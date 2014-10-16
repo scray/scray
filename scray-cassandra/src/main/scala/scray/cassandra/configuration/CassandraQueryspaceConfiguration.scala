@@ -25,7 +25,6 @@ import scray.cassandra.extractors.CassandraExtractor
 import scray.querying.description.Row
 import scray.querying.description.Column
 
-
 /**
  * configuration of a simple Cassandra-based query space.
  * If all tables used are based on Cassandra this class can be used out-of-the-box.
@@ -38,10 +37,12 @@ import scray.querying.description.Column
 class CassandraQueryspaceConfiguration(
     override val name: String,
     val tables: Set[(AbstractCQLCassandraStore[_, _], (_) => Row)],
-    // mapping from indexed table and the indexed column to the table containing the index and the 
+    // mapping from indexed table and the indexed column to the table containing the index and the ref column
     val indexes: Map[(AbstractCQLCassandraStore[_, _], String), (AbstractCQLCassandraStore[_, _], String)]
 ) extends QueryspaceConfiguration(name) {
 
+  lazy val tableRowMapperMap: Map[AbstractCQLCassandraStore[_, _], (_) => Row] = tables.toMap
+  
   override def queryCanBeOrdered(query: Query): Option[ColumnConfiguration] = {
     query.getOrdering.flatMap { ordering =>
       val registry = Registry.querySpaceColumns.get(query.getQueryspace)
@@ -60,13 +61,20 @@ class CassandraQueryspaceConfiguration(
   override def queryCanBeGrouped(query: Query): Option[ColumnConfiguration] = queryCanBeOrdered(query)
   
   override def getColumns: List[ColumnConfiguration] = tables.toList.flatMap ( table => {
-    val extractor = CassandraExtractor.getExtractor(table._1)
-    val allColumns = extractor.getTableConfiguration(table._1).allColumns
-    allColumns.map(col => extractor.getColumnConfiguration(table._1, col, this, index))
+    // TODO: fix this ugly stuff (for now we leave it, as fixing this will only increase type safety)
+    val typeReducedTable = table._1.asInstanceOf[AbstractCQLCassandraStore[Any, Any]]
+    val extractor = CassandraExtractor.getExtractor(typeReducedTable)
+    val allColumns = extractor.getTableConfiguration(typeReducedTable, table._2).allColumns
+    allColumns.map { col => 
+      val index = extractor.createManualIndexConfiguration(col, typeReducedTable, indexes, tableRowMapperMap)
+      extractor.getColumnConfiguration(typeReducedTable, col, this, index)
+    }
   })
   
   override def getTables: Set[scray.querying.description.TableConfiguration[_, _]] = tables.map ( table => {
-    val extractor = CassandraExtractor.getExtractor(table._1)
-    extractor.getTableConfiguration(table._1, table._2)
+    // TODO: fix this ugly stuff (for now we leave it, as fixing this will only increase type safety)
+    val typeReducedTable = table._1.asInstanceOf[AbstractCQLCassandraStore[Any, Any]]
+    val extractor = CassandraExtractor.getExtractor(typeReducedTable)
+    extractor.getTableConfiguration(typeReducedTable, table._2)
   })
 }

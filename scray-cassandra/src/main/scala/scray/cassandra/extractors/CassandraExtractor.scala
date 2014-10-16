@@ -30,26 +30,59 @@ import scray.querying.description.Row
 import scray.querying.queries.DomainQuery
 import scray.querying.description.internal.SingleValueDomain
 import scray.querying.description.internal.SingleValueDomain
+import scray.querying.description.IndexConfiguration
+import scray.querying.description.ManuallyIndexConfiguration
 
 /**
  * Helper class to create a configuration for a Cassandra table
  */
-trait CassandraExtractor {
+trait CassandraExtractor[S <: AbstractCQLCassandraStore[_, _]] {
 
   /**
    * returns a list of columns for this specific store; implementors must override this
    */
-  def getColumns(store: AbstractCQLCassandraStore[_, _]): List[Column]
+  def getColumns(store: S): List[Column]
+  
+  /**
+   * returns list of clustering key columns for this specific store; implementors must override this
+   */
+  def getClusteringKeyColumns(store: S): List[Column]
+  
+  /**
+   * if this store is used as a ha-join reference it returns the (only) significant row-key
+   */
+  def getRowKeyColumn(store: S): Column
+
+  /**
+   * returns list of row key columns for this specific store; implementors must override this
+   */
+  def getRowKeyColumns(store: S): List[Column]
+
+  /**
+   * returns a list of value key columns for this specific store; implementors must override this
+   */
+  def getValueColumns(store: S): List[Column]
+
+  /**
+   * returns the table configuration for this specific store; implementors must override this
+   */
+  def getTableConfiguration(store: S, rowMapper: (_) => Row): TableConfiguration[_, _]
+
+  /**
+   * returns a generic Cassandra-store query mapping
+   */
+  def getQueryMapping(store: S): DomainQuery => String =
+    new DomainToCQLQueryMapper[S].getQueryMapping(store, this)
 
   /**
    * DB-System is fixed
    */
-  def getDBSystem: String = { "cassandra" }
+  def getDBSystem: String = "cassandra"
   
   /**
    * returns a table identifier for this cassandra store
    */
-  def getTableIdentifier(store: AbstractCQLCassandraStore[_, _]): TableIdentifier =
+  def getTableIdentifier(store: S): TableIdentifier =
     TableIdentifier(getDBSystem, store.columnFamily.session.keyspacename, store.columnFamily.getName)
 
   /**
@@ -62,14 +95,14 @@ trait CassandraExtractor {
   /**
    * checks that a column has been indexed by Cassandra itself, so no manual indexing
    */
-  def checkColumnCassandraAutoIndexed(store: AbstractCQLCassandraStore[_, _], column: Column): Boolean = {
+  def checkColumnCassandraAutoIndexed(store: S, column: Column): Boolean = {
     Option(getMetadata(store.columnFamily).getTable(store.columnFamily.getName).getColumn(column.columnName).getIndex()).isDefined
   }
 
   /**
    * returns the column configuration for a Cassandra column
    */
-  def getColumnConfiguration(store: AbstractCQLCassandraStore[_, _], 
+  def getColumnConfiguration(store: S, 
       column: Column,
       querySpace: QueryspaceConfiguration,
       index: Option[ManuallyIndexConfiguration]): ColumnConfiguration = {
@@ -85,7 +118,7 @@ trait CassandraExtractor {
   /**
    * returns all column configurations
    */
-  def getColumnConfigurations(store: AbstractCQLCassandraStore[_, _],
+  def getColumnConfigurations(store: S,
       querySpace: QueryspaceConfiguration, 
       indexes: Map[String, ManuallyIndexConfiguration]): List[ColumnConfiguration] = {
     getColumns(store).map(col => getColumnConfiguration(store, col, querySpace, indexes.get(col.columnName)))
@@ -94,24 +127,28 @@ trait CassandraExtractor {
   /**
    * helper method to create a list of columns from a store
    */
-  protected def getInternalColumns(store: AbstractCQLCassandraStore[_, _], colNames: List[String]) = {
+  protected def getInternalColumns(store: S, colNames: List[String]) = {
     val ti = getTableIdentifier(store)
     colNames.map(Column(_, ti))    
-  } 
+  }
   
-  def getQueryMapping(store: AbstractCQLCassandraStore[_, _]): DomainQuery => String =
-    DomainToCQLQueryMapper.getQueryMapping(store, this)
-  
-  def getClusteringKeyColumns(store: AbstractCQLCassandraStore[_, _]): List[Column]
-  
-  def getRowKeyColumn(store: AbstractCQLCassandraStore[_, _]): Column
-
-  def getRowKeyColumns(store: AbstractCQLCassandraStore[_, _]): List[Column]
-  
-  def getValueColumns(store: AbstractCQLCassandraStore[_, _]): List[Column]
-  
-  def getTableConfiguration(store: AbstractCQLCassandraStore[_, _], rowMapper: (_) => Row): TableConfiguration[_, _]
-
+  /**
+   * return a manual index configuration for a column
+   */
+  def createManualIndexConfiguration(column: Column, 
+      store: S,
+      indexes: Map[(AbstractCQLCassandraStore[_, _], String), (AbstractCQLCassandraStore[_, _], String)],
+      mappers: Map[AbstractCQLCassandraStore[_, _], (_) => Row]): Option[ManuallyIndexConfiguration] = {
+    indexes.get((store, column.columnName)).map { (index) =>
+      // TODO: fix this ugly stuff (for now we leave it, as fixing this will only increase type safety)
+      val indexStore = index._1.asInstanceOf[AbstractCQLCassandraStore[Any, Any]]
+      val indexExtractor = CassandraExtractor.getExtractor(indexStore)
+      ManuallyIndexConfiguration(
+        getTableConfiguration(store, mappers.get(store).get),
+        indexExtractor.getTableConfiguration(indexStore, mappers.get(indexStore).get)
+      )
+    }
+  }
 }
 
 object CassandraExtractor {
@@ -119,12 +156,11 @@ object CassandraExtractor {
   /**
    * returns a Cassandra information extractor for a given Cassandra-Storehaus wrapper
    */
-  def getExtractor(store: AbstractCQLCassandraStore[_, _]): CassandraExtractor = {
+  def getExtractor[S <: AbstractCQLCassandraStore[_, _]](store: S): CassandraExtractor[S] = {
     store match { 
-      case collStore: CQLCassandraCollectionStore[_, _, _, _, _, _] => CQLCollectionStoreExtractor
+      case collStore: CQLCassandraCollectionStore[_, _, _, _, _, _] => 
+        new CQLCollectionStoreExtractor(collStore).asInstanceOf[CassandraExtractor[S]]
       
     }
   }
-  
-  
 }
