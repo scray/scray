@@ -35,7 +35,7 @@ import scray.querying.description.SmallerEqual
 @RunWith(classOf[JUnitRunner])
 class ScrayQueryingPlannerTest extends WordSpec {
   val ti = TableIdentifier("cassandra", "mytestspace", "mycf")
-  val planner = new Planner
+  val planner = Planner
   "Scray's select-project-join planner" should {
     "flatten nested 'AND's" in {
       val sq = SimpleQuery("", ti,
