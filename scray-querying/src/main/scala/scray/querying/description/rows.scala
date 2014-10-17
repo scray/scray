@@ -89,7 +89,7 @@ class CompositeRow(rows: List[Row]) extends Row {
 /**
  * A row with no data. Used for filtering.
  */
-class EmptyRow extends Row {
+class EmptyRow extends Row with Serializable {
   override def getColumnValue[V](colNum: Int): Option[V] = None
   override def getColumnValue[V](col: Column): Option[V] = None
   override def getColumnValueType(colNum: Int): Option[TypeTag[_]] = None

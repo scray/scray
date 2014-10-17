@@ -32,6 +32,8 @@ import scray.querying.description.internal.SingleValueDomain
 import scray.querying.description.internal.SingleValueDomain
 import scray.querying.description.IndexConfiguration
 import scray.querying.description.ManuallyIndexConfiguration
+import com.twitter.storehaus.cassandra.cql.CQLCassandraStoreTupleValues
+import com.datastax.driver.core.Metadata
 
 /**
  * Helper class to create a configuration for a Cassandra table
@@ -77,7 +79,7 @@ trait CassandraExtractor[S <: AbstractCQLCassandraStore[_, _]] {
   /**
    * DB-System is fixed
    */
-  def getDBSystem: String = "cassandra"
+  def getDBSystem: String = CassandraExtractor.DB_ID
   
   /**
    * returns a table identifier for this cassandra store
@@ -89,14 +91,15 @@ trait CassandraExtractor[S <: AbstractCQLCassandraStore[_, _]] {
    * returns metadata information from Cassandra
    */
   def getMetadata(cf: StoreColumnFamily): KeyspaceMetadata = {
-    cf.session.getSession.getCluster().getMetadata().getKeyspace(cf.session.getKeyspacename)
+    cf.session.getSession.getCluster().getMetadata().getKeyspace(Metadata.quote(cf.session.getKeyspacename))
   }
   
   /**
    * checks that a column has been indexed by Cassandra itself, so no manual indexing
    */
   def checkColumnCassandraAutoIndexed(store: S, column: Column): Boolean = {
-    Option(getMetadata(store.columnFamily).getTable(store.columnFamily.getName).getColumn(column.columnName).getIndex()).isDefined
+    val metadata = Option(getMetadata(store.columnFamily))
+    metadata.map(meta => meta.getTable(store.columnFamily.getPreparedNamed).getColumn(Metadata.quote(column.columnName)).getIndex()).isDefined
   }
 
   /**
@@ -160,7 +163,10 @@ object CassandraExtractor {
     store match { 
       case collStore: CQLCassandraCollectionStore[_, _, _, _, _, _] => 
         new CQLCollectionStoreExtractor(collStore).asInstanceOf[CassandraExtractor[S]]
-      
+      case tupleStore: CQLCassandraStoreTupleValues[_, _, _, _] =>
+        new CQLStoreTupleValuesExtractor(tupleStore).asInstanceOf[CassandraExtractor[S]]
     }
   }
+  
+  val DB_ID: String = "cassandra"
 }

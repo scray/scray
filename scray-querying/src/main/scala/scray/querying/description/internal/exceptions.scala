@@ -28,6 +28,7 @@ object ExceptionIDs {
   val queryDomainParserExceptionID = "SIL-Scray-010"
   val nonAtomicClauseExceptionID = "SIL-Scray-011"
   val noPlanExceptionID = "SIL-Scray-012"
+  val plannerShutdownExceptionID = "SIL-Scray-013"
   // 800+ = errors for specific queries
   val keyBasedQueryExceptionID = "SIL-Scray-800"
 }
@@ -67,3 +68,6 @@ class NonAtomicClauseException(query: Query)
 
 class NoPlanException(query: Query)
     extends ScrayException(ExceptionIDs.noPlanExceptionID, query.getQueryID, "Could not construct a plan from the query") with Serializable
+
+class ExecutorShutdownException(query: Query)
+    extends ScrayException(ExceptionIDs.plannerShutdownExceptionID, query.getQueryID, "The query engine has already been shut down. Cannot accept queries any more.") with Serializable

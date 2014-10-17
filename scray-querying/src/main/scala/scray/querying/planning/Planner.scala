@@ -67,7 +67,7 @@ import com.twitter.util.Future
  *   - transform query predicates to a set of domains
  *   - find the main query
  */
-class Planner {
+object Planner {
   
   /**
    * plans the execution and starts it
