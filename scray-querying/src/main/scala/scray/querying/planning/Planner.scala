@@ -59,6 +59,8 @@ import scray.querying.source.LazyQueryColumnDispenserSource
 import scray.querying.source.Source
 import scray.querying.source.OrderingEagerMappingSource
 import com.twitter.util.Future
+import scala.collection.parallel.immutable.ParSeq
+import com.twitter.util.Await
 
 /**
  * Simple planner to execute queries.
@@ -107,7 +109,7 @@ object Planner {
     val unOrdered = plans.find((execution) => execution._1.isInstanceOf[OrderedComposablePlan[_, _]]) == None
 
     // run the plans and merge if it is needed
-    executePlans(plans.asInstanceOf[Seq[(OrderedComposablePlan[DomainQuery,_], DomainQuery)]], unOrdered)
+    executePlans(plans.asInstanceOf[ParSeq[(OrderedComposablePlan[DomainQuery,_], DomainQuery)]], unOrdered)
   }
 
   /**
@@ -378,31 +380,31 @@ object Planner {
    * executes the plan, and returns the Futures to be returned by the engine
    * and which might still need to be merged  
    */
-  def executePlans(plans: Seq[(ComposablePlan[DomainQuery, _], DomainQuery)], unOrdered: Boolean): Spool[Row] = {
+  def executePlans(plans: ParSeq[(ComposablePlan[DomainQuery, _], DomainQuery)], unOrdered: Boolean): Spool[Row] = {
     // run all at once
-    val futures = plans.par.map((execution) => execution._1.getSource.request(execution._2))
+    val futures = plans.par.map((execution) => execution._1.getSource.request(execution._2)).seq
 
     if(futures.size == 0) {
       Spool.Empty.asInstanceOf[Spool[Row]]
     } else if(futures.size == 1) {
       // in case we only have results for one query we can quickly return them
-      futures.head match {
-        case spool: Spool[_] => spool.get.asInstanceOf[Spool[Row]]
-        case seq: Seq[_] => Spool.seqToSpool[Row](seq.get.asInstanceOf[Seq[Row]]).toSpool
+      Await.result(futures.head) match {
+        case spool: Spool[_] => spool.asInstanceOf[Spool[Row]]
+        case seq: Seq[_] => Spool.seqToSpool[Row](seq.asInstanceOf[Seq[Row]]).toSpool
       }
     } else { unOrdered match {
       case true =>
         // TODO: we spit out the value which is available first and so on
         // for now we just throw out the first result...
-        futures.head match {
-          case spool: Spool[_] => spool.get.asInstanceOf[Spool[Row]]
-          case seq: Seq[_] => Spool.seqToSpool[Row](seq.get.asInstanceOf[Seq[Row]]).toSpool
+        Await.result(futures.head) match {
+          case spool: Spool[_] => spool.asInstanceOf[Spool[Row]]
+          case seq: Seq[_] => Spool.seqToSpool[Row](seq.asInstanceOf[Seq[Row]]).toSpool
       }
       case false =>
         // TODO: we wait for all data streams to return a result and then return the lowest value
-        futures.head match {
-          case spool: Spool[_] => spool.get.asInstanceOf[Spool[Row]]
-          case seq: Seq[_] => Spool.seqToSpool[Row](seq.get.asInstanceOf[Seq[Row]]).toSpool
+        Await.result(futures.head) match {
+          case spool: Spool[_] => spool.asInstanceOf[Spool[Row]]
+          case seq: Seq[_] => Spool.seqToSpool[Row](seq.asInstanceOf[Seq[Row]]).toSpool
       }
     }}
   }
