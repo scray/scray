@@ -70,4 +70,4 @@ class NoPlanException(query: Query)
     extends ScrayException(ExceptionIDs.noPlanExceptionID, query.getQueryID, "Could not construct a plan from the query") with Serializable
 
 class ExecutorShutdownException(query: Query)
-    extends ScrayException(ExceptionIDs.plannerShutdownExceptionID, query.getQueryID, "The query engine has already been shut down. Cannot accept queries any more.") with Serializable
+    extends ScrayException(ExceptionIDs.plannerShutdownExceptionID, query.getQueryID, "Cannot accept queries any more. Engine shut down.") with Serializable

@@ -21,6 +21,9 @@ import scray.querying.description.{Column, Row}
 import scray.querying.queries.DomainQuery
 import scray.querying.Registry
 import scray.querying.description.TableIdentifier
+import scalax.collection.immutable.Graph
+import scalax.collection.GraphEdge.DiEdge
+import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
 
 /**
  * queries a Storehaus-store. Assumes that the Seq returnes by QueryableStore is a lazy sequence (i.e. view)
@@ -58,6 +61,8 @@ class QueryableSource[K, V](store: QueryableStore[K, V], space: String, table: T
       case None => false
     }
   }
+  
+  override def getGraph: Graph[Source[DomainQuery, Spool[Row]], DiEdge] = Graph.from(List(this), List())
 }
 
 object QueryableSource {

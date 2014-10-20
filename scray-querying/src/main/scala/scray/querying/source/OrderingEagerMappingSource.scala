@@ -23,7 +23,7 @@ import scray.querying.description.ColumnOrdering
 
 /**
  * source which pulls all data into memory and starts sorting
- * TODO: flatten that stuff to disk and do a merge sort on disk files
+ * TODO: flatten that stuff to disk and do a merge sort / TimSort on disk files
  */
 class OrderingEagerMappingSource[Q <: DomainQuery, R](source: Source[Q, R])
     extends EagerCollectingQueryMappingSource[Q, R](source) {
@@ -39,10 +39,12 @@ class OrderingEagerMappingSource[Q <: DomainQuery, R](source: Source[Q, R])
         } else { true }
       }
     }
-    queryOrdering.map(_ => element.sortWith(compRows)).getOrElse(element)
+    element.sortWith(compRows)
   }
 
   override def transformSeqElement(element: Row, query: Q): Row = element
 
   override def getColumns: List[Column] = source.getColumns
+  
+  override def isOrdered(query: Q): Boolean = true
 }

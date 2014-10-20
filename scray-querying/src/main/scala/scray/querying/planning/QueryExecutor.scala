@@ -1,3 +1,17 @@
+// See the LICENCE.txt file distributed with this work for additional
+// information regarding copyright ownership.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 package scray.querying.planning
 
 import com.twitter.concurrent.Spool
@@ -15,9 +29,10 @@ import scray.querying.description.Row
 import scray.querying.description.internal.ExecutorShutdownException
 
 /**
- * daemon thread executing queries in a pool 
- */
-class QueryExecutor(poolSize: Int = 25, timeout: Duration = Duration.fromSeconds(60)) {
+ * daemon thread executing queries in a pool  */
+
+class QueryExecutor(poolSize: Int = QueryExecutor.threadPoolSize,
+      timeout: Duration = Duration.fromSeconds(QueryExecutor.numberOfSecondsForShutdown)) {
 
   private val log = LoggerFactory.getLogger(classOf[QueryExecutor])
   
@@ -71,4 +86,10 @@ object QueryExecutor {
    * reference to the query runner pool
    */
   lazy val runner = new QueryExecutor
+  
+  // default number of processors = number of query engine threads
+  val threadPoolSize = Runtime.getRuntime().availableProcessors()
+  
+  // default number of seconds = 1 minute
+  val numberOfSecondsForShutdown = 60
 }

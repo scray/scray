@@ -14,9 +14,15 @@
 // limitations under the License.
 package scray.querying.source
 
-import com.twitter.util.Future
 import com.twitter.concurrent.Spool
-import scray.querying.description.{Column, Row}
+import com.twitter.util.Future
+
+import scalax.collection.GraphEdge.DiEdge
+import scalax.collection.edge.Implicits._
+import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
+import scalax.collection.immutable.Graph
+import scray.querying.description.Column
+import scray.querying.description.Row
 import scray.querying.queries.DomainQuery
 
 /**
@@ -37,6 +43,11 @@ trait Source[Q <: DomainQuery, T] {
    * as defined in this DomainQuery
    */
   def isOrdered(query: Q): Boolean
+  
+  /**
+   * returns a scala graph of the current setup of sources
+   */
+  def getGraph: Graph[Source[DomainQuery, T], DiEdge]
 }
 
 /**
@@ -64,4 +75,5 @@ class NullSource[Q <: DomainQuery] extends LazySource[Q] {
   override def request(query: Q): LazyData = Future(Spool.Empty)
   override def getColumns: List[Column] = List()
   override def isOrdered(query: Q): Boolean = true
+  override def getGraph: Graph[Source[DomainQuery, Spool[Row]], DiEdge] = Graph.empty[Source[DomainQuery, Spool[Row]], DiEdge]
 }

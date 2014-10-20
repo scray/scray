@@ -378,10 +378,11 @@ object Planner {
   
   /**
    * executes the plan, and returns the Futures to be returned by the engine
-   * and which might still need to be merged  
+   * and which might still need to be merged
    */
   def executePlans(plans: ParSeq[(ComposablePlan[DomainQuery, _], DomainQuery)], unOrdered: Boolean): Spool[Row] = {
     // run all at once
+    val t1 = System.currentTimeMillis()
     val futures = plans.par.map((execution) => execution._1.getSource.request(execution._2)).seq
 
     if(futures.size == 0) {

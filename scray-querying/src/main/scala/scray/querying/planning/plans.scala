@@ -16,10 +16,16 @@ package scray.querying.planning
 
 import com.twitter.concurrent.Spool
 import com.twitter.util.Future
-
 import scray.querying.description.Row
 import scray.querying.queries.DomainQuery
 import scray.querying.source.{LazySource, LazyData, NullSource, Source}
+import scalax.collection.io.dot.DotRootGraph
+import scalax.collection.io.dot.DotGraph
+import scalax.collection.io.dot.DotEdgeStmt
+import scalax.collection.Graph
+import scalax.collection.GraphEdge.DiEdge
+import scalax.collection.edge.LDiEdge
+import scalax.collection.io.dot._
 
 /**
  * a plan is used to execute a query internally
@@ -34,7 +40,13 @@ sealed trait Plan[Q <: DomainQuery, T] {
   /**
    * return the source to execute the query
    */
-  def getSource: Source[Q, T]  
+  def getSource: Source[Q, T]
+  
+  /**
+   * writes a simplification of the plan layout for debugging
+   */
+  def getDot(queryId: String): String 
+  
 }
 
 /**
@@ -44,6 +56,15 @@ sealed trait Plan[Q <: DomainQuery, T] {
 abstract class ComposablePlan[Q <: DomainQuery, T](source: Source[Q, T]) extends Plan[Q, T] {
   def map[Q1 <: DomainQuery, T1](source: Source[Q1, T1]): ComposablePlan[Q1, T1]
   override def getSource: Source[Q, T] = source
+  override def getDot(queryId: String): String = {
+    val dotGraph = DotRootGraph(directed = true, id = Some(s"Plan for query $queryId"))
+    val edgeTransformer: Graph[Source[DomainQuery, T], DiEdge]#EdgeT => Option[(DotGraph, DotEdgeStmt)] = 
+      (innerEdge: Graph[Source[DomainQuery, T], DiEdge]#EdgeT) => {
+      val edge = innerEdge.edge
+      Some(dotGraph, DotEdgeStmt(edge.from.toString, edge.to.toString, Nil))
+    }
+    source.getGraph.toDot(dotGraph, edgeTransformer)
+  } 
 }
 
 object ComposablePlan {
@@ -82,4 +103,8 @@ class OrderedComposablePlan[Q <: DomainQuery, T](source: Source[Q, T]) extends C
 class NullPlan[Q <: DomainQuery] extends Plan[Q, LazyData] {
   override def needToOrder: Boolean = false
   override def getSource: Source[Q, LazyData] = (new NullSource[Q]).asInstanceOf[Source[Q, LazyData]]
+  override def getDot(queryId: String): String = {
+    val root = DotRootGraph(directed = true, id = Some(s"Plan for query $queryId"))
+    Graph.empty[Source[DomainQuery, Spool[Row]], DiEdge].toDot(root, _ => None)
+  }
 }

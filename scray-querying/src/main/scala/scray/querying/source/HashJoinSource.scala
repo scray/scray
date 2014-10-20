@@ -20,6 +20,9 @@ import scray.querying.queries.{DomainQuery, KeyBasedQuery}
 import scray.querying.description.Column
 import scray.querying.description.Row
 import scray.querying.description.CompositeRow
+import scalax.collection.immutable.Graph
+import scalax.collection.GraphEdge.DiEdge
+import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
 
 /**
  * This hash joined source provides an template for implementing hashed-joins. This is a relational lookup.
@@ -65,4 +68,11 @@ class HashJoinSource[Q <: DomainQuery, K, R, V](
   
   // as lookupSource is always ordered, ordering depends only on the original source 
   override def isOrdered(query: Q): Boolean = source.isOrdered(query)
+  
+  override def getGraph: Graph[Source[DomainQuery, Spool[Row]], DiEdge] = (source.getGraph + 
+    DiEdge(source.asInstanceOf[Source[DomainQuery, Spool[Row]]],
+    this.asInstanceOf[Source[DomainQuery, Spool[Row]]])) ++ 
+    (lookupSource.getGraph.asInstanceOf[Graph[Source[DomainQuery, Spool[Row]], DiEdge]] +
+    DiEdge(lookupSource.asInstanceOf[Source[DomainQuery, Spool[Row]]],
+    this.asInstanceOf[Source[DomainQuery, Spool[Row]]]))
 }

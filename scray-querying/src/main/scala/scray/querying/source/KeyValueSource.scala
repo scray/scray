@@ -22,6 +22,10 @@ import scray.querying.description.Row
 import scray.querying.Registry
 import scray.querying.description.Column
 import scray.querying.description.TableIdentifier
+import scalax.collection.immutable.Graph
+import scalax.collection.GraphEdge.DiEdge
+import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
+import scray.querying.queries.DomainQuery
 
 /**
  * A source that queries a Storehaus-store for a given value.
@@ -47,4 +51,8 @@ class KeyValueSource[K, V](val store: ReadableStore[K, V],
   
   // as there is only one element this method may return true
   override def isOrdered(query: KeyBasedQuery[K]): Boolean = true
+  
+  override def getGraph: Graph[Source[DomainQuery, Seq[Row]], DiEdge] = 
+    Graph.from(List(this.asInstanceOf[Source[DomainQuery, Seq[Row]]]), List())
+
 }

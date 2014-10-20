@@ -21,7 +21,7 @@ object ColumnDispenserTransformer {
   def transformElement[Q <: DomainQuery](element: Row, query: Q): Row = {
     // if we find a column which is not requested by this query we will dispense it
     val columns = element.getColumns.filter(query.getResultSetColumns.contains(_))
-    SimpleRow(columns.map(col => RowColumn(col, element.getColumnValue(col))))
+    SimpleRow(columns.map(col => RowColumn(col, element.getColumnValue(col).get)))
   }
 }
 
