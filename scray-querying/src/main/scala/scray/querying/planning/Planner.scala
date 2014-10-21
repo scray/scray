@@ -102,6 +102,9 @@ object Planner {
       // if needed add an in-memory sorting step afterwards
       val executablePlan = sortedPlan(dispensedPlan, domainQuery)
       
+      // post-actions
+      Registry.queryPostProcessor(domainQuery, executablePlan)
+      
       (executablePlan, domainQuery)
     }
 

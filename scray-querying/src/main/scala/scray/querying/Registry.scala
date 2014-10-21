@@ -20,6 +20,7 @@ import scray.querying.description.ColumnConfiguration
 import scray.querying.description.QueryspaceConfiguration
 import scray.querying.description.TableConfiguration
 import scray.querying.description.TableIdentifier
+import scray.querying.planning.PostPlanningActions
 
 /**
  * Registry for tables and resources 
@@ -41,6 +42,9 @@ object Registry {
   
   // shortcut to find column-configurations
   val querySpaceColumns = new HashMap[String, HashMap[Column, ColumnConfiguration]]
+  
+  // planner post-pocessor
+  var queryPostProcessor: PostPlanningActions.PostPlanningAction = PostPlanningActions.doNothing
   
   /**
    * Register a new querySpace

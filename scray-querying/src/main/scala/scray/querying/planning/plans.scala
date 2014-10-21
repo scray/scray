@@ -57,7 +57,7 @@ abstract class ComposablePlan[Q <: DomainQuery, T](source: Source[Q, T]) extends
   def map[Q1 <: DomainQuery, T1](source: Source[Q1, T1]): ComposablePlan[Q1, T1]
   override def getSource: Source[Q, T] = source
   override def getDot(queryId: String): String = {
-    val dotGraph = DotRootGraph(directed = true, id = Some(s"Plan for query $queryId"))
+    val dotGraph = DotRootGraph(directed = true, id = Some(s""""Plan for query $queryId""""))
     val edgeTransformer: Graph[Source[DomainQuery, T], DiEdge]#EdgeT => Option[(DotGraph, DotEdgeStmt)] = 
       (innerEdge: Graph[Source[DomainQuery, T], DiEdge]#EdgeT) => {
       val edge = innerEdge.edge
@@ -104,7 +104,7 @@ class NullPlan[Q <: DomainQuery] extends Plan[Q, LazyData] {
   override def needToOrder: Boolean = false
   override def getSource: Source[Q, LazyData] = (new NullSource[Q]).asInstanceOf[Source[Q, LazyData]]
   override def getDot(queryId: String): String = {
-    val root = DotRootGraph(directed = true, id = Some(s"Plan for query $queryId"))
+    val root = DotRootGraph(directed = true, id = Some(s""""Plan for query $queryId""""))
     Graph.empty[Source[DomainQuery, Spool[Row]], DiEdge].toDot(root, _ => None)
   }
 }
