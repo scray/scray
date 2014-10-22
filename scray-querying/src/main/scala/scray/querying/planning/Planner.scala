@@ -61,6 +61,7 @@ import scray.querying.source.OrderingEagerMappingSource
 import com.twitter.util.Future
 import scala.collection.parallel.immutable.ParSeq
 import com.twitter.util.Await
+import scray.querying.description.ColumnOrdering
 
 /**
  * Simple planner to execute queries.
@@ -109,10 +110,11 @@ object Planner {
     }
 
     // do we need to order?
-    val unOrdered = plans.find((execution) => execution._1.isInstanceOf[OrderedComposablePlan[_, _]]) == None
+    val ordering = plans.find((execution) => execution._1.isInstanceOf[OrderedComposablePlan[_, _]]).
+      map(_._1.asInstanceOf[OrderedComposablePlan[DomainQuery, _]])
 
     // run the plans and merge if it is needed
-    executePlans(plans.asInstanceOf[ParSeq[(OrderedComposablePlan[DomainQuery,_], DomainQuery)]], unOrdered)
+    executePlans(plans.asInstanceOf[ParSeq[(OrderedComposablePlan[DomainQuery,_], DomainQuery)]], ordering == None, ordering)
   }
 
   /**
@@ -372,7 +374,7 @@ object Planner {
           case eagerSource: EagerSource[_] => new OrderingEagerMappingSource[DomainQuery, Seq[Row]](
               eagerSource.asInstanceOf[Source[DomainQuery, Seq[Row]]]) 
         }
-        new OrderedComposablePlan(source)
+        new OrderedComposablePlan(source, domainQuery.getOrdering)
       }
       case ucp: UnorderedComposablePlan[_, _] => ucp
     }
@@ -383,7 +385,9 @@ object Planner {
    * executes the plan, and returns the Futures to be returned by the engine
    * and which might still need to be merged
    */
-  def executePlans(plans: ParSeq[(ComposablePlan[DomainQuery, _], DomainQuery)], unOrdered: Boolean): Spool[Row] = {
+  def executePlans(plans: ParSeq[(ComposablePlan[DomainQuery, _], DomainQuery)], 
+      unOrdered: Boolean,
+      ordering: Option[OrderedComposablePlan[DomainQuery, _]]): Spool[Row] = {
     // run all at once
     val t1 = System.currentTimeMillis()
     val futures = plans.par.map((execution) => execution._1.getSource.request(execution._2)).seq
@@ -396,20 +400,24 @@ object Planner {
         case spool: Spool[_] => spool.asInstanceOf[Spool[Row]]
         case seq: Seq[_] => Spool.seqToSpool[Row](seq.asInstanceOf[Seq[Row]]).toSpool
       }
-    } else { unOrdered match {
-      case true =>
-        // TODO: we spit out the value which is available first and so on
-        // for now we just throw out the first result...
-        Await.result(futures.head) match {
-          case spool: Spool[_] => spool.asInstanceOf[Spool[Row]]
-          case seq: Seq[_] => Spool.seqToSpool[Row](seq.asInstanceOf[Seq[Row]]).toSpool
+    } else { 
+      val seqtuple = futures.partition ( future => future match {
+        case spool: Spool[_] => true
+        case seq: Seq[_] => false
+      })
+      val seqs = seqtuple._2.asInstanceOf[Seq[Future[Seq[Row]]]]
+      val spools = seqtuple._1.asInstanceOf[Seq[Future[Spool[Row]]]]
+      val indexes = Seq.fill(seqs.size)(0)      
+      unOrdered match {
+        case true =>
+          // we spit out the value which is available first and so on
+          Await.result(MergingResultSpool.mergeUnorderedResults(seqs, spools, indexes))
+        case false =>
+          // we wait for all data streams to return a result and then return the lowest value
+          val compRows: (Row, Row) => Boolean = 
+            scray.querying.source.rowCompWithOrdering(ordering.get.ordering.get.column, ordering.get.ordering.get.ordering)
+          Await.result(MergingResultSpool.mergeOrderedSpools(seqs, spools, compRows, indexes))
       }
-      case false =>
-        // TODO: we wait for all data streams to return a result and then return the lowest value
-        Await.result(futures.head) match {
-          case spool: Spool[_] => spool.asInstanceOf[Spool[Row]]
-          case seq: Seq[_] => Spool.seqToSpool[Row](seq.asInstanceOf[Seq[Row]]).toSpool
-      }
-    }}
+    }
   }
 }

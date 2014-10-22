@@ -30,16 +30,7 @@ class OrderingEagerMappingSource[Q <: DomainQuery, R](source: Source[Q, R])
   
   override def transformSeq(element: Seq[Row], query: Q): Seq[Row] = {
     val queryOrdering = query.getOrdering
-    def compRows(row1: Row, row2: Row): Boolean = {
-      val a = row1.getColumnValue(queryOrdering.get.column)
-      val b = row2.getColumnValue(queryOrdering.get.column)
-      if(a.isEmpty) { false
-      } else { if(b.isDefined) { 
-          queryOrdering.get.ordering.compare(a.get, b.get) <= 0
-        } else { true }
-      }
-    }
-    element.sortWith(compRows)
+    element.sortWith(rowCompWithOrdering(queryOrdering.get.column, queryOrdering.get.ordering))
   }
 
   override def transformSeqElement(element: Row, query: Q): Row = element

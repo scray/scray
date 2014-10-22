@@ -26,28 +26,63 @@ import scala.annotation.tailrec
  */
 object MergingResultSpool {
 
-//  def appendRowToSpool(row: Row, spool: Spool[Row]): Spool[Row] = {
-//    
-//  }
-  
   /**
    * Returns the first result available. 
    */
-//  def mergeUnorderedResults(seqs: Seq[Future[Seq[Row]]], spools: Seq[Future[Spool[Row]]]): Future[Spool[Row]] = {
-//    if (!spools(0).get.isEmpty) {
-//      // *:: for lazy/deferred tail
-//      spools(0).get.head *:: mergeUnorderedResults(seqs, )
-//    } else {
-//      Spool.empty
-//    }
-//  }
-//
-//    
-//    seqs(0).onSuccess( /* add all rows to spool */)
-//    
-//  }
-//  
-//
+  def mergeUnorderedResults(seqs: Seq[Future[Seq[Row]]],
+      spools: Seq[Future[Spool[Row]]],
+      indexes: Seq[Int]): Future[Spool[Row]] = Future.value {
+    def submitSpool(spoolFuture: Future[Spool[Row]]): Spool[Row] = {
+      val spool = Await.result(spoolFuture)
+      spool.head *:: mergeUnorderedResults(seqs, tailSpoolInSeq(spools, spool), indexes)      
+    }
+    def submitSeq(info: Option[(Int, Row, Int)]): Spool[Row] = info match {
+      case Some((index, row, seqpos)) => 
+        val newIndexes = indexes.take(index) ++ Seq(seqpos + 1) ++ indexes.takeRight(indexes.size - index - 1)        
+        row *:: mergeUnorderedResults(seqs, spools, newIndexes)
+      case None => Spool.empty
+    }
+    @tailrec def submitFirstValidSeqOrEmpty(locSeqs: Seq[Future[Seq[Row]]], locIndexes: Seq[Int], count: Int): Spool[Row] = {
+      if(locSeqs.size <= 0) {
+        Spool.empty
+      } else {
+        val result = Await.result(locSeqs.head)
+        if(locIndexes.head < result.size) {
+          submitSeq(Some((count, result(locIndexes.head), locIndexes.head)))
+        } else {
+          submitFirstValidSeqOrEmpty(locSeqs.tail, locIndexes, count + 1)
+        }
+      }
+    }
+    @tailrec def submitFirstValidSpoolOrEmpty(locSpools: Seq[Future[Spool[Row]]]): Spool[Row] = {
+      if(locSpools.size <= 0) {
+        submitFirstValidSeqOrEmpty(seqs, indexes, 0)
+      } else {
+        val result = Await.result(locSpools.head)
+        if(!result.isEmpty) {
+          submitSpool(locSpools.head)
+        } else {
+          submitFirstValidSpoolOrEmpty(locSpools.tail)
+        }
+      }
+    }
+    val seqAvailableResults = findAvailableSeq(indexes, seqs, 0, None)
+    if(seqAvailableResults.isEmpty) {
+      val spoolAvailableResults = spools.find { spool =>
+        val spoolFuturePoll = spool.poll 
+        spoolFuturePoll match {
+          case Some(pollTry) => !pollTry.get.isEmpty
+          case None => false
+        }
+      }
+      spoolAvailableResults match {
+        case Some(spoolFuture) => submitSpool(spoolFuture)
+        case None => submitFirstValidSpoolOrEmpty(spools)
+      }
+    } else {
+      submitSeq(seqAvailableResults)
+    }
+  }
 
   
   /**
@@ -125,16 +160,44 @@ object MergingResultSpool {
       val seqLocal = Await.result(seqsLocal.head)
       val newAcc = if(indexesLocal.head < seqLocal.size) {
         acc.map { accu =>
-          if(smaller(seqLocal.head, accu._2)) {
-            (count, seqLocal.head, indexesLocal.head)
+          if(smaller(seqLocal(indexesLocal.head), accu._2)) {
+            (count, seqLocal(indexesLocal.head), indexesLocal.head)
           } else {
             accu
           }
-        }.orElse(Some((count, seqLocal.head, indexesLocal.head)))
+        }.orElse(Some((count, seqLocal(indexesLocal.head), indexesLocal.head)))
       } else {
         acc
       }
       findSmallestSeq(smaller, indexesLocal.tail, seqsLocal.tail, count + 1, newAcc)
     }
-  }  
+  }
+  
+  /**
+   * find smallest seq which index is smaller than its end, and returns an 
+   * index into Seqs and a Row and an index within
+   */ 
+  @tailrec private def findAvailableSeq(indexesLocal: Seq[Int],
+      seqsLocal: Seq[Future[Seq[Row]]],
+      count: Int,
+      acc: Option[(Int, Row, Int)]): Option[(Int, Row, Int)] = {
+    if(indexesLocal.isEmpty) {
+      acc
+    } else {
+      val res = seqsLocal.head.poll match {
+        case Some(seqLocalTry) => seqLocalTry.map(seqLocal => if(indexesLocal.head < seqLocal.size) {
+          // we have a result, return that thing
+          Some((count, seqLocal(indexesLocal.head), indexesLocal.head))
+        } else {
+          None
+        }).get
+        case None => None 
+      }
+      if(res.isDefined) {
+        res
+      } else {
+        findAvailableSeq(indexesLocal.tail, seqsLocal.tail, count + 1, acc)
+      }
+    }
+  }
 }

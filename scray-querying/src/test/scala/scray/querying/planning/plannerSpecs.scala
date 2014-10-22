@@ -202,6 +202,9 @@ class ScrayQueryingPlannerTest extends WordSpec {
       assert(result.get.head.asInstanceOf[RangeValueDomain[Int]].upperBound.get.value == 3)
     }
   }
+//  "Scray's Panner should create dot-data" should {
+//    
+//  }
 //  "Scray's result-set column identifier" should {
 //    "find columns from tables and domains" in {
 //      val sq = SimpleQuery("", ti,

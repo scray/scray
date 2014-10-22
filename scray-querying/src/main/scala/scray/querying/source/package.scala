@@ -17,8 +17,31 @@ package scray.querying
 import com.twitter.util.Future
 import com.twitter.concurrent.Spool
 import scray.querying.description.Row
+import scray.querying.description.Column
 
 package object source {
   type LazyData = Future[Spool[Row]]
-  type EagerData = Future[Seq[Row]]  
+  type EagerData = Future[Seq[Row]]
+  
+  /**
+   * compares two rows according to a column
+   * empty rows or rows without column in question are "bigger" than the others 
+   */
+  def rowCompWithOrdering[T](column: Column, ordering: Ordering[T]): (Row, Row) => Boolean = (row1, row2) => {
+    val a = row1.getColumnValue(column)
+    val b = row2.getColumnValue(column)
+    if(a.isEmpty) { 
+      if(b.isEmpty) {
+        true
+      } else {
+        false
+      }
+    } else { 
+      if(b.isDefined) { 
+        ordering.compare(a.get, b.get) <= 0
+      } else { 
+        true 
+      }
+    }
+  } 
 }

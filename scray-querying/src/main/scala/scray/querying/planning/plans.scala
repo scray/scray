@@ -26,6 +26,7 @@ import scalax.collection.Graph
 import scalax.collection.GraphEdge.DiEdge
 import scalax.collection.edge.LDiEdge
 import scalax.collection.io.dot._
+import scray.querying.description.ColumnOrdering
 
 /**
  * a plan is used to execute a query internally
@@ -70,7 +71,7 @@ abstract class ComposablePlan[Q <: DomainQuery, T](source: Source[Q, T]) extends
 object ComposablePlan {
   def getComposablePlan[Q <: DomainQuery, T](source: Source[Q, T], query: DomainQuery): ComposablePlan[Q, T] = {
     if(query.getOrdering.isDefined) { 
-      new OrderedComposablePlan(source)
+      new OrderedComposablePlan(source, query.getOrdering)
     } else { 
       new UnorderedComposablePlan(source)
     }
@@ -90,9 +91,9 @@ class UnorderedComposablePlan[Q <: DomainQuery, T](source: Source[Q, T]) extends
  * A plan that returns ordered elements. May need to be joined
  * with other ordered plans. 
  */
-class OrderedComposablePlan[Q <: DomainQuery, T](source: Source[Q, T]) extends ComposablePlan[Q, T](source) {
+class OrderedComposablePlan[Q <: DomainQuery, T](source: Source[Q, T], val ordering: Option[ColumnOrdering[_]]) extends ComposablePlan[Q, T](source) {
   override def map[Q1 <: DomainQuery, T1](source: Source[Q1, T1]): ComposablePlan[Q1, T1] =
-    new OrderedComposablePlan[Q1, T1](source)  
+    new OrderedComposablePlan[Q1, T1](source, ordering)  
   override def needToOrder: Boolean = true
 }
 

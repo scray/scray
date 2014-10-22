@@ -36,6 +36,5 @@ object PostPlanningActions {
     val data = plan.getDot(query.getQueryID.toString())
     FileUtils.write(FileUtils.getFile(FileUtils.getTempDirectory(), 
         s"scray${query.getQueryID.toString()}.dot"), data, false)  
-  }
-  
+  } 
 }
