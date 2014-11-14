@@ -120,14 +120,14 @@ object Planner {
   /**
    * verify basic query properties
    */
-  def basicVerifyQuery(query: Query): Unit = {
+  @inline def basicVerifyQuery(query: Query): Unit = {
     // check that the queryspace is there
-    Registry.querySpaces.get(query.getQueryspace).orElse {
+    Registry.getQuerySpace(query.getQueryspace).orElse {
       throw new QueryspaceViolationException(query)
     }
     
     // check that the table is registered in the queryspace
-    Registry.querySpaceTables(query.getQueryspace).get(query.getTableIdentifier).orElse{
+    Registry.getQuerySpaceTable(query.getQueryspace, query.getTableIdentifier).orElse{
       throw new QueryspaceViolationException(query)
     }
     // TODO: check that all queried columns are registered
@@ -190,20 +190,23 @@ object Planner {
   def findMainQueryPlan[T](query: Query, domainQuery: DomainQuery): ComposablePlan[DomainQuery, _] = {
     val sortedColumnConfig: Option[ColumnConfiguration] = query.getOrdering.flatMap { _ => 
       // we shall sort - do we have sorting in the query space?
-      Registry.querySpaces.get(query.getQueryspace).flatMap(_.queryCanBeOrdered(query))
+      Registry.getQuerySpace(query.getQueryspace).flatMap(_.queryCanBeOrdered(query))
     }
 
     val groupedColumnConfig: Option[ColumnConfiguration] = query.getOrdering.flatMap { _ => 
       // we shall group - do we have auto-grouping?
-      Registry.querySpaces.get(query.getQueryspace).flatMap(_.queryCanBeGrouped(query))
+      Registry.getQuerySpace(query.getQueryspace).flatMap(_.queryCanBeGrouped(query))
     }
 
     // if we do not have a sorting nor a grouping, we try to find the first hand-made index
     val mainColumn: Option[ColumnConfiguration] = sortedColumnConfig.orElse(groupedColumnConfig).orElse{
       domainQuery.domains.map { domain =>
-        Registry.querySpaces.get(query.getQueryspace).flatMap { qSpace => 
-          qSpace.getColumns.find(col => 
-            domain.column == col.column && col.index.map(_.isManuallyIndexed.isDefined).getOrElse(false))
+        Registry.getQuerySpaceColumn(query.getQueryspace, domain.column).flatMap{col => 
+          if(col.index.map(_.isManuallyIndexed.isDefined).getOrElse(false)) {
+            Some(col)
+          } else {
+            None
+          }
         }
       }.find(_.isDefined).getOrElse(None)
     }
@@ -220,7 +223,7 @@ object Planner {
       }) 
     }.getOrElse {
       // construct plan using information on main table
-      Registry.querySpaceTables(domainQuery.getQueryspace).get(domainQuery.getTableIdentifier).map { tableConf =>
+      Registry.getQuerySpaceTable(domainQuery.getQueryspace, domainQuery.getTableIdentifier).map { tableConf =>
         new QueryableSource(tableConf.queryableStore(), query.getQueryspace, tableConf.table)
       }
     }.map(ComposablePlan.getComposablePlan(_, domainQuery)).getOrElse(throw new NoPlanException(query))
@@ -229,7 +232,7 @@ object Planner {
   /**
    * intersect domains for a single predicate of a query
    */
-  private def domainComparator[T](query: Query,
+  @inline private def domainComparator[T](query: Query,
       col: Column, 
       throwFunc: (T) => Boolean,
       creationDomain: RangeValueDomain[T], collector: HashMap[Column, Domain[_]]): Unit = {
@@ -302,16 +305,12 @@ object Planner {
    * identifies columns which are being queried.
    * TODO: add functions that can be queried
    */
-  def identifyColumns(list: Columns, table: TableIdentifier, domains: List[Domain[_]], query: Query): List[Column] = {
+  @inline def identifyColumns(list: Columns, table: TableIdentifier, domains: List[Domain[_]], query: Query): List[Column] = {
     list.columns match {
       case Right(cols) => cols
       case Left(all) => { // the result will be all possible columns, i.e. all from the table + columns from domains
         if(all) {
-          (Registry.querySpaces.get(query.getQueryspace).getOrElse {
-            throw new QueryspaceViolationException(query)
-          }.getTables.find { ti => (ti.table.dbId == table.dbId) && 
-            (ti.table.dbSystem == ti.table.dbSystem) &&
-            (ti.table.tableId == ti.table.tableId)}.getOrElse {
+          (Registry.getQuerySpaceTable(query.getQueryspace, table).getOrElse {
               throw new QueryspaceViolationException(query)
             }.allColumns.toSet ++ domains.map(dom => dom.column).toSet).toList
         } else { throw new QueryWithoutColumnsException(query) }
@@ -322,7 +321,7 @@ object Planner {
   /**
    * transforms a predicate-based query into a (internal) domain-based one
    */
-  def transformQueryDomains(query: Query): DomainQuery = {
+  @inline def transformQueryDomains(query: Query): DomainQuery = {
     val domains = qualifyPredicates(query).getOrElse(List())
     val table = query.getTableIdentifier
     DomainQuery(query.getQueryID,

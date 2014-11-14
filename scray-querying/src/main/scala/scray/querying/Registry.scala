@@ -21,41 +21,101 @@ import scray.querying.description.QueryspaceConfiguration
 import scray.querying.description.TableConfiguration
 import scray.querying.description.TableIdentifier
 import scray.querying.planning.PostPlanningActions
+import java.util.concurrent.locks.ReadWriteLock
+import java.util.concurrent.locks.ReentrantReadWriteLock
+import scray.querying.description.ColumnConfiguration
 
 /**
  * Registry for tables and resources 
  */
 object Registry {
 
-  // all querySpaces, that can be queried, TODO: make this thread safe, 
-  // but not with ConcurrentHashmap, as this will read often !
-  val querySpaces = new HashMap[String, QueryspaceConfiguration]
+  // makes registry thread safe at the cost of some performance;
+  // however, reads should not be blocking each other
+  private val rwlock = new ReentrantReadWriteLock
   
-  // all tables must be registered here, query plugins do this
-  // val tableRegistry = new HashMap[TableIdentifier, TableConfiguration[_]]
+  // all querySpaces, that can be queried
+  private val querySpaces = new HashMap[String, QueryspaceConfiguration]
   
-  // all columns
-  // val columnRegistry = new HashMap[Column, ColumnConfiguration]
- 
+  /**
+   * returns the current queryspace configuration
+   */
+  @inline def getQuerySpace(space: String): Option[QueryspaceConfiguration] = {
+    rwlock.readLock.lock
+    try {
+      querySpaces.get(space)
+    } finally {
+      rwlock.readLock.unlock
+    }
+  }
+   
   // shortcut to find table-configurations
-  val querySpaceTables = new HashMap[String, HashMap[TableIdentifier, TableConfiguration[_, _]]]
+  private val querySpaceTables = new HashMap[String, HashMap[TableIdentifier, TableConfiguration[_, _]]]
+
+  /**
+   * returns a table configuration
+   */
+  @inline def getQuerySpaceTable(space: String, ti: TableIdentifier): Option[TableConfiguration[_, _]] = {
+    rwlock.readLock.lock
+    try {
+      querySpaceTables.get(space).flatMap(_.get(ti))
+    } finally {
+      rwlock.readLock.unlock
+    }
+  }
   
   // shortcut to find column-configurations
-  val querySpaceColumns = new HashMap[String, HashMap[Column, ColumnConfiguration]]
-  
-  // planner post-pocessor
-  var queryPostProcessor: PostPlanningActions.PostPlanningAction = PostPlanningActions.doNothing
+  private val querySpaceColumns = new HashMap[String, HashMap[Column, ColumnConfiguration]]
+
+  /**
+   * returns a column configuration
+   */
+  @inline def getQuerySpaceColumn(space: String, column: Column): Option[ColumnConfiguration] = {
+    rwlock.readLock.lock
+    try {
+      querySpaceColumns.get(space).flatMap(_.get(column))
+    } finally {
+      rwlock.readLock.unlock
+    }
+  }
   
   /**
    * Register a new querySpace
-   * TODO: OSGIfy such that db- and query-plugins can use this
    */
   def registerQuerySpace(querySpace: QueryspaceConfiguration): Unit = {
-    querySpaces.put(querySpace.name, querySpace)
-    querySpaceColumns.put(querySpace.name, new HashMap[Column, ColumnConfiguration])
-    querySpaceTables.put(querySpace.name, new HashMap[TableIdentifier, TableConfiguration[_, _]])
-    querySpace.getColumns.foreach(col => querySpaceColumns.get(querySpace.name).map(_.put(col.column, col)))
-      // columnRegistry.put(col.column, col)
-    querySpace.getTables.foreach(table => querySpaceTables.get(querySpace.name).map(_.put(table.table, table)))
+    rwlock.writeLock.lock
+    try {
+      querySpaces.put(querySpace.name, querySpace)
+      querySpaceColumns.put(querySpace.name, new HashMap[Column, ColumnConfiguration])
+      querySpaceTables.put(querySpace.name, new HashMap[TableIdentifier, TableConfiguration[_, _]])
+      querySpace.getColumns.foreach(col => querySpaceColumns.get(querySpace.name).map(_.put(col.column, col)))
+        // columnRegistry.put(col.column, col)
+      querySpace.getTables.foreach(table => querySpaceTables.get(querySpace.name).map(_.put(table.table, table)))
+    } finally {
+      rwlock.writeLock.unlock
+    }
   }
+  
+  /**
+   * Must be called to update the information. It suffices to update columns which actually have been 
+   * updated. Does not update the queryspace-object itself - only the information that is really used
+   * by the planner.
+   */
+  def updateTableInformation(
+      querySpace: String,
+      tableid: TableIdentifier,
+      tableconfig: TableConfiguration[_ , _],
+      columConfigsToUpdate: List[ColumnConfiguration] = List()) = {
+    rwlock.writeLock.lock
+    try {
+      querySpaceTables.get(querySpace).map(_.put(tableid, tableconfig))
+      columConfigsToUpdate.foreach(col => querySpaceColumns.get(querySpace).map(_.put(col.column, col)))
+      // TODO: invalidate relevant caches, if the exist in the future :)
+    } finally {
+      rwlock.writeLock.unlock
+    }
+  }
+
+  // planner post-pocessor
+  var queryPostProcessor: PostPlanningActions.PostPlanningAction = PostPlanningActions.doNothing
 }

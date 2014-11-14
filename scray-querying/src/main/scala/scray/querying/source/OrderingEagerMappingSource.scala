@@ -28,7 +28,7 @@ import scray.querying.description.ColumnOrdering
 class OrderingEagerMappingSource[Q <: DomainQuery, R](source: Source[Q, R])
     extends EagerCollectingQueryMappingSource[Q, R](source) {
   
-  override def transformSeq(element: Seq[Row], query: Q): Seq[Row] = {
+  @inline override def transformSeq(element: Seq[Row], query: Q): Seq[Row] = {
     val queryOrdering = query.getOrdering
     element.sortWith(rowCompWithOrdering(queryOrdering.get.column, queryOrdering.get.ordering))
   }

@@ -45,15 +45,12 @@ class CassandraQueryspaceConfiguration(
   
   override def queryCanBeOrdered(query: Query): Option[ColumnConfiguration] = {
     query.getOrdering.flatMap { ordering =>
-      val registry = Registry.querySpaceColumns.get(query.getQueryspace)
-      registry.flatMap { reg =>
-        reg.get(ordering.column).flatMap { colConfig => 
-          colConfig.index.flatMap(index => if(index.isManuallyIndexed.isDefined && index.isSorted) {
-            Some(colConfig)
-          } else {
-            None
-          })
-        }
+      Registry.getQuerySpaceColumn(query.getQueryspace, ordering.column).flatMap { colConfig => 
+        colConfig.index.flatMap(index => if(index.isManuallyIndexed.isDefined && index.isSorted) {
+          Some(colConfig)
+        } else {
+          None
+        })
       }
     }
   }

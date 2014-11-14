@@ -31,11 +31,11 @@ import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
 class QueryableSource[K, V](store: QueryableStore[K, V], space: String, table: TableIdentifier) 
     extends LazySource[DomainQuery] {
 
-  val valueToRow: (V) => Row = Registry.querySpaceTables.get(space).get.
-    get(table).get.rowMapper.asInstanceOf[(V) => Row]
+  private val queryspaceTable = Registry.getQuerySpaceTable(space, table) 
   
-  val queryMapping: DomainQuery => K = Registry.querySpaceTables.get(space).get.
-    get(table).get.domainQueryMapping.asInstanceOf[DomainQuery => K]
+  val valueToRow: (V) => Row = queryspaceTable.get.rowMapper.asInstanceOf[(V) => Row]
+  
+  val queryMapping: DomainQuery => K = queryspaceTable.get.domainQueryMapping.asInstanceOf[DomainQuery => K]
   
   override def request(query: DomainQuery): Future[Spool[Row]] = store.queryable.get(queryMapping(query)).transform {
     case Throw(y) => Future.exception(y)
@@ -44,17 +44,14 @@ class QueryableSource[K, V](store: QueryableStore[K, V], space: String, table: T
       QueryableSource.iteratorToSpool[V](x.getOrElse(Seq[V]()).view.iterator, valueToRow)
   }
 
-  override def getColumns: List[Column] = {
-    Registry.querySpaceTables.get(space).get.
-      get(table).get.allColumns
-  }
+  override def getColumns: List[Column] = queryspaceTable.get.allColumns
   
   /**
    * looks up in the registry if we can fulfill the ordering
    */
   override def isOrdered(query: DomainQuery): Boolean = {
     query.getOrdering match {
-      case Some(col) => Registry.querySpaceColumns.get(space).get.get(col.column) match {
+      case Some(col) => Registry.getQuerySpaceColumn(space, col.column) match {
           case None => false
           case Some(colConfig) => colConfig.index.map(_.isSorted).orElse(Some(false)).get
         }

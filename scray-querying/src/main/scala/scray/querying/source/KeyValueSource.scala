@@ -34,8 +34,9 @@ import scray.querying.queries.DomainQuery
 class KeyValueSource[K, V](val store: ReadableStore[K, V], 
     space: String, table: TableIdentifier) extends EagerSource[KeyBasedQuery[K]] {
 
-  val valueToRow: (V) => Row = Registry.querySpaceTables.get(space).get.
-    get(table).get.rowMapper.asInstanceOf[(V) => Row]
+  private val queryspaceTable = Registry.getQuerySpaceTable(space, table) 
+  
+  val valueToRow: (V) => Row = queryspaceTable.get.rowMapper.asInstanceOf[(V) => Row]
 
   override def request(query: KeyBasedQuery[K]): Future[Seq[Row]] = {
     store.get(query.key).map {
@@ -44,10 +45,7 @@ class KeyValueSource[K, V](val store: ReadableStore[K, V],
     }
   }
   
-  override def getColumns: List[Column] = {
-    Registry.querySpaceTables.get(space).get.
-      get(table).get.allColumns
-  }
+  override def getColumns: List[Column] = queryspaceTable.get.allColumns
   
   // as there is only one element this method may return true
   override def isOrdered(query: KeyBasedQuery[K]): Boolean = true

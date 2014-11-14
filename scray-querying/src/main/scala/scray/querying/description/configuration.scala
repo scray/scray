@@ -85,7 +85,7 @@ case class TableConfiguration[V, Q] (
   primarykeyColumn: Column, // the primary key columns of the table, i.e. a unique reference into a row with partitioning relevance  
   clusteringKeyColumns: List[Column], // some more primary key columns which can be ordered
   allColumns: List[Column], // a List of all columns in the table
-  rowMapper: (V) => Row, // mapper from a result row reutrned by the store to a scray-row
+  rowMapper: (V) => Row, // mapper from a result row returned by the store to a scray-row
   domainQueryMapping: DomainQuery => Q, // maps a scray-DomainQuery to a query of the store
   queryableStore: () => QueryableStore[Q, V], // the queryable store representation, allowing to query the store
   readableStore: () => ReadableStore[Q, V] // the readablestore, used in case this is used by a HashJoinSource
@@ -96,7 +96,7 @@ case class TableConfiguration[V, Q] (
  */
 case class VersioningConfiguration (
   latestCompleteVersion: () => Long, // latest complete version of the table 
-  runtimeVersion: () => Long, // current real-time version, which is updated continously
+  runtimeVersion: () => Long, // current real-time version, which is updated continuously
   nameVersionMapping: Option[(String, Long) => String] // if needed, a mapping for the table name for the version
   // dataVersionMapping: () // if needed, a mapping for the data to fit the version, not supported yet
 )
