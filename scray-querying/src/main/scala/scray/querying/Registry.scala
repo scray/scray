@@ -26,7 +26,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock
 import scray.querying.description.ColumnConfiguration
 
 /**
- * Registry for tables and resources 
+ * Registry for tables and resources
  */
 object Registry {
 
@@ -110,7 +110,7 @@ object Registry {
     try {
       querySpaceTables.get(querySpace).map(_.put(tableid, tableconfig))
       columConfigsToUpdate.foreach(col => querySpaceColumns.get(querySpace).map(_.put(col.column, col)))
-      // TODO: invalidate relevant caches, if the exist in the future :)
+      // TODO: invalidate relevant caches, if these exist in the future :)
     } finally {
       rwlock.writeLock.unlock
     }

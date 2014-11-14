@@ -50,7 +50,7 @@ import scray.querying.description.internal.{
 import scray.querying.queries.DomainQuery
 import scray.querying.source.QueryableSource
 import scray.querying.source.KeyValueSource
-import scray.querying.source.HashJoinSource
+import scray.querying.source.SimpleHashJoinSource
 import scray.querying.source.LazySource
 import scray.querying.source.LazyQueryDomainFilterSource
 import scray.querying.source.EagerCollectingDomainFilterSource
@@ -218,7 +218,7 @@ object Planner {
           query.getQueryspace, tableConf.indexTableConfig.table)
         val mainSource = new KeyValueSource(tableConf.indexTableConfig.readableStore(), 
           query.getQueryspace, tableConf.indexTableConfig.table)
-        new HashJoinSource(indexSource, colConf.column, 
+        new SimpleHashJoinSource(indexSource, colConf.column, 
           mainSource, tableConf.mainTableConfig.primarykeyColumn)
       }) 
     }.getOrElse {
@@ -378,7 +378,6 @@ object Planner {
       case ucp: UnorderedComposablePlan[_, _] => ucp
     }
   }
-
   
   /**
    * executes the plan, and returns the Futures to be returned by the engine

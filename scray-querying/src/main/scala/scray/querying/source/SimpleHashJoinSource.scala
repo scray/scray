@@ -22,16 +22,19 @@ import scray.querying.description.Row
 import scray.querying.description.CompositeRow
 import scalax.collection.immutable.Graph
 import scalax.collection.GraphEdge.DiEdge
-import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
+import scalax.collection.GraphPredef._
+import scalax.collection.GraphEdge._
+import scray.querying.queries.SimpleKeyBasedQuery
 
 /**
- * This hash joined source provides an template for implementing hashed-joins. This is a relational lookup.
- * This is a left outer join. To make this an inner join results must be filtered.
+ * This hash joined source provides a template for implementing hashed-joins. This is a relational lookup.
  * 
  * The query Q1 of "source" yields a spool which is composed of a key K and a reference R (i.e. (K, R)).
  * The query Q2 of "lookupSource" is then queried for K and the combined results are returned.
+ * 
+ * This is a left outer join. To make this an inner join results must be filtered.
  */
-class HashJoinSource[Q <: DomainQuery, K, R, V](
+class SimpleHashJoinSource[Q <: DomainQuery, K, R, V](
     source: LazySource[Q],
     sourceJoinColumn: Column,
     lookupSource: KeyValueSource[R, V],
@@ -45,7 +48,7 @@ class HashJoinSource[Q <: DomainQuery, K, R, V](
     spool.map(in => {
       val inCol = in.getColumnValue(sourceJoinColumn)
       if(inCol.isDefined) {
-        val keyValueSourceQuery = new KeyBasedQuery[R](
+        val keyValueSourceQuery = new SimpleKeyBasedQuery[R](
           inCol.get,
           lookupSourceJoinColumn,
           lookupSource.getColumns,

@@ -22,14 +22,14 @@ import scray.querying.description.internal.SingleValueDomain
 import scray.querying.description.internal.KeyBasedQueryException
 
 /**
- * query to look up a primary key in a table
+ * query to look up a single column primary key in a table
  */
-class KeyBasedQuery[K](val key: K, reftable: TableIdentifier, result: List[Column], space: String, qid: UUID) 
-  extends DomainQuery(qid, space, result, reftable, List(), None, None, None) {
-
-  override def transformedAstCopy(ast: List[Domain[_]]): KeyBasedQuery[K] = ast.headOption.map {
+class SimpleKeyBasedQuery[K](override val key: K, column: Column, result: List[Column], space: String, qid: UUID)
+  extends KeyBasedQuery[K](key, column.table, result, space, qid) {
+  
+  override def transformedAstCopy(ast: List[Domain[_]]): SimpleKeyBasedQuery[K] = ast.headOption.map {
     _ match {
-      case svd: SingleValueDomain[K] => new KeyBasedQuery[K](svd.value, reftable, result, space, qid)
+      case svd: SingleValueDomain[K] => new SimpleKeyBasedQuery[K](svd.value, svd.column, result, space, qid)
       case _ => throw new KeyBasedQueryException(this)
     }
   }.orElse(throw new KeyBasedQueryException(this)).get

@@ -58,8 +58,8 @@ class QueryspaceColumnViolationException(query: Query, column: Column)
     extends ScrayException(ExceptionIDs.queryspaceColumnViolationExceptionID, query.getQueryID, s"""query trys to access column ${column.columnName} from 
     queryspace ${query.getQueryspace} which has not been registered""") with Serializable
 
-class KeyBasedQueryException(query: DomainQuery, column: Column) 
-    extends ScrayException(ExceptionIDs.keyBasedQueryExceptionID, query.getQueryID, s"""query trys to access column ${column.columnName} from queryspace
+class KeyBasedQueryException(query: DomainQuery) 
+    extends ScrayException(ExceptionIDs.keyBasedQueryExceptionID, query.getQueryID, s"""query trys to access queryspace
     ${query.getQueryspace} which has not been registered""") with Serializable
 
 class NonAtomicClauseException(query: Query)
