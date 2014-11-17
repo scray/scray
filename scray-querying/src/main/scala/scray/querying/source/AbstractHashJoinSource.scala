@@ -14,17 +14,18 @@
 // limitations under the License.
 package scray.querying.source
 
-import com.twitter.util.{Await, Future}
 import com.twitter.concurrent.Spool
-import com.twitter.concurrent.Spool.*::
+import com.twitter.util.{Await, Future}
 import scala.annotation.tailrec
-import scala.collection.parallel.mutable.ParArray
 import scala.collection.mutable.ArraySeq
+import scala.collection.parallel.mutable.ParArray
 import scalax.collection.GraphEdge.DiEdge
 import scalax.collection.GraphPredef._
 import scalax.collection.immutable.Graph
+import scray.querying.description.{Column, CompositeRow, EmptyRow, Row, TableIdentifier}
+import scray.querying.planning.MergingResultSpool
 import scray.querying.queries.{DomainQuery, KeyBasedQuery}
-import scray.querying.description.{ Column, CompositeRow, EmptyRow, Row, TableIdentifier }
+import scray.querying.description.ColumnOrdering
 
 /**
  * This hash joined source provides a template for implementing hashed-joins. This is a relational lookup.
@@ -43,7 +44,7 @@ abstract class AbstractHashJoinSource[Q <: DomainQuery, R <: Product, V](
   /**
    * transforms the spool. May not skip too many elements because it is not tail recursive.
    */
-  protected def spoolTransform(spool: Spool[Row], query: Q): Spool[Row] = {
+  @inline protected def spoolTransform(spool: Spool[Row], query: Q): Spool[Row] = {
     @tailrec def insertRowsIntoSpool(rows: ArraySeq[Row], spoolElements: Spool[Row]): Spool[Row] = {
       if(rows.isEmpty) {
         spoolElements
@@ -86,7 +87,7 @@ abstract class AbstractHashJoinSource[Q <: DomainQuery, R <: Product, V](
    * Implementors can override this method to make transformations.
    * Default is to perform no transformations.
    */
-  protected def transformIndexQuery(query: Q): Q = query
+  @inline protected def transformIndexQuery(query: Q): Set[Q] = Set(query)
   
   /**
    * Return a list of references into the lookupSource from an index row.
@@ -95,13 +96,34 @@ abstract class AbstractHashJoinSource[Q <: DomainQuery, R <: Product, V](
   protected def getJoinablesFromIndexSource(index: Row): Array[R]
   
   override def request(query: Q): Future[Spool[Row]] = {
-    indexsource.request(transformIndexQuery(query)).map(spoolTransform(_, query))
+    val rowComp = rowCompWithOrdering(query.ordering.get.column, query.ordering.get.ordering)
+    val queries = transformIndexQuery(query)
+    val results = queries.par.map(mappedquery =>
+      indexsource.request(mappedquery).map(spoolTransform(_, mappedquery)))
+    if(isOrdered(query)) {
+      MergingResultSpool.mergeOrderedSpools(Seq(), results.seq.toSeq, rowComp, Array[Int]())
+    } else {
+      MergingResultSpool.mergeUnorderedResults(Seq(), results.seq.toSeq, Array[Int]())
+    }
   }
   
   /**
+   * implementors provide information whether their ordering is the same as 
+   * or is a transformation of the one of the the original query.
+   */
+  @inline protected def isOrderedAccordingToOrignalOrdering(transformedQuery: Q, ordering: ColumnOrdering[_]): Boolean
+  
+  /**
    * As lookupSource is always ordered, ordering depends only on the original source
+   * or on the transformed queries. If we have one unordered query everything is unordered.
    */ 
-  override def isOrdered(query: Q): Boolean = indexsource.isOrdered(query)
+  @inline override def isOrdered(query: Q): Boolean = {
+    query.getOrdering match {
+      case Some(ordering) => transformIndexQuery(query).find(
+          q => !(indexsource.isOrdered(q) && isOrderedAccordingToOrignalOrdering(q, ordering))).isEmpty
+      case None => false
+    }
+  }
   
   /**
    * Splits up the source graph into two sub-graphs

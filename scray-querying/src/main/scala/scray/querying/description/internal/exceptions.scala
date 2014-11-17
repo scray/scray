@@ -31,13 +31,15 @@ object ExceptionIDs {
   val plannerShutdownExceptionID = "SIL-Scray-013"
   // 800+ = errors for specific queries
   val keyBasedQueryExceptionID = "SIL-Scray-800"
+  // 900+ = errors for specific indexes
+  val queryDomainRangeException = "SIL-Scray-901"
 }
 
 class ScrayException(id: String, query: UUID, msg: String) extends Exception(s"$id: $msg for query ${query}") with Serializable
 
 class QueryDomainParserException(reason: QueryDomainParserExceptionReasons.Reason, column: Column, query: Query) 
     extends ScrayException(ExceptionIDs.queryDomainParserExceptionID, query.getQueryID, 
-        s"Could not parse query domains for column:${column.columnName}, reason is:$reason") with Serializable
+        s"Could not parse query domains for column:${column.columnName}, reason is:$reason")
 
 object QueryDomainParserExceptionReasons extends Enumeration with Serializable {
   type Reason = Value
@@ -46,6 +48,9 @@ object QueryDomainParserExceptionReasons extends Enumeration with Serializable {
   DOMAIN_DISJOINT_CONFLICT, // example reason: col1 < a and col1 > b, but b >= a 
   UNKNOWN_DOMAIN_CONFLICT = Value // unknown reason
 }
+
+class QueryDomainRangeException(column: Column, query: DomainQuery) extends ScrayException(ExceptionIDs.queryDomainRangeException, query.getQueryID, 
+        s"Could not execute tome-based index on column:${column.columnName}, reason is that the domain with a range has no bounds at all.") with Serializable
 
 class QueryWithoutColumnsException(query: Query) 
     extends ScrayException(ExceptionIDs.queryWithoutColumnsExceptionID, query.getQueryID, "query contains no columns to query") with Serializable
