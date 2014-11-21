@@ -12,7 +12,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-package scray.commons.exceptions
+package scray.common.exceptions
 
 import java.util.UUID
 
@@ -21,5 +21,5 @@ object ExceptionIDs {
   val GENERAL_FAULT = "SIL-Scray-Commons-001"
 }
 
-class ScrayException(id: String, query: UUID, msg: String) 
-    extends Exception(s"$id: $msg for query ${query}") with Serializable
+class ScrayException(id : String, query : Option[UUID], msg : String)
+  extends Exception(s"$id: $msg for query ${query}") with Serializable
