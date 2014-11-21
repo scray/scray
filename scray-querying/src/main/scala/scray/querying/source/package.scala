@@ -20,8 +20,8 @@ import scray.querying.description.Row
 import scray.querying.description.Column
 
 package object source {
-  type LazyData = Future[Spool[Row]]
-  type EagerData = Future[Seq[Row]]
+  type LazyDataFuture = Future[Spool[Row]]
+  type EagerDataFuture = Future[Seq[Row]]
   
   /**
    * compares two rows according to a column

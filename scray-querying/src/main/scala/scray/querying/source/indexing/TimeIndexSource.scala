@@ -30,12 +30,13 @@ import scray.querying.source.{AbstractHashJoinSource, KeyValueSource, LazySource
  * Format of this hand-made index will be:
  * TIME[a], TIME[ms], Set[ref]
  */
-class TimeIndexSource[Q <: DomainQuery, R <: Product, V](
+class TimeIndexSource[Q <: DomainQuery, M, R, V](
     timeIndexConfig: TimeIndexConfig,
     indexsource: LazySource[Q],
     lookupSource: KeyValueSource[R, V],
-    lookupSourceTable: TableIdentifier)(implicit tag: ClassTag[R]) 
-    extends AbstractHashJoinSource[Q, R, V](indexsource, lookupSource, lookupSourceTable) {
+    lookupSourceTable: TableIdentifier,
+    lookupkeymapper: Option[M => R] = None)(implicit tag: ClassTag[M]) 
+    extends AbstractHashJoinSource[Q, M, R, V](indexsource, lookupSource, lookupSourceTable, lookupkeymapper) {
 
   /**
    * return the year from a time using GregorianCalendar and the given TimeZone
@@ -114,13 +115,13 @@ class TimeIndexSource[Q <: DomainQuery, R <: Product, V](
     }
   }
   
-  override protected def getJoinablesFromIndexSource(index: Row): Array[R] = {
-    index.getColumnValue(timeIndexConfig.indexReferencesColumn) match {
+  override protected def getJoinablesFromIndexSource(index: Row): Array[M] = {
+    index.getColumnValue[M](timeIndexConfig.indexReferencesColumn) match {
       case Some(refs) => refs match {
-        case travs: TraversableOnce[R] => travs.asInstanceOf[TraversableOnce[R]].toArray
-        case travs: R => Array[R](travs)
+        case travs: TraversableOnce[M] => travs.asInstanceOf[TraversableOnce[M]].toArray
+        case travs: M => Array[M](travs)
       }
-      case None => Array[R]()
+      case None => Array[M]()
     }
   }
 
@@ -132,15 +133,3 @@ class TimeIndexSource[Q <: DomainQuery, R <: Product, V](
    */
   override def getColumns: List[Column] = lookupSource.getColumns
 }
-
-/**
- * configuration which must be passed to TimeIndexSource
- */
-case class TimeIndexConfig(
-    timeReferenceCol: Column, 
-    indexRowColumnYear: Column,
-    indexColumnMs: Column, 
-    indexReferencesColumn: Column,
-    timeZone: TimeZone = TimeZone.getTimeZone("UTC"),
-    minimumYear: Int = 2014,
-    maxLimit: Option[Long] = Some(5000)) extends IndexConfig

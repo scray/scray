@@ -30,6 +30,7 @@ trait Row {
   def getColumnValueType(col: Column): Option[TypeTag[_]]
   def getColumns: List[Column]
   def getNumberOfEntries: Int
+  def isEmpty = getNumberOfEntries == 0
 }
 
 case class RowColumn[V](column: Column, value: V)(implicit val valuesType: TypeTag[V])

@@ -36,12 +36,12 @@ class KeyValueSource[K, V](val store: ReadableStore[K, V],
 
   private val queryspaceTable = Registry.getQuerySpaceTable(space, table) 
   
-  val valueToRow: (V) => Row = queryspaceTable.get.rowMapper.asInstanceOf[(V) => Row]
+  val valueToRow: ((K, V)) => Row = queryspaceTable.get.rowMapper.asInstanceOf[((K, V)) => Row]
 
   override def request(query: KeyBasedQuery[K]): Future[Seq[Row]] = {
     store.get(query.key).map {
       case None => Seq[Row]()
-      case Some(value) => Seq(valueToRow(value))
+      case Some(value) => Seq(valueToRow((query.key, value)))
     }
   }
   

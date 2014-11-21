@@ -50,12 +50,12 @@ object Registry {
   }
    
   // shortcut to find table-configurations
-  private val querySpaceTables = new HashMap[String, HashMap[TableIdentifier, TableConfiguration[_, _]]]
+  private val querySpaceTables = new HashMap[String, HashMap[TableIdentifier, TableConfiguration[_, _, _]]]
 
   /**
    * returns a table configuration
    */
-  @inline def getQuerySpaceTable(space: String, ti: TableIdentifier): Option[TableConfiguration[_, _]] = {
+  @inline def getQuerySpaceTable(space: String, ti: TableIdentifier): Option[TableConfiguration[_, _, _]] = {
     rwlock.readLock.lock
     try {
       querySpaceTables.get(space).flatMap(_.get(ti))
@@ -87,7 +87,7 @@ object Registry {
     try {
       querySpaces.put(querySpace.name, querySpace)
       querySpaceColumns.put(querySpace.name, new HashMap[Column, ColumnConfiguration])
-      querySpaceTables.put(querySpace.name, new HashMap[TableIdentifier, TableConfiguration[_, _]])
+      querySpaceTables.put(querySpace.name, new HashMap[TableIdentifier, TableConfiguration[_, _, _]])
       querySpace.getColumns.foreach(col => querySpaceColumns.get(querySpace.name).map(_.put(col.column, col)))
         // columnRegistry.put(col.column, col)
       querySpace.getTables.foreach(table => querySpaceTables.get(querySpace.name).map(_.put(table.table, table)))
@@ -104,7 +104,7 @@ object Registry {
   def updateTableInformation(
       querySpace: String,
       tableid: TableIdentifier,
-      tableconfig: TableConfiguration[_ , _],
+      tableconfig: TableConfiguration[_ , _, _],
       columConfigsToUpdate: List[ColumnConfiguration] = List()) = {
     rwlock.writeLock.lock
     try {

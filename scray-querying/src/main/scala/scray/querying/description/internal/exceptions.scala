@@ -29,6 +29,7 @@ object ExceptionIDs {
   val nonAtomicClauseExceptionID = "SIL-Scray-011"
   val noPlanExceptionID = "SIL-Scray-012"
   val plannerShutdownExceptionID = "SIL-Scray-013"
+  val indexTypeExceptionID = "SIL-Scray-014"
   // 800+ = errors for specific queries
   val keyBasedQueryExceptionID = "SIL-Scray-800"
   // 900+ = errors for specific indexes
@@ -76,3 +77,7 @@ class NoPlanException(query: Query)
 
 class ExecutorShutdownException(query: Query)
     extends ScrayException(ExceptionIDs.plannerShutdownExceptionID, query.getQueryID, "Cannot accept queries any more. Engine shut down.") with Serializable
+
+class IndexTypeException(query: Query)
+    extends ScrayException(ExceptionIDs.indexTypeExceptionID, query.getQueryID, s"""Index type is not defined or not
+    available in queryspace ${query.getQueryspace}""") with Serializable

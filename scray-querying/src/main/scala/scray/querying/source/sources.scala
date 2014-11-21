@@ -56,7 +56,7 @@ trait Source[Q <: DomainQuery, T] {
  * used as often as possible to prevent pulling all data into memory.
  */
 trait LazySource[Q <: DomainQuery] extends Source[Q, Spool[Row]] {
-  override def request(query: Q): LazyData
+  override def request(query: Q): LazyDataFuture
 }
 
 /**
@@ -65,14 +65,14 @@ trait LazySource[Q <: DomainQuery] extends Source[Q, Spool[Row]] {
  * pulled into memory at once.
  */
 trait EagerSource[Q <: DomainQuery] extends Source[Q, Seq[Row]] {
-  override def request(query: Q): EagerData
+  override def request(query: Q): EagerDataFuture
 }
 
 /**
  * A source that returns nothing.
  */
 class NullSource[Q <: DomainQuery] extends LazySource[Q] {
-  override def request(query: Q): LazyData = Future(Spool.Empty)
+  override def request(query: Q): LazyDataFuture = Future(Spool.Empty)
   override def getColumns: List[Column] = List()
   override def isOrdered(query: Q): Boolean = true
   override def getGraph: Graph[Source[DomainQuery, Spool[Row]], DiEdge] = Graph.empty[Source[DomainQuery, Spool[Row]], DiEdge]

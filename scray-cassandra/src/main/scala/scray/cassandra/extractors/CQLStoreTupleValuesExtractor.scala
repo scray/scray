@@ -39,30 +39,30 @@ import com.twitter.storehaus.cassandra.cql.CQLCassandraStoreTupleValues
 /**
  * Extractor object for Storehaus'-CQLCassandraCollectionStores
  */
-class CQLStoreTupleValuesExtractor[S <: CQLCassandraStoreTupleValues[_, _, _, _]](store: S) extends CassandraExtractor[S] {
+class CQLStoreTupleValuesExtractor[S <: CQLCassandraStoreTupleValues[_, _, _, _]](store: S, tableName: Option[String]) extends CassandraExtractor[S] {
 
-  override def getColumns(store: S): List[Column] = 
-    getInternalColumns(store, List(store.keyColumnName) ++ store.valueColumnNames)
+  override def getColumns: List[Column] = 
+    getInternalColumns(store, tableName, List(store.keyColumnName) ++ store.valueColumnNames)
   
-  override def getClusteringKeyColumns(store: S): List[Column] = Nil
+  override def getClusteringKeyColumns: List[Column] = Nil
 
-  override def getRowKeyColumn(store: S): Column =
-    getInternalColumns(store, List(store.keyColumnName)).head
+  override def getRowKeyColumn: Column =
+    getInternalColumns(store, tableName, List(store.keyColumnName)).head
   
-  override def getRowKeyColumns(store: S): List[Column] =
-    getInternalColumns(store, List(store.keyColumnName))
+  override def getRowKeyColumns: List[Column] =
+    getInternalColumns(store, tableName, List(store.keyColumnName))
   
-  override def getValueColumns(store: S): List[Column] =
-    getInternalColumns(store, store.valueColumnNames)
+  override def getValueColumns: List[Column] =
+    getInternalColumns(store, tableName, store.valueColumnNames)
     
-  override def getTableConfiguration(store: S, rowMapper: (_) => Row): TableConfiguration[_, _] = {
-    TableConfiguration[Any, Any] (
-      getTableIdentifier(store),
+  override def getTableConfiguration(rowMapper: (_) => Row): TableConfiguration[_, _, _] = {
+    TableConfiguration[Any, Any, Any] (
+      getTableIdentifier(store, tableName),
       // TODO: add versioning information here
       None,
-      getRowKeyColumn(store),
-      getClusteringKeyColumns(store),
-      getColumns(store),
+      getRowKeyColumn,
+      getClusteringKeyColumns,
+      getColumns,
       rowMapper.asInstanceOf[(Any) => Row],
       getQueryMapping(store),
       () => store.asInstanceOf[QueryableStore[Any, Any]],

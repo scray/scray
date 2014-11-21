@@ -31,7 +31,7 @@ class DomainToCQLQueryMapper[S <: AbstractCQLCassandraStore[_, _]] {
   import DomainToCQLQueryMapper.AND_LITERAL
   
   /**
-   * returns a function mapping from Domains to a CQL-Strings used in Where clauses
+   * returns a function mapping from Domains to CQL-Strings used in Where clauses
    */
   def getQueryMapping(store: S, extractor: CassandraExtractor[S]): DomainQuery => String = {
     (query) => {
@@ -80,7 +80,7 @@ class DomainToCQLQueryMapper[S <: AbstractCQLCassandraStore[_, _]] {
     
   
   private def getRowKeyQueryMapping(store: S, query: DomainQuery, extractor: CassandraExtractor[S]): Option[String] = {
-    val rowColumns = extractor.getRowKeyColumns(store)
+    val rowColumns = extractor.getRowKeyColumns
     val foundRowKeyDomains = rowColumns.flatMap(col => query.domains.filter { dom => dom match {
       case svd: SingleValueDomain[_] => svd.column.columnName == col.columnName && 
         svd.column.table.tableId == store.columnFamily.getName &&
@@ -117,7 +117,7 @@ class DomainToCQLQueryMapper[S <: AbstractCQLCassandraStore[_, _]] {
         }
       }
     }
-    val clusterCols = extractor.getClusteringKeyColumns(store)
+    val clusterCols = extractor.getClusteringKeyColumns
     val domains = clusterColumnDomains(clusterCols)
     // map the domains to CQL strings and AND this
     val cqlQuery = domains.collect {
@@ -131,7 +131,7 @@ class DomainToCQLQueryMapper[S <: AbstractCQLCassandraStore[_, _]] {
   }
   
   private def getValueKeyQueryMapping(store: S, query: DomainQuery, extractor: CassandraExtractor[S]): Option[String] = {
-    val valueCols = extractor.getValueColumns(store).filter(valueCol => extractor.checkColumnCassandraAutoIndexed(store, valueCol))
+    val valueCols = extractor.getValueColumns.filter(valueCol => extractor.checkColumnCassandraAutoIndexed(store, valueCol))
     query.domains.find{dom => valueCols.find { valueCol => 
         dom.column.columnName == valueCol.columnName && 
         dom.isInstanceOf[SingleValueDomain[_]] &&

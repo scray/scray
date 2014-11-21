@@ -28,7 +28,7 @@ import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
 /**
  * queries a Storehaus-store. Assumes that the Seq returnes by QueryableStore is a lazy sequence (i.e. view)
  */
-class QueryableSource[K, V](store: QueryableStore[K, V], space: String, table: TableIdentifier) 
+class QueryableSource[K, V](store: QueryableStore[K, V], space: String, table: TableIdentifier, isOrdered: Boolean = false) 
     extends LazySource[DomainQuery] {
 
   private val queryspaceTable = Registry.getQuerySpaceTable(space, table) 
@@ -50,13 +50,16 @@ class QueryableSource[K, V](store: QueryableStore[K, V], space: String, table: T
    * looks up in the registry if we can fulfill the ordering
    */
   override def isOrdered(query: DomainQuery): Boolean = {
-    query.getOrdering match {
+    isOrdered || (query.getOrdering match {
       case Some(col) => Registry.getQuerySpaceColumn(space, col.column) match {
-          case None => false
+          case None => {
+            println(Registry)
+            false
+          }
           case Some(colConfig) => colConfig.index.map(_.isSorted).orElse(Some(false)).get
         }
       case None => false
-    }
+    })
   }
   
   override def getGraph: Graph[Source[DomainQuery, Spool[Row]], DiEdge] = Graph.from(List(this), List())
