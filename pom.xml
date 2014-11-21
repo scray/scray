@@ -13,13 +13,21 @@
 		<maven.compiler.source>1.6</maven.compiler.source>
 		<maven.compiler.target>1.6</maven.compiler.target>
 		<encoding>UTF-8</encoding>
+		
 		<scala.tools.version>2.10</scala.tools.version>
 		<scala.version>2.10.4</scala.version>
+		<scala.suffix>2.10</scala.suffix>
+		
+		<finagle.version>6.22.0</finagle.version>
+		<libthrift.version>0.8.0</libthrift.version>
 	</properties>
 
 	<modules>
+		<module>scray-commons</module>
 		<module>scray-querying</module>
 		<module>scray-cassandra</module>
+		<!-- <module>scray-service</module>
+		<module>scray-core</module> -->
 	</modules>
 
 	<dependencies>

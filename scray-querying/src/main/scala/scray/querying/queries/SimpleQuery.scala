@@ -22,7 +22,7 @@ case class SimpleQuery(
     space: String,
     table: TableIdentifier,
     id: UUID = UUID.randomUUID,
-    columns: Option[Columns] = None, // None represtens simple default meaning all columns
+    columns: Columns = Columns(Left(true)), // simple default meaning all columns
     where: Option[Clause] = None, // None means no conditions specified, return all results
     grouping: Option[ColumnGrouping] = None, // None means no grouping
     ordering: Option[ColumnOrdering[_]] = None, // None means ordering undefined
@@ -33,7 +33,7 @@ case class SimpleQuery(
   
   override def getQueryspace: String = space
   
-  override def getResultSetColumns: Columns = columns.getOrElse(Columns(Left(true)))
+  override def getResultSetColumns: Columns = columns
   
   override def getTableIdentifier: TableIdentifier = table
   
