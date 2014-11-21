@@ -50,6 +50,8 @@ class LazyQueryDomainFilterSource[Q <: DomainQuery](source: LazySource[Q])
    * so we report back all columns from upstream
    */
   override def getColumns: List[Column] = source.getColumns
+  
+  override def getDiscriminant = "Filter" + source.getDiscriminant
 }
 
 
@@ -79,4 +81,6 @@ class EagerCollectingDomainFilterSource[Q <: DomainQuery, R](source: Source[Q, R
   override def transformSeqElement(element: Row, query: Q): Row = element
 
   override def getColumns: List[Column] = source.getColumns
+  
+  override def getDiscriminant = "Filter" + source.getDiscriminant
 }

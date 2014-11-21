@@ -25,6 +25,8 @@ import scalax.collection.GraphEdge.DiEdge
 import scalax.collection.GraphPredef._
 import scalax.collection.GraphEdge._
 import scray.querying.queries.SimpleKeyBasedQuery
+import scray.querying.caching.Cache
+import scray.querying.caching.NullCache
 
 /**
  * This hash joined source provides a template for implementing hashed-joins. This is a relational lookup.
@@ -78,4 +80,8 @@ class SimpleHashJoinSource[Q <: DomainQuery, K, R, V](
     (lookupSource.getGraph.asInstanceOf[Graph[Source[DomainQuery, Spool[Row]], DiEdge]] +
     DiEdge(lookupSource.asInstanceOf[Source[DomainQuery, Spool[Row]]],
     this.asInstanceOf[Source[DomainQuery, Spool[Row]]]))
+  
+  override def getDiscriminant: String = source.getDiscriminant + lookupSource.getDiscriminant
+  
+  override def createCache: Cache[Nothing] = new NullCache
 }

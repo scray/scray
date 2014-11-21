@@ -26,14 +26,14 @@ import scala.collection.immutable.HashMap
 trait Row {
   def getColumnValue[V](colNum: Int): Option[V]
   def getColumnValue[V](col: Column): Option[V]
-  def getColumnValueType(colNum: Int): Option[TypeTag[_]]
-  def getColumnValueType(col: Column): Option[TypeTag[_]]
+//  def getColumnValueType(colNum: Int): Option[TypeTag[_]]
+//  def getColumnValueType(col: Column): Option[TypeTag[_]]
   def getColumns: List[Column]
   def getNumberOfEntries: Int
   def isEmpty = getNumberOfEntries == 0
 }
 
-case class RowColumn[V](column: Column, value: V)(implicit val valuesType: TypeTag[V])
+case class RowColumn[V](column: Column, value: V)//(implicit val valuesType: TypeTag[V])
 
 /**
  * case class representing a row; memoizes results on demand
@@ -42,11 +42,11 @@ case class SimpleRow(
   columns: List[RowColumn[_]]
 ) extends Row {
   override def getColumnValue[V](colNum: Int): Option[V] = columns.lift(colNum).map(_.value.asInstanceOf[V])
-  override def getColumnValueType(colNum: Int): Option[TypeTag[_]] = columns.lift(colNum).map(_.valuesType)
+//  override def getColumnValueType(colNum: Int): Option[TypeTag[_]] = columns.lift(colNum).map(_.valuesType)
 
   lazy val cols: Map[Column, RowColumn[_]] = columns.map(c => (c.column, c)).toMap
   override def getColumnValue[V](col: Column): Option[V] = cols.get(col).map(_.value.asInstanceOf[V])
-  override def getColumnValueType(col: Column): Option[TypeTag[_]] = cols.get(col).map(_.valuesType)
+//  override def getColumnValueType(col: Column): Option[TypeTag[_]] = cols.get(col).map(_.valuesType)
   
   lazy val columnList: List[Column] = columns.map(_.column)
   override def getColumns: List[Column] = columnList
@@ -72,17 +72,17 @@ class CompositeRow(rows: List[Row]) extends Row {
   override def getColumnValue[V](col: Column): Option[V] = {
     rows.find(row => row.getColumns.contains(col)).flatMap(_.getColumnValue(col))
   }
-  override def getColumnValueType(colNum: Int): Option[TypeTag[_]] = {
-    @tailrec def getRelevantRowForEntryNumber(colNumLocal: Int, rowList: List[Row]): Option[TypeTag[_]] = {
-      val size = rowList.head.getNumberOfEntries
-      if(colNumLocal < size) { rowList.head.getColumnValueType(colNumLocal) }
-      else { getRelevantRowForEntryNumber(colNumLocal - size, rowList.tail) }
-    }
-    getRelevantRowForEntryNumber(colNum, rows)
-  }
-  override def getColumnValueType(col: Column): Option[TypeTag[_]] = {
-    rows.find(row => row.getColumns.contains(col)).flatMap(_.getColumnValueType(col))
-  }
+//  override def getColumnValueType(colNum: Int): Option[TypeTag[_]] = {
+//    @tailrec def getRelevantRowForEntryNumber(colNumLocal: Int, rowList: List[Row]): Option[TypeTag[_]] = {
+//      val size = rowList.head.getNumberOfEntries
+//      if(colNumLocal < size) { rowList.head.getColumnValueType(colNumLocal) }
+//      else { getRelevantRowForEntryNumber(colNumLocal - size, rowList.tail) }
+//    }
+//    getRelevantRowForEntryNumber(colNum, rows)
+//  }
+//  override def getColumnValueType(col: Column): Option[TypeTag[_]] = {
+//    rows.find(row => row.getColumns.contains(col)).flatMap(_.getColumnValueType(col))
+//  }
   override def getNumberOfEntries: Int = rows.foldLeft(0)(_ + _.getNumberOfEntries)
   override def getColumns: List[Column] = rows.foldLeft(List[Column]())((agg, row) => agg ++ row.getColumns)
 }
@@ -93,8 +93,8 @@ class CompositeRow(rows: List[Row]) extends Row {
 class EmptyRow extends Row with Serializable {
   override def getColumnValue[V](colNum: Int): Option[V] = None
   override def getColumnValue[V](col: Column): Option[V] = None
-  override def getColumnValueType(colNum: Int): Option[TypeTag[_]] = None
-  override def getColumnValueType(col: Column): Option[TypeTag[_]] = None
+//  override def getColumnValueType(colNum: Int): Option[TypeTag[_]] = None
+//  override def getColumnValueType(col: Column): Option[TypeTag[_]] = None
   override def getColumns: List[Column] = List()
   override def getNumberOfEntries: Int = 0
 }

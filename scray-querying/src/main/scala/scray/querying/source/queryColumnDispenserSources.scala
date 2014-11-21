@@ -16,6 +16,8 @@ package scray.querying.source
 
 import scray.querying.queries.DomainQuery
 import scray.querying.description.{Column, Row, RowColumn, SimpleRow}
+import scray.querying.caching.Cache
+import scray.querying.caching.NullCache
 
 object ColumnDispenserTransformer {
   def transformElement[Q <: DomainQuery](element: Row, query: Q): Row = {
@@ -39,6 +41,8 @@ class LazyQueryColumnDispenserSource[Q <: DomainQuery](source: LazySource[Q])
    * This is the maximum we can return, if a query will request them all
    */
   override def getColumns: List[Column] = source.getColumns
+  
+  override def getDiscriminant = "ColumnDispenser" + source.getDiscriminant
 }
 
 
@@ -52,4 +56,6 @@ class EagerCollectingColumnDispenserSource[Q <: DomainQuery, R](source: Source[Q
     ColumnDispenserTransformer.transformElement(element, query)
 
   override def getColumns: List[Column] = source.getColumns
+  
+  override def getDiscriminant = "ColumnDispenser" + source.getDiscriminant
 }

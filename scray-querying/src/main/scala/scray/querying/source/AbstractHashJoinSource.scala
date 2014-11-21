@@ -26,6 +26,8 @@ import scray.querying.description.{Column, CompositeRow, EmptyRow, Row, TableIde
 import scray.querying.planning.MergingResultSpool
 import scray.querying.queries.{DomainQuery, KeyBasedQuery}
 import scray.querying.description.ColumnOrdering
+import scray.querying.caching.Cache
+import scray.querying.caching.NullCache
 
 /**
  * This hash joined source provides a template for implementing hashed-joins. This is a relational lookup.
@@ -83,35 +85,6 @@ abstract class AbstractHashJoinSource[Q <: DomainQuery, M, R /* <: Product */, V
         spool.tail
       }      
     }
-//    val in = spool.head
-//    val joinables = getJoinablesFromIndexSource(in)
-//    // execute this flatMap on a parallel collection
-//    val parseq: ParArray[Option[Row]] = joinables.par.map { lookupTuple => 
-//      val keyValueSourceQuery = new KeyBasedQuery[R](
-//        lookupkeymapper.map(_(lookupTuple)).getOrElse(lookupTuple.asInstanceOf[R]),
-//        lookupSourceTable,
-//        lookupSource.getColumns,
-//        query.querySpace,
-//        query.getQueryID)
-//      val seq = Await.result(lookupSource.request(keyValueSourceQuery))
-//      if(seq.size > 0) {
-//        val head = seq.head
-//        Some(new CompositeRow(List(head, in)))      
-//      } else { None }
-//    }
-//    val results = parseq.filter(_.isDefined).map(_.get)
-//    // we can map the first one; the others must be inserted 
-//    // into the spool before we return it
-//    if(results.size > 0) {
-//      val newSpool = spool.map(_ => results.head)
-//      if(results.size > 1) {
-//        insertRowsIntoSpool(results.tail.seq, newSpool)
-//      } else {
-//        newSpool
-//      }
-//    } else {
-//      spool.map(_ => new EmptyRow)
-//    }
   }
   
   /**
@@ -165,4 +138,8 @@ abstract class AbstractHashJoinSource[Q <: DomainQuery, M, R /* <: Product */, V
     (lookupSource.getGraph.asInstanceOf[Graph[Source[DomainQuery, Spool[Row]], DiEdge]] +
     DiEdge(lookupSource.asInstanceOf[Source[DomainQuery, Spool[Row]]],
     this.asInstanceOf[Source[DomainQuery, Spool[Row]]]))
+    
+  override def getDiscriminant: String = indexsource.getDiscriminant + lookupSource.getDiscriminant
+  
+  override def createCache: Cache[Nothing] = new NullCache
 }
