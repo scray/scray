@@ -23,7 +23,7 @@
 	</properties>
 
 	<modules>
-		<module>scray-commons</module>
+		<module>scray-common</module>
 		<module>scray-querying</module>
 		<module>scray-cassandra</module>
 		<!-- <module>scray-service</module>
