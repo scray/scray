@@ -14,37 +14,26 @@
 // limitations under the License.
 package scray.querying.source
 
-import scray.querying.Query
-import com.twitter.concurrent.Spool
-import com.twitter.util.Future
 import scray.querying.queries.DomainQuery
-import scray.querying.description.Row
+import scray.querying.description.{Column, EmptyRow}
 import scalax.collection.immutable.Graph
 import scalax.collection.GraphEdge.DiEdge
-import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
+import scalax.collection.GraphPredef._
+import scalax.collection.GraphEdge._
+import com.twitter.concurrent.Spool
+import scray.querying.description.Row
+import com.twitter.util.Future
 
 /**
- * A source to lazily post-process data from a provided lazy source.
+ * dispenses empty rows, such that the results only contains rows which contain data
  */
-abstract class LazyQueryMappingSource[Q <: DomainQuery](source: LazySource[Q]) 
-  extends LazySource[Q] {
+class LazyEmptyRowDispenserSource[Q <: DomainQuery](val source: LazySource[Q]) extends LazySource[Q] {
 
-  /**
-   * simple implementation starts a conversion process
-   * subclasses implement transformSpoolElement
-   */
   override def request(query: Q): LazyDataFuture = {
-    source.request(query).map ( spool => spool.map { row => 
-      // TODO: find a stack inexpensive way to skip rows
-      transformSpoolElement(row, query)
-    })
-  }
-  
-  /**
-   * implementors implement this method in order to lazily transform the Spool row-by-row.
-   */
-  def transformSpoolElement(element: Row, query: Q): Row
-  
+    source.request(query).flatMap(_.filter(row => !(row.isInstanceOf[EmptyRow] || row.isEmpty)))
+  } 
+
+  override def getColumns: List[Column] = source.getColumns
   
   override def isOrdered(query: Q): Boolean = source.isOrdered(query)
   
@@ -54,37 +43,21 @@ abstract class LazyQueryMappingSource[Q <: DomainQuery](source: LazySource[Q])
 }
 
 /**
- * A source to eagerly post-process data from a provided source.
+ * dispense all empty rows in the requested source
  */
-abstract class EagerCollectingQueryMappingSource[Q <: DomainQuery, R](source: Source[Q, R]) 
-  extends EagerSource[Q] {
-
-  /**
-   * simple implementation starts collecting and a conversion process
-   * subclasses implement transformSpoolElement
-   */
+class EagerEmptyRowDispenserSource[Q <: DomainQuery, R](source: Source[Q, R]) extends EagerSource[Q] {
+  
   override def request(query: Q): EagerDataFuture = {
     source.request(query).flatMap(_ match {
-      case spool: Spool[_] => spool.toSeq.asInstanceOf[Future[Seq[Row]]] //collect
+      case spool: Spool[_] => spool.toSeq.asInstanceOf[EagerDataFuture] //collect
       case seq: Seq[_] => Future(seq.asInstanceOf[Seq[Row]]) // do nothing
-    }).map(transformSeq(_, query))
+    }).map(_.filter(row => !(row.isInstanceOf[EmptyRow] || row.isEmpty)))
   }
   
-  /**
-   * implementors implement this method in order to map the resultset on the whole
-   * Default is to call transformSeqElement on each element of the Seq.
-   */
-  def transformSeq(element: Seq[Row], query: Q): Seq[Row] = {
-    element.map(transformSeqElement(_, query))
-  }
-  
-  /**
-   * implementors override this to achieve transformation of a single row
-   */
-  def transformSeqElement(element: Row, query: Q): Row
+  override def getColumns: List[Column] = source.getColumns
   
   override def isOrdered(query: Q): Boolean = source.isOrdered(query)
-  
+    
   override def getGraph: Graph[Source[DomainQuery, Seq[Row]], DiEdge] = source.asInstanceOf[Source[DomainQuery, Seq[Row]]].getGraph + 
     DiEdge(source.asInstanceOf[Source[DomainQuery, Seq[Row]]],
     this.asInstanceOf[Source[DomainQuery, Seq[Row]]])

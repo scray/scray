@@ -62,6 +62,12 @@ import com.twitter.util.Future
 import scala.collection.parallel.immutable.ParSeq
 import com.twitter.util.Await
 import scray.querying.description.ColumnOrdering
+import scray.querying.description.internal.IndexTypeException
+import scray.querying.source.indexing.SimpleHashJoinConfig
+import scray.querying.source.indexing.TimeIndexConfig
+import scray.querying.source.indexing.TimeIndexSource
+import scray.querying.source.LazyEmptyRowDispenserSource
+import scray.querying.source.EagerEmptyRowDispenserSource
 
 /**
  * Simple planner to execute queries.
@@ -98,7 +104,10 @@ object Planner {
       val filteredPlan = addRemainingFilters(plan, domainQuery)
       
       // add column removal for columns which are not needed any more
-      val dispensedPlan = removeDispensableColumns(filteredPlan, domainQuery)
+      val dispensedColumnPlan = removeDispensableColumns(filteredPlan, domainQuery)
+      
+      // remove empty rows
+      val dispensedPlan = removeEmptyRows(dispensedColumnPlan, domainQuery)
       
       // if needed add an in-memory sorting step afterwards
       val executablePlan = sortedPlan(dispensedPlan, domainQuery)
@@ -213,14 +222,23 @@ object Planner {
     
     // construct a simple plan
     mainColumn.map { colConf =>
-      colConf.index.flatMap(_.isManuallyIndexed.map { tableConf =>
+      colConf.index.flatMap(index => index.isManuallyIndexed.map { tableConf =>
         val indexSource = new QueryableSource(tableConf.indexTableConfig.queryableStore(),
-          query.getQueryspace, tableConf.indexTableConfig.table)
-        val mainSource = new KeyValueSource(tableConf.indexTableConfig.readableStore(), 
-          query.getQueryspace, tableConf.indexTableConfig.table)
-        new SimpleHashJoinSource(indexSource, colConf.column, 
-          mainSource, tableConf.mainTableConfig.primarykeyColumn)
-      }) 
+          query.getQueryspace, tableConf.indexTableConfig.table, index.isSorted)
+        val mainSource = new KeyValueSource(tableConf.mainTableConfig.readableStore(), 
+          query.getQueryspace, tableConf.mainTableConfig.table)
+        tableConf.indexConfig match {
+          case simple: SimpleHashJoinConfig => new SimpleHashJoinSource(indexSource, colConf.column, 
+            mainSource, tableConf.mainTableConfig.primarykeyColumn)
+          case time: TimeIndexConfig => new TimeIndexSource(time, indexSource, mainSource.asInstanceOf[KeyValueSource[Any, _]],
+            tableConf.mainTableConfig.table, tableConf.keymapper)
+          case _ => throw new IndexTypeException(query)
+        }
+      }).orElse {
+        Registry.getQuerySpaceTable(domainQuery.getQueryspace, domainQuery.getTableIdentifier).map { tableConf =>
+          new QueryableSource(tableConf.queryableStore(), query.getQueryspace, tableConf.table, true)
+        }
+      }
     }.getOrElse {
       // construct plan using information on main table
       Registry.getQuerySpaceTable(domainQuery.getQueryspace, domainQuery.getTableIdentifier).map { tableConf =>
@@ -360,7 +378,20 @@ object Planner {
               eagerSource.asInstanceOf[Source[DomainQuery, Seq[Row]]]), domainQuery) 
     }
   }
-      
+
+  /**
+   * Add row removal for rows which are empty
+   */
+  def removeEmptyRows(filteredPlan: ComposablePlan[DomainQuery, _], domainQuery: DomainQuery): ComposablePlan[DomainQuery, _] = {
+    filteredPlan.getSource match {
+      case lazySource: LazySource[_] => ComposablePlan.getComposablePlan(
+          new LazyEmptyRowDispenserSource(lazySource), domainQuery)
+      case eagerSource: EagerSource[_] => ComposablePlan.getComposablePlan(
+          new EagerEmptyRowDispenserSource[DomainQuery, Seq[Row]](
+              eagerSource.asInstanceOf[Source[DomainQuery, Seq[Row]]]), domainQuery) 
+    }
+  }
+  
   /**
    * if needed add an in-memory sorting step afterwards
    */ 

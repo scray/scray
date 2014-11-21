@@ -14,10 +14,10 @@
 // limitations under the License.
 package scray.querying.description
 
+import com.twitter.storehaus.{QueryableStore, ReadableStore}
 import scray.querying.Query
 import scray.querying.queries.DomainQuery
-import com.twitter.storehaus.QueryableStore
-import com.twitter.storehaus.ReadableStore
+import scray.querying.source.indexing.IndexConfig
 
 /**
  * parent class of queryspace-configuration, used to identify which tables
@@ -26,19 +26,22 @@ import com.twitter.storehaus.ReadableStore
 abstract class QueryspaceConfiguration(val name: String) {
 
   /**
-   * if this queryspace can order accoring to query by itself
+   * if this queryspace can order accoring to query all by itself, i.e. 
+   * without an extra in-memory step introduced by scray-querying the
+   * results will be ordered if the queryspace can choose the main table
    */
   def queryCanBeOrdered(query: Query): Option[ColumnConfiguration]
   
   /**
-   * if this queryspace can group accoring to query by itself
+   * if this queryspace can group accoring to query all by itself, i.e. 
+   * without an extra in-memory step introduced by scray-querying
    */
   def queryCanBeGrouped(query: Query): Option[ColumnConfiguration]
   
   /**
    * returns configuration of tables which are included in this query sapce
    */
-  def getTables: Set[TableConfiguration[_, _]]
+  def getTables: Set[TableConfiguration[_, _, _]]
   
   /**
    * returns columns which can be included in this query space
@@ -62,7 +65,7 @@ case class ColumnConfiguration (
  */
 case class IndexConfiguration (
   isAutoIndexed: Boolean, // indexed by means of the database, e.g. a B+ in Oracle
-  isManuallyIndexed: Option[ManuallyIndexConfiguration], // if this is a hand-made index, e.g. by means of Hadoop
+  isManuallyIndexed: Option[ManuallyIndexConfiguration[_, _, _, _, _]], // if this is a hand-made index, e.g. by means of Hadoop
   isSorted: Boolean, // if this is a sorted index, e.g. by means of a clustering key
   isGrouped: Boolean, // if this is a sorted index, we think of grouping as to be a sort without ordering requirements
   isRangeQueryable: Boolean // if this index can be range queried
@@ -71,15 +74,17 @@ case class IndexConfiguration (
 /**
  * information we need about this manual index
  */
-case class ManuallyIndexConfiguration (
-  mainTableConfig: TableConfiguration[_, _], // the table that holds all data
-  indexTableConfig: TableConfiguration[_, _] // the table that holds the index into the data of single column of mainTableConfig
+case class ManuallyIndexConfiguration[K, R, M, V, Q] (
+  mainTableConfig: TableConfiguration[Q, R, V], // the table that holds all data
+  indexTableConfig: TableConfiguration[Q, K, M], // the table that holds the index into the data of single column of mainTableConfig
+  keymapper: Option[M => R], // map the type of the references from one table to the type of the keys of the other
+  indexConfig: IndexConfig // depending on the type of the configuration we decide how to handle this
 )
 
 /**
  * properties of tables
  */
-case class TableConfiguration[V, Q] (
+case class TableConfiguration[Q, K, V] (
   table: TableIdentifier,
   versioned: Option[VersioningConfiguration], // if the table is versioned and how
   primarykeyColumn: Column, // the primary key columns of the table, i.e. a unique reference into a row with partitioning relevance  
@@ -88,7 +93,7 @@ case class TableConfiguration[V, Q] (
   rowMapper: (V) => Row, // mapper from a result row returned by the store to a scray-row
   domainQueryMapping: DomainQuery => Q, // maps a scray-DomainQuery to a query of the store
   queryableStore: () => QueryableStore[Q, V], // the queryable store representation, allowing to query the store
-  readableStore: () => ReadableStore[Q, V] // the readablestore, used in case this is used by a HashJoinSource
+  readableStore: () => ReadableStore[K, V] // the readablestore, used in case this is used by a HashJoinSource
 )
 
 /**

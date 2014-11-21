@@ -35,16 +35,17 @@ import scray.querying.description.ColumnOrdering
  * 
  * This is an inner join, but results must be filtered for EmptyRow.
  */
-abstract class AbstractHashJoinSource[Q <: DomainQuery, R <: Product, V](
+abstract class AbstractHashJoinSource[Q <: DomainQuery, M, R /* <: Product */, V](
     indexsource: LazySource[Q],
     lookupSource: KeyValueSource[R, V],
-    lookupSourceTable: TableIdentifier)
+    lookupSourceTable: TableIdentifier,
+    lookupkeymapper: Option[M => R] = None)
   extends LazySource[Q] {
 
   /**
-   * transforms the spool. May not skip too many elements because it is not tail recursive.
+   * transforms the spool and queries the lookup source.
    */
-  @inline protected def spoolTransform(spool: Spool[Row], query: Q): Spool[Row] = {
+  @inline protected def spoolTransform(spool: Spool[Row], query: Q): Future[Spool[Row]] = {
     @tailrec def insertRowsIntoSpool(rows: ArraySeq[Row], spoolElements: Spool[Row]): Spool[Row] = {
       if(rows.isEmpty) {
         spoolElements
@@ -52,35 +53,65 @@ abstract class AbstractHashJoinSource[Q <: DomainQuery, R <: Product, V](
         insertRowsIntoSpool(rows.tail, rows.head *:: Future(spoolElements))
       }
     }
-    val in = spool.head
-    val joinables = getJoinablesFromIndexSource(in)
-    // execute this flatMap on a parallel collection
-    val parseq: ParArray[Option[Row]] = joinables.par.map { lookupTuple => 
-      val keyValueSourceQuery = new KeyBasedQuery[R](
-        lookupTuple,
-        lookupSourceTable,
-        lookupSource.getColumns,
-        query.querySpace,
-        query.getQueryID)
-      val seq = Await.result(lookupSource.request(keyValueSourceQuery))
-      if(seq.size > 0) {
-        val head = seq.head
-        Some(new CompositeRow(List(head, in)))      
-      } else { None }
-    }
-    val results = parseq.filter(_.isDefined).map(_.get)
-    // we can map the first one; the others must be inserted 
-    // into the spool before we return it
-    if(results.size > 0) {
-      val newSpool = spool.map(_ => results.head)
-      if(results.size > 1) {
-        insertRowsIntoSpool(results.tail.seq, newSpool)
-      } else {
-        newSpool
+    spool.flatMap { in => 
+      val joinables = getJoinablesFromIndexSource(in)
+      // execute this flatMap on a parallel collection
+      val parseq: ParArray[Option[Row]] = joinables.par.map { lookupTuple => 
+        val keyValueSourceQuery = new KeyBasedQuery[R](
+          lookupkeymapper.map(_(lookupTuple)).getOrElse(lookupTuple.asInstanceOf[R]),
+          lookupSourceTable,
+          lookupSource.getColumns,
+          query.querySpace,
+          query.getQueryID)
+        val seq = Await.result(lookupSource.request(keyValueSourceQuery))
+        if(seq.size > 0) {
+          val head = seq.head
+          Some(new CompositeRow(List(head, in)))      
+        } else { None }
       }
-    } else {
-      spool.map(_ => new EmptyRow)
+      val results = parseq.filter(_.isDefined).map(_.get)
+      // we can map the first one; the others must be inserted 
+      // into the spool before we return it
+      if(results.size > 0) {
+        val sp = in *:: spool.tail
+        if(results.size > 1) {
+          Future(insertRowsIntoSpool(results.tail.seq, sp))
+        } else {
+          Future(sp)
+        }
+      } else {
+        spool.tail
+      }      
     }
+//    val in = spool.head
+//    val joinables = getJoinablesFromIndexSource(in)
+//    // execute this flatMap on a parallel collection
+//    val parseq: ParArray[Option[Row]] = joinables.par.map { lookupTuple => 
+//      val keyValueSourceQuery = new KeyBasedQuery[R](
+//        lookupkeymapper.map(_(lookupTuple)).getOrElse(lookupTuple.asInstanceOf[R]),
+//        lookupSourceTable,
+//        lookupSource.getColumns,
+//        query.querySpace,
+//        query.getQueryID)
+//      val seq = Await.result(lookupSource.request(keyValueSourceQuery))
+//      if(seq.size > 0) {
+//        val head = seq.head
+//        Some(new CompositeRow(List(head, in)))      
+//      } else { None }
+//    }
+//    val results = parseq.filter(_.isDefined).map(_.get)
+//    // we can map the first one; the others must be inserted 
+//    // into the spool before we return it
+//    if(results.size > 0) {
+//      val newSpool = spool.map(_ => results.head)
+//      if(results.size > 1) {
+//        insertRowsIntoSpool(results.tail.seq, newSpool)
+//      } else {
+//        newSpool
+//      }
+//    } else {
+//      spool.map(_ => new EmptyRow)
+//    }
   }
   
   /**
@@ -93,13 +124,13 @@ abstract class AbstractHashJoinSource[Q <: DomainQuery, R <: Product, V](
    * Return a list of references into the lookupSource from an index row.
    * Each one will create a new row in the result spool.
    */
-  protected def getJoinablesFromIndexSource(index: Row): Array[R]
+  protected def getJoinablesFromIndexSource(index: Row): Array[M]
   
   override def request(query: Q): Future[Spool[Row]] = {
     val rowComp = rowCompWithOrdering(query.ordering.get.column, query.ordering.get.ordering)
     val queries = transformIndexQuery(query)
     val results = queries.par.map(mappedquery =>
-      indexsource.request(mappedquery).map(spoolTransform(_, mappedquery)))
+      indexsource.request(mappedquery).flatMap(spool => spoolTransform(spool, mappedquery)))
     if(isOrdered(query)) {
       MergingResultSpool.mergeOrderedSpools(Seq(), results.seq.toSeq, rowComp, Array[Int]())
     } else {

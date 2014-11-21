@@ -18,7 +18,7 @@ import com.twitter.concurrent.Spool
 import com.twitter.util.Future
 import scray.querying.description.Row
 import scray.querying.queries.DomainQuery
-import scray.querying.source.{LazySource, LazyData, NullSource, Source}
+import scray.querying.source.{LazySource, LazyDataFuture, NullSource, Source}
 import scalax.collection.io.dot.DotRootGraph
 import scalax.collection.io.dot.DotGraph
 import scalax.collection.io.dot.DotEdgeStmt
@@ -101,9 +101,9 @@ class OrderedComposablePlan[Q <: DomainQuery, T](source: Source[Q, T], val order
  * NullPlan is a no strategy, i.e. on execution nothing will be done.
  * Used for testing.
  */
-class NullPlan[Q <: DomainQuery] extends Plan[Q, LazyData] {
+class NullPlan[Q <: DomainQuery] extends Plan[Q, LazyDataFuture] {
   override def needToOrder: Boolean = false
-  override def getSource: Source[Q, LazyData] = (new NullSource[Q]).asInstanceOf[Source[Q, LazyData]]
+  override def getSource: Source[Q, LazyDataFuture] = (new NullSource[Q]).asInstanceOf[Source[Q, LazyDataFuture]]
   override def getDot(queryId: String): String = {
     val root = DotRootGraph(directed = true, id = Some(s""""Plan for query $queryId""""))
     Graph.empty[Source[DomainQuery, Spool[Row]], DiEdge].toDot(root, _ => None)
