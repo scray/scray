@@ -23,12 +23,10 @@ object ExceptionIDs {
   val PARSING_ERROR = "SIL-Scray-Service-010"
 }
 
-class ScrayException(id : String, msg : String, cause : Option[Throwable] = None)
-  extends Exception(s"$id: $msg", cause.getOrElse(null)) with Serializable {
-  def this(id : String, query : UUID, msg : String, cause : Option[Throwable] = None) = this(id, s"$msg for query ${query}", cause)
-}
+class ScrayException(id : String, query : Option[UUID], msg : String, cause : Option[Throwable] = None)
+  extends Exception(
+    { query match { case None => id + ": " + msg; case Some(q) => id + ": " + msg + " for query " + q } },
+    cause.getOrElse(null)) with Serializable
 
-class ScrayServiceException(id : String, msg : String, cause : Option[Throwable] = None)
-  extends ScrayException(id, msg, cause) {
-  def this(id : String, query : UUID, msg : String, cause : Option[Throwable] = None) = this(id, s"$msg for query ${query}", cause)
-}
+class ScrayServiceException(id : String, query : Option[UUID], msg : String, cause : Option[Throwable] = None)
+  extends ScrayException(id, query, msg, cause)

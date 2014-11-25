@@ -11,8 +11,8 @@ import java.util.Date
 /**
  * Utility object transforming human readable string literals into corresponding typed data.
  *
- * Literals can be typed via YAML-like tags or untyped. 
- * 
+ * Literals can be typed via YAML-like tags or untyped.
+ *
  * Untyped literals transform as follows:
  * - alphanumeric strings in simple quotes into string objects
  * - numeric strings into integers
@@ -59,7 +59,7 @@ object StringLiteralDeserializer {
       case Success(result) => Success(result)
       case Failure(e) => {
         if (e.isInstanceOf[ParseError]) sys.error(parser.formatError(e.asInstanceOf[ParseError], showTraces = true))
-        Failure(new ScrayServiceException(id = ExceptionIDs.PARSING_ERROR, msg = s"Unparsable value literal '$literal'.", cause = Some(e)))
+        Failure(new ScrayServiceException(id = ExceptionIDs.PARSING_ERROR, None, msg = s"Unparsable value literal '$literal'.", cause = Some(e)))
       }
     }
   }
@@ -90,7 +90,7 @@ object StringLiteralDeserializer {
   } catch {
     case e : Exception => Failure(
       new ScrayServiceException(
-        id = ExceptionIDs.PARSING_ERROR, msg = s"Unparsable ${typeName} literal '$literal'.", cause = Some(e)))
+        id = ExceptionIDs.PARSING_ERROR, None, msg = s"Unparsable ${typeName} literal '$literal'.", cause = Some(e)))
   }
 
 }
