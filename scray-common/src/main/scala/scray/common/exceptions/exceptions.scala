@@ -19,7 +19,16 @@ import java.util.UUID
 object ExceptionIDs {
   // SIL-Scray-Commons-000+ error types
   val GENERAL_FAULT = "SIL-Scray-Commons-001"
+  // SIL-Scray-Service-010+ parsing error types
+  val PARSING_ERROR = "SIL-Scray-Service-010"
 }
 
-class ScrayException(id : String, query : Option[UUID], msg : String)
-  extends Exception(s"$id: $msg for query ${query}") with Serializable
+class ScrayException(id : String, msg : String, cause : Option[Throwable] = None)
+  extends Exception(s"$id: $msg", cause.getOrElse(null)) with Serializable {
+  def this(id : String, query : UUID, msg : String, cause : Option[Throwable] = None) = this(id, s"$msg for query ${query}", cause)
+}
+
+class ScrayServiceException(id : String, msg : String, cause : Option[Throwable] = None)
+  extends ScrayException(id, msg, cause) {
+  def this(id : String, query : UUID, msg : String, cause : Option[Throwable] = None) = this(id, s"$msg for query ${query}", cause)
+}
