@@ -24,6 +24,10 @@ import scray.querying.planning.PostPlanningActions
 import java.util.concurrent.locks.ReadWriteLock
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import scray.querying.description.ColumnConfiguration
+import scray.querying.source.Source
+import org.mapdb.HTreeMap
+import scray.querying.caching.Cache
+import java.util.concurrent.locks.ReentrantLock
 
 /**
  * Registry for tables and resources
@@ -118,4 +122,23 @@ object Registry {
 
   // planner post-pocessor
   var queryPostProcessor: PostPlanningActions.PostPlanningAction = PostPlanningActions.doNothing
+  
+  private val cachelock = new ReentrantLock
+  private val caches = new HashMap[String, Cache[_]]
+  
+  /**
+   * retrieve an off-heap cache for reading
+   */
+  def getCache[T, C <: Cache[T]](source: Source[_, _]): C = {
+    cachelock.lock
+    try {
+      caches.get(source.getDiscriminant).getOrElse {
+        val newCache = source.createCache
+        caches.put(source.getDiscriminant, newCache)
+        newCache
+      }.asInstanceOf[C]
+    } finally {
+      cachelock.unlock
+    }
+  }
 }

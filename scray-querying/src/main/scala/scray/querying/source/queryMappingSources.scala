@@ -21,7 +21,10 @@ import scray.querying.queries.DomainQuery
 import scray.querying.description.Row
 import scalax.collection.immutable.Graph
 import scalax.collection.GraphEdge.DiEdge
-import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
+import scalax.collection.GraphPredef._
+import scalax.collection.GraphEdge._
+import scray.querying.caching.Cache
+import scray.querying.caching.NullCache
 
 /**
  * A source to lazily post-process data from a provided lazy source.
@@ -51,6 +54,8 @@ abstract class LazyQueryMappingSource[Q <: DomainQuery](source: LazySource[Q])
   override def getGraph: Graph[Source[DomainQuery, Spool[Row]], DiEdge] = source.getGraph + 
     DiEdge(source.asInstanceOf[Source[DomainQuery, Spool[Row]]],
     this.asInstanceOf[Source[DomainQuery, Spool[Row]]])
+    
+  override def createCache: Cache[Nothing] = new NullCache 
 }
 
 /**
@@ -88,4 +93,6 @@ abstract class EagerCollectingQueryMappingSource[Q <: DomainQuery, R](source: So
   override def getGraph: Graph[Source[DomainQuery, Seq[Row]], DiEdge] = source.asInstanceOf[Source[DomainQuery, Seq[Row]]].getGraph + 
     DiEdge(source.asInstanceOf[Source[DomainQuery, Seq[Row]]],
     this.asInstanceOf[Source[DomainQuery, Seq[Row]]])
+    
+  override def createCache: Cache[Nothing] = new NullCache 
 }

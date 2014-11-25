@@ -23,6 +23,8 @@ import scalax.collection.GraphEdge._
 import com.twitter.concurrent.Spool
 import scray.querying.description.Row
 import com.twitter.util.Future
+import scray.querying.caching.Cache
+import scray.querying.caching.NullCache
 
 /**
  * dispenses empty rows, such that the results only contains rows which contain data
@@ -40,6 +42,10 @@ class LazyEmptyRowDispenserSource[Q <: DomainQuery](val source: LazySource[Q]) e
   override def getGraph: Graph[Source[DomainQuery, Spool[Row]], DiEdge] = source.getGraph + 
     DiEdge(source.asInstanceOf[Source[DomainQuery, Spool[Row]]],
     this.asInstanceOf[Source[DomainQuery, Spool[Row]]])
+
+  override def getDiscriminant = "RowDispenser" + source.getDiscriminant
+  
+  override def createCache: Cache[Nothing] = new NullCache
 }
 
 /**
@@ -61,4 +67,8 @@ class EagerEmptyRowDispenserSource[Q <: DomainQuery, R](source: Source[Q, R]) ex
   override def getGraph: Graph[Source[DomainQuery, Seq[Row]], DiEdge] = source.asInstanceOf[Source[DomainQuery, Seq[Row]]].getGraph + 
     DiEdge(source.asInstanceOf[Source[DomainQuery, Seq[Row]]],
     this.asInstanceOf[Source[DomainQuery, Seq[Row]]])
+    
+  override def getDiscriminant = "RowDispenser" + source.getDiscriminant
+  
+  override def createCache: Cache[Nothing] = new NullCache
 }

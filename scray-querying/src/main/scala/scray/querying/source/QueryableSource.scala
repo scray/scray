@@ -23,7 +23,10 @@ import scray.querying.Registry
 import scray.querying.description.TableIdentifier
 import scalax.collection.immutable.Graph
 import scalax.collection.GraphEdge.DiEdge
-import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
+import scalax.collection.GraphPredef._
+import scalax.collection.GraphEdge._
+import scray.querying.caching.QueryableCache
+import scray.querying.caching.Cache
 
 /**
  * queries a Storehaus-store. Assumes that the Seq returnes by QueryableStore is a lazy sequence (i.e. view)
@@ -63,6 +66,10 @@ class QueryableSource[K, V](store: QueryableStore[K, V], space: String, table: T
   }
   
   override def getGraph: Graph[Source[DomainQuery, Spool[Row]], DiEdge] = Graph.from(List(this), List())
+  
+  override def getDiscriminant = table.toString()
+  
+  override def createCache: Cache[Spool[Row]] = new QueryableCache
 }
 
 object QueryableSource {

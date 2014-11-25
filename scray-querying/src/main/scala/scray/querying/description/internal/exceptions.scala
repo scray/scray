@@ -18,28 +18,11 @@ import scray.querying.description.Column
 import scray.querying.Query
 import java.util.UUID
 import scray.querying.queries.DomainQuery
-
-object ExceptionIDs {
-  // 000+ = query verification errors
-  val queryWithoutColumnsExceptionID = "SIL-Scray-001"
-  val queryspaceViolationExceptionID = "SIL-Scray-002"
-  val queryspaceColumnViolationExceptionID = "SIL-Scray-003"
-  // 010+ = planner errors
-  val queryDomainParserExceptionID = "SIL-Scray-010"
-  val nonAtomicClauseExceptionID = "SIL-Scray-011"
-  val noPlanExceptionID = "SIL-Scray-012"
-  val plannerShutdownExceptionID = "SIL-Scray-013"
-  val indexTypeExceptionID = "SIL-Scray-014"
-  // 800+ = errors for specific queries
-  val keyBasedQueryExceptionID = "SIL-Scray-800"
-  // 900+ = errors for specific indexes
-  val queryDomainRangeException = "SIL-Scray-901"
-}
-
-class ScrayException(id: String, query: UUID, msg: String) extends Exception(s"$id: $msg for query ${query}") with Serializable
+import scray.common.exceptions.ScrayException
+import scray.querying.ExceptionIDs
 
 class QueryDomainParserException(reason: QueryDomainParserExceptionReasons.Reason, column: Column, query: Query) 
-    extends ScrayException(ExceptionIDs.queryDomainParserExceptionID, query.getQueryID, 
+    extends ScrayException(ExceptionIDs.queryDomainParserExceptionID, Some(query.getQueryID), 
         s"Could not parse query domains for column:${column.columnName}, reason is:$reason")
 
 object QueryDomainParserExceptionReasons extends Enumeration with Serializable {
@@ -50,34 +33,40 @@ object QueryDomainParserExceptionReasons extends Enumeration with Serializable {
   UNKNOWN_DOMAIN_CONFLICT = Value // unknown reason
 }
 
-class QueryDomainRangeException(column: Column, query: DomainQuery) extends ScrayException(ExceptionIDs.queryDomainRangeException, query.getQueryID, 
+class QueryDomainRangeException(column: Column, query: DomainQuery) extends ScrayException(ExceptionIDs.queryDomainRangeException, Some(query.getQueryID), 
         s"Could not execute tome-based index on column:${column.columnName}, reason is that the domain with a range has no bounds at all.") with Serializable
 
 class QueryWithoutColumnsException(query: Query) 
-    extends ScrayException(ExceptionIDs.queryWithoutColumnsExceptionID, query.getQueryID, "query contains no columns to query") with Serializable
+    extends ScrayException(ExceptionIDs.queryWithoutColumnsExceptionID, Some(query.getQueryID), "query contains no columns to query") with Serializable
 
 class QueryspaceViolationException(query: Query)
-    extends ScrayException(ExceptionIDs.queryspaceViolationExceptionID, query.getQueryID, s"""query trys to access queryspace or table which has not
+    extends ScrayException(ExceptionIDs.queryspaceViolationExceptionID, Some(query.getQueryID), s"""query trys to access queryspace or table which has not
     been registered; queryspace=${query.getQueryspace}, table=${query.getTableIdentifier} """) with Serializable
 
 class QueryspaceColumnViolationException(query: Query, column: Column) 
-    extends ScrayException(ExceptionIDs.queryspaceColumnViolationExceptionID, query.getQueryID, s"""query trys to access column ${column.columnName} from 
+    extends ScrayException(ExceptionIDs.queryspaceColumnViolationExceptionID, Some(query.getQueryID), s"""query trys to access column ${column.columnName} from 
     queryspace ${query.getQueryspace} which has not been registered""") with Serializable
 
 class KeyBasedQueryException(query: DomainQuery) 
-    extends ScrayException(ExceptionIDs.keyBasedQueryExceptionID, query.getQueryID, s"""query trys to access queryspace
+    extends ScrayException(ExceptionIDs.keyBasedQueryExceptionID, Some(query.getQueryID), s"""query trys to access queryspace
     ${query.getQueryspace} which has not been registered""") with Serializable
 
 class NonAtomicClauseException(query: Query)
-    extends ScrayException(ExceptionIDs.nonAtomicClauseExceptionID, query.getQueryID, "To qualify predicates those must be either be atomic clauses or 'And's")
+    extends ScrayException(ExceptionIDs.nonAtomicClauseExceptionID, Some(query.getQueryID), "To qualify predicates those must be either be atomic clauses or 'And's")
     with Serializable
 
 class NoPlanException(query: Query)
-    extends ScrayException(ExceptionIDs.noPlanExceptionID, query.getQueryID, "Could not construct a plan from the query") with Serializable
+    extends ScrayException(ExceptionIDs.noPlanExceptionID, Some(query.getQueryID), "Could not construct a plan from the query") with Serializable
 
 class ExecutorShutdownException(query: Query)
-    extends ScrayException(ExceptionIDs.plannerShutdownExceptionID, query.getQueryID, "Cannot accept queries any more. Engine shut down.") with Serializable
+    extends ScrayException(ExceptionIDs.plannerShutdownExceptionID, Some(query.getQueryID), "Cannot accept queries any more. Engine shut down.") with Serializable
 
 class IndexTypeException(query: Query)
-    extends ScrayException(ExceptionIDs.indexTypeExceptionID, query.getQueryID, s"""Index type is not defined or not
+    extends ScrayException(ExceptionIDs.indexTypeExceptionID, Some(query.getQueryID), s"""Index type is not defined or not
     available in queryspace ${query.getQueryspace}""") with Serializable
+
+class WrongQueryTypeForCacheException(query: DomainQuery, sourceDiscriminant: String)
+    extends ScrayException(ExceptionIDs.wrongQueryTypeForCacheID, Some(query.getQueryID), s"""Different type query was expected for 
+    this cache for source ${sourceDiscriminant} on query ${query.getQueryspace}""") with Serializable
+
+    

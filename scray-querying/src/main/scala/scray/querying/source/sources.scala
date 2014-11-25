@@ -16,14 +16,16 @@ package scray.querying.source
 
 import com.twitter.concurrent.Spool
 import com.twitter.util.Future
-
 import scalax.collection.GraphEdge.DiEdge
 import scalax.collection.edge.Implicits._
-import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
+import scalax.collection.GraphPredef._
+import scalax.collection.GraphEdge._
 import scalax.collection.immutable.Graph
 import scray.querying.description.Column
 import scray.querying.description.Row
 import scray.querying.queries.DomainQuery
+import scray.querying.caching.Cache
+import scray.querying.caching.NullCache
 
 /**
  * sources take queries and produce future results.
@@ -48,6 +50,17 @@ trait Source[Q <: DomainQuery, T] {
    * returns a scala graph of the current setup of sources
    */
   def getGraph: Graph[Source[DomainQuery, T], DiEdge]
+  
+  /**
+   * Returns a unique String identifying the type of source.
+   * Used to identify caches.
+   */
+  def getDiscriminant: String
+  
+  /**
+   * Create a cache for this source
+   */
+  def createCache: Cache[_]
 }
 
 /**
@@ -76,4 +89,6 @@ class NullSource[Q <: DomainQuery] extends LazySource[Q] {
   override def getColumns: List[Column] = List()
   override def isOrdered(query: Q): Boolean = true
   override def getGraph: Graph[Source[DomainQuery, Spool[Row]], DiEdge] = Graph.empty[Source[DomainQuery, Spool[Row]], DiEdge]
+  override def getDiscriminant: String = "-NullSource-"
+  override def createCache: Cache[_] = new NullCache
 }

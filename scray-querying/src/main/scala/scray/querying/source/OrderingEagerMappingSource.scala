@@ -20,6 +20,8 @@ import scray.querying.description.Row
 import scray.querying.description.internal.SingleValueDomain
 import scray.querying.description.internal.RangeValueDomain
 import scray.querying.description.ColumnOrdering
+import scray.querying.caching.Cache
+import scray.querying.caching.NullCache
 
 /**
  * source which pulls all data into memory and starts sorting
@@ -38,4 +40,8 @@ class OrderingEagerMappingSource[Q <: DomainQuery, R](source: Source[Q, R])
   override def getColumns: List[Column] = source.getColumns
   
   override def isOrdered(query: Q): Boolean = true
+  
+  override def getDiscriminant = "Ordering" + source.getDiscriminant
+  
+  override def createCache: Cache[Nothing] = new NullCache
 }
