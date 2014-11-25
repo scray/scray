@@ -29,13 +29,15 @@ import scalax.collection.GraphEdge._
 import scray.querying.queries.DomainQuery
 import scray.querying.caching.KeyValueCache
 import scray.querying.caching.Cache
+import org.slf4j.LoggerFactory
+import com.typesafe.scalalogging.slf4j.LazyLogging
 
 /**
  * A source that queries a Storehaus-store for a given value.
  * The query is comprised of a simple key in this case.
  */
 class KeyValueSource[K, V](val store: ReadableStore[K, V], 
-    space: String, table: TableIdentifier) extends EagerSource[KeyBasedQuery[K]] {
+    space: String, table: TableIdentifier, enableCaching: Boolean = true) extends EagerSource[KeyBasedQuery[K]] with LazyLogging {
 
   private val queryspaceTable = Registry.getQuerySpaceTable(space, table)
   private val cache = Registry.getCache[V, KeyValueCache[K, V]](this)
@@ -43,12 +45,26 @@ class KeyValueSource[K, V](val store: ReadableStore[K, V],
   val valueToRow: ((K, V)) => Row = queryspaceTable.get.rowMapper.asInstanceOf[((K, V)) => Row]
 
   override def request(query: KeyBasedQuery[K]): Future[Seq[Row]] = {
-    cache.retrieve(query).map(value => Future.value(Seq(valueToRow((query.key, value))))).getOrElse {
+    logger.debug(s"Requesting row with key ${query.key} for query ${query.getQueryID}")
+    if(enableCaching) {
+      cache.retrieve(query).map { value =>
+          logger.debug(s"Cache HIT for key ${query.key} for query ${query.getQueryID}")
+          Future.value(Seq(valueToRow((query.key, value))))
+        }.getOrElse {
+          logger.debug(s"Cache MISS for key ${query.key} for query ${query.getQueryID}")
+          store.get(query.key).map {
+      	    case None => Seq[Row]()
+      	    case Some(value) =>
+      	      cache.put(query, value)
+              logger.debug(s"Cache PUT for key ${query.key} for query ${query.getQueryID}")
+      	      Seq(valueToRow((query.key, value)))
+          }
+        }
+    } else {
       store.get(query.key).map {
       	case None => Seq[Row]()
       	case Some(value) =>
-      	  cache.put(query, value)
-      	  Seq(valueToRow((query.key, value)))
+  	      Seq(valueToRow((query.key, value)))
       }
     }
   }

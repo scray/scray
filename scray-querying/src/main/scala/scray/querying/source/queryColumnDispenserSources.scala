@@ -18,12 +18,15 @@ import scray.querying.queries.DomainQuery
 import scray.querying.description.{Column, Row, RowColumn, SimpleRow}
 import scray.querying.caching.Cache
 import scray.querying.caching.NullCache
+import com.typesafe.scalalogging.slf4j.LazyLogging
+import scala.collection.mutable.HashSet
+import scala.collection.mutable.ArrayBuffer
+import scala.util.Try
 
 object ColumnDispenserTransformer {
-  def transformElement[Q <: DomainQuery](element: Row, query: Q): Row = {
+  def transformElement[Q <: DomainQuery](element: Row, query: Q, columns: HashSet[Column]): Row = {
     // if we find a column which is not requested by this query we will dispense it
-    val columns = element.getColumns.filter(query.getResultSetColumns.contains(_))
-    SimpleRow(columns.map(col => RowColumn(col, element.getColumnValue(col).get)))
+    element.intersectValues(columns)
   }
 }
 
@@ -32,10 +35,17 @@ object ColumnDispenserTransformer {
  * i.e. throw away columns which are not needed any more
  */
 class LazyQueryColumnDispenserSource[Q <: DomainQuery](source: LazySource[Q]) 
-  extends LazyQueryMappingSource[Q](source) {
+  extends LazyQueryMappingSource[Q](source) with LazyLogging {
 
+  private val queryColumns = new HashSet[Column]
+  
+  override def init(query: Q) = {
+    queryColumns.clear
+    queryColumns ++= query.getResultSetColumns
+  } 
+  
   def transformSpoolElement(element: Row, query: Q): Row = 
-    ColumnDispenserTransformer.transformElement(element, query)
+    ColumnDispenserTransformer.transformElement(element, query, queryColumns)
 
   /**
    * This is the maximum we can return, if a query will request them all
@@ -50,10 +60,17 @@ class LazyQueryColumnDispenserSource[Q <: DomainQuery](source: LazySource[Q])
  * used to filter rows according to the domain parameters supplied
  */
 class EagerCollectingColumnDispenserSource[Q <: DomainQuery, R](source: Source[Q, R]) 
-  extends EagerCollectingQueryMappingSource[Q, R](source) {
+  extends EagerCollectingQueryMappingSource[Q, R](source) with LazyLogging {
 
+  private val queryColumns = new HashSet[Column]
+  
+  override def init(query: Q) = {
+    queryColumns.clear
+    queryColumns ++= query.getResultSetColumns
+  }
+  
   override def transformSeqElement(element: Row, query: Q): Row = 
-    ColumnDispenserTransformer.transformElement(element, query)
+    ColumnDispenserTransformer.transformElement(element, query, queryColumns)
 
   override def getColumns: List[Column] = source.getColumns
   

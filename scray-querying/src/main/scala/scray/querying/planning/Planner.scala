@@ -104,7 +104,8 @@ object Planner {
       val filteredPlan = addRemainingFilters(plan, domainQuery)
       
       // add column removal for columns which are not needed any more
-      val dispensedColumnPlan = removeDispensableColumns(filteredPlan, domainQuery)
+      val allColumns = cQuery.getResultSetColumns.columns.isLeft
+      val dispensedColumnPlan = removeDispensableColumns(filteredPlan, domainQuery, allColumns)
       
       // remove empty rows
       val dispensedPlan = removeEmptyRows(dispensedColumnPlan, domainQuery)
@@ -226,7 +227,7 @@ object Planner {
         val indexSource = new QueryableSource(tableConf.indexTableConfig.queryableStore(),
           query.getQueryspace, tableConf.indexTableConfig.table, index.isSorted)
         val mainSource = new KeyValueSource(tableConf.mainTableConfig.readableStore(), 
-          query.getQueryspace, tableConf.mainTableConfig.table)
+          query.getQueryspace, tableConf.mainTableConfig.table, true)
         tableConf.indexConfig match {
           case simple: SimpleHashJoinConfig => new SimpleHashJoinSource(indexSource, colConf.column, 
             mainSource, tableConf.mainTableConfig.primarykeyColumn)
@@ -369,13 +370,18 @@ object Planner {
   /**
    * Add column removal for columns which are not needed any more to the plan
    */
-  def removeDispensableColumns(filteredPlan: ComposablePlan[DomainQuery, _], domainQuery: DomainQuery): ComposablePlan[DomainQuery, _] = {
-    filteredPlan.getSource match {
-      case lazySource: LazySource[_] => ComposablePlan.getComposablePlan(
-          new LazyQueryColumnDispenserSource(lazySource), domainQuery)
-      case eagerSource: EagerSource[_] => ComposablePlan.getComposablePlan(
+  def removeDispensableColumns(filteredPlan: ComposablePlan[DomainQuery, _],
+      domainQuery: DomainQuery, allColumns: Boolean): ComposablePlan[DomainQuery, _] = {
+    if(!allColumns) {
+      filteredPlan.getSource match {
+        case lazySource: LazySource[_] => ComposablePlan.getComposablePlan(
+            new LazyQueryColumnDispenserSource(lazySource), domainQuery)
+        case eagerSource: EagerSource[_] => ComposablePlan.getComposablePlan(
           new EagerCollectingDomainFilterSource[DomainQuery, Seq[Row]](
-              eagerSource.asInstanceOf[Source[DomainQuery, Seq[Row]]]), domainQuery) 
+              eagerSource.asInstanceOf[Source[DomainQuery, Seq[Row]]]), domainQuery)
+      }
+    } else {
+      filteredPlan
     }
   }
 
@@ -425,6 +431,7 @@ object Planner {
       Spool.Empty.asInstanceOf[Spool[Row]]
     } else if(futures.size == 1) {
       // in case we only have results for one query we can quickly return them
+      println(futures.head.getClass)
       Await.result(futures.head) match {
         case spool: Spool[_] => spool.asInstanceOf[Spool[Row]]
         case seq: Seq[_] => Spool.seqToSpool[Row](seq.asInstanceOf[Seq[Row]]).toSpool

@@ -27,6 +27,7 @@ import scalax.collection.GraphEdge._
 import scray.querying.queries.SimpleKeyBasedQuery
 import scray.querying.caching.Cache
 import scray.querying.caching.NullCache
+import com.typesafe.scalalogging.slf4j.LazyLogging
 
 /**
  * This hash joined source provides a template for implementing hashed-joins. This is a relational lookup.
@@ -41,7 +42,7 @@ class SimpleHashJoinSource[Q <: DomainQuery, K, R, V](
     sourceJoinColumn: Column,
     lookupSource: KeyValueSource[R, V],
     lookupSourceJoinColumn: Column)
-  extends LazySource[Q] {
+  extends LazySource[Q] with LazyLogging {
 
   /**
    * transforms the spool. May not skip too many elements because it is not tail recursive.
@@ -66,6 +67,7 @@ class SimpleHashJoinSource[Q <: DomainQuery, K, R, V](
   }
   
   override def request(query: Q): Future[Spool[Row]] = {
+    logger.debug(s"Joining in ${lookupSource.getDiscriminant} into ${source.getDiscriminant} for ${query.getQueryID}")
     source.request(query).map(spoolTransform(_, query))
   }
   

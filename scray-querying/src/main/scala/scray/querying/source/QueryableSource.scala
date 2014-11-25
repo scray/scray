@@ -27,12 +27,13 @@ import scalax.collection.GraphPredef._
 import scalax.collection.GraphEdge._
 import scray.querying.caching.QueryableCache
 import scray.querying.caching.Cache
+import com.typesafe.scalalogging.slf4j.LazyLogging
 
 /**
  * queries a Storehaus-store. Assumes that the Seq returnes by QueryableStore is a lazy sequence (i.e. view)
  */
 class QueryableSource[K, V](store: QueryableStore[K, V], space: String, table: TableIdentifier, isOrdered: Boolean = false) 
-    extends LazySource[DomainQuery] {
+    extends LazySource[DomainQuery] with LazyLogging {
 
   private val queryspaceTable = Registry.getQuerySpaceTable(space, table) 
   
@@ -40,11 +41,14 @@ class QueryableSource[K, V](store: QueryableStore[K, V], space: String, table: T
   
   val queryMapping: DomainQuery => K = queryspaceTable.get.domainQueryMapping.asInstanceOf[DomainQuery => K]
   
-  override def request(query: DomainQuery): Future[Spool[Row]] = store.queryable.get(queryMapping(query)).transform {
-    case Throw(y) => Future.exception(y)
-    case Return(x) => 
-      // construct lazy spool
-      QueryableSource.iteratorToSpool[V](x.getOrElse(Seq[V]()).view.iterator, valueToRow)
+  override def request(query: DomainQuery): Future[Spool[Row]] = {
+    logger.debug(s"Requesting data from store with ${query.getQueryID}")
+    store.queryable.get(queryMapping(query)).transform {
+      case Throw(y) => Future.exception(y)
+      case Return(x) => 
+        // construct lazy spool
+        QueryableSource.iteratorToSpool[V](x.getOrElse(Seq[V]()).view.iterator, valueToRow)
+    }
   }
 
   override def getColumns: List[Column] = queryspaceTable.get.allColumns

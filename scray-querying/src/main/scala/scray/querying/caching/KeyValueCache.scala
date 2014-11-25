@@ -16,8 +16,7 @@ class KeyValueCache[K, V](
   val cache = db.createHashMap("cache").counterEnable().make[K, V]
   
   /**
-   * retrieve one row and end up with CompleteCacheServeMarkerRow
-   * if successful
+   * retrieve one row, ending is an implicit of existing contents (i.e. can only be one)
    */
   override def retrieve(query: DomainQuery): Option[V] = query match {
     case keyquery: KeyBasedQuery[K] => Option(cache.get(keyquery.key))
@@ -30,8 +29,7 @@ class KeyValueCache[K, V](
   }
   
   override def maintnance: Unit = {
-    // expiring old columns can be handled automatically by MapDB
-    // only job is to make sure that it doesn't overflow
+    // expiring old columns can be handled automatically by MapDB in this case
   }
   
   override def close: Unit = {
