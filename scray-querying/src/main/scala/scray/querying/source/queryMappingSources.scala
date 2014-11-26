@@ -13,41 +13,70 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 package scray.querying.source
-
-import scray.querying.Query
 import com.twitter.concurrent.Spool
 import com.twitter.util.Future
-import scray.querying.queries.DomainQuery
-import scray.querying.description.Row
-import scalax.collection.immutable.Graph
+import com.typesafe.scalalogging.slf4j.LazyLogging
+import scalax.collection.GraphEdge._
 import scalax.collection.GraphEdge.DiEdge
 import scalax.collection.GraphPredef._
-import scalax.collection.GraphEdge._
+import scalax.collection.immutable.Graph
 import scray.querying.caching.Cache
 import scray.querying.caching.NullCache
+import scray.querying.description.Row
+import scray.querying.queries.DomainQuery
+import scala.collection.mutable.ArrayBuffer
 
 /**
  * A source to lazily post-process data from a provided lazy source.
  */
 abstract class LazyQueryMappingSource[Q <: DomainQuery](source: LazySource[Q]) 
-  extends LazySource[Q] {
+  extends LazySource[Q] with LazyLogging {
 
+  val optFunctions = new ArrayBuffer[(Row, Q) => Row]
+  
+  val optimized = source match {
+    case mappingsource: LazyQueryMappingSource[Q] => 
+      mappingsource.optimize(transformSpoolElement(_, _))
+      true
+    case _ => false
+  }
+  
+  /**
+   * do some optimization (less maps on spools) if the 
+   * upstream source is of the same type.
+   */
+  def optimize(function: ((Row, Q) => Row)): Unit = {
+    source match {
+      case mappingsource: LazyQueryMappingSource[Q] => 
+        mappingsource.optimize(function)
+      case _ => 
+        optFunctions += function
+    }
+  }
+  
   /**
    * simple implementation starts a conversion process
    * subclasses implement transformSpoolElement
    */
   override def request(query: Q): LazyDataFuture = {
-    source.request(query).map ( spool => spool.map { row => 
-      // TODO: find a stack inexpensive way to skip rows
-      transformSpoolElement(row, query)
-    })
+    logger.debug(s"Transforming elements lazyly for ${query.getQueryID}")
+    init(query)
+    if(optimized) {
+      source.request(query)
+    } else {
+      source.request(query).map ( spool => spool.map { row => 
+         val firstres = transformSpoolElement(row, query)
+         optFunctions.foldLeft(firstres)((param, function) => function(param, query))
+      })
+    }
   }
   
   /**
    * implementors implement this method in order to lazily transform the Spool row-by-row.
    */
   def transformSpoolElement(element: Row, query: Q): Row
-  
+
+  def init(query: Q): Unit = {}
   
   override def isOrdered(query: Q): Boolean = source.isOrdered(query)
   
@@ -62,13 +91,15 @@ abstract class LazyQueryMappingSource[Q <: DomainQuery](source: LazySource[Q])
  * A source to eagerly post-process data from a provided source.
  */
 abstract class EagerCollectingQueryMappingSource[Q <: DomainQuery, R](source: Source[Q, R]) 
-  extends EagerSource[Q] {
+  extends EagerSource[Q] with LazyLogging {
 
   /**
    * simple implementation starts collecting and a conversion process
    * subclasses implement transformSpoolElement
    */
   override def request(query: Q): EagerDataFuture = {
+    logger.debug(s"Transforming elements eagerly for ${query.getQueryID}")
+    init(query)
     source.request(query).flatMap(_ match {
       case spool: Spool[_] => spool.toSeq.asInstanceOf[Future[Seq[Row]]] //collect
       case seq: Seq[_] => Future(seq.asInstanceOf[Seq[Row]]) // do nothing
@@ -87,6 +118,8 @@ abstract class EagerCollectingQueryMappingSource[Q <: DomainQuery, R](source: So
    * implementors override this to achieve transformation of a single row
    */
   def transformSeqElement(element: Row, query: Q): Row
+  
+  def init(query: Q): Unit = {}
   
   override def isOrdered(query: Q): Boolean = source.isOrdered(query)
   

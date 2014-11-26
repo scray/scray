@@ -22,15 +22,17 @@ import scray.querying.description.internal.RangeValueDomain
 import scray.querying.description.ColumnOrdering
 import scray.querying.caching.Cache
 import scray.querying.caching.NullCache
+import com.typesafe.scalalogging.slf4j.LazyLogging
 
 /**
  * source which pulls all data into memory and starts sorting
  * TODO: flatten that stuff to disk and do a merge sort / TimSort on disk files
  */
 class OrderingEagerMappingSource[Q <: DomainQuery, R](source: Source[Q, R])
-    extends EagerCollectingQueryMappingSource[Q, R](source) {
+    extends EagerCollectingQueryMappingSource[Q, R](source) with LazyLogging {
   
   @inline override def transformSeq(element: Seq[Row], query: Q): Seq[Row] = {
+    logger.debug("Ordering output in memory for ${query}")
     val queryOrdering = query.getOrdering
     element.sortWith(rowCompWithOrdering(queryOrdering.get.column, queryOrdering.get.ordering))
   }

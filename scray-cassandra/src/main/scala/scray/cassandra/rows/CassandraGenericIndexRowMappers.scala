@@ -36,7 +36,7 @@ object CassandraGenericIndexRowMappers {
     rows += RowColumn(Column(store.colkeyColumnNames(1), ti), entry._1._2.tail.head)
     rows += RowColumn(Column(store.valueColumnName, ti), entry._2)
     // scalastyle:on magic.number
-    SimpleRow(rows.toList)
+    SimpleRow(rows)
   }
         
   // Cassandra types for a*/*a indexes

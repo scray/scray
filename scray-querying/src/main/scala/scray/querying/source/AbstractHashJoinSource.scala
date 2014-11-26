@@ -28,6 +28,10 @@ import scray.querying.queries.{DomainQuery, KeyBasedQuery}
 import scray.querying.description.ColumnOrdering
 import scray.querying.caching.Cache
 import scray.querying.caching.NullCache
+import org.slf4j.LoggerFactory
+import com.typesafe.scalalogging.slf4j.LazyLogging
+import scala.collection.parallel.ForkJoinTaskSupport
+import scala.concurrent.forkjoin.ForkJoinPool
 
 /**
  * This hash joined source provides a template for implementing hashed-joins. This is a relational lookup.
@@ -42,23 +46,23 @@ abstract class AbstractHashJoinSource[Q <: DomainQuery, M, R /* <: Product */, V
     lookupSource: KeyValueSource[R, V],
     lookupSourceTable: TableIdentifier,
     lookupkeymapper: Option[M => R] = None)
-  extends LazySource[Q] {
+  extends LazySource[Q] with LazyLogging {
 
   /**
    * transforms the spool and queries the lookup source.
    */
   @inline protected def spoolTransform(spool: Spool[Row], query: Q): Future[Spool[Row]] = {
-    @tailrec def insertRowsIntoSpool(rows: ArraySeq[Row], spoolElements: Spool[Row]): Spool[Row] = {
+    @tailrec def insertRowsIntoSpool(rows: Array[Row], spoolElements: Spool[Row]): Spool[Row] = {
       if(rows.isEmpty) {
         spoolElements
       } else {
-        insertRowsIntoSpool(rows.tail, rows.head *:: Future(spoolElements))
+        insertRowsIntoSpool(rows.tail, rows.head *:: Future.value(spoolElements))
       }
     }
     spool.flatMap { in => 
       val joinables = getJoinablesFromIndexSource(in)
       // execute this flatMap on a parallel collection
-      val parseq: ParArray[Option[Row]] = joinables.par.map { lookupTuple => 
+      val parseq: Array[Option[Row]] = joinables.map { lookupTuple => 
         val keyValueSourceQuery = new KeyBasedQuery[R](
           lookupkeymapper.map(_(lookupTuple)).getOrElse(lookupTuple.asInstanceOf[R]),
           lookupSourceTable,
@@ -75,11 +79,11 @@ abstract class AbstractHashJoinSource[Q <: DomainQuery, M, R /* <: Product */, V
       // we can map the first one; the others must be inserted 
       // into the spool before we return it
       if(results.size > 0) {
-        val sp = in *:: spool.tail
+        val sp = results(0) *:: spool.tail
         if(results.size > 1) {
-          Future(insertRowsIntoSpool(results.tail.seq, sp))
+          Future.value(insertRowsIntoSpool(results.tail, sp))
         } else {
-          Future(sp)
+          Future.value(sp)
         }
       } else {
         spool.tail
@@ -100,14 +104,19 @@ abstract class AbstractHashJoinSource[Q <: DomainQuery, M, R /* <: Product */, V
   protected def getJoinablesFromIndexSource(index: Row): Array[M]
   
   override def request(query: Q): Future[Spool[Row]] = {
+    logger.debug(s"Joining in ${lookupSource.getDiscriminant} into ${indexsource.getDiscriminant} for ${query.getQueryID}")
     val rowComp = rowCompWithOrdering(query.ordering.get.column, query.ordering.get.ordering)
     val queries = transformIndexQuery(query)
     val results = queries.par.map(mappedquery =>
       indexsource.request(mappedquery).flatMap(spool => spoolTransform(spool, mappedquery)))
-    if(isOrdered(query)) {
-      MergingResultSpool.mergeOrderedSpools(Seq(), results.seq.toSeq, rowComp, Array[Int]())
+    if(results.size > 1) {
+      if(isOrdered(query)) {
+        MergingResultSpool.mergeOrderedSpools(Seq(), results.seq.toSeq, rowComp, Array[Int]())
+      } else {
+        MergingResultSpool.mergeUnorderedResults(Seq(), results.seq.toSeq, Array[Int]())
+      }
     } else {
-      MergingResultSpool.mergeUnorderedResults(Seq(), results.seq.toSeq, Array[Int]())
+      results.head
     }
   }
   

@@ -15,8 +15,11 @@
 package scray.querying.description
 
 import scala.annotation.tailrec
-import scala.reflect.runtime.universe.{TypeTag, typeTag}
-import scala.collection.immutable.HashMap
+import scala.collection.mutable.ArrayBuffer
+import scala.reflect.runtime.universe.typeTag
+import scala.collection.mutable.HashSet
+
+
 
 /**
  * A Row in the result set representing a data record. 
@@ -31,28 +34,81 @@ trait Row {
   def getColumns: List[Column]
   def getNumberOfEntries: Int
   def isEmpty = getNumberOfEntries == 0
+  @inline def intersectValues(cols: HashSet[Column]): Row
+  @inline def recalculateInternalCaches: Unit
 }
 
 case class RowColumn[V](column: Column, value: V)//(implicit val valuesType: TypeTag[V])
+
+object RowColumnComparator {
+  def apply(a: Column, b: Column): Boolean = compare(a, b)
+  def compare(a: Column, b: Column): Boolean = {
+    val coln = a.columnName.compareTo(b.columnName)
+    if(coln == 0) {
+      val tabn = a.table.tableId.compareTo(b.table.tableId)
+      if(tabn == 0) {
+        val sdn = a.table.dbId.compareTo(b.table.dbId)
+        if(sdn == 0) {
+          val dbs = a.table.dbSystem.compareTo(b.table.dbSystem)
+          dbs >= 0
+        } else {
+          sdn > 0
+        }
+      } else {
+        tabn > 0
+      }
+    } else {
+      coln > 0
+    }
+  }
+  val compFnColumns: (Column, Column) => Boolean = compare(_, _)
+  val compFnRowColumns: (RowColumn[_], RowColumn[_]) => Boolean = (a, b) => compare(a.column, b.column)
+
+  /**
+   * this needs to be real fast, as it is used in the
+   * innermost loop, the ColumnDispenserSource
+   */
+  @inline def intersectValues(columns: ArrayBuffer[RowColumn[_]], intersector: HashSet[Column]): ArrayBuffer[RowColumn[_]] = {
+    val resultCollection = new ArrayBuffer[RowColumn[_]]
+    columns.foreach(rowcol => if(intersector.contains(rowcol.column)) { resultCollection += rowcol })
+    resultCollection
+  }
+}
 
 /**
  * case class representing a row; memoizes results on demand
  */
 case class SimpleRow(
-  columns: List[RowColumn[_]]
+  columns: ArrayBuffer[RowColumn[_]]
 ) extends Row {
-  override def getColumnValue[V](colNum: Int): Option[V] = columns.lift(colNum).map(_.value.asInstanceOf[V])
+  @transient var cols: Map[Column, RowColumn[_]] = Map()
+  @transient var columnList: List[Column] = List()
+  recalculateInternalCaches
+  
+  override def getColumnValue[V](colNum: Int): Option[V] = columns(colNum).asInstanceOf[Option[V]]
+  
+  // lift(colNum).map(_.value.asInstanceOf[V])
 //  override def getColumnValueType(colNum: Int): Option[TypeTag[_]] = columns.lift(colNum).map(_.valuesType)
 
-  lazy val cols: Map[Column, RowColumn[_]] = columns.map(c => (c.column, c)).toMap
   override def getColumnValue[V](col: Column): Option[V] = cols.get(col).map(_.value.asInstanceOf[V])
 //  override def getColumnValueType(col: Column): Option[TypeTag[_]] = cols.get(col).map(_.valuesType)
   
-  lazy val columnList: List[Column] = columns.map(_.column)
   override def getColumns: List[Column] = columnList
   
-  lazy val size = columns.size
-  override def getNumberOfEntries: Int = size 
+  override def getNumberOfEntries: Int = columns.size
+  
+  @inline override def intersectValues(cols: HashSet[Column]): Row = {
+    val resultCollection = RowColumnComparator.intersectValues(columns, cols)
+    columns.clear
+    columns ++= resultCollection
+    recalculateInternalCaches
+    this
+  }
+  
+  @inline override def recalculateInternalCaches: Unit = {
+    columnList = columns.map(_.column).toList
+    cols = columns.map(c => (c.column, c)).toMap
+  }
 }
 
 /**
@@ -69,9 +125,10 @@ class CompositeRow(rows: List[Row]) extends Row {
     }
     getRelevantRowForEntryNumber(colNum, rows)
   }
-  override def getColumnValue[V](col: Column): Option[V] = {
-    rows.find(row => row.getColumns.contains(col)).flatMap(_.getColumnValue(col))
-  }
+  override def getColumnValue[V](col: Column): Option[V] = rows.collect {
+      case row: Row if row.getColumnValue(col).isDefined => row.getColumnValue(col)
+    }.head
+    
 //  override def getColumnValueType(colNum: Int): Option[TypeTag[_]] = {
 //    @tailrec def getRelevantRowForEntryNumber(colNumLocal: Int, rowList: List[Row]): Option[TypeTag[_]] = {
 //      val size = rowList.head.getNumberOfEntries
@@ -85,6 +142,12 @@ class CompositeRow(rows: List[Row]) extends Row {
 //  }
   override def getNumberOfEntries: Int = rows.foldLeft(0)(_ + _.getNumberOfEntries)
   override def getColumns: List[Column] = rows.foldLeft(List[Column]())((agg, row) => agg ++ row.getColumns)
+  @inline override def intersectValues(cols: HashSet[Column]): Row = {
+    rows.foreach(_.intersectValues(cols))
+    this
+  }
+  @inline override def recalculateInternalCaches: Unit = rows.foreach(_.recalculateInternalCaches)
+  override def toString: String = s"CompositeRow(${rows.mkString(",")})"
 }
 
 /**
@@ -97,4 +160,6 @@ class EmptyRow extends Row with Serializable {
 //  override def getColumnValueType(col: Column): Option[TypeTag[_]] = None
   override def getColumns: List[Column] = List()
   override def getNumberOfEntries: Int = 0
+  @inline override def intersectValues(cols: HashSet[Column]): Row = this
+  @inline override def recalculateInternalCaches: Unit = {}
 }

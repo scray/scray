@@ -23,6 +23,7 @@ import scray.querying.description.{Column, ColumnGrouping, ColumnOrdering, Query
 import scray.querying.description.internal.{Bound, Domain, QueryDomainRangeException, RangeValueDomain, SingleValueDomain}
 import scray.querying.queries.DomainQuery
 import scray.querying.source.{AbstractHashJoinSource, KeyValueSource, LazySource}
+import com.typesafe.scalalogging.slf4j.LazyLogging
 
 /**
  * creates an indexed-source with a hashed-join reference on a time column.
@@ -36,7 +37,8 @@ class TimeIndexSource[Q <: DomainQuery, M, R, V](
     lookupSource: KeyValueSource[R, V],
     lookupSourceTable: TableIdentifier,
     lookupkeymapper: Option[M => R] = None)(implicit tag: ClassTag[M]) 
-    extends AbstractHashJoinSource[Q, M, R, V](indexsource, lookupSource, lookupSourceTable, lookupkeymapper) {
+    extends AbstractHashJoinSource[Q, M, R, V](indexsource, lookupSource, lookupSourceTable, lookupkeymapper)
+    with LazyLogging {
 
   /**
    * return the year from a time using GregorianCalendar and the given TimeZone

@@ -25,13 +25,16 @@ import scray.querying.description.Row
 import com.twitter.util.Future
 import scray.querying.caching.Cache
 import scray.querying.caching.NullCache
+import org.slf4j.LoggerFactory
+import com.typesafe.scalalogging.slf4j.LazyLogging
 
 /**
  * dispenses empty rows, such that the results only contains rows which contain data
  */
-class LazyEmptyRowDispenserSource[Q <: DomainQuery](val source: LazySource[Q]) extends LazySource[Q] {
-
+class LazyEmptyRowDispenserSource[Q <: DomainQuery](val source: LazySource[Q]) extends LazySource[Q] with LazyLogging {
+  
   override def request(query: Q): LazyDataFuture = {
+    logger.debug(s"Filtering empty rows lazyly for ${query.getQueryID}")
     source.request(query).flatMap(_.filter(row => !(row.isInstanceOf[EmptyRow] || row.isEmpty)))
   } 
 
@@ -51,9 +54,10 @@ class LazyEmptyRowDispenserSource[Q <: DomainQuery](val source: LazySource[Q]) e
 /**
  * dispense all empty rows in the requested source
  */
-class EagerEmptyRowDispenserSource[Q <: DomainQuery, R](source: Source[Q, R]) extends EagerSource[Q] {
+class EagerEmptyRowDispenserSource[Q <: DomainQuery, R](source: Source[Q, R]) extends EagerSource[Q] with LazyLogging {
   
   override def request(query: Q): EagerDataFuture = {
+    logger.debug(s"Filtering empty rows eagerly for ${query.getQueryID}")
     source.request(query).flatMap(_ match {
       case spool: Spool[_] => spool.toSeq.asInstanceOf[EagerDataFuture] //collect
       case seq: Seq[_] => Future(seq.asInstanceOf[Seq[Row]]) // do nothing
