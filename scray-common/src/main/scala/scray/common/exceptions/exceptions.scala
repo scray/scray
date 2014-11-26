@@ -18,9 +18,10 @@ import java.util.UUID
 
 object ExceptionIDs {
   // SIL-Scray-Commons-000+ error types
-  val GENERAL_FAULT = "SIL-Scray-Commons-001"
+  val GENERAL_FAULT = "SIL-Scray-Commons-001-General"
+  val UNIMPLEMNTED = "SIL-Scray-Commons-002-Unimplemented"
   // SIL-Scray-Service-010+ parsing error types
-  val PARSING_ERROR = "SIL-Scray-Service-010"
+  val PARSING_ERROR = "SIL-Scray-Service-010-Parsing-Error"
 }
 
 class ScrayException(id : String, query : Option[UUID], msg : String, cause : Option[Throwable] = None)
