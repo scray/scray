@@ -34,7 +34,8 @@ object QueryDomainParserExceptionReasons extends Enumeration with Serializable {
 }
 
 class QueryDomainRangeException(column: Column, query: DomainQuery) extends ScrayException(ExceptionIDs.queryDomainRangeException, Some(query.getQueryID), 
-        s"Could not execute tome-based index on column:${column.columnName}, reason is that the domain with a range has no bounds at all.") with Serializable
+    s"Could not execute time or wildcard-based index on column:${column.columnName}, reason is that the domain with a range has no bounds at all.") 
+    with Serializable
 
 class QueryWithoutColumnsException(query: Query) 
     extends ScrayException(ExceptionIDs.queryWithoutColumnsExceptionID, Some(query.getQueryID), "query contains no columns to query") with Serializable
@@ -69,4 +70,6 @@ class WrongQueryTypeForCacheException(query: DomainQuery, sourceDiscriminant: St
     extends ScrayException(ExceptionIDs.wrongQueryTypeForCacheID, Some(query.getQueryID), s"""Different type query was expected for 
     this cache for source ${sourceDiscriminant} on query ${query.getQueryspace}""") with Serializable
 
-    
+class WildcardIndexRangeException(query: DomainQuery, column: Column)
+    extends ScrayException(ExceptionIDs.queryWildcardRangeException, Some(query.getQueryID), s"""Ranges can only be queried if the number of
+        letters stays the same for the length of the prefix for column ${column.columnName} on query ${query.getQueryspace}""") with Serializable

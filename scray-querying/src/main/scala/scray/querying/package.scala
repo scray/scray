@@ -19,5 +19,6 @@ package object querying {
     val keyBasedQueryExceptionID = "SIL-Scray-Querying-800"
     // 900+ = errors for specific indexes
     val queryDomainRangeException = "SIL-Scray-Querying-901"
+    val queryWildcardRangeException = "SIL-Scray-Querying-902"
   }
 }
