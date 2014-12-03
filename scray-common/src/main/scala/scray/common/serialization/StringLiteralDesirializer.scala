@@ -53,7 +53,7 @@ object StringLiteralDeserializer {
   /**
    * Deserialize untyped literals
    */
-  def deserialize(literal : String) : Try[Any] = {
+  def deserialize(literal : String) : Try[_] = {
     val parser = new LiteralParser(literal)
     parser.InputLine.run() match {
       case Success(result) => Success(result)
@@ -67,19 +67,21 @@ object StringLiteralDeserializer {
   /**
    * Deserialize typed literals
    */
-  def deserialize(literal : String, typeTag : String) : Try[Any] = typeTag match {
-    case tag : String if (tag.equals(TypeTags.STR)) => Success(literal)
-    case tag : String if (tag.equals(TypeTags.INT)) => cast[Int]("Int", literal, { _.toInt })
-    case tag : String if (tag.equals(TypeTags.LNG)) => cast[Long]("Long", literal, { _.toLong })
-    case tag : String if (tag.equals(TypeTags.DBL)) => cast[Double]("Double", literal, { _.toDouble })
-    case tag : String if (tag.equals(TypeTags.BOL)) => cast[Boolean]("Boolean", literal, { _.toBoolean })
-    case tag : String if (tag.equals(TypeTags.UID)) => cast[UUID]("UUID", literal, { UUID.fromString(_) })
-    case tag : String if (tag.equals(TypeTags.DAT)) => cast[Date]("Date", literal, {
-      val sdf = new SimpleDateFormat(DATEFORMAT)
-      sdf.setTimeZone(java.util.TimeZone.getTimeZone(TIMEZONE))
-      sdf.parse(_)
-    })
-  }
+  def deserialize(literal : String, typeTag : String) : Try[_] =
+    typeTag match {
+      case tag : String if (tag.equals(TypeTags.STR)) => Success(literal)
+      case tag : String if (tag.equals(TypeTags.INT)) => cast[Int]("Int", literal, { _.toInt })
+      case tag : String if (tag.equals(TypeTags.LNG)) => cast[Long]("Long", literal, { _.toLong })
+      case tag : String if (tag.equals(TypeTags.DBL)) => cast[Double]("Double", literal, { _.toDouble })
+      case tag : String if (tag.equals(TypeTags.BOL)) => cast[Boolean]("Boolean", literal, { _.toBoolean })
+      case tag : String if (tag.equals(TypeTags.UID)) => cast[UUID]("UUID", literal, { UUID.fromString(_) })
+      case tag : String if (tag.equals(TypeTags.DAT)) => cast[Date]("Date", literal, {
+        val sdf = new SimpleDateFormat(DATEFORMAT)
+        sdf.setTimeZone(java.util.TimeZone.getTimeZone(TIMEZONE))
+        sdf.parse(_)
+      })
+      case _ => Failure(new ScrayServiceException(id = ExceptionIDs.PARSING_ERROR, None, msg = s"Illegal typeTag '${tag}'.", cause = None))
+    }
 
   /**
    * Generic string casting function
