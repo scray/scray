@@ -227,7 +227,7 @@ object Planner {
         val indexSource = new QueryableSource(tableConf.indexTableConfig.queryableStore(),
           query.getQueryspace, tableConf.indexTableConfig.table, index.isSorted)
         val mainSource = new KeyValueSource(tableConf.mainTableConfig.readableStore(), 
-          query.getQueryspace, tableConf.mainTableConfig.table, true)
+          query.getQueryspace, tableConf.mainTableConfig.table, false)
         tableConf.indexConfig match {
           case simple: SimpleHashJoinConfig => new SimpleHashJoinSource(indexSource, colConf.column, 
             mainSource, tableConf.mainTableConfig.primarykeyColumn)

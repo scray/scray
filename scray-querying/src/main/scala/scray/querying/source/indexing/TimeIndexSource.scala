@@ -99,8 +99,10 @@ class TimeIndexSource[Q <: DomainQuery, M, R, V](
           case None => rvd.upperBound match {
             case Some(end) => {
               // warning: query years all up to end!
+              val endValue = end.value.asInstanceOf[Long]
+              val endBound = Some(Bound[Long](end.inclusive, endValue))
               years ++= timeIndexConfig.minimumYear.to(getYearFromTime(Time.now))
-              None
+              Some(new RangeValueDomain[Long](timeIndexConfig.indexColumnMs, None, endBound))
             }
             case None => throw new QueryDomainRangeException(timeIndexConfig.timeReferenceCol, query)
           }

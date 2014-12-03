@@ -79,14 +79,14 @@ abstract class AbstractHashJoinSource[Q <: DomainQuery, M, R /* <: Product */, V
       // we can map the first one; the others must be inserted 
       // into the spool before we return it
       if(results.size > 0) {
-        val sp = results(0) *:: spool.tail
+        val sp = results(0) *:: Future.value(Spool.empty[Row])
         if(results.size > 1) {
           Future.value(insertRowsIntoSpool(results.tail, sp))
         } else {
           Future.value(sp)
         }
       } else {
-        spool.tail
+        Future.value(in *:: Future.value(Spool.empty[Row]))
       }      
     }
   }

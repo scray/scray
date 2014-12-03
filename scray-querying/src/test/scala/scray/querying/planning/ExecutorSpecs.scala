@@ -27,6 +27,7 @@ import scray.querying.description.ColumnOrdering
 import com.twitter.util.Await
 import com.twitter.concurrent.Spool
 import scala.annotation.tailrec
+import scala.collection.mutable.ArrayBuffer
 
 @RunWith(classOf[JUnitRunner])
 class ScrayQueryingExecutorTest extends WordSpec {
@@ -35,14 +36,14 @@ class ScrayQueryingExecutorTest extends WordSpec {
   
   val cols = 1.until(10).map(i => Column(s"bla$i", ti))
 
-  val sr1 = SimpleRow(List(RowColumn(cols(0), 34), RowColumn(cols(1), 21)))  
-  val sr2 = SimpleRow(List(RowColumn(cols(1), 12), RowColumn(cols(2), "guck")))  
-  val sr3 = SimpleRow(List(RowColumn(cols(0), 56), RowColumn(cols(1), 34), RowColumn(cols(2), 456)))  
-  val sr4 = SimpleRow(List(RowColumn(cols(0), 1), RowColumn(cols(1), 34.4f)))  
-  val sr5 = SimpleRow(List(RowColumn(cols(0), 33), RowColumn(cols(1), 21)))    
-  val sr6 = SimpleRow(List(RowColumn(cols(0), 34), RowColumn(cols(1), "dffg")))  
-  val sr7 = SimpleRow(List())  
-  val sr8 = SimpleRow(List(RowColumn(cols(0), 100), RowColumn(cols(1), "dffg")))  
+  val sr1 = SimpleRow(ArrayBuffer(RowColumn(cols(0), 34), RowColumn(cols(1), 21)))  
+  val sr2 = SimpleRow(ArrayBuffer(RowColumn(cols(1), 12), RowColumn(cols(2), "guck")))  
+  val sr3 = SimpleRow(ArrayBuffer(RowColumn(cols(0), 56), RowColumn(cols(1), 34), RowColumn(cols(2), 456)))  
+  val sr4 = SimpleRow(ArrayBuffer(RowColumn(cols(0), 1), RowColumn(cols(1), 34.4f)))  
+  val sr5 = SimpleRow(ArrayBuffer(RowColumn(cols(0), 33), RowColumn(cols(1), 21)))    
+  val sr6 = SimpleRow(ArrayBuffer(RowColumn(cols(0), 34), RowColumn(cols(1), "dffg")))  
+  val sr7 = SimpleRow(ArrayBuffer())  
+  val sr8 = SimpleRow(ArrayBuffer(RowColumn(cols(0), 100), RowColumn(cols(1), "dffg")))  
   
   // these seqs are ordered
   val seq1 = Future(Seq(sr4, sr1, sr3))
@@ -80,7 +81,6 @@ class ScrayQueryingExecutorTest extends WordSpec {
       countAndPrintUnordered(spool.tail, number - 1, Some(row))
     }
   }
-
   
   "Scray's executor with ordered seq and columns" should {
     "return empty if no results are provided" in {

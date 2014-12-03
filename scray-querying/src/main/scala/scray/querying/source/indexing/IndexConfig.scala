@@ -10,16 +10,44 @@ import scray.querying.description.Column
 sealed trait IndexConfig extends Serializable
 
 /**
- * configuration which must be passed to TimeIndexSource
+ * configuration for TimeIndexSource
  */
 case class TimeIndexConfig(
-    timeReferenceCol: Column, 
+    // column in the lookup-table that can be queried
+    timeReferenceCol: Column,
+    // column in the index-table that reflects the year for the time
     indexRowColumnYear: Column,
-    indexColumnMs: Column, 
+    // column in the index-table that contains the time information in ms
+    indexColumnMs: Column,
+    // column in the index-table that contains the references into the lookup-source
     indexReferencesColumn: Column,
-    timeZone: TimeZone = TimeZone.getTimeZone("UTC"),
+    // time zone of index, only relevant for turns of the year
+    timeZone: TimeZone = TimeZone.getTimeZone("UTC"), 
+    // minimum year of data that is indexed
     minimumYear: Int = 2014,
+    // query limit
     maxLimit: Option[Long] = Some(5000)) extends IndexConfig
+
+/**
+ * configuration for WildcardIndexSource
+ */
+case class WildcardIndexConfig(
+    // column in the lookup-table that can be queried
+    referenceCol: Column,
+    // first letters to be indexed
+    indexRowNameCol: Column,
+    // UTF8-Column for the name which is indexed
+    indexNameColumn: Column,
+    // column in the index-table that contains the references into the lookup-source
+    indexReferencesColumn: Column,
+    // the number of characters in the prefix
+    numberOfPrefixCharacters: Int,
+    // if the index is lower case, i.e. enables
+    lowerCaseIndex: Boolean,
+    // if the prefix is present in the data
+    prefixPresent: Boolean,
+    // query limit
+    maxLimit: Option[Long] = Some(5000)) extends IndexConfig    
 
 /**
  * simple in-stream index
