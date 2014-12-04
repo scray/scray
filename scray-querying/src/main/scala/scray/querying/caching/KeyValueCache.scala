@@ -1,3 +1,17 @@
+// See the LICENCE.txt file distributed with this work for additional
+// information regarding copyright ownership.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 package scray.querying.caching
 
 import scray.querying.queries.DomainQuery
@@ -9,12 +23,13 @@ import scray.querying.description.internal.WrongQueryTypeForCacheException
 
 class KeyValueCache[K, V](
     val sourceDiscriminant: String,
+    val valueSerializer: Option[Serializer[V]] = None,
     val cachesizegb: Double = 1.0D,
     val numberentries: Option[Int] = None) extends Cache[V] {
 
   val db = DBMaker.newMemoryDirectDB().transactionDisable().asyncWriteEnable().make
-  val cache = db.createHashMap("cache").counterEnable().make[K, V]
-  
+  val cache = db.createHashMap("cache").counterEnable().valueSerializer(valueSerializer.orNull).make[K, V]
+
   /**
    * retrieve one row, ending is an implicit of existing contents (i.e. can only be one)
    */
