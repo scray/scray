@@ -29,30 +29,30 @@ namespace java scray.service.qmodel.thriftjava
 /**
  * Table identifier
  */
-struct STableInfo {
-	1: string dbSystem,				// e.g. "cassandra"
-	2: string dbId,					// e.g. cassandra keyspace
-	3: string tableId,				// e.g. cassandra column family
-	4: scrayBase.STypeInfo keyT		// table key type
+struct ScrayTTableInfo {
+	1: string dbSystem,                // e.g. "cassandra"
+	2: string dbId,					   // e.g. cassandra keyspace
+	3: string tableId,                 // e.g. cassandra column family
+	4: scrayBase.ScrayTTypeInfo keyT   // table key type
 }
 
 /**
  * Column identifier
  */
-struct SColumnInfo {
-	1: string name,							// column name
-	2: optional scrayBase.STypeInfo sType,	// optional Column type
-	3: optional STableInfo tableId			// optional table identifier
+struct ScrayTColumnInfo {
+	1: string name,							    // column name
+	2: optional scrayBase.ScrayTTypeInfo tType,	// optional Column type
+	3: optional ScrayTTableInfo tableId			// optional table identifier
 }
 
 /**
  * Query identifier
  */
-struct SQueryInfo {
-	1: optional scrayBase.UUID queryId,	// optional query id (set by planner)
-	2: string querySpace,    			// predefined query context
-	3: STableInfo tableInfo,			// table identifier
-    4: set<SColumnInfo> columns,		// Columns to fetch
+struct ScrayTQueryInfo {
+	1: optional scrayBase.ScrayUUID queryId,   // optional query id (set by planner)
+	2: string querySpace,    			       // predefined query context
+	3: ScrayTTableInfo tableInfo,			   // table identifier
+    4: set<ScrayTColumnInfo> columns,		   // Columns to fetch
 }
 
 //////////////////////////////////////////////////////////////////////////////////
@@ -63,17 +63,17 @@ struct SQueryInfo {
 /**
  * Main query type
  */
-struct SQuery {
-	1: SQueryInfo queryInfo,					// query meta information
-    2: map<string, scrayBase.SValue> values,	// query expression named values
-	3: string queryExpression					// query expression string
+struct ScrayTQuery {
+	1: ScrayTQueryInfo queryInfo,					// query meta information
+    2: map<string, scrayBase.ScrayTValue> values,	// query expression named values
+	3: string queryExpression					    // query expression string
 }
 
 //////////////////////////////////////////////////////////////////////////////////
 // result types
 //////////////////////////////////////////////////////////////////////////////////
 
-struct SRow {
+struct ScrayTRow {
 	1: binary key,					// key value
 	2: map<string, binary> columns	// mapped column values
 }

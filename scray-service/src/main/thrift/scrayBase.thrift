@@ -22,7 +22,8 @@ namespace java scray.service.base.thriftjava
 /*
  * Atomic types
  */
-enum SType {
+enum ScrayTType {
+ ANY = 0,
  BOOL = 1,
  INT = 2,
  LONG = 3,
@@ -34,23 +35,23 @@ enum SType {
 /**
  * Data type information
  */
-struct STypeInfo {
-	1: SType sType,
+struct ScrayTTypeInfo {
+	1: ScrayTType tType,
 	2: optional string className
 }
 
 /**
  * Data unit
  */
-struct SValue {
-	1: STypeInfo sType,
+struct ScrayTValue {
+	1: ScrayTTypeInfo sType,
 	2: binary value
 }
 
 /**
  * Identifier
  */
-struct UUID {
+struct ScrayUUID {
 	1: i64 mostSigBits, 
 	2: i64 leastSigBits
 }
