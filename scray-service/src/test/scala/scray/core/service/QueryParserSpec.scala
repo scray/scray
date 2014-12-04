@@ -91,7 +91,7 @@ class QueryParserSpec extends FlatSpec with Matchers {
     parsed
   }
 
-  private def generate(parsed : Try[SQuery]) : Query = {
+  private def generate(parsed : Try[_Query]) : Query = {
     parsed.isSuccess should be(true)
     val query = parsed.get.createQuery
     if (query.isFailure) println(query)
