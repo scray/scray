@@ -17,6 +17,12 @@
 			<artifactId>parboiled_${scala.suffix}</artifactId>
 			<version>${parboiled.version}</version>
 		</dependency>
+		<dependency>
+		  <!-- version must be aligned with Summingbird, manage in parent pom? -->
+      <groupId>com.twitter</groupId>
+      <artifactId>chill_2.10</artifactId>
+      <version>0.4.0</version>
+    </dependency>
 	</dependencies>
 
 	<licenses>
