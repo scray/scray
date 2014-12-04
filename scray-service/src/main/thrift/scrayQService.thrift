@@ -28,7 +28,7 @@ namespace java scray.service.qservice.thriftjava
 /**
  * Scray-level exceptions
  */
-exception SException {
+exception ScrayTException {
 	1: i32 what,
 	2: string why
 }
@@ -36,25 +36,25 @@ exception SException {
 /**
  * Subset of result rows as transmission units
  */
-struct SResultFrame {
-	1: scrayQModel.SQueryInfo queryInfo,	// query meta information
-	2: i32 offset,							// result stream offset
-	3: list<scrayQModel.SRow> rows			// list of rows
+struct ScrayTResultFrame {
+	1: scrayQModel.ScrayTQueryInfo queryInfo,	// query meta information
+	2: i32 offset,							    // result stream offset
+	3: list<scrayQModel.ScrayTRow> rows			// list of rows
 }
 
 /**
  * Query executor with streaming result sets
  */
-service ScrayService {
+service ScrayTService {
 
 	/**
 	 * Submit queries
 	 */
-	scrayBase.UUID query(1: scrayQModel.SQuery query) throws (1: SException ex)
+	scrayBase.ScrayUUID query(1: scrayQModel.ScrayTQuery query) throws (1: ScrayTException ex)
 	
 	/**
 	 * Fetch query results
 	 */
-	SResultFrame getResults(1: scrayBase.UUID queryId, 2: i32 offset) throws (1: SException ex)
+	ScrayTResultFrame getResults(1: scrayBase.ScrayUUID queryId, 2: i32 offset) throws (1: ScrayTException ex)
 
 }
