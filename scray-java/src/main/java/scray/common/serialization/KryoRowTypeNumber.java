@@ -12,14 +12,23 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-package scray.querying.caching
-
-import scray.common.serialization.KryoRowTypeNumber
+package scray.common.serialization;
 
 /**
- * identification numbers for caching serialization
+ * Repository for the identifiers of row types.
+ * This enum is used to distinguish between stored row types in the serialized byte array.
  */
-package object serialization {
-  val SIMPLE_ROW = KryoRowTypeNumber.simplerow.getNumber()
-  val COMPOSITE_ROW = KryoRowTypeNumber.compositerow.getNumber()
+public enum KryoRowTypeNumber {
+
+	simplerow(1), compositerow(2); 
+
+	private int number;
+	
+	private KryoRowTypeNumber(int number) {
+		this.number = number;
+	}
+	
+	public int getNumber() {
+		return number; 
+	}
 }

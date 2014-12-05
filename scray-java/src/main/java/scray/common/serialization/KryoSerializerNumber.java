@@ -12,14 +12,23 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-package scray.querying.caching
-
-import scray.common.serialization.KryoRowTypeNumber
+package scray.common.serialization;
 
 /**
- * identification numbers for caching serialization
+ * Repository for the numbers used with Kryo.
+ * Java interoperability is ensured using JAVA.
  */
-package object serialization {
-  val SIMPLE_ROW = KryoRowTypeNumber.simplerow.getNumber()
-  val COMPOSITE_ROW = KryoRowTypeNumber.compositerow.getNumber()
+public enum KryoSerializerNumber {
+
+	column(200), rowcolumn(201), simplerow(202), compositerow(203); 
+
+	private int number;
+	
+	private KryoSerializerNumber(int number) {
+		this.number = number;
+	}
+	
+	public int getNumber() {
+		return number; 
+	}
 }

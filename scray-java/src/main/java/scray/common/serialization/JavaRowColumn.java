@@ -12,14 +12,32 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-package scray.querying.caching
-
-import scray.common.serialization.KryoRowTypeNumber
+package scray.common.serialization;
 
 /**
- * identification numbers for caching serialization
+ * simple cient-side JAVA-based row columns implementation
  */
-package object serialization {
-  val SIMPLE_ROW = KryoRowTypeNumber.simplerow.getNumber()
-  val COMPOSITE_ROW = KryoRowTypeNumber.compositerow.getNumber()
+public class JavaRowColumn<T> {
+
+	private JavaColumn column = null;
+	private T value = null;
+	
+	public JavaRowColumn() {}
+	public JavaRowColumn(JavaColumn column, T value) {
+		this.column = column;
+		this.value = value;
+	}
+	
+	public JavaColumn getColumn() {
+		return column;
+	}
+	public void setColumn(JavaColumn column) {
+		this.column = column;
+	}
+	public T getValue() {
+		return value;
+	}
+	public void setValue(T value) {
+		this.value = value;
+	}
 }

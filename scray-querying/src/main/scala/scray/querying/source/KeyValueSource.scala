@@ -32,6 +32,7 @@ import scray.querying.caching.Cache
 import org.slf4j.LoggerFactory
 import com.typesafe.scalalogging.slf4j.LazyLogging
 import scray.querying.caching.serialization.KeyValueCacheSerializer
+import scray.querying.caching.serialization.RegisterRowCachingSerializers
 
 /**
  * A source that queries a Storehaus-store for a given value.
@@ -81,5 +82,8 @@ class KeyValueSource[K, V](val store: ReadableStore[K, V],
 
   override def getDiscriminant = table.toString()
   
-  override def createCache: Cache[_] = new KeyValueCache[K, Row](getDiscriminant, Some(new KeyValueCacheSerializer))
+  override def createCache: Cache[_] = {
+    RegisterRowCachingSerializers()
+    new KeyValueCache[K, Row](getDiscriminant, Some(new KeyValueCacheSerializer))
+  }
 }

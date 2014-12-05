@@ -20,16 +20,22 @@ import scray.querying.description.{ Column, CompositeRow, Row, RowColumn, TableI
 import scala.collection.mutable.ArrayBuffer
 import scala.annotation.tailrec
 import scray.common.serialization.KryoPoolSerialization
+import scray.common.serialization.KryoSerializerNumber
 
 /**
  * convenience method to register these serializers
  */
 object RegisterRowCachingSerializers {
+  // it's safe to not lock this var because it's locked through cache-lock in the Registry 
+  private var registered = false
   def apply() = {
-    KryoPoolSerialization.register(classOf[Column], new ColumnSerialization)
-    KryoPoolSerialization.register(classOf[RowColumn[_]], new RowColumnSerialization)
-    KryoPoolSerialization.register(classOf[SimpleRow], new SimpleRowSerialization)
-    KryoPoolSerialization.register(classOf[CompositeRow], new CompositeRowSerialization)
+    if(!registered) {
+      registered = true
+      KryoPoolSerialization.register(classOf[Column], new ColumnSerialization, KryoSerializerNumber.column.getNumber())
+      KryoPoolSerialization.register(classOf[RowColumn[_]], new RowColumnSerialization, KryoSerializerNumber.rowcolumn.getNumber())
+      KryoPoolSerialization.register(classOf[SimpleRow], new SimpleRowSerialization, KryoSerializerNumber.simplerow.getNumber())
+      KryoPoolSerialization.register(classOf[CompositeRow], new CompositeRowSerialization, KryoSerializerNumber.compositerow.getNumber())
+    }
   }
 }
 
@@ -49,7 +55,7 @@ class CompositeRowSerialization extends KSerializer[CompositeRow] {
         k.writeObject(o, composite)
     }
   }
-  
+
   override def read(k: Kryo, i: Input, c: Class[CompositeRow]): CompositeRow = {
     val abuf = new ArrayBuffer[Row]
     @tailrec def deserializeRows(count: Int): Unit = {
@@ -111,14 +117,13 @@ class RowColumnSerialization extends KSerializer[RowColumn[_]] {
  * fast serialization for Columns
  */
 class ColumnSerialization extends KSerializer[Column] {
-  
+
   override def write(k: Kryo, o: Output, v: Column): Unit = {
     o.writeString(v.table.dbSystem)
     o.writeString(v.table.dbId)
     o.writeString(v.table.tableId)
     o.writeString(v.columnName)
   }
-    
 
   override def read(k: Kryo, i: Input, c: Class[Column]): Column = {
     val dbSystem = i.readString
