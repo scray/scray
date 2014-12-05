@@ -53,6 +53,7 @@ struct ScrayTQueryInfo {
 	2: string querySpace,    			       // predefined query context
 	3: ScrayTTableInfo tableInfo,			   // table identifier
     4: set<ScrayTColumnInfo> columns,		   // Columns to fetch
+    5: optional i64 expires                    // results won't be available after this (epoch) time
 }
 
 //////////////////////////////////////////////////////////////////////////////////

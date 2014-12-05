@@ -12,9 +12,9 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-package scray.core.service
 
-import java.nio.ByteBuffer
+package scray.core.service.parser
+
 import scala.Option.option2Iterable
 import scala.util.Failure
 import scala.util.Success
@@ -30,57 +30,19 @@ import scray.querying.description.Greater
 import scray.querying.description.GreaterEqual
 import scray.querying.description.Smaller
 import scray.querying.description.SmallerEqual
-import scray.service.qmodel.thrifscala.ScrayTQuery
-import org.scalatest.junit.JUnitRunner
 import scala.util.Try
 import scray.querying.description.Or
 import scray.querying.Query
+import scray.core.service.ScrayTQueryObj
+import org.scalatest.junit.JUnitRunner
 
 @RunWith(classOf[JUnitRunner])
-class QueryParserSpec extends FlatSpec with Matchers {
-
-  def createSQuery(expr : String) : ScrayTQuery = ScrayTQuery(
-    queryInfo = scray.service.qmodel.thrifscala.ScrayTQueryInfo(
-      queryId = Some(scray.service.base.thrifscala.ScrayUUID(1, 2)),
-      querySpace = "myQuerySpace",
-      tableInfo = scray.service.qmodel.thrifscala.ScrayTTableInfo(
-        dbSystem = "myDbSystem",
-        dbId = "myDbId",
-        tableId = "myTableId",
-        keyT = scray.service.base.thrifscala.ScrayTTypeInfo(
-          scray.service.base.thrifscala.ScrayTType(1),
-          Some("scray.classname"))),
-      columns = Set(
-        scray.service.qmodel.thrifscala.ScrayTColumnInfo(
-          name = "col1",
-          None /* STypeInfo */ ,
-          None /* STableInfo */ ),
-        scray.service.qmodel.thrifscala.ScrayTColumnInfo(
-          name = "col2",
-          None /* STypeInfo */ ,
-          None /* STableInfo */ ))),
-    values = Map(
-      "val1" -> scray.service.base.thrifscala.ScrayTValue(
-        scray.service.base.thrifscala.ScrayTTypeInfo(
-          scray.service.base.thrifscala.ScrayTType(2),
-          Some("scray.classname")),
-        ByteBuffer.allocate(10)),
-      "val2" -> scray.service.base.thrifscala.ScrayTValue(
-        scray.service.base.thrifscala.ScrayTTypeInfo(
-          scray.service.base.thrifscala.ScrayTType(2),
-          Some("scray.classname")),
-        ByteBuffer.allocate(10)),
-      "val3" -> scray.service.base.thrifscala.ScrayTValue(
-        scray.service.base.thrifscala.ScrayTTypeInfo(
-          scray.service.base.thrifscala.ScrayTType(2),
-          Some("scray.classname")),
-        ByteBuffer.allocate(10))),
-    queryExpression = expr)
+class QueryParserSpec extends FlatSpec with Matchers with ScrayTQueryObj {
 
   val DEBUG = false
 
   private def parse(query : String) = {
-    val parser = new TQueryParser(createSQuery(query))
+    val parser = new TQueryParser(getTQueryObj(query))
     val parsed = parser.InputLine.run() match {
       case Success(result) => Success(result)
       case Failure(e : ParseError) =>

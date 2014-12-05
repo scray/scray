@@ -22,6 +22,7 @@ object ExceptionIDs {
   val UNIMPLEMNTED = "SIL-Scray-Commons-002-Unimplemented"
   // SIL-Scray-Service-010+ parsing error types
   val PARSING_ERROR = "SIL-Scray-Service-010-Parsing-Error"
+  val SPOOLING_ERROR = "SIL-Scray-Service-011-Spooling-Error"
 }
 
 class ScrayException(id : String, query : Option[UUID], msg : String, cause : Option[Throwable] = None)

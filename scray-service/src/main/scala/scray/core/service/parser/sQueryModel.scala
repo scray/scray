@@ -12,31 +12,21 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-package scray.core.service
+
+package scray.core.service.parser
 
 import java.util.UUID
-
 import scala.util.{ Failure, Success, Try }
-import scala.math.ScalaNumericAnyConversions
-
-import org.parboiled2.CharPredicate
-import org.parboiled2.Parser
-import org.parboiled2.ParserInput
-import org.parboiled2.ParserInput.apply
-import org.parboiled2.Rule0
-import org.parboiled2.Rule1
-import org.parboiled2.Rule2
-
 import scray.common.exceptions.ExceptionIDs
 import scray.common.exceptions.ScrayServiceException
 import scray.common.serialization.StringLiteralDeserializer
-
 import scray.querying.Query
 import scray.querying.queries.SimpleQuery
 import scray.querying.description._
-
 import scray.service.qmodel.thrifscala.ScrayTColumnInfo
 import scray.service.qmodel.thrifscala.ScrayTQuery
+import scala.math.Ordered.orderingToOrdered
+import scray.querying.description._
 
 trait _QueryComponent
  
