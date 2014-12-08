@@ -12,25 +12,23 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-package scray.querying.caching
+package scray.common.serialization;
 
-import scray.querying.queries.DomainQuery
-import scray.querying.source.LazyDataFuture
+/**
+ * Repository for the numbers used with Kryo.
+ * Java interoperability is ensured using JAVA.
+ */
+public enum KryoSerializerNumber {
 
-trait Cache[V] {
+	column(200), rowcolumn(201), simplerow(202), compositerow(203); 
 
-  /**
-   * retrieve data from the cache
-   */
-  def retrieve(query: DomainQuery): Option[V]
-  
-  /**
-   * do maintnance on this cache, e.g. remove old rows
-   */
-  def maintnance: Unit
-  
-  /**
-   * closes the cache and frees up it's resources
-   */
-  def close: Unit
+	private int number;
+	
+	private KryoSerializerNumber(int number) {
+		this.number = number;
+	}
+	
+	public int getNumber() {
+		return number; 
+	}
 }

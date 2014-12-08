@@ -12,25 +12,32 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-package scray.querying.caching
+package scray.common.serialization;
 
-import scray.querying.queries.DomainQuery
-import scray.querying.source.LazyDataFuture
+/**
+ * simple cient-side JAVA-based row columns implementation
+ */
+public class JavaRowColumn<T> {
 
-trait Cache[V] {
-
-  /**
-   * retrieve data from the cache
-   */
-  def retrieve(query: DomainQuery): Option[V]
-  
-  /**
-   * do maintnance on this cache, e.g. remove old rows
-   */
-  def maintnance: Unit
-  
-  /**
-   * closes the cache and frees up it's resources
-   */
-  def close: Unit
+	private JavaColumn column = null;
+	private T value = null;
+	
+	public JavaRowColumn() {}
+	public JavaRowColumn(JavaColumn column, T value) {
+		this.column = column;
+		this.value = value;
+	}
+	
+	public JavaColumn getColumn() {
+		return column;
+	}
+	public void setColumn(JavaColumn column) {
+		this.column = column;
+	}
+	public T getValue() {
+		return value;
+	}
+	public void setValue(T value) {
+		this.value = value;
+	}
 }

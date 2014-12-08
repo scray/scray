@@ -28,6 +28,7 @@ import scray.querying.source.Source
 import org.mapdb.HTreeMap
 import scray.querying.caching.Cache
 import java.util.concurrent.locks.ReentrantLock
+import scray.querying.caching.serialization.RegisterRowCachingSerializers
 
 /**
  * Registry for tables and resources

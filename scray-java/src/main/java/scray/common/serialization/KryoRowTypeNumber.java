@@ -12,25 +12,23 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-package scray.querying.caching
+package scray.common.serialization;
 
-import scray.querying.queries.DomainQuery
-import scray.querying.source.LazyDataFuture
+/**
+ * Repository for the identifiers of row types.
+ * This enum is used to distinguish between stored row types in the serialized byte array.
+ */
+public enum KryoRowTypeNumber {
 
-trait Cache[V] {
+	simplerow(1), compositerow(2); 
 
-  /**
-   * retrieve data from the cache
-   */
-  def retrieve(query: DomainQuery): Option[V]
-  
-  /**
-   * do maintnance on this cache, e.g. remove old rows
-   */
-  def maintnance: Unit
-  
-  /**
-   * closes the cache and frees up it's resources
-   */
-  def close: Unit
+	private int number;
+	
+	private KryoRowTypeNumber(int number) {
+		this.number = number;
+	}
+	
+	public int getNumber() {
+		return number; 
+	}
 }

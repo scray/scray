@@ -116,7 +116,7 @@ case class SimpleRow(
  * for result transformation. The order of the rows in the list 
  * is important for the reference numbers of the columns.
  */
-class CompositeRow(rows: List[Row]) extends Row {
+class CompositeRow(val rows: List[Row]) extends Row {
   override def getColumnValue[V](colNum: Int): Option[V] = {
     @tailrec def getRelevantRowForEntryNumber(colNumLocal: Int, rowList: List[Row]): Option[V] = {
       val size = rowList.head.getNumberOfEntries

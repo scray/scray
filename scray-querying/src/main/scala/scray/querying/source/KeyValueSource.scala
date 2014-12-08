@@ -31,6 +31,8 @@ import scray.querying.caching.KeyValueCache
 import scray.querying.caching.Cache
 import org.slf4j.LoggerFactory
 import com.typesafe.scalalogging.slf4j.LazyLogging
+import scray.querying.caching.serialization.KeyValueCacheSerializer
+import scray.querying.caching.serialization.RegisterRowCachingSerializers
 
 /**
  * A source that queries a Storehaus-store for a given value.
@@ -40,7 +42,7 @@ class KeyValueSource[K, V](val store: ReadableStore[K, V],
     space: String, table: TableIdentifier, enableCaching: Boolean = true) extends EagerSource[KeyBasedQuery[K]] with LazyLogging {
 
   private val queryspaceTable = Registry.getQuerySpaceTable(space, table)
-  private val cache = Registry.getCache[V, KeyValueCache[K, V]](this)
+  private val cache = Registry.getCache[Row, KeyValueCache[K, Row]](this)
   
   val valueToRow: ((K, V)) => Row = queryspaceTable.get.rowMapper.asInstanceOf[((K, V)) => Row]
 
@@ -49,15 +51,16 @@ class KeyValueSource[K, V](val store: ReadableStore[K, V],
     if(enableCaching) {
       cache.retrieve(query).map { value =>
           logger.debug(s"Cache HIT for key ${query.key} for query ${query.getQueryID}")
-          Future.value(Seq(valueToRow((query.key, value))))
+          Future.value(Seq(value))
         }.getOrElse {
           logger.debug(s"Cache MISS for key ${query.key} for query ${query.getQueryID}")
           store.get(query.key).map {
       	    case None => Seq[Row]()
       	    case Some(value) =>
-      	      cache.put(query, value)
+      	      val rowValue = valueToRow((query.key, value))
+      	      cache.put(query, rowValue)
               logger.debug(s"Cache PUT for key ${query.key} for query ${query.getQueryID}")
-      	      Seq(valueToRow((query.key, value)))
+      	      Seq[Row](rowValue)
           }
         }
     } else {
@@ -79,5 +82,8 @@ class KeyValueSource[K, V](val store: ReadableStore[K, V],
 
   override def getDiscriminant = table.toString()
   
-  override def createCache: Cache[_] = new KeyValueCache[K, V](getDiscriminant)
+  override def createCache: Cache[_] = {
+    RegisterRowCachingSerializers()
+    new KeyValueCache[K, Row](getDiscriminant, Some(new KeyValueCacheSerializer))
+  }
 }

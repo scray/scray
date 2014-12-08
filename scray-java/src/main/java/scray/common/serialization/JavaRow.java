@@ -12,25 +12,22 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-package scray.querying.caching
+package scray.common.serialization;
 
-import scray.querying.queries.DomainQuery
-import scray.querying.source.LazyDataFuture
+import java.util.Set;
 
-trait Cache[V] {
-
-  /**
-   * retrieve data from the cache
-   */
-  def retrieve(query: DomainQuery): Option[V]
-  
-  /**
-   * do maintnance on this cache, e.g. remove old rows
-   */
-  def maintnance: Unit
-  
-  /**
-   * closes the cache and frees up it's resources
-   */
-  def close: Unit
+/**
+ * Row which contains accessors for the columns
+ */
+public interface JavaRow {
+	
+	/**
+	 * get a value of this row
+	 */
+	public <T> T getColumnValue(JavaColumn column);
+	
+	/**
+	 * get all columns of this Row
+	 */
+	public Set<JavaColumn> getAllColumns(); 
 }

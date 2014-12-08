@@ -14,23 +14,12 @@
 // limitations under the License.
 package scray.querying.caching
 
-import scray.querying.queries.DomainQuery
-import scray.querying.source.LazyDataFuture
+import scray.common.serialization.KryoRowTypeNumber
 
-trait Cache[V] {
-
-  /**
-   * retrieve data from the cache
-   */
-  def retrieve(query: DomainQuery): Option[V]
-  
-  /**
-   * do maintnance on this cache, e.g. remove old rows
-   */
-  def maintnance: Unit
-  
-  /**
-   * closes the cache and frees up it's resources
-   */
-  def close: Unit
+/**
+ * identification numbers for caching serialization
+ */
+package object serialization {
+  val SIMPLE_ROW = KryoRowTypeNumber.simplerow.getNumber()
+  val COMPOSITE_ROW = KryoRowTypeNumber.compositerow.getNumber()
 }
