@@ -59,7 +59,7 @@ object StringLiteralDeserializer {
       case Success(result) => Success(result)
       case Failure(e) => {
         if (e.isInstanceOf[ParseError]) sys.error(parser.formatError(e.asInstanceOf[ParseError], showTraces = true))
-        Failure(new ScrayServiceException(id = ExceptionIDs.PARSING_ERROR, None, msg = s"Unparsable value literal '$literal'.", cause = Some(e)))
+        Failure(new ScrayException(id = ExceptionIDs.SERIALIZATION_FAULT, None, msg = s"Unparsable value literal '$literal'.", cause = Some(e)))
       }
     }
   }
@@ -80,7 +80,7 @@ object StringLiteralDeserializer {
         sdf.setTimeZone(java.util.TimeZone.getTimeZone(TIMEZONE))
         sdf.parse(_)
       })
-      case _ => Failure(new ScrayServiceException(id = ExceptionIDs.PARSING_ERROR, None, msg = s"Illegal typeTag '${tag}'.", cause = None))
+      case _ => Failure(new ScrayException(id = ExceptionIDs.SERIALIZATION_FAULT, None, msg = s"Illegal typeTag '${tag}'.", cause = None))
     }
 
   /**
@@ -91,8 +91,8 @@ object StringLiteralDeserializer {
     Success(res)
   } catch {
     case e : Exception => Failure(
-      new ScrayServiceException(
-        id = ExceptionIDs.PARSING_ERROR, None, msg = s"Unparsable ${typeName} literal '$literal'.", cause = Some(e)))
+      new ScrayException(
+        id = ExceptionIDs.SERIALIZATION_FAULT, None, msg = s"Unparsable ${typeName} literal '$literal'.", cause = Some(e)))
   }
 
 }
