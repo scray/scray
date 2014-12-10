@@ -1,32 +1,50 @@
 package scray.core.service
 
-import java.nio.ByteBuffer
-import java.util.UUID
-
 import org.junit.runner.RunWith
+import org.mockito.Matchers._
+import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfter
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 import org.scalatest.junit.JUnitRunner
-
+import org.scalatest.mock.MockitoSugar
+import com.twitter.concurrent.Spool
 import com.twitter.finagle.Thrift
-import com.twitter.util._
-
-import scray.service.base.thrifscala.ScrayUUID
+import com.twitter.util.Await
+import scray.querying.description.Row
+import scray.querying.planning.Planner
 import scray.service.qmodel.thrifscala.ScrayTQuery
-import scray.service.qmodel.thrifscala.ScrayTQueryInfo
-import scray.service.qmodel.thrifscala.ScrayTRow
-import scray.service.qservice.thrifscala.ScrayTResultFrame
+import scray.service.qmodel.thrifscala.ScrayUUID
 import scray.service.qservice.thrifscala.ScrayTService
+import scray.core.service.util.{ SpoolSamples, TQuerySamples }
+import scray.querying.Query
+import scray.core.service.spools.TimedSpoolRack
 
 @RunWith(classOf[JUnitRunner])
-class ThriftSpec extends FlatSpec with Matchers with BeforeAndAfter with ScrayTQueryObj {
+class ThriftSpec
+  extends FlatSpec
+  with Matchers
+  with BeforeAndAfter
+  with TQuerySamples
+  with MockitoSugar
+  with KryoPoolRegistration
+  with SpoolSamples {
 
   val ENDPOINT = "localhost:8080"
 
-  val server = Thrift.serveIface(ENDPOINT, ServiceImpl)
+  // prepare back end (query engine) mock
+  val mockplanner = mock[(Query) => Spool[Row]]
+  object MockedSpoolRack extends TimedSpoolRack(planAndExecute = mockplanner)
+  when(mockplanner(anyObject())).thenReturn(spool1.get)
+
+  // prepare finagle
+  object TestService extends ScrayTServiceImpl(MockedSpoolRack)
+  val server = Thrift.serveIface(ENDPOINT, TestService)
+  val client = Thrift.newIface[ScrayTService.FutureIface](ENDPOINT)
 
   before {
+    // register kryo serializers
+    register
     println("Thrift server bound to: " + server.boundAddress)
   }
 
@@ -35,10 +53,7 @@ class ThriftSpec extends FlatSpec with Matchers with BeforeAndAfter with ScrayTQ
   }
 
   "scray service query method" should "return a query id" in {
-    val queryObj : ScrayTQuery = getTQueryObj("SELECT @nothing FROM @nowhere")
-
-    // prepare client
-    val client = Thrift.newIface[ScrayTService.FutureIface](ENDPOINT)
+    val queryObj : ScrayTQuery = createTQuery("SELECT @col1 FROM @myTableId")
 
     //call service
     val res = client.query(queryObj) onFailure { e => throw e } onSuccess { r => println(s"Received '$r'.") }
@@ -46,21 +61,4 @@ class ThriftSpec extends FlatSpec with Matchers with BeforeAndAfter with ScrayTQ
     Await.result(res) shouldBe a[ScrayUUID]
   }
 
-}
-
-object ServiceImpl extends ScrayTService.FutureIface with ScrayTQueryObj {
-
-  val queryObj : ScrayTQuery = getTQueryObj("SELECT @nothing FROM @nowhere")
-  val id = UUID.randomUUID()
-
-  def query(query : ScrayTQuery) : Future[ScrayUUID] =
-    Future.value(ScrayUUID(id.getLeastSignificantBits(), id.getMostSignificantBits()))
-
-  def getResults(queryId : ScrayUUID, offset : Int) : Future[ScrayTResultFrame] = {
-    val queryInfo : ScrayTQueryInfo = queryObj.queryInfo
-    val offset : Int = 1
-    val rows : Seq[ScrayTRow] = Seq(ScrayTRow(ByteBuffer.allocate(10), Map("foo" -> ByteBuffer.allocate(10))))
-    val frame = ScrayTResultFrame(queryInfo, offset, rows)
-    Future.value(frame)
-  }
 }

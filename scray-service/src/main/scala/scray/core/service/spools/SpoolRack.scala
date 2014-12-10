@@ -1,3 +1,18 @@
+// See the LICENCE.txt file distributed with this work for additional
+// information regarding copyright ownership.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package scray.core.service.spools
 
 import java.util.UUID
@@ -10,46 +25,16 @@ import com.twitter.util.{ Future, Time, Timer, Duration, JavaTimer }
 import scray.querying.Query
 import scray.querying.description.Row
 import scray.querying.planning.QueryExecutor
-import scray.common.exceptions.ScrayServiceException
-import scray.common.exceptions.ExceptionIDs
+import scray.core.service.ScrayServiceException
+import scray.core.service.ExceptionIDs
 import scray.service.qmodel.thrifscala.ScrayTQueryInfo
 import com.twitter.scrooge.TFieldBlob
 import scray.service.qmodel.thrifscala.ScrayTQuery
-import scray.service.base.thrifscala.ScrayUUID
+import scray.service.qmodel.thrifscala.ScrayUUID
 import scray.querying.planning.Planner
-import scray.core.service.UUID2ScrayUUID
-
-/**
- * Spool repo holding temporal query result sets
- *
- */
-trait SpoolRack {
-
-  /**
-   * Add a new temporal spool to be retrieved later
-   *
-   * @param query the underlying query
-   * @param tQueryInfo thrift meta info
-   * @return updated thrift meta info to be sent back to the service client
-   */
-  def putSpool(query : Query, tQueryInfo : ScrayTQueryInfo) : Future[ScrayTQueryInfo]
-
-  /**
-   * Retrieve existing temporal spool for consecutively retrieving result set frames
-   *
-   * @param uuid query identifier
-   * @return spool container holding spool and meta info
-   */
-  def getSpool(uuid : ScrayUUID) : Future[ServiceSpool]
-
-  /**
-   * Decommission temporal spool. This is normally called by the timer
-   *
-   * @param uuid query identifier
-   * @return nothing
-   */
-  def removeSpool(uuid : UUID) : Future[Unit]
-}
+import scray.core.service._
+import scala.util.Failure
+import scala.util.Success
 
 /**
  * Container holding spool and meta info
@@ -57,83 +42,50 @@ trait SpoolRack {
 case class ServiceSpool(val spool : Spool[Row], val tQueryInfo : ScrayTQueryInfo)
 
 /**
- * SpoolRack singleton implementation
+ * SpoolRack singleton based on TimedSpoolRack
  */
-object SpoolRack extends HashMap[UUID, ServiceSpool] with SpoolRack {
+object SpoolRack extends TimedSpoolRack(planAndExecute = Planner.planAndExecute)
 
-  // default time to live for query result sets
-  final val TTL = Duration.fromSeconds(60)
+/**
+ * Spool repo holding temporal query result sets
+ *
+ */
+trait SpoolRack {
+  /**
+   * Create a new temporal spool for a given queue to be retrieved later.
+   *
+   * This function is idempotent.
+   *
+   * @param query the underlying query
+   * @param tQueryInfo thrift meta info
+   * @return updated thrift meta info to be sent back to the service client
+   */
+  def createSpool(query : Query, tQueryInfo : ScrayTQueryInfo) : ScrayTQueryInfo
 
-  // timer enforcing ttl
-  lazy val timer = new JavaTimer(true)
+  /**
+   * Retrieve existing temporal spool for consecutively retrieving result set frames.
+   *
+   * @param uuid query identifier
+   * @return spool container holding spool and meta info if exists else None
+   */
+  def getSpool(uuid : ScrayUUID) : Option[ServiceSpool]
 
-  // operations are locked for writing
-  final val lock : ReadWriteLock = new ReentrantReadWriteLock()
+  /**
+   * Update existing temporal spool for keeping state of delivered result set frames.
+   *
+   * @param uuid query identifier
+   * @param spool container holding spool and meta info
+   * @return updated spool container
+   */
+  def updateSpool(uuid : ScrayUUID, spool : ServiceSpool) : ServiceSpool
 
-  // we use the Planner object as entry point for the query engine
-  lazy val engine = Planner
-
-  override def putSpool(query : Query, tQueryInfo : ScrayTQueryInfo) : Future[ScrayTQueryInfo] = {
-    val expires = Time.now + TTL
-
-    //update query info
-    val updQI = tQueryInfo.copy(
-      queryId = Some(query.getQueryID),
-      expires = Some(expires.inNanoseconds))
-
-    // prepare this query
-    val resultSpool = engine.planAndExecute(query)
-
-    // acquire write lock
-    lock.writeLock().lock()
-
-    try {
-      val result = put(query.getQueryID, ServiceSpool(resultSpool, updQI)) match {
-        case Some(spool) => {
-          timer.doAt(expires)(SpoolRack.removeSpool(query.getQueryID))
-          Future.value(updQI)
-        }
-        case None => Future.exception(new ScrayServiceException(
-          ExceptionIDs.SPOOLING_ERROR, Some(query.getQueryID), "Failed to store query instance.", None))
-      }
-
-      result
-
-    } finally {
-      // finally release lock 
-      lock.writeLock().unlock()
-    }
-  }
-
-  override def getSpool(uuid : UUID) : Future[ServiceSpool] = {
-
-    // acquire read lock
-    lock.readLock().lock()
-
-    try {
-      val result = get(uuid) match {
-        case Some(spool) => Future.value(spool)
-        case None => Future.exception(new ScrayServiceException(
-          ExceptionIDs.SPOOLING_ERROR, Some(uuid), "Unknown query instance.", None))
-      }
-
-      result
-
-    } finally {
-      // finally release lock 
-      lock.readLock().unlock()
-    }
-  }
-
-  override def removeSpool(uuid : UUID) : Future[Unit] = Future.value {
-
-    // acquire write lock
-    lock.writeLock().lock()
-
-    try { remove(uuid) } finally {
-      // finally release lock 
-      lock.writeLock().unlock()
-    }
-  }
-
+  /**
+   * Decommission temporal spool.
+   *
+   * This function is normally called by the timer after TTL.
+   *
+   * @param uuid query identifier
+   * @return nothing
+   */
+  def removeSpool(uuid : ScrayUUID) : Unit
 }

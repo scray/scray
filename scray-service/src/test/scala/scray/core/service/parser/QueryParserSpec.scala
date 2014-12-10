@@ -22,7 +22,7 @@ import org.junit.runner.RunWith
 import org.parboiled2.ParseError
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
-import scray.common.exceptions.ScrayServiceException
+import scray.core.service.ScrayServiceException
 import scray.querying.description.And
 import scray.querying.description.Columns
 import scray.querying.description.Equal
@@ -33,16 +33,16 @@ import scray.querying.description.SmallerEqual
 import scala.util.Try
 import scray.querying.description.Or
 import scray.querying.Query
-import scray.core.service.ScrayTQueryObj
 import org.scalatest.junit.JUnitRunner
+import scray.core.service.util.TQuerySamples
 
 @RunWith(classOf[JUnitRunner])
-class QueryParserSpec extends FlatSpec with Matchers with ScrayTQueryObj {
+class QueryParserSpec extends FlatSpec with Matchers with TQuerySamples {
 
   val DEBUG = false
 
   private def parse(query : String) = {
-    val parser = new TQueryParser(getTQueryObj(query))
+    val parser = new TQueryParser(createTQuery(query))
     val parsed = parser.InputLine.run() match {
       case Success(result) => Success(result)
       case Failure(e : ParseError) =>
@@ -83,7 +83,7 @@ class QueryParserSpec extends FlatSpec with Matchers with ScrayTQueryObj {
   }
 
   it should "throw with unmatched column refs" in {
-    an[ScrayServiceException] should be thrownBy parse("SELECT @col1, @col2, @col3 FROM @myTableId")
+    an[ScrayServiceException] should be thrownBy parse("SELECT @col1, @col2, @col33 FROM @myTableId")
   }
 
   it should "handle single column literals" in {
