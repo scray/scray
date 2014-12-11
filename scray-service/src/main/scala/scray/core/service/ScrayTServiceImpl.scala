@@ -33,17 +33,23 @@ import scray.service.qservice.thrifscala.ScrayTService
 import scray.core.service.spools.ServiceSpool
 import com.twitter.concurrent.Spool
 import scray.querying.description.Row
+import org.slf4j.LoggerFactory
 
 object ScrayTServiceImpl extends ScrayTServiceImpl(SpoolRack)
 
 class ScrayTServiceImpl(val rack : SpoolRack) extends ScrayTService.FutureIface {
 
+  private val logger = LoggerFactory.getLogger(classOf[ScrayTServiceImpl])
+
   def query(tQuery : ScrayTQuery) : Future[ScrayUUID] = {
+
+    logger.info(s"New 'query' request: ${tQuery}")
+
     val parser = new TQueryParser(tQuery)
     val parsed = parser.InputLine.run() match {
       case Success(result) => Success(result)
       case Failure(e : ParseError) =>
-        sys.error(parser.formatError(e, showTraces = true)); Failure(e)
+        logger.error(parser.formatError(e, showTraces = true)); Failure(e)
       case Failure(e) => throw e
     }
     parsed.flatMap(_.createQuery) match {
@@ -53,6 +59,9 @@ class ScrayTServiceImpl(val rack : SpoolRack) extends ScrayTService.FutureIface 
   }
 
   def getResults(queryId : ScrayUUID) : Future[ScrayTResultFrame] = {
+
+    logger.info(s"New 'getResults' request: ${queryId}")
+
     rack.getSpool(queryId) match {
       case Some(spool) => {
         // create a future page

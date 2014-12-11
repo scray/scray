@@ -80,6 +80,6 @@ struct ScrayTQuery {
 //////////////////////////////////////////////////////////////////////////////////
 
 struct ScrayTRow {
-	1: optional binary rowId,  // key value
-	2: list<binary> columns    // column name value pairs
+	1: optional binary rowId,          // key value
+	2: optional list<binary> columns   // column list option, missing of which marks the end of the result set
 }
