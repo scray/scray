@@ -8,19 +8,62 @@
 	<name>Scray - JAVA exclusive</name>
 	<description>scray java code, which can be used from java and scala</description>
 
-  <!-- make sure this project doesn't have any Scala dependencies! -->
+	<properties>
+		<maven.compiler.source>1.6</maven.compiler.source>
+		<maven.compiler.target>1.6</maven.compiler.target>
+		<encoding>UTF-8</encoding>
+		<scala.suffix>2.10</scala.suffix>
+		<finagle.version>6.15.0</finagle.version>
+		<libthrift.version>0.9.1</libthrift.version>
+		<scrooge.version>3.4.0</scrooge.version>
+	</properties>
+
+	<repositories>
+		<repository>
+			<id>twttr.com</id>
+			<name>Twitter Maven</name>
+			<url>http://maven.twttr.com</url>
+		</repository>
+	</repositories>
+
+	<!-- make sure this project doesn't have any Scala dependencies! -->
 	<dependencies>
 		<dependency>
 			<groupId>com.twitter</groupId>
 			<artifactId>chill-java</artifactId>
 			<version>0.4.0</version>
 		</dependency>
+        <dependency>
+            <groupId>com.twitter</groupId>
+            <artifactId>scrooge-core_${scala.suffix}</artifactId>
+            <version>${scrooge.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.twitter</groupId>
+            <artifactId>scrooge-runtime_${scala.suffix}</artifactId>
+            <version>${scrooge.version}</version>
+        </dependency>
 		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
-			<version>4.4</version>
-			<scope>test</scope>
+			<groupId>com.twitter</groupId>
+			<artifactId>finagle-thrift_${scala.suffix}</artifactId>
+			<version>${finagle.version}</version>
 		</dependency>
+		<dependency>
+            <groupId>com.twitter</groupId>
+            <artifactId>util-core_2.10</artifactId>
+            <version>6.15.0</version>
+        </dependency>
+		<dependency>
+			<groupId>org.apache.thrift</groupId>
+			<artifactId>libthrift</artifactId>
+			<version>${libthrift.version}</version>
+		</dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.4</version>
+            <scope>test</scope>
+        </dependency>
 	</dependencies>
 
 	<build>
@@ -30,11 +73,73 @@
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>3.2</version>
 				<configuration>
-					<source>1.6</source>
-					<target>1.6</target>
+					<source>1.7</source>
+					<target>1.7</target>
 				</configuration>
 			</plugin>
+			<plugin>
+				<groupId>com.twitter</groupId>
+				<artifactId>scrooge-maven-plugin</artifactId>
+				<version>${scrooge.version}</version>
+				<configuration>
+					<language>experimental-java</language>
+					<thriftOpts>
+						<thriftOpt>--finagle</thriftOpt>
+					</thriftOpts>
+				</configuration>
+				<executions>
+					<execution>
+						<id>thrift-sources</id>
+						<phase>generate-sources</phase>
+						<goals>
+							<goal>compile</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>thrift-test-sources</id>
+						<phase>generate-test-sources</phase>
+						<goals>
+							<goal>testCompile</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
 		</plugins>
+
+		<pluginManagement>
+			<plugins>
+				<!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
+				<plugin>
+					<groupId>org.eclipse.m2e</groupId>
+					<artifactId>lifecycle-mapping</artifactId>
+					<version>1.0.0</version>
+					<configuration>
+						<lifecycleMappingMetadata>
+							<pluginExecutions>
+								<pluginExecution>
+									<pluginExecutionFilter>
+										<groupId>com.twitter</groupId>
+										<artifactId>
+											scrooge-maven-plugin
+										</artifactId>
+										<versionRange>
+											[3.4.0,)
+										</versionRange>
+										<goals>
+											<goal>compile</goal>
+											<goal>testCompile</goal>
+										</goals>
+									</pluginExecutionFilter>
+									<action>
+										<ignore></ignore>
+									</action>
+								</pluginExecution>
+							</pluginExecutions>
+						</lifecycleMappingMetadata>
+					</configuration>
+				</plugin>
+			</plugins>
+		</pluginManagement>
 	</build>
 
 	<licenses>
