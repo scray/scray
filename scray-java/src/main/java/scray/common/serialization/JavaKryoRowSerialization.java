@@ -82,7 +82,7 @@ public class JavaKryoRowSerialization {
 	
 		@Override
 		public void write(Kryo k, Output o, JavaSimpleRow v) {
-			o.writeInt(v.getColumns().size());
+			o.writeShort(v.getColumns().size());
 			for(JavaRowColumn<?> rowcol: v.getColumns()) {
 				k.writeObject(o, rowcol);
 			}
@@ -91,7 +91,7 @@ public class JavaKryoRowSerialization {
 		@Override
 		public JavaSimpleRow read(Kryo k, Input i, Class<JavaSimpleRow> type) {
 		    ArrayList<JavaRowColumn<?>> abuf = new ArrayList<JavaRowColumn<?>>();
-			int number = i.readInt();
+			int number = i.readShort();
 		    for(int j = 0; j < number; j++) {
 		    	abuf.add(k.readObject(i, JavaRowColumn.class));
 		    }
@@ -106,7 +106,7 @@ public class JavaKryoRowSerialization {
 	
 		@Override
 		public void write(Kryo k, Output o, JavaCompositeRow v) {
-			o.writeInt(v.getRows().size());
+			o.writeShort(v.getRows().size());
 			for(JavaRow rowcol: v.getRows()) {
 				if(rowcol instanceof JavaSimpleRow) {
 					o.writeByte(KryoRowTypeNumber.simplerow.getNumber());
@@ -122,7 +122,7 @@ public class JavaKryoRowSerialization {
 		@Override
 		public JavaCompositeRow read(Kryo k, Input i, Class<JavaCompositeRow> type) {
 		    ArrayList<JavaRow> abuf = new ArrayList<JavaRow>();
-			int number = i.readInt();
+			int number = i.readShort();
 		    for(int j = 0; j < number; j++) {
 		    	int typ = i.readByte();
 		    	if(typ == KryoRowTypeNumber.simplerow.getNumber()) {
