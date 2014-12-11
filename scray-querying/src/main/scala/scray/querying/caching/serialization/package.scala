@@ -22,4 +22,7 @@ import scray.common.serialization.KryoRowTypeNumber
 package object serialization {
   val SIMPLE_ROW = KryoRowTypeNumber.simplerow.getNumber()
   val COMPOSITE_ROW = KryoRowTypeNumber.compositerow.getNumber()
+  
+  val CACHE_INCOMPLETE_MARKER_ROW = KryoRowTypeNumber.values().maxBy(_.getNumber()).getNumber() + 1
+  val CACHE_COMPLETE_MARKER_ROW = KryoRowTypeNumber.values().maxBy(_.getNumber()).getNumber() + 2
 }

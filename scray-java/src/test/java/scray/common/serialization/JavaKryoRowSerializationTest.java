@@ -14,13 +14,17 @@
 // limitations under the License.
 package scray.common.serialization;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 import java.io.InputStream;
+import java.util.UUID;
 
 import org.junit.Test;
 
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
-import static org.junit.Assert.*;
+import com.twitter.chill.java.UUIDSerializer;
 
 /**
  * Test interoperability with Scala result-set-classes
@@ -28,7 +32,7 @@ import static org.junit.Assert.*;
 public class JavaKryoRowSerializationTest {
 
 	@Test
-	public void testDesrializeScalaSerializedStuff() {
+	public void testSimpleRowDeserializeScalaSerializedStuff() {
 		// this is a scala-generated binary file with a serialized row.
 		// It should contain 2 columns and respective values
 		Kryo k = new Kryo();
@@ -40,5 +44,26 @@ public class JavaKryoRowSerializationTest {
 	    assertTrue(result.getColumns().size() == 2);
 	    assertEquals(result.getColumns().get(0).getValue(), 1);
 	    assertEquals(result.getColumns().get(1).getValue(), "blubb");
+	}
+
+	@Test
+	public void testCompositeRowDeserializeScalaSerializedStuff() {
+		// this is a scala-generated binary file with a serialized row.
+		// It should contain 2 columns and respective values
+		Kryo k = new Kryo();
+		k.register(UUID.class, new UUIDSerializer());
+		JavaKryoRowSerialization.registerSerializers(k);
+		InputStream file1 = this.getClass().getResourceAsStream("/serializations/scraytest4.txt");
+	    Input input = new Input(file1);
+	    JavaCompositeRow result = k.readObject(input, JavaCompositeRow.class);
+	    assertTrue(result instanceof JavaCompositeRow);
+	    assertEquals(result.getRows().size(), 2);
+	    JavaSimpleRow row1 = (JavaSimpleRow)result.getRows().get(0);
+	    JavaSimpleRow row2 = (JavaSimpleRow)result.getRows().get(1);
+	    assertEquals(row1.getColumns().size(), 2);
+	    assertEquals(row2.getColumns().size(), 3);
+	    assertEquals(row1.getColumns().get(0).getValue(), 1);
+	    assertTrue(row2.getColumns().get(1).getValue() instanceof UUID);
+	    assertEquals(row2.getColumns().get(2).getValue(), 2.3d);
 	}
 }

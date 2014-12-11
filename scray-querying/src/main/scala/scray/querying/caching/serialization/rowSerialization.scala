@@ -45,7 +45,7 @@ object RegisterRowCachingSerializers {
 class CompositeRowSerialization extends KSerializer[CompositeRow] {
 
   override def write(k: Kryo, o: Output, v: CompositeRow): Unit = {
-    o.writeInt(v.rows.size)
+    o.writeShort(v.rows.size)
     v.rows.foreach {
       case simple: SimpleRow => 
         o.writeByte(SIMPLE_ROW)
@@ -67,7 +67,7 @@ class CompositeRowSerialization extends KSerializer[CompositeRow] {
         deserializeRows(count - 1)
       }
     }
-    val number = i.readInt
+    val number = i.readShort
     deserializeRows(number)
     new CompositeRow(abuf.toList)
   }
@@ -79,7 +79,7 @@ class CompositeRowSerialization extends KSerializer[CompositeRow] {
 class SimpleRowSerialization extends KSerializer[SimpleRow] {
 
   override def write(k: Kryo, o: Output, v: SimpleRow): Unit = {
-    o.writeInt(v.columns.size)
+    o.writeShort(v.columns.size)
     v.columns.foreach(k.writeObject(o, _))
   }
   
@@ -91,7 +91,7 @@ class SimpleRowSerialization extends KSerializer[SimpleRow] {
         deserializeColumns(count - 1)
       }
     }
-    val number = i.readInt
+    val number = i.readShort
     deserializeColumns(number)
     SimpleRow(abuf)
   }
@@ -133,3 +133,4 @@ class ColumnSerialization extends KSerializer[Column] {
     Column(i.readString, table)
   }
 }
+
