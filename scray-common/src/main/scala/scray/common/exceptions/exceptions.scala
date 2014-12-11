@@ -19,15 +19,11 @@ import java.util.UUID
 object ExceptionIDs {
   // SIL-Scray-Commons-000+ error types
   val GENERAL_FAULT = "SIL-Scray-Commons-001-General"
-  val UNIMPLEMNTED = "SIL-Scray-Commons-002-Unimplemented"
-  // SIL-Scray-Service-010+ parsing error types
-  val PARSING_ERROR = "SIL-Scray-Service-010-Parsing-Error"
+  val SERIALIZATION_FAULT = "SIL-Scray-Commons-002-Serialization"
+  val UNIMPLEMNTED = "SIL-Scray-Commons-003-Unimplemented"
 }
 
 class ScrayException(id : String, query : Option[UUID], msg : String, cause : Option[Throwable] = None)
   extends Exception(
     { query match { case None => id + ": " + msg; case Some(q) => id + ": " + msg + " for query " + q } },
     cause.getOrElse(null)) with Serializable
-
-class ScrayServiceException(id : String, query : Option[UUID], msg : String, cause : Option[Throwable] = None)
-  extends ScrayException(id, query, msg, cause)

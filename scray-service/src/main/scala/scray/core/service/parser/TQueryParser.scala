@@ -12,20 +12,17 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-package scray.core.service
 
-import java.util.UUID
-import scala.util.{ Failure, Success, Try }
-import scala.math.ScalaNumericAnyConversions
+package scray.core.service.parser
+
 import org.parboiled2._
-import scray.common.serialization.StringLiteralDeserializer
 import scray.querying.Query
 import scray.querying.description._
-import scray.querying.queries.SimpleQuery
 import scray.service.qmodel.thrifscala.ScrayTQuery
+import org.parboiled2.ParserInput.apply
 
 /**
- * Thrift query parser resulting in an _Query model
+ * Thrift query parser resulting in a _Query model
  */
 class TQueryParser(tQuery : ScrayTQuery) extends Parser {
   override val input : ParserInput = tQuery.queryExpression

@@ -13,18 +13,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package scray.core
+package scray.core.service
 
-import java.util.UUID
-import scray.service.qmodel.thrifscala.ScrayUUID
-package object service {
+package object parser {
 
-  val ENDPOINT = "localhost:8080"
+  import scala.math.Ordering._
 
-  implicit def UUID2ScrayUUID(uuid : UUID) : ScrayUUID =
-    ScrayUUID(uuid.getLeastSignificantBits(), uuid.getMostSignificantBits())
-
-  implicit def ScrayUUID2UUID(suuid : ScrayUUID) : UUID =
-    new UUID(suuid.leastSigBits, suuid.mostSigBits)
+  /**
+   * implicit ordering for java comparables
+   */
+  implicit def ordered[A <: Comparable[_]] : Ordering[A] = new Ordering[A] {
+    override def compare(x : A, y : A) : Int = x.asInstanceOf[Comparable[A]] compareTo y
+  }
 
 }

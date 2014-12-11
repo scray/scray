@@ -16,11 +16,16 @@
  * under the License.
  */
 
-// include base types
-include "scrayBase.thrift"
- 
 namespace java scray.service.qmodel.thriftjava
 #@namespace scala scray.service.qmodel.thrifscala
+
+/**
+ * Identifier
+ */
+struct ScrayUUID {
+    1: i64 mostSigBits, 
+    2: i64 leastSigBits
+}
 
 //////////////////////////////////////////////////////////////////////////////////
 // schema/meta types
@@ -33,7 +38,7 @@ struct ScrayTTableInfo {
 	1: string dbSystem,                // e.g. "cassandra"
 	2: string dbId,					   // e.g. cassandra keyspace
 	3: string tableId,                 // e.g. cassandra column family
-	4: scrayBase.ScrayTTypeInfo keyT   // table key type
+	4: optional string keyT            // optional table key type (classname)
 }
 
 /**
@@ -41,7 +46,7 @@ struct ScrayTTableInfo {
  */
 struct ScrayTColumnInfo {
 	1: string name,							    // column name
-	2: optional scrayBase.ScrayTTypeInfo tType,	// optional Column type
+	2: optional string columnT,	                // optional Column type (classname)
 	3: optional ScrayTTableInfo tableId			// optional table identifier
 }
 
@@ -49,24 +54,25 @@ struct ScrayTColumnInfo {
  * Query identifier
  */
 struct ScrayTQueryInfo {
-	1: optional scrayBase.ScrayUUID queryId,   // optional query id (set by planner)
+	1: optional ScrayUUID queryId,             // optional query id (set by planner)
 	2: string querySpace,    			       // predefined query context
 	3: ScrayTTableInfo tableInfo,			   // table identifier
-    4: set<ScrayTColumnInfo> columns,		   // Columns to fetch
+    4: list<ScrayTColumnInfo> columns,		   // columns to fetch (in list order)
+    5: optional i32 pagesize,                  // number of rows per result frame
+    6: optional i64 expires                    // results won't be available after this (epoch) time
 }
 
 //////////////////////////////////////////////////////////////////////////////////
 // query types
 //////////////////////////////////////////////////////////////////////////////////
 	
-
 /**
  * Main query type
  */
 struct ScrayTQuery {
-	1: ScrayTQueryInfo queryInfo,					// query meta information
-    2: map<string, scrayBase.ScrayTValue> values,	// query expression named values
-	3: string queryExpression					    // query expression string
+	1: ScrayTQueryInfo queryInfo,   // query meta information
+    2: map<string, binary> values,  // query expression named values
+	3: string queryExpression	    // query expression string
 }
 
 //////////////////////////////////////////////////////////////////////////////////
@@ -74,6 +80,6 @@ struct ScrayTQuery {
 //////////////////////////////////////////////////////////////////////////////////
 
 struct ScrayTRow {
-	1: binary key,					// key value
-	2: map<string, binary> columns	// mapped column values
+	1: optional binary rowId,  // key value
+	2: list<binary> columns    // column name value pairs
 }

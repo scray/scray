@@ -16,9 +16,6 @@
  * under the License.
  */
 
-// include base types
-include "scrayBase.thrift"
-
 // include query model
 include "scrayQModel.thrift"
  
@@ -38,8 +35,7 @@ exception ScrayTException {
  */
 struct ScrayTResultFrame {
 	1: scrayQModel.ScrayTQueryInfo queryInfo,	// query meta information
-	2: i32 offset,							    // result stream offset
-	3: list<scrayQModel.ScrayTRow> rows			// list of rows
+	2: list<scrayQModel.ScrayTRow> rows			// list of rows
 }
 
 /**
@@ -50,11 +46,11 @@ service ScrayTService {
 	/**
 	 * Submit queries
 	 */
-	scrayBase.ScrayUUID query(1: scrayQModel.ScrayTQuery query) throws (1: ScrayTException ex)
+	scrayQModel.ScrayUUID query(1: scrayQModel.ScrayTQuery query) throws (1: ScrayTException ex)
 	
 	/**
 	 * Fetch query results
 	 */
-	ScrayTResultFrame getResults(1: scrayBase.ScrayUUID queryId, 2: i32 offset) throws (1: ScrayTException ex)
+	ScrayTResultFrame getResults(1: scrayQModel.ScrayUUID queryId) throws (1: ScrayTException ex)
 
 }

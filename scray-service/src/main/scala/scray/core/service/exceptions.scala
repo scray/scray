@@ -13,18 +13,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package scray.core
+package scray.core.service
 
 import java.util.UUID
-import scray.service.qmodel.thrifscala.ScrayUUID
-package object service {
+import scray.common.exceptions.ScrayException
 
-  val ENDPOINT = "localhost:8080"
-
-  implicit def UUID2ScrayUUID(uuid : UUID) : ScrayUUID =
-    ScrayUUID(uuid.getLeastSignificantBits(), uuid.getMostSignificantBits())
-
-  implicit def ScrayUUID2UUID(suuid : ScrayUUID) : UUID =
-    new UUID(suuid.leastSigBits, suuid.mostSigBits)
-
+object ExceptionIDs {
+  val PARSING_ERROR = "SIL-Scray-Service-010-Parsing"
+  val SPOOLING_ERROR = "SIL-Scray-Service-011-Spooling"
+  val CACHING_ERROR = "SIL-Scray-Service-012-Cache"
 }
+
+class ScrayServiceException(id : String, query : Option[UUID], msg : String, cause : Option[Throwable] = None)
+  extends ScrayException(id, query, msg, cause)
