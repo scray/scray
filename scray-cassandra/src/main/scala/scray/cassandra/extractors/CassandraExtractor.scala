@@ -35,6 +35,7 @@ import scray.querying.description.ManuallyIndexConfiguration
 import com.twitter.storehaus.cassandra.cql.CQLCassandraStoreTupleValues
 import com.datastax.driver.core.Metadata
 import scray.querying.source.indexing.IndexConfig
+import com.twitter.storehaus.cassandra.cql.CQLCassandraRowStore
 
 /**
  * Helper class to create a configuration for a Cassandra table
@@ -172,6 +173,8 @@ object CassandraExtractor {
         new CQLCollectionStoreExtractor(collStore, tableName).asInstanceOf[CassandraExtractor[S]]
       case tupleStore: CQLCassandraStoreTupleValues[_, _, _, _] =>
         new CQLStoreTupleValuesExtractor(tupleStore, tableName).asInstanceOf[CassandraExtractor[S]]
+      case rowStore: CQLCassandraRowStore[_] =>
+        new CQLRowStoreExtractor(rowStore, tableName).asInstanceOf[CassandraExtractor[S]]
     }
   }
   

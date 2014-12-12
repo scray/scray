@@ -27,6 +27,9 @@ import java.io.File
 import java.util.UUID
 import scray.common.serialization.{ KryoPoolSerialization, JavaKryoRowSerialization, JavaSimpleRow, JavaColumn, JavaCompositeRow, JavaRowColumn }
 import com.twitter.chill.java.UUIDSerializer
+import org.mapdb.DBMaker
+import scray.querying.caching.serialization.KeyValueCacheSerializer
+import scray.querying.description.Row
 
 
 /**
@@ -137,6 +140,21 @@ class CachingSpecs extends WordSpec {
 	  assert(row1.getColumns().get(0).getValue() == 1)
 	  assert(row2.getColumns().get(1).getValue().isInstanceOf[UUID])
 	  assert(row2.getColumns().get(2).getValue() == 2.3d)
+    }
+    "allow off-heap cache storage for Simple- and CompositeRows" in {
+      val db = DBMaker.newMemoryDirectDB().transactionDisable().asyncWriteEnable().make
+      val cache = db.createHashMap("cache").counterEnable().valueSerializer(new KeyValueCacheSerializer()).make[UUID, Row]
+      try {
+        val randUUID = UUID.randomUUID()
+        val randUUID2 = UUID.randomUUID()
+        val comRow = new CompositeRow(List(si, s2))
+        cache.put(randUUID2, comRow)
+        cache.put(randUUID, s2)
+        assert(cache.get(randUUID) == s2)
+        assert(comRow eq cache.get(randUUID2))
+      } finally {
+        cache.close
+      }
     }
   }
   
