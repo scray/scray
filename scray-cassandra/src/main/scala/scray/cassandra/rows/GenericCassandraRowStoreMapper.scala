@@ -13,6 +13,7 @@ import scray.querying.description.Column
 import scray.cassandra.extractors.CassandraExtractor
 import scala.collection.mutable.ListBuffer
 import scray.querying.description.SimpleRow
+import java.nio.ByteBuffer
 
 /**
  * a generic mapper to map cassandra rows emitted by CQLCassandraRowStore to scray rows 
@@ -58,7 +59,10 @@ object GenericCassandraRowStoreMapper {
       } else {
         val tm = typeMap.get(in.head.getType.getName.toString).get.fromRow(cassrow, in.head.getName)
         val buffer = tm match {
-          case Some(value) => buf += RowColumn(Column(in.head.getName, ti), value)
+          case Some(value) => value match {
+            case bytes: ByteBuffer => buf += RowColumn(Column(in.head.getName, ti), bytes.array())
+            case _ => buf += RowColumn(Column(in.head.getName, ti), value)
+          }
           case None => buf
         }
         columnsTransform(in.tail, buffer)
