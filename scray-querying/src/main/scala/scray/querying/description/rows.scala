@@ -18,6 +18,7 @@ import scala.annotation.tailrec
 import scala.collection.mutable.ArrayBuffer
 import scala.reflect.runtime.universe.typeTag
 import scala.collection.mutable.HashSet
+import com.twitter.util.Try
 
 
 
@@ -85,7 +86,7 @@ case class SimpleRow(
   @transient var columnList: List[Column] = List()
   recalculateInternalCaches
   
-  override def getColumnValue[V](colNum: Int): Option[V] = columns(colNum).asInstanceOf[Option[V]]
+  override def getColumnValue[V](colNum: Int): Option[V] = Try(columns(colNum).value).toOption.asInstanceOf[Option[V]]
   
   // lift(colNum).map(_.value.asInstanceOf[V])
 //  override def getColumnValueType(colNum: Int): Option[TypeTag[_]] = columns.lift(colNum).map(_.valuesType)
