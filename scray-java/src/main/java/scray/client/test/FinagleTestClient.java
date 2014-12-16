@@ -1,4 +1,4 @@
-package scray.client.finagle;
+package scray.client.test;
 
 import java.nio.ByteBuffer;
 import java.util.HashMap;
@@ -7,6 +7,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import scala.runtime.BoxedUnit;
+import scray.client.finagle.FinagleThriftConnection;
 import scray.service.qmodel.thriftjava.ScrayTColumnInfo;
 import scray.service.qmodel.thriftjava.ScrayTQuery;
 import scray.service.qmodel.thriftjava.ScrayTQueryInfo;
@@ -14,9 +15,7 @@ import scray.service.qmodel.thriftjava.ScrayTRow;
 import scray.service.qmodel.thriftjava.ScrayTTableInfo;
 import scray.service.qmodel.thriftjava.ScrayUUID;
 import scray.service.qservice.thriftjava.ScrayTResultFrame;
-import scray.service.qservice.thriftjava.ScrayTService;
 
-import com.twitter.finagle.Thrift;
 import com.twitter.scrooge.Option;
 import com.twitter.util.Await;
 import com.twitter.util.Function;
@@ -24,14 +23,10 @@ import com.twitter.util.Future;
 
 public class FinagleTestClient {
 
-	static final String ENDPOINT = "localhost:8080";
-
 	public static void main(String[] args) throws Exception {
 
-		// prepare client
-		ScrayTService.FutureIface client = Thrift.newIface(ENDPOINT,
-				ScrayTService.FutureIface.class);
-
+		FinagleThriftConnection con = new FinagleThriftConnection("localhost:8080");
+		
 		// prepare a query
 		List<ScrayTColumnInfo> clist = new LinkedList<ScrayTColumnInfo>();
 
@@ -46,7 +41,7 @@ public class FinagleTestClient {
 				new HashMap<String, ByteBuffer>(),
 				"SELECT col1, col2 FROM @baz");
 
-		Future<ScrayUUID> quid = client.query(query).onSuccess(
+		Future<ScrayUUID> quid = con.getScrayTService().query(query).onSuccess(
 				new Function<ScrayUUID, BoxedUnit>() {
 					@Override
 					public BoxedUnit apply(ScrayUUID response) {
@@ -62,7 +57,7 @@ public class FinagleTestClient {
 
 		while (hasNextFrame) {
 
-			Future<ScrayTResultFrame> frame = client.getResults(quidok)
+			Future<ScrayTResultFrame> frame = con.getScrayTService().getResults(quidok)
 					.onSuccess(new Function<ScrayTResultFrame, BoxedUnit>() {
 						@Override
 						public BoxedUnit apply(ScrayTResultFrame response) {

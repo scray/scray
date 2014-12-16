@@ -33,37 +33,48 @@
 			<artifactId>chill-java</artifactId>
 			<version>0.4.0</version>
 		</dependency>
-        <dependency>
-            <groupId>com.twitter</groupId>
-            <artifactId>scrooge-core_${scala.suffix}</artifactId>
-            <version>${scrooge.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.twitter</groupId>
-            <artifactId>scrooge-runtime_${scala.suffix}</artifactId>
-            <version>${scrooge.version}</version>
-        </dependency>
+		<dependency>
+			<groupId>com.twitter</groupId>
+			<artifactId>scrooge-core_${scala.suffix}</artifactId>
+			<version>${scrooge.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.twitter</groupId>
+			<artifactId>scrooge-runtime_${scala.suffix}</artifactId>
+			<version>${scrooge.version}</version>
+		</dependency>
 		<dependency>
 			<groupId>com.twitter</groupId>
 			<artifactId>finagle-thrift_${scala.suffix}</artifactId>
 			<version>${finagle.version}</version>
 		</dependency>
 		<dependency>
-            <groupId>com.twitter</groupId>
-            <artifactId>util-core_2.10</artifactId>
-            <version>6.15.0</version>
-        </dependency>
+			<groupId>com.twitter</groupId>
+			<artifactId>util-core_2.10</artifactId>
+			<version>6.15.0</version>
+		</dependency>
 		<dependency>
 			<groupId>org.apache.thrift</groupId>
 			<artifactId>libthrift</artifactId>
 			<version>${libthrift.version}</version>
 		</dependency>
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.4</version>
-            <scope>test</scope>
-        </dependency>
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>4.4</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-jdk14</artifactId>
+			<version>1.7.7</version>
+		</dependency>
+		<dependency>
+			<groupId>org.mockito</groupId>
+			<artifactId>mockito-core</artifactId>
+			<version>1.10.8</version>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
 
 	<build>
@@ -108,7 +119,8 @@
 
 		<pluginManagement>
 			<plugins>
-				<!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
+				<!--This plugin's configuration is used to store Eclipse m2e settings 
+					only. It has no influence on the Maven build itself. -->
 				<plugin>
 					<groupId>org.eclipse.m2e</groupId>
 					<artifactId>lifecycle-mapping</artifactId>
