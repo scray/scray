@@ -61,15 +61,15 @@
 			<version>1.10.8</version>
 		</dependency>
 		<dependency>
-      <groupId>com.typesafe.scala-logging</groupId>
-      <artifactId>scala-logging-api_2.10</artifactId>
-      <version>2.1.2</version>
-    </dependency>
-    <dependency>
-      <groupId>com.typesafe.scala-logging</groupId>
-      <artifactId>scala-logging-slf4j_2.10</artifactId>
-      <version>2.1.2</version>
-    </dependency>		
+			<groupId>com.typesafe.scala-logging</groupId>
+			<artifactId>scala-logging-api_2.10</artifactId>
+			<version>2.1.2</version>
+		</dependency>
+		<dependency>
+			<groupId>com.typesafe.scala-logging</groupId>
+			<artifactId>scala-logging-slf4j_2.10</artifactId>
+			<version>2.1.2</version>
+		</dependency>
 	</dependencies>
 
 	<dependencyManagement>
