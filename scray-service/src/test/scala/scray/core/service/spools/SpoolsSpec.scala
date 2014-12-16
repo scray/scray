@@ -118,4 +118,13 @@ class SpoolsSpec
     pair2._2.toSeq.get.size should be(spoolsize1 - PGSZ)
   }
 
+  it should "serialize column values" in {
+    val rack = new TimedSpoolRack(planAndExecute = mockplanner)
+    val qinf1 = rack createSpool (query, tquery.queryInfo)
+    val spool0 = rack.getSpool(uuid).get
+    val spoolsize0 = spool0.spool.toSeq.get.size
+    val pair1 = new SpoolPager(spool0).page.get
+    val bla = pair1._1.map(_._2.get).flatten.map(col => KryoPoolSerialization.chill.fromBytes(col.value.array())).map(println(_))
+  }
+
 }

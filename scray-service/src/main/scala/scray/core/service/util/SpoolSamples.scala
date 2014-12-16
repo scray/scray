@@ -16,14 +16,13 @@ trait SpoolSamples {
   val cols = 1.until(10).map(i => Column(s"col$i", ti))
 
   val sr1 = SimpleRow(ArrayBuffer(RowColumn(cols(0), 34), RowColumn(cols(1), 21)))
-  val sr2 = SimpleRow(ArrayBuffer(RowColumn(cols(1), 12), RowColumn(cols(2), "guck")))
+  val sr2 = SimpleRow(ArrayBuffer(RowColumn(cols(1), 12), RowColumn(cols(2), "foo")))
   val sr3 = SimpleRow(ArrayBuffer(RowColumn(cols(0), 56), RowColumn(cols(1), 34), RowColumn(cols(2), 456)))
   val sr4 = SimpleRow(ArrayBuffer(RowColumn(cols(0), 1), RowColumn(cols(1), 34.4f)))
   val sr5 = SimpleRow(ArrayBuffer(RowColumn(cols(0), 33), RowColumn(cols(1), 21)))
-  val sr6 = SimpleRow(ArrayBuffer(RowColumn(cols(0), 34), RowColumn(cols(1), "dffg")))
-
+  val sr6 = SimpleRow(ArrayBuffer(RowColumn(cols(0), 34), RowColumn(cols(1), "bar")))
   val sr7 = SimpleRow(ArrayBuffer())
-  val sr8 = SimpleRow(ArrayBuffer(RowColumn(cols(0), 100), RowColumn(cols(1), "dffg")))
+  val sr8 = SimpleRow(ArrayBuffer(RowColumn(cols(0), 100), RowColumn(cols(1), "baz")))
 
   // these seqs are ordered
   val seq1 = Future(Seq(sr4, sr1, sr3))

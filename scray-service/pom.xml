@@ -53,6 +53,11 @@
 			<artifactId>scrooge-core_${scala.suffix}</artifactId>
 			<version>3.17.0</version>
 		</dependency>
+		<dependency>
+			<groupId>com.twitter</groupId>
+			<artifactId>chill_2.10</artifactId>
+			<version>0.4.0</version>
+		</dependency>
 	</dependencies>
 
 	<build>
