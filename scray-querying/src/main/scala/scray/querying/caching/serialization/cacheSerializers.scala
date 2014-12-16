@@ -29,7 +29,7 @@ import scala.collection.mutable.ArrayBuffer
 /**
  * serializer usable with key-value-caches
  */
-class KeyValueCacheSerializer extends Serializer[Row] {
+class KeyValueCacheSerializer extends Serializer[Row] with Serializable {
 
   override def serialize(out: DataOutput, value: Row) = {
     val typ = value match {
@@ -67,7 +67,7 @@ class KeyValueCacheSerializer extends Serializer[Row] {
 /**
  * serializer usable with index caches
  */
-class QueryableCacheSerializer extends Serializer[ArrayBuffer[Row]] {
+class QueryableCacheSerializer extends Serializer[ArrayBuffer[Row]] with Serializable {
 
   override def serialize(out: DataOutput, value: ArrayBuffer[Row]) = {
     val size = value.size

@@ -29,7 +29,6 @@
 		<module>scray-querying</module>
 		<module>scray-cassandra</module>
 		<module>scray-service</module>
-		<module>scray-core</module>
 	</modules>
 
 	<dependencies>
