@@ -41,7 +41,8 @@ public class ScrayResultSetMetaData implements ResultSetMetaData {
 
 	@Override
 	public String getColumnName(int column) throws SQLException {
-		return resultSet.getColumnList().get(column).getColumnInfo().getName();
+		return resultSet.getColumnList().get(column - 1).getColumnInfo()
+				.getName();
 	}
 
 	@Override

@@ -93,26 +93,14 @@ public class ScrayJdbcTest {
 	}
 
 	ScrayTColumn createColumn(int col) {
+		// ScrayTColumn tcol = new ScrayTColumn(new ScrayTColumnInfo("col" +
+		// col, ));
 		return null;
 	}
 
 	@Test
 	public void goodScrayUrlDecomposition() {
 
-		String testurl = "scray://127.0.0.1:8080/cassandra/myKeyspace/myColumnFamily/default";
-
-		try {
-			ScrayURL surl = new ScrayURL(testurl);
-			assertTrue(surl.checkSyntax());
-			assertEquals(surl.getHostAndPort(), "127.0.0.1:8080");
-			assertEquals(surl.getDbSystem(), "cassandra");
-			assertEquals(surl.getDbId(), "myKeyspace");
-			assertEquals(surl.getTableId(), "myColumnFamily");
-			assertEquals(surl.getQuerySpace(), "default");
-		} catch (URISyntaxException e) {
-			e.printStackTrace();
-			fail();
-		}
 	}
 
 }

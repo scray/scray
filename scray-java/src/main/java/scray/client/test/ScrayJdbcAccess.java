@@ -28,18 +28,24 @@ public class ScrayJdbcAccess {
 			Class.forName("scray.client.jdbc.ScrayDriver");
 
 			connect = DriverManager
-					.getConnection("scray://localhost:8080/myDbSystem/myDbId/myTableId/myQuerySpace");
+					.getConnection("scray://localhost:8080/cassandra/SIL/BISMTOlsWorkflowElement/SIL");
 
 			statement = connect.createStatement();
 
+			statement.setQueryTimeout(20);
+
 			int count = 0;
 
-			if (statement.execute("SELECT * FROM @myTableId")) {
+			long snap = System.currentTimeMillis();
+
+			if (statement.execute("SELECT * FROM @BISMTOlsWorkflowElement")) {
 				do {
 					count++;
 					ResultSet results = statement.getResultSet();
-					System.out.println("Writing result set nr " + count + ".");
+					System.out.println("Result set nr " + count + " loaded in "
+							+ (System.currentTimeMillis() - snap) + " ms.");
 					writeResultSet(results);
+					snap = System.currentTimeMillis();
 				} while (statement.getMoreResults());
 
 				System.out.println("Query finished.");
@@ -63,8 +69,9 @@ public class ScrayJdbcAccess {
 			for (int i = 1; i <= size; i++) {
 				String type = meta.getColumnClassName(i);
 				Object value = resultSet.getObject(i);
-				System.out
-						.println("Column " + i + " (" + type + ") = " + value);
+				System.out.println("Column " + i + "  '"
+						+ meta.getColumnName(i) + "'  (" + type + ") = "
+						+ value);
 			}
 		}
 	}

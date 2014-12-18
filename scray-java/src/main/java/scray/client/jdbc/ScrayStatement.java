@@ -192,14 +192,14 @@ public class ScrayStatement implements java.sql.Statement {
 		Future<ScrayTResultFrame> fframe = connection.getThriftConnection()
 				.getScrayTService().getResults(uuid);
 		ScrayTResultFrame frame = Await.result(fframe, new Duration(
-				queryTimeout * 1000000000));
+				queryTimeout * 1000000000L));
 		return frame;
 	}
 
 	private ScrayUUID syncSubmit(ScrayTQuery query) throws Exception {
 		Future<ScrayUUID> fuuid = connection.getThriftConnection()
 				.getScrayTService().query(rawTQuery);
-		return Await.result(fuuid, new Duration(queryTimeout * 1000000000));
+		return Await.result(fuuid, new Duration(queryTimeout * 1000000000L));
 	}
 
 	@Override
