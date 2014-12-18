@@ -22,22 +22,43 @@ import scray.querying.description._
 import scray.querying.caching.serialization._
 import scray.common.serialization.KryoPoolSerialization
 import scray.common.serialization.KryoSerializerNumber
+import com.twitter.finagle.ListeningServer
+import java.net.InetAddress
  
-object ScrayTServer extends KryoPoolRegistration {
+object ScrayTServer extends AbstractScrayTServer {
+  override val endpoint = ScrayServerEndpoint(
+      InetAddress.getByName(scray.core.service.ENDPOINT.split(":")(0)),
+      Integer.valueOf(scray.core.service.ENDPOINT.split(":")(1))
+  )
+  
+  override def initializeResources(): Unit = {}
+  override def destroyResources(): Unit = {}
+}
+
+case class ScrayServerEndpoint(host: InetAddress, port: Int)
+
+abstract class AbstractScrayTServer extends KryoPoolRegistration {
+  val endpoint: ScrayServerEndpoint
+  
+  lazy val server: ListeningServer = Thrift.serveIface(addressString, ScrayTServiceImpl)
  
-  val server = Thrift.serveIface(scray.core.service.ENDPOINT, ScrayTServiceImpl)
- 
+  def addressString: String = s"${endpoint.host.getHostAddress}:${endpoint.port}"
+  
+  def initializeResources: Unit
+  def destroyResources: Unit
+  
   def main(args : Array[String]) {
     register
+    initializeResources
     Await.ready(server)
   }
-}
- 
-trait KryoPoolRegistration {
-  def register = {
-    KryoPoolSerialization.register(classOf[Column], new ColumnSerialization, KryoSerializerNumber.column.getNumber())
-    KryoPoolSerialization.register(classOf[RowColumn[_]], new RowColumnSerialization, KryoSerializerNumber.rowcolumn.getNumber())
-    KryoPoolSerialization.register(classOf[SimpleRow], new SimpleRowSerialization, KryoSerializerNumber.simplerow.getNumber())
-    KryoPoolSerialization.register(classOf[CompositeRow], new CompositeRowSerialization, KryoSerializerNumber.compositerow.getNumber())
+  
+  def shutdown: Unit = {
+    destroyResources
+    server.close()
   }
+}
+
+trait KryoPoolRegistration {
+  def register = RegisterRowCachingSerializers() 
 }

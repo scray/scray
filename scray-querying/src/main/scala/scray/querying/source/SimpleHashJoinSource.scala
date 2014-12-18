@@ -28,42 +28,55 @@ import scray.querying.queries.SimpleKeyBasedQuery
 import scray.querying.caching.Cache
 import scray.querying.caching.NullCache
 import com.typesafe.scalalogging.slf4j.LazyLogging
+import scray.querying.description.EmptyRow
 
 /**
- * This hash joined source provides a template for implementing hashed-joins. This is a relational lookup.
+ * This hash joined source provides a means to implement referential lookups (a simple join).
  * 
- * The query Q1 of "source" yields a spool which is composed of a key K and a reference R (i.e. (K, R)).
- * The query Q2 of "lookupSource" is then queried for K and the combined results are returned.
+ * The query Q1 of "source" yields a spool which contains a column yielding a reference K.
+ * The column value is then transformed into a reference R using typeMapper.
+ * The query Q2 of "lookupSource" is then queried for R and the combined results are returned.
  * 
- * This is a left outer join. To make this an inner join results must be filtered.
+ * Default is a left outer join. 
+ * To make this an inner join results must be filtered by setting isInner to true.
  */
 class SimpleHashJoinSource[Q <: DomainQuery, K, R, V](
     source: LazySource[Q],
     sourceJoinColumn: Column,
     lookupSource: KeyValueSource[R, V],
-    lookupSourceJoinColumn: Column)
+    lookupSourceJoinColumn: Column,
+    typeMapper: K => R = (k: K) => k.asInstanceOf[R],
+    isInner: Boolean = false)
   extends LazySource[Q] with LazyLogging {
 
   /**
    * transforms the spool. May not skip too many elements because it is not tail recursive.
    */
-  private def spoolTransform(spool: Spool[Row], query: Q): Spool[Row] = {
-    spool.map(in => {
-      val inCol = in.getColumnValue(sourceJoinColumn)
-      if(inCol.isDefined) {
-        val keyValueSourceQuery = new SimpleKeyBasedQuery[R](
-          inCol.get,
-          lookupSourceJoinColumn,
-          lookupSource.getColumns,
-          query.querySpace,
-          query.getQueryID)
-        val seq = Await.result(lookupSource.request(keyValueSourceQuery))
-        if(seq.size > 0) {
-          val head = seq.head
-          new CompositeRow(List(head, in))      
-        } else { in }
-      } else { in }
-    })
+  private def spoolTransform(spool: Spool[Row], query: Q): Spool[Row] = spool.map(in => {
+    val inCol = in.getColumnValue[K](sourceJoinColumn)
+    if(inCol.isDefined) {
+      val keyValueSourceQuery = new SimpleKeyBasedQuery[R](
+        typeMapper(inCol.get),
+        lookupSourceJoinColumn,
+        lookupSource.getColumns,
+        query.querySpace,
+        query.getQueryID)
+      val seq = Await.result(lookupSource.request(keyValueSourceQuery))
+      if(seq.size > 0) {
+        val head = seq.head
+        new CompositeRow(List(head, in))      
+      } else { 
+        handleNull(in)
+      }
+    } else { 
+      handleNull(in) 
+    }
+  })
+  
+  @inline private def handleNull(row: Row) = if(isInner) {
+    new EmptyRow
+  } else {
+    row
   }
   
   override def request(query: Q): Future[Spool[Row]] = {

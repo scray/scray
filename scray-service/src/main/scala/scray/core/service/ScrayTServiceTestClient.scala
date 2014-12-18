@@ -19,7 +19,7 @@ import scray.core.service.util.TQuerySamples
 object ScrayTServiceTestClient extends TQuerySamples {
   def main(args : Array[String]) {
 
-    val queryObj : ScrayTQuery = createTQuery(expr = "SELECT @nothing FROM @nowhere")
+    val queryObj : ScrayTQuery = createTQuery(expr = "SELECT nothing FROM @myTableId")
 
     // prepare client
     val client = Thrift.newIface[ScrayTService.FutureIface](ENDPOINT)

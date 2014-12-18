@@ -67,7 +67,7 @@ object GenericCassandraRowStoreMapper {
         }
         columnsTransform(in.tail, buffer)
       }
-      val lb = columnsTransform(cassrow.getColumnDefinitions().asList().asScala.toList, ListBuffer.empty[RowColumn[_]])
-      SimpleRow(new ArrayBuffer[RowColumn[_]](lb.size).++=(lb))
+    val lb = columnsTransform(cassrow.getColumnDefinitions().asList().asScala.toList, ListBuffer.empty[RowColumn[_]])
+    SimpleRow(new ArrayBuffer[RowColumn[_]](lb.size).++=(lb))
   }
 }

@@ -36,6 +36,7 @@ import com.twitter.storehaus.cassandra.cql.CQLCassandraStoreTupleValues
 import com.datastax.driver.core.Metadata
 import scray.querying.source.indexing.IndexConfig
 import com.twitter.storehaus.cassandra.cql.CQLCassandraRowStore
+import scray.cassandra.util.CassandraUtils
 
 /**
  * Helper class to create a configuration for a Cassandra table
@@ -94,16 +95,14 @@ trait CassandraExtractor[S <: AbstractCQLCassandraStore[_, _]] {
   /**
    * returns metadata information from Cassandra
    */
-  def getMetadata(cf: StoreColumnFamily): KeyspaceMetadata = {
-    cf.session.getSession.getCluster().getMetadata().getKeyspace(Metadata.quote(cf.session.getKeyspacename))
-  }
+  def getMetadata(cf: StoreColumnFamily): KeyspaceMetadata = CassandraUtils.getKeyspaceMetadata(cf)
   
   /**
    * checks that a column has been indexed by Cassandra itself, so no manual indexing
    */
   def checkColumnCassandraAutoIndexed(store: S, column: Column): Boolean = {
     val metadata = Option(getMetadata(store.columnFamily))
-    metadata.map(meta => meta.getTable(store.columnFamily.getPreparedNamed).getColumn(Metadata.quote(column.columnName)).getIndex()).isDefined
+    metadata.map(_ => CassandraUtils.getTableMetadata(store.columnFamily, metadata).getColumn(Metadata.quote(column.columnName)).getIndex()).isDefined
   }
 
   /**
