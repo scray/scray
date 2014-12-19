@@ -25,6 +25,10 @@ public class ScrayJdbcAccess {
 	public void readDataBase() throws Exception {
 		try {
 
+			int FETCHSIZE = 50;
+			int TIMEOUT = 60;
+			int RESULTSETS = 1;
+
 			Class.forName("scray.client.jdbc.ScrayDriver");
 
 			connect = DriverManager
@@ -32,12 +36,15 @@ public class ScrayJdbcAccess {
 
 			statement = connect.createStatement();
 
-			statement.setQueryTimeout(60);
-			statement.setFetchSize(100);
+			statement.setQueryTimeout(TIMEOUT);
+			statement.setFetchSize(FETCHSIZE);
+
+			int resultSets = RESULTSETS;
 
 			int count = 0;
 
-			long snap = System.currentTimeMillis();
+			long start = System.currentTimeMillis();
+			long snap = start;
 
 			if (statement.execute("SELECT * FROM BISMTOlsWorkflowElement")) {
 				do {
@@ -47,9 +54,14 @@ public class ScrayJdbcAccess {
 							+ (System.currentTimeMillis() - snap) + " ms.");
 					writeResultSet(results);
 					snap = System.currentTimeMillis();
-				} while (statement.getMoreResults());
+				} while (statement.getMoreResults() && count < resultSets);
 
-				System.out.println("Query finished.");
+				System.out.println();
+
+				System.out.println("Finished - fetched " + count
+						+ " ResultSet(s) with pagesize of " + FETCHSIZE
+						+ " in " + (System.currentTimeMillis() - start)
+						+ " ms.");
 
 			}
 

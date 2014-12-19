@@ -36,13 +36,13 @@ public class ScrayURL {
 		String schemeSpecificPart = opaqueUri.getSchemeSpecificPart();
 
 		int startOfHier = schemeSpecificPart.indexOf(':');
-		String first = schemeSpecificPart.substring(0, startOfHier);
+		String subscheme = schemeSpecificPart.substring(0, startOfHier);
 		String rest = schemeSpecificPart.substring(startOfHier + 1);
 
-		if (first.equals(SUBSCHEME)) {
+		if (subscheme.equals(SUBSCHEME)) {
 			return new URI(opaqueUri.getScheme() + ":" + rest);
 		} else {
-			throw new URISyntaxException(first, "invalid sub-scheme");
+			throw new URISyntaxException(subscheme, "invalid sub-scheme");
 		}
 	}
 
