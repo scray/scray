@@ -73,9 +73,8 @@ public class ScrayResultSetMetaData implements ResultSetMetaData {
 
 	@Override
 	public String getTableName(int column) throws SQLException {
-		ScrayConnection con = (ScrayConnection) resultSet.getStatement()
-				.getConnection();
-		return con.getScrayURL().getTableId();
+		ScrayStatement stm = (ScrayStatement) resultSet.getStatement();
+		return stm.getTableId();
 	}
 
 	@Override

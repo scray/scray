@@ -10,44 +10,67 @@ import org.slf4j.LoggerFactory;
 /**
  * URL schema for scray connections.
  * 
- * scray://host:port/dbSystem/dbId/tableId/querySpace
+ * jdbc:scray://host:port/dbSystem/dbId/querySpace
  * 
  */
 public class ScrayURL {
 
-	public static final String SCHEME = "scray";
+	public static final String SCHEME = "jdbc";
+	public static final String SUBSCHEME = "scray";
 
 	public static enum PathComponents {
-		DBSYSTEM, DBID, TABLEID, QUERYSPACE
+		DBSYSTEM, DBID, QUERYSPACE
 	}
 
 	private Logger log = LoggerFactory.getLogger(ScrayURL.class);
 
-	public URI uri;
+	public URI opaque;
 
 	public ScrayURL(String url) throws URISyntaxException {
-		this.uri = new URI(url);
+		this.opaque = new URI(url);
 	}
 
-	public boolean checkSyntax() {
+	// check and transform opaque jdbc url into absolute uri (by excluding the
+	// sub schema)
+	public URI transformOpaqueUri(URI opaqueUri) throws URISyntaxException {
+		String schemeSpecificPart = opaqueUri.getSchemeSpecificPart();
+		StringTokenizer tokenizer = new StringTokenizer(schemeSpecificPart, ":");
+		if (tokenizer.countTokens() != 3) {
+			throw new URISyntaxException(opaqueUri.toString(),
+					"invalid scheme-specific part");
+		} else {
+			String first = tokenizer.nextToken();
+			if (!first.equals(SUBSCHEME)) {
+				throw new URISyntaxException(opaqueUri.toString(),
+						"invalid sub-scheme");
+			} else {
+				String rest = schemeSpecificPart.substring(schemeSpecificPart
+						.indexOf(SUBSCHEME) + SUBSCHEME.length() + 1);
+				return new URI(opaqueUri.getScheme() + ":" + rest);
+			}
+		}
+	}
+
+	// Check hierarchical part of transformed jdbc url for required elements
+	public boolean check() {
 		try {
-			if (!uri.isAbsolute()) {
-				throw new URISyntaxException(uri.toString(),
-						"Faulty structure.");
+			URI hierUri = transformOpaqueUri(opaque);
+
+			if (!hierUri.getScheme().equals(SCHEME)) {
+				throw new URISyntaxException(hierUri.getScheme(),
+						"faulty scheme");
 			}
-			if (!uri.getScheme().equals(SCHEME)) {
-				throw new URISyntaxException(uri.getScheme(), "faulty scheme");
+			if (hierUri.getHost() == null) {
+				throw new URISyntaxException(hierUri.getHost(), "faulty host");
 			}
-			if (uri.getHost() == null) {
-				throw new URISyntaxException(uri.getHost(), "faulty host");
-			}
-			if (uri.getPort() == -1) {
-				throw new URISyntaxException(String.valueOf(uri.getPort()),
+			if (hierUri.getPort() == -1) {
+				throw new URISyntaxException(String.valueOf(hierUri.getPort()),
 						"faulty port");
 			}
-			StringTokenizer tokenizer = new StringTokenizer(uri.getPath(), "/");
-			if (tokenizer.countTokens() != 4) {
-				throw new URISyntaxException(uri.getPath(), "faulty path");
+			StringTokenizer tokenizer = new StringTokenizer(hierUri.getPath(),
+					"/");
+			if (tokenizer.countTokens() != 3) {
+				throw new URISyntaxException(hierUri.getPath(), "faulty path");
 			}
 			return true;
 		} catch (URISyntaxException e) {
@@ -64,23 +87,32 @@ public class ScrayURL {
 		return getPathComponent(PathComponents.DBID.ordinal());
 	}
 
-	public String getTableId() {
-		return getPathComponent(PathComponents.TABLEID.ordinal());
-	}
-
 	public String getQuerySpace() {
 		return getPathComponent(PathComponents.QUERYSPACE.ordinal());
 	}
 
 	public String getHostAndPort() {
-		return uri.getHost() + ":" + uri.getPort();
+		String token = null;
+		try {
+			URI hier = transformOpaqueUri(opaque);
+			token = hier.getHost() + ":" + hier.getPort();
+		} catch (URISyntaxException ex) {
+			// eat
+		}
+		return token;
 	}
 
 	private String getPathComponent(int index) {
-		StringTokenizer tokenizer = new StringTokenizer(uri.getPath(), "/");
-		String token = tokenizer.nextToken();
-		for (int i = 0; i < index; i++) {
+		String token = null;
+		try {
+			StringTokenizer tokenizer = new StringTokenizer(transformOpaqueUri(
+					opaque).getPath(), "/");
 			token = tokenizer.nextToken();
+			for (int i = 0; i < index; i++) {
+				token = tokenizer.nextToken();
+			}
+		} catch (URISyntaxException ex) {
+			// eat
 		}
 		return token;
 	}

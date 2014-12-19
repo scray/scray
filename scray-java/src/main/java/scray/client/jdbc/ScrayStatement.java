@@ -39,6 +39,7 @@ public class ScrayStatement implements java.sql.Statement {
 	private ScrayConnection connection = null;
 
 	private ScrayTQuery rawTQuery = null;
+	private String tableId = null;
 	private ScrayUUID queryId = null;
 	private ScrayTResultFrame currFrame = null;
 	private ScrayResultSet currResults = null;
@@ -74,20 +75,54 @@ public class ScrayStatement implements java.sql.Statement {
 		closed = true;
 	}
 
-	private ScrayTQuery createScrayTQuery(String sql) {
-		List<ScrayTColumnInfo> clist = new LinkedList<ScrayTColumnInfo>();
+	private ScrayTQuery createScrayTQuery(String sql) throws SQLException {
 
 		ScrayURL url = connection.getScrayURL();
 
+		// extract table id and enrich query expression with scray specific '@'
+		// character prefix
+
+		int idx = sql.toLowerCase().indexOf("from") + 4;
+
+		if (idx == -1) {
+			throw new SQLException("FROM-part missing in query.");
+		}
+
+		while (sql.charAt(idx) == ' ' && idx < sql.length() - 1) {
+			idx++;
+		}
+
+		if (idx == sql.length() - 1) {
+			throw new SQLException("Table identifier missing in query.");
+		}
+
+		String enrichedSql = sql.substring(0, idx) + "@" + sql.substring(idx);
+
+		StringBuffer sbuf = new StringBuffer();
+
+		while (sql.charAt(idx) != ' ' && idx < sql.length() - 1) {
+			sbuf.append(sql.charAt(idx));
+			idx++;
+		}
+
+		sbuf.append(sql.charAt(idx));
+
+		tableId = sbuf.toString();
+
+		// create scray query
+
+		// we don't use protocol level column spec here
+		List<ScrayTColumnInfo> clist = new LinkedList<ScrayTColumnInfo>();
+
 		ScrayTTableInfo tinfo = new ScrayTTableInfo(url.getDbSystem(),
-				url.getDbId(), url.getTableId());
+				url.getDbId(), tableId);
 
 		ScrayTQueryInfo qinfo = new ScrayTQueryInfo(Option.<ScrayUUID> none(),
 				url.getQuerySpace(), tinfo, clist,
 				Option.make(true, fetchSize), Option.<Long> none());
 
 		ScrayTQuery query = new ScrayTQuery(qinfo,
-				new HashMap<String, ByteBuffer>(), sql);
+				new HashMap<String, ByteBuffer>(), enrichedSql);
 
 		return query;
 	}
@@ -267,6 +302,10 @@ public class ScrayStatement implements java.sql.Statement {
 		throw new SQLFeatureNotSupportedException();
 	}
 
+	public String getTableId() {
+		return tableId;
+	}
+
 	@Override
 	public void addBatch(String sql) throws SQLException {
 		throw new SQLFeatureNotSupportedException();
@@ -332,7 +371,6 @@ public class ScrayStatement implements java.sql.Statement {
 		throw new SQLFeatureNotSupportedException();
 	}
 
-
 	@Override
 	public void setPoolable(boolean poolable) throws SQLException {
 		throw new SQLFeatureNotSupportedException();
@@ -352,7 +390,5 @@ public class ScrayStatement implements java.sql.Statement {
 	public boolean isCloseOnCompletion() throws SQLException {
 		throw new SQLFeatureNotSupportedException();
 	}
-
-
 
 }

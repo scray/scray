@@ -25,15 +25,14 @@ public class ScrayURLTest {
 	@Test
 	public void goodScrayUrlDecomposition() {
 
-		String testurl = "scray://127.0.0.1:8080/cassandra/myKeyspace/myColumnFamily/default";
+		String testurl = "jdbc:scray://127.0.0.1:8080/cassandra/myKeyspace/default";
 
 		try {
 			ScrayURL surl = new ScrayURL(testurl);
-			assertTrue(surl.checkSyntax());
+			assertTrue(surl.check());
 			assertEquals(surl.getHostAndPort(), "127.0.0.1:8080");
 			assertEquals(surl.getDbSystem(), "cassandra");
 			assertEquals(surl.getDbId(), "myKeyspace");
-			assertEquals(surl.getTableId(), "myColumnFamily");
 			assertEquals(surl.getQuerySpace(), "default");
 		} catch (URISyntaxException e) {
 			e.printStackTrace();
@@ -45,14 +44,15 @@ public class ScrayURLTest {
 	public void badScrayUrlDetection() {
 
 		String[] testurls = {
-				"spray://127.0.0.1:8080/cassandra/myKeyspace/myColumnFamily/default",
-				"scray://127.0.0.1/cassandra/myKeyspace/myColumnFamily/default",
-				"scray://127.0.0.1:8080/cassandra/myKeyspace/myColumnFamily" };
+				"jdpc:scray://127.0.0.1:8080/cassandra/myKeyspace/myColumnFamily/default",
+				"jdbc:spray://127.0.0.1:8080/cassandra/myKeyspace/myColumnFamily/default",
+				"jdbc:scray://127.0.0.1/cassandra/myKeyspace/myColumnFamily/default",
+				"jdbc:scray://127.0.0.1:8080/cassandra/myKeyspace/myColumnFamily" };
 
 		try {
 			for (int i = 0; i < testurls.length; i++) {
 				ScrayURL surl = new ScrayURL(testurls[i]);
-				assertFalse(surl.checkSyntax());
+				assertFalse(surl.check());
 			}
 		} catch (URISyntaxException e) {
 			e.printStackTrace();

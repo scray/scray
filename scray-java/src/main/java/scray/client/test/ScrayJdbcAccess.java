@@ -28,17 +28,18 @@ public class ScrayJdbcAccess {
 			Class.forName("scray.client.jdbc.ScrayDriver");
 
 			connect = DriverManager
-					.getConnection("scray://localhost:8080/cassandra/SIL/BISMTOlsWorkflowElement/SIL");
+					.getConnection("jdbc:scray://localhost:8080/cassandra/SIL/SIL");
 
 			statement = connect.createStatement();
 
-			statement.setQueryTimeout(20);
+			statement.setQueryTimeout(60);
+			statement.setFetchSize(100);
 
 			int count = 0;
 
 			long snap = System.currentTimeMillis();
 
-			if (statement.execute("SELECT * FROM @BISMTOlsWorkflowElement")) {
+			if (statement.execute("SELECT * FROM BISMTOlsWorkflowElement")) {
 				do {
 					count++;
 					ResultSet results = statement.getResultSet();
