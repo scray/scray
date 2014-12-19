@@ -34,20 +34,15 @@ public class ScrayURL {
 	// sub schema)
 	public URI transformOpaqueUri(URI opaqueUri) throws URISyntaxException {
 		String schemeSpecificPart = opaqueUri.getSchemeSpecificPart();
-		StringTokenizer tokenizer = new StringTokenizer(schemeSpecificPart, ":");
-		if (tokenizer.countTokens() != 3) {
-			throw new URISyntaxException(opaqueUri.toString(),
-					"invalid scheme-specific part");
+
+		int startOfHier = schemeSpecificPart.indexOf(':');
+		String first = schemeSpecificPart.substring(0, startOfHier);
+		String rest = schemeSpecificPart.substring(startOfHier + 1);
+
+		if (first.equals(SUBSCHEME)) {
+			return new URI(opaqueUri.getScheme() + ":" + rest);
 		} else {
-			String first = tokenizer.nextToken();
-			if (!first.equals(SUBSCHEME)) {
-				throw new URISyntaxException(opaqueUri.toString(),
-						"invalid sub-scheme");
-			} else {
-				String rest = schemeSpecificPart.substring(schemeSpecificPart
-						.indexOf(SUBSCHEME) + SUBSCHEME.length() + 1);
-				return new URI(opaqueUri.getScheme() + ":" + rest);
-			}
+			throw new URISyntaxException(first, "invalid sub-scheme");
 		}
 	}
 
