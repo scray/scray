@@ -42,9 +42,10 @@ import scala.util.Success
 case class ServiceSpool(val spool : Spool[Row], val tQueryInfo : ScrayTQueryInfo)
 
 /**
- * SpoolRack singleton based on TimedSpoolRack
+ * SpoolRack singletons based on TimedSpoolRack
  */
-object SpoolRack extends TimedSpoolRack(planAndExecute = Planner.planAndExecute)
+object TSpoolRack extends TimedSpoolRack(planAndExecute = Planner.planAndExecute)
+object VSpoolRack extends VersionedSpoolRack(planAndExecute = Planner.planAndExecute)
 
 /**
  * Spool repo holding temporal query result sets

@@ -140,6 +140,12 @@ class QueryParserSpec extends FlatSpec with Matchers with TQuerySamples {
     query.getWhereAST.get.asInstanceOf[Equal[Int]].value.asInstanceOf[Ordered[Int]].compareTo(1) should be(0)
   }
 
+  it should "handle atomic predicates with literal quoted values" in {
+    val parsed = parse("SELECT col1 FROM @myTableId WHERE col1 = 'foo bar' ")
+    val query = generate(parsed)
+    query.getWhereAST.get.asInstanceOf[Equal[String]].value.asInstanceOf[Ordered[String]].compareTo("foo bar") should be(0)
+  }
+  
   it should "handle atomic predicates with typed literal values" in {
     val parsed = parse("SELECT col1 FROM @myTableId WHERE col1 = !!long 2")
     val query = generate(parsed)
@@ -201,6 +207,12 @@ class QueryParserSpec extends FlatSpec with Matchers with TQuerySamples {
 
   it should "handle nested complex predicates with parens" in {
     val parsed = parse("SELECT col1, col2 FROM @myTableId WHERE ( col1>1 OR col2>2 ) AND col1<10")
+    val query = generate(parsed)
+    query.getWhereAST.get.isInstanceOf[And] should be(true)
+  }
+
+  it should "handle conjunctions with atomic predicates in parens" in {
+    val parsed = parse("SELECT col1, col2 FROM @myTableId WHERE (col2>2) AND (col1<10) ORDERBY col2")
     val query = generate(parsed)
     query.getWhereAST.get.isInstanceOf[And] should be(true)
   }

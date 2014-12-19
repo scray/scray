@@ -93,13 +93,18 @@ class TQueryParser(tQuery : ScrayTQuery) extends Parser {
   def _referencedValue : Rule1[_RefVal] = rule { _reference ~> { (ref : String) => _RefVal(ref) } }
 
   // Rules matching value literals
-  def _typedLiteral : Rule2[String, String] = rule { _typetag ~ _charSet }
-  def _untypedLiteral : Rule1[String] = rule { _charSet }
+  def _typedLiteral : Rule2[String, String] = rule { _typetag ~ { _quotedValueChars | _unquotedValueChars } }
+  def _untypedLiteral : Rule1[String] = rule { _quotedValueChars | _unquotedValueChars }
+
+  def _unquotedValueChars : Rule1[String] = rule { capture(oneOrMore(UnquotedValueChars)) ~ zeroOrMore(' ') }
+  def _quotedValueChars : Rule1[String] = rule { capture(str("'")) ~ capture(oneOrMore(QuotedValueChars)) ~ capture(str("'")) ~ zeroOrMore(' ') ~> { (a : String, b : String, c : String) => a + b + c } }
+
+  val QuotedValueChars = CharPredicate.Printable -- '\u0027'
+  val UnquotedValueChars = CharPredicate.AlphaNum ++ '.' ++ '-' ++ '+'
 
   // Rules matching terminals
   def _typetag : Rule1[String] = rule { capture(str("!!") ~ oneOrMore(CharPredicate.AlphaNum)) ~ oneOrMore(' ') } // tag w/ '!!'
   def _reference : Rule1[String] = rule { str("@") ~ _identifier } // ref w/o '@'
   def _identifier : Rule1[String] = rule { capture(oneOrMore(CharPredicate.AlphaNum)) ~ zeroOrMore(' ') }
-  def _charSet : Rule1[String] = rule { capture(oneOrMore(CharPredicate.Visible)) ~ zeroOrMore(' ') }
   def _number : Rule1[String] = rule { capture(oneOrMore(CharPredicate.Digit)) ~ zeroOrMore(' ') }
 }

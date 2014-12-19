@@ -25,7 +25,7 @@ object ScrayTTestServer extends KryoPoolRegistration with MockedPlanner {
   val ENDPOINT = "localhost:8080"
 
   val server = Thrift.serveIface(ENDPOINT, TestService)
-
+  
   def main(args : Array[String]) {
     register
     Await.ready(server)

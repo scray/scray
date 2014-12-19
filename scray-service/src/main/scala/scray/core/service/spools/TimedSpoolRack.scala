@@ -50,7 +50,7 @@ class TimedSpoolRack(val ttl : Duration = Duration.fromSeconds(60), planAndExecu
   private final val lock : ReadWriteLock = new ReentrantReadWriteLock()
 
   // internal timer enforcing ttl
-  private lazy val timer = new JavaTimer(true)
+  private val timer = new JavaTimer(false)
 
   // computes expiration time for collecting frames
   private def expires = Time.now + ttl

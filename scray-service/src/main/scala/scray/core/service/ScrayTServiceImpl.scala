@@ -34,8 +34,9 @@ import scray.core.service.spools.ServiceSpool
 import com.twitter.concurrent.Spool
 import scray.querying.description.Row
 import org.slf4j.LoggerFactory
+import scray.core.service.spools.TSpoolRack
 
-object ScrayTServiceImpl extends ScrayTServiceImpl(SpoolRack)
+object ScrayTServiceImpl extends ScrayTServiceImpl(TSpoolRack)
 
 class ScrayTServiceImpl(val rack : SpoolRack) extends ScrayTService.FutureIface {
 

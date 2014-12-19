@@ -44,7 +44,7 @@ object StringLiteralDeserializer {
   class LiteralParser(override val input : ParserInput) extends Parser {
     def InputLine = rule { literal ~ EOI }
     def literal : Rule1[Any] = rule { str | float | int | bool }
-    def str : Rule1[String] = rule { ''' ~ capture(oneOrMore(CharPredicate.AlphaNum)) ~ ''' }
+    def str : Rule1[String] = rule { ''' ~ capture(oneOrMore(CharPredicate.Printable -- '\u0027')) ~ ''' }
     def float : Rule1[Double] = rule { capture(oneOrMore(CharPredicate.Digit) ~ '.' ~ oneOrMore(CharPredicate.Digit)) ~> { (in : String) => in.toDouble } }
     def int : Rule1[Int] = rule { capture(oneOrMore(CharPredicate.Digit)) ~> { (in : String) => in.toInt } }
     def bool : Rule1[Boolean] = rule { capture("true" | "false") ~> { (in : String) => in.toBoolean } }
