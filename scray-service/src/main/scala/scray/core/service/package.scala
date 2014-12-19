@@ -19,7 +19,7 @@ import java.util.UUID
 import scray.service.qmodel.thrifscala.ScrayUUID
 package object service {
 
-  val ENDPOINT = "localhost:8080"
+  val ENDPOINT = "localhost:18181"
 
   implicit def UUID2ScrayUUID(uuid : UUID) : ScrayUUID =
     ScrayUUID(uuid.getLeastSignificantBits(), uuid.getMostSignificantBits())

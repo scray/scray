@@ -100,12 +100,10 @@ public class ScrayStatement implements java.sql.Statement {
 
 		StringBuffer sbuf = new StringBuffer();
 
-		while (sql.charAt(idx) != ' ' && idx < sql.length() - 1) {
+		while (sql.charAt(idx) != ' ' && idx < sql.length()) {
 			sbuf.append(sql.charAt(idx));
 			idx++;
 		}
-
-		sbuf.append(sql.charAt(idx));
 
 		tableId = sbuf.toString();
 
