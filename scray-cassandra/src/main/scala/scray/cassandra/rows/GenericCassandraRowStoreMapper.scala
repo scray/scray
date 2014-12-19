@@ -60,7 +60,10 @@ object GenericCassandraRowStoreMapper {
         val tm = typeMap.get(in.head.getType.getName.toString).get.fromRow(cassrow, in.head.getName)
         val buffer = tm match {
           case Some(value) => value match {
-            case bytes: ByteBuffer => buf += RowColumn(Column(in.head.getName, ti), bytes.array())
+            case bytes: ByteBuffer =>
+              val byteArray = new Array[Byte](bytes.remaining())
+              bytes.get(byteArray)
+              buf += RowColumn(Column(in.head.getName, ti), byteArray)
             case _ => buf += RowColumn(Column(in.head.getName, ti), value)
           }
           case None => buf
