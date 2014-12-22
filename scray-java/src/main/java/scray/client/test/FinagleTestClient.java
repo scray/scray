@@ -25,7 +25,7 @@ public class FinagleTestClient {
 
 	public static void main(String[] args) throws Exception {
 
-		FinagleThriftConnection con = new FinagleThriftConnection("localhost:8080");
+		FinagleThriftConnection con = new FinagleThriftConnection("localhost:18181");
 		
 		// prepare a query
 		List<ScrayTColumnInfo> clist = new LinkedList<ScrayTColumnInfo>();

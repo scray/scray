@@ -19,13 +19,18 @@ import com.twitter.finagle.Thrift
 import scray.core.service.util.MockedPlanner
 import com.twitter.util.Await
 import scray.core.service.spools.TimedSpoolRack
+import scala.util.Random
 
 object ScrayTTestServer extends KryoPoolRegistration with MockedPlanner {
 
-  val ENDPOINT = "localhost:8080"
+  val ENDPOINT = "localhost:18182"
+  val ROWS = 5000
+  val MAXCOLS = 50
+  val bigBuf = 1.until(1000).foldLeft("")((str, int) => str + Random.nextPrintableChar)
+  val VALUES = Array(1, 2, 3, 4, 1.3, 2.7, bigBuf, "foo", "bar", "baz")
 
-  val server = Thrift.serveIface(ENDPOINT, TestService)
-  
+  val server = Thrift.serveIface(ENDPOINT, GenTestService(ROWS, MAXCOLS, VALUES))
+
   def main(args : Array[String]) {
     register
     Await.ready(server)

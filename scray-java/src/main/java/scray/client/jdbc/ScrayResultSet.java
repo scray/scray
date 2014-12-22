@@ -160,8 +160,11 @@ public class ScrayResultSet implements java.sql.ResultSet {
 		if (row.isSetColumns()) {
 			columnList = row.getColumns();
 			for (ScrayTColumn tcol : row.getColumns()) {
-				valueCache.put(new CachePosition(cursor, tcol.getColumnInfo()
-						.getName()), decode(tcol.getValue()));
+				CachePosition pos = new CachePosition(cursor, tcol
+						.getColumnInfo().getName());
+				if (!valueCache.containsKey(pos)) {
+					valueCache.put(pos, decode(tcol.getValue()));
+				}
 			}
 		}
 	}
@@ -450,8 +453,6 @@ public class ScrayResultSet implements java.sql.ResultSet {
 		return decode(columnIndex, Integer.class);
 	}
 
-
-
 	@Override
 	public int getInt(String columnLabel) throws SQLException {
 		checkConstraints();
@@ -526,7 +527,6 @@ public class ScrayResultSet implements java.sql.ResultSet {
 		return decode(columnIndex, type);
 	}
 
-
 	@Override
 	public Object getObject(int columnIndex, Map<String, Class<?>> map)
 			throws SQLException {
@@ -538,7 +538,6 @@ public class ScrayResultSet implements java.sql.ResultSet {
 		checkConstraints();
 		return decode(columnLabel);
 	}
-
 
 	@Override
 	public <T> T getObject(String columnLabel, Class<T> type)
@@ -593,12 +592,10 @@ public class ScrayResultSet implements java.sql.ResultSet {
 		throw new SQLFeatureNotSupportedException();
 	}
 
-
 	@Override
 	public SQLXML getSQLXML(String columnLabel) throws SQLException {
 		throw new SQLFeatureNotSupportedException();
 	}
-
 
 	@Override
 	public Statement getStatement() throws SQLException {
@@ -631,7 +628,6 @@ public class ScrayResultSet implements java.sql.ResultSet {
 	public Time getTime(String columnLabel) throws SQLException {
 		throw new SQLFeatureNotSupportedException();
 	}
-
 
 	@Override
 	public Time getTime(String columnLabel, Calendar cal) throws SQLException {
@@ -684,7 +680,6 @@ public class ScrayResultSet implements java.sql.ResultSet {
 	public URL getURL(String columnLabel) throws SQLException {
 		throw new SQLFeatureNotSupportedException();
 	}
-
 
 	@Override
 	public SQLWarning getWarnings() throws SQLException {
@@ -762,7 +757,7 @@ public class ScrayResultSet implements java.sql.ResultSet {
 
 	@Override
 	public boolean previous() throws SQLException {
-		if (cursor > 0) {
+		if (cursor > 1) {
 			changeCursor(cursor - 1);
 			return true;
 		} else {
@@ -772,13 +767,10 @@ public class ScrayResultSet implements java.sql.ResultSet {
 		}
 	}
 
-
-
 	@Override
 	public void refreshRow() throws SQLException {
 		throw new SQLFeatureNotSupportedException();
 	}
-
 
 	@Override
 	public boolean relative(int rows) throws SQLException {
@@ -789,7 +781,6 @@ public class ScrayResultSet implements java.sql.ResultSet {
 	public boolean rowDeleted() throws SQLException {
 		throw new SQLFeatureNotSupportedException();
 	}
-
 
 	@Override
 	public boolean rowInserted() throws SQLException {
@@ -810,7 +801,6 @@ public class ScrayResultSet implements java.sql.ResultSet {
 	public void setFetchSize(int fetchSize) throws SQLException {
 		this.fetchSize = fetchSize;
 	}
-
 
 	@Override
 	public <T> T unwrap(Class<T> iface) throws SQLException {
@@ -1280,5 +1270,5 @@ public class ScrayResultSet implements java.sql.ResultSet {
 	public boolean wasNull() throws SQLException {
 		throw new SQLFeatureNotSupportedException();
 	}
-	
+
 }

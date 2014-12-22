@@ -9,6 +9,7 @@ import scray.querying.description.RowColumn
 import scray.querying.description.Row
 import scray.querying.description.TableIdentifier
 import com.twitter.concurrent.Spool.syntax1
+import scala.util.Random
 
 trait SpoolSamples {
   val ti = TableIdentifier("cassandra", "mytestspace", "mycf")
@@ -37,4 +38,14 @@ trait SpoolSamples {
   val spool2 = Future(sr4 **:: sr5 **:: sr8 **:: Spool.empty[Row])
   val spool3 = Future(sr8 **:: sr7 **:: Spool.empty[Row])
   val spool4 = Future(sr8 **:: sr2 **:: Spool.empty[Row])
+
+  // spool generator
+  def spoolGen(rows : Int, maxCols : Int, vals : Array[_]) : Future[Spool[Row]] = {
+    val cols = 1.until(maxCols).map(i => Column(s"col$i", ti))
+    Future(1.until(rows)
+      .foldRight(Spool.empty[Row])((int, spl) => SimpleRow(1.until(Random.nextInt(maxCols))
+        .map(col => RowColumn(cols(col), vals(Random.nextInt(vals.length - 1))))
+        .foldLeft(ArrayBuffer[RowColumn[_]]())((abuf, rcol) => abuf += rcol)) **:: spl))
+  }
+
 }

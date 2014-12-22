@@ -17,4 +17,20 @@ trait MockedPlanner extends SpoolSamples {
 
   object TestService extends ScrayTServiceImpl(MockedSpoolRack)
 
+  def createMockedPlanner(rows : Int, maxCols : Int, vals : Array[_]) : (Query) => Spool[Row] = {
+    val genMockPlanner = mock(classOf[(Query) => Spool[Row]])
+    when(genMockPlanner(anyObject())).thenReturn(spoolGen(rows, maxCols, vals).get)
+    genMockPlanner
+  }
+
+  object GenMockedSpoolRack {
+    def apply(rows : Int, maxCols : Int, vals : Array[_]) =
+      new TimedSpoolRack(planAndExecute = createMockedPlanner(rows, maxCols, vals))
+  }
+
+  object GenTestService {
+    def apply(rows : Int, maxCols : Int, vals : Array[_]) =
+      new ScrayTServiceImpl(GenMockedSpoolRack(rows, maxCols, vals))
+  }
+
 }

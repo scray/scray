@@ -27,12 +27,12 @@ public class ScrayJdbcAccess {
 
 			int FETCHSIZE = 50;
 			int TIMEOUT = 60;
-			int RESULTSETS = 1;
+			int RESULTSETS = 2;
 
 			Class.forName("scray.client.jdbc.ScrayDriver");
 
 			connect = DriverManager
-					.getConnection("jdbc:scray://localhost:8080/cassandra/SIL/SIL");
+					.getConnection("jdbc:scray://localhost:18181/cassandra/SIL/SIL");
 
 			statement = connect.createStatement();
 
@@ -42,26 +42,54 @@ public class ScrayJdbcAccess {
 			int resultSets = RESULTSETS;
 
 			int count = 0;
-
-			long start = System.currentTimeMillis();
-			long snap = start;
+			long aggTime = 0;
+			long snap = System.currentTimeMillis();
 
 			if (statement.execute("SELECT * FROM BISMTOlsWorkflowElement")) {
 				do {
 					count++;
 					ResultSet results = statement.getResultSet();
+					long nextTime = System.currentTimeMillis() - snap;
+					aggTime += nextTime;
+
+					System.out
+							.println("====================================================================");
+					System.out
+							.println("====================================================================");
+					System.out
+							.println("====================================================================");
+
 					System.out.println("Result set nr " + count + " loaded in "
-							+ (System.currentTimeMillis() - snap) + " ms.");
+							+ nextTime + " ms.");
+
+					System.out
+							.println("====================================================================");
+					System.out
+							.println("====================================================================");
+					System.out
+							.println("====================================================================");
+
 					writeResultSet(results);
 					snap = System.currentTimeMillis();
 				} while (statement.getMoreResults() && count < resultSets);
 
-				System.out.println();
+				System.out
+						.println("====================================================================");
+				System.out
+						.println("====================================================================");
+				System.out
+						.println("====================================================================");
 
 				System.out.println("Finished - fetched " + count
 						+ " ResultSet(s) with pagesize of " + FETCHSIZE
-						+ " in " + (System.currentTimeMillis() - start)
-						+ " ms.");
+						+ " in " + aggTime + " ms.");
+
+				System.out
+						.println("====================================================================");
+				System.out
+						.println("====================================================================");
+				System.out
+						.println("====================================================================");
 
 			}
 

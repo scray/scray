@@ -7,7 +7,7 @@
 
   <modelVersion>4.0.0</modelVersion>
   <artifactId>scray-cassandra</artifactId>
-  <name>Scray - Cassandra Adapter</name>
+  <name>Scray - Cassandra</name>
   <description>scray adapter to r/w Cassandra column families</description>
 
   <dependencies>

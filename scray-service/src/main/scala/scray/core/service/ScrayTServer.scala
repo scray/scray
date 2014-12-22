@@ -40,7 +40,7 @@ case class ScrayServerEndpoint(host: InetAddress, port: Int)
 abstract class AbstractScrayTServer extends KryoPoolRegistration {
   val endpoint: ScrayServerEndpoint
   
-  val VER = "1.6"
+  val VER = "1.7"
   
   lazy val server: ListeningServer = Thrift.serveIface(addressString, ScrayTServiceImpl)
  
