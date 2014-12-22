@@ -52,7 +52,7 @@ class DomainToCQLQueryMapper[S <: AbstractCQLCassandraStore[_, _]] {
   
   private def convertValue[T](value: T) = value match {
     case v: String => s"'$v' "
-    case _ => s"$value " 
+    case _ => s"${value.toString} " 
   }
   
   private def convertSingleValueDomain(vdomain: SingleValueDomain[_]): String = 
