@@ -88,7 +88,10 @@ public class ScrayStatement implements java.sql.Statement {
 			throw new SQLException("FROM-part missing in query.");
 		}
 
-		while (sql.charAt(idx) == ' ' && idx < sql.length() - 1) {
+		w1: while (idx < sql.length()) {
+			if (sql.charAt(idx) != ' ') {
+				break w1;
+			}
 			idx++;
 		}
 
@@ -100,7 +103,10 @@ public class ScrayStatement implements java.sql.Statement {
 
 		StringBuffer sbuf = new StringBuffer();
 
-		while (sql.charAt(idx) != ' ' && idx < sql.length()) {
+		w2: while (idx < sql.length()) {
+			if (sql.charAt(idx) == ' ') {
+				break w2;
+			}
 			sbuf.append(sql.charAt(idx));
 			idx++;
 		}
