@@ -65,13 +65,13 @@ class ScrayTServiceImpl(val rack : SpoolRack) extends ScrayTService.FutureIface 
 
     rack.getSpool(queryId) match {
       case Some(spool) => {
-        // create a future page
-        new SpoolPager(spool) page () map { pair =>
-          ScrayTResultFrame(
-            // update spool and use its updated query info (new ttl)
-            rack.updateSpool(queryId, ServiceSpool(pair._2, spool.tQueryInfo)).tQueryInfo,
-            pair._1)
-        }
+        val snap = System.currentTimeMillis()
+        // create a future page (and remaining spool)
+        val pair = new SpoolPager(spool) page ()
+        logger.debug(s"Spooling for $queryId took ${System.currentTimeMillis() - snap}")
+        // create result frame with updated query info 
+        pair.map(pair => ScrayTResultFrame(
+          rack.updateSpool(queryId, ServiceSpool(pair._2, spool.tQueryInfo)).tQueryInfo, pair._1))
       }
       case None => Future.exception(new ScrayServiceException(
         ExceptionIDs.SPOOLING_ERROR, Some(queryId), s"No results for query ${ScrayUUID2UUID(queryId)}.", None))

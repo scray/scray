@@ -211,7 +211,7 @@ class QueryParserSpec extends FlatSpec with Matchers with TQuerySamples {
     query.getWhereAST.get.isInstanceOf[And] should be(true)
   }
 
-  it should "handle conjunctions with atomic predicates in parens" in {
+  it should "handle conjunctions with atomic predicates in parens w/o whitespaces ending with ORDERBY" in {
     val parsed = parse("SELECT col1, col2 FROM @myTableId WHERE (col2>2) AND (col1<10) ORDERBY col2")
     val query = generate(parsed)
     query.getWhereAST.get.isInstanceOf[And] should be(true)

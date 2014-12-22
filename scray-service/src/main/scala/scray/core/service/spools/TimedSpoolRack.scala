@@ -29,6 +29,7 @@ import java.util.UUID
 import scray.querying.description.Row
 import com.twitter.util.TimerTask
 import scray.core.service._
+import org.slf4j.LoggerFactory
 
 /**
  * SpoolRack implementation offering some means to substitute the back end (query engine).
@@ -43,6 +44,8 @@ import scray.core.service._
 class TimedSpoolRack(val ttl : Duration = Duration.fromSeconds(60), planAndExecute : (Query) => Spool[Row])
   extends SpoolRack {
 
+  private val logger = LoggerFactory.getLogger(classOf[ScrayTServiceImpl])
+
   // internal registry, mutable, concurrency controlled
   private val spoolMap = new HashMap[UUID, (ServiceSpool, TimerTask)]()
 
@@ -54,6 +57,10 @@ class TimedSpoolRack(val ttl : Duration = Duration.fromSeconds(60), planAndExecu
 
   // computes expiration time for collecting frames
   private def expires = Time.now + ttl
+
+  // monitoring wrapper for planner function
+  private val wrappedPlanAndExecute : (Query) => Spool[Row] = (q) => { planLog(q); planAndExecute(q) }
+  private def planLog(q : Query) : Unit = logger.info(s"Planner called for query $q");
 
   override def createSpool(query : Query, tQueryInfo : ScrayTQueryInfo) : ScrayTQueryInfo = {
     // exit if exists
@@ -71,7 +78,7 @@ class TimedSpoolRack(val ttl : Duration = Duration.fromSeconds(60), planAndExecu
       expires = Some(expiration.inNanoseconds))
 
     // prepare this query with the engine
-    val resultSpool : Spool[Row] = planAndExecute(query)
+    val resultSpool : Spool[Row] = wrappedPlanAndExecute(query)
 
     // acquire write lock
     lock.writeLock().lock()
