@@ -39,18 +39,39 @@ struct ScrayTResultFrame {
 }
 
 /**
- * Query executor with streaming result sets
+ * Stateful query service with continuous result pages
  */
-service ScrayTService {
+service ScrayStatefulTService {
 
 	/**
-	 * Submit queries
+	 * Submit query
 	 */
 	scrayQModel.ScrayUUID query(1: scrayQModel.ScrayTQuery query) throws (1: ScrayTException ex)
 	
 	/**
 	 * Fetch query results
+	 * Paging state is maintained on server side.
+	 * The operation is neither idempotent nor safe.
 	 */
 	ScrayTResultFrame getResults(1: scrayQModel.ScrayUUID queryId) throws (1: ScrayTException ex)
+
+}
+
+/**
+ * Stateless query service with indexed result pages
+ */
+service ScrayStatelessTService {
+
+    /**
+     * Submit query
+     */
+    scrayQModel.ScrayUUID query(1: scrayQModel.ScrayTQuery query) throws (1: ScrayTException ex)
+    
+    /**
+     * Fetch query result pages by index.
+     * Paging state is to be maintained on client side.
+     * The operation is idempotent and safe.
+     */
+    ScrayTResultFrame getResults(1: scrayQModel.ScrayUUID queryId, 2: i32 pageIndex) throws (1: ScrayTException ex)
 
 }

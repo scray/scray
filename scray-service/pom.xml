@@ -16,6 +16,9 @@
 		<parboiled.version>2.0.1</parboiled.version>
 	</properties>
 
+
+
+
 	<dependencies>
 		<dependency>
 			<groupId>scray</groupId>
@@ -53,11 +56,16 @@
 			<artifactId>scrooge-core_${scala.suffix}</artifactId>
 			<version>3.17.0</version>
 		</dependency>
-		<dependency>
-			<groupId>com.twitter</groupId>
-			<artifactId>chill_2.10</artifactId>
-			<version>0.4.0</version>
-		</dependency>
+        <dependency>
+            <groupId>com.twitter</groupId>
+            <artifactId>chill_2.10</artifactId>
+            <version>0.4.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.twitter</groupId>
+            <artifactId>storehaus-memcache_2.10</artifactId>
+            <version>0.9.1</version>
+        </dependency>
 	</dependencies>
 
 	<build>

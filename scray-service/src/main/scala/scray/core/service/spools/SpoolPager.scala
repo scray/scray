@@ -28,21 +28,24 @@ import scray.service.qmodel.thrifscala.ScrayTRow
 import scray.service.qmodel.thrifscala.ScrayTColumn
 import scray.service.qmodel.thrifscala.ScrayTColumnInfo
 
-/**
- * Marker row demarcating the end of the result set (within a page)
- */
-class SucceedingSpoolRow extends EmptyRow
-
 class SpoolPager(sspool : ServiceSpool) {
 
-  final val DEFAULT_PAGESIZE : Int = 50
   val pagesize : Int = sspool.tQueryInfo.pagesize.getOrElse(DEFAULT_PAGESIZE)
 
   // fetches a page worth of of converted rows and returns it paired with the remaining spool
   def page() : Future[(Seq[ScrayTRow], Spool[Row])] = if (!sspool.spool.isEmpty) {
-    part(Seq(sspool.spool.head), sspool.spool.tail, pagesize - 1).map { pair => (pair._1 map { convertRow(_) }, pair._2) }
+    part(Seq(sspool.spool.head), sspool.spool.tail, pagesize - 1).map { pair => (pair._1 map { RowConverter.convertRow(_) }, pair._2) }
   } else {
     Future.value((Seq(ScrayTRow(None, None)), sspool.spool))
+  }
+
+  def pageAll() : Future[Spool[Seq[Row]]] = pageAll(sspool.spool)
+
+  // lazily fetch spool rows chunked as pages
+  private def pageAll(spool : Spool[Row]) : Future[Spool[Seq[Row]]] = if (!spool.isEmpty) {
+    part(Seq(spool.head), spool.tail, pagesize - 1) flatMap { pair => pageAll(pair._2) map (pair._1 **:: _) }
+  } else {
+    Future.value(Seq[Row](new SucceedingRow()) **:: Spool.empty)
   }
 
   // recursive function parting a given spool into an eager head (Seq part) and a lazy tail (Spool part)
@@ -54,19 +57,8 @@ class SpoolPager(sspool : ServiceSpool) {
         if (!spool.isEmpty) {
           part(dest :+ spool.head, spool.tail, pos - 1)
         } else {
-          Future.value((dest :+ new SucceedingSpoolRow(), Spool.empty))
+          Future.value((dest :+ new SucceedingRow(), Spool.empty))
         }
       }
     }
-
-  private def convertRow(sRow : Row) : ScrayTRow = sRow match {
-    case sRow : SucceedingSpoolRow => ScrayTRow(None, None)
-    case _ => ScrayTRow(None, Some(sRow.getColumns.map { col =>
-      ScrayTColumn(ScrayTColumnInfo(col.columnName, None, None), encode(sRow.getColumnValue(col).get))
-    }))
-  }
-
-  private def encode[V](value : V) : ByteBuffer =
-    ByteBuffer.wrap(KryoPoolSerialization.chill.toBytesWithClass(value))
-
 }

@@ -25,7 +25,7 @@ import scray.common.serialization.KryoSerializerNumber
 import com.twitter.finagle.ListeningServer
 import java.net.InetAddress
  
-object ScrayTServer extends AbstractScrayTServer {
+object ScrayStatefulTServer extends AbstractScrayStatefulTServer {
   override val endpoint = ScrayServerEndpoint(
       InetAddress.getByName(scray.core.service.ENDPOINT.split(":")(0)),
       Integer.valueOf(scray.core.service.ENDPOINT.split(":")(1))
@@ -37,12 +37,12 @@ object ScrayTServer extends AbstractScrayTServer {
 
 case class ScrayServerEndpoint(host: InetAddress, port: Int)
 
-abstract class AbstractScrayTServer extends KryoPoolRegistration {
+abstract class AbstractScrayStatefulTServer extends KryoPoolRegistration {
   val endpoint: ScrayServerEndpoint
   
   val VER = "1.7"
   
-  lazy val server: ListeningServer = Thrift.serveIface(addressString, ScrayTServiceImpl)
+  lazy val server: ListeningServer = Thrift.serveIface(addressString, ScrayStatefulTServiceImpl)
  
   def addressString: String = s"${endpoint.host.getHostAddress}:${endpoint.port}"
   
