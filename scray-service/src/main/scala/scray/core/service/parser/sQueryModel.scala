@@ -325,19 +325,19 @@ abstract class _AtomicPredicate(columnName : String, value : _Value) extends _Pr
  */
 
 case class _Equal(columnName : String, value : _Value) extends _AtomicPredicate(columnName, value) {
-  def generate()(implicit query : _Query) : Equal[Ordered[_]] = Equal[Ordered[_]](getColumn, getValue.get)
+  def generate()(implicit query : _Query) : Equal[_] = Equal(getColumn, getValue.get)
 }
 case class _Greater(columnName : String, value : _Value) extends _AtomicPredicate(columnName, value) {
-  def generate()(implicit query : _Query) : Greater[Ordered[_]] = Greater[Ordered[_]](getColumn, getValue.get)
+  def generate()(implicit query : _Query) : Greater[_] = Greater(getColumn, getValue.get)
 }
 case class _GreaterEqual(columnName : String, value : _Value) extends _AtomicPredicate(columnName, value) {
-  def generate()(implicit query : _Query) : GreaterEqual[Ordered[_]] = GreaterEqual[Ordered[_]](getColumn, getValue.get)
+  def generate()(implicit query : _Query) : GreaterEqual[_] = GreaterEqual(getColumn, getValue.get)
 }
 case class _Smaller(columnName : String, value : _Value) extends _AtomicPredicate(columnName, value) {
-  def generate()(implicit query : _Query) : Smaller[Ordered[_]] = Smaller[Ordered[_]](getColumn, getValue.get)
+  def generate()(implicit query : _Query) : Smaller[_] = Smaller(getColumn, getValue.get)
 }
 case class _SmallerEqual(columnName : String, value : _Value) extends _AtomicPredicate(columnName, value) {
-  def generate()(implicit query : _Query) : SmallerEqual[Ordered[_]] = SmallerEqual[Ordered[_]](getColumn, getValue.get)
+  def generate()(implicit query : _Query) : SmallerEqual[_] = SmallerEqual(getColumn, getValue.get)
 }
 
 /**

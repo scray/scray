@@ -102,7 +102,10 @@ trait CassandraExtractor[S <: AbstractCQLCassandraStore[_, _]] {
    */
   def checkColumnCassandraAutoIndexed(store: S, column: Column): Boolean = {
     val metadata = Option(getMetadata(store.columnFamily))
-    metadata.map(_ => CassandraUtils.getTableMetadata(store.columnFamily, metadata).getColumn(Metadata.quote(column.columnName)).getIndex()).isDefined
+    metadata.flatMap{_ => 
+      val tm = CassandraUtils.getTableMetadata(store.columnFamily, metadata)
+      val cm = tm.getColumn(Metadata.quote(column.columnName))
+      Option(cm.getIndex())}.isDefined
   }
 
   /**
