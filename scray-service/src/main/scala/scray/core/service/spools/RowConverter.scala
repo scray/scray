@@ -1,5 +1,5 @@
 package scray.core.service.spools
-
+import com.twitter.bijection.Conversion.asMethod
 import scray.querying.description.EmptyRow
 import java.nio.ByteBuffer
 import scray.service.qmodel.thrifscala.ScrayTRow
@@ -7,6 +7,9 @@ import scray.querying.description.Row
 import scray.common.serialization.KryoPoolSerialization
 import scray.service.qmodel.thrifscala.ScrayTColumn
 import scray.service.qmodel.thrifscala.ScrayTColumnInfo
+import com.twitter.chill.KryoInjection
+import com.twitter.bijection.Injection
+import com.twitter.bijection.Bijection
 
 /**
  * Marker row demarcating the end of the result set (within a page)
@@ -25,7 +28,10 @@ object RowConverter {
     }))
   }
 
-  private def encode[V](value : V) : ByteBuffer =
-    ByteBuffer.wrap(KryoPoolSerialization.chill.toBytesWithClass(value))
+  private def encode[V](value : V) : ByteBuffer = {
+    // compose an injection from a pool backed chill serialization and a ByteBuffer conversion
+    val encoder = KryoInjection.instance(KryoPoolSerialization.chill) andThen Bijection.bytes2Buffer
+    encoder(value)
+  }
 
 }
