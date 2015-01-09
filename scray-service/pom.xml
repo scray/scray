@@ -16,9 +16,6 @@
 		<parboiled.version>2.0.1</parboiled.version>
 	</properties>
 
-
-
-
 	<dependencies>
 		<dependency>
 			<groupId>scray</groupId>
@@ -42,7 +39,7 @@
 		</dependency>
 		<dependency>
 			<groupId>org.scalatest</groupId>
-			<artifactId>scalatest_2.10</artifactId>
+			<artifactId>scalatest_${scala.suffix}</artifactId>
 			<version>2.2.1</version>
 			<scope>test</scope>
 		</dependency>
@@ -58,17 +55,17 @@
 		</dependency>
         <dependency>
             <groupId>com.twitter</groupId>
-            <artifactId>chill_2.10</artifactId>
+            <artifactId>chill_${scala.suffix}</artifactId>
             <version>0.4.0</version>
         </dependency>
         <dependency>
             <groupId>com.twitter</groupId>
-            <artifactId>chill-bijection_2.10</artifactId>
+            <artifactId>chill-bijection_${scala.suffix}</artifactId>
             <version>0.4.0</version>
         </dependency>
         <dependency>
             <groupId>com.twitter</groupId>
-            <artifactId>storehaus-memcache_2.10</artifactId>
+            <artifactId>storehaus-memcache_${scala.suffix}</artifactId>
             <version>0.9.1</version>
         </dependency>
 	</dependencies>
