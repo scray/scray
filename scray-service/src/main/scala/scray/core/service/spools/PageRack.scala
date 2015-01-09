@@ -31,10 +31,11 @@ import scray.service.qmodel.thrifscala.ScrayTQueryInfo
 import com.twitter.scrooge.TFieldBlob
 import scray.service.qmodel.thrifscala.ScrayTQuery
 import scray.service.qmodel.thrifscala.ScrayUUID
-import scray.querying.planning.Planner
 import scray.core.service._
 import scala.util.Failure
 import scala.util.Success
+import scray.core.service.spools.memcached.MemcachedPageRack
+import scray.querying.planning.Planner
 
 /**
  * Page identifier
@@ -47,31 +48,24 @@ case class PageKey(uuid : ScrayUUID, pageIndex : Int)
 case class PageValue(page : Seq[Row], tQueryInfo : ScrayTQueryInfo)
 
 /**
+ * PageRack singleton
+ */
+object MPageRack extends MemcachedPageRack(planAndExecute = Planner.planAndExecute)
+
+/**
  * Page cache holding individual pages of query result sets
  *
  */
 trait PageRack {
-
-  val pageTTL = Duration.fromSeconds(180)
 
   /**
    * Create a new temporal page set for a given queue to be retrieved later.
    *
    * @param query the underlying query
    * @param tQueryInfo thrift meta info
-   * @param ttl time to life
    * @return updated thrift meta info to be sent back to the service client
    */
-  def createPages(query : Query, tQueryInfo : ScrayTQueryInfo, ttl : Duration = pageTTL) : ScrayTQueryInfo
-
-  /**
-   * Set a new single temporal page
-   *
-   * @param id page identifier
-   * @param ttl time to life
-   * @return nothing
-   */
-  def setPage(id : PageKey, page : PageValue, ttl : Duration = pageTTL) : Unit
+  def createPages(query : Query, tQueryInfo : ScrayTQueryInfo) : ScrayTQueryInfo
 
   /**
    * Retrieve an existing temporal page.
@@ -80,21 +74,5 @@ trait PageRack {
    * @return page container holding page and meta info if exists else None
    */
   def getPage(key : PageKey) : Future[Option[PageValue]]
-
-  /**
-   * Decommission all temporal pages of a query.
-   *
-   * @param uuid query identifier
-   * @return nothing
-   */
-  def removePages(uuid : ScrayUUID) : Unit
-
-  /**
-   * Decommission a singletemporal page.
-   *
-   * @param id page identifier
-   * @return nothing
-   */
-  def removePage(key : PageKey) : Unit
 
 }
