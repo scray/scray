@@ -40,8 +40,12 @@ import scray.querying.description.EmptyRow
 import scray.service.qmodel.thrifscala.ScrayTColumn
 import scray.service.qmodel.thrifscala.ScrayTColumnInfo
 import scray.core.service.spools.RowConverter
+import scray.core.service.spools.memcached.MemcachedPageRack
+import scray.core.service.spools.MPageRack
 
-//object ScrayStatefulTServiceImpl extends ScrayStatefulTServiceImpl(TSpoolRack)
+object ScrayStatelessTServiceImpl {
+  def apply() = new ScrayStatelessTServiceImpl(MPageRack)
+}
 
 class ScrayStatelessTServiceImpl(val rack : PageRack) extends ScrayStatelessTService.FutureIface {
 
@@ -73,10 +77,10 @@ class ScrayStatelessTServiceImpl(val rack : PageRack) extends ScrayStatelessTSer
       _ match {
         case Some(pval) => Future.value(ScrayTResultFrame(pval.tQueryInfo, pval.page.map(RowConverter.convertRow(_))))
         case None => Future.exception(new ScrayServiceException(
-          ExceptionIDs.CACHING_ERROR, Some(queryId), s"No results for query ${ScrayUUID2UUID(queryId)}.", None))
+          ExceptionIDs.CACHING_ERROR, Some(queryId), s"No results for query ${ScrayUUID2UUID(queryId)} on page ${pageIndex}.", None))
       }
     }
-    logger.debug(s"Paging for $queryId took ${System.currentTimeMillis() - snap}")
+    logger.debug(s"Page retrieval for $queryId page $pageIndex took ${System.currentTimeMillis() - snap}")
     return frame
   }
 

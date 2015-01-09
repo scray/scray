@@ -17,6 +17,7 @@ package scray.core
 
 import java.util.UUID
 import scray.service.qmodel.thrifscala.ScrayUUID
+import java.net.InetAddress
 package object service {
 
   // scray server endpoint

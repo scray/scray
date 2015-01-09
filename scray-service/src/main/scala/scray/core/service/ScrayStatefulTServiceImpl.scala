@@ -36,7 +36,9 @@ import scray.querying.description.Row
 import org.slf4j.LoggerFactory
 import scray.core.service.spools.TSpoolRack
 
-object ScrayStatefulTServiceImpl extends ScrayStatefulTServiceImpl(TSpoolRack)
+object ScrayStatefulTServiceImpl {
+  def apply() = new ScrayStatefulTServiceImpl(TSpoolRack)
+}
 
 class ScrayStatefulTServiceImpl(val rack : SpoolRack) extends ScrayStatefulTService.FutureIface {
 
