@@ -25,18 +25,14 @@ import scray.common.serialization.KryoSerializerNumber
 import com.twitter.finagle.ListeningServer
 import java.net.InetAddress
 
-object ScrayStatefulTServer extends AbstractScrayTServer {
+abstract class ScrayStatefulTServer extends AbstractScrayTServer {
   override val version = "1.7"
   override val server : ListeningServer = Thrift.serveIface(addressString, ScrayStatefulTServiceImpl())
-  override def initializeResources() : Unit = {}
-  override def destroyResources() : Unit = {}
 }
 
-object ScrayStatelessTServer extends AbstractScrayTServer {
+abstract class ScrayStatelessTServer extends AbstractScrayTServer {
   override val version = "0.9"
   override val server : ListeningServer = Thrift.serveIface(addressString, ScrayStatelessTServiceImpl())
-  override def initializeResources() : Unit = {}
-  override def destroyResources() : Unit = {}
 }
 
 case class ScrayServerEndpoint(host : InetAddress, port : Int)

@@ -26,7 +26,7 @@ class MemcachedPageRack(planAndExecute : (Query) => Spool[Row], val pageTTL : Du
 
   private val logger = LoggerFactory.getLogger(classOf[MemcachedPageRack])
 
-  val client = Client(MEMCACHED_HOST)
+  val client = Client(host = MEMCACHED_HOST)
   val pageStore = MemcachePageStore(client, pageTTL)
 
   // computes expiration time for collecting frames
@@ -62,16 +62,34 @@ class MemcachedPageRack(planAndExecute : (Query) => Spool[Row], val pageTTL : Du
 }
 
 class MemcachedSpoolPager(serviceSpool : ServiceSpool, store : MemcachePageStore) extends Runnable {
+  private val logger = LoggerFactory.getLogger(classOf[MemcachedSpoolPager])
+
   def run() {
     // prepare paging (lazily)
     val pages : Future[Spool[Seq[Row]]] = (new SpoolPager(serviceSpool)).pageAll()
-    // put pages to memcached
-    pushPages(pages.get, 0)
+
+    val snap = System.currentTimeMillis()
+
+    // put pages to memcached in a single batch
+    store.multiPut(pages.get.foldLeft(
+      (Map[String, Option[PageValue]](), 0)) {
+        (a, b) =>
+          (a._1 + (pidKeyEncoder(PageKey(serviceSpool.tQueryInfo.queryId.get, a._2)) ->
+            Some(PageValue(b, serviceSpool.tQueryInfo))), a._2 + 1)
+      }.get._1)
+
+    logger.info(s"Putting pages to memcached finished in ${System.currentTimeMillis() - snap} milis.")
+
+    // alternative: put pages to memcached sequentially (adds multiple network roundtrips but first page will be available fast)
+    //pushPages(pages.get, 0)
+    //logger.info(s"Putting pages to memcached finished in ${System.currentTimeMillis() - snap} milis.")
   }
 
   @tailrec
   private final def pushPages(pages : Spool[Seq[Row]], pageIdx : Int) : Unit = if (!pages.isEmpty) {
+    val snap = System.currentTimeMillis()
     store.put(pidKeyEncoder(PageKey(serviceSpool.tQueryInfo.queryId.get, pageIdx)) -> Some(PageValue(pages.head, serviceSpool.tQueryInfo)))
+    logger.info(s"Putting 1 page to memcached finished in ${System.currentTimeMillis() - snap} milis.")
     pushPages(pages.tail.get, pageIdx + 1)
   }
 }

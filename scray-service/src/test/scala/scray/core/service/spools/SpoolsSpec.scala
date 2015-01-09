@@ -134,7 +134,7 @@ class SpoolsSpec
     pspool.toSeq.get.size should be((spoolsize0 / PGSZ) + 1)
   }
 
-  "Chill-based spool serialization" should "serialize page value objects" in {
+  "Chill-based page serialization" should "serialize page value objects" in {
     // prepare row page
     val rack = new TimedSpoolRack(planAndExecute = mockplanner)
     val qinf1 = rack createSpool (query, tquery.queryInfo)

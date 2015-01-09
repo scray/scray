@@ -24,7 +24,7 @@ package object service {
   val ENDPOINT = "localhost:18181"
 
   // memcached host
-  val MEMCACHED_HOST = "localhost:11211"
+  val MEMCACHED_HOST = "127.0.0.1:11211"
 
   implicit def UUID2ScrayUUID(uuid : UUID) : ScrayUUID =
     ScrayUUID(uuid.getLeastSignificantBits(), uuid.getMostSignificantBits())
