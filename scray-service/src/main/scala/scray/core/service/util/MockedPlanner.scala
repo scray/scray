@@ -6,7 +6,7 @@ import org.mockito.Mockito._
 import scray.querying.Query
 import com.twitter.concurrent.Spool
 import scray.querying.description.Row
-import scray.core.service.ScrayTServiceImpl
+import scray.core.service.ScrayStatefulTServiceImpl
 
 trait MockedPlanner extends SpoolSamples {
 
@@ -15,7 +15,7 @@ trait MockedPlanner extends SpoolSamples {
 
   when(mockplanner(anyObject())).thenReturn(spoolOf8.get)
 
-  object TestService extends ScrayTServiceImpl(MockedSpoolRack)
+  object TestService extends ScrayStatefulTServiceImpl(MockedSpoolRack)
 
   def createMockedPlanner(rows : Int, maxCols : Int, vals : Array[_]) : (Query) => Spool[Row] = {
     val genMockPlanner = mock(classOf[(Query) => Spool[Row]])
@@ -30,7 +30,7 @@ trait MockedPlanner extends SpoolSamples {
 
   object GenTestService {
     def apply(rows : Int, maxCols : Int, vals : Array[_]) =
-      new ScrayTServiceImpl(GenMockedSpoolRack(rows, maxCols, vals))
+      new ScrayStatefulTServiceImpl(GenMockedSpoolRack(rows, maxCols, vals))
   }
 
 }

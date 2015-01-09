@@ -20,6 +20,9 @@ import scray.common.serialization.KryoPoolSerialization
 import scray.service.qmodel.thrifscala.ScrayTQuery
 import scray.core.service._
 import scray.service.qmodel.thrifscala.ScrayTRow
+import com.twitter.chill.KryoInjection
+import java.util.UUID
+import com.twitter.bijection.Bijection
 
 @RunWith(classOf[JUnitRunner])
 class SpoolsSpec
@@ -30,6 +33,10 @@ class SpoolsSpec
   with SpoolSamples
   with KryoPoolRegistration {
 
+  // kryo registration
+  register
+
+  // pagesize
   val PGSZ = 2
 
   // prepare back end (query engine) mock
@@ -103,7 +110,7 @@ class SpoolsSpec
     qinf1.expires.get should be < spool1a.tQueryInfo.expires.get
   }
 
-  "SpoolPager" should "slice spools to pages" in {
+  "SpoolPager" should "slice spools to consecutive pages" in {
     val rack = new TimedSpoolRack(planAndExecute = mockplanner)
     val qinf1 = rack createSpool (query, tquery.queryInfo)
     val spool0 = rack.getSpool(uuid).get
@@ -118,12 +125,53 @@ class SpoolsSpec
     pair2._2.toSeq.get.size should be(spoolsize1 - PGSZ)
   }
 
-  it should "serialize column values" in {
+  it should "convert row spools to page spools" in {
     val rack = new TimedSpoolRack(planAndExecute = mockplanner)
     val qinf1 = rack createSpool (query, tquery.queryInfo)
     val spool0 = rack.getSpool(uuid).get
     val spoolsize0 = spool0.spool.toSeq.get.size
-    val pair1 = new SpoolPager(spool0).page.get
+    val pspool = new SpoolPager(spool0).pageAll.get
+    pspool.toSeq.get.size should be((spoolsize0 / PGSZ) + 1)
+  }
+
+  "Chill-based spool serialization" should "serialize page value objects" in {
+    // prepare row page
+    val rack = new TimedSpoolRack(planAndExecute = mockplanner)
+    val qinf1 = rack createSpool (query, tquery.queryInfo)
+    val spool0 = rack.getSpool(uuid).get
+    val spoolsize0 = spool0.spool.toSeq.get.size
+    val page1 = PageValue(new SpoolPager(spool0).pageAll.get.head, spool0.tQueryInfo)
+    // bijection-based kryo serialization plus string encoding
+    val pooledKryoInjection = KryoInjection.instance(KryoPoolSerialization.chill)
+    val bytes = pooledKryoInjection(page1)
+    // ... and back
+    val page2 = pooledKryoInjection.invert(bytes).get
+    page2 should be(page1)
+  }
+
+  it should "serialize page key objects" in {
+    val key1 = PageKey(UUID.randomUUID(), 0)
+    val pooledKryoInjection = KryoInjection.instance(KryoPoolSerialization.chill)
+    val bytes = pooledKryoInjection(key1)
+    val key2 = pooledKryoInjection.invert(bytes).get
+    key2 should be(key1)
+  }
+
+  "RowConverter" should "transform query model rows to service model rows" in {
+    val rack = new TimedSpoolRack(planAndExecute = mockplanner)
+    val qinf1 = rack createSpool (query, tquery.queryInfo)
+    val spool0 = rack.getSpool(uuid).get
+    // SpoolPager.page calls row converter and returns a converted page
+    val spage = new SpoolPager(spool0).page.get._1
+    // page elements should be service model objects
+    spage.head.isInstanceOf[ScrayTRow] should be(true)
+    // column values should be properly serialized as ByteBuffers
+    // look up original column value from native spool
+    val col1 = spool0.spool.head.getColumnValue[Any](0)
+    // decode corresponding column value from page via combined inverted injection/bijection
+    val col2 = KryoInjection.instance(KryoPoolSerialization.chill).invert(
+      Bijection.bytes2Buffer.invert(spage.head.columns.get.head.value))
+    col2.get should be(col1.get)
   }
 
 }

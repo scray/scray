@@ -49,7 +49,7 @@ object VSpoolRack extends VersionedSpoolRack(planAndExecute = Planner.planAndExe
 
 /**
  * Spool repo holding temporal query result sets
- *
+ * 
  */
 trait SpoolRack {
   /**
