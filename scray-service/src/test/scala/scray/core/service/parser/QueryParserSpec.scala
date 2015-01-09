@@ -137,54 +137,54 @@ class QueryParserSpec extends FlatSpec with Matchers with TQuerySamples {
   it should "handle atomic predicates with literal values" in {
     val parsed = parse("SELECT col1 FROM @myTableId WHERE col1=1")
     val query = generate(parsed)
-    query.getWhereAST.get.asInstanceOf[Equal[Int]].value.asInstanceOf[Ordered[Int]].compareTo(1) should be(0)
+    query.getWhereAST.get.asInstanceOf[Equal[Int]].value.compareTo(1) should be(0)
   }
 
   it should "handle atomic predicates with literal quoted values" in {
     val parsed = parse("SELECT col1 FROM @myTableId WHERE col1 = 'foo bar' ")
     val query = generate(parsed)
-    query.getWhereAST.get.asInstanceOf[Equal[String]].value.asInstanceOf[Ordered[String]].compareTo("foo bar") should be(0)
+    query.getWhereAST.get.asInstanceOf[Equal[String]].value.compareTo("foo bar") should be(0)
   }
   
   it should "handle atomic predicates with typed literal values" in {
     val parsed = parse("SELECT col1 FROM @myTableId WHERE col1 = !!long 2")
     val query = generate(parsed)
-    query.getWhereAST.get.asInstanceOf[Equal[Long]].value.asInstanceOf[Ordered[Long]].compareTo(2L) should be(0)
+    query.getWhereAST.get.asInstanceOf[Equal[Long]].value.compareTo(2L) should be(0)
   }
 
   it should "handle atomic predicates with 'equal'" in {
     val parsed = parse("SELECT col1 FROM @myTableId WHERE col1=1")
     val query = generate(parsed)
     query.getWhereAST.get.isInstanceOf[Equal[_]] should be(true)
-    query.getWhereAST.get.asInstanceOf[Equal[Int]].value.asInstanceOf[Ordered[Int]].compareTo(1) should be(0)
+    query.getWhereAST.get.asInstanceOf[Equal[Int]].value.compareTo(1) should be(0)
   }
 
   it should "handle atomic predicates with 'smaller'" in {
     val parsed = parse("SELECT col1 FROM @myTableId WHERE col1<1")
     val query = generate(parsed)
     query.getWhereAST.get.isInstanceOf[Smaller[_]] should be(true)
-    query.getWhereAST.get.asInstanceOf[Smaller[Int]].value.asInstanceOf[Ordered[Int]].compareTo(1) should be(0)
+    query.getWhereAST.get.asInstanceOf[Smaller[Int]].value.compareTo(1) should be(0)
   }
 
   it should "handle atomic predicates with 'smaller equal'" in {
     val parsed = parse("SELECT col1 FROM @myTableId WHERE col1<=1")
     val query = generate(parsed)
     query.getWhereAST.get.isInstanceOf[SmallerEqual[_]] should be(true)
-    query.getWhereAST.get.asInstanceOf[SmallerEqual[Int]].value.asInstanceOf[Ordered[Int]].compareTo(1) should be(0)
+    query.getWhereAST.get.asInstanceOf[SmallerEqual[Int]].value.compareTo(1) should be(0)
   }
 
   it should "handle atomic predicates with 'greater'" in {
     val parsed = parse("SELECT col1 FROM @myTableId WHERE col1>1")
     val query = generate(parsed)
     query.getWhereAST.get.isInstanceOf[Greater[_]] should be(true)
-    query.getWhereAST.get.asInstanceOf[Greater[Int]].value.asInstanceOf[Ordered[Int]].compareTo(1) should be(0)
+    query.getWhereAST.get.asInstanceOf[Greater[Int]].value.compareTo(1) should be(0)
   }
 
   it should "handle atomic predicates with 'greater equal'" in {
     val parsed = parse("SELECT col1 FROM @myTableId WHERE col1>=1")
     val query = generate(parsed)
     query.getWhereAST.get.isInstanceOf[GreaterEqual[_]] should be(true)
-    query.getWhereAST.get.asInstanceOf[GreaterEqual[Int]].value.asInstanceOf[Ordered[Int]].compareTo(1) should be(0)
+    query.getWhereAST.get.asInstanceOf[GreaterEqual[Int]].value.compareTo(1) should be(0)
   }
 
   it should "handle complex 'AND' predicates" in {
