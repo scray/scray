@@ -41,6 +41,7 @@ public class ScrayStatement implements java.sql.Statement {
 	private ScrayTQuery rawTQuery = null;
 	private String tableId = null;
 	private ScrayUUID queryId = null;
+	private int pageIdx = -1;
 	private ScrayTResultFrame currFrame = null;
 	private ScrayResultSet currResults = null;
 
@@ -50,7 +51,8 @@ public class ScrayStatement implements java.sql.Statement {
 
 	private void advanceQuery() throws SQLException {
 		try {
-			currFrame = syncFetch(queryId);
+			pageIdx += 1;
+			currFrame = syncFetch(queryId, pageIdx);
 			currResults = new ScrayResultSet(currFrame, fetchSize,
 					fetchDirection, this);
 		} catch (Exception e) {
@@ -227,9 +229,10 @@ public class ScrayStatement implements java.sql.Statement {
 		queryTimeout = seconds;
 	}
 
-	private ScrayTResultFrame syncFetch(ScrayUUID uuid) throws Exception {
+	private ScrayTResultFrame syncFetch(ScrayUUID uuid, int pageIdx)
+			throws Exception {
 		Future<ScrayTResultFrame> fframe = connection.getThriftConnection()
-				.getScrayTService().getResults(uuid);
+				.getScrayTService().getResults(uuid, pageIdx);
 		ScrayTResultFrame frame = Await.result(fframe, new Duration(
 				queryTimeout * 1000000000L));
 		return frame;

@@ -38,7 +38,7 @@ import scray.service.qmodel.thriftjava.ScrayTRow;
 import scray.service.qmodel.thriftjava.ScrayTTableInfo;
 import scray.service.qmodel.thriftjava.ScrayUUID;
 import scray.service.qservice.thriftjava.ScrayTResultFrame;
-import scray.service.qservice.thriftjava.ScrayTService;
+import scray.service.qservice.thriftjava.ScrayStatelessTService;
 
 import com.twitter.scrooge.Option;
 import com.twitter.util.Future;
@@ -69,14 +69,14 @@ public class ScrayJdbcTest {
 	ScrayTResultFrame frame;
 
 	class MockedConnection extends FinagleThriftConnection {
-		ScrayTService.FutureIface mockedClient;
+		ScrayStatelessTService.FutureIface mockedClient;
 
 		public MockedConnection() {
 			super("127.0.0.1:18182");
-			mockedClient = mock(ScrayTService.FutureIface.class);
+			mockedClient = mock(ScrayStatelessTService.FutureIface.class);
 		}
 
-		public ScrayTService.FutureIface getScrayTService() {
+		public ScrayStatelessTService.FutureIface getScrayTService() {
 			return mockedClient;
 		}
 	}
@@ -86,8 +86,9 @@ public class ScrayJdbcTest {
 		when(_MCON.mockedClient.query(any(ScrayTQuery.class))).thenReturn(
 				Future.value(_SUUID));
 		// stub first call to getResults
-		when(_MCON.mockedClient.getResults(_SUUID)).thenReturn(
-				Future.value(frame));
+		when(
+				_MCON.mockedClient.getResults(any(ScrayUUID.class),
+						any(Integer.class))).thenReturn(Future.value(frame));
 	}
 
 	void createFrame() {
