@@ -15,18 +15,25 @@
 
 package scray.core.service
 
-import java.util.UUID
-import scray.common.exceptions.ScrayException
+import scala.util.Random
 
-object ExceptionIDs {
-  val PARSING_ERROR = "SIL-Scray-Service-010-Parsing"
-  val SPOOLING_ERROR = "SIL-Scray-Service-011-Spooling"
-  val CACHING_ERROR = "SIL-Scray-Service-012-Cache"
-}
+import com.twitter.finagle.Thrift
+import com.twitter.util.Await
 
-class ScrayServiceException(id : String, query : UUID, msg : String, cause : Throwable)
-  extends ScrayException(id, query, msg, cause) {
-  def this(id : String, msg : String, cause : Throwable) = this(id, null, msg, cause)
-  def this(id : String, query : UUID, msg : String) = this(id, query, msg, null)
-  def this(id : String, msg : String) = this(id, null, msg, null)
+import scray.core.service.util.MockedPlanner
+
+object ScrayStatefulTTestServer extends KryoPoolRegistration with MockedPlanner {
+
+  val ENDPOINT = "localhost:18182"
+  val ROWS = 5000
+  val MAXCOLS = 50
+  val bigBuf = 1.until(1000).foldLeft("")((str, int) => str + Random.nextPrintableChar)
+  val VALUES = Array(1, 2, 3, 4, 1.3, 2.7, bigBuf, "foo", "bar", "baz")
+
+  val server = Thrift.serveIface(ENDPOINT, GenStatefulTestService(ROWS, MAXCOLS, VALUES))
+
+  def main(args : Array[String]) {
+    register
+    Await.ready(server)
+  }
 }

@@ -1,18 +1,18 @@
 package scray.client.finagle;
 
-import scray.service.qservice.thriftjava.ScrayTService;
+import scray.service.qservice.thriftjava.ScrayStatelessTService;
 
 import com.twitter.finagle.Thrift;
 
 public class FinagleThriftConnection {
 
-	private ScrayTService.FutureIface client;
+	private ScrayStatelessTService.FutureIface client;
 
 	public FinagleThriftConnection(String endpoint) {
-		client = Thrift.newIface(endpoint, ScrayTService.FutureIface.class);
+		client = Thrift.newIface(endpoint, ScrayStatelessTService.FutureIface.class);
 	}
 
-	public ScrayTService.FutureIface getScrayTService() {
+	public ScrayStatelessTService.FutureIface getScrayTService() {
 		return client;
 	}
 

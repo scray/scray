@@ -17,9 +17,14 @@ package scray.core
 
 import java.util.UUID
 import scray.service.qmodel.thrifscala.ScrayUUID
+import java.net.InetAddress
 package object service {
 
+  // scray server endpoint
   val ENDPOINT = "localhost:18181"
+
+  // memcached host
+  val MEMCACHED_HOST = "127.0.0.1:11211"
 
   implicit def UUID2ScrayUUID(uuid : UUID) : ScrayUUID =
     ScrayUUID(uuid.getLeastSignificantBits(), uuid.getMostSignificantBits())

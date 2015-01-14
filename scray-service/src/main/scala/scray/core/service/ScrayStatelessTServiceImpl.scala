@@ -29,18 +29,27 @@ import scray.service.qmodel.thrifscala.ScrayTQueryInfo
 import scray.service.qmodel.thrifscala.ScrayTRow
 import scray.service.qservice.thrifscala.ScrayTResultFrame
 import scray.core.service.spools.SpoolPager
-import scray.service.qservice.thrifscala.ScrayTService
+import scray.service.qservice.thrifscala.ScrayStatelessTService
 import scray.core.service.spools.ServiceSpool
 import com.twitter.concurrent.Spool
 import scray.querying.description.Row
 import org.slf4j.LoggerFactory
-import scray.core.service.spools.TSpoolRack
+import scray.core.service.spools.{ PageRack, PageKey, PageValue }
+import scray.common.serialization.KryoPoolSerialization
+import scray.querying.description.EmptyRow
+import scray.service.qmodel.thrifscala.ScrayTColumn
+import scray.service.qmodel.thrifscala.ScrayTColumnInfo
+import scray.core.service.spools.RowConverter
+import scray.core.service.spools.memcached.MemcachedPageRack
+import scray.core.service.spools.MPageRack
 
-object ScrayTServiceImpl extends ScrayTServiceImpl(TSpoolRack)
+object ScrayStatelessTServiceImpl {
+  def apply() = new ScrayStatelessTServiceImpl(MPageRack)
+}
 
-class ScrayTServiceImpl(val rack : SpoolRack) extends ScrayTService.FutureIface {
+class ScrayStatelessTServiceImpl(val rack : PageRack) extends ScrayStatelessTService.FutureIface {
 
-  private val logger = LoggerFactory.getLogger(classOf[ScrayTServiceImpl])
+  private val logger = LoggerFactory.getLogger(classOf[ScrayStatelessTServiceImpl])
 
   def query(tQuery : ScrayTQuery) : Future[ScrayUUID] = {
 
@@ -54,28 +63,25 @@ class ScrayTServiceImpl(val rack : SpoolRack) extends ScrayTService.FutureIface 
       case Failure(e) => throw e
     }
     parsed.flatMap(_.createQuery) match {
-      case Success(query) => Future.value(rack.createSpool(query, tQuery.queryInfo).queryId.get)
+      case Success(query) => Future.value(rack.createPages(query, tQuery.queryInfo).queryId.get)
       case Failure(ex) => Future.exception(ex)
     }
   }
 
-  def getResults(queryId : ScrayUUID) : Future[ScrayTResultFrame] = {
+  def getResults(queryId : ScrayUUID, pageIndex : Int) : Future[ScrayTResultFrame] = {
 
     logger.info(s"New 'getResults' request: ${queryId}")
 
-    rack.getSpool(queryId) match {
-      case Some(spool) => {
-        val snap = System.currentTimeMillis()
-        // create a future page (and remaining spool)
-        val pair = new SpoolPager(spool) page ()
-        logger.debug(s"Spooling for $queryId took ${System.currentTimeMillis() - snap}")
-        // create result frame with updated query info 
-        pair.map(pair => ScrayTResultFrame(
-          rack.updateSpool(queryId, ServiceSpool(pair._2, spool.tQueryInfo)).tQueryInfo, pair._1))
+    val snap = System.currentTimeMillis()
+    val frame = rack.getPage(PageKey(queryId, pageIndex)).flatMap {
+      _ match {
+        case Some(pval) => Future.value(ScrayTResultFrame(pval.tQueryInfo, pval.page.map(RowConverter.convertRow(_))))
+        case None => Future.exception(new ScrayServiceException(
+          ExceptionIDs.CACHING_ERROR, queryId, s"No results (yet) for query ${ScrayUUID2UUID(queryId)} on page ${pageIndex}."))
       }
-      case None => Future.exception(new ScrayServiceException(
-        ExceptionIDs.SPOOLING_ERROR, Some(queryId), s"No results for query ${ScrayUUID2UUID(queryId)}.", None))
     }
+    logger.debug(s"Page retrieval for $queryId page $pageIndex took ${System.currentTimeMillis() - snap}")
+    return frame
   }
 
 }
