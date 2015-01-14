@@ -25,8 +25,9 @@ public class FinagleTestClient {
 
 	public static void main(String[] args) throws Exception {
 
-		FinagleThriftConnection con = new FinagleThriftConnection("localhost:18181");
-		
+		FinagleThriftConnection con = new FinagleThriftConnection(
+				"localhost:18181");
+
 		// prepare a query
 		List<ScrayTColumnInfo> clist = new LinkedList<ScrayTColumnInfo>();
 
@@ -41,8 +42,8 @@ public class FinagleTestClient {
 				new HashMap<String, ByteBuffer>(),
 				"SELECT col1, col2 FROM @baz");
 
-		Future<ScrayUUID> quid = con.getScrayTService().query(query).onSuccess(
-				new Function<ScrayUUID, BoxedUnit>() {
+		Future<ScrayUUID> quid = con.getScrayTService().query(query)
+				.onSuccess(new Function<ScrayUUID, BoxedUnit>() {
 					@Override
 					public BoxedUnit apply(ScrayUUID response) {
 						System.out.println("Received response: " + response);
@@ -53,11 +54,15 @@ public class FinagleTestClient {
 		ScrayUUID quidok = Await.result(quid);
 
 		boolean hasNextFrame = true;
+		int pagecount = -1;
 		int rowcount = 0;
 
 		while (hasNextFrame) {
 
-			Future<ScrayTResultFrame> frame = con.getScrayTService().getResults(quidok)
+			pagecount += 1;
+
+			Future<ScrayTResultFrame> frame = con.getScrayTService()
+					.getResults(quidok, pagecount)
 					.onSuccess(new Function<ScrayTResultFrame, BoxedUnit>() {
 						@Override
 						public BoxedUnit apply(ScrayTResultFrame response) {

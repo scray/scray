@@ -13,23 +13,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package scray.core
+package scray.core.service
 
-import java.util.UUID
-import scray.service.qmodel.thrifscala.ScrayUUID
-import java.net.InetAddress
-package object service {
+import scala.util.Random
 
-  // scray server endpoint
-  val ENDPOINT = "localhost:18181"
+import com.twitter.finagle.Thrift
+import com.twitter.util.Await
 
-  // memcached host
-  val MEMCACHED_HOST = "127.0.0.1:11211"
+import scray.core.service.util.MockedPlanner
 
-  implicit def UUID2ScrayUUID(uuid : UUID) : ScrayUUID =
-    ScrayUUID(uuid.getLeastSignificantBits(), uuid.getMostSignificantBits())
+object ScrayStatefulTTestServer extends KryoPoolRegistration with MockedPlanner {
 
-  implicit def ScrayUUID2UUID(suuid : ScrayUUID) : UUID =
-    new UUID(suuid.leastSigBits, suuid.mostSigBits)
+  val ENDPOINT = "localhost:18182"
+  val ROWS = 5000
+  val MAXCOLS = 50
+  val bigBuf = 1.until(1000).foldLeft("")((str, int) => str + Random.nextPrintableChar)
+  val VALUES = Array(1, 2, 3, 4, 1.3, 2.7, bigBuf, "foo", "bar", "baz")
 
+  val server = Thrift.serveIface(ENDPOINT, GenStatefulTestService(ROWS, MAXCOLS, VALUES))
+
+  def main(args : Array[String]) {
+    register
+    Await.ready(server)
+  }
 }

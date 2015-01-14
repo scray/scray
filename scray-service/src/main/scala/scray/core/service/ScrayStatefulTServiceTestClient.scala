@@ -4,7 +4,7 @@ import com.twitter.finagle.Thrift
 import com.twitter.util.Future
 import scray.service.qmodel.thrifscala.ScrayTQuery
 import java.nio.ByteBuffer
-import scray.service.qservice.thrifscala.ScrayTService
+import scray.service.qservice.thrifscala.ScrayStatefulTService
 import com.twitter.util.Await
 import scray.service.qmodel.thrifscala.ScrayUUID
 import scray.service.qmodel.thrifscala.ScrayTQueryInfo
@@ -22,7 +22,7 @@ object ScrayTServiceTestClient extends TQuerySamples {
     val queryObj : ScrayTQuery = createTQuery(expr = "SELECT nothing FROM @myTableId")
 
     // prepare client
-    val client = Thrift.newIface[ScrayTService.FutureIface](ENDPOINT)
+    val client = Thrift.newIface[ScrayStatefulTService.FutureIface](ENDPOINT)
 
     //call service
     val res = client.query(queryObj) onFailure { e => throw e } onSuccess { r => println(s"Received '$r'.") }

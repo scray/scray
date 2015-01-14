@@ -31,62 +31,48 @@ import scray.service.qmodel.thrifscala.ScrayTQueryInfo
 import com.twitter.scrooge.TFieldBlob
 import scray.service.qmodel.thrifscala.ScrayTQuery
 import scray.service.qmodel.thrifscala.ScrayUUID
-import scray.querying.planning.Planner
 import scray.core.service._
 import scala.util.Failure
 import scala.util.Success
+import scray.core.service.spools.memcached.MemcachedPageRack
+import scray.querying.planning.Planner
 
 /**
- * Container holding spool and meta info
+ * Page identifier
  */
-case class ServiceSpool(val spool : Spool[Row], val tQueryInfo : ScrayTQueryInfo)
+case class PageKey(uuid : ScrayUUID, pageIndex : Int)
 
 /**
- * SpoolRack singletons
+ * Page container
  */
-object TSpoolRack extends TimedSpoolRack(planAndExecute = Planner.planAndExecute)
-object VSpoolRack extends VersionedSpoolRack(planAndExecute = Planner.planAndExecute)
+case class PageValue(page : Seq[Row], tQueryInfo : ScrayTQueryInfo)
 
 /**
- * Spool repo holding temporal query result sets
- * 
+ * PageRack singleton
  */
-trait SpoolRack {
+object MPageRack extends MemcachedPageRack(planAndExecute = Planner.planAndExecute)
+
+/**
+ * Page cache holding individual pages of query result sets
+ *
+ */
+trait PageRack {
+
   /**
-   * Create a new temporal spool for a given queue to be retrieved later.
-   *
-   * This function is idempotent.
+   * Create a new temporal page set for a given queue to be retrieved later.
    *
    * @param query the underlying query
    * @param tQueryInfo thrift meta info
    * @return updated thrift meta info to be sent back to the service client
    */
-  def createSpool(query : Query, tQueryInfo : ScrayTQueryInfo) : ScrayTQueryInfo
+  def createPages(query : Query, tQueryInfo : ScrayTQueryInfo) : ScrayTQueryInfo
 
   /**
-   * Retrieve existing temporal spool for consecutively retrieving result set frames.
+   * Retrieve an existing temporal page.
    *
-   * @param uuid query identifier
-   * @return spool container holding spool and meta info if exists else None
+   * @param id page identifier
+   * @return page container holding page and meta info if exists else None
    */
-  def getSpool(uuid : ScrayUUID) : Option[ServiceSpool]
+  def getPage(key : PageKey) : Future[Option[PageValue]]
 
-  /**
-   * Update existing temporal spool for keeping state of delivered result set frames.
-   *
-   * @param uuid query identifier
-   * @param spool container holding spool and meta info
-   * @return updated spool container
-   */
-  def updateSpool(uuid : ScrayUUID, spool : ServiceSpool) : ServiceSpool
-
-  /**
-   * Decommission temporal spool.
-   *
-   * This function is normally called by the timer after TTL.
-   *
-   * @param uuid query identifier
-   * @return nothing
-   */
-  def removeSpool(uuid : ScrayUUID) : Unit
 }

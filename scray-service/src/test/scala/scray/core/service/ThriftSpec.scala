@@ -15,7 +15,7 @@ import scray.querying.description.Row
 import scray.querying.planning.Planner
 import scray.service.qmodel.thrifscala.ScrayTQuery
 import scray.service.qmodel.thrifscala.ScrayUUID
-import scray.service.qservice.thrifscala.ScrayTService
+import scray.service.qservice.thrifscala.ScrayStatefulTService
 import scray.core.service.util.{ SpoolSamples, TQuerySamples }
 import scray.querying.Query
 import scray.core.service.spools.TimedSpoolRack
@@ -38,9 +38,9 @@ class ThriftSpec
   when(mockplanner(anyObject())).thenReturn(spool1.get)
 
   // prepare finagle
-  object TestService extends ScrayTServiceImpl(MockedSpoolRack)
+  object TestService extends ScrayStatefulTServiceImpl(MockedSpoolRack)
   val server = Thrift.serveIface(ENDPOINT, TestService)
-  val client = Thrift.newIface[ScrayTService.FutureIface](ENDPOINT)
+  val client = Thrift.newIface[ScrayStatefulTService.FutureIface](ENDPOINT)
 
   before {
     // register kryo serializers

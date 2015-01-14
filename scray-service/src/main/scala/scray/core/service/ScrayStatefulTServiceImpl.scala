@@ -29,18 +29,20 @@ import scray.service.qmodel.thrifscala.ScrayTQueryInfo
 import scray.service.qmodel.thrifscala.ScrayTRow
 import scray.service.qservice.thrifscala.ScrayTResultFrame
 import scray.core.service.spools.SpoolPager
-import scray.service.qservice.thrifscala.ScrayTService
+import scray.service.qservice.thrifscala.ScrayStatefulTService
 import scray.core.service.spools.ServiceSpool
 import com.twitter.concurrent.Spool
 import scray.querying.description.Row
 import org.slf4j.LoggerFactory
 import scray.core.service.spools.TSpoolRack
 
-object ScrayTServiceImpl extends ScrayTServiceImpl(TSpoolRack)
+object ScrayStatefulTServiceImpl {
+  def apply() = new ScrayStatefulTServiceImpl(TSpoolRack)
+}
 
-class ScrayTServiceImpl(val rack : SpoolRack) extends ScrayTService.FutureIface {
+class ScrayStatefulTServiceImpl(val rack : SpoolRack) extends ScrayStatefulTService.FutureIface {
 
-  private val logger = LoggerFactory.getLogger(classOf[ScrayTServiceImpl])
+  private val logger = LoggerFactory.getLogger(classOf[ScrayStatefulTServiceImpl])
 
   def query(tQuery : ScrayTQuery) : Future[ScrayUUID] = {
 

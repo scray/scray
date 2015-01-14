@@ -39,7 +39,7 @@
 		</dependency>
 		<dependency>
 			<groupId>org.scalatest</groupId>
-			<artifactId>scalatest_2.10</artifactId>
+			<artifactId>scalatest_${scala.suffix}</artifactId>
 			<version>2.2.1</version>
 			<scope>test</scope>
 		</dependency>
@@ -53,11 +53,21 @@
 			<artifactId>scrooge-core_${scala.suffix}</artifactId>
 			<version>3.17.0</version>
 		</dependency>
-		<dependency>
-			<groupId>com.twitter</groupId>
-			<artifactId>chill_2.10</artifactId>
-			<version>0.4.0</version>
-		</dependency>
+        <dependency>
+            <groupId>com.twitter</groupId>
+            <artifactId>chill_${scala.suffix}</artifactId>
+            <version>0.4.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.twitter</groupId>
+            <artifactId>chill-bijection_${scala.suffix}</artifactId>
+            <version>0.4.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.twitter</groupId>
+            <artifactId>storehaus-memcache_${scala.suffix}</artifactId>
+            <version>0.9.1</version>
+        </dependency>
 	</dependencies>
 
 	<build>

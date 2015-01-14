@@ -44,7 +44,7 @@ import org.slf4j.LoggerFactory
 class TimedSpoolRack(val ttl : Duration = Duration.fromSeconds(60), planAndExecute : (Query) => Spool[Row])
   extends SpoolRack {
 
-  private val logger = LoggerFactory.getLogger(classOf[ScrayTServiceImpl])
+  private val logger = LoggerFactory.getLogger(classOf[TimedSpoolRack])
 
   // internal registry, mutable, concurrency controlled
   private val spoolMap = new HashMap[UUID, (ServiceSpool, TimerTask)]()
