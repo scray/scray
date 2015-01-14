@@ -68,26 +68,20 @@ case class _Query(components : Map[Class[_ <: _QueryComponent], _QueryComponent]
           if (l.getClass().equals(r.getClass())) { l } else {
             throw new ScrayServiceException(
               ExceptionIDs.PARSING_ERROR,
-              query = None,
-              s"Inconsistent columns (all columns need to be either references or specfications).",
-              cause = None)
+              s"Inconsistent columns (all columns need to be either references or specfications).")
           })
         // no duplicate columns allowed
         if (cs.components.removeDuplicates.size == components.size) {
           throw new ScrayServiceException(
             ExceptionIDs.PARSING_ERROR,
-            query = None,
-            s"Duplicated column names in FROM part.",
-            cause = None)
+            s"Duplicated column names in FROM part.")
         }
         // check for thrift references in ref columns
         if (!cs.components.filter(_.isInstanceOf[_RefColumn])
           .foldLeft(true)((a, b) => a && tQuery.queryInfo.columns.find(_.name.equals(b.getName)).nonEmpty)) {
           throw new ScrayServiceException(
             ExceptionIDs.PARSING_ERROR,
-            query = None,
-            s"Unmatched column reference in FROM part.",
-            cause = None)
+            s"Unmatched column reference in FROM part.")
         }
         cs
       }))
@@ -118,9 +112,7 @@ case class _Query(components : Map[Class[_ <: _QueryComponent], _QueryComponent]
       } else {
         throw new ScrayServiceException(
           ExceptionIDs.PARSING_ERROR,
-          query = None,
-          s"Grouping contains unmatched column name '${grouping.get.name}'.",
-          cause = None)
+          s"Grouping contains unmatched column name '${grouping.get.name}'.")
       }
     })
 
@@ -134,9 +126,7 @@ case class _Query(components : Map[Class[_ <: _QueryComponent], _QueryComponent]
       } else {
         throw new ScrayServiceException(
           ExceptionIDs.PARSING_ERROR,
-          query = None,
-          s"Ordering contains unmatched column name '${ordering.get.name}'.",
-          cause = None)
+          s"Ordering contains unmatched column name '${ordering.get.name}'.")
       }
     })
 
@@ -202,9 +192,7 @@ case class _RefColumn(reference : String) extends _Column {
     .find(col => col.name.equals(reference))
     .getOrElse(throw new ScrayServiceException(
       ExceptionIDs.PARSING_ERROR,
-      query = None,
-      s"Unmatched column reference '$getName'.",
-      cause = None)))
+      s"Unmatched column reference '$getName'.")))
 }
 
 /**
@@ -245,9 +233,7 @@ case class _RefTable(reference : String) extends _Table {
     } else {
       Failure(new ScrayServiceException(
         ExceptionIDs.PARSING_ERROR,
-        query = None,
-        s"Unmatched table reference '$reference'.",
-        cause = None))
+        s"Unmatched table reference '$reference'."))
     }
   }
 }
@@ -301,9 +287,7 @@ abstract class _AtomicPredicate(columnName : String, value : _Value) extends _Pr
   override def getMatched(columns : _Columns) : Try[_Predicate] = if (isMatchedBy(columns)) Success(this) else
     Failure(new ScrayServiceException(
       ExceptionIDs.PARSING_ERROR,
-      query = None,
-      s"Predicate contains unmatched column name '${columnName}'.",
-      cause = None))
+      s"Predicate contains unmatched column name '${columnName}'."))
 
   def isMatchedBy(columns : _Columns) : Boolean = columns match {
     case ac : _AsterixColumn => true

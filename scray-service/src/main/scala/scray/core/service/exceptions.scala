@@ -24,5 +24,9 @@ object ExceptionIDs {
   val CACHING_ERROR = "SIL-Scray-Service-012-Cache"
 }
 
-class ScrayServiceException(id : String, query : Option[UUID], msg : String, cause : Option[Throwable] = None)
-  extends ScrayException(id, query, msg, cause)
+class ScrayServiceException(id : String, query : UUID, msg : String, cause : Throwable)
+  extends ScrayException(id, query, msg, cause) {
+  def this(id : String, msg : String, cause : Throwable) = this(id, null, msg, cause)
+  def this(id : String, query : UUID, msg : String) = this(id, query, msg, null)
+  def this(id : String, msg : String) = this(id, null, msg, null)
+}

@@ -74,7 +74,7 @@ class ScrayTServiceImpl(val rack : SpoolRack) extends ScrayTService.FutureIface 
           rack.updateSpool(queryId, ServiceSpool(pair._2, spool.tQueryInfo)).tQueryInfo, pair._1))
       }
       case None => Future.exception(new ScrayServiceException(
-        ExceptionIDs.SPOOLING_ERROR, Some(queryId), s"No results for query ${ScrayUUID2UUID(queryId)}.", None))
+        ExceptionIDs.SPOOLING_ERROR, queryId, s"No results for query ${ScrayUUID2UUID(queryId)}."))
     }
   }
 
