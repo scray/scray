@@ -1,29 +1,14 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-	<parent>
-		<groupId>scray</groupId>
-		<artifactId>scray</artifactId>
-		<version>0.0.1-SNAPSHOT</version>
-	</parent>
 
 	<modelVersion>4.0.0</modelVersion>
+
+	<groupId>scray</groupId>
 	<artifactId>scray-common</artifactId>
 	<name>Scray - Common</name>
-	<description>scray commonly used structures and mechanisms</description>
+	<version>0.0.1-SNAPSHOT</version>
 
-	<dependencies>
-		<dependency>
-			<groupId>org.parboiled</groupId>
-			<artifactId>parboiled_${scala.suffix}</artifactId>
-			<version>${parboiled.version}</version>
-		</dependency>
-		<dependency>
-		  <!-- version must be aligned with Summingbird, manage in parent pom? -->
-      <groupId>com.twitter</groupId>
-      <artifactId>chill_2.10</artifactId>
-      <version>0.4.0</version>
-    </dependency>
-	</dependencies>
+	<description>scray artefacts shared between scala and java components</description>
 
 	<licenses>
 		<license>
@@ -33,4 +18,5 @@
 			<comments>A business-friendly OSS license</comments>
 		</license>
 	</licenses>
+
 </project>

@@ -16,6 +16,7 @@
 		<finagle.version>6.15.0</finagle.version>
 		<libthrift.version>0.9.1</libthrift.version>
 		<scrooge.version>3.4.0</scrooge.version>
+		<scray.version>0.0.1-SNAPSHOT</scray.version>
 	</properties>
 
 	<repositories>
@@ -26,8 +27,12 @@
 		</repository>
 	</repositories>
 
-	<!-- make sure this project doesn't have any Scala dependencies! -->
 	<dependencies>
+		<dependency>
+			<groupId>scray</groupId>
+			<artifactId>scray-common</artifactId>
+			<version>${scray.version}</version>
+		</dependency>
 		<dependency>
 			<groupId>com.twitter</groupId>
 			<artifactId>chill-java</artifactId>
@@ -79,6 +84,7 @@
 
 	<build>
 		<plugins>
+
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
@@ -88,6 +94,7 @@
 					<target>1.7</target>
 				</configuration>
 			</plugin>
+
 			<plugin>
 				<groupId>com.twitter</groupId>
 				<artifactId>scrooge-maven-plugin</artifactId>
@@ -115,6 +122,38 @@
 					</execution>
 				</executions>
 			</plugin>
+
+			<plugin>
+				<artifactId>maven-dependency-plugin</artifactId>
+				<executions>
+					<execution>
+						<phase>prepare-package</phase>
+						<goals>
+							<goal>copy-dependencies</goal>
+						</goals>
+						<configuration>
+							<outputDirectory>${project.build.directory}/lib</outputDirectory>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-assembly-plugin</artifactId>
+				<executions>
+					<execution>
+						<phase>package</phase>
+						<goals>
+							<goal>single</goal>
+						</goals>
+						<configuration>
+							<descriptor>dependencies.xml</descriptor>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+
 		</plugins>
 
 		<pluginManagement>
@@ -146,6 +185,27 @@
 										<ignore></ignore>
 									</action>
 								</pluginExecution>
+								<pluginExecution>
+									<pluginExecutionFilter>
+										<groupId>
+											org.apache.maven.plugins
+										</groupId>
+										<artifactId>
+											maven-dependency-plugin
+										</artifactId>
+										<versionRange>
+											[2.1,)
+										</versionRange>
+										<goals>
+											<goal>
+												copy-dependencies
+											</goal>
+										</goals>
+									</pluginExecutionFilter>
+									<action>
+										<ignore></ignore>
+									</action>
+								</pluginExecution>
 							</pluginExecutions>
 						</lifecycleMappingMetadata>
 					</configuration>
@@ -162,4 +222,5 @@
 			<comments>A business-friendly OSS license</comments>
 		</license>
 	</licenses>
+
 </project>

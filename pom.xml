@@ -25,10 +25,11 @@
 	</properties>
 
 	<modules>
-		<module>scray-common</module>
 		<module>scray-querying</module>
 		<module>scray-cassandra</module>
 		<module>scray-service</module>
+        <module>scray-common</module>
+		<module>scray-java</module>
 	</modules>
 
 	<dependencies>
