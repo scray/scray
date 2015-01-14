@@ -32,7 +32,7 @@ public class ScrayJdbcAccess {
 			Class.forName("scray.client.jdbc.ScrayDriver");
 
 			connect = DriverManager
-					.getConnection("jdbc:scray://localhost:18181/cassandra/SIL/SIL");
+					.getConnection("jdbc:scray://localhost:18182/cassandra/SIL/SIL");
 
 			statement = connect.createStatement();
 
@@ -45,7 +45,7 @@ public class ScrayJdbcAccess {
 			long aggTime = 0;
 			long snap = System.currentTimeMillis();
 
-			if (statement.execute("SELECT * FROM BISMTOlsWorkflowElement")) {
+			if (statement.execute("SELECT * FROM BISMTOlsWorkflowElement")) {				
 				do {
 					count++;
 					ResultSet results = statement.getResultSet();

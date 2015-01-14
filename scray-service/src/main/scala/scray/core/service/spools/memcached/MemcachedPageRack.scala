@@ -51,8 +51,14 @@ class MemcachedPageRack(planAndExecute : (Query) => Spool[Row], val pageTTL : Du
     // prepare this query with the engine
     val resultSpool : Spool[Row] = wrappedPlanAndExecute(query)
 
-    // spawn paging job
-    pool.execute(new MemcachedSpoolPager(ServiceSpool(resultSpool, updQI), pageStore))
+    // prepare paging (lazily)
+    val pages : Spool[Seq[Row]] = (new SpoolPager(ServiceSpool(resultSpool, updQI))).pageAll().get
+
+    // push first page to memcached (in order to have it ready for subsequent client calls)
+    pageStore.put(pidKeyEncoder(PageKey(updQI.queryId.get, 0)) -> Some(PageValue(pages.head, updQI)))
+
+    // spawn subsequent paging job
+    pool.execute(new MemcachedSpoolPager(pages.tail, updQI, pageStore))
 
     // return updated query info
     updQI
@@ -61,35 +67,31 @@ class MemcachedPageRack(planAndExecute : (Query) => Spool[Row], val pageTTL : Du
   override def getPage(key : PageKey) : Future[Option[PageValue]] = pageStore.get(pidKeyEncoder(key))
 }
 
-class MemcachedSpoolPager(serviceSpool : ServiceSpool, store : MemcachePageStore) extends Runnable {
+class MemcachedSpoolPager(pages : Future[Spool[Seq[Row]]], queryInfo : ScrayTQueryInfo, store : MemcachePageStore) extends Runnable {
   private val logger = LoggerFactory.getLogger(classOf[MemcachedSpoolPager])
 
   def run() {
-    // prepare paging (lazily)
-    val pages : Future[Spool[Seq[Row]]] = (new SpoolPager(serviceSpool)).pageAll()
-
     val snap = System.currentTimeMillis()
 
-    // put pages to memcached in a single batch
-    store.multiPut(pages.get.foldLeft(
-      (Map[String, Option[PageValue]](), 0)) {
-        (a, b) =>
-          (a._1 + (pidKeyEncoder(PageKey(serviceSpool.tQueryInfo.queryId.get, a._2)) ->
-            Some(PageValue(b, serviceSpool.tQueryInfo))), a._2 + 1)
-      }.get._1)
+    // alternative1: put pages to memcached in a single batch
+    //    store.multiPut(pages.get.foldLeft(
+    //      (Map[String, Option[PageValue]](), 1 /* indexing starts with second page (index=1)*/)) {
+    //        (a, b) =>
+    //          (a._1 + (pidKeyEncoder(PageKey(serviceSpool.tQueryInfo.queryId.get, a._2)) ->
+    //            Some(PageValue(b, serviceSpool.tQueryInfo))), a._2 + 1)
+    //      }.get._1)
 
-    logger.info(s"Putting pages to memcached finished in ${System.currentTimeMillis() - snap} milis.")
-
-    // alternative: put pages to memcached sequentially (adds multiple network roundtrips but first page will be available fast)
-    //pushPages(pages.get, 0)
-    //logger.info(s"Putting pages to memcached finished in ${System.currentTimeMillis() - snap} milis.")
+    // alternative2: put pages to memcached sequentially (adds multiple network roundtrips but first page will be available fast)
+    pushPages(pages.get, 1) // indexing starts with second page (index=1)
+    logger.info(s"Putting pages of query ${queryInfo.queryId.get} to memcached finished in ${System.currentTimeMillis() - snap} milis.")
   }
 
   @tailrec
   private final def pushPages(pages : Spool[Seq[Row]], pageIdx : Int) : Unit = if (!pages.isEmpty) {
-    val snap = System.currentTimeMillis()
-    store.put(pidKeyEncoder(PageKey(serviceSpool.tQueryInfo.queryId.get, pageIdx)) -> Some(PageValue(pages.head, serviceSpool.tQueryInfo)))
-    logger.info(s"Putting 1 page to memcached finished in ${System.currentTimeMillis() - snap} milis.")
+    // val snap = System.currentTimeMillis()
+    store.put(pidKeyEncoder(PageKey(queryInfo.queryId.get, pageIdx)) -> Some(PageValue(pages.head, queryInfo)))
+    // logger.info(s"Putting 1 page to memcached finished in ${System.currentTimeMillis() - snap} milis.")
     pushPages(pages.tail.get, pageIdx + 1)
   }
+
 }

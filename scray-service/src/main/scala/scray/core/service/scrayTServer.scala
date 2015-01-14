@@ -25,28 +25,28 @@ import scray.common.serialization.KryoSerializerNumber
 import com.twitter.finagle.ListeningServer
 import java.net.InetAddress
 
-abstract class ScrayStatefulTServer extends AbstractScrayTServer {
-  override val version = "1.7"
-  override val server : ListeningServer = Thrift.serveIface(addressString, ScrayStatefulTServiceImpl())
-}
-
-abstract class ScrayStatelessTServer extends AbstractScrayTServer {
-  override val version = "0.9"
-  override val server : ListeningServer = Thrift.serveIface(addressString, ScrayStatelessTServiceImpl())
-}
-
 case class ScrayServerEndpoint(host : InetAddress, port : Int)
 
 trait KryoPoolRegistration {
   def register = RegisterRowCachingSerializers()
 }
 
+abstract class ScrayStatefulTServer extends AbstractScrayTServer {
+  override def getServer : ListeningServer = Thrift.serveIface(addressString, ScrayStatefulTServiceImpl())
+  override def getVersion : String = "1.7"
+}
+
+abstract class ScrayStatelessTServer extends AbstractScrayTServer {
+  override def getServer : ListeningServer = Thrift.serveIface(addressString, ScrayStatelessTServiceImpl())
+  override def getVersion : String = "0.9"
+}
+
 abstract class AbstractScrayTServer extends KryoPoolRegistration {
-  val version : String
-  val server : ListeningServer
 
   def initializeResources : Unit
   def destroyResources : Unit
+  def getServer : ListeningServer
+  def getVersion : String
 
   val endpoint : ScrayServerEndpoint = ScrayServerEndpoint(
     InetAddress.getByName(scray.core.service.ENDPOINT.split(":")(0)),
@@ -55,14 +55,14 @@ abstract class AbstractScrayTServer extends KryoPoolRegistration {
   def addressString : String = s"${endpoint.host.getHostAddress}:${endpoint.port}"
 
   def main(args : Array[String]) {
-    register
+    register // kryo pool registrars
     initializeResources
-    println(s"Server Version ${version}")
-    Await.ready(server)
+    println(s"Server Version ${getVersion}")
+    Await.ready(getServer)
   }
 
   def shutdown : Unit = {
     destroyResources
-    server.close()
+    getServer.close()
   }
 }
