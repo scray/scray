@@ -28,6 +28,7 @@ import scray.querying.description.internal.WildcardIndexRangeException
 import scala.collection.mutable.HashSet
 import com.twitter.concurrent.Spool
 import com.twitter.util.Await
+import scray.querying.description.internal.ComposedMultivalueDomain
 
 /**
  * creates an indexed-source with a wildcard-join reference on a UTF8-column.
@@ -117,7 +118,8 @@ class WildcardIndexSource[Q <: DomainQuery, M, R, V](
   override protected def transformIndexQuery(query: Q): Set[Q] = {
     val optDomain = query.getWhereAST.find(domain => domain.column == wildcardIndexConfig.referenceCol)
     optDomain.map(_ match {
-      case svd: SingleValueDomain[_] => {
+    case cmd: ComposedMultivalueDomain[_] => ??? // currently unused domain type  
+    case svd: SingleValueDomain[_] => {
         val name = getNormalizedName(svd.value.asInstanceOf[String])
         val rowDomain = new SingleValueDomain(wildcardIndexConfig.indexRowNameCol, getFirstLetters(name))
         val nameDomain = new SingleValueDomain(getValueIndexColumn, getReducedName(name))

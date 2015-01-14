@@ -21,7 +21,7 @@ import scray.querying.description.Column
 /**
  * represents a domain as a replacement for a predicate
  */
-abstract class Domain[T](val column: Column)
+sealed abstract class Domain[T](val column: Column)
 
 /**
  * single value domain, represents effectively =
@@ -257,7 +257,7 @@ case class RangeValueDomain[T](
 
 /**
  * represents a domain which has multiple ranges, i.e. is
- * composed of several other domains 
+ * composed of several other domains which are combined by or
  */
 case class ComposedMultivalueDomain[T](override val column: Column, domains: Set[Domain[T]]) 
   extends Domain[T](column)
