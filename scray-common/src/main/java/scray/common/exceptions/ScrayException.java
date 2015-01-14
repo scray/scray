@@ -12,18 +12,32 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-package scray.common.exceptions
+package scray.common.serialization;
 
-import java.util.UUID
+import java.util.UUID;
+import java.io.Serializable;
 
-object ExceptionIDs {
-  // SIL-Scray-Commons-000+ error types
-  val GENERAL_FAULT = "SIL-Scray-Commons-001-General"
-  val SERIALIZATION_FAULT = "SIL-Scray-Commons-002-Serialization"
-  val UNIMPLEMNTED = "SIL-Scray-Commons-003-Unimplemented"
+/**
+ * Common Scray Exception super class
+ * @author andreas
+ *
+ */
+public class ScrayException extends Exception implements Serializable {
+
+	public ScrayException(String id, UUID query, String msg, Throwable cause) {
+		super(id + ": " + msg + (q != null)?(" for query " + q):"", cause)
+	}
+	
+	public ScrayException(String id, String msg, Throwable cause) {
+		this(id, null, msg, cause)				
+	}
+
+	public ScrayException(String id, UUID query, String msg) {
+		this(id, query, msg, null)		
+	}
+
+	public ScrayException(String id, String msg) {
+		this(id, null, msg, null)
+	}
+
 }
-
-class ScrayException(id : String, query : Option[UUID], msg : String, cause : Option[Throwable] = None)
-  extends Exception(
-    { query match { case None => id + ": " + msg; case Some(q) => id + ": " + msg + " for query " + q } },
-    cause.getOrElse(null)) with Serializable
