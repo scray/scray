@@ -17,6 +17,12 @@
 			<artifactId>scray-common</artifactId>
 			<version>${scray.version}</version>
 		</dependency>
+    <dependency>
+      <groupId>scray</groupId>
+      <artifactId>scray-java</artifactId>
+      <version>${scray.version}</version>
+      <scope>test</scope>
+    </dependency>
 		<dependency>
 			<groupId>com.twitter</groupId>
 			<artifactId>util-core_2.10</artifactId>
