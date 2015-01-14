@@ -23,21 +23,22 @@ import java.io.Serializable;
  *
  */
 public class ScrayException extends Exception implements Serializable {
+	
+	private static final long serialVersionUID = 1L;
 
 	public ScrayException(String id, UUID query, String msg, Throwable cause) {
-		super(id + ": " + msg + (q != null)?(" for query " + q):"", cause)
+		super(id + ": " + msg + ((query != null)?(" for query " + query.toString()):""), cause);
 	}
 	
 	public ScrayException(String id, String msg, Throwable cause) {
-		this(id, null, msg, cause)				
+		this(id, null, msg, cause);
 	}
 
 	public ScrayException(String id, UUID query, String msg) {
-		this(id, query, msg, null)		
+		this(id, query, msg, null);
 	}
 
 	public ScrayException(String id, String msg) {
-		this(id, null, msg, null)
+		this(id, null, msg, null);
 	}
-
 }
