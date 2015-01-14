@@ -22,6 +22,7 @@
 		<libthrift.version>0.8.0</libthrift.version>
 		<parboiled.version>2.0.1</parboiled.version>
 
+        <scray.version>0.0.1-SNAPSHOT</scray.version>
 	</properties>
 
 	<modules>
