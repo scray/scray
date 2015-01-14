@@ -103,7 +103,7 @@
 					<scalaVersion>${scala.version}</scalaVersion>
 					<args>
 						<!--<arg>-unchecked</arg> <arg>-deprecation</arg> -->
-						<arg>-explaintypes</arg>
+						<!--<arg>-explaintypes</arg> -->
 						<!-- <arg>-Xlog-implicits</arg> -->
 					</args>
 				</configuration>

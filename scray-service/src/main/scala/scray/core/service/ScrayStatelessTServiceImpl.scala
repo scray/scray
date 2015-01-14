@@ -77,7 +77,7 @@ class ScrayStatelessTServiceImpl(val rack : PageRack) extends ScrayStatelessTSer
       _ match {
         case Some(pval) => Future.value(ScrayTResultFrame(pval.tQueryInfo, pval.page.map(RowConverter.convertRow(_))))
         case None => Future.exception(new ScrayServiceException(
-          ExceptionIDs.CACHING_ERROR, Some(queryId), s"No results (yet) for query ${ScrayUUID2UUID(queryId)} on page ${pageIndex}.", None))
+          ExceptionIDs.CACHING_ERROR, queryId, s"No results (yet) for query ${ScrayUUID2UUID(queryId)} on page ${pageIndex}."))
       }
     }
     logger.debug(s"Page retrieval for $queryId page $pageIndex took ${System.currentTimeMillis() - snap}")
