@@ -17,7 +17,6 @@ package scray.cassandra.extractors
 import com.twitter.storehaus.cassandra.cql.CQLCassandraCollectionStore
 import scray.querying.description.TableIdentifier
 import scray.querying.description.Column
-import scalaz.Memo
 import scray.querying.description.ColumnConfiguration
 import scray.querying.description.IndexConfiguration
 import scray.querying.description.QueryspaceConfiguration
