@@ -24,6 +24,7 @@ import scray.querying.description.internal.{Bound, Domain, QueryDomainRangeExcep
 import scray.querying.queries.DomainQuery
 import scray.querying.source.{AbstractHashJoinSource, KeyValueSource, LazySource}
 import com.typesafe.scalalogging.slf4j.LazyLogging
+import scray.querying.description.internal.ComposedMultivalueDomain
 
 /**
  * creates an indexed-source with a hashed-join reference on a time column.
@@ -69,6 +70,7 @@ class TimeIndexSource[Q <: DomainQuery, M, R, V](
   override protected def transformIndexQuery(query: Q): Set[Q] = {
     val optDomain = query.getWhereAST.find(domain => domain.column == timeIndexConfig.timeReferenceCol)
     optDomain.map(_ match {
+      case cmd: ComposedMultivalueDomain[_] => ??? // currently unsused domain type
       case svd: SingleValueDomain[_] => {
         val time = Time.fromMilliseconds(svd.value.asInstanceOf[Long])
         val yearDomain = new SingleValueDomain(timeIndexConfig.indexRowColumnYear, getYearFromTime(time))
