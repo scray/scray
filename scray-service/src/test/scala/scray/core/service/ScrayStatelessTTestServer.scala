@@ -16,10 +16,8 @@
 package scray.core.service
 
 import scala.util.Random
-
 import com.twitter.finagle.Thrift
 import com.twitter.util.Await
-
 import scray.core.service.util.MockedPlanner
 
 object ScrayStatelessTTestServer extends KryoPoolRegistration with MockedPlanner {

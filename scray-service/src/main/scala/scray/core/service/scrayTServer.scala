@@ -32,13 +32,21 @@ trait KryoPoolRegistration {
 }
 
 abstract class ScrayStatefulTServer extends AbstractScrayTServer {
-  override def getServer : ListeningServer = Thrift.serveIface(addressString, ScrayStatefulTServiceImpl())
+  val server = Thrift.serveIface(addressString, ScrayStatefulTServiceImpl())
+  override def getServer : ListeningServer = server
   override def getVersion : String = "1.7"
 }
 
 abstract class ScrayStatelessTServer extends AbstractScrayTServer {
-  override def getServer : ListeningServer = Thrift.serveIface(addressString, ScrayStatelessTServiceImpl())
+  val server = Thrift.serveIface(addressString, ScrayStatelessTServiceImpl())
+  override def getServer : ListeningServer = server
   override def getVersion : String = "0.9"
+}
+
+object ScrayStatelessTServerTest extends ScrayStatelessTServer {
+  def initializeResources : Unit = {}
+  def destroyResources : Unit = {}
+  override def main(args : Array[String]) = super.main(args)
 }
 
 abstract class AbstractScrayTServer extends KryoPoolRegistration {
