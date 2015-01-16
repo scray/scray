@@ -24,7 +24,7 @@ import com.twitter.util.Future;
 
 public class ScrayStatement implements java.sql.Statement {
 
-	public static final int DEFAULT_FETCH_SIZE = 50;
+	public static final int DEFAULT_FETCH_SIZE = 200;
 	public static final int DEFAULT_FETCH_DIRECTION = ResultSet.FETCH_FORWARD;
 	public static final int MAX_ROWS_MAX = 5000;
 	public static final int DEFAULT_MAX_ROWS = 1000;

@@ -48,14 +48,24 @@ class MemcachedPageRack(planAndExecute : (Query) => Spool[Row], val pageTTL : Du
       queryId = Some(query.getQueryID),
       expires = Some(expires.inNanoseconds))
 
+    val snap1 = System.currentTimeMillis()
+
     // prepare this query with the engine
     val resultSpool : Spool[Row] = wrappedPlanAndExecute(query)
+
+    logger.info(s"PlanAndExecute of query ${updQI.queryId.get} finished in ${System.currentTimeMillis() - snap1} milis.")
+    val snap2 = System.currentTimeMillis()
 
     // prepare paging (lazily)
     val pages : Spool[Seq[Row]] = (new SpoolPager(ServiceSpool(resultSpool, updQI))).pageAll().get
 
+    logger.info(s"Paging of query ${updQI.queryId.get} finished in ${System.currentTimeMillis() - snap2} milis.")
+    val snap3 = System.currentTimeMillis()
+
     // push first page to memcached (in order to have it ready for subsequent client calls)
     pageStore.put(pidKeyEncoder(PageKey(updQI.queryId.get, 0)) -> Some(PageValue(pages.head, updQI)))
+
+    logger.info(s"First page of query ${updQI.queryId.get} pushed to memcached finished in ${System.currentTimeMillis() - snap3} milis.")
 
     // spawn subsequent paging job
     pool.execute(new MemcachedSpoolPager(pages.tail, updQI, pageStore))
