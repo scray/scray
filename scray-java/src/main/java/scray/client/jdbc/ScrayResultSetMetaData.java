@@ -26,7 +26,11 @@ public class ScrayResultSetMetaData implements ResultSetMetaData {
 
 	@Override
 	public int getColumnCount() throws SQLException {
-		return resultSet.getColumnList().size();
+		if (resultSet.getColumnList() == null) {
+			return 0;
+		} else {
+			return resultSet.getColumnList().size();
+		}
 	}
 
 	@Override

@@ -481,7 +481,7 @@ public class ScrayResultSet implements java.sql.ResultSet {
 
 	@Override
 	public ResultSetMetaData getMetaData() throws SQLException {
-		checkConstraints();
+		//checkConstraints();
 		return new ScrayResultSetMetaData(this);
 	}
 
