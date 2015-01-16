@@ -211,20 +211,20 @@ class QueryParserSpec extends FlatSpec with Matchers with TQuerySamples {
     query.getWhereAST.get.isInstanceOf[And] should be(true)
   }
 
-  it should "handle conjunctions with atomic predicates in parens w/o whitespaces ending with ORDERBY" in {
-    val parsed = parse("SELECT col1, col2 FROM @myTableId WHERE (col2>2) AND (col1<10) ORDERBY col2")
+  it should "handle conjunctions with atomic predicates in parens w/o whitespaces ending with ORDER BY" in {
+    val parsed = parse("SELECT col1, col2 FROM @myTableId WHERE (col2>2) AND (col1<10) ORDER BY col2")
     val query = generate(parsed)
     query.getWhereAST.get.isInstanceOf[And] should be(true)
   }
 
   it should "handle 'ORDERBY' predicates" in {
-    val parsed = parse("SELECT col1, col2 FROM @myTableId ORDERBY col2")
+    val parsed = parse("SELECT col1, col2 FROM @myTableId ORDER BY col2")
     val query = generate(parsed)
     query.getOrdering.isDefined should be(true)
   }
 
   it should "handle 'GROUPBY' predicates" in {
-    val parsed = parse("SELECT col1, col2 FROM @myTableId GROUPBY col2")
+    val parsed = parse("SELECT col1, col2 FROM @myTableId GROUP BY col2")
     val query = generate(parsed)
     query.getGrouping.nonEmpty should be(true)
     query.getGrouping.get.column.columnName should be("col2")

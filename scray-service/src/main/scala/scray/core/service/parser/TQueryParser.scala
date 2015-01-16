@@ -51,8 +51,8 @@ class TQueryParser(tQuery : ScrayTQuery) extends Parser {
   def _skip : Rule1[Option[String]] = rule { "SKIP" ~ _number ~> { (s : String) => Some(s) } }
 
   // Rules matching 'post predicates'
-  def _groupby : Rule1[_Grouping] = rule { "GROUPBY" ~ _identifier ~> { (nam : String) => _Grouping(nam) } }
-  def _orderby : Rule1[_Ordering] = rule { "ORDERBY" ~ _identifier ~> { (nam : String) => _Ordering(nam) } }
+  def _groupby : Rule1[_Grouping] = rule { "GROUP BY" ~ _identifier ~> { (nam : String) => _Grouping(nam) } }
+  def _orderby : Rule1[_Ordering] = rule { "ORDER BY" ~ _identifier ~> { (nam : String) => _Ordering(nam) } }
 
   // Rules matching columns
   def _columns : Rule1[_Columns] = rule { _asterixColumn | _columnSet }
