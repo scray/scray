@@ -41,7 +41,7 @@ import org.slf4j.LoggerFactory
  * @param ttl time to live for query result sets
  * @param planAndExecute function connecting the query engine
  */
-class TimedSpoolRack(val ttl : Duration = Duration.fromSeconds(60), planAndExecute : (Query) => Spool[Row])
+class TimedSpoolRack(val ttl : Duration = DEFAULT_TTL, planAndExecute : (Query) => Spool[Row])
   extends SpoolRack {
 
   private val logger = LoggerFactory.getLogger(classOf[TimedSpoolRack])
