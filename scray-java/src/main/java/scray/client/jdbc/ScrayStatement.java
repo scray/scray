@@ -18,13 +18,10 @@ import scray.service.qmodel.thriftjava.ScrayUUID;
 import scray.service.qservice.thriftjava.ScrayTResultFrame;
 
 import com.twitter.scrooge.Option;
-import com.twitter.util.Await;
-import com.twitter.util.Duration;
-import com.twitter.util.Future;
 
 public class ScrayStatement implements java.sql.Statement {
 
-	public static final int DEFAULT_FETCH_SIZE = 200;
+	public static final int DEFAULT_FETCH_SIZE = 10000;
 	public static final int DEFAULT_FETCH_DIRECTION = ResultSet.FETCH_FORWARD;
 	public static final int MAX_ROWS_MAX = 5000;
 	public static final int DEFAULT_MAX_ROWS = 1000;
@@ -41,7 +38,6 @@ public class ScrayStatement implements java.sql.Statement {
 	private ScrayTQuery rawTQuery = null;
 	private String tableId = null;
 	private ScrayUUID queryId = null;
-	private int pageIdx = -1;
 	private ScrayTResultFrame currFrame = null;
 	private ScrayResultSet currResults = null;
 
@@ -51,8 +47,7 @@ public class ScrayStatement implements java.sql.Statement {
 
 	private void advanceQuery() throws SQLException {
 		try {
-			pageIdx += 1;
-			currFrame = syncFetch(queryId, pageIdx);
+			currFrame = syncFetch(queryId);
 			currResults = new ScrayResultSet(currFrame, fetchSize,
 					fetchDirection, this);
 		} catch (Exception e) {
@@ -229,19 +224,13 @@ public class ScrayStatement implements java.sql.Statement {
 		queryTimeout = seconds;
 	}
 
-	private ScrayTResultFrame syncFetch(ScrayUUID uuid, int pageIdx)
-			throws Exception {
-		Future<ScrayTResultFrame> fframe = connection.getThriftConnection()
-				.getScrayTService().getResults(uuid, pageIdx);
-		ScrayTResultFrame frame = Await.result(fframe, new Duration(
-				queryTimeout * 1000000000L));
-		return frame;
+	private ScrayTResultFrame syncFetch(ScrayUUID uuid) throws Exception {
+		return connection.getScrayTServiceAdapter().getResults(uuid,
+				queryTimeout);
 	}
 
 	private ScrayUUID syncSubmit(ScrayTQuery query) throws Exception {
-		Future<ScrayUUID> fuuid = connection.getThriftConnection()
-				.getScrayTService().query(rawTQuery);
-		return Await.result(fuuid, new Duration(queryTimeout * 1000000000L));
+		return connection.getScrayTServiceAdapter().query(query, queryTimeout);
 	}
 
 	@Override

@@ -32,7 +32,7 @@ public class ScrayJdbcAccess {
 			Class.forName("scray.client.jdbc.ScrayDriver");
 
 			connect = DriverManager
-					.getConnection("jdbc:scray://localhost:18182/cassandra/SIL/SIL");
+					.getConnection("jdbc:scray:stateless//localhost:18182/cassandra/SIL/SIL");
 
 			statement = connect.createStatement();
 

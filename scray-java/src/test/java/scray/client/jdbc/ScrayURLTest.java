@@ -25,11 +25,12 @@ public class ScrayURLTest {
 	@Test
 	public void goodScrayUrlDecomposition() {
 
-		String testurl = "jdbc:scray://127.0.0.1:8080/cassandra/myKeyspace/default";
+		String testurl = "jdbc:scray:stateless://127.0.0.1:8080/cassandra/myKeyspace/default";
 
 		try {
 			ScrayURL surl = new ScrayURL(testurl);
-			assertTrue(surl.check());
+			assertEquals(surl.getSubScheme(), "scray");
+			assertEquals(surl.getProtocolMode(), "stateless");
 			assertEquals(surl.getHostAndPort(), "127.0.0.1:8080");
 			assertEquals(surl.getDbSystem(), "cassandra");
 			assertEquals(surl.getDbId(), "myKeyspace");
@@ -44,19 +45,23 @@ public class ScrayURLTest {
 	public void badScrayUrlDetection() {
 
 		String[] testurls = {
-				"jdpc:scray://127.0.0.1:8080/cassandra/myKeyspace/default",
-				"jdbc:spray://127.0.0.1:8080/cassandra/myKeyspace/default",
-				"jdbc:scray://127.0.0.1/cassandra/myKeyspace/default",
-				"jdbc:scray://127.0.0.1:8080/cassandra/myKeyspace" };
+				"jdbc:scray:stateless",
+				"jdpc:scray:stateless://127.0.0.1:8080/cassandra/myKeyspace/default",
+				"jdbc:spray:stateless://127.0.0.1:8080/cassandra/myKeyspace/default",
+				"jdbc:scray://127.0.0.1:8080/cassandra/myKeyspace/default",
+				"jdbc:scray:sateless://127.0.0.1:8080/cassandra/myKeyspace/default",
+				"jdbc:scray:stateless://127.0.0.1/cassandra/myKeyspace/default",
+				"jdbc:scray:stateless://127.0.0.1:8080/cassandra/myKeyspace",
+				"jdbc:scray:stateless://127.0.0.1:8080/cassandra/myKeyspace/default/something" };
 
-		try {
-			for (int i = 0; i < testurls.length; i++) {
-				ScrayURL surl = new ScrayURL(testurls[i]);
-				assertFalse(surl.check());
+		for (int i = 0; i < testurls.length; i++) {
+			try {
+				new ScrayURL(testurls[i]);
+				fail();
+			} catch (URISyntaxException e) {
+				System.out.println("Successfully found faulty URL: "
+						+ e.toString());
 			}
-		} catch (URISyntaxException e) {
-			e.printStackTrace();
-			fail();
 		}
 	}
 }
