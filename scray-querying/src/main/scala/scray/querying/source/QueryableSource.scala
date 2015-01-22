@@ -59,11 +59,8 @@ class QueryableSource[K, V](store: QueryableStore[K, V], space: String, table: T
   override def isOrdered(query: DomainQuery): Boolean = {
     isOrdered || (query.getOrdering match {
       case Some(col) => Registry.getQuerySpaceColumn(space, col.column) match {
-          case None => {
-            println(Registry)
-            false
-          }
-          case Some(colConfig) => colConfig.index.map(_.isSorted).orElse(Some(false)).get
+          case None => false
+          case Some(colConfig) => colConfig.index.map(_.isSorted).getOrElse(false)
         }
       case None => false
     })
