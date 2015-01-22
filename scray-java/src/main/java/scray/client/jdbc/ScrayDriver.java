@@ -41,10 +41,11 @@ public class ScrayDriver implements java.sql.Driver {
 	@Override
 	public boolean acceptsURL(String url) throws SQLException {
 		try {
-			return new ScrayURL(url).check();
+			new ScrayURL(url);
 		} catch (URISyntaxException e) {
-			throw new SQLException(e);
+			return false;
 		}
+		return true;
 	}
 
 	@Override

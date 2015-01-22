@@ -22,19 +22,11 @@ import scray.querying.description.Row
 import scray.service.qmodel.thrifscala.ScrayTQueryInfo
 import scray.service.qmodel.thrifscala.ScrayUUID
 
-class MemcachedPageRack(planAndExecute : (Query) => Spool[Row], val pageTTL : Duration = DEFAULT_TTL) extends PageRack {
-
-  private val logger = LoggerFactory.getLogger(classOf[MemcachedPageRack])
-
+class MemcachedPageRack(planAndExecute : (Query) => Spool[Row], pageTTL : Duration = DEFAULT_TTL)
+  extends PageRackImplBase(planAndExecute, pageTTL) {
+  
   val client = Client(host = MEMCACHED_HOST)
   val pageStore = MemcachePageStore(client, pageTTL)
-
-  // computes expiration time for collecting frames
-  private def expires = Time.now + pageTTL
-
-  // monitoring wrapper for planner function
-  private val wrappedPlanAndExecute : (Query) => Spool[Row] = (q) => { planLog(q); planAndExecute(q) }
-  private def planLog(q : Query) : Unit = logger.info(s"Planner called for query $q");
 
   val POOLSIZE = 10
   val pool : ExecutorService = Executors.newFixedThreadPool(POOLSIZE)

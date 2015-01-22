@@ -10,9 +10,6 @@ import com.twitter.util.Duration
 
 package object memcached {
 
-  // time-to-life of memcached query results 
-  final val DEFAULT_TTL : Duration = Duration.fromSeconds(180)
-
   val pooledKryoInjection = KryoInjection.instance(KryoPoolSerialization.chill)
 
   implicit val pageKeyCodec : Codec[PageKey] = Injection.build[PageKey, Array[Byte]](

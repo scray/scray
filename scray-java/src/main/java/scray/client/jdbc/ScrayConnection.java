@@ -19,27 +19,35 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Executor;
 
-import scray.client.finagle.FinagleThriftConnection;
+import scray.client.finagle.ScrayStatefulTServiceAdapter;
+import scray.client.finagle.ScrayStatelessTServiceAdapter;
+import scray.client.finagle.ScrayTServiceAdapter;
 
 public class ScrayConnection implements java.sql.Connection {
 
 	private boolean closed = false;
 
 	private ScrayURL scrayURL;
-	private FinagleThriftConnection tCon;
+	private ScrayTServiceAdapter tAdapter;
 
 	public ScrayConnection(ScrayURL scrayURL) {
 		this.scrayURL = scrayURL;
-		tCon = new FinagleThriftConnection(scrayURL.getHostAndPort());
+		if (scrayURL.getProtocolMode().equals(ScrayURL.ProtocolModes.stateful)) {
+			tAdapter = new ScrayStatefulTServiceAdapter(
+					scrayURL.getHostAndPort());
+		} else {
+			tAdapter = new ScrayStatelessTServiceAdapter(
+					scrayURL.getHostAndPort());
+		}
 	}
 
-	public ScrayConnection(ScrayURL scrayURL, FinagleThriftConnection tCon) {
+	public ScrayConnection(ScrayURL scrayURL, ScrayTServiceAdapter tAdapter) {
 		this.scrayURL = scrayURL;
-		this.tCon = tCon;
+		this.tAdapter = tAdapter;
 	}
 
-	FinagleThriftConnection getThriftConnection() {
-		return tCon;
+	ScrayTServiceAdapter getScrayTServiceAdapter() {
+		return tAdapter;
 	}
 
 	@Override

@@ -14,8 +14,12 @@
 // limitations under the License.
 package scray.client.jdbc;
 
-import static org.mockito.Matchers.*;
-import static org.mockito.Mockito.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
@@ -25,10 +29,11 @@ import java.util.List;
 import java.util.Random;
 import java.util.UUID;
 
-import org.junit.*;
-import static org.junit.Assert.*;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
-import scray.client.finagle.FinagleThriftConnection;
+import scray.client.finagle.ScrayStatelessTServiceAdapter;
 import scray.common.serialization.pool.KryoJavaPoolSerialization;
 import scray.service.qmodel.thriftjava.ScrayTColumn;
 import scray.service.qmodel.thriftjava.ScrayTColumnInfo;
@@ -37,8 +42,8 @@ import scray.service.qmodel.thriftjava.ScrayTQueryInfo;
 import scray.service.qmodel.thriftjava.ScrayTRow;
 import scray.service.qmodel.thriftjava.ScrayTTableInfo;
 import scray.service.qmodel.thriftjava.ScrayUUID;
-import scray.service.qservice.thriftjava.ScrayTResultFrame;
 import scray.service.qservice.thriftjava.ScrayStatelessTService;
+import scray.service.qservice.thriftjava.ScrayTResultFrame;
 
 import com.twitter.scrooge.Option;
 import com.twitter.util.Future;
@@ -48,7 +53,7 @@ public class ScrayJdbcTest {
 	final int _ROWS = 1000;
 	final int _COLS = 50;
 
-	final String _URL = "jdbc:scray//localhost:18182/myDbSystem/myDbId/myQuerySpace";
+	final String _URL = "jdbc:scray:stateless://localhost:18182/myDbSystem/myDbId/myQuerySpace";
 
 	final String _QUERY = "SELECT * FROM myTableId";
 
@@ -56,7 +61,7 @@ public class ScrayJdbcTest {
 	final ScrayUUID _SUUID = new ScrayUUID(_UUID.getLeastSignificantBits(),
 			_UUID.getMostSignificantBits());
 
-	final MockedConnection _MCON = new MockedConnection();
+	final MockedAdapter _MADP = new MockedAdapter();
 
 	final Object[] _VALS = { 1, "foo", 1.3D, true };
 
@@ -68,27 +73,20 @@ public class ScrayJdbcTest {
 
 	ScrayTResultFrame frame;
 
-	class MockedConnection extends FinagleThriftConnection {
-		ScrayStatelessTService.FutureIface mockedClient;
-
-		public MockedConnection() {
+	class MockedAdapter extends ScrayStatelessTServiceAdapter {
+		public MockedAdapter() {
 			super("127.0.0.1:18182");
-			mockedClient = mock(ScrayStatelessTService.FutureIface.class);
-		}
-
-		public ScrayStatelessTService.FutureIface getScrayTService() {
-			return mockedClient;
+			client = mock(ScrayStatelessTService.FutureIface.class);
 		}
 	}
 
 	void mockStubbing() {
-		// stub call to query
-		when(_MCON.mockedClient.query(any(ScrayTQuery.class))).thenReturn(
+		// stub calls to query
+		when(_MADP.getClient().query(any(ScrayTQuery.class))).thenReturn(
 				Future.value(_SUUID));
-		// stub first call to getResults
-		when(
-				_MCON.mockedClient.getResults(any(ScrayUUID.class),
-						any(Integer.class))).thenReturn(Future.value(frame));
+		// stub calls to getResults
+		when(_MADP.getClient().getResults(any(ScrayUUID.class), any(Integer.class)))
+				.thenReturn(Future.value(frame));
 	}
 
 	void createFrame() {
@@ -120,7 +118,7 @@ public class ScrayJdbcTest {
 	public ScrayJdbcTest() {
 		try {
 			scrayURL = new ScrayURL(_URL);
-			scrayConnection = new ScrayConnection(scrayURL, _MCON);
+			scrayConnection = new ScrayConnection(scrayURL, _MADP);
 			scrayStatement = (ScrayStatement) scrayConnection.createStatement();
 		} catch (URISyntaxException ex) {
 			ex.printStackTrace();

@@ -36,6 +36,7 @@ import scala.util.Failure
 import scala.util.Success
 import scray.core.service.spools.memcached.MemcachedPageRack
 import scray.querying.planning.Planner
+import org.slf4j.LoggerFactory
 
 /**
  * Page identifier
@@ -51,6 +52,17 @@ case class PageValue(page : Seq[Row], tQueryInfo : ScrayTQueryInfo)
  * PageRack singleton
  */
 object MPageRack extends MemcachedPageRack(planAndExecute = Planner.planAndExecute)
+
+abstract class PageRackImplBase(val planAndExecute : (Query) => Spool[Row], val pageTTL : Duration = DEFAULT_TTL) extends PageRack {
+  val logger = LoggerFactory.getLogger(classOf[PageRackImplBase])
+
+  // computes expiration time for collecting frames
+  def expires = Time.now + pageTTL
+
+  // monitoring wrapper for planner function
+  val wrappedPlanAndExecute : (Query) => Spool[Row] = (q) => { planLog(q); planAndExecute(q) }
+  def planLog(q : Query) : Unit = logger.info(s"Planner called for query $q");
+}
 
 /**
  * Page cache holding individual pages of query result sets
@@ -76,3 +88,4 @@ trait PageRack {
   def getPage(key : PageKey) : Future[Option[PageValue]]
 
 }
+

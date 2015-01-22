@@ -4,13 +4,11 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.StringTokenizer;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 /**
  * URL schema for scray connections.
  * 
- * jdbc:scray://host:port/dbSystem/dbId/querySpace
+ * jdbc:scray:stateless://host:port/dbSystem/dbId/querySpace
+ * jdbc:scray:stateful://host:port/dbSystem/dbId/querySpace
  * 
  */
 public class ScrayURL {
@@ -18,98 +16,200 @@ public class ScrayURL {
 	public static final String SCHEME = "jdbc";
 	public static final String SUBSCHEME = "scray";
 
-	public static enum PathComponents {
-		DBSYSTEM, DBID, QUERYSPACE
+	public static enum ProtocolModes {
+		stateful, stateless
 	}
 
-	private Logger log = LoggerFactory.getLogger(ScrayURL.class);
-
 	public URI opaque;
+	public UriPattern pattern;
 
 	public ScrayURL(String url) throws URISyntaxException {
 		this.opaque = new URI(url);
+		this.pattern = new UriPattern(opaque);
 	}
 
-	// check and transform opaque jdbc url into absolute uri (by excluding the
-	// sub schema)
-	public URI transformOpaqueUri(URI opaqueUri) throws URISyntaxException {
-		String schemeSpecificPart = opaqueUri.getSchemeSpecificPart();
+	public class UriPattern {
 
-		int startOfHier = schemeSpecificPart.indexOf(':');
-		String subscheme = schemeSpecificPart.substring(0, startOfHier);
-		String rest = schemeSpecificPart.substring(startOfHier + 1);
+		final static String HIER_DELIM = "://";
 
-		if (subscheme.equals(SUBSCHEME)) {
-			return new URI(opaqueUri.getScheme() + ":" + rest);
-		} else {
-			throw new URISyntaxException(subscheme, "invalid sub-scheme");
+		private URI absoluteUri;
+		private String fullScheme;
+		private String mainScheme;
+		private String schemeExtension;
+		private String subScheme;
+		private String hierPart;
+		private String protocolMode;
+		private String host;
+		private int port;
+		private String hostAndPort;
+		private String path;
+		private String dbSystem;
+		private String dbId;
+		private String querySpace;
+
+		public UriPattern(URI opaqueUri) throws URISyntaxException {
+
+			/* extract absolute URI */
+
+			mainScheme = opaqueUri.getScheme();
+
+			if (!mainScheme.equals(SCHEME)) {
+				throw new URISyntaxException(mainScheme,
+						"Invalid URL: faulty main scheme");
+			}
+
+			String schemeSpecificPart = opaqueUri.getSchemeSpecificPart();
+			int startOfHier = schemeSpecificPart.indexOf(HIER_DELIM);
+
+			if (startOfHier < 0) {
+				throw new URISyntaxException(opaqueUri.toString(),
+						"Invalid URL: hierarchical part mismatch");
+			}
+
+			hierPart = schemeSpecificPart.substring(startOfHier);
+			absoluteUri = new URI(mainScheme + hierPart);
+
+			/* extract host and port */
+
+			host = absoluteUri.getHost();
+
+			if (host == null) {
+				throw new URISyntaxException(host, "Invalid URL: faulty host");
+			}
+
+			port = absoluteUri.getPort();
+
+			if (port == -1) {
+				throw new URISyntaxException(String.valueOf(port),
+						"Invalid URL: faulty port");
+			}
+
+			hostAndPort = host + ":" + String.valueOf(port);
+
+			/* decompose path */
+
+			path = absoluteUri.getPath();
+
+			StringTokenizer pathElems = new StringTokenizer(path, "/");
+
+			if (pathElems.countTokens() != 3) {
+				throw new URISyntaxException(path, "Invalid URL: faulty path");
+			}
+
+			dbSystem = pathElems.nextToken();
+			dbId = pathElems.nextToken();
+			querySpace = pathElems.nextToken();
+
+			/* decompose extended scheme */
+
+			schemeExtension = schemeSpecificPart.substring(0, startOfHier);
+			fullScheme = mainScheme + ":" + schemeExtension;
+
+			StringTokenizer schemeExTokens = new StringTokenizer(
+					schemeExtension, ":");
+
+			if (schemeExTokens.countTokens() != 2)
+				throw new URISyntaxException(fullScheme,
+						"Invalid URL: scheme mismatch (must contain three parts)");
+
+			subScheme = schemeExTokens.nextToken();
+
+			if (!subScheme.equals(SUBSCHEME)) {
+				throw new URISyntaxException(subScheme,
+						"Invalid URL: faulty subScheme");
+			}
+
+			protocolMode = schemeExTokens.nextToken();
+
+			if (!(protocolMode.equals(ProtocolModes.stateful.name()) || protocolMode
+					.equals(ProtocolModes.stateless.name()))) {
+				throw new URISyntaxException(protocolMode,
+						"Invalid URL: faulty protocolMode");
+			}
+		}
+
+		public String getMainScheme() {
+			return mainScheme;
+		}
+
+		public String getSubScheme() {
+			return subScheme;
+		}
+
+		public String getProtocolMode() {
+			return protocolMode;
+		}
+
+		public String getHost() {
+			return host;
+		}
+
+		public int getPort() {
+			return port;
+		}
+
+		public String getHostAndPort() {
+			return hostAndPort;
+		}
+
+		public String getDbSystem() {
+			return dbSystem;
+		}
+
+		public String getDbId() {
+			return dbId;
+		}
+
+		public String getQuerySpace() {
+			return querySpace;
 		}
 	}
 
-	// Check hierarchical part of transformed jdbc url for required elements
-	public boolean check() {
-		try {
-			URI hierUri = transformOpaqueUri(opaque);
-
-			if (!hierUri.getScheme().equals(SCHEME)) {
-				throw new URISyntaxException(hierUri.getScheme(),
-						"faulty scheme");
-			}
-			if (hierUri.getHost() == null) {
-				throw new URISyntaxException(hierUri.getHost(), "faulty host");
-			}
-			if (hierUri.getPort() == -1) {
-				throw new URISyntaxException(String.valueOf(hierUri.getPort()),
-						"faulty port");
-			}
-			StringTokenizer tokenizer = new StringTokenizer(hierUri.getPath(),
-					"/");
-			if (tokenizer.countTokens() != 3) {
-				throw new URISyntaxException(hierUri.getPath(), "faulty path");
-			}
-			return true;
-		} catch (URISyntaxException e) {
-			log.error("URI check failed: " + e.getMessage());
-			return false;
-		}
+	public String getMainScheme() {
+		return pattern.getMainScheme();
 	}
 
-	public String getDbSystem() {
-		return getPathComponent(PathComponents.DBSYSTEM.ordinal());
+	public String getSubScheme() {
+		return pattern.getSubScheme();
 	}
 
-	public String getDbId() {
-		return getPathComponent(PathComponents.DBID.ordinal());
+	public String getProtocolMode() {
+		return pattern.getProtocolMode();
 	}
 
-	public String getQuerySpace() {
-		return getPathComponent(PathComponents.QUERYSPACE.ordinal());
+	public String getHost() {
+		return pattern.getHost();
+	}
+
+	public int getPort() {
+		return pattern.getPort();
 	}
 
 	public String getHostAndPort() {
-		String token = null;
-		try {
-			URI hier = transformOpaqueUri(opaque);
-			token = hier.getHost() + ":" + hier.getPort();
-		} catch (URISyntaxException ex) {
-			// eat
-		}
-		return token;
+		return pattern.getHostAndPort();
 	}
 
-	private String getPathComponent(int index) {
-		String token = null;
-		try {
-			StringTokenizer tokenizer = new StringTokenizer(transformOpaqueUri(
-					opaque).getPath(), "/");
-			token = tokenizer.nextToken();
-			for (int i = 0; i < index; i++) {
-				token = tokenizer.nextToken();
-			}
-		} catch (URISyntaxException ex) {
-			// eat
-		}
-		return token;
+	public String getDbSystem() {
+		return pattern.getDbSystem();
 	}
 
+	public String getDbId() {
+		return pattern.getDbId();
+	}
+
+	public String getQuerySpace() {
+		return pattern.getQuerySpace();
+	}
+
+	@Override
+	public String toString() {
+		return "ScrayURL [getMainScheme()=" + getMainScheme()
+				+ ", getSubScheme()=" + getSubScheme() + ", getProtocolMode()="
+				+ getProtocolMode() + ", getHost()=" + getHost()
+				+ ", getPort()=" + getPort() + ", getHostAndPort()="
+				+ getHostAndPort() + ", getDbSystem()=" + getDbSystem()
+				+ ", getDbId()=" + getDbId() + ", getQuerySpace()="
+				+ getQuerySpace() + "]";
+	}
+	
 }
