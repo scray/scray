@@ -40,10 +40,10 @@ class CassandraQueryspaceConfiguration(
     override val name: String,
     val tables: Set[(AbstractCQLCassandraStore[_, _], ((_) => Row, Option[String]))],
     // mapping from indexed table and the indexed column to the table containing the index and the ref column
-    val indexes: Map[(AbstractCQLCassandraStore[_, _], String),
+    indexes: Map[(AbstractCQLCassandraStore[_, _], String),
       (AbstractCQLCassandraStore[_, _], String, IndexConfig, Option[Function1[_,_]])]
 ) extends QueryspaceConfiguration(name) {
-
+  
   lazy val tableRowMapperMap: Map[AbstractCQLCassandraStore[_, _], ((_) => Row, Option[String])] = tables.toMap
   
   override def queryCanBeOrdered(query: Query): Option[ColumnConfiguration] = {
