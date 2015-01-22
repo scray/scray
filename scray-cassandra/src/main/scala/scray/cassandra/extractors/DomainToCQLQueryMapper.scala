@@ -77,7 +77,7 @@ class DomainToCQLQueryMapper[S <: AbstractCQLCassandraStore[_, _]] {
         case false => "<"
       }
       s"""$and"${vdomain.column.columnName}" $comp ${convertValue(bound.value)}"""
-    }
+    }.getOrElse("")
   } 
 
   private def getRowKeyQueryMapping(store: S, query: DomainQuery, 
