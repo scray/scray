@@ -64,7 +64,7 @@ class CQLCollectionStoreExtractor[S <: CQLCassandraCollectionStore[_, _, _, _, _
       getClusteringKeyColumns,
       getColumns,
       rowMapper.asInstanceOf[(Any) => Row],
-      getQueryMapping(store),
+      getQueryMapping(store, tableName),
       () => store.asInstanceOf[QueryableStore[Any, Any]],
       () => store.asInstanceOf[ReadableStore[Any, Any]]
     )

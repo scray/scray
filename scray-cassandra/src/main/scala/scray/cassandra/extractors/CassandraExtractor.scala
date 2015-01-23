@@ -76,8 +76,8 @@ trait CassandraExtractor[S <: AbstractCQLCassandraStore[_, _]] {
   /**
    * returns a generic Cassandra-store query mapping
    */
-  def getQueryMapping(store: S): DomainQuery => String =
-    new DomainToCQLQueryMapper[S].getQueryMapping(store, this)
+  def getQueryMapping(store: S, tableName: Option[String]): DomainQuery => String =
+    new DomainToCQLQueryMapper[S].getQueryMapping(store, this, tableName)
 
   /**
    * DB-System is fixed

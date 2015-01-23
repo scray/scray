@@ -43,10 +43,11 @@ object StringLiteralDeserializer {
    */
   class LiteralParser(override val input : ParserInput) extends Parser {
     def InputLine = rule { literal ~ EOI }
-    def literal : Rule1[Any] = rule { str | float | int | bool }
+    def literal : Rule1[Any] = rule { str | float | long | int | bool }
     def str : Rule1[String] = rule { ''' ~ capture(oneOrMore(CharPredicate.Printable -- '\u0027')) ~ ''' }
     def float : Rule1[Double] = rule { capture(oneOrMore(CharPredicate.Digit) ~ '.' ~ oneOrMore(CharPredicate.Digit)) ~> { (in : String) => in.toDouble } }
     def int : Rule1[Int] = rule { capture(oneOrMore(CharPredicate.Digit)) ~> { (in : String) => in.toInt } }
+    def long : Rule1[Long] = rule { capture(oneOrMore(CharPredicate.Digit)) ~ 'L' ~> { (in: String) => in.toLong } }
     def bool : Rule1[Boolean] = rule { capture("true" | "false") ~> { (in : String) => in.toBoolean } }
   }
 
@@ -54,6 +55,7 @@ object StringLiteralDeserializer {
    * Deserialize untyped literals
    */
   def deserialize(literal : String) : Try[_] = {
+    println(literal)
     val parser = new LiteralParser(literal)
     parser.InputLine.run() match {
       case Success(result) => Success(result)

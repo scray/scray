@@ -20,7 +20,10 @@ package scray.common.serialization;
  */
 public enum KryoSerializerNumber {
 
-	column(200), rowcolumn(201), simplerow(202), compositerow(203); 
+	column(200), rowcolumn(201), simplerow(202), compositerow(203),	
+	Set1(18), Set2(19), Set3(20), Set4(21), // small scala sets -> java set
+	UUID(81), // various JAVA type numbers
+	BatchId(210); // because clients usually do not have a batch id 
 
 	private int number;
 	

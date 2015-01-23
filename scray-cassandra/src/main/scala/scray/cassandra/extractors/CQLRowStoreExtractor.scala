@@ -49,7 +49,7 @@ class CQLRowStoreExtractor[S <: CQLCassandraRowStore[_]](store: S, tableName: Op
       getClusteringKeyColumns,
       getColumns,
       rowMapper.asInstanceOf[(Any) => Row],
-      getQueryMapping(store),
+      getQueryMapping(store, tableName),
       () => store.asInstanceOf[QueryableStore[Any, Any]],
       () => store.asInstanceOf[ReadableStore[Any, Any]]
     )

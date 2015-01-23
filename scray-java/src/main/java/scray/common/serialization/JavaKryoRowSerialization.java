@@ -15,11 +15,14 @@
 package scray.common.serialization;
 
 import java.util.ArrayList;
+import java.util.Set;
+import java.util.UUID;
 
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.Serializer;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
+import com.twitter.chill.java.UUIDSerializer;
 
 /**
  * some classes for JAVA-interoperability to prevent importing Scala dependencies.
@@ -31,6 +34,13 @@ public class JavaKryoRowSerialization {
 		kryo.register(JavaRowColumn.class, new RowColumnSerializer(), KryoSerializerNumber.rowcolumn.getNumber());
 		kryo.register(JavaSimpleRow.class, new JavaSimpleRowSerializer(), KryoSerializerNumber.simplerow.getNumber());
 		kryo.register(JavaCompositeRow.class, new JavaCompositeRowSerializer(), KryoSerializerNumber.compositerow.getNumber());
+		kryo.register(JavaBatchID.class, new JavaBatchIDSerializer(), KryoSerializerNumber.BatchId.getNumber());
+		kryo.register(Set.class, new JavaSetSerializer<>(), KryoSerializerNumber.Set1.getNumber());
+		kryo.register(Set.class, new JavaSetSerializer<>(), KryoSerializerNumber.Set2.getNumber());
+		kryo.register(Set.class, new JavaSetSerializer<>(), KryoSerializerNumber.Set3.getNumber());
+		kryo.register(Set.class, new JavaSetSerializer<>(), KryoSerializerNumber.Set4.getNumber());
+		kryo.register(Set.class, new JavaSetSerializer<>(), KryoSerializerNumber.Set.getNumber());
+		kryo.register(UUID.class, new UUIDSerializer(), KryoSerializerNumber.UUID.getNumber());
 	}
 	
 	/**
@@ -133,6 +143,21 @@ public class JavaKryoRowSerialization {
 		    	}
 		    }
 			return new JavaCompositeRow(abuf);
+		}		
+	}
+	
+	/**
+	 * kryo serializer for JavaBatchID
+	 */
+	public static class JavaBatchIDSerializer extends Serializer<JavaBatchID> {
+		@Override
+		public void write(Kryo k, Output o, JavaBatchID id) {
+			o.writeLong(id.getId());
+		}
+
+		@Override
+		public JavaBatchID read(Kryo k, Input i, Class<JavaBatchID> type) {
+			return new JavaBatchID(i.readLong());
 		}		
 	}
 }
