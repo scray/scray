@@ -13,23 +13,21 @@
 		<maven.compiler.source>1.6</maven.compiler.source>
 		<maven.compiler.target>1.6</maven.compiler.target>
 		<encoding>UTF-8</encoding>
-
 		<scala.tools.version>2.10</scala.tools.version>
 		<scala.version>2.10.4</scala.version>
 		<scala.suffix>2.10</scala.suffix>
-
 		<finagle.version>6.12.2</finagle.version>
 		<libthrift.version>0.8.0</libthrift.version>
 		<parboiled.version>2.0.1</parboiled.version>
-
-		<scray.version>0.0.1-SNAPSHOT</scray.version>
+		<snappy-java.version>1.0.4.1</snappy-java.version>
+        <scray.version>0.0.1-SNAPSHOT</scray.version>
 	</properties>
 
 	<modules>
 		<module>scray-querying</module>
 		<module>scray-cassandra</module>
 		<module>scray-service</module>
-        <module>scray-common</module>
+		<module>scray-common</module>
 		<module>scray-java</module>
 	</modules>
 

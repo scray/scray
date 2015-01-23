@@ -1,28 +1,30 @@
 package scray.core.service.spools
 
+import java.util.UUID
 import org.junit.runner.RunWith
 import org.mockito.Matchers.anyObject
 import org.mockito.Mockito.when
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
+import org.scalatest.junit.JUnitRunner
 import org.scalatest.mock.MockitoSugar
+import com.twitter.bijection.Bijection
+import com.twitter.chill.KryoInjection
 import com.twitter.concurrent.Spool
+import com.twitter.util.Duration
+import com.twitter.util.JavaTimer
+import scray.common.serialization.KryoPoolSerialization
+import scray.core.service._
+import scray.core.service.KryoPoolRegistration
 import scray.core.service.parser.TQueryParser
 import scray.core.service.util.SpoolSamples
 import scray.core.service.util.TQuerySamples
 import scray.querying.Query
 import scray.querying.description.Row
-import org.scalatest.junit.JUnitRunner
-import com.twitter.util.Duration
-import com.twitter.util.JavaTimer
-import scray.core.service.KryoPoolRegistration
-import scray.common.serialization.KryoPoolSerialization
 import scray.service.qmodel.thrifscala.ScrayTQuery
-import scray.core.service._
 import scray.service.qmodel.thrifscala.ScrayTRow
-import com.twitter.chill.KryoInjection
-import java.util.UUID
-import com.twitter.bijection.Bijection
+import scray.common.ScrayProperties
+import org.xerial.snappy.Snappy
 
 @RunWith(classOf[JUnitRunner])
 class SpoolsSpec
@@ -168,9 +170,22 @@ class SpoolsSpec
     // column values should be properly serialized as ByteBuffers
     // look up original column value from native spool
     val col1 = spool0.spool.head.getColumnValue[Any](0)
+
     // decode corresponding column value from page via combined inverted injection/bijection
-    val col2 = KryoInjection.instance(KryoPoolSerialization.chill).invert(
-      Bijection.bytes2Buffer.invert(spage.head.columns.get.head.value))
+    val rawBytes = Bijection.bytes2Buffer.invert(spage.head.columns.get.head.value)
+    // need to conditionally uncompress
+    val col2 = KryoInjection.instance(KryoPoolSerialization.chill).invert({
+      if (rawBytes.length >= ScrayProperties.RESULT_COMPRESSION_MIN_SIZE_VALUE) {
+        RowConverter.bytes2SnappyBytes.invert(rawBytes)
+      } else if (Snappy.isValidCompressedBuffer(rawBytes)) {
+        RowConverter.bytes2SnappyBytes.invert(rawBytes)
+      } else rawBytes
+    })
+
+    // w/o compression
+    // val col2 = KryoInjection.instance(KryoPoolSerialization.chill).invert(
+    // Bijection.bytes2Buffer.invert(spage.head.columns.get.head.value))
+
     col2.get should be(col1.get)
   }
 
