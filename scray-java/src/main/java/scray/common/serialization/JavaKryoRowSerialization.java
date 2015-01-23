@@ -39,6 +39,7 @@ public class JavaKryoRowSerialization {
 		kryo.register(Set.class, new JavaSetSerializer<>(), KryoSerializerNumber.Set2.getNumber());
 		kryo.register(Set.class, new JavaSetSerializer<>(), KryoSerializerNumber.Set3.getNumber());
 		kryo.register(Set.class, new JavaSetSerializer<>(), KryoSerializerNumber.Set4.getNumber());
+		kryo.register(Set.class, new JavaSetSerializer<>(), KryoSerializerNumber.Set.getNumber());
 		kryo.register(UUID.class, new UUIDSerializer(), KryoSerializerNumber.UUID.getNumber());
 	}
 	
