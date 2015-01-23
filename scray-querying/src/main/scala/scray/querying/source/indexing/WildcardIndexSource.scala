@@ -34,7 +34,7 @@ import scray.querying.description.internal.ComposedMultivalueDomain
  * creates an indexed-source with a wildcard-join reference on a UTF8-column.
  * 
  * Format of this hand-made index will be:
- * UTF8[first 3 letters], UTF8[name to be indexed], Set[ref]
+ * UTF8[first 3 letters], UTF8[name to be indexed], Set[ ref ]
  */
 class WildcardIndexSource[Q <: DomainQuery, M, R, V](
     wildcardIndexConfig: WildcardIndexConfig,
