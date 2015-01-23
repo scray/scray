@@ -1,12 +1,34 @@
 package scray.common.serialization.pool;
 
+import java.io.InputStream;
 import java.util.LinkedList;
 import java.util.List;
 
 import com.esotericsoftware.kryo.Serializer;
 import com.twitter.chill.KryoPool;
+import com.twitter.chill.SerDeState;
 
 public class KryoJavaPoolSerialization {
+	public Object fromStream(InputStream stream) {
+		SerDeState serde = chill.borrow();
+		try {
+			serde.setInput(stream);
+			return serde.readClassAndObject();
+		} finally {
+			chill.release(serde);
+		}
+	}
+
+	public <T> T fromStream(InputStream stream,
+			Class<T> cls) {
+		SerDeState serde = chill.borrow();
+		try {
+			serde.setInput(stream);
+			return serde.readObject(cls);
+		} finally {
+			chill.release(serde);
+		}
+	}
 
 	private KryoJavaPoolSerialization() {
 	}

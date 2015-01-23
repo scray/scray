@@ -26,12 +26,18 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.xerial.snappy.Snappy;
+
+import scray.common.ScrayProperties;
 import scray.common.serialization.pool.KryoJavaPoolSerialization;
 import scray.service.qmodel.thriftjava.ScrayTColumn;
 import scray.service.qmodel.thriftjava.ScrayTRow;
 import scray.service.qservice.thriftjava.ScrayTResultFrame;
 
 public class ScrayResultSet implements java.sql.ResultSet {
+
+	private static org.slf4j.Logger log = org.slf4j.LoggerFactory
+			.getLogger(ScrayResultSet.class);
 
 	class CachePosition {
 		int row;
@@ -106,6 +112,8 @@ public class ScrayResultSet implements java.sql.ResultSet {
 
 	private boolean isLastResultSet;
 
+	private int minCompressionSize = ScrayProperties.RESULT_COMPRESSION_MIN_SIZE_VALUE;
+
 	public ScrayResultSet(ScrayTResultFrame frame, int fetchSize,
 			int fetchDirection, ScrayStatement statement) {
 		this.fetchSize = fetchSize;
@@ -113,6 +121,18 @@ public class ScrayResultSet implements java.sql.ResultSet {
 		rows = frame.getRows();
 		this.statement = statement;
 		this.isLastResultSet = !rows.get(rows.size() - 1).isSetColumns();
+		// try pulling in properties
+		String compressionMinKey = ScrayProperties.RESULT_COMPRESSION_MIN_SIZE_NAME;
+		if (ScrayProperties.props.containsKey(compressionMinKey)) {
+			String compressMinVal = ScrayProperties.props
+					.getProperty(compressionMinKey);
+			try {
+				minCompressionSize = Integer.parseInt(compressMinVal);
+			} catch (Exception e) {
+				log.warn("Invalid property " + compressionMinKey + "="
+						+ compressMinVal, e);
+			}
+		}
 	}
 
 	@Override
@@ -193,14 +213,22 @@ public class ScrayResultSet implements java.sql.ResultSet {
 	}
 
 	private Object decode(ByteBuffer bytes) throws SQLException {
+		Object obj = null;
 		try {
 			byte[] bytesArr = new byte[bytes.remaining()];
 			bytes.get(bytesArr);
-			return KryoJavaPoolSerialization.getInstance().chill
-					.fromBytes(bytesArr);
+			byte[] rawSer = bytesArr;
+			if (bytesArr.length >= minCompressionSize) {
+				rawSer = Snappy.uncompress(bytesArr);
+			} else if (Snappy.isValidCompressedBuffer(bytesArr)) {
+				rawSer = Snappy.uncompress(bytesArr);
+			}
+			obj = KryoJavaPoolSerialization.getInstance().chill
+					.fromBytes(rawSer);
 		} catch (Exception ex) {
 			throw new SQLException("Serialization error.", ex);
 		}
+		return obj;
 	}
 
 	private Object decode(int columnIndex) throws SQLException {
@@ -481,7 +509,7 @@ public class ScrayResultSet implements java.sql.ResultSet {
 
 	@Override
 	public ResultSetMetaData getMetaData() throws SQLException {
-		//checkConstraints();
+		// checkConstraints();
 		return new ScrayResultSetMetaData(this);
 	}
 

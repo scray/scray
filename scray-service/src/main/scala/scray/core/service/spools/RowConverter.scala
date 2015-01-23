@@ -10,6 +10,9 @@ import scray.service.qmodel.thrifscala.ScrayTColumnInfo
 import com.twitter.chill.KryoInjection
 import com.twitter.bijection.Injection
 import com.twitter.bijection.Bijection
+import com.twitter.bijection.GZippedBytes
+import org.xerial.snappy.Snappy
+import scray.common.ScrayProperties
 
 /**
  * Marker row demarcating the end of the result set (within a page)
@@ -20,6 +23,12 @@ class SucceedingRow extends EmptyRow
  * Utility function for converting rows between query model and service model including serialization
  */
 object RowConverter {
+  val compressionSizeMinLength : Int = {
+    if (ScrayProperties.props.containsKey(ScrayProperties.RESULT_COMPRESSION_MIN_SIZE_NAME))
+      ScrayProperties.props.getProperty(ScrayProperties.RESULT_COMPRESSION_MIN_SIZE_NAME).toInt
+    else
+      ScrayProperties.RESULT_COMPRESSION_MIN_SIZE_VALUE
+  }
 
   def convertRow(sRow : Row) : ScrayTRow = sRow match {
     case sRow : SucceedingRow => ScrayTRow(None, None)
@@ -28,10 +37,12 @@ object RowConverter {
     }))
   }
 
-  private def encode[V](value : V) : ByteBuffer = {
-    // compose an injection from a pool backed chill serialization and a ByteBuffer conversion
-    val encoder = KryoInjection.instance(KryoPoolSerialization.chill) andThen Bijection.bytes2Buffer
-    encoder(value)
-  }
+  val bytes2SnappyBytes = Bijection.build[Array[Byte], Array[Byte]](Snappy.compress(_))(Snappy.uncompress(_))
+  val kryoCodec = KryoInjection.instance(KryoPoolSerialization.chill) // andThen bytes2SnappyBytes andThen Bijection.bytes2Buffer
 
+  private def encode[V](value : V) : ByteBuffer = {
+    val serial = kryoCodec(value)
+    Bijection.bytes2Buffer(
+      if (serial.length >= compressionSizeMinLength) bytes2SnappyBytes(serial) else serial)
+  }
 }

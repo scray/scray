@@ -32,8 +32,10 @@ import java.util.UUID;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.xerial.snappy.Snappy;
 
 import scray.client.finagle.ScrayStatelessTServiceAdapter;
+import scray.common.ScrayProperties;
 import scray.common.serialization.pool.KryoJavaPoolSerialization;
 import scray.service.qmodel.thriftjava.ScrayTColumn;
 import scray.service.qmodel.thriftjava.ScrayTColumnInfo;
@@ -63,7 +65,12 @@ public class ScrayJdbcTest {
 
 	final MockedAdapter _MADP = new MockedAdapter();
 
-	final Object[] _VALS = { 1, "foo", 1.3D, true };
+	final Object[] _VALS = {
+			1,
+			"foo",
+			1.3D,
+			true,
+			"NssigZXQxSnh4n28G4Hn BNHnzCWLuUbRrrhIGjFd DhMyCkQ1BrSD0PzwEIsd icT3t8Rs8RIFMCvwcAme nLmOhDSq5OpG8yZWxn5e 5onb0ZfFW0OkfcEQy9eQ naTF8Vi0rrtl5genhUUY zoBT2LjewhPOTQBhMIhQ D5javQm2ftJlSmB2zVKQ PGQ0ZV11O6FWkz9hu4fr hq47t7tx5ZuD8qNKS8pD 25FrTVbCS8y6ngIEOZEu i4FHtRYuZY24iiuEGSa1 NsXxrtr5xET08RXVZvfJ TzE8vr8dtncqObcdOK5k a3I4ZAo1p3YsEBrSTTG6 o54WDLBICtTvosQ0c4f9 rQ0himrKoBNzbUMEfZON S8bpl7LXUyiFkSSSi2nM RXpGA6A4ZPejGmuoq5qZ fwMswNb84cW3u61KjA0R Q0Al127Jpaaw9l8rykLe pFf9VM2vux0zSKqdzLrc Vi9X6iAEb90Pmj1BDbyM qu28FKf5QNdAQ7QUDUAl KUBA0r0szIPKPibvEdvv 7CvVz6gWvIh0BvYvWv4c lh4q7gJUmOxjE2zTbQmp aZ2Me7ys8yNjwgv9ZQsR mThY5Yc04sEXvSKVrdJP lsyXmq1YmQXgL0XrgkzJ Q2CJ4qb01OVr9aeMYr3U Lm1mPTTYFtja7cqEyxo0 ljpYn1zCtHHTcnoX2pNE yUBC6sPmAyeZETLzXXrz ikcn14zWy48DqvrlGMZV h9c6IiPAEcxT1iUCTJZa vvczYML02zsEPWPzzZYe LGgdW7bPXK8DLvBtBXjI 0vZbYZ36MMiE7NcEwXFb KyKQmEKU4RJXy2jcDAYx RP0VfFZMIxHx60I1LhEL tt9lrfse0Qir573NOHxe yaLXUduFkZJdXchHiZSt RwdR7z8QFqMo1WWITsgq gnfko0rqE880jMRZGfvp FZOxRkrYgYv7WkZ6XwGM 18OvJxnMQkuGjczcIzW6 CGrw4ds8jxEGZaS94hqw AEeV5gPi3Gjzxt2qkKYf OrclwOSQllLfljfXkhL4 iKWMBo3B5Fm2iBvAS9od BhISBcxxmeCa7SO74LBO Lp3yr7bmcjKQTk21i518 4aN92xQh889qKgu2MnVJ RYcrC8W1ocsXDOxKf42G 7Z63MiJcs5XD102c8hmK mDc9MT0mM546pw2foZOF DCBWgSFD5QtW30cToTId jmMk2CMm9N946e9KkGza OyLWddFsgINqO27q8RQv fnNDXtbXnBXkhiD9JtIc vftjLttDQocvolzJEn9r xThBpZo8O8QTfMOl63dM hHKwECT8hkX8hMqaHQ3M 8prJXokfc1jfHKOshccQ GmRRmUqP67D7ScA2xjCh AmrCEMXDSBtXYzhhY59o ua85XSUn4NRd4kLOSHf8 WcMVea0DxXbMQgiF63pF YYZPC94VCxY7HrTbja7t qgpaeBg8Ycmjx2vADgDL Nm4qOUr1ni76jszIul4O JNHyQwf4d4lGZ1bQEE2f 4Zwa14kWoT7Z5jgoQHdG ZMHQARUV1hfNRmRHYmpm b16150Alrx115fU4iaVp TpdUHU6jSc0uZH3FYTWX hIoZkBqFMjXDSTUIHZeY gdvNnAzVfPvVzVb2Ngs2 pxopnW7CU2H8ZxPDsJyt aOc9LJtQHUvRv9nZ9H09 BEBmYvWXIICr6VJV3XjY wCT9hVHQthM8VXN2AUOc 1luAmNlGxFbPdFsNNYKB jcSYKhymF2m6Tz03FpHK ZZFeFtpVVsHEmwJLlAgy AwslBGMEvvdwa0kQA7y6 vs8u6MV6Yvm0HMyAutQ9 OpT0NcxgvEKMnMcT6An1 AhGZX6w6ai74DCTu2cHf x6OoZHhq11W6YzRSGpjf 1x2V8wJ6R3pqy9yTt5zn hZprDkB1n8LWEkI2kxBn Uu6RqQnJqTMQQS7mKtCr dWi2lazPcmLpSelaIdBb khBXYs4peG5LGYW8Uhss nrVE4vo9wxhIXVqGrfM7 zNIakxgj2gAWTtocLXWK lrKEZaTi94GHdQdOkt2W" };
 
 	ScrayURL scrayURL;
 
@@ -85,8 +92,9 @@ public class ScrayJdbcTest {
 		when(_MADP.getClient().query(any(ScrayTQuery.class))).thenReturn(
 				Future.value(_SUUID));
 		// stub calls to getResults
-		when(_MADP.getClient().getResults(any(ScrayUUID.class), any(Integer.class)))
-				.thenReturn(Future.value(frame));
+		when(
+				_MADP.getClient().getResults(any(ScrayUUID.class),
+						any(Integer.class))).thenReturn(Future.value(frame));
 	}
 
 	void createFrame() {
@@ -107,13 +115,57 @@ public class ScrayJdbcTest {
 	}
 
 	ScrayTColumn createColumn(int col) {
-		ScrayTColumnInfo cInfo = new ScrayTColumnInfo("col" + col);
-		ByteBuffer bbuf = ByteBuffer.wrap(KryoJavaPoolSerialization
-				.getInstance().chill.toBytesWithClass(_VALS[new Random()
-				.nextInt(_VALS.length)]));
-		ScrayTColumn tCol = new ScrayTColumn(cInfo, bbuf);
+		ScrayTColumn tCol = null;
+		try {
+			ScrayTColumnInfo cInfo = new ScrayTColumnInfo("col" + col);
+			byte[] rawbytes = KryoJavaPoolSerialization.getInstance().chill
+					.toBytesWithClass(_VALS[new Random().nextInt(_VALS.length)]);
+			byte[] bytes = rawbytes;
+			if (rawbytes.length >= ScrayProperties.RESULT_COMPRESSION_MIN_SIZE_VALUE) {
+				bytes = Snappy.compress(rawbytes);
+			}
+			ByteBuffer bbuf = ByteBuffer.wrap(bytes);
+			tCol = new ScrayTColumn(cInfo, bbuf);
+		} catch (Exception ex) {
+			ex.printStackTrace();
+			new RuntimeException(ex);
+		}
 		return tCol;
 	}
+
+	// ScrayTColumn createColumn(int col) {
+	// ScrayTColumn tCol = null;
+	// try {
+	// ScrayTColumnInfo cInfo = new ScrayTColumnInfo("col" + col);
+	// byte[] bytes = KryoJavaPoolSerialization.getInstance().chill
+	// .toBytesWithClass(_VALS[new Random().nextInt(_VALS.length)]);
+	// ByteBuffer bbuf = ByteBuffer.wrap(bytes);
+	// tCol = new ScrayTColumn(cInfo, bbuf);
+	// } catch (Exception ex) {
+	// ex.printStackTrace();
+	// new RuntimeException(ex);
+	// }
+	// return tCol;
+	// }
+
+	// ScrayTColumn createColumn(int col) {
+	// ScrayTColumn tCol = null;
+	// try {
+	// ScrayTColumnInfo cInfo = new ScrayTColumnInfo("col" + col);
+	// ByteArrayOutputStream baos = new ByteArrayOutputStream();
+	// GZIPOutputStream gzip = new GZIPOutputStream(baos);
+	// gzip.write(KryoJavaPoolSerialization.getInstance().chill
+	// .toBytesWithClass(_VALS[new Random().nextInt(_VALS.length)]));
+	// gzip.flush();
+	// gzip.close();
+	// ByteBuffer bbuf = ByteBuffer.wrap(baos.toByteArray());
+	// tCol = new ScrayTColumn(cInfo, bbuf);
+	// } catch (Exception ex) {
+	// ex.printStackTrace();
+	// new RuntimeException(ex);
+	// }
+	// return tCol;
+	// }
 
 	public ScrayJdbcTest() {
 		try {
@@ -198,5 +250,4 @@ public class ScrayJdbcTest {
 			fail();
 		}
 	}
-
 }
