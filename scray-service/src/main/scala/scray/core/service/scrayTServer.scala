@@ -24,11 +24,18 @@ import scray.common.serialization.KryoPoolSerialization
 import scray.common.serialization.KryoSerializerNumber
 import com.twitter.finagle.ListeningServer
 import java.net.InetAddress
+import scray.common.properties.ScrayProperties
+import com.twitter.util.Try
+import scray.common.properties.IntProperty
 
 case class ScrayServerEndpoint(host : InetAddress, port : Int)
 
 trait KryoPoolRegistration {
   def register = RegisterRowCachingSerializers()
+  def registerProperties = {
+    Try(ScrayProperties.registerProperty(new IntProperty(
+            ScrayProperties.RESULT_COMPRESSION_MIN_SIZE_NAME, ScrayProperties.RESULT_COMPRESSION_MIN_SIZE_VALUE)))
+  }
 }
 
 abstract class ScrayStatefulTServer extends AbstractScrayTServer {
