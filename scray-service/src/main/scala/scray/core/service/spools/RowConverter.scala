@@ -12,7 +12,7 @@ import com.twitter.bijection.Injection
 import com.twitter.bijection.Bijection
 import com.twitter.bijection.GZippedBytes
 import org.xerial.snappy.Snappy
-import scray.common.ScrayProperties
+import scray.common.properties.ScrayProperties
 
 /**
  * Marker row demarcating the end of the result set (within a page)
@@ -23,12 +23,7 @@ class SucceedingRow extends EmptyRow
  * Utility function for converting rows between query model and service model including serialization
  */
 object RowConverter {
-  val compressionSizeMinLength : Int = {
-    if (ScrayProperties.props.containsKey(ScrayProperties.RESULT_COMPRESSION_MIN_SIZE_NAME))
-      ScrayProperties.props.getProperty(ScrayProperties.RESULT_COMPRESSION_MIN_SIZE_NAME).toInt
-    else
-      ScrayProperties.RESULT_COMPRESSION_MIN_SIZE_VALUE
-  }
+  lazy val compressionSizeMinLength : Int = ScrayProperties.getPropertyValue(ScrayProperties.RESULT_COMPRESSION_MIN_SIZE_NAME)
 
   def convertRow(sRow : Row) : ScrayTRow = sRow match {
     case sRow : SucceedingRow => ScrayTRow(None, None)

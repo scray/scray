@@ -35,7 +35,10 @@ import org.junit.Test;
 import org.xerial.snappy.Snappy;
 
 import scray.client.finagle.ScrayStatelessTServiceAdapter;
-import scray.common.ScrayProperties;
+import scray.common.properties.IntProperty;
+import scray.common.properties.PropertyException;
+import scray.common.properties.ScrayProperties;
+import scray.common.properties.ScrayProperties.Phase;
 import scray.common.serialization.pool.KryoJavaPoolSerialization;
 import scray.service.qmodel.thriftjava.ScrayTColumn;
 import scray.service.qmodel.thriftjava.ScrayTColumnInfo;
@@ -47,6 +50,7 @@ import scray.service.qmodel.thriftjava.ScrayUUID;
 import scray.service.qservice.thriftjava.ScrayStatelessTService;
 import scray.service.qservice.thriftjava.ScrayTResultFrame;
 
+import com.esotericsoftware.minlog.Log;
 import com.twitter.scrooge.Option;
 import com.twitter.util.Future;
 
@@ -181,6 +185,13 @@ public class ScrayJdbcTest {
 
 	@Before
 	public void init() {
+		try {
+			ScrayProperties.registerProperty(new IntProperty(ScrayProperties.RESULT_COMPRESSION_MIN_SIZE_NAME, ScrayProperties.RESULT_COMPRESSION_MIN_SIZE_VALUE));
+			ScrayProperties.setPhase(Phase.config);
+			ScrayProperties.setPhase(Phase.use);
+		} catch(PropertyException pe) {
+			Log.error("init error", pe);
+		}
 		createFrame();
 		mockStubbing();
 	}

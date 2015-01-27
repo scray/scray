@@ -19,6 +19,8 @@ import scray.service.qservice.thrifscala.ScrayStatefulTService
 import scray.core.service.util.{ SpoolSamples, TQuerySamples }
 import scray.querying.Query
 import scray.core.service.spools.TimedSpoolRack
+import scray.common.properties.ScrayProperties
+import scray.common.properties.ScrayProperties.Phase
 
 @RunWith(classOf[JUnitRunner])
 class ThriftSpec
@@ -43,7 +45,10 @@ class ThriftSpec
   val client = Thrift.newIface[ScrayStatefulTService.FutureIface](ENDPOINT)
 
   before {
+    registerProperties
     // register kryo serializers
+    ScrayProperties.setPhase(Phase.config)
+    ScrayProperties.setPhase(Phase.use)
     register
     println("Thrift server bound to: " + server.boundAddress)
   }

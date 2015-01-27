@@ -23,7 +23,7 @@ import scray.querying.Query
 import scray.querying.description.Row
 import scray.service.qmodel.thrifscala.ScrayTQuery
 import scray.service.qmodel.thrifscala.ScrayTRow
-import scray.common.ScrayProperties
+import scray.common.properties.ScrayProperties
 import org.xerial.snappy.Snappy
 
 @RunWith(classOf[JUnitRunner])
@@ -35,6 +35,8 @@ class SpoolsSpec
   with SpoolSamples
   with KryoPoolRegistration {
 
+  registerProperties
+  
   // kryo registration
   register
 
