@@ -110,8 +110,11 @@ public class ScrayProperties {
 	 */
 	private static synchronized <T, U> void setPropertyValue(Property<T, U> prop, U value) throws PropertyException {
 		T storageVal = prop.transformToStorageFormat(value);
+		PropertyStorage store = stores.get(stores.size() - 1);
 		if(prop.checkConstraints(storageVal)) {
-			stores.get(stores.size() - 1).put(prop, storageVal);
+			if(store instanceof PropertyStoragePut) {
+				((PropertyStoragePut)store).put(prop, storageVal);
+			}
 		} else {
 			throw new PropertyConstraintViolatedException(prop.getName());
 		}		
@@ -136,15 +139,17 @@ public class ScrayProperties {
 	@SuppressWarnings("unchecked")
 	public static synchronized <T, U> void setPropertyValue(String propName, U value, boolean overwriteIfExists) throws PropertyException {
 		ScrayProperties.checkPhase(Phase.use);
-		if(stores.get(stores.size() - 1).isUpdatableStore()) {
-			throw new UnsupportedOperationException("Property storage " + stores.get(stores.size() - 1).getClass().getName() + " does not support setting property values!");
+		PropertyStorage store = stores.get(stores.size() - 1);
+		if(store == null || !(store instanceof PropertyStoragePut)) {
+			throw new UnsupportedOperationException("Property storage " + 
+					((store != null)?store.getClass().getName():"null") + " does not support setting property values!");
 		}
 		if(properties.get(propName) != null) {
 			Property<T, U> prop = (Property<T, U>)properties.get(propName);
 			if(overwriteIfExists) {
 				setPropertyValue(prop, value);
 			} else {
-				if(stores.get(stores.size() - 1).get(prop) != null) {
+				if(store.get(prop) != null) {
 					throw new PropertyValueExistsException(propName);
 				} else {
 					setPropertyValue(prop, value);
@@ -176,7 +181,6 @@ public class ScrayProperties {
 	 * Phase handling
 	 * @return
 	 */
-	
 	public static enum Phase {
 		register(0), config(1), use(2);
 		private int num;
@@ -228,4 +232,6 @@ public class ScrayProperties {
 	
 	public static final String RESULT_COMPRESSION_MIN_SIZE_NAME = "RESULT_COMPRESSION_MIN_SIZE";
 	public static final int RESULT_COMPRESSION_MIN_SIZE_VALUE = 1024;
+	
+	public final static SocketListProperty CASSANDRA_SEEDS = new SocketListProperty("CASSANDRA_SEED_IPS", 9042);
 }

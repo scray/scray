@@ -33,14 +33,8 @@ public class PropertyFileStorage implements PropertyStorage {
 	}
 	
 	/**
-	 * Properties in property files cannot be set
-	 */
-	public <T, U> void put(Property<T, U> name, T value) {}
-	
-	/**
 	 * Initializes system with default property file
 	 */
-	@SuppressWarnings("unchecked")
 	public void init() {
 		// check if there is a command line argument set, otherwise use default argument
 		props = new Properties();
@@ -56,7 +50,12 @@ public class PropertyFileStorage implements PropertyStorage {
 		} catch (IOException e) {
 			log.error("Failed to load " + location + "", e);
 		}
-		for(Entry<Object, Object> entry: props.entrySet()) {
+		checkProperties(props);
+	} 
+	
+	@SuppressWarnings("unchecked")
+	public static void checkProperties(Properties properties) {
+		for(Entry<Object, Object> entry: properties.entrySet()) {
 			// verify that all registered properties have the right type 
 			// (others might have not been registered because some module is not in use)
 			String key = (String)entry.getKey();
@@ -68,16 +67,9 @@ public class PropertyFileStorage implements PropertyStorage {
 					}
 				}
 			}
-		}
-	} 
-	
-	/**
-	 * Properties in property files cannot be set
-	 */
-	public boolean isUpdatableStore() {
-		return true;
+		}		
 	}
-
+	
 	public static String DEFAULT_PROPERTY_FILE = "scray.properties";
 	public static String DEFAULT_JVM_ARGUMENT = "scray.properties"; 
 }

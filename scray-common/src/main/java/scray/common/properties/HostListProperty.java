@@ -59,7 +59,7 @@ public class HostListProperty extends Property<String, List<InetAddress>> {
 		try {
 			String[] strs = value.split(separator);
 			for(String str : strs) {
-				result.add(InetAddress.getByName(str));
+				result.add(InetAddress.getByName(str.trim()));
 			}
 		} catch(UnknownHostException uhe) {
 			return null;
