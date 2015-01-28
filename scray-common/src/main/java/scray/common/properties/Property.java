@@ -59,6 +59,10 @@ public abstract class Property<T, U> {
 		return (T)value;
 	}
 
+	public String toString(T value) {
+		return value.toString();
+	}
+ 	
 	public abstract boolean hasDefault();
 	
 	public abstract U getDefault();

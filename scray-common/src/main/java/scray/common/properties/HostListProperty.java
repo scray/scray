@@ -2,15 +2,15 @@ package scray.common.properties;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
-public class HostListProperty extends Property<String, List<InetAddress>> {
+public class HostListProperty extends Property<String, Set<InetAddress>> {
 
 	private String separator = ",";
 	
 	private String name = null;
-	private List<InetAddress> defaultValue = null;
+	private Set<InetAddress> defaultValue = null;
 
 	public HostListProperty(String name) {
 		this.name = name;
@@ -33,7 +33,7 @@ public class HostListProperty extends Property<String, List<InetAddress>> {
 		});
 	}
 
-	public HostListProperty(String name, List<InetAddress> defaultValue) {
+	public HostListProperty(String name, Set<InetAddress> defaultValue) {
 		this(name);
 		this.defaultValue = defaultValue;
 	}
@@ -44,7 +44,7 @@ public class HostListProperty extends Property<String, List<InetAddress>> {
 	}
 
 	@Override
-	public List<InetAddress> getDefault() {
+	public Set<InetAddress> getDefault() {
 		return defaultValue;
 	}
 
@@ -54,8 +54,8 @@ public class HostListProperty extends Property<String, List<InetAddress>> {
 	}
 
 	@Override
-	public List<InetAddress> transformToResult(String value) {
-		List<InetAddress> result = new ArrayList<InetAddress>();
+	public Set<InetAddress> transformToResult(String value) {
+		Set<InetAddress> result = new HashSet<InetAddress>();
 		try {
 			String[] strs = value.split(separator);
 			for(String str : strs) {
@@ -69,5 +69,19 @@ public class HostListProperty extends Property<String, List<InetAddress>> {
 	
 	public void setSeparatorString(String separator) {
 		this.separator = separator;
+	}
+	
+	@Override
+	public String transformToStorageFormat(Set<InetAddress> value) {
+		StringBuilder sb = new StringBuilder();
+		boolean first = true;
+		for(InetAddress addr: value) {
+			if(!first) {
+				sb.append(",");
+			}
+			sb.append(addr.toString());
+			first = false;
+		}
+		return sb.toString();
 	}
 }

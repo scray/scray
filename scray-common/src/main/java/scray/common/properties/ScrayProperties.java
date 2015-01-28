@@ -112,8 +112,8 @@ public class ScrayProperties {
 		T storageVal = prop.transformToStorageFormat(value);
 		PropertyStorage store = stores.get(stores.size() - 1);
 		if(prop.checkConstraints(storageVal)) {
-			if(store instanceof PropertyStoragePut) {
-				((PropertyStoragePut)store).put(prop, storageVal);
+			if(store instanceof PropertyStoragePuttable) {
+				((PropertyStoragePuttable)store).put(prop, storageVal);
 			}
 		} else {
 			throw new PropertyConstraintViolatedException(prop.getName());
@@ -140,7 +140,7 @@ public class ScrayProperties {
 	public static synchronized <T, U> void setPropertyValue(String propName, U value, boolean overwriteIfExists) throws PropertyException {
 		ScrayProperties.checkPhase(Phase.use);
 		PropertyStorage store = stores.get(stores.size() - 1);
-		if(store == null || !(store instanceof PropertyStoragePut)) {
+		if(store == null || !(store instanceof PropertyStoragePuttable)) {
 			throw new UnsupportedOperationException("Property storage " + 
 					((store != null)?store.getClass().getName():"null") + " does not support setting property values!");
 		}

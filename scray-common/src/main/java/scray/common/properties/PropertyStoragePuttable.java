@@ -5,7 +5,7 @@ package scray.common.properties;
  * @author andreas
  *
  */
-public interface PropertyStoragePut extends PropertyStorage {
+public interface PropertyStoragePuttable extends PropertyStorage {
 
 	/**
 	 * set a property value on the storage device.

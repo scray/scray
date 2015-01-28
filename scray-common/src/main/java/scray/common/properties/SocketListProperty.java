@@ -4,16 +4,16 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.net.UnknownServiceException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
-public class SocketListProperty extends Property<String, List<InetSocketAddress>> {
+public class SocketListProperty extends Property<String, Set<InetSocketAddress>> {
 
 	private String hostSeperator = ",";
 	private String portSeperator = ":";
 	
 	private String name = null;
-	private List<InetSocketAddress> defaultValue = null;
+	private Set<InetSocketAddress> defaultValue = null;
 	private int defaultPort = -1;
 
 	public SocketListProperty(final String name, final int defaultPort) {
@@ -56,7 +56,7 @@ public class SocketListProperty extends Property<String, List<InetSocketAddress>
 		this(name, -1);
 	}
 	
-	public SocketListProperty(String name, int defaultPort, List<InetSocketAddress> defaultValue) {
+	public SocketListProperty(String name, int defaultPort, Set<InetSocketAddress> defaultValue) {
 		this(name, defaultPort);
 		this.defaultValue = defaultValue;
 	}
@@ -67,7 +67,7 @@ public class SocketListProperty extends Property<String, List<InetSocketAddress>
 	}
 
 	@Override
-	public List<InetSocketAddress> getDefault() {
+	public Set<InetSocketAddress> getDefault() {
 		return defaultValue;
 	}
 
@@ -77,8 +77,8 @@ public class SocketListProperty extends Property<String, List<InetSocketAddress>
 	}
 
 	@Override
-	public List<InetSocketAddress> transformToResult(String value) {
-		List<InetSocketAddress> result = new ArrayList<InetSocketAddress>();
+	public Set<InetSocketAddress> transformToResult(String value) {
+		Set<InetSocketAddress> result = new HashSet<InetSocketAddress>();
 		String[] strs = value.split(hostSeperator);
 		for(String str : strs) {
 			String[] hostAndPort = str.trim().split(portSeperator);
@@ -90,6 +90,22 @@ public class SocketListProperty extends Property<String, List<InetSocketAddress>
 			}
 		}
 		return result;
+	}
+	
+	@Override
+	public String transformToStorageFormat(Set<InetSocketAddress> value) {
+		StringBuilder sb = new StringBuilder();
+		boolean first = true;
+		for(InetSocketAddress addr: value) {
+			if(!first) {
+				sb.append(",");
+			}
+			sb.append(addr.getHostString());
+			sb.append(":");
+			sb.append(addr.getPort());
+			first = false;
+		}
+		return sb.toString();
 	}
 	
 	public void setSeperatorsString(String hostSeperator, String portSeperator) {
