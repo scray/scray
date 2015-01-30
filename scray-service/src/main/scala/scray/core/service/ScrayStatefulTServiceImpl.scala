@@ -56,7 +56,7 @@ class ScrayStatefulTServiceImpl(val rack : SpoolRack) extends ScrayStatefulTServ
       case Failure(e) => throw e
     }
     parsed.flatMap(_.createQuery) match {
-      case Success(query) => Future.value(rack.createSpool(query, tQuery.queryInfo).queryId.get)
+      case Success(query) => try { Future.value(rack.createSpool(query, tQuery.queryInfo).queryId.get) } catch { case e: Exception => e.printStackTrace(); throw e}
       case Failure(ex) => Future.exception(ex)
     }
   }

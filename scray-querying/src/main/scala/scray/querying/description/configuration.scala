@@ -18,6 +18,7 @@ import com.twitter.storehaus.{QueryableStore, ReadableStore}
 import scray.querying.Query
 import scray.querying.queries.DomainQuery
 import scray.querying.source.indexing.IndexConfig
+import scray.querying.description.internal.MaterializedView
 
 /**
  * parent class of queryspace-configuration, used to identify which tables
@@ -93,7 +94,8 @@ case class TableConfiguration[Q, K, V] (
   rowMapper: (V) => Row, // mapper from a result row returned by the store to a scray-row
   domainQueryMapping: DomainQuery => Q, // maps a scray-DomainQuery to a query of the store
   queryableStore: () => QueryableStore[Q, V], // the queryable store representation, allowing to query the store
-  readableStore: () => ReadableStore[K, V] // the readablestore, used in case this is used by a HashJoinSource
+  readableStore: () => ReadableStore[K, V], // the readablestore, used in case this is used by a HashJoinSource
+  materializedViews: List[MaterializedView] // materialized views for this table
 )
 
 /**

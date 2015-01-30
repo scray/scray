@@ -41,6 +41,35 @@ case class RangeValueDomain[T](
   upperBound: Option[Bound[T]] // None means no upper bound
 )(implicit val ordering: Ordering[T]) extends Domain[T](column) {
   /**
+   * checks if the current RangeValueDomain is a sub-interval of rangeValueDomain
+   */
+  def isSubIntervalOf(rangeValueDomain: RangeValueDomain[T]): Boolean = {
+    val ures = rangeValueDomain.upperBound.map { uBound =>
+      upperBound match {
+        case Some(upper) => if(ordering.compare(upper.value, uBound.value) < 0 || 
+            (upper.value == uBound.value && uBound.inclusive)) {
+          true
+        } else {
+          false
+        }
+        case None => false
+      }
+    }.getOrElse(true)
+    val lres = rangeValueDomain.lowerBound.map { lBound =>
+      lowerBound match {
+        case Some(lower) => if(ordering.compare(lower.value, lBound.value) > 0 || 
+            (lower.value == lBound.value && lBound.inclusive)) {
+          true
+        } else {
+          false
+        }
+        case None => false
+      }
+    }.getOrElse(true)
+    ures && lres
+  }
+  
+  /**
    * finds the smallest possible interval from two intervals
    */
   def bisect(rangeValueDomain: RangeValueDomain[T]): Option[RangeValueDomain[T]] = {

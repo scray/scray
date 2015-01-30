@@ -105,12 +105,12 @@ abstract class AbstractHashJoinSource[Q <: DomainQuery, M, R /* <: Product */, V
   
   override def request(query: Q): Future[Spool[Row]] = {
     logger.debug(s"Joining in ${lookupSource.getDiscriminant} into ${indexsource.getDiscriminant} for ${query.getQueryID}")
-    val rowComp = rowCompWithOrdering(query.ordering.get.column, query.ordering.get.ordering)
     val queries = transformIndexQuery(query)
     val results = queries.par.map(mappedquery =>
       indexsource.request(mappedquery).flatMap(spool => spoolTransform(spool, mappedquery)))
     if(results.size > 1) {
       if(isOrdered(query)) {
+        val rowComp = rowCompWithOrdering(query.ordering.get.column, query.ordering.get.ordering)
         MergingResultSpool.mergeOrderedSpools(Seq(), results.seq.toSeq, rowComp, Array[Int]())
       } else {
         MergingResultSpool.mergeUnorderedResults(Seq(), results.seq.toSeq, Array[Int]())

@@ -65,7 +65,8 @@ class CQLStoreTupleValuesExtractor[S <: CQLCassandraStoreTupleValues[_, _, _, _]
       rowMapper.asInstanceOf[(Any) => Row],
       getQueryMapping(store, tableName),
       () => store.asInstanceOf[QueryableStore[Any, Any]],
-      () => store.asInstanceOf[ReadableStore[Any, Any]]
+      () => store.asInstanceOf[ReadableStore[Any, Any]],
+      List()
     )
   }
 }

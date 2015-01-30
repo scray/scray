@@ -94,12 +94,13 @@ object Registry {
       querySpaceColumns.put(querySpace.name, new HashMap[Column, ColumnConfiguration])
       querySpaceTables.put(querySpace.name, new HashMap[TableIdentifier, TableConfiguration[_, _, _]])
       querySpace.getColumns.foreach(col => querySpaceColumns.get(querySpace.name).map(_.put(col.column, col)))
-        // columnRegistry.put(col.column, col)
       querySpace.getTables.foreach(table => querySpaceTables.get(querySpace.name).map(_.put(table.table, table)))
     } finally {
       rwlock.writeLock.unlock
     }
   }
+
+  
   
   /**
    * Must be called to update the information. It suffices to update columns which actually have been 
