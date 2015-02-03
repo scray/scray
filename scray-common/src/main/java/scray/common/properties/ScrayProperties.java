@@ -230,6 +230,15 @@ public class ScrayProperties {
 				" and transitioning to phase " + phase.toString() + " complete.");
 	}
 	
+	/**
+	 * Reset the registered properties to no available property. Useful for tests.
+	 */
+	public static void reset() {
+		properties.clear();
+		stores.clear();
+		currentPhase = Phase.register;
+	}
+	
 	public static final String RESULT_COMPRESSION_MIN_SIZE_NAME = "RESULT_COMPRESSION_MIN_SIZE";
 	public static final int RESULT_COMPRESSION_MIN_SIZE_VALUE = 1024;
 	
