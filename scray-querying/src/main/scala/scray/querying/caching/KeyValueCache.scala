@@ -28,7 +28,8 @@ class KeyValueCache[K, V](
     val numberentries: Option[Int] = None) extends Cache[V] {
 
   val db = DBMaker.newMemoryDirectDB().transactionDisable().asyncWriteEnable().make
-  val cache = db.createHashMap("cache").counterEnable().valueSerializer(valueSerializer.orNull).make[K, V]
+  val cache = db.createHashMap("cache").expireStoreSize(cachesizegb).counterEnable().
+    valueSerializer(valueSerializer.orNull).make[K, V]
 
   /**
    * retrieve one row, ending is an implicit of existing contents (i.e. can only be one)

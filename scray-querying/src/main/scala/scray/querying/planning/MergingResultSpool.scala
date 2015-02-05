@@ -20,6 +20,7 @@ import scray.querying.description.Row
 import scala.collection.mutable.ArrayBuffer
 import com.twitter.util.Await
 import scala.annotation.tailrec
+import scray.querying.description.QueryRange
 
 /**
  * used to combine query result sets 
@@ -198,6 +199,37 @@ object MergingResultSpool {
       } else {
         findAvailableSeq(indexesLocal.tail, seqsLocal.tail, count + 1, acc)
       }
+    }
+  }
+  
+  /**
+   * seek and limit a given spool 
+   */
+  def seekingLimitingSpoolTransformer(spool: Spool[Row], range: Option[QueryRange]): Spool[Row] = {
+    def slspooltcount(spool: Spool[Row], count: Long, skip: Long): Spool[Row] = {
+      if(count < skip) {
+        // there is still data we need to skip
+        slspooltcount(Await.result(spool.tail), count + 1L, skip)
+      } else {
+        if(range.get.limit.isEmpty) {
+          // skipping ended and no limit, return rest of data
+          spool
+        } else {
+          if(count < skip + range.get.limit.get) {
+            // re-insert data
+            spool.head *:: Future.value(slspooltcount(Await.result(spool.tail), count + 1L, skip))
+          } else {
+            // limit has been reached, return the empty spool
+            Spool.empty[Row]
+          }
+        }
+      }
+    }
+    if(range.isDefined && (range.get.skip.isDefined || range.get.limit.isDefined)) {
+      val skip = range.get.skip.getOrElse(0L)
+      slspooltcount(spool, 0L, skip)
+    } else {
+      spool
     }
   }
 }

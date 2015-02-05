@@ -129,7 +129,9 @@ object Planner extends LazyLogging {
     logger.debug(s"Plan computed for query: ${query.getQueryID.toString}")
       
     // run the plans and merge if it is needed
-    executePlans(plans.asInstanceOf[ParSeq[(OrderedComposablePlan[DomainQuery,_], DomainQuery)]], ordering == None, ordering)
+    MergingResultSpool.seekingLimitingSpoolTransformer(
+        executePlans(plans.asInstanceOf[ParSeq[(OrderedComposablePlan[DomainQuery,_], DomainQuery)]], ordering == None, ordering),
+        query.getQueryRange)
   }
 
   /**
@@ -194,6 +196,9 @@ object Planner extends LazyLogging {
     }.getOrElse(List(query))
   }
   
+  /**
+   * check that we can use a specific materialized view for a given query
+   */
 //  private def checkMaterializedViewMatching(space: String, table: TableIdentifier, domQuery: DomainQuery): Option[TableConfiguration[_, _, _]] = {
 //    @inline def checkSingleValueDomainValues(column: Column, values: Array[SingleValueDomain[_]]) = {
 //      values.find { singleVDom => 
@@ -230,7 +235,7 @@ object Planner extends LazyLogging {
 //      }
 //    }
 //  }
-//
+
   /**
    * Finds the main query
    * 

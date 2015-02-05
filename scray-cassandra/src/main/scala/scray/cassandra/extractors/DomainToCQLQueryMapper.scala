@@ -38,16 +38,32 @@ class DomainToCQLQueryMapper[S <: AbstractCQLCassandraStore[_, _]] {
       // first check that we have fixed all partition keys
       getRowKeyQueryMapping(store, query, extractor, storeTableNickName).map { queryStringBegin =>
         // if this is the case the query can fix clustering keys and the last one may be a rangedomain 
-        getClusterKeyQueryMapping(store, query, extractor, storeTableNickName) match {
+        val baseQuery = getClusterKeyQueryMapping(store, query, extractor, storeTableNickName) match {
           case None => queryStringBegin
           case Some(queryPart) => s"$queryStringBegin$AND_LITERAL$queryPart"
         }
+        enforceLimit(baseQuery, query)
       }.getOrElse {
         // if there is not a partition and maybe a clustering column 
         // we must make sure we have a single index for the col we select (only use one)
-        getValueKeyQueryMapping(store, query, extractor, storeTableNickName).getOrElse("")
+        enforceLimit(getValueKeyQueryMapping(store, query, extractor, storeTableNickName).getOrElse(""), query)
       }
     }
+  }
+  
+  /**
+   * sets given limits at the provided query
+   */
+  private def enforceLimit(queryString: String, query: DomainQuery): String = {
+    query.getQueryRange.map { range =>
+      if(range.limit.isDefined) {
+        val sbuf = new StringBuffer(queryString)
+        val skip = range.skip.getOrElse(0L)
+        sbuf.append(" LIMIT ").append(skip + range.limit.get).toString
+      } else {
+        queryString
+      }
+    }.getOrElse(queryString)
   }
   
   private def convertValue[T](value: T) = value match {

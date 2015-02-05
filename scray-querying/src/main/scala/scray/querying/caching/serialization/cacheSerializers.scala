@@ -115,4 +115,3 @@ class QueryableCacheSerializer extends Serializer[ArrayBuffer[Row]] with Seriali
   override def fixedSize: Int = -1
 }
 
-

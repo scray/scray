@@ -31,9 +31,31 @@ import java.util.concurrent.locks.ReentrantLock
 import scray.querying.caching.serialization.RegisterRowCachingSerializers
 
 /**
+ * default trait to represent get operations on the registry
+ */
+trait Registry {
+  
+  /**
+   * returns the current queryspace configuration
+   */
+  @inline def getQuerySpace(space: String): Option[QueryspaceConfiguration]
+  
+  /**
+   * returns a column configuration
+   */
+  @inline def getQuerySpaceColumn(space: String, column: Column): Option[ColumnConfiguration]
+  
+  /**
+   * returns a table configuration
+   */
+  @inline def getQuerySpaceTable(space: String, ti: TableIdentifier): Option[TableConfiguration[_, _, _]]
+}
+
+
+/**
  * Registry for tables and resources
  */
-object Registry {
+object Registry extends Registry {
 
   // makes registry thread safe at the cost of some performance;
   // however, reads should not be blocking each other
@@ -45,7 +67,7 @@ object Registry {
   /**
    * returns the current queryspace configuration
    */
-  @inline def getQuerySpace(space: String): Option[QueryspaceConfiguration] = {
+  @inline override def getQuerySpace(space: String): Option[QueryspaceConfiguration] = {
     rwlock.readLock.lock
     try {
       querySpaces.get(space)
@@ -75,7 +97,7 @@ object Registry {
   /**
    * returns a column configuration
    */
-  @inline def getQuerySpaceColumn(space: String, column: Column): Option[ColumnConfiguration] = {
+  @inline override def getQuerySpaceColumn(space: String, column: Column): Option[ColumnConfiguration] = {
     rwlock.readLock.lock
     try {
       querySpaceColumns.get(space).flatMap(_.get(column))
@@ -99,8 +121,40 @@ object Registry {
       rwlock.writeLock.unlock
     }
   }
-
   
+  /**
+   * return a "private" copy of a query space in this registry to be used
+   * without synchronization. The planner will attach the returned objects to
+   * each DomainQuery for easy access. Concurrent modifications of the registry
+   * will therefore only marginally affect running queries (changes to mutable
+   * list will.
+   */
+  def getRegistryQueryspaceCopy(querySpace: String): Registry = {
+    rwlock.readLock.lock
+    try {
+      new Registry {
+        private val columns = querySpaceColumns.get(querySpace).map(_.clone()).getOrElse(new HashMap())
+        private val tables = querySpaceTables.get(querySpace).map(_.clone()).getOrElse(new HashMap())
+        @inline def getQuerySpace(space: String): Option[QueryspaceConfiguration] = {
+          None
+        }
+        @inline def getQuerySpaceColumn(space: String, column: Column): Option[ColumnConfiguration] = {
+          space match {
+            case `querySpace` => columns.get(column)
+            case _ => None
+          }  
+        }
+        @inline def getQuerySpaceTable(space: String, ti: TableIdentifier): Option[TableConfiguration[_, _, _]] = {
+          space match {
+            case `querySpace` => tables.get(ti)
+            case _ => None
+          }
+        }
+      }
+    } finally {
+      rwlock.readLock.unlock
+    }
+  }
   
   /**
    * Must be called to update the information. It suffices to update columns which actually have been 

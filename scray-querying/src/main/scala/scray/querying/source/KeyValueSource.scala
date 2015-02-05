@@ -47,19 +47,15 @@ class KeyValueSource[K, V](val store: ReadableStore[K, V],
   val valueToRow: ((K, V)) => Row = queryspaceTable.get.rowMapper.asInstanceOf[((K, V)) => Row]
 
   override def request(query: KeyBasedQuery[K]): Future[Seq[Row]] = {
-    logger.debug(s"Requesting row with key ${query.key} for query ${query.getQueryID}")
     if(enableCaching) {
       cache.retrieve(query).map { value =>
-          logger.debug(s"Cache HIT for key ${query.key} for query ${query.getQueryID}")
           Future.value(Seq(value))
         }.getOrElse {
-          logger.debug(s"Cache MISS for key ${query.key} for query ${query.getQueryID}")
           store.get(query.key).map {
       	    case None => Seq[Row]()
       	    case Some(value) =>
       	      val rowValue = valueToRow((query.key, value))
       	      cache.put(query, rowValue)
-              logger.debug(s"Cache PUT for key ${query.key} for query ${query.getQueryID}")
       	      Seq[Row](rowValue)
           }
         }
