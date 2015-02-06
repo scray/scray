@@ -293,4 +293,15 @@ public class ScrayProperties {
 	public final static IntProperty MINUTES_PER_BATCH = new IntProperty(
 			"MINUTES_PER_BATCH", 1);
 
+	
+	/**
+	 * Reset the registered properties to no available property. Useful for tests.
+	 */
+	public static void reset() {
+		properties.clear();
+		stores.clear();
+		currentPhase = Phase.register;
+	}
+	
+	
 }

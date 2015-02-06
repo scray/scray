@@ -68,6 +68,9 @@ import scray.querying.source.indexing.TimeIndexConfig
 import scray.querying.source.indexing.TimeIndexSource
 import scray.querying.source.LazyEmptyRowDispenserSource
 import scray.querying.source.EagerEmptyRowDispenserSource
+import scray.querying.description.TableConfiguration
+import scray.querying.description.internal.SingleValueDomain
+import com.typesafe.scalalogging.slf4j.LazyLogging
 
 /**
  * Simple planner to execute queries.
@@ -76,7 +79,7 @@ import scray.querying.source.EagerEmptyRowDispenserSource
  *   - transform query predicates to a set of domains
  *   - find the main query
  */
-object Planner {
+object Planner extends LazyLogging {
   
   /**
    * plans the execution and starts it
@@ -123,8 +126,12 @@ object Planner {
     val ordering = plans.find((execution) => execution._1.isInstanceOf[OrderedComposablePlan[_, _]]).
       map(_._1.asInstanceOf[OrderedComposablePlan[DomainQuery, _]])
 
+    logger.debug(s"Plan computed for query: ${query.getQueryID.toString}")
+      
     // run the plans and merge if it is needed
-    executePlans(plans.asInstanceOf[ParSeq[(OrderedComposablePlan[DomainQuery,_], DomainQuery)]], ordering == None, ordering)
+    MergingResultSpool.seekingLimitingSpoolTransformer(
+        executePlans(plans.asInstanceOf[ParSeq[(OrderedComposablePlan[DomainQuery,_], DomainQuery)]], ordering == None, ordering),
+        query.getQueryRange)
   }
 
   /**
@@ -189,7 +196,46 @@ object Planner {
     }.getOrElse(List(query))
   }
   
-  
+  /**
+   * check that we can use a specific materialized view for a given query
+   */
+//  private def checkMaterializedViewMatching(space: String, table: TableIdentifier, domQuery: DomainQuery): Option[TableConfiguration[_, _, _]] = {
+//    @inline def checkSingleValueDomainValues(column: Column, values: Array[SingleValueDomain[_]]) = {
+//      values.find { singleVDom => 
+//        domQuery.domains.find { dom => 
+//          dom.column == column && (dom match {
+//            case single: SingleValueDomain[_] => singleVDom.value == single.value
+//            case _ => false
+//          })
+//        }.isDefined
+//      }.isDefined
+//    }
+//    @inline def checkRangeValueDomainValues(column: Column, values: Array[RangeValueDomain[_]]) = {
+//      values.find { rangeDom => 
+//        domQuery.domains.find { dom => 
+//          dom.column == column && (dom match {
+//            case range: RangeValueDomain[Any] => range.isSubIntervalOf(rangeDom.asInstanceOf[RangeValueDomain[Any]])
+//            case _ => false
+//          })
+//        }.isDefined
+//      }.isDefined
+//    }
+//    Registry.getQuerySpaceTable(space, table).map { config =>
+//      config.materializedViews.find { matView =>
+//        // but... does this materialized view make sense for this query at all?
+//        val moreThanZero = (matView.fixedDomains.size > 0) || (matView.rangeDomains.size > 0)
+//        if(moreThanZero) {
+//          // if we don't find a Domain of the view that doesn't match we found a usable view        
+//          val fdom = matView.fixedDomains.find((mat) => !checkSingleValueDomainValues(mat._1, mat._2)).isEmpty
+//          val rdom = matView.rangeDomains.find((mat) => !checkRangeValueDomainValues(mat._1, mat._2)).isEmpty
+//          fdom && rdom
+//        } else {
+//          false
+//        }
+//      }
+//    }
+//  }
+
   /**
    * Finds the main query
    * 
@@ -220,7 +266,7 @@ object Planner {
         }
       }.find(_.isDefined).getOrElse(None)
     }
-    
+
     // construct a simple plan
     mainColumn.map { colConf =>
       colConf.index.flatMap(index => index.isManuallyIndexed.map { tableConf =>
@@ -355,7 +401,7 @@ object Planner {
 
   /**
    * Filters rows that do not satisfy filter criterias
-   * TODO: later only check only filters that have not been checked by database
+   * TODO: later only check filters that have not been used by database
    */
   def addRemainingFilters(plan: ComposablePlan[DomainQuery, _], domainQuery: DomainQuery): ComposablePlan[DomainQuery, _] = {
     plan.getSource match {
@@ -431,7 +477,6 @@ object Planner {
       Spool.Empty.asInstanceOf[Spool[Row]]
     } else if(futures.size == 1) {
       // in case we only have results for one query we can quickly return them
-      println(futures.head.getClass)
       Await.result(futures.head) match {
         case spool: Spool[_] => spool.asInstanceOf[Spool[Row]]
         case seq: Seq[_] => Spool.seqToSpool[Row](seq.asInstanceOf[Seq[Row]]).toSpool
