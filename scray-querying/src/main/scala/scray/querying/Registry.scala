@@ -66,6 +66,8 @@ object Registry extends Registry {
   
   /**
    * returns the current queryspace configuration
+   * Cannot be used to query the Registry for tables or columns of a queryspace, 
+   * because of concurrent updates. Use more specific methods instead. 
    */
   @inline override def getQuerySpace(space: String): Option[QueryspaceConfiguration] = {
     rwlock.readLock.lock
@@ -157,9 +159,9 @@ object Registry extends Registry {
   }
   
   /**
-   * Must be called to update the information. It suffices to update columns which actually have been 
-   * updated. Does not update the queryspace-object itself - only the information that is really used
-   * by the planner.
+   * Must be called to update the table and columns information. It suffices to update columns which 
+   * actually have been updated. Does not update the queryspace-object itself - only the information 
+   * that is really used by the planner.
    */
   def updateTableInformation(
       querySpace: String,
@@ -196,5 +198,18 @@ object Registry extends Registry {
     } finally {
       cachelock.unlock
     }
+  }
+
+  /**
+   * replace the cache with a new one
+   */
+  def replaceCache[T](cacheDiscriminant: String, oldCache: Option[Cache[T]], newCache: Cache[T]): Unit = {
+    cachelock.lock
+    try {
+      oldCache.map(_.close)
+      caches.put(cacheDiscriminant, newCache)
+    } finally {
+      cachelock.unlock
+    }    
   }
 }
