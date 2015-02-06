@@ -14,4 +14,9 @@ public class PropertyPhaseException extends PropertyException {
 	public PropertyPhaseException(Phase phase) {
 		super(ExceptionIDs.PROPERTY_PHASE.getName(), "Wrong phase! Phase should be " + phase);
 	}
+
+	public PropertyPhaseException(Phase phase, Property<?, ?> prop) {
+		super(ExceptionIDs.PROPERTY_PHASE.getName(), "Wrong phase! Phase should be " + phase + " with property " + prop.getName());
+	}
+
 }

@@ -33,8 +33,7 @@ case class ScrayServerEndpoint(host : InetAddress, port : Int)
 trait KryoPoolRegistration {
   def register = RegisterRowCachingSerializers()
   def registerProperties = {
-    Try(ScrayProperties.registerProperty(new IntProperty(
-            ScrayProperties.RESULT_COMPRESSION_MIN_SIZE_NAME, ScrayProperties.RESULT_COMPRESSION_MIN_SIZE_VALUE)))
+    Try(ScrayProperties.registerProperty(ScrayProperties.RESULT_COMPRESSION_MIN_SIZE))
   }
 }
 

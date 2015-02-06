@@ -9,11 +9,9 @@ import java.sql.SQLFeatureNotSupportedException;
 import java.util.Properties;
 import java.util.logging.Logger;
 
-import scray.common.properties.IntProperty;
 import scray.common.properties.PropertyException;
 import scray.common.properties.ScrayProperties;
 import scray.common.properties.ScrayProperties.Phase;
-import scray.common.serialization.JavaKryoRowSerialization;
 
 public class ScrayDriver implements java.sql.Driver {
 
@@ -23,18 +21,18 @@ public class ScrayDriver implements java.sql.Driver {
 	static {
 		try {
 			try {
-				ScrayProperties.registerProperty(new IntProperty(
-						ScrayProperties.RESULT_COMPRESSION_MIN_SIZE_NAME, ScrayProperties.RESULT_COMPRESSION_MIN_SIZE_VALUE));
+				ScrayProperties
+						.registerProperty(ScrayProperties.RESULT_COMPRESSION_MIN_SIZE);
 				ScrayProperties.setPhase(Phase.config);
 				ScrayProperties.setPhase(Phase.use);
-			} catch (PropertyException p) { 
+			} catch (PropertyException p) {
 				throw new RuntimeException(p);
 			}
 			// Register the ScrayDriver with DriverManager
 			ScrayDriver driverInst = new ScrayDriver();
 			DriverManager.registerDriver(driverInst);
 			// System.setSecurityManager(new RMISecurityManager());
-			
+
 		} catch (SQLException e) {
 			log.error("Error registering jdbc driver.", e);
 		}

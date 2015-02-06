@@ -13,13 +13,12 @@ import scray.common.properties.IntProperty
  */
 object CassandraPropertyUtils {
 
-  def getCassandraHostProperty(): Set[StoreHost] = ScrayProperties.getPropertyValue(ScrayProperties.CASSANDRA_SEEDS).
+  def getCassandraHostProperty() : Set[StoreHost] = ScrayProperties.getPropertyValue(ScrayProperties.CASSANDRA_QUERY_SEED_IPS).
     asScala.toSet[InetSocketAddress].map(inetsocket => StoreHost(s"${inetsocket.getHostString}:${inetsocket.getPort}"))
-    
-  def performDefaultPropertySystemInitialization(additionPropertiesToRegister: Set[Property[_,_]] = Set()): Unit = {
-    ScrayProperties.registerProperty(ScrayProperties.CASSANDRA_SEEDS)
-    ScrayProperties.registerProperty(new IntProperty(ScrayProperties.RESULT_COMPRESSION_MIN_SIZE_NAME,
-        ScrayProperties.RESULT_COMPRESSION_MIN_SIZE_VALUE))
+
+  def performDefaultPropertySystemInitialization(additionPropertiesToRegister : Set[Property[_, _]] = Set()) : Unit = {
+    ScrayProperties.registerProperty(ScrayProperties.CASSANDRA_QUERY_SEED_IPS)
+    ScrayProperties.registerProperty(ScrayProperties.RESULT_COMPRESSION_MIN_SIZE)
     additionPropertiesToRegister.foreach(ScrayProperties.registerProperty(_))
     ScrayProperties.setPhase(Phase.config)
     ScrayProperties.setPhase(Phase.use)

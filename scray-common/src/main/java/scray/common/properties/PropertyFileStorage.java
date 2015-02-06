@@ -1,5 +1,6 @@
 package scray.common.properties;
 
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Map.Entry;
@@ -7,8 +8,9 @@ import java.util.Properties;
 
 /**
  * Storage abstraction for property files
+ * 
  * @author andreas
- *
+ * 
  */
 public class PropertyFileStorage implements PropertyStorage {
 
@@ -16,60 +18,88 @@ public class PropertyFileStorage implements PropertyStorage {
 			.getLogger(PropertyFileStorage.class);
 
 	private String location = null;
-	private String systemEnv = null;
 
-	public PropertyFileStorage(String propertyFileLocation, String systemEnvPathArgument) {
-		systemEnv = systemEnvPathArgument;
-		location = propertyFileLocation;
+	public enum FileLocationTypes {
+		JarPropertiesFile, LocalPropertiesFile
 	}
-	
+
+	private FileLocationTypes fileLocationType = null;
+
+	public PropertyFileStorage(String location,
+			FileLocationTypes fileLocationType) {
+		this.location = location;
+		this.fileLocationType = fileLocationType;
+	}
+
 	private Properties props;
 
 	/**
-	 * get the property value out of the 
+	 * get the property value out of the
 	 */
 	public <T, U> T get(Property<T, U> name) {
-		return name.fromString((String)props.get(name.getName()));
+		String value = (String) props.get(name.getName());
+		if (value != null) {
+			return name.fromString(value);
+		} else {
+			return null;
+		}
 	}
-	
+
 	/**
 	 * Initializes system with default property file
 	 */
 	public void init() {
-		// check if there is a command line argument set, otherwise use default argument
+
 		props = new Properties();
+
 		try {
-			if(System.getProperty(systemEnv) != null) {
+
+			if (fileLocationType.equals(FileLocationTypes.JarPropertiesFile)) {
 				props.load(ScrayProperties.class.getClassLoader()
-						.getResourceAsStream(System.getProperty(systemEnv)));
-				
-			} else {
-				props.load(ScrayProperties.class.getClassLoader()
-					.getResourceAsStream(location));
+						.getResourceAsStream(location));
+			} else if (fileLocationType
+					.equals(FileLocationTypes.LocalPropertiesFile)) {
+				if(System.getProperty(location) != null) {
+					props.load(new FileInputStream(System.getProperty(location)));
+				} else {
+					props.load(new FileInputStream(System.getenv(location)));
+				}
 			}
-		} catch (IOException e) {
-			log.error("Failed to load " + location + "", e);
+
+			checkProperties(props);
+
+		} catch (Exception e) {
+			log.warn("Configuration file '" + location + "' not loaded.");
 		}
-		checkProperties(props);
-	} 
-	
+	}
+
 	@SuppressWarnings("unchecked")
 	public static void checkProperties(Properties properties) {
-		for(Entry<Object, Object> entry: properties.entrySet()) {
-			// verify that all registered properties have the right type 
-			// (others might have not been registered because some module is not in use)
-			String key = (String)entry.getKey();
-			String value = (String)entry.getValue();
-			for(Property<Object, Object> prop: (Collection<Property<Object, Object>>)(Object)ScrayProperties.getRegisteredProperties()) {
-				if(prop.getName().equals(key)) {
-					if(!prop.checkConstraints(prop.fromString(value))) {
-						throw new RuntimeException(new PropertyConstraintViolatedException(key));
+
+		for (Entry<Object, Object> entry : properties.entrySet()) {
+
+			// verify that all registered properties have the right type
+			// (others might have not been registered because some module is not
+			// in use)
+
+			String key = (String) entry.getKey();
+			String value = (String) entry.getValue();
+
+			for (Property<Object, Object> prop : (Collection<Property<Object, Object>>) (Object) ScrayProperties
+					.getRegisteredProperties()) {
+
+				if (prop.getName().equals(key)) {
+
+					if (!prop.checkConstraints(prop.fromString(value))) {
+
+						throw new RuntimeException(
+								new PropertyConstraintViolatedException(key));
 					}
 				}
 			}
-		}		
+		}
 	}
-	
+
 	public static String DEFAULT_PROPERTY_FILE = "scray.properties";
-	public static String DEFAULT_JVM_ARGUMENT = "scray.properties"; 
+	public static String DEFAULT_JVM_ARGUMENT = "scray-properties";
 }

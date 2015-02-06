@@ -125,7 +125,8 @@ public class ScrayJdbcTest {
 			byte[] rawbytes = KryoJavaPoolSerialization.getInstance().chill
 					.toBytesWithClass(_VALS[new Random().nextInt(_VALS.length)]);
 			byte[] bytes = rawbytes;
-			if (rawbytes.length >= ScrayProperties.RESULT_COMPRESSION_MIN_SIZE_VALUE) {
+			if (rawbytes.length >= ScrayProperties
+					.getPropertyValue(ScrayProperties.RESULT_COMPRESSION_MIN_SIZE)) {
 				bytes = Snappy.compress(rawbytes);
 			}
 			ByteBuffer bbuf = ByteBuffer.wrap(bytes);
@@ -186,10 +187,11 @@ public class ScrayJdbcTest {
 	@Before
 	public void init() {
 		try {
-			ScrayProperties.registerProperty(new IntProperty(ScrayProperties.RESULT_COMPRESSION_MIN_SIZE_NAME, ScrayProperties.RESULT_COMPRESSION_MIN_SIZE_VALUE));
+			ScrayProperties
+					.registerProperty(ScrayProperties.RESULT_COMPRESSION_MIN_SIZE);
 			ScrayProperties.setPhase(Phase.config);
 			ScrayProperties.setPhase(Phase.use);
-		} catch(PropertyException pe) {
+		} catch (PropertyException pe) {
 			Log.error("init error", pe);
 		}
 		createFrame();

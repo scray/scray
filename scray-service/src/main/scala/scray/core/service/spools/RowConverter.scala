@@ -23,7 +23,7 @@ class SucceedingRow extends EmptyRow
  * Utility function for converting rows between query model and service model including serialization
  */
 object RowConverter {
-  lazy val compressionSizeMinLength : Int = ScrayProperties.getPropertyValue(ScrayProperties.RESULT_COMPRESSION_MIN_SIZE_NAME)
+  lazy val compressionSizeMinLength : Int = ScrayProperties.getPropertyValue(ScrayProperties.RESULT_COMPRESSION_MIN_SIZE.getName())
 
   def convertRow(sRow : Row) : ScrayTRow = sRow match {
     case sRow : SucceedingRow => ScrayTRow(None, None)

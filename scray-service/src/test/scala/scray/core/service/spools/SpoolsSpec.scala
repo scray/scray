@@ -177,7 +177,7 @@ class SpoolsSpec
     val rawBytes = Bijection.bytes2Buffer.invert(spage.head.columns.get.head.value)
     // need to conditionally uncompress
     val col2 = KryoInjection.instance(KryoPoolSerialization.chill).invert({
-      if (rawBytes.length >= ScrayProperties.RESULT_COMPRESSION_MIN_SIZE_VALUE) {
+      if (rawBytes.length >= ScrayProperties.RESULT_COMPRESSION_MIN_SIZE.getDefault()) {
         RowConverter.bytes2SnappyBytes.invert(rawBytes)
       } else if (Snappy.isValidCompressedBuffer(rawBytes)) {
         RowConverter.bytes2SnappyBytes.invert(rawBytes)
