@@ -20,4 +20,5 @@ class NullCache extends Cache[Nothing] {
   override def retrieve(query: DomainQuery): Option[Nothing] = None
   override def maintnance: Unit = {}
   override def close: Unit = {}
+  override def report: MonitoringInfos = MonitoringInfos(0.0d, 0L, 0L, 0L)
 }

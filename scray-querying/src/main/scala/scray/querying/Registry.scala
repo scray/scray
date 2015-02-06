@@ -15,36 +15,42 @@
 package scray.querying
 
 import scala.collection.mutable.HashMap
-import scray.querying.description.Column
-import scray.querying.description.ColumnConfiguration
-import scray.querying.description.QueryspaceConfiguration
-import scray.querying.description.TableConfiguration
-import scray.querying.description.TableIdentifier
+import scray.querying.description.{
+  Column,
+  ColumnConfiguration,
+  QueryspaceConfiguration,
+  TableConfiguration,
+  TableIdentifier
+}
 import scray.querying.planning.PostPlanningActions
-import java.util.concurrent.locks.ReadWriteLock
-import java.util.concurrent.locks.ReentrantReadWriteLock
-import scray.querying.description.ColumnConfiguration
+import java.util.concurrent.locks.{
+  ReadWriteLock,
+  ReentrantReadWriteLock,
+  ReentrantLock
+}
 import scray.querying.source.Source
 import org.mapdb.HTreeMap
 import scray.querying.caching.Cache
-import java.util.concurrent.locks.ReentrantLock
 import scray.querying.caching.serialization.RegisterRowCachingSerializers
+import scray.querying.monitoring.Monitor
+import com.typesafe.scalalogging.slf4j.LazyLogging
+import scray.querying.caching.MonitoringInfos
 
 /**
  * default trait to represent get operations on the registry
  */
 trait Registry {
-  
+
   /**
    * returns the current queryspace configuration
    */
   @inline def getQuerySpace(space: String): Option[QueryspaceConfiguration]
-  
+
   /**
    * returns a column configuration
    */
   @inline def getQuerySpaceColumn(space: String, column: Column): Option[ColumnConfiguration]
-  
+
   /**
    * returns a table configuration
    */
@@ -55,19 +61,22 @@ trait Registry {
 /**
  * Registry for tables and resources
  */
-object Registry extends Registry {
+object Registry extends LazyLogging with Registry {
+
+  // Object to send monitor information to
+  private val monitor = new Monitor
 
   // makes registry thread safe at the cost of some performance;
   // however, reads should not be blocking each other
   private val rwlock = new ReentrantReadWriteLock
-  
+
   // all querySpaces, that can be queried
   private val querySpaces = new HashMap[String, QueryspaceConfiguration]
-  
+
   /**
    * returns the current queryspace configuration
-   * Cannot be used to query the Registry for tables or columns of a queryspace, 
-   * because of concurrent updates. Use more specific methods instead. 
+   * Cannot be used to query the Registry for tables or columns of a queryspace,
+   * because of concurrent updates. Use more specific methods instead.
    */
   @inline override def getQuerySpace(space: String): Option[QueryspaceConfiguration] = {
     rwlock.readLock.lock
@@ -77,7 +86,7 @@ object Registry extends Registry {
       rwlock.readLock.unlock
     }
   }
-   
+
   // shortcut to find table-configurations
   private val querySpaceTables = new HashMap[String, HashMap[TableIdentifier, TableConfiguration[_, _, _]]]
 
@@ -92,7 +101,7 @@ object Registry extends Registry {
       rwlock.readLock.unlock
     }
   }
-  
+
   // shortcut to find column-configurations
   private val querySpaceColumns = new HashMap[String, HashMap[Column, ColumnConfiguration]]
 
@@ -107,7 +116,7 @@ object Registry extends Registry {
       rwlock.readLock.unlock
     }
   }
-  
+
   /**
    * Register a new querySpace
    */
@@ -122,8 +131,11 @@ object Registry extends Registry {
     } finally {
       rwlock.writeLock.unlock
     }
+    monitor.monitor(querySpaceTables)
   }
-  
+
+
+
   /**
    * return a "private" copy of a query space in this registry to be used
    * without synchronization. The planner will attach the returned objects to
@@ -144,7 +156,7 @@ object Registry extends Registry {
           space match {
             case `querySpace` => columns.get(column)
             case _ => None
-          }  
+          }
         }
         @inline def getQuerySpaceTable(space: String, ti: TableIdentifier): Option[TableConfiguration[_, _, _]] = {
           space match {
@@ -157,10 +169,10 @@ object Registry extends Registry {
       rwlock.readLock.unlock
     }
   }
-  
+
   /**
-   * Must be called to update the table and columns information. It suffices to update columns which 
-   * actually have been updated. Does not update the queryspace-object itself - only the information 
+   * Must be called to update the table and columns information. It suffices to update columns which
+   * actually have been updated. Does not update the queryspace-object itself - only the information
    * that is really used by the planner.
    */
   def updateTableInformation(
@@ -178,12 +190,13 @@ object Registry extends Registry {
     }
   }
 
+
   // planner post-pocessor
   var queryPostProcessor: PostPlanningActions.PostPlanningAction = PostPlanningActions.doNothing
-  
+
   private val cachelock = new ReentrantLock
   private val caches = new HashMap[String, Cache[_]]
-  
+
   /**
    * retrieve an off-heap cache for reading
    */
@@ -210,6 +223,18 @@ object Registry extends Registry {
       caches.put(cacheDiscriminant, newCache)
     } finally {
       cachelock.unlock
-    }    
+    }
+  }
+
+  /**
+   * Get cache information
+   */
+  def getCacheCounter[T, C <: Cache[T]](cacheID: String): Option[MonitoringInfos] = {
+    cachelock.lock
+    try {
+      caches.get(cacheID).map(_.report)
+    } finally {
+      cachelock.unlock
+    }
   }
 }

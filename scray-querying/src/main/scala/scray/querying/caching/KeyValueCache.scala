@@ -28,8 +28,9 @@ class KeyValueCache[K, V](
     val numberentries: Option[Int] = None) extends Cache[V] {
 
   val db = DBMaker.newMemoryDirectDB().transactionDisable().asyncWriteEnable().make
-  val cache = db.createHashMap("cache").expireStoreSize(cachesizegb).counterEnable().
-    valueSerializer(valueSerializer.orNull).make[K, V]
+  val cache = db.createHashMap("cache").counterEnable().expireStoreSize(cachesizegb).
+                  valueSerializer(valueSerializer.orNull).make[K, V]
+  val store = Store.forDB(db)
 
   /**
    * retrieve one row, ending is an implicit of existing contents (i.e. can only be one)
@@ -43,12 +44,14 @@ class KeyValueCache[K, V](
     case keyquery: KeyBasedQuery[K] => cache.put(keyquery.key, value)
     case _ => throw new WrongQueryTypeForCacheException(query, sourceDiscriminant)
   }
-  
+
   override def maintnance: Unit = {
     // expiring old columns can be handled automatically by MapDB in this case
   }
-  
+
   override def close: Unit = {
     cache.close
   }
+
+  override def report: MonitoringInfos = MonitoringInfos(cachesizegb, cache.sizeLong, store.getCurrSize, store.getFreeSize)
 }
