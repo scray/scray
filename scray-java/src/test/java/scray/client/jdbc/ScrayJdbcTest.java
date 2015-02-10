@@ -35,10 +35,10 @@ import org.junit.Test;
 import org.xerial.snappy.Snappy;
 
 import scray.client.finagle.ScrayStatelessTServiceAdapter;
-import scray.common.properties.IntProperty;
 import scray.common.properties.PropertyException;
 import scray.common.properties.ScrayProperties;
 import scray.common.properties.ScrayProperties.Phase;
+import scray.common.properties.predefined.PredefinedProperties;
 import scray.common.serialization.pool.KryoJavaPoolSerialization;
 import scray.service.qmodel.thriftjava.ScrayTColumn;
 import scray.service.qmodel.thriftjava.ScrayTColumnInfo;
@@ -126,7 +126,7 @@ public class ScrayJdbcTest {
 					.toBytesWithClass(_VALS[new Random().nextInt(_VALS.length)]);
 			byte[] bytes = rawbytes;
 			if (rawbytes.length >= ScrayProperties
-					.getPropertyValue(ScrayProperties.RESULT_COMPRESSION_MIN_SIZE)) {
+					.getPropertyValue(PredefinedProperties.RESULT_COMPRESSION_MIN_SIZE)) {
 				bytes = Snappy.compress(rawbytes);
 			}
 			ByteBuffer bbuf = ByteBuffer.wrap(bytes);
@@ -188,7 +188,7 @@ public class ScrayJdbcTest {
 	public void init() {
 		try {
 			ScrayProperties
-					.registerProperty(ScrayProperties.RESULT_COMPRESSION_MIN_SIZE);
+					.registerProperty(PredefinedProperties.RESULT_COMPRESSION_MIN_SIZE);
 			ScrayProperties.setPhase(Phase.config);
 			ScrayProperties.setPhase(Phase.use);
 		} catch (PropertyException pe) {

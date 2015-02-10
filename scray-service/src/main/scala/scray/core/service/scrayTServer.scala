@@ -21,19 +21,20 @@ import com.twitter.util.Await
 import scray.querying.description._
 import scray.querying.caching.serialization._
 import scray.common.serialization.KryoPoolSerialization
-import scray.common.serialization.KryoSerializerNumber
+import scray.common.serialization.numbers.KryoSerializerNumber
 import com.twitter.finagle.ListeningServer
 import java.net.InetAddress
 import scray.common.properties.ScrayProperties
 import com.twitter.util.Try
 import scray.common.properties.IntProperty
+import scray.common.properties.predefined.PredefinedProperties
 
 case class ScrayServerEndpoint(host : InetAddress, port : Int)
 
 trait KryoPoolRegistration {
   def register = RegisterRowCachingSerializers()
   def registerProperties = {
-    Try(ScrayProperties.registerProperty(ScrayProperties.RESULT_COMPRESSION_MIN_SIZE))
+    Try(ScrayProperties.registerProperty(PredefinedProperties.RESULT_COMPRESSION_MIN_SIZE))
   }
 }
 

@@ -29,6 +29,7 @@ import java.util.Map;
 import org.xerial.snappy.Snappy;
 
 import scray.common.properties.ScrayProperties;
+import scray.common.properties.predefined.PredefinedProperties;
 import scray.common.serialization.pool.KryoJavaPoolSerialization;
 import scray.service.qmodel.thriftjava.ScrayTColumn;
 import scray.service.qmodel.thriftjava.ScrayTRow;
@@ -120,7 +121,7 @@ public class ScrayResultSet implements java.sql.ResultSet {
 		this.isLastResultSet = !rows.get(rows.size() - 1).isSetColumns();
 		// try pulling in properties
 		minCompressionSize = ScrayProperties
-				.getPropertyValue(ScrayProperties.RESULT_COMPRESSION_MIN_SIZE
+				.getPropertyValue(PredefinedProperties.RESULT_COMPRESSION_MIN_SIZE
 						.getName());
 	}
 

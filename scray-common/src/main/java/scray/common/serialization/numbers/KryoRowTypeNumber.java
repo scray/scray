@@ -12,22 +12,19 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-package scray.common.serialization;
+package scray.common.serialization.numbers;
 
 /**
- * Repository for the numbers used with Kryo.
- * Java interoperability is ensured using JAVA.
+ * Repository for the identifiers of row types.
+ * This enum is used to distinguish between stored row types in the serialized byte array.
  */
-public enum KryoSerializerNumber {
+public enum KryoRowTypeNumber {
 
-	column(200), rowcolumn(201), simplerow(202), compositerow(203),	
-	Set1(18), Set2(19), Set3(20), Set4(21), Set(22), // small scala sets -> java set
-	UUID(81), // various JAVA type numbers
-	BatchId(210); // because clients usually do not have a batch id 
+	simplerow(1), compositerow(2); 
 
 	private int number;
 	
-	private KryoSerializerNumber(int number) {
+	private KryoRowTypeNumber(int number) {
 		this.number = number;
 	}
 	

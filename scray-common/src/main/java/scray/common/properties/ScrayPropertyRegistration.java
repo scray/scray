@@ -14,11 +14,11 @@ public class ScrayPropertyRegistration {
 	 */
 
 	public static interface PropertyRegistrator {
-		public void register();
+		public void register() throws PropertyException;
 	}
 
 	public static interface PropertyLoader {
-		public void load();
+		public void load() throws PropertyException;
 
 		public String getId();
 	}

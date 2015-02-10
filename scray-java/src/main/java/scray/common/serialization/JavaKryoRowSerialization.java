@@ -18,6 +18,9 @@ import java.util.ArrayList;
 import java.util.Set;
 import java.util.UUID;
 
+import scray.common.serialization.numbers.KryoRowTypeNumber;
+import scray.common.serialization.numbers.KryoSerializerNumber;
+
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.Serializer;
 import com.esotericsoftware.kryo.io.Input;

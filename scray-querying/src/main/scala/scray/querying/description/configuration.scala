@@ -41,11 +41,13 @@ abstract class QueryspaceConfiguration(val name: String) {
   
   /**
    * returns configuration of tables which are included in this query sapce
+   * Internal use! 
    */
   def getTables: Set[TableConfiguration[_, _, _]]
   
   /**
    * returns columns which can be included in this query space
+   * Internal use! 
    */
   def getColumns: List[ColumnConfiguration]
   

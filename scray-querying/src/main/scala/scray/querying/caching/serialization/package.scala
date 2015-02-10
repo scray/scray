@@ -14,7 +14,7 @@
 // limitations under the License.
 package scray.querying.caching
 
-import scray.common.serialization.KryoRowTypeNumber
+import scray.common.serialization.numbers.KryoRowTypeNumber
 
 /**
  * identification numbers for caching serialization

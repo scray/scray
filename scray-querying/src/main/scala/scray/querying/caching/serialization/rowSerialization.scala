@@ -20,7 +20,7 @@ import scray.querying.description.{ Column, CompositeRow, Row, RowColumn, TableI
 import scala.collection.mutable.ArrayBuffer
 import scala.annotation.tailrec
 import scray.common.serialization.KryoPoolSerialization
-import scray.common.serialization.KryoSerializerNumber
+import scray.common.serialization.numbers.KryoSerializerNumber
 
 /**
  * convenience method to register these serializers

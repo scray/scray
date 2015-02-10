@@ -12,6 +12,7 @@ import java.util.logging.Logger;
 import scray.common.properties.PropertyException;
 import scray.common.properties.ScrayProperties;
 import scray.common.properties.ScrayProperties.Phase;
+import scray.common.properties.predefined.PredefinedProperties;
 
 public class ScrayDriver implements java.sql.Driver {
 
@@ -22,7 +23,7 @@ public class ScrayDriver implements java.sql.Driver {
 		try {
 			try {
 				ScrayProperties
-						.registerProperty(ScrayProperties.RESULT_COMPRESSION_MIN_SIZE);
+						.registerProperty(PredefinedProperties.RESULT_COMPRESSION_MIN_SIZE);
 				ScrayProperties.setPhase(Phase.config);
 				ScrayProperties.setPhase(Phase.use);
 			} catch (PropertyException p) {
