@@ -94,7 +94,7 @@ class Monitor extends LazyLogging with MonitorMBean {
 
             case None =>
               //namecounter = namecounter + 1
-              val bname = "Johannes:00=Tables,name=" + deStringfyName(name)
+              val bname = "Scray:00=Tables,name=" + deStringfyName(name)
               val bean = new MonitoringInfoBean(name)
               beans.put(name, bean)
               JMXHelpers.jmxRegister(bean, bname)
