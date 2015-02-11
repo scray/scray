@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 package scray.querying
- 
+
 import scala.collection.mutable.HashMap
 import scray.querying.description.{
   Column,
@@ -35,6 +35,7 @@ import scray.querying.caching.serialization.RegisterRowCachingSerializers
 import scray.querying.monitoring.Monitor
 import com.typesafe.scalalogging.slf4j.LazyLogging
 import scray.querying.caching.MonitoringInfos
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * default trait to represent get operations on the registry
@@ -72,6 +73,8 @@ object Registry extends LazyLogging with Registry {
 
   // all querySpaces, that can be queried
   private val querySpaces = new HashMap[String, QueryspaceConfiguration]
+
+  private val enableCaches = new AtomicBoolean(true)
 
   /**
    * returns the current queryspace configuration
@@ -214,13 +217,25 @@ object Registry extends LazyLogging with Registry {
   }
 
   /**
+   * return cache for given discriminant if it exists
+   */
+  def getCache[T, C <: Cache[T]](cacheID: String): Option[C] = {
+    cachelock.lock
+    try {
+      caches.get(cacheID).asInstanceOf[Option[C]]
+    } finally {
+      cachelock.unlock
+    }
+  }
+
+  /**
    * replace the cache with a new one
    */
-  def replaceCache[T](cacheDiscriminant: String, oldCache: Option[Cache[T]], newCache: Cache[T]): Unit = {
+  def replaceCache[T](cacheID: String, oldCache: Option[Cache[T]], newCache: Cache[T]): Unit = {
     cachelock.lock
     try {
       oldCache.map(_.close)
-      caches.put(cacheDiscriminant, newCache)
+      caches.put(cacheID, newCache)
     } finally {
       cachelock.unlock
     }
@@ -237,4 +252,10 @@ object Registry extends LazyLogging with Registry {
       cachelock.unlock
     }
   }
+
+  /**
+   * en- or disable caching of column family values. Disable in case of memory pressure.
+   */
+  def setCachingEnabled(enabled: Boolean) = enableCaches.set(enabled)
+  def getCachingEnabled = enableCaches.get
 }

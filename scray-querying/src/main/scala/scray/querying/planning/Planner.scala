@@ -71,6 +71,7 @@ import scray.querying.source.EagerEmptyRowDispenserSource
 import scray.querying.description.TableConfiguration
 import scray.querying.description.internal.SingleValueDomain
 import com.typesafe.scalalogging.slf4j.LazyLogging
+import scray.common.properties.ScrayProperties
 
 /**
  * Simple planner to execute queries.
@@ -273,7 +274,7 @@ object Planner extends LazyLogging {
         val indexSource = new QueryableSource(tableConf.indexTableConfig.queryableStore(),
           query.getQueryspace, tableConf.indexTableConfig.table, index.isSorted)
         val mainSource = new KeyValueSource(tableConf.mainTableConfig.readableStore(), 
-          query.getQueryspace, tableConf.mainTableConfig.table, true)
+          query.getQueryspace, tableConf.mainTableConfig.table, Registry.getCachingEnabled)
         tableConf.indexConfig match {
           case simple: SimpleHashJoinConfig => new SimpleHashJoinSource(indexSource, colConf.column, 
             mainSource, tableConf.mainTableConfig.primarykeyColumn)

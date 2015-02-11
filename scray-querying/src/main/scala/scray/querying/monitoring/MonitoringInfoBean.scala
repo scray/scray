@@ -1,18 +1,20 @@
 package scray.querying.monitoring
 
-import javax.management.DynamicMBean
-import javax.management.MBeanInfo
-import javax.management.MBeanAttributeInfo
-import javax.management.Attribute
+import java.lang.{Double => JDouble, Long => JLong}
+import javax.management.{ AttributeList, DynamicMBean, MBeanInfo, MBeanAttributeInfo,
+  Attribute, MBeanOperationInfo, MBeanParameterInfo}
 import scala.util.Random
-import javax.management.AttributeList
 import scala.collection.convert.WrapAsScala._
 import scray.querying.Registry
 import scray.querying.caching.MonitoringInfos
-import java.lang.{Double => JDouble, Long => JLong}
+import scray.querying.caching.KeyValueCache
+import com.typesafe.scalalogging.slf4j.LazyLogging
+import scray.querying.caching.Cache
 
 
-class MonitoringInfoBean(name: String) extends DynamicMBean {
+class MonitoringInfoBean(name: String) extends DynamicMBean with LazyLogging {
+
+  val changeCacheSizeOperationName : String = "Request: change cache size"
 
   def getValueSizeGB() : Double = {
     val cacheCounter = Registry.getCacheCounter(name)
@@ -71,8 +73,17 @@ class MonitoringInfoBean(name: String) extends DynamicMBean {
     val att3Info = new MBeanAttributeInfo("currentSize", "java.lang.Long", "Dies ist das ertse Attribut", true, false, false)
     val att4Info = new MBeanAttributeInfo("freeSize", "java.lang.Long", "Dies ist das zweite Attribut", true, false, false)
     val attribs = Array[MBeanAttributeInfo](att1Info, att2Info, att3Info, att4Info)
+
+    val p1Info = new MBeanParameterInfo("sizeGB", "java.lang.Double", "New cache size")
+    val params = Array[MBeanParameterInfo](p1Info)
+
+    val op1Info = new MBeanOperationInfo(changeCacheSizeOperationName, "Change cache size",
+                              params,
+                              "Double", MBeanOperationInfo.ACTION)
+    val ops     = Array[MBeanOperationInfo](op1Info)
+
     new MBeanInfo(this.getClass.getName, "TestBean for Scray",
-      attribs, null, null, null)
+      attribs, null, ops, null)
   }
 
   override def setAttributes(attributes: AttributeList): AttributeList =
@@ -84,5 +95,33 @@ class MonitoringInfoBean(name: String) extends DynamicMBean {
     results
   }
 
-  override def invoke(actionName: String, params: Array[Object], signature: Array[String]): Object = null
+  override def invoke(actionName: String, params: Array[Object], signature: Array[String]): Object = {
+    def handleCreateKeyValueCache[K, V](kvcache: KeyValueCache[K, V], newsize: Double): KeyValueCache[K, V] = {
+      logger.info(s"Replacing Cache ${kvcache.sourceDiscriminant} with old size ${kvcache.cachesizegb}GB with new size ${newsize}")
+            new KeyValueCache(
+                  kvcache.sourceDiscriminant,
+                  kvcache.valueSerializer,
+                  newsize,
+                  kvcache.numberentries)
+
+    }
+    def completeCacheOperation[T](oldCache: Option[Cache[T]], newSize: Double): Unit = {
+        oldCache match {
+          case Some(ocache) => Registry.replaceCache(name, oldCache, ocache match {
+            case kvcache: KeyValueCache[_, _] => handleCreateKeyValueCache(kvcache, newSize)
+            case _ =>
+              logger.error("Cache type not identifyable. Will not replace the cache!")
+              ocache
+          })
+          case None => logger.error("Cache type not identifyable. Will not replace the cache!")
+        }
+    }
+    actionName match {
+      case `changeCacheSizeOperationName` =>
+        val newsize: JDouble = params(0).asInstanceOf[JDouble]
+        completeCacheOperation(Registry.getCache(name), newsize)
+        "Your request has been approved"
+      case _ => s"Action ${actionName} unknown"
+    }
+  }
 }
