@@ -55,7 +55,6 @@ object StringLiteralDeserializer {
    * Deserialize untyped literals
    */
   def deserialize(literal : String) : Try[_] = {
-    println(literal)
     val parser = new LiteralParser(literal)
     parser.InputLine.run() match {
       case Success(result) => Success(result)
