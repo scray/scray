@@ -4,7 +4,7 @@ import scray.common.properties.PropertyException;
 import scray.common.properties.ScrayProperties;
 import scray.common.properties.ScrayPropertyRegistration;
 
-public class CommonCassandraRegistration implements ScrayPropertyRegistration.PropertyRegistrator {
+public class CommonCassandraRegistrar implements ScrayPropertyRegistration.PropertyRegistrar {
 
 	@Override 
 	public void register() throws PropertyException {

@@ -13,7 +13,7 @@ public class ScrayPropertyRegistration {
 	 * Modules can implement these interfaces to register their own properties
 	 */
 
-	public static interface PropertyRegistrator {
+	public static interface PropertyRegistrar {
 		public void register() throws PropertyException;
 	}
 
@@ -61,7 +61,7 @@ public class ScrayPropertyRegistration {
 		}
 	}
 
-	private static Set<PropertyRegistrator> registrators = new HashSet<PropertyRegistrator>();
+	private static Set<PropertyRegistrar> registrars = new HashSet<PropertyRegistrar>();
 	private static List<PropertyLoader> loaders = new ArrayList<PropertyLoader>();
 
 	/**
@@ -69,8 +69,8 @@ public class ScrayPropertyRegistration {
 	 * 
 	 * @param registrator
 	 */
-	public static synchronized void addRegistrar(PropertyRegistrator registrator) {
-		registrators.add(registrator);
+	public static synchronized void addRegistrar(PropertyRegistrar registrator) {
+		registrars.add(registrator);
 	}
 
 	/**
@@ -94,7 +94,7 @@ public class ScrayPropertyRegistration {
 
 		if (ScrayProperties.getPhase().equals(ScrayProperties.Phase.register)) {
 
-			for (PropertyRegistrator reg : registrators) {
+			for (PropertyRegistrar reg : registrars) {
 				reg.register();
 			}
 
