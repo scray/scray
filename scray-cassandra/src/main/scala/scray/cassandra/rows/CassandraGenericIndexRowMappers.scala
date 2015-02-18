@@ -19,11 +19,12 @@ object CassandraGenericIndexRowMappers {
   // Cassandra types for time indexes
   type TimeIndexRK = Int :: HNil
   type TimeIndexCK = Long :: BatchID :: HNil
-  type TimeIndexValueType = Set[String]
+  // inner type doesn't really matter, as there is type erasure at runtime
+  type TimeIndexValueType = Set[Any]
   type TimeIndexRS = CassandraPrimitive[Int] :: HNil
   type TimeIndexCS = CassandraPrimitive[Long] :: CassandraPrimitive[BatchID] :: HNil
   type TimeIndexStore = CQLCassandraCollectionStore[TimeIndexRK, TimeIndexCK,
-      TimeIndexValueType, String, TimeIndexRS, TimeIndexCS]
+      TimeIndexValueType, Any, TimeIndexRS, TimeIndexCS]
   
   def timeIndexRowMapper(store: TimeIndexStore, tableName: Option[String]): 
         (((TimeIndexRK, TimeIndexCK), TimeIndexValueType)) => Row = (entry) => {

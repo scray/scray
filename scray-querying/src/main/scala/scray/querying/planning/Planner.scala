@@ -72,6 +72,8 @@ import scray.querying.description.TableConfiguration
 import scray.querying.description.internal.SingleValueDomain
 import com.typesafe.scalalogging.slf4j.LazyLogging
 import scray.common.properties.ScrayProperties
+import com.twitter.storehaus.QueryableStore
+import com.twitter.storehaus.ReadableStore
 
 /**
  * Simple planner to execute queries.
@@ -237,6 +239,16 @@ object Planner extends LazyLogging {
 //    }
 //  }
 
+  def getQueryableStore[Q, K, V](tableConfig: TableConfiguration[Q, K, V]): QueryableStore[Q, V] = tableConfig.versioned match {
+    case None => tableConfig.queryableStore.get()
+    case Some(versionInfo) => versionInfo.queryableStore(versionInfo.runtimeVersion().get)
+  }
+
+  def getReadableStore[Q, K, V](tableConfig: TableConfiguration[Q, K, V]): ReadableStore[K, V] = tableConfig.versioned match {
+    case None => tableConfig.readableStore.get()
+    case Some(versionInfo) => versionInfo.readableStore(versionInfo.runtimeVersion().get)
+  }
+  
   /**
    * Finds the main query
    * 
@@ -271,9 +283,9 @@ object Planner extends LazyLogging {
     // construct a simple plan
     mainColumn.map { colConf =>
       colConf.index.flatMap(index => index.isManuallyIndexed.map { tableConf =>
-        val indexSource = new QueryableSource(tableConf.indexTableConfig.queryableStore(),
+        val indexSource = new QueryableSource(getQueryableStore(tableConf.indexTableConfig),
           query.getQueryspace, tableConf.indexTableConfig.table, index.isSorted)
-        val mainSource = new KeyValueSource(tableConf.mainTableConfig.readableStore(), 
+        val mainSource = new KeyValueSource(getReadableStore(tableConf.mainTableConfig), 
           query.getQueryspace, tableConf.mainTableConfig.table, Registry.getCachingEnabled)
         tableConf.indexConfig match {
           case simple: SimpleHashJoinConfig => new SimpleHashJoinSource(indexSource, colConf.column, 
@@ -284,13 +296,13 @@ object Planner extends LazyLogging {
         }
       }).orElse {
         Registry.getQuerySpaceTable(domainQuery.getQueryspace, domainQuery.getTableIdentifier).map { tableConf =>
-          new QueryableSource(tableConf.queryableStore(), query.getQueryspace, tableConf.table, true)
+          new QueryableSource(getQueryableStore(tableConf), query.getQueryspace, tableConf.table, true)
         }
       }
     }.getOrElse {
       // construct plan using information on main table
       Registry.getQuerySpaceTable(domainQuery.getQueryspace, domainQuery.getTableIdentifier).map { tableConf =>
-        new QueryableSource(tableConf.queryableStore(), query.getQueryspace, tableConf.table)
+        new QueryableSource(getQueryableStore(tableConf), query.getQueryspace, tableConf.table)
       }
     }.map(ComposablePlan.getComposablePlan(_, domainQuery)).getOrElse(throw new NoPlanException(query))
   }

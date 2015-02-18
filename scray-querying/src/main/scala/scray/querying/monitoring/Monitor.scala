@@ -1,22 +1,19 @@
 package scray.querying.monitoring
 
 import java.lang.management.ManagementFactory
-
 import scala.collection.JavaConverters._
 import scala.collection.mutable.HashMap
 import scala.collection.mutable.HashMap
-
 import org.mapdb.DBMaker
 import org.mapdb.Store
-
 import com.twitter.util.Duration
 import com.twitter.util.JavaTimer
 import com.typesafe.scalalogging.slf4j.LazyLogging
-
 import javax.management.ObjectName
 import scray.querying.Registry
 import scray.querying.description.TableConfiguration
 import scray.querying.description.TableIdentifier
+import java.util.concurrent.locks.ReentrantLock
 
 /**
  * register a new MBean with JMX
@@ -32,46 +29,61 @@ private object JMXHelpers {
  */
 class Monitor extends LazyLogging {
   import JMXHelpers._
-  
+
   private val beans = new HashMap[String, MonitoringInfoBean]
-  
-  def getSize(): Int = beans.size
+
+  private val lock = new ReentrantLock
+
+  def getSize(): Int = {
+    lock.lock()
+    try {
+      beans.size
+    } finally {
+      lock.unlock()
+    }
+  }
 
   def getCacheActive(): Boolean = Registry.getCachingEnabled
-  
+
   JMXHelpers.jmxRegister(new MonitoringBaseInfoBean(this), "Scray:name=Cache")
 
   /**
-   * monitor the caches 
+   * monitor the caches
    */
   def monitor(tables: HashMap[String, HashMap[TableIdentifier, TableConfiguration[_, _, _]]]) {
     logger.debug(s"Monitoring Queryspaces with ${tables.size} entries")
+    val timer = new JavaTimer(true)
+    timer.schedule(Duration.fromSeconds(3)) {
 
-    // setup polling for a cache identified by its discriminant
-    def pollCache(name: TableIdentifier): Unit = {
-      val timer = new JavaTimer(true)
-      timer.schedule(Duration.fromSeconds(3)) {
-        Registry.getCacheCounter(name.toString) match {
-          case None => beans.get(name.toString) match {
-            case None =>
-              val bname = s"Scray:00=Tables,name=${name.tableId}_${name.dbId}_${name.dbSystem}"
-              val bean = new MonitoringInfoBean(name.toString)
-              beans.put(name.toString, bean)
-              JMXHelpers.jmxRegister(bean, bname)
-            case _ =>
+      // setup polling for a cache identified by its discriminant
+      def pollCache(name: TableIdentifier): Unit = {
+        lock.lock()
+        try {
+          Registry.getCacheCounter(name.toString) match {
+            case None ⇒ beans.get(name.toString) match {
+              case None ⇒
+                val bname = s"Scray:00=Tables,name=${name.tableId}_${name.dbId}_${name.dbSystem}"
+                val bean = new MonitoringInfoBean(name.toString)
+                beans.put(name.toString, bean)
+                JMXHelpers.jmxRegister(bean, bname)
+              case _ ⇒
+            }
+            case _ ⇒
           }
-          case _ =>
+        } finally {
+          lock.unlock()
         }
       }
-    }
-    
-    // walk over all table identifiers to retrieve a key for the caches
-    def walkTables(tablesInSpace: HashMap[TableIdentifier, TableConfiguration[_, _, _]]): Unit = 
-      tablesInSpace.keys.foreach(pollCache(_)) 
-      
-    if (tables.size > 0) {
-      // walk over all query spaces and extract table information
-      tables.keys.foreach(i => walkTables(tables.get(i).get))
+
+      // walk over all table identifiers to retrieve a key for the caches
+      def walkTables(tablesInSpace: HashMap[TableIdentifier, TableConfiguration[_, _, _]]): Unit =
+        tablesInSpace.keys.foreach(pollCache(_))
+
+      if (tables.size > 0) {
+        // walk over all query spaces and extract table information
+        tables.keys.foreach(i ⇒ walkTables(tables.get(i).get))
+      }
     }
   }
+
 }

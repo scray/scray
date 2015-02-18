@@ -26,6 +26,7 @@ import scray.querying.description.Row
 import scray.querying.description.Column
 import scray.querying.source.indexing.IndexConfig
 import scray.querying.description.TableConfiguration
+import scray.querying.description.VersioningConfiguration
 
 /**
  * configuration of a simple Cassandra-based query space.
@@ -38,13 +39,13 @@ import scray.querying.description.TableConfiguration
  */
 class CassandraQueryspaceConfiguration(
     override val name: String,
-    val tables: Set[(AbstractCQLCassandraStore[_, _], ((_) => Row, Option[String]))],
+    val tables: Set[(AbstractCQLCassandraStore[_, _], ((_) => Row, Option[String], Option[VersioningConfiguration[_, _, _]]))],
     // mapping from indexed table and the indexed column to the table containing the index and the ref column
     indexes: Map[(AbstractCQLCassandraStore[_, _], String),
       (AbstractCQLCassandraStore[_, _], String, IndexConfig, Option[Function1[_,_]])]
 ) extends QueryspaceConfiguration(name) {
   
-  lazy val tableRowMapperMap: Map[AbstractCQLCassandraStore[_, _], ((_) => Row, Option[String])] = tables.toMap
+  lazy val tableRowMapperMap: Map[AbstractCQLCassandraStore[_, _], ((_) => Row, Option[String], Option[VersioningConfiguration[_, _, _]])] = tables.toMap
   
   override def queryCanBeOrdered(query: Query): Option[ColumnConfiguration] = {
     // TODO: maybe this is right for some cases, but we must implement all:
@@ -52,13 +53,17 @@ class CassandraQueryspaceConfiguration(
     //   - what happens if the main query doesn't use the table with the clustering column 
     query.getOrdering.flatMap { ordering =>
       Registry.getQuerySpaceColumn(query.getQueryspace, ordering.column).flatMap { colConfig =>
-        colConfig.index.flatMap(index => if(index.isManuallyIndexed.isDefined && index.isSorted) {
+        colConfig.index.flatMap(index => if(index.isManuallyIndexed.isDefined && 
+                index.isSorted && 
+                (index.isManuallyIndexed.get.indexTableConfig.queryableStore.isDefined ||
+                   (index.isManuallyIndexed.get.indexTableConfig.versioned.isDefined &&
+                    index.isManuallyIndexed.get.indexTableConfig.versioned.get.runtimeVersion().isDefined ))) {
           Some(colConfig)
         } else {
           None
         }).orElse {
           Registry.getQuerySpaceTable(query.getQueryspace, ordering.column.table).flatMap { table =>
-            if(table.clusteringKeyColumns.size > 0 && table.clusteringKeyColumns(0) == ordering.column) {
+            if(table.clusteringKeyColumns.size > 0 && table.clusteringKeyColumns(0) == ordering.column ) {
               Some(colConfig)
             } else {
               None
@@ -74,7 +79,7 @@ class CassandraQueryspaceConfiguration(
   override def getColumns: List[ColumnConfiguration] = tables.toList.flatMap ( table => {
     // TODO: fix this ugly stuff (for now we leave it, as fixing this will only increase type safety)
     val typeReducedTable = table._1.asInstanceOf[AbstractCQLCassandraStore[Any, Any]]
-    val extractor = CassandraExtractor.getExtractor(typeReducedTable, table._2._2)
+    val extractor = CassandraExtractor.getExtractor(typeReducedTable, table._2._2, table._2._3)
     val allColumns = extractor.getTableConfiguration(table._2._1).allColumns
     allColumns.map { col =>
       val index = extractor.createManualIndexConfiguration(col, typeReducedTable, indexes, tableRowMapperMap)
@@ -85,7 +90,7 @@ class CassandraQueryspaceConfiguration(
   override def getTables: Set[TableConfiguration[_, _, _]] = tables.map ( table => {
     // TODO: fix this ugly stuff (for now we leave it, as fixing this will only increase type safety)
     val typeReducedTable = table._1.asInstanceOf[AbstractCQLCassandraStore[Any, Any]]
-    val extractor = CassandraExtractor.getExtractor(typeReducedTable, table._2._2)
+    val extractor = CassandraExtractor.getExtractor(typeReducedTable, table._2._2, table._2._3)
     extractor.getTableConfiguration(table._2._1)
   })
 }

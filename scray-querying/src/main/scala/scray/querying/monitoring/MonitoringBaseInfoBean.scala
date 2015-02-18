@@ -13,10 +13,13 @@ import scray.querying.caching.MonitoringInfos
 import java.lang.{Integer => JInteger, Boolean => JBoolean}
 import javax.management.MBeanOperationInfo
 import javax.management.MBeanParameterInfo
+import scala.collection.mutable.HashMap
 
 
 class MonitoringBaseInfoBean(monitor: Monitor) extends DynamicMBean {
 
+
+  
   private val actionNameID: String = "Request: toggle cache"
 
   override def getAttribute(attribute: String): Object = {
@@ -35,19 +38,20 @@ class MonitoringBaseInfoBean(monitor: Monitor) extends DynamicMBean {
 
   override def setAttribute(attribute: Attribute): Unit = {}
 
-  override def getMBeanInfo(): MBeanInfo = {
-    val att1Info = new MBeanAttributeInfo("size", "java.lang.Integer", "Dies ist das ertse Attribut", true, false, false)
-    val att2Info = new MBeanAttributeInfo("active", "java.lang.Boolean", "Dies ist das zweite Attribut", true, false, false)
-    val attribs = Array[MBeanAttributeInfo](att1Info, att2Info)
+  val att1Info = new MBeanAttributeInfo("size", "java.lang.Integer", "Dies ist das ertse Attribut", true, false, false)
+  val att2Info = new MBeanAttributeInfo("active", "java.lang.Boolean", "Dies ist das zweite Attribut", true, false, false)
+  val attribs = Array[MBeanAttributeInfo](att1Info, att2Info)
 
-    val op1Info = new MBeanOperationInfo(actionNameID, "Toggle cache",
+  val op1Info = new MBeanOperationInfo(actionNameID, "Toggle cache",
                               null,
                               "Boolean", MBeanOperationInfo.ACTION)
-    val ops     = Array[MBeanOperationInfo](op1Info)
+  val ops     = Array[MBeanOperationInfo](op1Info)
 
-    new MBeanInfo(this.getClass.getName, "TestBean for Scray",
+  val info = new MBeanInfo(this.getClass.getName, "TestBean for Scray",
       attribs, null, ops, null)
-  }
+
+  
+  override def getMBeanInfo(): MBeanInfo = info
 
   override def setAttributes(attributes: AttributeList): AttributeList =
     getAttributes(attributes.asList.map(_.getName).toArray)

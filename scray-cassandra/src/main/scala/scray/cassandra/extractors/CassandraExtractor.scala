@@ -37,6 +37,7 @@ import com.datastax.driver.core.Metadata
 import scray.querying.source.indexing.IndexConfig
 import com.twitter.storehaus.cassandra.cql.CQLCassandraRowStore
 import scray.cassandra.util.CassandraUtils
+import scray.querying.description.VersioningConfiguration
 
 /**
  * Helper class to create a configuration for a Cassandra table
@@ -99,13 +100,14 @@ trait CassandraExtractor[S <: AbstractCQLCassandraStore[_, _]] {
   
   /**
    * checks that a column has been indexed by Cassandra itself, so no manual indexing
+   * if the table has not yet been created (the version must still be computed) we assume no indexing 
    */
   def checkColumnCassandraAutoIndexed(store: S, column: Column): Boolean = {
     val metadata = Option(getMetadata(store.columnFamily))
     metadata.flatMap{_ => 
       val tm = CassandraUtils.getTableMetadata(store.columnFamily, metadata)
-      val cm = tm.getColumn(Metadata.quote(column.columnName))
-      Option(cm.getIndex())}.isDefined
+      val cm = Option(tm).map(_.getColumn(Metadata.quote(column.columnName)))
+      cm.flatMap(colmeta => Option(colmeta.getIndex()))}.isDefined
   }
 
   /**
@@ -146,13 +148,15 @@ trait CassandraExtractor[S <: AbstractCQLCassandraStore[_, _]] {
    */
   def createManualIndexConfiguration(column: Column, 
       store: S,
-      indexes: Map[(AbstractCQLCassandraStore[_, _], String), (AbstractCQLCassandraStore[_, _], String, IndexConfig, Option[Function1[_,_]])],
-      mappers: Map[AbstractCQLCassandraStore[_, _], ((_) => Row, Option[String])]): Option[ManuallyIndexConfiguration[_, _, _, _, _]] = {
+      indexes: Map[(AbstractCQLCassandraStore[_, _], String), (AbstractCQLCassandraStore[_, _], String, 
+              IndexConfig, Option[Function1[_,_]])],
+      mappers: Map[AbstractCQLCassandraStore[_, _], ((_) => Row, Option[String], Option[VersioningConfiguration[_, _, _]])]):
+        Option[ManuallyIndexConfiguration[_, _, _, _, _]] = {
     indexes.get((store, column.columnName)).map { (index) =>
       // TODO: fix this ugly stuff (for now we leave it, as fixing this will only increase type safety)
       val indexStore = index._1.asInstanceOf[AbstractCQLCassandraStore[Any, Any]]
       val indexstoreinfo = mappers.get(indexStore).get
-      val indexExtractor = CassandraExtractor.getExtractor(indexStore, indexstoreinfo._2)
+      val indexExtractor = CassandraExtractor.getExtractor(indexStore, indexstoreinfo._2, indexstoreinfo._3)
       val storeinfo = mappers.get(store).get
       ManuallyIndexConfiguration[Any, Any, Any, Any, Any](
         getTableConfiguration(storeinfo._1).asInstanceOf[TableConfiguration[Any, Any, Any]],
@@ -169,14 +173,15 @@ object CassandraExtractor {
   /**
    * returns a Cassandra information extractor for a given Cassandra-Storehaus wrapper
    */
-  def getExtractor[S <: AbstractCQLCassandraStore[_, _]](store: S, tableName: Option[String]): CassandraExtractor[S] = {
+  def getExtractor[S <: AbstractCQLCassandraStore[_, _]](store: S, tableName: Option[String],
+          versions: Option[VersioningConfiguration[_, _, _]]): CassandraExtractor[S] = {
     store match { 
       case collStore: CQLCassandraCollectionStore[_, _, _, _, _, _] => 
-        new CQLCollectionStoreExtractor(collStore, tableName).asInstanceOf[CassandraExtractor[S]]
+        new CQLCollectionStoreExtractor(collStore, tableName, versions).asInstanceOf[CassandraExtractor[S]]
       case tupleStore: CQLCassandraStoreTupleValues[_, _, _, _] =>
-        new CQLStoreTupleValuesExtractor(tupleStore, tableName).asInstanceOf[CassandraExtractor[S]]
+        new CQLStoreTupleValuesExtractor(tupleStore, tableName, versions).asInstanceOf[CassandraExtractor[S]]
       case rowStore: CQLCassandraRowStore[_] =>
-        new CQLRowStoreExtractor(rowStore, tableName).asInstanceOf[CassandraExtractor[S]]
+        new CQLRowStoreExtractor(rowStore, tableName, versions).asInstanceOf[CassandraExtractor[S]]
     }
   }
   

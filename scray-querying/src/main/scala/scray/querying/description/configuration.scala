@@ -89,23 +89,25 @@ case class ManuallyIndexConfiguration[K, R, M, V, Q] (
  */
 case class TableConfiguration[Q, K, V] (
   table: TableIdentifier,
-  versioned: Option[VersioningConfiguration], // if the table is versioned and how
+  versioned: Option[VersioningConfiguration[Q, K, V]], // if the table is versioned and how
   primarykeyColumn: Column, // the primary key columns of the table, i.e. a unique reference into a row with partitioning relevance  
   clusteringKeyColumns: List[Column], // some more primary key columns which can be ordered
   allColumns: List[Column], // a List of all columns in the table
   rowMapper: (V) => Row, // mapper from a result row returned by the store to a scray-row
   domainQueryMapping: DomainQuery => Q, // maps a scray-DomainQuery to a query of the store
-  queryableStore: () => QueryableStore[Q, V], // the queryable store representation, allowing to query the store
-  readableStore: () => ReadableStore[K, V], // the readablestore, used in case this is used by a HashJoinSource
+  queryableStore: Option[() => QueryableStore[Q, V]], // the queryable store representation, allowing to query the store, None if versioned
+  readableStore: Option[() => ReadableStore[K, V]], // the readablestore, used in case this is used by a HashJoinSource, None if versioned
   materializedViews: List[MaterializedView] // materialized views for this table
 )
 
 /**
  * we generally assume versions to be Longs, see Summingbird for more information
  */
-case class VersioningConfiguration (
-  latestCompleteVersion: () => Long, // latest complete version of the table 
-  runtimeVersion: () => Long, // current real-time version, which is updated continuously
-  nameVersionMapping: Option[(String, Long) => String] // if needed, a mapping for the table name for the version
+case class VersioningConfiguration[Q, K, V] (
+  // latestCompleteVersion: () => Option[Long], // latest complete version of the table 
+  runtimeVersion: () => Option[Long], // current real-time version, which is updated continuously
+  nameVersionMapping: Option[(String, Long) => String], // if needed, a mapping for the table name for the version
+  queryableStore: Long => QueryableStore[Q, V], // the versioned queryable store representation, allowing to query the store
+  readableStore: Long => ReadableStore[K, V] // the versioned readablestore, used in case this is used by a HashJoinSource
   // dataVersionMapping: () // if needed, a mapping for the data to fit the version, not supported yet
 )

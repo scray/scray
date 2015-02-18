@@ -20,11 +20,13 @@ import scray.querying.description.Column
 import scray.querying.description.Row
 import com.twitter.storehaus.ReadableStore
 import com.twitter.storehaus.QueryableStore
+import scray.querying.description.VersioningConfiguration
 
 /**
  * Extractor object for Storehaus'-CQLCassandraCollectionStores
  */
-class CQLRowStoreExtractor[S <: CQLCassandraRowStore[_]](store: S, tableName: Option[String]) extends CassandraExtractor[S] {
+class CQLRowStoreExtractor[S <: CQLCassandraRowStore[_]](store: S, tableName: Option[String], 
+        versions: Option[VersioningConfiguration[_, _, _]]) extends CassandraExtractor[S] {
 
   override def getColumns: List[Column] =
     getInternalColumns(store, tableName, store.columns.map(_._1))
@@ -43,15 +45,20 @@ class CQLRowStoreExtractor[S <: CQLCassandraRowStore[_]](store: S, tableName: Op
   override def getTableConfiguration(rowMapper: (_) => Row): TableConfiguration[_, _, _] = {
     TableConfiguration[Any, Any, Any] (
       getTableIdentifier(store, tableName),
-      // TODO: add versioning information here
-      None,
+      versions.asInstanceOf[Option[scray.querying.description.VersioningConfiguration[Any,Any,Any]]],
       getRowKeyColumn,
       getClusteringKeyColumns,
       getColumns,
       rowMapper.asInstanceOf[(Any) => Row],
       getQueryMapping(store, tableName),
-      () => store.asInstanceOf[QueryableStore[Any, Any]],
-      () => store.asInstanceOf[ReadableStore[Any, Any]],
+      versions match {
+        case Some(_) => None 
+        case None => Some(() => store.asInstanceOf[QueryableStore[Any, Any]])
+      },
+      versions match {
+        case Some(_) => None 
+        case None => Some(() => store.asInstanceOf[ReadableStore[Any, Any]])
+      },
       List()
     )
   }
