@@ -87,6 +87,11 @@
 			<artifactId>snappy-java</artifactId>
 			<version>${snappy-java.version}</version>
 		</dependency>
+		<dependency>
+		  <groupId>commons-cli</groupId>
+		  <artifactId>commons-cli</artifactId>
+		  <version>1.2</version>
+		</dependency>
 	</dependencies>
 
 	<build>
