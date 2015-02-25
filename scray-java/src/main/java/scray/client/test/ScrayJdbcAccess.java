@@ -23,9 +23,10 @@ public class ScrayJdbcAccess {
     private int FETCHSIZE = 50;
     private int TIMEOUT = 60;
     private int RESULTSETS = -1;
-    private String URL = "jdbc:scray:stateless://localhost:18181/cassandra/SIL/SIL";
+    private String URL = "jdbc:scray:stateful://localhost:18181/cassandra/SIL/SIL";
 	private String TABLE = "BISMTOlsDocumentsElement";
 	private boolean DOTS = false;
+	private int LIMIT = -1;
 	
 	public static void main(String[] args) {
 	    ScrayJdbcAccess jdbc = new ScrayJdbcAccess();
@@ -63,7 +64,9 @@ public class ScrayJdbcAccess {
 			long aggTime = 0;
 			long snap = System.currentTimeMillis();
 
-			if (statement.execute("SELECT * FROM " + TABLE)) {				
+			String limitString = (LIMIT > 0)?" LIMIT " + LIMIT:"";
+			
+			if (statement.execute("SELECT * FROM " + TABLE + limitString)) {				
 				do {
 					count++;
 					ResultSet results = statement.getResultSet();
@@ -186,5 +189,10 @@ public class ScrayJdbcAccess {
     public void setDOTS(boolean dOTS)
     {
         DOTS = dOTS;
+    }
+
+    public void setLIMIT(int lIMIT)
+    {
+        LIMIT = lIMIT;
     }
 }

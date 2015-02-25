@@ -10,7 +10,7 @@ import org.apache.commons.cli.ParseException;
 public class ScrayJdbcAccessParser
 {
     private static enum OPTIONS {
-        help("h"), table("t"), numsets("n"), url("u"), timeout("o"), fetchsize("f"), dots("d");
+        help("h"), table("t"), numsets("n"), url("u"), timeout("o"), fetchsize("f"), dots("d"), limit("l");
         private String arg = null; 
         private OPTIONS(String arg) {
             this.arg = arg;
@@ -43,6 +43,10 @@ public class ScrayJdbcAccessParser
         fetchsize.setArgName("SIZE");
         fetchsize.setRequired(false);
         options.addOption(fetchsize);
+        Option limit = new Option(OPTIONS.limit.getArg(), "limit", true, "limit for query, -1 = none, default");
+        limit.setArgName("MAX");
+        limit.setRequired(false);
+        options.addOption(limit);
         Option help = new Option(OPTIONS.help.getArg(), "help", false, "print usage information");
         help.setRequired(false);
         options.addOption(help);
@@ -78,6 +82,14 @@ public class ScrayJdbcAccessParser
         if(cl.hasOption(OPTIONS.fetchsize.getArg())) {
             try {
                 jdbc.setFETCHSIZE(Integer.parseInt(cl.getOptionValue(OPTIONS.fetchsize.getArg())));
+            } catch(NumberFormatException n) {
+                printParserError(n);
+                return false;
+            }
+        }
+        if(cl.hasOption(OPTIONS.limit.getArg())) {
+            try {
+                jdbc.setLIMIT(Integer.parseInt(cl.getOptionValue(OPTIONS.limit.getArg())));
             } catch(NumberFormatException n) {
                 printParserError(n);
                 return false;
