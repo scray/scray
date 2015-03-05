@@ -7,32 +7,51 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class ScrayJdbcAccess {
 
+    private static Logger logger = LoggerFactory.getLogger(ScrayJdbcAccess.class);
+    
 	private Connection connect = null;
 	private Statement statement = null;
 	private ResultSet resultSet = null;
+	private long totalcount = 0L;
 
+	/* defaults for options */
+    private int FETCHSIZE = 50;
+    private int TIMEOUT = 60;
+    private int RESULTSETS = -1;
+    private String URL = "jdbc:scray:stateful://localhost:18181/cassandra/SIL/SIL";
+	private String TABLE = "BISMTOlsDocumentsElement";
+	private boolean DOTS = false;
+	private int LIMIT = -1;
+	
 	public static void main(String[] args) {
-		ScrayJdbcAccess jdbc = new ScrayJdbcAccess();
-		try {
-			jdbc.readDataBase();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+	    ScrayJdbcAccess jdbc = new ScrayJdbcAccess();
+	    if(ScrayJdbcAccessParser.parseCLIOptions(jdbc, args)) {
+	        try {
+	            jdbc.readDataBase();
+	        } catch (Exception e) {
+	            e.printStackTrace();
+	        }
+	    }
 	}
+	
+	public ScrayJdbcAccess() {
+        try {
+            Class.forName("scray.client.jdbc.ScrayDriver");
+        } catch(Exception e) {
+            logger.error("Could not initialize driver", e);
+        }
+	}
+	
 
 	public void readDataBase() throws Exception {
 		try {
-
-			int FETCHSIZE = 50;
-			int TIMEOUT = 60;
-			int RESULTSETS = 2;
-
-			Class.forName("scray.client.jdbc.ScrayDriver");
-
-			connect = DriverManager
-					.getConnection("jdbc:scray:stateless//localhost:18182/cassandra/SIL/SIL");
+            connect = DriverManager
+                            .getConnection(URL);
 
 			statement = connect.createStatement();
 
@@ -45,33 +64,36 @@ public class ScrayJdbcAccess {
 			long aggTime = 0;
 			long snap = System.currentTimeMillis();
 
-			if (statement.execute("SELECT * FROM BISMTOlsWorkflowElement")) {				
+			String limitString = (LIMIT > 0)?" LIMIT " + LIMIT:"";
+			
+			if (statement.execute("SELECT * FROM " + TABLE + limitString)) {				
 				do {
 					count++;
 					ResultSet results = statement.getResultSet();
 					long nextTime = System.currentTimeMillis() - snap;
 					aggTime += nextTime;
 
-					System.out
+					if(!DOTS) {
+					    System.out
 							.println("====================================================================");
-					System.out
+					    System.out
 							.println("====================================================================");
-					System.out
+					    System.out
 							.println("====================================================================");
 
-					System.out.println("Result set nr " + count + " loaded in "
+					    System.out.println("Result set nr " + count + " loaded in "
 							+ nextTime + " ms.");
 
-					System.out
+					    System.out
 							.println("====================================================================");
-					System.out
+					    System.out
 							.println("====================================================================");
-					System.out
+					    System.out
 							.println("====================================================================");
-
+					}
 					writeResultSet(results);
 					snap = System.currentTimeMillis();
-				} while (statement.getMoreResults() && count < resultSets);
+				} while (statement.getMoreResults() && count != (resultSets -1));
 
 				System.out
 						.println("====================================================================");
@@ -104,15 +126,21 @@ public class ScrayJdbcAccess {
 		int count = 0;
 		while (resultSet.next()) {
 			count++;
-			ResultSetMetaData meta = resultSet.getMetaData();
+			totalcount++;
+			if(DOTS && totalcount % 10000L == 0) {
+			    System.out.print(".");
+			}
+	        ResultSetMetaData meta = resultSet.getMetaData();
 			int size = meta.getColumnCount();
-			System.out.println("Row " + count + " has " + size + " columns.");
+			if(!DOTS) System.out.println("Row " + count + " has " + size + " columns.");
 			for (int i = 1; i <= size; i++) {
-				String type = meta.getColumnClassName(i);
-				Object value = resultSet.getObject(i);
-				System.out.println("Column " + i + "  '"
+				if(!DOTS) {
+				    String type = meta.getColumnClassName(i);
+	                Object value = resultSet.getObject(i);
+	                System.out.println("Column " + i + "  '"
 						+ meta.getColumnName(i) + "'  (" + type + ") = "
 						+ value);
+				}
 			}
 		}
 	}
@@ -134,4 +162,37 @@ public class ScrayJdbcAccess {
 		}
 	}
 
+	public void setTABLE(String TABLE) {
+	    this.TABLE = TABLE;
+	}
+
+    public void setFETCHSIZE(int fETCHSIZE)
+    {
+        FETCHSIZE = fETCHSIZE;
+    }
+
+    public void setTIMEOUT(int tIMEOUT)
+    {
+        TIMEOUT = tIMEOUT;
+    }
+
+    public void setRESULTSETS(int rESULTSETS)
+    {
+        RESULTSETS = rESULTSETS;
+    }
+
+    public void setURL(String uRL)
+    {
+        URL = uRL;
+    }
+    
+    public void setDOTS(boolean dOTS)
+    {
+        DOTS = dOTS;
+    }
+
+    public void setLIMIT(int lIMIT)
+    {
+        LIMIT = lIMIT;
+    }
 }
