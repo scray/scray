@@ -17,10 +17,14 @@ public class PredefinedProperties {
 			"CASSANDRA_INDEX_KEYSPACE", "SILIDX");
 	public final static StringProperty CASSANDRA_QUERY_CLUSTER_NAME = new StringProperty(
 			"CASSANDRA_QUERY_CLUSTER_NAME", "Query Cluster");
+	public final static StringProperty CASSANDRA_QUERY_CLUSTER_DC = new StringProperty(
+			"CASSANDRA_QUERY_CLUSTER_DC", "DC1");
 	public final static StringProperty CASSANDRA_INDEX_CLUSTER_NAME = new StringProperty(
 			"CASSANDRA_INDEX_CLUSTER_NAME", "Index Cluster");
+	public final static StringProperty CASSANDRA_INDEX_CLUSTER_DC = new StringProperty(
+			"CASSANDRA_INDEX_CLUSTER_DC", "DC2");
 	public final static IntProperty MINUTES_PER_BATCH = new IntProperty(
-			"MINUTES_PER_BATCH", 1);
+			"MINUTES_PER_BATCH", 30);
 
 	/* Following properties used as constants (defaults) */
 

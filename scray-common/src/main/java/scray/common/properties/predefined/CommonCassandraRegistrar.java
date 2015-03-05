@@ -10,6 +10,7 @@ public class CommonCassandraRegistrar implements ScrayPropertyRegistration.Prope
 	public void register() throws PropertyException {
 		ScrayProperties.registerProperty(PredefinedProperties.CASSANDRA_QUERY_SEED_IPS);
 		ScrayProperties.registerProperty(PredefinedProperties.CASSANDRA_QUERY_CLUSTER_NAME);
+		ScrayProperties.registerProperty(PredefinedProperties.CASSANDRA_QUERY_CLUSTER_DC);
 	    ScrayProperties.registerProperty(PredefinedProperties.CASSANDRA_QUERY_KEYSPACE);
 	}
 }
