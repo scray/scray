@@ -33,4 +33,8 @@ public class PropertyMemoryStorage implements PropertyStoragePuttable {
 		// check initial properties
 		PropertyFileStorage.checkProperties(props);
 	}
+	
+	public String toString() {
+		return "PropertyMemoryStorage, size=" + props.size();
+	}
 }

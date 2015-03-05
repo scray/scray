@@ -15,6 +15,8 @@ import org.slf4j.LoggerFactory;
  */
 public class ScrayProperties {
 
+	private static Logger logger = LoggerFactory.getLogger(ScrayProperties.class);
+	
 	/**
 	 * registered properties
 	 */
@@ -89,17 +91,18 @@ public class ScrayProperties {
 				PropertyStorage values = stores.get(i);
 				if (values.get(prop) != null) {
 					result = prop.transformToResult(values.get(prop));
+					logger.debug("Found property value for {} in store {}, value is {}", prop.getName(), values.toString(), result);
 					found = true;
-				} else {
-					if (prop.hasDefault()) {
-						result = prop.getDefault();
-						found = true;
-						break;
-					}
-				}
+					break;
+				} 
 			}
 			if (!found) {
-				throw new PropertyEmptyException(prop.getName());
+				if (prop.hasDefault()) {
+					result = prop.getDefault();
+					logger.debug("Using default property for {}, value is {}", prop.getName(), result);
+				} else {			
+					throw new PropertyEmptyException(prop.getName());
+				}
 			}
 		} catch (PropertyException pe) {
 			log.error("Property error: ", pe);

@@ -101,4 +101,8 @@ public class PropertyFileStorage implements PropertyStorage {
 
 	public static String DEFAULT_PROPERTY_FILE = "scray.properties";
 	public static String DEFAULT_JVM_ARGUMENT = "scray-properties";
+	
+	public String toString() {
+		return "PropertyFileStorage, location='"+ location + "', size=" + props.size() + ", type=" + fileLocationType;
+	}
 }
