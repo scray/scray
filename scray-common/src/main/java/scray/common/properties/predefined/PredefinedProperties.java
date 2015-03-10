@@ -25,6 +25,10 @@ public class PredefinedProperties {
 			"CASSANDRA_INDEX_CLUSTER_DC", "DC2");
 	public final static IntProperty MINUTES_PER_BATCH = new IntProperty(
 			"MINUTES_PER_BATCH", 30);
+	public final static SocketListProperty SCRAY_SERVICE_IPS = new SocketListProperty(
+			"SCRAY_SERVICE_IPS", 18181);
+	public final static SocketListProperty SCRAY_MEMCACHED_IPS = new SocketListProperty(
+			"SCRAY_MEMCACHED_IPS", 11211);
 
 	/* Following properties used as constants (defaults) */
 

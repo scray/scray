@@ -63,7 +63,7 @@ class ScrayStatefulTServiceImpl(val rack : SpoolRack) extends ScrayStatefulTServ
 
   def getResults(queryId : ScrayUUID) : Future[ScrayTResultFrame] = {
 
-    logger.info(s"New 'getResults' request: ${queryId}")
+    logger.debug(s"New 'getResults' request: ${queryId}")
 
     rack.getSpool(queryId) match {
       case Some(spool) => {

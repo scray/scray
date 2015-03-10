@@ -13,7 +13,7 @@ import com.twitter.util.Duration
 import com.twitter.util.Future
 import com.twitter.util.Time
 
-import scray.core.service.MEMCACHED_HOST
+import scray.core.service._
 import scray.core.service.ScrayUUID2UUID
 import scray.core.service.UUID2ScrayUUID
 import scray.core.service.spools._
@@ -25,7 +25,7 @@ import scray.service.qmodel.thrifscala.ScrayUUID
 class MemcachedPageRack(planAndExecute : (Query) => Spool[Row], pageTTL : Duration = DEFAULT_TTL)
   extends PageRackImplBase(planAndExecute, pageTTL) {
   
-  val client = Client(host = MEMCACHED_HOST)
+  val client = Client(host = inetAddr2EndpointString(MEMCACHED_ENDPOINT))
   val pageStore = MemcachePageStore(client, pageTTL)
 
   val POOLSIZE = 10

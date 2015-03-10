@@ -29,28 +29,24 @@ import com.twitter.util.Try
 import scray.common.properties.IntProperty
 import scray.common.properties.predefined.PredefinedProperties
 
-case class ScrayServerEndpoint(host : InetAddress, port : Int)
-
 trait KryoPoolRegistration {
   def register = RegisterRowCachingSerializers()
-  def registerProperties = {
-    Try(ScrayProperties.registerProperty(PredefinedProperties.RESULT_COMPRESSION_MIN_SIZE))
-  }
 }
 
 abstract class ScrayStatefulTServer extends AbstractScrayTServer {
-  val server = Thrift.serveIface(addressString, ScrayStatefulTServiceImpl())
+  val server = Thrift.serveIface(getServerAddress, ScrayStatefulTServiceImpl())
   override def getServer : ListeningServer = server
-  override def getVersion : String = "1.7"
+  override def getVersion : String = "1.8"
 }
 
 abstract class ScrayStatelessTServer extends AbstractScrayTServer {
-  val server = Thrift.serveIface(addressString, ScrayStatelessTServiceImpl())
+  val server = Thrift.serveIface(getServerAddress, ScrayStatelessTServiceImpl())
   override def getServer : ListeningServer = server
   override def getVersion : String = "0.9"
 }
 
 object ScrayStatelessTServerTest extends ScrayStatelessTServer {
+  def getServerAddress : String = "127.0.0.1:18181"
   def initializeResources : Unit = {}
   def destroyResources : Unit = {}
   override def main(args : Array[String]) = super.main(args)
@@ -63,11 +59,7 @@ abstract class AbstractScrayTServer extends KryoPoolRegistration {
   def getServer : ListeningServer
   def getVersion : String
 
-  val endpoint : ScrayServerEndpoint = ScrayServerEndpoint(
-    InetAddress.getByName(scray.core.service.ENDPOINT.split(":")(0)),
-    Integer.valueOf(scray.core.service.ENDPOINT.split(":")(1)))
-
-  def addressString : String = s"${endpoint.host.getHostAddress}:${endpoint.port}"
+  def getServerAddress : String 
 
   def main(args : Array[String]) {
     register // kryo pool registrars

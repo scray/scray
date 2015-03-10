@@ -6,13 +6,17 @@ import scray.service.qservice.thrifscala.ScrayStatefulTService
 import com.twitter.util.Await
 import scray.core.service.util.TQuerySamples
 
+import scray.core.service.properties.ScrayServicePropertiesRegistration
+
 object ScrayTServiceTestClient extends TQuerySamples {
   def main(args : Array[String]) {
+
+    ScrayServicePropertiesRegistration.configure()
 
     val queryObj : ScrayTQuery = createTQuery(expr = "SELECT nothing FROM @myTableId")
 
     // prepare client
-    val client = Thrift.newIface[ScrayStatefulTService.FutureIface](ENDPOINT)
+    val client = Thrift.newIface[ScrayStatefulTService.FutureIface](s"${SCRAY_ENDPOINT.getHostName}:${SCRAY_ENDPOINT.getPort}")
 
     //call service
     val res = client.query(queryObj) onFailure { e => throw e } onSuccess { r => println(s"Received '$r'.") }

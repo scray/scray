@@ -21,6 +21,7 @@ import scray.querying.Query
 import scray.core.service.spools.TimedSpoolRack
 import scray.common.properties.ScrayProperties
 import scray.common.properties.ScrayProperties.Phase
+import scray.core.service.properties.ScrayServicePropertiesRegistration
 
 @RunWith(classOf[JUnitRunner])
 class ThriftSpec
@@ -32,7 +33,7 @@ class ThriftSpec
   with KryoPoolRegistration
   with SpoolSamples {
 
-  val ENDPOINT = "localhost:8080"
+  ScrayServicePropertiesRegistration.configure()
 
   // prepare back end (query engine) mock
   val mockplanner = mock[(Query) => Spool[Row]]
@@ -41,14 +42,11 @@ class ThriftSpec
 
   // prepare finagle
   object TestService extends ScrayStatefulTServiceImpl(MockedSpoolRack)
-  val server = Thrift.serveIface(ENDPOINT, TestService)
-  val client = Thrift.newIface[ScrayStatefulTService.FutureIface](ENDPOINT)
+  val server = Thrift.serveIface(inetAddr2EndpointString(SCRAY_ENDPOINT), TestService)
+  val client = Thrift.newIface[ScrayStatefulTService.FutureIface](inetAddr2EndpointString(SCRAY_ENDPOINT))
 
   before {
-    registerProperties
     // register kryo serializers
-    ScrayProperties.setPhase(Phase.config)
-    ScrayProperties.setPhase(Phase.use)
     register
     println("Thrift server bound to: " + server.boundAddress)
   }
@@ -58,7 +56,7 @@ class ThriftSpec
   }
 
   "scray service query method" should "return a query id" in {
-    val queryObj : ScrayTQuery = createTQuery("SELECT @col1 FROM @myTableId")
+    val queryObj: ScrayTQuery = createTQuery("SELECT @col1 FROM @myTableId")
 
     //call service
     val res = client.query(queryObj) onFailure { e => throw e } onSuccess { r => println(s"Received '$r'.") }

@@ -18,7 +18,7 @@ import com.twitter.util.JavaTimer
 import scray.core.service.KryoPoolRegistration
 import scray.common.serialization.KryoPoolSerialization
 import scray.service.qmodel.thrifscala.ScrayTQuery
-import scray.core.service._
+//import scray.core.service._
 import scray.service.qmodel.thrifscala.ScrayTRow
 import scray.core.service.spools.PageKey
 import com.twitter.util.Await

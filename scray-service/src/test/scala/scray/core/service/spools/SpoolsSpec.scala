@@ -35,8 +35,6 @@ class SpoolsSpec
   with SpoolSamples
   with KryoPoolRegistration {
 
-  registerProperties
-  
   // kryo registration
   register
 

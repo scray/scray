@@ -18,18 +18,25 @@ package scray.core
 import java.util.UUID
 import scray.service.qmodel.thrifscala.ScrayUUID
 import java.net.InetAddress
+import scray.core.service.properties.ScrayServicePropertiesRegistration
+import scray.common.properties.ScrayProperties
+import scray.common.properties.predefined.PredefinedProperties
+import java.net.InetSocketAddress
+
 package object service {
 
   // scray server endpoint
-  val ENDPOINT = "localhost:18181"
+  val SCRAY_ENDPOINT : InetSocketAddress = ScrayProperties.getPropertyValue(PredefinedProperties.SCRAY_SERVICE_IPS).iterator().next
 
   // memcached host
-  val MEMCACHED_HOST = "127.0.0.1:11211"
+  val MEMCACHED_ENDPOINT : InetSocketAddress = ScrayProperties.getPropertyValue(PredefinedProperties.SCRAY_MEMCACHED_IPS).iterator().next
 
-  implicit def UUID2ScrayUUID(uuid : UUID) : ScrayUUID =
+  def inetAddr2EndpointString(iaddr: InetSocketAddress): String = s"${iaddr.getHostName}:${iaddr.getPort}"
+
+  implicit def UUID2ScrayUUID(uuid: UUID): ScrayUUID =
     ScrayUUID(uuid.getLeastSignificantBits(), uuid.getMostSignificantBits())
 
-  implicit def ScrayUUID2UUID(suuid : ScrayUUID) : UUID =
+  implicit def ScrayUUID2UUID(suuid: ScrayUUID): UUID =
     new UUID(suuid.leastSigBits, suuid.mostSigBits)
 
 }
