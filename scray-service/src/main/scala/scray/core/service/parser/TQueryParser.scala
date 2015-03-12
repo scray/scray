@@ -46,7 +46,7 @@ class TQueryParser(tQuery : ScrayTQuery) extends Parser {
   def _rootStatement : Rule1[_Query] = rule { push(_Query(Map[Class[_ <: _QueryComponent], _QueryComponent]())(tQuery)) }
 
   // Rules matching ranges
-  def _range : Rule1[_Range] = rule { (_limit ~ push(None) | push(None) ~ _skip | _limit ~ _skip) ~> { (l : Option[String], s : Option[String]) => _Range(s, l) } }
+  def _range : Rule1[_Range] = rule { ( _skip ~ _limit | push(None) ~ _limit | _skip ~ push(None) ) ~> { (s : Option[String], l : Option[String]) => _Range(s, l) } }
   def _limit : Rule1[Option[String]] = rule { "LIMIT" ~ _number ~> { (s : String) => Some(s) } }
   def _skip : Rule1[Option[String]] = rule { "SKIP" ~ _number ~> { (s : String) => Some(s) } }
 
