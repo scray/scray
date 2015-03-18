@@ -249,4 +249,12 @@ class QueryParserSpec extends FlatSpec with Matchers with TQuerySamples {
     query.getQueryRange.get.limit.nonEmpty should be(true)
   }
 
+    it should "handle combined 'ORDER BY', 'LIMIT' and 'SKIP' predicates" in {
+    val parsed = parse("SELECT col1, col2 FROM @myTableId ORDER BY col2 SKIP 1 LIMIT 1000")
+    val query = generate(parsed)
+    query.getOrdering.isDefined should be(true)
+    query.getQueryRange.get.skip.nonEmpty should be(true)
+    query.getQueryRange.get.limit.nonEmpty should be(true)
+  }
+    
 }
