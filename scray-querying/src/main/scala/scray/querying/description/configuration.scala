@@ -40,7 +40,14 @@ abstract class QueryspaceConfiguration(val name: String) {
   def queryCanBeGrouped(query: Query): Option[ColumnConfiguration]
   
   /**
-   * returns configuration of tables which are included in this query sapce
+   * If this queryspace can handle the query using the materialized view provided.
+   * The weight (Int) is an indicator for the specificity of the view and reflects the 
+   * number of columns that match query arguments.
+   */
+  def queryCanUseMaterializedView(query: DomainQuery, materializedView: MaterializedView): Option[(Boolean, Int)]
+  
+  /**
+   * returns configuration of tables which are included in this query space
    * Internal use! 
    */
   def getTables: Set[TableConfiguration[_, _, _]]
@@ -90,7 +97,7 @@ case class ManuallyIndexConfiguration[K, R, M, V, Q] (
 case class TableConfiguration[Q, K, V] (
   table: TableIdentifier,
   versioned: Option[VersioningConfiguration[Q, K, V]], // if the table is versioned and how
-  primarykeyColumn: Column, // the primary key columns of the table, i.e. a unique reference into a row with partitioning relevance  
+  primarykeyColumns: List[Column], // the primary key columns of the table, i.e. a unique reference into a row with partitioning relevance  
   clusteringKeyColumns: List[Column], // some more primary key columns which can be ordered
   allColumns: List[Column], // a List of all columns in the table
   rowMapper: (V) => Row, // mapper from a result row returned by the store to a scray-row

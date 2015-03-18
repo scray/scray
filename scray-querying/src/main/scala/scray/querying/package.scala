@@ -7,6 +7,7 @@ package object querying {
     val queryWithoutColumnsExceptionID = "SIL-Scray-Querying-001"
     val queryspaceViolationExceptionID = "SIL-Scray-Querying-002"
     val queryspaceColumnViolationExceptionID = "SIL-Scray-Querying-003"
+    val queryspaceViolationTableUnavailableExceptionID = "SIL-Scray-Querying-004"
     // 010+ = planner errors
     val queryDomainParserExceptionID = "SIL-Scray-Querying-010"
     val nonAtomicClauseExceptionID = "SIL-Scray-Querying-011"

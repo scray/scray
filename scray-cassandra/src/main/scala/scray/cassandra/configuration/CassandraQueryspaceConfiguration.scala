@@ -19,6 +19,7 @@ import com.twitter.storehaus.cassandra.cql.CQLCassandraCollectionStore
 import com.twitter.storehaus.cassandra.cql.CQLCassandraConfiguration.StoreSession
 import scray.querying.Query
 import scray.querying.Registry
+import scray.querying.planning.Planner
 import scray.querying.description.ColumnConfiguration
 import scray.querying.description.QueryspaceConfiguration
 import scray.cassandra.extractors.CassandraExtractor
@@ -27,6 +28,11 @@ import scray.querying.description.Column
 import scray.querying.source.indexing.IndexConfig
 import scray.querying.description.TableConfiguration
 import scray.querying.description.VersioningConfiguration
+import scray.querying.description.internal.MaterializedView
+import scray.querying.queries.DomainQuery
+import scray.querying.description.internal.SingleValueDomain
+import scray.querying.description.internal.RangeValueDomain
+import scala.annotation.tailrec
 
 /**
  * configuration of a simple Cassandra-based query space.
@@ -93,4 +99,50 @@ class CassandraQueryspaceConfiguration(
     val extractor = CassandraExtractor.getExtractor(typeReducedTable, table._2._2, table._2._3)
     extractor.getTableConfiguration(table._2._1)
   })
+  
+  override def queryCanUseMaterializedView (query: DomainQuery, materializedView: MaterializedView): Option[(Boolean, Int)] = {
+    @tailrec def calculateSpecificity(cols: List[Column], count: Int, checkOrdering: Option[Column] = None): (Boolean, Int) = {
+      // returns true, specificity if view matches requested ordering
+      // returns false, specificity if the view cannot be used to order according to ordering
+      val single = query.getWhereAST.find { dom =>
+         cols.size > 0 && dom.column == cols.head && dom.isInstanceOf[SingleValueDomain[_]]
+      }.isDefined
+      // last can be a RangeValueDomain (and should be in case of checkOrdering != None)
+      if(!single) {
+        val rangeResult: List[Option[Boolean]] = query.getWhereAST.collect { 
+          case rvd: RangeValueDomain[_] if cols.size > 0 && rvd.column == cols.head => 
+            checkOrdering match {
+              case Some(orderedCol) => Some(orderedCol.columnName == cols.head) 
+              case None => None
+            }
+        }
+        if(rangeResult.size > 0) {
+          rangeResult.head match {
+            case Some(ord) => (ord, count + 1)
+            case None => (false, count + 1)
+          }
+        } else {
+          (false, count)          
+        }
+      } else {
+        calculateSpecificity(cols.tail, count + 1, checkOrdering)
+      }
+    }
+    def getClusteringMatches(): (Boolean, Int) = 
+      calculateSpecificity(materializedView.viewTable.clusteringKeyColumns, 0, query.getOrdering.map(_.column))
+    
+    // check that all primarykeyColumns are satisfied with SingleValueDomains
+    val partitionSatisfied = (materializedView.viewTable.primarykeyColumns.find ( col => query.getWhereAST.find { _ match {
+      case svd: SingleValueDomain[_] => col != svd.column
+      case _ => true
+    }}.isDefined).isEmpty, materializedView.viewTable.primarykeyColumns.size)
+
+    if(partitionSatisfied._1) {
+      // the weight is calculated
+      val clusteringMatches = getClusteringMatches
+      Some(clusteringMatches._1, partitionSatisfied._2 + clusteringMatches._2)
+    } else {
+      None
+    }
+  }
 }

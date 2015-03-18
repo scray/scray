@@ -44,6 +44,10 @@ class QueryspaceViolationException(query: Query)
     extends ScrayException(ExceptionIDs.queryspaceViolationExceptionID, query.getQueryID, s"""query trys to access queryspace or table which has not
     been registered; queryspace=${query.getQueryspace}, table=${query.getTableIdentifier} """) with Serializable
 
+class QueryspaceViolationTableUnavailableException(query: Query)
+    extends ScrayException(ExceptionIDs.queryspaceViolationTableUnavailableExceptionID, query.getQueryID, s"""query trys to access table which has no
+    version (yet); queryspace=${query.getQueryspace}, table=${query.getTableIdentifier} """) with Serializable
+
 class QueryspaceColumnViolationException(query: Query, column: Column) 
     extends ScrayException(ExceptionIDs.queryspaceColumnViolationExceptionID, query.getQueryID, s"""query trys to access column ${column.columnName} from 
     queryspace ${query.getQueryspace} which has not been registered""") with Serializable
