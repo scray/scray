@@ -207,20 +207,25 @@ object MergingResultSpool {
    */
   def seekingLimitingSpoolTransformer(spool: Spool[Row], range: Option[QueryRange]): Spool[Row] = {
     def slspooltcount(spool: Spool[Row], count: Long, skip: Long): Spool[Row] = {
-      if(count < skip) {
-        // there is still data we need to skip
-        slspooltcount(Await.result(spool.tail), count + 1L, skip)
+      if(spool.isEmpty) {
+        // end of data has been reached, return the empty spool
+        spool
       } else {
-        if(range.get.limit.isEmpty) {
-          // skipping ended and no limit, return rest of data
-          spool
+        if(count < skip) {
+          // there is still data we need to skip
+          slspooltcount(Await.result(spool.tail), count + 1L, skip)
         } else {
-          if(count < skip + range.get.limit.get) {
-            // re-insert data
-            spool.head *:: Future.value(slspooltcount(Await.result(spool.tail), count + 1L, skip))
+          if(range.get.limit.isEmpty) {
+            // skipping ended and no limit, return rest of data
+            spool
           } else {
-            // limit has been reached, return the empty spool
-            Spool.empty[Row]
+            if(count < skip + range.get.limit.get) {
+              // re-insert data
+              spool.head *:: Future.value(slspooltcount(Await.result(spool.tail), count + 1L, skip))
+            } else {
+              // limit has been reached, return the empty spool
+              Spool.empty[Row]
+            }
           }
         }
       }

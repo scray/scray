@@ -60,7 +60,7 @@ class CQLStoreTupleValuesExtractor[S <: CQLCassandraStoreTupleValues[_, _, _, _]
     TableConfiguration[Any, Any, Any] (
       getTableIdentifier(store, tableName),
       versions.asInstanceOf[Option[scray.querying.description.VersioningConfiguration[Any,Any,Any]]],
-      getRowKeyColumn,
+      getRowKeyColumns,
       getClusteringKeyColumns,
       getColumns,
       rowMapper.asInstanceOf[(Any) => Row],

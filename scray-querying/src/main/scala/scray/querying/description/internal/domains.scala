@@ -39,6 +39,7 @@ case class RangeValueDomain[T](
   override val column: Column,
   lowerBound: Option[Bound[T]], // None means no lower bound
   upperBound: Option[Bound[T]] // None means no upper bound
+  // exclusions: Option[List[T]]
 )(implicit val ordering: Ordering[T]) extends Domain[T](column) {
   /**
    * checks if the current RangeValueDomain is a sub-interval of rangeValueDomain

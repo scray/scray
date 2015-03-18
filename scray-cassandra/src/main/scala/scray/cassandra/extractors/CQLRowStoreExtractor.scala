@@ -46,7 +46,7 @@ class CQLRowStoreExtractor[S <: CQLCassandraRowStore[_]](store: S, tableName: Op
     TableConfiguration[Any, Any, Any] (
       getTableIdentifier(store, tableName),
       versions.asInstanceOf[Option[scray.querying.description.VersioningConfiguration[Any,Any,Any]]],
-      getRowKeyColumn,
+      getRowKeyColumns,
       getClusteringKeyColumns,
       getColumns,
       rowMapper.asInstanceOf[(Any) => Row],

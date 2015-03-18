@@ -44,7 +44,7 @@ class SimpleHashJoinSource[Q <: DomainQuery, K, R, V](
     source: LazySource[Q],
     sourceJoinColumn: Column,
     lookupSource: KeyValueSource[R, V],
-    lookupSourceJoinColumn: Column,
+    lookupSourceJoinColumns: List[Column],
     typeMapper: K => R = (k: K) => k.asInstanceOf[R],
     isInner: Boolean = false)
   extends LazySource[Q] with LazyLogging {
@@ -57,7 +57,7 @@ class SimpleHashJoinSource[Q <: DomainQuery, K, R, V](
     if(inCol.isDefined) {
       val keyValueSourceQuery = new SimpleKeyBasedQuery[R](
         typeMapper(inCol.get),
-        lookupSourceJoinColumn,
+        lookupSourceJoinColumns,
         lookupSource.getColumns,
         query.querySpace,
         query.getQueryID)

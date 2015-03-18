@@ -15,65 +15,43 @@
 package scray.querying.planning
 
 import com.twitter.concurrent.Spool
-import java.util.UUID
-import scala.collection.mutable.HashMap
-import scray.querying.Registry
-import scray.querying.Query
-import scray.querying.description.{
-  And,
-  AtomicClause,
-  Clause,
-  Column,
-  ColumnConfiguration,
-  Columns,
-  Equal,
-  Greater,
-  GreaterEqual,
-  Or,
-  Row,
-  Smaller,
-  SmallerEqual,
-  TableIdentifier
-}
-import scray.querying.description.internal.{
-  Bound,
-  Domain,
-  NoPlanException,
-  NonAtomicClauseException,
-  QueryDomainParserException,
-  QueryDomainParserExceptionReasons,
-  QueryspaceViolationException,
-  QueryWithoutColumnsException,
-  RangeValueDomain,
-  SingleValueDomain
-}
-import scray.querying.queries.DomainQuery
-import scray.querying.source.QueryableSource
-import scray.querying.source.KeyValueSource
-import scray.querying.source.SimpleHashJoinSource
-import scray.querying.source.LazySource
-import scray.querying.source.LazyQueryDomainFilterSource
-import scray.querying.source.EagerCollectingDomainFilterSource
-import scray.querying.source.EagerSource
-import scray.querying.source.LazyQueryColumnDispenserSource
-import scray.querying.source.Source
-import scray.querying.source.OrderingEagerMappingSource
-import com.twitter.util.Future
-import scala.collection.parallel.immutable.ParSeq
+import com.twitter.storehaus.QueryableStore
+import com.twitter.storehaus.ReadableStore
 import com.twitter.util.Await
+import com.twitter.util.Future
+import com.typesafe.scalalogging.slf4j.LazyLogging
+
+import java.util.UUID
+
+import scala.collection.mutable.HashMap
+import scala.collection.parallel.immutable.ParSeq
+
+import scray.querying.Query
+import scray.querying.Registry
+import scray.querying.description.{And, AtomicClause, Clause, Column, ColumnConfiguration, Columns, Equal, Greater, GreaterEqual, Unequal, Or, Row, Smaller, SmallerEqual, TableIdentifier}
 import scray.querying.description.ColumnOrdering
+import scray.querying.description.TableConfiguration
+import scray.querying.description.internal.{Bound, Domain, NoPlanException, NonAtomicClauseException, QueryDomainParserException, QueryDomainParserExceptionReasons, QueryspaceViolationException, QueryWithoutColumnsException, RangeValueDomain, SingleValueDomain}
 import scray.querying.description.internal.IndexTypeException
+import scray.querying.description.internal.QueryspaceViolationTableUnavailableException
+import scray.querying.description.internal.QueryspaceColumnViolationException
+import scray.querying.description.internal.SingleValueDomain
+import scray.querying.queries.DomainQuery
+import scray.querying.source.EagerCollectingDomainFilterSource
+import scray.querying.source.EagerEmptyRowDispenserSource
+import scray.querying.source.EagerSource
+import scray.querying.source.KeyValueSource
+import scray.querying.source.LazyEmptyRowDispenserSource
+import scray.querying.source.LazyQueryColumnDispenserSource
+import scray.querying.source.LazyQueryDomainFilterSource
+import scray.querying.source.LazySource
+import scray.querying.source.OrderingEagerMappingSource
+import scray.querying.source.QueryableSource
+import scray.querying.source.SimpleHashJoinSource
+import scray.querying.source.Source
 import scray.querying.source.indexing.SimpleHashJoinConfig
 import scray.querying.source.indexing.TimeIndexConfig
 import scray.querying.source.indexing.TimeIndexSource
-import scray.querying.source.LazyEmptyRowDispenserSource
-import scray.querying.source.EagerEmptyRowDispenserSource
-import scray.querying.description.TableConfiguration
-import scray.querying.description.internal.SingleValueDomain
-import com.typesafe.scalalogging.slf4j.LazyLogging
-import scray.common.properties.ScrayProperties
-import com.twitter.storehaus.QueryableStore
-import com.twitter.storehaus.ReadableStore
 
 /**
  * Simple planner to execute queries.
@@ -88,9 +66,10 @@ object Planner extends LazyLogging {
    * plans the execution and starts it
    */
   def planAndExecute(query: Query): Spool[Row] = {
-    // TODO: memoize query-plans
     
     basicVerifyQuery(query)
+
+    // TODO: memoize query-plans if basicVerifyQuery has been successful
     
     val conjunctiveQueries = distributiveOrReductionToConjunctiveQuery(query)
     // from now on, we only have select-project-join / conjunctive queries
@@ -142,16 +121,49 @@ object Planner extends LazyLogging {
    */
   @inline def basicVerifyQuery(query: Query): Unit = {
     // check that the queryspace is there
-    Registry.getQuerySpace(query.getQueryspace).orElse {
-      throw new QueryspaceViolationException(query)
-    }
+    Registry.getQuerySpace(query.getQueryspace).orElse(throw new QueryspaceViolationException(query))
     
     // check that the table is registered in the queryspace
     Registry.getQuerySpaceTable(query.getQueryspace, query.getTableIdentifier).orElse{
       throw new QueryspaceViolationException(query)
+    }.map { tableConf =>
+      if(!(tableConf.queryableStore.isDefined || tableConf.readableStore.isDefined)) {
+          // check that there is a version for the table
+          tableConf.versioned.orElse(throw new QueryspaceViolationTableUnavailableException(query)). 
+            map(_.runtimeVersion().orElse(throw new QueryspaceViolationTableUnavailableException(query)))
+      }
     }
-    // TODO: check that all queried columns are registered
-    // TODO: check that all referenced columns in orderby, groupby and the clauses are registered 
+    
+    // def to throw if a column is not registered 
+    @inline def checkColumnReference(reference: Column): Unit = {
+      Registry.getQuerySpaceColumn(query.getQueryspace, reference) match {
+        case None => throw new QueryspaceColumnViolationException(query, reference)
+        case _ => // column is registered, o.k.
+      }
+    }
+    
+    // check that all queried columns are registered
+    query.getResultSetColumns.columns match {
+      case Right(columns) => columns.foreach(col => checkColumnReference(col))
+      case Left(bool) => if(bool) { /* is a star (*), o.k. */ } else {
+        throw new QueryWithoutColumnsException(query)
+      }
+    }
+    
+    // check that all columns used in clauses are registered
+    query.getWhereAST.foreach { 
+      case equal: Equal[_] => checkColumnReference(equal.column)
+      case greater: Greater[_] => checkColumnReference(greater.column)
+      case greaterequal: GreaterEqual[_] => checkColumnReference(greaterequal.column)
+      case smaller: Smaller[_] => checkColumnReference(smaller.column)
+      case smallerequal: SmallerEqual[_] => checkColumnReference(smallerequal.column)
+      case unequal: Unequal[_] => checkColumnReference(unequal.column)
+      case _ => // do not need to check, not an atomic clause
+    }
+    
+    // check that all referenced columns in orderby, groupby are registered
+    query.getGrouping.map(grouping => checkColumnReference(grouping.column))
+    query.getOrdering.map(ordering => checkColumnReference(ordering.column))
   }
   
   /**
@@ -202,48 +214,57 @@ object Planner extends LazyLogging {
   /**
    * check that we can use a specific materialized view for a given query
    */
-//  private def checkMaterializedViewMatching(space: String, table: TableIdentifier, domQuery: DomainQuery): Option[TableConfiguration[_, _, _]] = {
-//    @inline def checkSingleValueDomainValues(column: Column, values: Array[SingleValueDomain[_]]) = {
-//      values.find { singleVDom => 
-//        domQuery.domains.find { dom => 
-//          dom.column == column && (dom match {
-//            case single: SingleValueDomain[_] => singleVDom.value == single.value
-//            case _ => false
-//          })
-//        }.isDefined
-//      }.isDefined
-//    }
-//    @inline def checkRangeValueDomainValues(column: Column, values: Array[RangeValueDomain[_]]) = {
-//      values.find { rangeDom => 
-//        domQuery.domains.find { dom => 
-//          dom.column == column && (dom match {
-//            case range: RangeValueDomain[Any] => range.isSubIntervalOf(rangeDom.asInstanceOf[RangeValueDomain[Any]])
-//            case _ => false
-//          })
-//        }.isDefined
-//      }.isDefined
-//    }
-//    Registry.getQuerySpaceTable(space, table).map { config =>
-//      config.materializedViews.find { matView =>
-//        // but... does this materialized view make sense for this query at all?
-//        val moreThanZero = (matView.fixedDomains.size > 0) || (matView.rangeDomains.size > 0)
-//        if(moreThanZero) {
-//          // if we don't find a Domain of the view that doesn't match we found a usable view        
-//          val fdom = matView.fixedDomains.find((mat) => !checkSingleValueDomainValues(mat._1, mat._2)).isEmpty
-//          val rdom = matView.rangeDomains.find((mat) => !checkRangeValueDomainValues(mat._1, mat._2)).isEmpty
-//          fdom && rdom
-//        } else {
-//          false
-//        }
-//      }
-//    }
-//  }
+  private def checkMaterializedViewMatching(space: String, table: TableIdentifier, domQuery: DomainQuery): Option[TableConfiguration[_, _, _]] = {
+    // check that all 
+    @inline def checkSingleValueDomainValues(column: Column, values: Array[SingleValueDomain[_]]): Boolean = {
+      values.find { singleVDom => 
+        domQuery.domains.find { dom => 
+          dom.column == column && (dom match {
+            case single: SingleValueDomain[_] => singleVDom.value == single.value
+            case _ => false
+          })
+        }.isDefined
+      }.isDefined
+    }
+    @inline def checkRangeValueDomainValues(column: Column, values: Array[RangeValueDomain[_]]): Boolean = {
+      values.find { rangeDom => 
+        domQuery.domains.find { dom => 
+          dom.column == column && (dom match {
+            case range: RangeValueDomain[_] => range.asInstanceOf[RangeValueDomain[Any]].
+              isSubIntervalOf(rangeDom.asInstanceOf[RangeValueDomain[Any]])
+            case _ => false
+          })
+        }.isDefined
+      }.isDefined
+    }
+    Registry.getQuerySpaceTable(space, table).flatMap { config =>
+      config.materializedViews.find { matView =>
+        // but... does this materialized view make sense for this query at all?
+        val moreThanZero = (matView.fixedDomains.size > 0) || (matView.rangeDomains.size > 0)
+        if(moreThanZero) {
+          // if we don't find a Domain of the view that doesn't match we found a usable view        
+          val fdom = matView.fixedDomains.find((mat) => !checkSingleValueDomainValues(mat._1, mat._2)).isEmpty
+          val rdom = matView.rangeDomains.find((mat) => !checkRangeValueDomainValues(mat._1, mat._2)).isEmpty
+          val dbdom = matView.checkMaterializedView(matView, domQuery)
+          fdom && rdom && dbdom
+        } else {
+          false
+        }
+      }
+    }.map(_.viewTable)
+  }
 
+  /**
+   * returns a QueryableStore and uses versioning information, if needed
+   */
   def getQueryableStore[Q, K, V](tableConfig: TableConfiguration[Q, K, V]): QueryableStore[Q, V] = tableConfig.versioned match {
     case None => tableConfig.queryableStore.get()
     case Some(versionInfo) => versionInfo.queryableStore(versionInfo.runtimeVersion().get)
   }
 
+  /**
+   * returns a ReadableStore and uses versioning information, if needed
+   */
   def getReadableStore[Q, K, V](tableConfig: TableConfiguration[Q, K, V]): ReadableStore[K, V] = tableConfig.versioned match {
     case None => tableConfig.readableStore.get()
     case Some(versionInfo) => versionInfo.readableStore(versionInfo.runtimeVersion().get)
@@ -267,6 +288,11 @@ object Planner extends LazyLogging {
       Registry.getQuerySpace(query.getQueryspace).flatMap(_.queryCanBeGrouped(query))
     }
 
+    // check if we have a matching materialized view prepared
+    val matview = checkMaterializedViewMatching(query.getQueryspace, query.getTableIdentifier, domainQuery)
+    
+    // matview.map(_.)
+    
     // if we do not have a sorting nor a grouping, we try to find the first hand-made index
     val mainColumn: Option[ColumnConfiguration] = sortedColumnConfig.orElse(groupedColumnConfig).orElse{
       domainQuery.domains.map { domain =>
@@ -289,7 +315,7 @@ object Planner extends LazyLogging {
           query.getQueryspace, tableConf.mainTableConfig.table, Registry.getCachingEnabled)
         tableConf.indexConfig match {
           case simple: SimpleHashJoinConfig => new SimpleHashJoinSource(indexSource, colConf.column, 
-            mainSource, tableConf.mainTableConfig.primarykeyColumn)
+            mainSource, tableConf.mainTableConfig.primarykeyColumns)
           case time: TimeIndexConfig => new TimeIndexSource(time, indexSource, mainSource.asInstanceOf[KeyValueSource[Any, _]],
             tableConf.mainTableConfig.table, tableConf.keymapper)
           case _ => throw new IndexTypeException(query)
@@ -365,6 +391,7 @@ object Planner extends LazyLogging {
           value => { le.ordering.compare(le.value, value) < 0 },
           RangeValueDomain(le.column, None, Some(Bound(true, le.value)(le.ordering)))(le.ordering),
           collector)
+      // TODO: case ne: Unequal[T] => this is problematic need more logic for that
     }
     // collect all predicates where columns are the same and try to define domains
     val collector = new HashMap[Column, Domain[_]]
