@@ -128,7 +128,7 @@ class CompositeRow(val rows: List[Row]) extends Row {
   }
   override def getColumnValue[V](col: Column): Option[V] = rows.collect {
       case row: Row if row.getColumnValue(col).isDefined => row.getColumnValue(col)
-    }.head
+    }.headOption.flatten
     
 //  override def getColumnValueType(colNum: Int): Option[TypeTag[_]] = {
 //    @tailrec def getRelevantRowForEntryNumber(colNumLocal: Int, rowList: List[Row]): Option[TypeTag[_]] = {
