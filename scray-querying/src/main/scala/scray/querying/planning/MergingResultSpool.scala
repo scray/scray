@@ -23,7 +23,7 @@ import scala.annotation.tailrec
 import scray.querying.description.QueryRange
 
 /**
- * used to combine query result sets 
+ * used to combine query result sets or skip and limit
  */
 object MergingResultSpool {
 
