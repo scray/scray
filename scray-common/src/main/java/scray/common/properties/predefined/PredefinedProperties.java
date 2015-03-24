@@ -30,10 +30,10 @@ public class PredefinedProperties {
 			"CASSANDRA_INDEX_CLUSTER_DC", "DC2");
 	public final static IntProperty MINUTES_PER_BATCH = new IntProperty(
 			"MINUTES_PER_BATCH", 30);
-    public final static IntProperty INDEX_DEFAULT_PARALLELIZATION = new IntProperty(
-                                                                        "INDEX_DEFAULT_PARALLELIZATION", 12);
-    public final static StringProperty INDEX_PARALLELIZATION_COLUMN = new StringProperty(
-                                                                                    "INDEX_PARALLELIZATION_COLUMN", "i");
+	public final static IntProperty INDEX_ROW_SPREAD = new IntProperty(
+			"INDEX_ROW_SPREAD", 15);
+        public final static StringProperty INDEX_PARALLELIZATION_COLUMN = new StringProperty(
+			"INDEX_PARALLELIZATION_COLUMN", "Spread");
 
 	private static Set<InetSocketAddress> defaultScrayServiceIps = new HashSet<InetSocketAddress>();
 
