@@ -46,11 +46,4 @@ public class PredefinedProperties {
 	public final static SocketListProperty SCRAY_MEMCACHED_IPS = new SocketListProperty(
 			"SCRAY_MEMCACHED_IPS", 11211);
 
-	/* Following properties used as constants (defaults) */
-
-	public final static StringProperty INDEXING_HDFS_PROPERTIES_KEY = new StringProperty(
-			"INDEXING_HDFS_PROPERTIES_KEY", "indexing.hdfs.properties");
-	public final static StringProperty INDEXING_HDFS_PROPERTIES_PATH = new StringProperty(
-			"INDEXING_HDFS_PROPERTIES_PATH", "/tmp/bdq-indexing.properties");
-
 }
