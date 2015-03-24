@@ -20,12 +20,9 @@ import com.twitter.storehaus.ReadableStore
 import com.twitter.util.Await
 import com.twitter.util.Future
 import com.typesafe.scalalogging.slf4j.LazyLogging
-
 import java.util.UUID
-
 import scala.collection.mutable.HashMap
 import scala.collection.parallel.immutable.ParSeq
-
 import scray.querying.Query
 import scray.querying.Registry
 import scray.querying.description.{And, AtomicClause, Clause, Column, ColumnConfiguration, Columns, Equal, Greater, GreaterEqual, Unequal, Or, Row, Smaller, SmallerEqual, TableIdentifier}
@@ -52,6 +49,9 @@ import scray.querying.source.Source
 import scray.querying.source.indexing.SimpleHashJoinConfig
 import scray.querying.source.indexing.TimeIndexConfig
 import scray.querying.source.indexing.TimeIndexSource
+import scray.querying.description.internal.MaterializedView
+import scala.annotation.tailrec
+import scray.querying.source.ParallelizedQueryableSource
 
 /**
  * Simple planner to execute queries.
@@ -212,9 +212,13 @@ object Planner extends LazyLogging {
   }
   
   /**
-   * check that we can use a specific materialized view for a given query
+   * Checks that we can use a one or more materialized views for a given query.
+   * If there is more than one view available the result will be the one with the "best"
+   * (i.e. highest) score (number of matching columns), except if some of the views
+   * support the ordering defined, then the "best" of this sub-set be used regardless
+   * of other views with better scores (saves memory).
    */
-  private def checkMaterializedViewMatching(space: String, table: TableIdentifier, domQuery: DomainQuery): Option[TableConfiguration[_, _, _]] = {
+  private def checkMaterializedViewMatching(space: String, table: TableIdentifier, domQuery: DomainQuery): Option[(Boolean, MaterializedView)] = {
     // check that all 
     @inline def checkSingleValueDomainValues(column: Column, values: Array[SingleValueDomain[_]]): Boolean = {
       values.find { singleVDom => 
@@ -237,21 +241,48 @@ object Planner extends LazyLogging {
         }.isDefined
       }.isDefined
     }
-    Registry.getQuerySpaceTable(space, table).flatMap { config =>
-      config.materializedViews.find { matView =>
-        // but... does this materialized view make sense for this query at all?
-        val moreThanZero = (matView.fixedDomains.size > 0) || (matView.rangeDomains.size > 0)
-        if(moreThanZero) {
+    @tailrec def findMaterializedViews(views: List[MaterializedView],  
+                                          resultViews: List[(Boolean, Int, MaterializedView)]): 
+                                          List[(Boolean, Int, MaterializedView)] = {
+      if(views.isEmpty) {
+        resultViews
+      } else {
+        val matView = views.head
+        // but... do we have constraints? If yes, check these first.
+        val moreThanZero = (!matView.fixedDomains.isEmpty) || (!matView.rangeDomains.isEmpty)
+        val matOpt: Option[(Boolean, Int)] = if(moreThanZero) {
           // if we don't find a Domain of the view that doesn't match we found a usable view        
           val fdom = matView.fixedDomains.find((mat) => !checkSingleValueDomainValues(mat._1, mat._2)).isEmpty
           val rdom = matView.rangeDomains.find((mat) => !checkRangeValueDomainValues(mat._1, mat._2)).isEmpty
-          val dbdom = matView.checkMaterializedView(matView, domQuery)
-          fdom && rdom && dbdom
+          if(fdom && rdom) {
+            matView.checkMaterializedView(matView, domQuery)
+          } else {
+            None
+          }
         } else {
-          false
+          // no constraints return whether view is matching and how
+          matView.checkMaterializedView(matView, domQuery)
         }
+        val resultlist = matOpt match {
+          case Some(addMatView) => (addMatView._1, addMatView._2, matView) :: resultViews 
+          case None => resultViews
+        }
+        findMaterializedViews(views.tail, resultlist)
       }
-    }.map(_.viewTable)
+    }
+    Registry.getQuerySpaceTable(space, table).flatMap { config =>
+      val views = findMaterializedViews(config.materializedViews, Nil)
+      if(!views.isEmpty) {
+        val orderedViews = views.filter(_._1)
+        if(!orderedViews.isEmpty) {
+          Some((true, orderedViews.maxBy[Int](_._2)._3))
+        } else {
+          Some((false, views.maxBy[Int](_._2)._3))
+        }
+      } else {
+        None
+      }
+    }
   }
 
   /**
@@ -278,6 +309,16 @@ object Planner extends LazyLogging {
    * 3. perform filter resolution
    */
   def findMainQueryPlan[T](query: Query, domainQuery: DomainQuery): ComposablePlan[DomainQuery, _] = {
+    // 1. check if we have a matching materialized view prepared and 
+    // whether it is ordered according to our ordering: Option[(ordered: Boolean, table)] 
+    checkMaterializedViewMatching(query.getQueryspace, query.getTableIdentifier, domainQuery) match {
+      case Some((ordered, viewConf)) =>
+        val qSource = new QueryableSource(getQueryableStore(viewConf.viewTable), query.getQueryspace, domainQuery.table, ordered) 
+        return ComposablePlan.getComposablePlan(qSource, domainQuery)
+      case _ =>
+    }
+ 
+    // 2. materialized views aren't available for this query. Build non-view-based plan 
     val sortedColumnConfig: Option[ColumnConfiguration] = query.getOrdering.flatMap { _ => 
       // we shall sort - do we have sorting in the query space?
       Registry.getQuerySpace(query.getQueryspace).flatMap(_.queryCanBeOrdered(query))
@@ -288,11 +329,6 @@ object Planner extends LazyLogging {
       Registry.getQuerySpace(query.getQueryspace).flatMap(_.queryCanBeGrouped(query))
     }
 
-    // check if we have a matching materialized view prepared
-    val matview = checkMaterializedViewMatching(query.getQueryspace, query.getTableIdentifier, domainQuery)
-    
-    // matview.map(_.)
-    
     // if we do not have a sorting nor a grouping, we try to find the first hand-made index
     val mainColumn: Option[ColumnConfiguration] = sortedColumnConfig.orElse(groupedColumnConfig).orElse{
       domainQuery.domains.map { domain =>
@@ -316,8 +352,15 @@ object Planner extends LazyLogging {
         tableConf.indexConfig match {
           case simple: SimpleHashJoinConfig => new SimpleHashJoinSource(indexSource, colConf.column, 
             mainSource, tableConf.mainTableConfig.primarykeyColumns)
-          case time: TimeIndexConfig => new TimeIndexSource(time, indexSource, mainSource.asInstanceOf[KeyValueSource[Any, _]],
-            tableConf.mainTableConfig.table, tableConf.keymapper)
+          case time: TimeIndexConfig => 
+            // maybe a parallel version is available --> convert to parallel version
+            val timeQueryableSource = time.parallelization match {
+              case Some(parFunc) => new ParallelizedQueryableSource(indexSource.store, indexSource.space, 
+                      time.parallelizationColumn.get, parFunc, time.ordering)
+              case None => indexSource
+            }
+            new TimeIndexSource(time, timeQueryableSource, mainSource.asInstanceOf[KeyValueSource[Any, _]], 
+                                tableConf.mainTableConfig.table, tableConf.keymapper)
           case _ => throw new IndexTypeException(query)
         }
       }).orElse {

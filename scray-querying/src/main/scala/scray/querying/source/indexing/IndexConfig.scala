@@ -1,7 +1,7 @@
 package scray.querying.source.indexing
 
 import java.util.TimeZone
-import scray.querying.description.Column
+import scray.querying.description.{Column, Row}
 
 /**
  * all indexes that are allowed must have a configuration
@@ -21,6 +21,12 @@ case class TimeIndexConfig(
     indexColumnMs: Column,
     // column in the index-table that contains the references into the lookup-source
     indexReferencesColumn: Column,
+    // if this index can be queried in parallel and how much parallelization is available
+    parallelization: Option[() => Int] = None,
+    // which column is used for parallelization
+    parallelizationColumn: Option[Column] = None,
+    // if this index is ordered
+    ordering: Option[(Row, Row) => Boolean] = None,
     // time zone of index, only relevant for turns of the year
     timeZone: TimeZone = TimeZone.getTimeZone("UTC"), 
     // minimum year of data that is indexed

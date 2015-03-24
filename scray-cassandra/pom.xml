@@ -31,7 +31,12 @@
       <artifactId>summingbird-batch_2.10</artifactId>
       <version>0.5.1</version>
     </dependency>
-    
+
+    <dependency>
+    	<groupId>org.yaml</groupId>
+    	<artifactId>snakeyaml</artifactId>
+    	<version>1.11</version>
+    </dependency>
   </dependencies>
 
   <licenses>

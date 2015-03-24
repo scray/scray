@@ -32,10 +32,10 @@ import scray.querying.caching.NullCache
 /**
  * queries a Storehaus-store. Assumes that the Seq returnes by QueryableStore is a lazy sequence (i.e. view)
  */
-class QueryableSource[K, V](store: QueryableStore[K, V], space: String, table: TableIdentifier, isOrdered: Boolean = false) 
+class QueryableSource[K, V](val store: QueryableStore[K, V], val space: String, table: TableIdentifier, val isOrdered: Boolean = false) 
     extends LazySource[DomainQuery] with LazyLogging {
 
-  private val queryspaceTable = Registry.getQuerySpaceTable(space, table) 
+  protected val queryspaceTable = Registry.getQuerySpaceTable(space, table) 
   
   val valueToRow: (V) => Row = queryspaceTable.get.rowMapper.asInstanceOf[(V) => Row]
   
@@ -78,7 +78,7 @@ object QueryableSource {
   /**
    * copied from com.twitter.storehaus.IterableStore, but removed tuple dependency
    */
-  private def iteratorToSpool[V](it: Iterator[V], transformer: (V) => Row): Future[Spool[Row]] = Future.value {
+  def iteratorToSpool[V](it: Iterator[V], transformer: (V) => Row): Future[Spool[Row]] = Future.value {
     if (it.hasNext) {
       // *:: for lazy/deferred tail
       transformer(it.next) *:: iteratorToSpool(it, transformer)
