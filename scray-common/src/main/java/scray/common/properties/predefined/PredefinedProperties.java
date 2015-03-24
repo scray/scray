@@ -32,6 +32,8 @@ public class PredefinedProperties {
 			"MINUTES_PER_BATCH", 30);
 	public final static IntProperty INDEX_ROW_SPREAD = new IntProperty(
 			"INDEX_ROW_SPREAD", 15);
+        public final static StringProperty INDEX_PARALLELIZATION_COLUMN = new StringProperty(
+			"INDEX_PARALLELIZATION_COLUMN", "Spread");
 
 	private static Set<InetSocketAddress> defaultScrayServiceIps = new HashSet<InetSocketAddress>();
 
