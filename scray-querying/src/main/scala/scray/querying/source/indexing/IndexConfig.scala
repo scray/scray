@@ -22,7 +22,7 @@ case class TimeIndexConfig(
     // column in the index-table that contains the references into the lookup-source
     indexReferencesColumn: Column,
     // if this index can be queried in parallel and how much parallelization is available
-    parallelization: Option[() => Int] = None,
+    parallelization: Option[() => Option[Int]] = None,
     // which column is used for parallelization
     parallelizationColumn: Option[Column] = None,
     // if this index is ordered
