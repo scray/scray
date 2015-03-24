@@ -356,7 +356,7 @@ object Planner extends LazyLogging {
             // maybe a parallel version is available --> convert to parallel version
             val timeQueryableSource = time.parallelization match {
               case Some(parFunc) => new ParallelizedQueryableSource(indexSource.store, indexSource.space, 
-                      time.parallelizationColumn.get, parFunc, time.ordering)
+                      time.parallelizationColumn.get, parFunc(indexSource.store), time.ordering)
               case None => indexSource
             }
             new TimeIndexSource(time, timeQueryableSource, mainSource.asInstanceOf[KeyValueSource[Any, _]], 

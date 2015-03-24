@@ -33,7 +33,7 @@ import scala.annotation.tailrec
  * Assumes that the Seq returnes by QueryableStore is a lazy sequence (i.e. view)
  */
 class ParallelizedQueryableSource[K, V](override val store: QueryableStore[K, V], override val space: String, 
-        parallelizationColumn: Column, parallelization: () => Option[Int], ordering: Option[(Row, Row) => Boolean]) extends 
+        parallelizationColumn: Column, parallelization: Option[Int], ordering: Option[(Row, Row) => Boolean]) extends 
         QueryableSource[K, V](store, space, parallelizationColumn.table, ordering.isDefined) with LazyLogging {
   
   @inline def getTransformedDomainQuery(query: DomainQuery, number: Int): K =
@@ -56,7 +56,7 @@ class ParallelizedQueryableSource[K, V](override val store: QueryableStore[K, V]
   }
 
   override def request(query: DomainQuery): Future[Spool[Row]] = {
-    parallelization().map { numberQueries => 
+    parallelization.map { numberQueries => 
       logger.debug(s"Requesting data from store with ${query.getQueryID} using ${numberQueries} queries in parallel")
       val spools = executeQueries(query, numberQueries, Nil)
       isOrdered match {
