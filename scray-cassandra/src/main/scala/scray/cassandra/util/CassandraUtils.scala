@@ -32,6 +32,7 @@ object CassandraUtils {
    * If you need synchronization please use external synchronization, e.g. Zookeeper.
    */
   def writeTablePropertyToCassandra(cf: StoreColumnFamily, property: String, value: String) = {
+    def escapeQuotes(str: String) = str.replaceAll("'", "''")
     // read
     val currentMap = getTablePropertiesFromCassandra(cf)
     // merge
@@ -43,7 +44,7 @@ object CassandraUtils {
         properties.put(property, value)
         properties
     }
-    val yaml = new Yaml().dump(map)
+    val yaml = escapeQuotes(new Yaml().dump(map))
     // write
     val cql = s"ALTER TABLE ${cf.getPreparedNamed} WITH comment='$yaml'"
     cf.session.getSession.execute(cql)
@@ -60,9 +61,9 @@ object CassandraUtils {
     val yaml = new Yaml()
     currentYaml.flatMap { content =>
       Try {
-        yaml.load(content).asInstanceOf[JMap[String, String]]
-      }.toOption
-    }    
+        Option(yaml.load(content).asInstanceOf[JMap[String, String]])
+      }.toOption.flatten
+    }
   } 
   
   /**
