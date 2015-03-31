@@ -12,6 +12,6 @@ public class CommonCassandraRegistrar implements ScrayPropertyRegistration.Prope
 		ScrayProperties.registerProperty(PredefinedProperties.CASSANDRA_QUERY_CLUSTER_NAME);
 		ScrayProperties.registerProperty(PredefinedProperties.CASSANDRA_QUERY_CLUSTER_DC);
 	    ScrayProperties.registerProperty(PredefinedProperties.CASSANDRA_QUERY_KEYSPACE);
-	    ScrayProperties.registerProperty(PredefinedProperties.CASSANDRA_QUERY_CONSISTENCY);
+	    ScrayProperties.registerProperty(PredefinedProperties.QUERY_READ_CONSISTENCY);
 	}
 }

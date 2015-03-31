@@ -4,6 +4,7 @@ import java.net.InetSocketAddress;
 import java.util.HashSet;
 import java.util.Set;
 
+import scray.common.properties.ConsistencyLevelProperty;
 import scray.common.properties.IntProperty;
 import scray.common.properties.SocketListProperty;
 import scray.common.properties.StringProperty;
@@ -20,6 +21,9 @@ public class PredefinedProperties {
 			"CASSANDRA_QUERY_KEYSPACE", "SIL");
 	public final static StringProperty CASSANDRA_INDEX_KEYSPACE = new StringProperty(
 			"CASSANDRA_INDEX_KEYSPACE", "SILIDX");
+	public final static ConsistencyLevelProperty QUERY_READ_CONSISTENCY = new ConsistencyLevelProperty(
+			"QUERY_READ_CONSISTENCY",
+			ConsistencyLevelProperty.ConsistencyLevel.LOCAL_ONE);
 	public final static StringProperty CASSANDRA_QUERY_CLUSTER_NAME = new StringProperty(
 			"CASSANDRA_QUERY_CLUSTER_NAME", "Query Cluster");
 	public final static StringProperty CASSANDRA_QUERY_CLUSTER_DC = new StringProperty(
@@ -32,7 +36,7 @@ public class PredefinedProperties {
 			"MINUTES_PER_BATCH", 30);
 	public final static IntProperty INDEX_ROW_SPREAD = new IntProperty(
 			"INDEX_ROW_SPREAD", 15);
-        public final static StringProperty INDEX_PARALLELIZATION_COLUMN = new StringProperty(
+	public final static StringProperty INDEX_PARALLELIZATION_COLUMN = new StringProperty(
 			"INDEX_PARALLELIZATION_COLUMN", "Spread");
 
 	private static Set<InetSocketAddress> defaultScrayServiceIps = new HashSet<InetSocketAddress>();
