@@ -170,7 +170,7 @@
 					<reportsDirectory>${project.build.directory}/surefire-reports</reportsDirectory>
 					<junitxml>.</junitxml>
 					<filereports>WDF TestSuite.txt</filereports>
-					<tagsToExclude>CassandraUp</tagsToExclude>
+					<tagsToExclude>CassandraUp,SilUp</tagsToExclude>
 				</configuration>
 				<executions>
 					<execution>
