@@ -30,6 +30,7 @@ import scray.querying.description.Greater
 import scray.querying.description.GreaterEqual
 import scray.querying.description.Smaller
 import scray.querying.description.SmallerEqual
+import scray.querying.description.Unequal
 import scala.util.Try
 import scray.querying.description.Or
 import scray.querying.Query
@@ -185,6 +186,13 @@ class QueryParserSpec extends FlatSpec with Matchers with TQuerySamples {
     val query = generate(parsed)
     query.getWhereAST.get.isInstanceOf[GreaterEqual[_]] should be(true)
     query.getWhereAST.get.asInstanceOf[GreaterEqual[Int]].value.compareTo(1) should be(0)
+  }
+
+    it should "handle atomic predicates with 'unequal'" in {
+    val parsed = parse("SELECT col1 FROM @myTableId WHERE col1<>1")
+    val query = generate(parsed)
+    query.getWhereAST.get.isInstanceOf[Unequal[_]] should be(true)
+    query.getWhereAST.get.asInstanceOf[Unequal[Int]].value.compareTo(1) should be(0)
   }
 
   it should "handle complex 'AND' predicates" in {

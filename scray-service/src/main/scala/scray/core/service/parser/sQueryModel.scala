@@ -305,7 +305,7 @@ abstract class _AtomicPredicate(columnName : String, value : _Value) extends _Pr
 }
 
 /*
- * Concrete atomic predicates (=,<,>,<=,>=) containing individual generators
+ * Concrete atomic predicates (=,<,>,<=,>=,<>) containing individual generators
  */
 
 case class _Equal(columnName : String, value : _Value) extends _AtomicPredicate(columnName, value) {
@@ -322,6 +322,9 @@ case class _Smaller(columnName : String, value : _Value) extends _AtomicPredicat
 }
 case class _SmallerEqual(columnName : String, value : _Value) extends _AtomicPredicate(columnName, value) {
   def generate()(implicit query : _Query) : SmallerEqual[_] = SmallerEqual(getColumn, getValue.get)
+}
+case class _Unequal(columnName : String, value : _Value) extends _AtomicPredicate(columnName, value) {
+  def generate()(implicit query : _Query) : Unequal[_] = Unequal(getColumn, getValue.get)
 }
 
 /**
