@@ -52,6 +52,7 @@ import scray.querying.source.indexing.TimeIndexSource
 import scray.querying.description.internal.MaterializedView
 import scala.annotation.tailrec
 import scray.querying.source.ParallelizedQueryableSource
+import scray.querying.description.internal._
 
 /**
  * Simple planner to execute queries.
@@ -380,18 +381,20 @@ object Planner extends LazyLogging {
    * intersect domains for a single predicate of a query
    */
   @inline private def domainComparator[T](query: Query,
-      col: Column, 
-      throwFunc: (T) => Boolean,
-      creationDomain: RangeValueDomain[T], collector: HashMap[Column, Domain[_]]): Unit = {
-    collector.get(col).map { pred => pred match {
-      case equal: SingleValueDomain[T] => if(throwFunc(equal.value)) { 
-        throw new QueryDomainParserException(QueryDomainParserExceptionReasons.DOMAIN_EQUALITY_CONFLICT, col, query)}
-      case range: RangeValueDomain[T] => {
-        collector.put(col, range.bisect(creationDomain)
-          .getOrElse(throw new QueryDomainParserException(QueryDomainParserExceptionReasons.DOMAIN_DISJOINT_CONFLICT, col, query)))
+                                          col: Column,
+                                          throwFunc: (T) => Boolean,
+                                          creationDomain: RangeValueDomain[T], collector: HashMap[Column, Domain[_]]): Unit = {
+    collector.get(col).map { _ match {
+        case equal: SingleValueDomain[T] => if (throwFunc(equal.value)) {
+          throw new QueryDomainParserException(QueryDomainParserExceptionReasons.DOMAIN_EQUALITY_CONFLICT, col, query)
+        }
+        case range: RangeValueDomain[T] => {
+          collector.put(col, range.bisect(creationDomain)
+            .getOrElse(throw new QueryDomainParserException(QueryDomainParserExceptionReasons.DOMAIN_DISJOINT_CONFLICT, col, query)))
+        }
+        case _ => throw new QueryDomainParserException(QueryDomainParserExceptionReasons.UNKNOWN_DOMAIN_CONFLICT, col, query)
       }
-      case _ => throw new QueryDomainParserException(QueryDomainParserExceptionReasons.UNKNOWN_DOMAIN_CONFLICT, col, query)
-    }}.orElse {
+    }.orElse {
       collector.put(col, creationDomain)
     }
   }
@@ -434,7 +437,11 @@ object Planner extends LazyLogging {
           value => { le.ordering.compare(le.value, value) < 0 },
           RangeValueDomain(le.column, None, Some(Bound(true, le.value)(le.ordering)))(le.ordering),
           collector)
-      // TODO: case ne: Unequal[T] => this is problematic need more logic for that
+      case ne: Unequal[T] => domainComparator[T](query,
+          ne.column, 
+          value => { ne.ordering.compare(ne.value, value) == 0 },
+          new RangeValueDomain(ne.column, List(ne.value))(ne.ordering),
+          collector)
     }
     // collect all predicates where columns are the same and try to define domains
     val collector = new HashMap[Column, Domain[_]]

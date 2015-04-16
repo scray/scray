@@ -17,10 +17,17 @@ package scray.querying
 import org.junit.runner.RunWith
 import org.scalatest.WordSpec
 import org.scalatest.junit.JUnitRunner
+import scray.querying.description.Clause
+import scray.querying.description.TableIdentifier
+import scray.querying.description.internal.Bound
+import scray.querying.description.internal.RangeValueDomain
+import scray.querying.queries.SimpleQuery
 import scray.querying.description.{Clause, Column, Columns, QueryRange, TableIdentifier}
 import scray.querying.description.{And, Equal, Or}
 import scray.querying.queries.SimpleQuery
 import scray.querying.description.internal.{Bound, RangeValueDomain}
+import scray.querying.description.Unequal
+import scray.querying.planning.Planner
 
 /**
  * Scray querying specification.

@@ -38,9 +38,14 @@ case class SingleValueDomain[T](
 case class RangeValueDomain[T](
   override val column: Column,
   lowerBound: Option[Bound[T]], // None means no lower bound
-  upperBound: Option[Bound[T]] // None means no upper bound
+  upperBound: Option[Bound[T]],// None means no upper bound
+  unequalValues: List[T] = List() 
+  
   // exclusions: Option[List[T]]
 )(implicit val ordering: Ordering[T]) extends Domain[T](column) {
+  
+  def this(column: Column, unequalValues: List[T])(implicit order: Ordering[T]) = this(column, None, None, unequalValues)(order)
+  
   /**
    * checks if the current RangeValueDomain is a sub-interval of rangeValueDomain
    */
@@ -273,7 +278,8 @@ case class RangeValueDomain[T](
     lowerBound.map(lower => ordering.compare(lower.value, value) < 0 || 
         (lower.inclusive && ordering.compare(lower.value, value) == 0)).getOrElse(true) &&
     upperBound.map(upper => ordering.compare(upper.value, value) > 0 || 
-        (upper.inclusive && ordering.compare(upper.value, value) == 0)).getOrElse(true)
+        (upper.inclusive && ordering.compare(upper.value, value) == 0)).getOrElse(true) &&
+    unequalValues.find ( _ == value ).isEmpty
   }
   def valueIsHigherThanUpper(value: T): Boolean = {
     upperBound.map(upper => ordering.compare(value, upper.value) > 0 ||
@@ -284,6 +290,7 @@ case class RangeValueDomain[T](
         (lower.inclusive && ordering.compare(lower.value, value) == 0)).getOrElse(false)
   }
 }
+
 
 /**
  * represents a domain which has multiple ranges, i.e. is
