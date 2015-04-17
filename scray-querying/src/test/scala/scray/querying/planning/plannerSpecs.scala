@@ -28,6 +28,10 @@ import scray.querying.description.internal.SingleValueDomain
 import scray.querying.description.Smaller
 import scray.querying.description.internal.RangeValueDomain
 import scray.querying.description.SmallerEqual
+import scray.querying.description.Unequal
+import scray.querying.description.internal.RangeValueDomain
+import org.scalatest.Succeeded
+import com.twitter.util.Try
 
 /**
  * Scray querying specification.
@@ -84,7 +88,7 @@ class ScrayQueryingPlannerTest extends WordSpec {
     }
     "use distributive law for multiplying/anding three 'OR's within one 'AND'" in {
       val sq = SimpleQuery("", ti,
-          where = Some(And(Or(Equal(Column("bla11", ti), 1), Equal(Column("bla12", ti), 1)),
+          where = Some(And(Or(Unequal(Column("bla11", ti), 1), Equal(Column("bla12", ti), 1)),
               Or(Equal(Column("bla21", ti), 2),Equal(Column("bla22", ti), 2)),
               Or(Equal(Column("bla31", ti), 3),Equal(Column("bla32", ti), 3))))
           )
@@ -201,6 +205,47 @@ class ScrayQueryingPlannerTest extends WordSpec {
       assert(result.get.head.isInstanceOf[RangeValueDomain[_]])
       assert(result.get.head.asInstanceOf[RangeValueDomain[Int]].upperBound.get.value == 3)
     }
+    "test domaine generation for unequal operator" in {      
+      val sq = SimpleQuery("", ti,
+          where = Some(Unequal(Column("bla", ti), "bla"))
+      )
+
+      val result = planner.qualifyPredicates(sq)  
+       result match {
+          case _: Some[List[RangeValueDomain[_]]] => assert(true)
+          case _ => fail("Wrong domaine for this query.")
+      }
+    }
+    "test wrong operator combination" in {      
+      val sq = SimpleQuery("", ti,
+          where = Some(And(Unequal(Column("bla", ti), "bla"), Equal(Column("bla", ti), "bla")))
+      )
+      
+       intercept[Exception]{planner.qualifyPredicates(sq)} 
+    }
+    "test operators greater and unequal together" in {      
+      val sq = SimpleQuery("", ti,
+          where = Some(And(Unequal(Column("bla", ti), "bla"), Greater(Column("bla", ti), "bla")))
+      )
+
+      val result = planner.qualifyPredicates(sq)  
+      result match {
+          case _: Some[List[RangeValueDomain[_]]] => assert(true)
+          case _ => fail("Wrong domaine for this query.")
+      }
+    }
+    "test operator unequal " in {      
+      val sq = SimpleQuery("", ti,
+          where = Some(Unequal(Column("bla", ti), "bla"))
+      )
+
+      val result = planner.qualifyPredicates(sq)  
+      result match {
+          case _: Some[List[RangeValueDomain[_]]] => assert(true)
+          case _ => fail("Wrong domaine for this query.")
+      }
+    }
+    
   }
 //  "Scray's Panner should create dot-data" should {
 //    
