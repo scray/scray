@@ -352,15 +352,17 @@ object Planner extends LazyLogging {
         tableConf.indexConfig match {
           case simple: SimpleHashJoinConfig => new SimpleHashJoinSource(indexSource, colConf.column, 
             mainSource, tableConf.mainTableConfig.primarykeyColumns)
-          case time: TimeIndexConfig => 
+          case time: TimeIndexConfig =>
             // maybe a parallel version is available --> convert to parallel version
             val timeQueryableSource = time.parallelization match {
+              // case Some(parFunc) => indexSource
               case Some(parFunc) => new ParallelizedQueryableSource(indexSource.store, indexSource.space, 
                       time.parallelizationColumn.get, parFunc(indexSource.store), time.ordering)
               case None => indexSource
             }
             new TimeIndexSource(time, timeQueryableSource, mainSource.asInstanceOf[KeyValueSource[Any, _]], 
-                                tableConf.mainTableConfig.table, tableConf.keymapper)
+                                tableConf.mainTableConfig.table, tableConf.keymapper,
+                                time.parallelization.flatMap(_(getQueryableStore(tableConf.indexTableConfig))))
           case _ => throw new IndexTypeException(query)
         }
       }).orElse {

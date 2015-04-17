@@ -37,8 +37,9 @@ class TimeIndexSource[Q <: DomainQuery, M, R, V](
     indexsource: LazySource[Q],
     lookupSource: KeyValueSource[R, V],
     lookupSourceTable: TableIdentifier,
-    lookupkeymapper: Option[M => R] = None)(implicit tag: ClassTag[M]) 
-    extends AbstractHashJoinSource[Q, M, R, V](indexsource, lookupSource, lookupSourceTable, lookupkeymapper)
+    lookupkeymapper: Option[M => R] = None,
+    sequencedmapper: Option[Int] = None)(implicit tag: ClassTag[M]) 
+    extends AbstractHashJoinSource[Q, M, R, V](indexsource, lookupSource, lookupSourceTable, lookupkeymapper, sequencedmapper)
     with LazyLogging {
 
   /**

@@ -42,7 +42,7 @@ class KeyValueSource[K, V](val store: ReadableStore[K, V],
     space: String, table: TableIdentifier, enableCaching: Boolean = true) extends EagerSource[KeyBasedQuery[K]] with LazyLogging {
 
   private val queryspaceTable = Registry.getQuerySpaceTable(space, table)
-  private val cache = Registry.getCache[Row, KeyValueCache[K, Row]](this)
+  protected val cache = Registry.getCache[Row, KeyValueCache[K, Row]](this)
   
   val valueToRow: ((K, V)) => Row = queryspaceTable.get.rowMapper.asInstanceOf[((K, V)) => Row]
 

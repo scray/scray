@@ -32,6 +32,10 @@ import org.slf4j.LoggerFactory
 import com.typesafe.scalalogging.slf4j.LazyLogging
 import scala.collection.parallel.ForkJoinTaskSupport
 import scala.concurrent.forkjoin.ForkJoinPool
+import com.twitter.concurrent.Spool.LazyCons
+import com.twitter.concurrent.Spool.LazyCons
+import scala.collection.mutable.ArrayBuffer
+import scray.querying.queries.KeySetBasedQuery
 
 /**
  * This hash joined source provides a template for implementing hashed-joins. This is a relational lookup.
@@ -45,9 +49,12 @@ abstract class AbstractHashJoinSource[Q <: DomainQuery, M, R /* <: Product */, V
     indexsource: LazySource[Q],
     lookupSource: KeyValueSource[R, V],
     lookupSourceTable: TableIdentifier,
-    lookupkeymapper: Option[M => R] = None)
+    lookupkeymapper: Option[M => R] = None,
+    sequencedmapper: Option[Int] = None)
   extends LazySource[Q] with LazyLogging {
 
+  import SpoolUtils._
+  
   /**
    * transforms the spool and queries the lookup source.
    */
@@ -59,35 +66,52 @@ abstract class AbstractHashJoinSource[Q <: DomainQuery, M, R /* <: Product */, V
         insertRowsIntoSpool(rows.tail, rows.head *:: Future.value(spoolElements))
       }
     }
-    spool.flatMap { in => 
-      val joinables = getJoinablesFromIndexSource(in)
-      // execute this flatMap on a parallel collection
-      val parseq: Array[Option[Row]] = joinables.map { lookupTuple => 
-        val keyValueSourceQuery = new KeyBasedQuery[R](
-          lookupkeymapper.map(_(lookupTuple)).getOrElse(lookupTuple.asInstanceOf[R]),
-          lookupSourceTable,
-          lookupSource.getColumns,
-          query.querySpace,
-          query.getQueryID)
-        val seq = Await.result(lookupSource.request(keyValueSourceQuery))
-        if(seq.size > 0) {
-          val head = seq.head
-          Some(new CompositeRow(List(head, in)))      
-        } else { None }
+    sequencedmapper.flatMap { seqSize =>
+      lookupSource match {
+        case pls: ParallelizedKeyValueSource[R, V] => 
+          Some(Future.value(spool.mapBuffered(seqSize, bufferedseq => {
+            val joinables = bufferedseq.flatMap(in => getJoinablesFromIndexSource(in))
+            val setquery = new KeySetBasedQuery[R](
+              joinables.map(lookupTuple => lookupkeymapper.map(_(lookupTuple)).getOrElse(lookupTuple.asInstanceOf[R])).toSet,
+              lookupSourceTable,
+              lookupSource.getColumns,
+              query.querySpace,
+              query.getQueryID)
+            Await.result(pls.request(setquery))
+          })))
+        case _ => None
       }
-      val results = parseq.filter(_.isDefined).map(_.get)
-      // we can map the first one; the others must be inserted 
-      // into the spool before we return it
-      if(results.size > 0) {
-        val sp = results(0) *:: Future.value(Spool.empty[Row])
-        if(results.size > 1) {
-          Future.value(insertRowsIntoSpool(results.tail, sp))
-        } else {
-          Future.value(sp)
+    }.getOrElse {
+      spool.flatMap { in => 
+        val joinables = getJoinablesFromIndexSource(in)
+        // execute this flatMap on a parallel collection
+        val parseq: Array[Option[Row]] = joinables.map { lookupTuple => 
+          val keyValueSourceQuery = new KeyBasedQuery[R](
+            lookupkeymapper.map(_(lookupTuple)).getOrElse(lookupTuple.asInstanceOf[R]),
+            lookupSourceTable,
+            lookupSource.getColumns,
+            query.querySpace,
+            query.getQueryID)
+          val seq = Await.result(lookupSource.request(keyValueSourceQuery))
+          if(seq.size > 0) {
+            val head = seq.head
+            Some(new CompositeRow(List(head, in)))      
+          } else { None }
         }
-      } else {
-        Future.value(in *:: Future.value(Spool.empty[Row]))
-      }      
+        val results = parseq.filter(_.isDefined).map(_.get)
+        // we can map the first one; the others must be inserted 
+        // into the spool before we return it
+        if(results.size > 0) {
+          val sp = results(0) *:: Future.value(Spool.empty[Row])
+          if(results.size > 1) {
+            Future.value(insertRowsIntoSpool(results.tail, sp))
+          } else {
+            Future.value(sp)
+          }
+        } else {
+          Future.value(in *:: Future.value(Spool.empty[Row]))
+        }      
+      }
     }
   }
   
@@ -151,4 +175,34 @@ abstract class AbstractHashJoinSource[Q <: DomainQuery, M, R /* <: Product */, V
   override def getDiscriminant: String = indexsource.getDiscriminant + lookupSource.getDiscriminant
   
   override def createCache: Cache[Nothing] = new NullCache
+}
+
+object SpoolUtils {
+  implicit class SpoolBufferExtender(val spool: Spool[Row]) {
+    val buffer = new ArrayBuffer
+    def mapBuffered(count: Int, f: Seq[Row] => Seq[Row]): Spool[Row] = {
+      // auto-buffer next count elements; eager fetch
+      @tailrec def fillSubBuffer(counter: Int, seq: Seq[Row], spool: => Spool[Row]): (Seq[Row], Spool[Row]) = {
+        if(counter <= 0 || spool.isEmpty) {
+          (seq, spool)
+        } else {
+          fillSubBuffer(counter - 1, seq :+ spool.head, Await.result(spool.tail))
+        }
+      }
+      if (spool.isEmpty) {
+        Spool.empty[Row]
+      } else {
+        // def _tail = spool.tail flatMap (tail => new SpoolBufferExtender(Await.result(tail)).mapBuffered(count, f)))
+        fillSubBuffer(count, Seq(), spool) match {
+          case (seq, reducedSpool) => rowSeqToSpool(f(seq)) ++ reducedSpool.mapBuffered(count, f)
+        }
+      }
+    }
+  }
+  
+  def rowSeqToSpool(seq: Seq[Row]): Spool[Row] = 
+    if (!seq.isEmpty)
+      seq.head *:: Future.value(rowSeqToSpool(seq.tail))
+    else
+      Spool.empty
 }

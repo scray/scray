@@ -26,11 +26,25 @@ import scray.querying.description.internal.KeyBasedQueryException
  */
 class KeyBasedQuery[K](val key: K, reftable: TableIdentifier, result: List[Column], space: String, qid: UUID) 
   extends DomainQuery(qid, space, result, reftable, List(), None, None, None) {
-
+  
   override def transformedAstCopy(ast: List[Domain[_]]): KeyBasedQuery[K] = ast.headOption.map {
     _ match {
       case svd: SingleValueDomain[K] => new KeyBasedQuery[K](svd.value, reftable, result, space, qid)
       case _ => throw new KeyBasedQueryException(this)
     }
   }.orElse(throw new KeyBasedQueryException(this)).get
+}
+
+
+/**
+ * query to look up a set of primary keys in a table
+ */
+class KeySetBasedQuery[K](override val key: Set[K], reftable: TableIdentifier, result: List[Column], space: String, qid: UUID) 
+  extends KeyBasedQuery[Set[K]](key, reftable, result, space, qid) {
+
+  override def transformedAstCopy(ast: List[Domain[_]]): KeySetBasedQuery[K] = new KeySetBasedQuery[K](ast.collect {
+    case svd: SingleValueDomain[K] => svd.value
+  }.toSet, reftable, result, space, qid)
+  
+  def getAsKeyBasedQueries(): Set[KeyBasedQuery[K]] = key.map { k => new KeyBasedQuery[K](k, reftable, result, space, qid) }
 }
