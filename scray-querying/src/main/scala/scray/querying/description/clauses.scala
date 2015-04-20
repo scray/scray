@@ -45,7 +45,7 @@ case class And(clauses: Clause*) extends Clause {
     new And(clauses.flatMap { clause => 
       clause match {
         case and: And => {
-          and.clauses
+          and.flatten.clauses
         }
         case _ => List(clause)
       }

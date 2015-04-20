@@ -53,6 +53,7 @@ import scray.querying.description.internal.MaterializedView
 import scala.annotation.tailrec
 import scray.querying.source.ParallelizedQueryableSource
 import scray.querying.description.internal._
+import com.twitter.util.Try
 
 /**
  * Simple planner to execute queries.
@@ -447,7 +448,7 @@ object Planner extends LazyLogging {
     }
     // collect all predicates where columns are the same and try to define domains
     val collector = new HashMap[Column, Domain[_]]
-    query.getWhereAST.foreach ( _ match {
+    query.getWhereAST.map ( _ match {
       case atomic: AtomicClause => qualifySinglePredicate(atomic, collector)
       case and: And => and.clauses.map { clause => 
         // after a select-project-join transformation we can safely assume only AtomicClauses

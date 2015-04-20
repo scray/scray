@@ -43,7 +43,7 @@ class ScrayQueryingPlannerTest extends WordSpec {
   "Scray's select-project-join planner" should {
     "flatten nested 'AND's" in {
       val sq = SimpleQuery("", ti,
-          where = Some(And(And(Equal(Column("bla1", ti), 1),Equal(Column("bla2", ti), 2))))
+          where = Some(And(And(Equal(Column("bla1", ti), 1),Equal(Column("bla2", ti), 2)), Equal(Column("bla3", ti), 3)))
           )
       val result = planner.distributiveOrReductionToConjunctiveQuery(sq)
       assert(result.size == 1)
@@ -229,6 +229,30 @@ class ScrayQueryingPlannerTest extends WordSpec {
       )
 
       val result = planner.qualifyPredicates(sq)  
+      result match {
+          case _: Some[List[RangeValueDomain[_]]] => assert(true)
+          case _ => fail("Wrong domaine for this query.")
+      }
+    }
+    "test multiple unequal" in {      
+      val sq = SimpleQuery("", ti,
+          where = Some(And(Unequal[String](Column("bla", ti), "bla1"), Unequal[String](Column("bla", ti), "bla2")))
+      )
+
+      val result = planner.qualifyPredicates(sq)  
+      result match {
+          case _: Some[List[RangeValueDomain[_]]] => assert(true)
+          case _ => fail("Wrong domaine for this query.")
+      }
+    }
+    "test unequal range operators mix" in {      
+      val sq = SimpleQuery("", ti,
+          where = Some(And(Unequal(Column("bla", ti), "bla1"), Smaller(Column("bla", ti), "bla2")))
+      )
+      val result = planner.qualifyPredicates(planner.distributiveOrReductionToConjunctiveQuery(sq).head)  
+      
+      print(result)
+      
       result match {
           case _: Some[List[RangeValueDomain[_]]] => assert(true)
           case _ => fail("Wrong domaine for this query.")

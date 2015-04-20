@@ -106,18 +106,39 @@ case class RangeValueDomain[T](
       })
     }
     lower match { 
-      case None => if(upper.isDefined && column == rangeValueDomain.column) {
-          Some(RangeValueDomain[T](column, None, upper)) 
+      case None => if((upper.isDefined && column == rangeValueDomain.column) || (rangeValueDomain.unequalValues.size > 0)) {
+        upper match {
+          case None => Some(RangeValueDomain[T](column, None, upper)) 
+          case _    =>  Some(RangeValueDomain[T](column, None, upper, 
+                      (unequalValues ++ rangeValueDomain.unequalValues).filter { x => 
+                      ordering.compare(x, upper.get.value) < 0 || (ordering.compare(x, upper.get.value) == 0 && upper.get.inclusive)})) 
+          }
         } else { 
           None 
         } 
       case Some(newLower) => upper match {
-          case None => Some(RangeValueDomain[T](column, lower, None))
+          case None => 
+            if((rangeValueDomain.unequalValues.size > 0)) {
+              return   Some(RangeValueDomain[T](column, lower, None,
+                      (unequalValues ++ rangeValueDomain.unequalValues).filter { x => 
+                    ordering.compare(x, lower.get.value) > 0 || (ordering.compare(x, lower.get.value) == 0 && lower.get.inclusive)}))
+            } else {
+              return Some(RangeValueDomain[T](column, lower, None) )
+            }
           case Some(newUpper) => if((column != rangeValueDomain.column) ||
             (ordering.compare(newLower.value, newUpper.value) > 0) || 
             ((!(newLower.inclusive && newUpper.inclusive)) && (ordering.compare(newLower.value, newUpper.value) == 0))) {
                None
-          } else { Some(RangeValueDomain[T](column, lower, upper)) }
+          } else { 
+            if((rangeValueDomain.unequalValues.size > 0)) {
+               return Some(RangeValueDomain[T](column, lower, upper,
+                      (unequalValues ++ rangeValueDomain.unequalValues).filter { x => 
+                    (ordering.compare(x, lower.get.value) > 0 || (ordering.compare(x, lower.get.value) == 0 && lower.get.inclusive)) &&
+                    ordering.compare(x, upper.get.value) < 0 || (ordering.compare(x, upper.get.value) == 0 && upper.get.inclusive)}))
+            }else {
+              Some(RangeValueDomain[T](column, lower, upper)) 
+            }
+          }
       }
     }
   }
