@@ -564,23 +564,23 @@ object Planner extends LazyLogging {
       ordering: Option[OrderedComposablePlan[DomainQuery, _]]): Spool[Row] = {
     // run all at once
     val t1 = System.currentTimeMillis()
-    val futures = plans.par.map((execution) => execution._1.getSource.request(execution._2)).seq
+    val futures = plans.par.map { (execution) => 
+      val source = execution._1.getSource
+      (source.isLazy, source.request(execution._2))
+    }.seq
 
     if(futures.size == 0) {
       Spool.Empty.asInstanceOf[Spool[Row]]
     } else if(futures.size == 1) {
       // in case we only have results for one query we can quickly return them
-      Await.result(futures.head) match {
+      Await.result(futures.head._2) match {
         case spool: Spool[_] => spool.asInstanceOf[Spool[Row]]
         case seq: Seq[_] => Spool.seqToSpool[Row](seq.asInstanceOf[Seq[Row]]).toSpool
       }
     } else { 
-      val seqtuple = futures.partition ( future => future match {
-        case spool: Spool[_] => true
-        case seq: Seq[_] => false
-      })
-      val seqs = seqtuple._2.asInstanceOf[Seq[Future[Seq[Row]]]]
-      val spools = seqtuple._1.asInstanceOf[Seq[Future[Spool[Row]]]]
+      val seqtuple = futures.partition ( future => future._1 )
+      val seqs = seqtuple._2.map(_._2).asInstanceOf[Seq[Future[Seq[Row]]]]
+      val spools = seqtuple._1.map(_._2).asInstanceOf[Seq[Future[Spool[Row]]]]
       val indexes = Seq.fill(seqs.size)(0)      
       unOrdered match {
         case true =>

@@ -61,6 +61,11 @@ trait Source[Q <: DomainQuery, T] {
    * Create a cache for this source
    */
   def createCache: Cache[_]
+  
+  /**
+   * whether this source is lazy or eager
+   */
+  def isLazy: Boolean
 }
 
 /**
@@ -70,6 +75,7 @@ trait Source[Q <: DomainQuery, T] {
  */
 trait LazySource[Q <: DomainQuery] extends Source[Q, Spool[Row]] {
   override def request(query: Q): LazyDataFuture
+  override def isLazy: Boolean = true
 }
 
 /**
@@ -79,6 +85,7 @@ trait LazySource[Q <: DomainQuery] extends Source[Q, Spool[Row]] {
  */
 trait EagerSource[Q <: DomainQuery] extends Source[Q, Seq[Row]] {
   override def request(query: Q): EagerDataFuture
+  override def isLazy: Boolean = false
 }
 
 /**
