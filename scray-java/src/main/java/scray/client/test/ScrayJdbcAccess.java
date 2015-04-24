@@ -13,7 +13,7 @@ import org.slf4j.LoggerFactory;
 public class ScrayJdbcAccess {
 
     private static Logger logger = LoggerFactory.getLogger(ScrayJdbcAccess.class);
-    
+
 	private Connection connect = null;
 	private Statement statement = null;
 	private ResultSet resultSet = null;
@@ -25,9 +25,9 @@ public class ScrayJdbcAccess {
     private int RESULTSETS = -1;
     private String URL = "jdbc:scray:stateful://localhost:18181/cassandra/SIL/SIL";
 	private String TABLE = "BISMTOlsDocumentsElement";
-	private boolean DOTS = false;
-	private int LIMIT = -1;
-	
+	private boolean DOTS = true;
+	private int LIMIT = 2000000;
+
 	public static void main(String[] args) {
 	    ScrayJdbcAccess jdbc = new ScrayJdbcAccess();
 	    if(ScrayJdbcAccessParser.parseCLIOptions(jdbc, args)) {
@@ -38,7 +38,7 @@ public class ScrayJdbcAccess {
 	        }
 	    }
 	}
-	
+
 	public ScrayJdbcAccess() {
         try {
             Class.forName("scray.client.jdbc.ScrayDriver");
@@ -46,7 +46,7 @@ public class ScrayJdbcAccess {
             logger.error("Could not initialize driver", e);
         }
 	}
-	
+
 
 	public void readDataBase() throws Exception {
 		try {
@@ -63,10 +63,8 @@ public class ScrayJdbcAccess {
 			int count = 0;
 			long aggTime = 0;
 			long snap = System.currentTimeMillis();
-
 			String limitString = (LIMIT > 0)?" LIMIT " + LIMIT:"";
-			
-			if (statement.execute("SELECT * FROM " + TABLE + limitString)) {				
+			if (statement.execute("SELECT * FROM " + TABLE + " ORDER BY bismtDocDocNumber" + limitString)) {
 				do {
 					count++;
 					ResultSet results = statement.getResultSet();
@@ -81,8 +79,7 @@ public class ScrayJdbcAccess {
 					    System.out
 							.println("====================================================================");
 
-					    System.out.println("Result set nr " + count + " loaded in "
-							+ nextTime + " ms.");
+					    System.out.println("Result set nr " + count + " loaded in " + nextTime + " ms.");
 
 					    System.out
 							.println("====================================================================");
@@ -128,7 +125,8 @@ public class ScrayJdbcAccess {
 			count++;
 			totalcount++;
 			if(DOTS && totalcount % 10000L == 0) {
-			    System.out.print(".");
+			    System.out.println(totalcount);
+			    // System.out.print(".");
 			}
 	        ResultSetMetaData meta = resultSet.getMetaData();
 			int size = meta.getColumnCount();
@@ -185,7 +183,7 @@ public class ScrayJdbcAccess {
     {
         URL = uRL;
     }
-    
+
     public void setDOTS(boolean dOTS)
     {
         DOTS = dOTS;

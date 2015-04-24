@@ -14,6 +14,7 @@ package object querying {
     val noPlanExceptionID = "SIL-Scray-Querying-012"
     val plannerShutdownExceptionID = "SIL-Scray-Querying-013"
     val indexTypeExceptionID = "SIL-Scray-Querying-014"
+    val queryCostsAreTooHigh = "SIL-Scray-Querying-015"
     // 700+ = caching errors
     val wrongQueryTypeForCacheID = "SIL-Scray-Querying-700"
     // 800+ = errors for specific queries

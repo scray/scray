@@ -77,3 +77,7 @@ class WrongQueryTypeForCacheException(query: DomainQuery, sourceDiscriminant: St
 class WildcardIndexRangeException(query: DomainQuery, column: Column)
     extends ScrayException(ExceptionIDs.queryWildcardRangeException, query.getQueryID, s"""Ranges can only be queried if the number of
         letters stays the same for the length of the prefix for column ${column.columnName} on query ${query.getQueryspace}""") with Serializable
+        
+class QueryCostsAreTooHigh(query: DomainQuery)
+    extends ScrayException(ExceptionIDs.queryCostsAreTooHigh, query.getQueryID, s"""Query costs are too high. 
+    Costs: ${query.getCosts}""") with Serializable

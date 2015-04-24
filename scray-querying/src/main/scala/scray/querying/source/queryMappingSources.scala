@@ -31,7 +31,7 @@ import scala.collection.mutable.ArrayBuffer
  */
 abstract class LazyQueryMappingSource[Q <: DomainQuery](source: LazySource[Q]) 
   extends LazySource[Q] with LazyLogging {
-
+  
   val optFunctions = new ArrayBuffer[(Row, Q) => Row]
   
   val optimized = source match {
@@ -101,7 +101,7 @@ abstract class EagerCollectingQueryMappingSource[Q <: DomainQuery, R](source: So
     logger.debug(s"Transforming elements eagerly for ${query.getQueryID}")
     init(query)
     source.request(query).flatMap(_ match {
-      case spool: Spool[_] => spool.toSeq.asInstanceOf[Future[Seq[Row]]] //collect
+      case spool: Spool[_] => spool.map { row => query.incementRowCounter(); query.checkCosts; row } .toSeq.asInstanceOf[Future[Seq[Row]]] //collect
       case seq: Seq[_] => Future(seq.asInstanceOf[Seq[Row]]) // do nothing
     }).map(transformSeq(_, query))
   }
@@ -120,7 +120,7 @@ abstract class EagerCollectingQueryMappingSource[Q <: DomainQuery, R](source: So
   def transformSeqElement(element: Row, query: Q): Row
   
   def init(query: Q): Unit = {}
-  
+
   override def isOrdered(query: Q): Boolean = source.isOrdered(query)
   
   override def getGraph: Graph[Source[DomainQuery, Seq[Row]], DiEdge] = source.asInstanceOf[Source[DomainQuery, Seq[Row]]].getGraph + 

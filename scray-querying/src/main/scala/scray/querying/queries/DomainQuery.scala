@@ -21,6 +21,9 @@ import scray.querying.description.QueryRange
 import scray.querying.description.TableIdentifier
 import scray.querying.description.internal.Domain
 import java.util.UUID
+import java.util.concurrent.atomic.AtomicInteger
+import scray.querying.description.internal.QueryCostsAreTooHigh
+
 
 case class DomainQuery(
     val id: UUID,
@@ -32,6 +35,13 @@ case class DomainQuery(
     val ordering: Option[ColumnOrdering[_]],
     val range: Option[QueryRange]
 ) {
+  
+  val costs: AtomicInteger = new AtomicInteger()
+  
+  def incementRowCounter() {
+    costs.incrementAndGet()
+  }
+  
   def getQueryID: UUID = id
   
   def getQueryspace: String = querySpace
@@ -50,4 +60,17 @@ case class DomainQuery(
   
   def transformedAstCopy(ast: List[Domain[_]]): DomainQuery = this.copy(domains = ast)
 
+  def getCosts: AtomicInteger = costs;
+  
+  def checkCosts { 
+    val heapFreeSize =  Runtime.getRuntime().freeMemory()
+    val heapSize = Runtime.getRuntime().maxMemory();
+    val usableHeapPercentage = 95
+    
+    val maxHeapForThisQuery = ((heapSize/ 100) * usableHeapPercentage)
+
+    if(costs.get > 300L && heapFreeSize > maxHeapForThisQuery) {
+      throw new QueryCostsAreTooHigh(this);
+    }
+  }
 }
