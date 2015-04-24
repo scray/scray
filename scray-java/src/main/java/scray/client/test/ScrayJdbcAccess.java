@@ -125,8 +125,7 @@ public class ScrayJdbcAccess {
 			count++;
 			totalcount++;
 			if(DOTS && totalcount % 10000L == 0) {
-			    System.out.println(totalcount);
-			    // System.out.print(".");
+			    System.out.print(".");
 			}
 	        ResultSetMetaData meta = resultSet.getMetaData();
 			int size = meta.getColumnCount();

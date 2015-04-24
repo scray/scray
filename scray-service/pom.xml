@@ -73,11 +73,6 @@
         	<artifactId>snappy-java</artifactId>
         	<version>${snappy-java.version}</version>
         </dependency>
-        <dependency>
-            <groupId>scray</groupId>
-            <artifactId>scray-service</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
-        </dependency>
 	</dependencies>
 
 	<build>
