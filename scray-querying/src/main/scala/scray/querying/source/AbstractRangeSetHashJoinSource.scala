@@ -59,7 +59,8 @@ abstract class AbstractRangeSetHashJoinSource[Q <: DomainQuery, M, R /* <: Produ
     }
     DomainQuery(query.getQueryID, query.getQueryspace, resultColumns, getPrefixIndexColumn.table,
         domains, Some(ColumnGrouping(getValueIndexColumn)),
-        Some(ColumnOrdering[T](getValueIndexColumn)), range).asInstanceOf[Q]
+        Some(ColumnOrdering[T](getValueIndexColumn,
+                query.getOrdering.filter(_.descending).isDefined)), range).asInstanceOf[Q]
   }  
   
   /**

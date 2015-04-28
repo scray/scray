@@ -33,8 +33,9 @@ import scala.annotation.tailrec
  * Assumes that the Seq returnes by QueryableStore is a lazy sequence (i.e. view)
  */
 class ParallelizedQueryableSource[K, V](override val store: QueryableStore[K, V], override val space: String, 
-        parallelizationColumn: Column, parallelization: Option[Int], ordering: Option[(Row, Row) => Boolean]) extends 
-        QueryableSource[K, V](store, space, parallelizationColumn.table, ordering.isDefined) with LazyLogging {
+        parallelizationColumn: Column, parallelization: Option[Int], ordering: Option[(Row, Row) => Boolean],
+        descending: Boolean) extends QueryableSource[K, V](store, space, parallelizationColumn.table, 
+                ordering.isDefined) with LazyLogging {
   
   @inline def getTransformedDomainQuery(query: DomainQuery, number: Int): K =
     queryMapping(query.transformedAstCopy(SingleValueDomain[Int](parallelizationColumn, number) :: query.getWhereAST))
@@ -60,7 +61,7 @@ class ParallelizedQueryableSource[K, V](override val store: QueryableStore[K, V]
       logger.debug(s"Requesting data from store with ${query.getQueryID} using ${numberQueries} queries in parallel")
       val spools = executeQueries(query, numberQueries, Nil)
       isOrdered match {
-        case true => MergingResultSpool.mergeOrderedSpools(Seq(), spools, ordering.get, Seq())
+        case true => MergingResultSpool.mergeOrderedSpools(Seq(), spools, ordering.get, descending, Seq())
         case false => MergingResultSpool.mergeUnorderedResults(Seq(), spools, Seq())
       }
     }.getOrElse {

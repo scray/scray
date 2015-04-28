@@ -27,20 +27,20 @@ package object source {
    * compares two rows according to a column
    * empty rows or rows without column in question are "bigger" than the others 
    */
-  def rowCompWithOrdering[T](column: Column, ordering: Ordering[T]): (Row, Row) => Boolean = (row1, row2) => {
+  def rowCompWithOrdering[T](column: Column, ordering: Ordering[T], descending: Boolean): (Row, Row) => Boolean = (row1, row2) => {
     val a = row1.getColumnValue(column)
     val b = row2.getColumnValue(column)
     if(a.isEmpty) { 
       if(b.isEmpty) {
-        true
+        descending ^ true
       } else {
-        false
+        descending ^ false
       }
     } else { 
       if(b.isDefined) { 
-        ordering.compare(a.get, b.get) <= 0
+        descending ^ ordering.compare(a.get, b.get) <= 0
       } else { 
-        true 
+        descending ^ true 
       }
     }
   } 

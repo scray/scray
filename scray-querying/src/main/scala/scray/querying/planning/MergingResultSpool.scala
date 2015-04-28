@@ -92,13 +92,14 @@ object MergingResultSpool {
   def mergeOrderedSpools(seqs: Seq[Future[Seq[Row]]], 
       spools: Seq[Future[Spool[Row]]],
       smaller: (Row, Row) => Boolean,
+      descending: Boolean,
       indexes: Seq[Int]): Future[Spool[Row]] = Future.value {
     // find smallest head of spools
     val smallestOfSpools = spools.foldLeft[Option[Spool[Row]]](None){ (smallest, spool) =>
       val spoolFutureResult = Await.result(spool)  
       if(!spoolFutureResult.isEmpty) {
         smallest.map { smallvalue => 
-          if(smaller(smallvalue.head, spoolFutureResult.head)) {
+          if(descending ^ smaller(smallvalue.head, spoolFutureResult.head)) {
             smallvalue
           } else {
             spoolFutureResult
@@ -109,27 +110,27 @@ object MergingResultSpool {
       }
     }
     
-    val smallestOfSeqs = findSmallestSeq(smaller, indexes, seqs, 0, None)
+    val smallestOfSeqs = findSmallestSeq(smaller, indexes, seqs, 0, None, descending)
     
     // compare spool-result with seq-result
     smallestOfSeqs match {
       case Some((index, row, seqpos)) => smallestOfSpools.map { spool =>
-        if(smaller(spool.head, row)) {
+        if(descending ^ smaller(spool.head, row)) {
           // return spool-value as next value
-          spool.head *:: mergeOrderedSpools(seqs, tailSpoolInSeq(spools, spool), smaller, indexes)
+          spool.head *:: mergeOrderedSpools(seqs, tailSpoolInSeq(spools, spool), smaller, descending, indexes)
         } else {
           // return seq-value as next value
           val newIndexes = indexes.take(index) ++ Seq(seqpos + 1) ++ indexes.takeRight(indexes.size - index - 1)
-          row *:: mergeOrderedSpools(seqs, spools, smaller, newIndexes)
+          row *:: mergeOrderedSpools(seqs, spools, smaller, descending, newIndexes)
         }
       }.getOrElse {
         // return seq-value as next value
         val newIndexes = indexes.take(index) ++ Seq(seqpos + 1) ++ indexes.takeRight(indexes.size - index - 1)        
-        row *:: mergeOrderedSpools(seqs, spools, smaller, newIndexes)
+        row *:: mergeOrderedSpools(seqs, spools, smaller, descending, newIndexes)
       }
       case None => smallestOfSpools.map { spool =>
         // return spool-value as next value
-        spool.head *:: mergeOrderedSpools(seqs, tailSpoolInSeq(spools, spool), smaller, indexes)
+        spool.head *:: mergeOrderedSpools(seqs, tailSpoolInSeq(spools, spool), smaller, descending, indexes)
       }.getOrElse(Spool.empty)
     }
   }
@@ -154,14 +155,15 @@ object MergingResultSpool {
       indexesLocal: Seq[Int],
       seqsLocal: Seq[Future[Seq[Row]]],
       count: Int,
-      acc: Option[(Int, Row, Int)]): Option[(Int, Row, Int)] = {
+      acc: Option[(Int, Row, Int)],
+      descending: Boolean): Option[(Int, Row, Int)] = {
     if(indexesLocal.isEmpty) {
       acc
     } else {
       val seqLocal = Await.result(seqsLocal.head)
       val newAcc = if(indexesLocal.head < seqLocal.size) {
         acc.map { accu =>
-          if(smaller(seqLocal(indexesLocal.head), accu._2)) {
+          if(descending ^ smaller(seqLocal(indexesLocal.head), accu._2)) {
             (count, seqLocal(indexesLocal.head), indexesLocal.head)
           } else {
             accu
@@ -170,7 +172,7 @@ object MergingResultSpool {
       } else {
         acc
       }
-      findSmallestSeq(smaller, indexesLocal.tail, seqsLocal.tail, count + 1, newAcc)
+      findSmallestSeq(smaller, indexesLocal.tail, seqsLocal.tail, count + 1, newAcc, descending)
     }
   }
   

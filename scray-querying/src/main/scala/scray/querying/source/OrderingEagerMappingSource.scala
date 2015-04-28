@@ -33,8 +33,8 @@ class OrderingEagerMappingSource[Q <: DomainQuery, R](source: Source[Q, R])
   
   @inline override def transformSeq(element: Seq[Row], query: Q): Seq[Row] = {
     logger.debug("Ordering output in memory for ${query}")
-    val queryOrdering = query.getOrdering
-    element.sortWith(rowCompWithOrdering(queryOrdering.get.column, queryOrdering.get.ordering))
+    val queryOrdering = query.getOrdering.get
+    element.sortWith(rowCompWithOrdering(queryOrdering.column, queryOrdering.ordering, queryOrdering.descending))
   }
 
   override def transformSeqElement(element: Row, query: Q): Row = element

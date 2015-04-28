@@ -65,7 +65,8 @@ class TimeIndexSource[Q <: DomainQuery, M, R, V](
     }
     DomainQuery(query.getQueryID, query.getQueryspace, resultColumns, timeIndexConfig.indexRowColumnYear.table,
         domains, Some(ColumnGrouping(timeIndexConfig.indexColumnMs)),
-        Some(ColumnOrdering[Long](timeIndexConfig.indexColumnMs)), range).asInstanceOf[Q]
+        Some(ColumnOrdering[Long](timeIndexConfig.indexColumnMs, 
+                query.getOrdering.filter(_.descending).isDefined)), range).asInstanceOf[Q]
   }
   
   override protected def transformIndexQuery(query: Q): Set[Q] = {

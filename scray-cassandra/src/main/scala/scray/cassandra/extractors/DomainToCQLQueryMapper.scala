@@ -28,7 +28,28 @@ import scray.querying.description.internal.RangeValueDomain
  * in the domains
  */
 class DomainToCQLQueryMapper[S <: AbstractCQLCassandraStore[_, _]] {
-  import DomainToCQLQueryMapper.AND_LITERAL
+  import DomainToCQLQueryMapper.{AND_LITERAL, EMPTY_LITERAL, ORDER_LITERAL, DESC_LITERAL, LIMIT_LITERAL}
+  
+  /**
+   * add an ordering specification, if needed
+   */
+  def addOrderMapping(orgQuery: String, store: S, query: DomainQuery, extractor: CassandraExtractor[S],
+      storeTableNickName: Option[String]): String = query.getOrdering.map { order =>
+    // check for the right-most clustering column. We order for this, only.
+    val clusterCols = extractor.getClusteringKeyColumns
+    val domains = clusterColumnDomains(clusterCols, store, query, extractor, storeTableNickName)
+    if(order.column == domains.takeRight(1)(0).column) {
+      val desc = if(order.descending) {
+        DESC_LITERAL
+      } else {
+        EMPTY_LITERAL
+      }
+      s"${ORDER_LITERAL}${desc}"
+    } else {
+      EMPTY_LITERAL
+    }
+  }.getOrElse(orgQuery)
+  
   
   /**
    * returns a function mapping from Domains to CQL-Strings used in Where clauses
@@ -59,7 +80,7 @@ class DomainToCQLQueryMapper[S <: AbstractCQLCassandraStore[_, _]] {
       if(range.limit.isDefined) {
         val sbuf = new StringBuffer(queryString)
         val skip = range.skip.getOrElse(0L)
-        sbuf.append(" LIMIT ").append(skip + range.limit.get).toString
+        sbuf.append(LIMIT_LITERAL).append(skip + range.limit.get).toString
       } else {
         queryString
       }
@@ -112,32 +133,36 @@ class DomainToCQLQueryMapper[S <: AbstractCQLCassandraStore[_, _]] {
       None
     }    
   }
+
+  /**
+   * assuming that cols are in order of definition, which should be the case for Cassandra-stores
+   * this recursion probably never overflows the stack as it is only on a few cols or domains
+   */
+  private def clusterColumnDomains(cols: List[Column], store: S, query: DomainQuery, extractor: CassandraExtractor[S],
+      storeTableNickName: Option[String]): List[Domain[_]] = {
+    if(cols == Nil) { 
+      Nil 
+    } else {
+      // find relevant domain
+      val domain = query.domains.find { dom => 
+        dom.column.columnName == cols.head.columnName && 
+        dom.column.table.tableId == storeTableNickName.getOrElse(store.columnFamily.getName) &&
+        dom.column.table.dbId == store.columnFamily.session.getKeyspacename &&
+        dom.column.table.dbSystem == extractor.getDBSystem
+      }
+      domain.collect { 
+        case svd: SingleValueDomain[_] => svd :: clusterColumnDomains(cols.tail, store, query, extractor, storeTableNickName)
+        case rvd: RangeValueDomain[_] => rvd :: Nil
+      }.getOrElse {
+        Nil
+      }
+    }
+  }
   
   private def getClusterKeyQueryMapping(store: S, query: DomainQuery, extractor: CassandraExtractor[S],
       storeTableNickName: Option[String]): Option[String] = {
-    // assuming that cols are in order of definition, which should be the case for Cassandra-stores
-    // this recursion probably never overflows the stack as it is only on a few cols or domains 
-    def clusterColumnDomains(cols: List[Column]): List[Domain[_]] = {
-      if(cols == Nil) { 
-        Nil 
-      } else {
-        // find relevant domain
-        val domain = query.domains.find { dom => 
-          dom.column.columnName == cols.head.columnName && 
-          dom.column.table.tableId == storeTableNickName.getOrElse(store.columnFamily.getName) &&
-          dom.column.table.dbId == store.columnFamily.session.getKeyspacename &&
-          dom.column.table.dbSystem == extractor.getDBSystem
-        }
-        domain.collect { 
-          case svd: SingleValueDomain[_] => svd :: clusterColumnDomains(cols.tail)
-          case rvd: RangeValueDomain[_] => rvd :: Nil
-        }.getOrElse {
-          Nil
-        }
-      }
-    }
     val clusterCols = extractor.getClusteringKeyColumns
-    val domains = clusterColumnDomains(clusterCols)
+    val domains = clusterColumnDomains(clusterCols, store, query, extractor, storeTableNickName)
     // map the domains to CQL strings and AND this
     val cqlQuery = domains.collect {
       case svd: SingleValueDomain[_] => convertSingleValueDomain(svd)
@@ -163,5 +188,9 @@ class DomainToCQLQueryMapper[S <: AbstractCQLCassandraStore[_, _]] {
 }
 
 object DomainToCQLQueryMapper {
+  val EMPTY_LITERAL: String = ""
+  val LIMIT_LITERAL: String = " LIMIT "
   val AND_LITERAL: String = " AND "
+  val ORDER_LITERAL: String = " ORDER BY "
+  val DESC_LITERAL: String = " DESC "
 }

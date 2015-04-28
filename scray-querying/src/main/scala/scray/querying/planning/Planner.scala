@@ -359,7 +359,8 @@ object Planner extends LazyLogging {
             val timeQueryableSource = time.parallelization match {
               // case Some(parFunc) => indexSource
               case Some(parFunc) => new ParallelizedQueryableSource(indexSource.store, indexSource.space, 
-                      time.parallelizationColumn.get, parFunc(indexSource.store), time.ordering)
+                      time.parallelizationColumn.get, parFunc(indexSource.store), time.ordering, 
+                      query.getOrdering.filter(_.descending).isDefined)
               case None => indexSource
             }
             new TimeIndexSource(time, timeQueryableSource, mainSource.asInstanceOf[KeyValueSource[Any, _]], 
@@ -589,8 +590,10 @@ object Planner extends LazyLogging {
         case false =>
           // we wait for all data streams to return a result and then return the lowest value
           val compRows: (Row, Row) => Boolean = 
-            scray.querying.source.rowCompWithOrdering(ordering.get.ordering.get.column, ordering.get.ordering.get.ordering)
-          Await.result(MergingResultSpool.mergeOrderedSpools(seqs, spools, compRows, indexes))
+            scray.querying.source.rowCompWithOrdering(ordering.get.ordering.get.column, 
+                                                      ordering.get.ordering.get.ordering,
+                                                      ordering.get.ordering.get.descending)
+          Await.result(MergingResultSpool.mergeOrderedSpools(seqs, spools, compRows, ordering.get.ordering.get.descending, indexes))
       }
     }
   }

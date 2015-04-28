@@ -134,8 +134,8 @@ abstract class AbstractHashJoinSource[Q <: DomainQuery, M, R /* <: Product */, V
       indexsource.request(mappedquery).flatMap(spool => spoolTransform(spool, mappedquery)))
     if(results.size > 1) {
       if(isOrdered(query)) {
-        val rowComp = rowCompWithOrdering(query.ordering.get.column, query.ordering.get.ordering)
-        MergingResultSpool.mergeOrderedSpools(Seq(), results.seq.toSeq, rowComp, Array[Int]())
+        val rowComp = rowCompWithOrdering(query.ordering.get.column, query.ordering.get.ordering, query.ordering.get.descending)
+        MergingResultSpool.mergeOrderedSpools(Seq(), results.seq.toSeq, rowComp, query.ordering.get.descending, Array[Int]())
       } else {
         MergingResultSpool.mergeUnorderedResults(Seq(), results.seq.toSeq, Array[Int]())
       }

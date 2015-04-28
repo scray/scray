@@ -32,7 +32,7 @@ case class Columns(columns: Either[Boolean, List[Column]])
 /**
  * represents ordering by a single column, e.g. order by in SQL terms with a single column
  */
-case class ColumnOrdering[V](column: Column)(implicit val ordering: Ordering[V])
+case class ColumnOrdering[V](column: Column, descending: Boolean)(implicit val ordering: Ordering[V])
 
 /**
  * represents grouping by a single column, e.g. group by in SQL terms with a single column
