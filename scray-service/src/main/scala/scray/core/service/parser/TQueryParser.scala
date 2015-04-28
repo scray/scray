@@ -52,7 +52,7 @@ class TQueryParser(tQuery: ScrayTQuery) extends Parser {
 
   // Rules matching 'post predicates'
   def _groupby: Rule1[_Grouping] = rule { "GROUP BY" ~ _identifier ~> { (nam: String) => _Grouping(nam) } }
-  def _orderby: Rule1[_Ordering] = rule { "ORDER BY" ~ _identifier ~> { (nam: String) => _Ordering(nam) } }
+  def _orderby: Rule1[_Ordering] = rule { "ORDER BY" ~ _identifier ~ optional(capture("DESC") | capture("ASC")) ~> { (nam: String, desc: Option[String]) => _Ordering(nam, desc.map(_.equals("DESC")).getOrElse(false)) } }
 
   // Rules matching columns
   def _columns: Rule1[_Columns] = rule { _asterixColumn | _columnSet }

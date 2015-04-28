@@ -42,11 +42,11 @@ class QueryParserSpec extends FlatSpec with Matchers with TQuerySamples {
 
   val DEBUG = false
 
-  private def parse(query : String) = {
+  private def parse(query: String) = {
     val parser = new TQueryParser(createTQuery(query))
     val parsed = parser.InputLine.run() match {
       case Success(result) => Success(result)
-      case Failure(e : ParseError) =>
+      case Failure(e: ParseError) =>
         sys.error(parser.formatError(e, showTraces = true)); Failure(e)
       case Failure(e) => throw e
     }
@@ -54,7 +54,7 @@ class QueryParserSpec extends FlatSpec with Matchers with TQuerySamples {
     parsed
   }
 
-  private def generate(parsed : Try[_Query]) : Query = {
+  private def generate(parsed: Try[_Query]): Query = {
     parsed.isSuccess should be(true)
     val query = parsed.get.createQuery
     if (query.isFailure) println(query)
@@ -146,7 +146,7 @@ class QueryParserSpec extends FlatSpec with Matchers with TQuerySamples {
     val query = generate(parsed)
     query.getWhereAST.get.asInstanceOf[Equal[String]].value.compareTo("foo bar") should be(0)
   }
-  
+
   it should "handle atomic predicates with typed literal values" in {
     val parsed = parse("SELECT col1 FROM @myTableId WHERE col1 = !!long 2")
     val query = generate(parsed)
@@ -188,7 +188,7 @@ class QueryParserSpec extends FlatSpec with Matchers with TQuerySamples {
     query.getWhereAST.get.asInstanceOf[GreaterEqual[Int]].value.compareTo(1) should be(0)
   }
 
-    it should "handle atomic predicates with 'unequal'" in {
+  it should "handle atomic predicates with 'unequal'" in {
     val parsed = parse("SELECT col1 FROM @myTableId WHERE col1<>1")
     val query = generate(parsed)
     query.getWhereAST.get.isInstanceOf[Unequal[_]] should be(true)
@@ -229,6 +229,21 @@ class QueryParserSpec extends FlatSpec with Matchers with TQuerySamples {
     val parsed = parse("SELECT col1, col2 FROM @myTableId ORDER BY col2")
     val query = generate(parsed)
     query.getOrdering.isDefined should be(true)
+    query.getOrdering.get.descending should be(false)
+  }
+
+  it should "handle 'ORDERBY' predicates with DESC" in {
+    val parsed = parse("SELECT col1, col2 FROM @myTableId ORDER BY col2 DESC")
+    val query = generate(parsed)
+    query.getOrdering.isDefined should be(true)
+    query.getOrdering.get.descending should be(true)
+  }
+
+  it should "handle 'ORDERBY' predicates with ASC" in {
+    val parsed = parse("SELECT col1, col2 FROM @myTableId ORDER BY col2 ASC")
+    val query = generate(parsed)
+    query.getOrdering.isDefined should be(true)
+    query.getOrdering.get.descending should be(false)
   }
 
   it should "handle 'GROUPBY' predicates" in {
@@ -249,7 +264,7 @@ class QueryParserSpec extends FlatSpec with Matchers with TQuerySamples {
     val query = generate(parsed)
     query.getQueryRange.get.skip.nonEmpty should be(true)
   }
-  
+
   it should "handle combined 'LIMIT' and 'SKIP' predicates" in {
     val parsed = parse("SELECT col1, col2 FROM @myTableId SKIP 100 LIMIT 10")
     val query = generate(parsed)
@@ -257,12 +272,12 @@ class QueryParserSpec extends FlatSpec with Matchers with TQuerySamples {
     query.getQueryRange.get.limit.nonEmpty should be(true)
   }
 
-    it should "handle combined 'ORDER BY', 'LIMIT' and 'SKIP' predicates" in {
+  it should "handle combined 'ORDER BY', 'LIMIT' and 'SKIP' predicates" in {
     val parsed = parse("SELECT col1, col2 FROM @myTableId ORDER BY col2 SKIP 1 LIMIT 1000")
     val query = generate(parsed)
     query.getOrdering.isDefined should be(true)
     query.getQueryRange.get.skip.nonEmpty should be(true)
     query.getQueryRange.get.limit.nonEmpty should be(true)
   }
-    
+
 }
