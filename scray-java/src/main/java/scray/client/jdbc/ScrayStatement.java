@@ -51,6 +51,7 @@ public class ScrayStatement implements java.sql.Statement {
 			currResults = new ScrayResultSet(currFrame, fetchSize,
 					fetchDirection, this);
 		} catch (Exception e) {
+		    e.printStackTrace();
 			throw new SQLException(e);
 		}
 	}
@@ -131,6 +132,7 @@ public class ScrayStatement implements java.sql.Statement {
 	@Override
 	public boolean execute(String sql) throws SQLException {
 		checkConstraints();
+		System.out.println(sql);
 		initializeQuery(sql);
 		advanceQuery();
 		return true;
