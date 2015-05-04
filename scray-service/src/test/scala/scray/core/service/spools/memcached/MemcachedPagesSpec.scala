@@ -18,7 +18,7 @@ import com.twitter.util.JavaTimer
 import scray.core.service.KryoPoolRegistration
 import scray.common.serialization.KryoPoolSerialization
 import scray.service.qmodel.thrifscala.ScrayTQuery
-//import scray.core.service._
+import scray.core.service.IntegrationTest
 import scray.service.qmodel.thrifscala.ScrayTRow
 import scray.core.service.spools.PageKey
 import com.twitter.util.Await
@@ -51,7 +51,7 @@ class MemcachedPagesSpec
   val query = parser.InputLine.run().get.createQuery.get
   val uuid = query.getQueryID
 
-  "MemcachedPageRack" should "store pages in memcached" in {
+  "MemcachedPageRack" should "store pages in memcached" taggedAs (IntegrationTest) in {
     val rack = new MemcachedPageRack(planAndExecute = mockplanner)
     val updQInf = rack.createPages(query, tquery.queryInfo)
     val key0 = PageKey(updQInf.queryId.get, 0)
