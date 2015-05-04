@@ -81,8 +81,13 @@
 				<artifactId>util-core_2.10</artifactId>
 				<version>6.22.0</version>
 			</dependency>
-		</dependencies>
-	</dependencyManagement>
+      <dependency>
+        <groupId>com.google.code.findbugs</groupId>
+        <artifactId>jsr305</artifactId>
+        <version>1.3.8</version>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
 
 	<build>
 		<sourceDirectory>src/main/scala</sourceDirectory>
@@ -220,11 +225,11 @@
 			<name>Typesafe Repository</name>
 			<url>http://repo.typesafe.com/typesafe/releases/</url>
 		</repository>
-		<repository>
+<!--		<repository>
 			<id>websudos.co.uk</id>
 			<name>Websudos Repository</name>
 			<url>http://maven.websudos.co.uk/ext-release-local</url>
-		</repository>
+		</repository> -->
 		<repository>
 			<id>sonatype.org</id>
 			<name>Sonatype Repo</name>

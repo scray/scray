@@ -82,35 +82,70 @@ abstract class AbstractHashJoinSource[Q <: DomainQuery, M, R /* <: Product */, V
         case _ => None
       }
     }.getOrElse {
-      spool.flatMap { in => 
-        val joinables = getJoinablesFromIndexSource(in)
-        // execute this flatMap on a parallel collection
-        val parseq: Array[Option[Row]] = joinables.map { lookupTuple => 
-          val keyValueSourceQuery = new KeyBasedQuery[R](
-            lookupkeymapper.map(_(lookupTuple)).getOrElse(lookupTuple.asInstanceOf[R]),
-            lookupSourceTable,
-            lookupSource.getColumns,
-            query.querySpace,
-            query.getQueryID)
-          val seq = Await.result(lookupSource.request(keyValueSourceQuery))
-          if(seq.size > 0) {
-            val head = seq.head
-            Some(new CompositeRow(List(head, in)))      
-          } else { None }
-        }
-        val results = parseq.filter(_.isDefined).map(_.get)
-        // we can map the first one; the others must be inserted 
-        // into the spool before we return it
-        if(results.size > 0) {
-          val sp = results(0) *:: Future.value(Spool.empty[Row])
-          if(results.size > 1) {
-            Future.value(insertRowsIntoSpool(results.tail, sp))
-          } else {
-            Future.value(sp)
+      // if a reasonable limit (say 2015, we try to process in parallel)
+      val pos = query.range.map { range => range.skip.getOrElse(0L) + range.limit.getOrElse(0L) }.getOrElse(Long.MaxValue)
+      if(pos > 2015L) {
+        spool.flatMap { in => 
+          val joinables = getJoinablesFromIndexSource(in)
+          // execute this flatMap on a parallel collection
+          val parseq: Array[Option[Row]] = joinables.map { lookupTuple => 
+            val keyValueSourceQuery = new KeyBasedQuery[R](
+              lookupkeymapper.map(_(lookupTuple)).getOrElse(lookupTuple.asInstanceOf[R]),
+              lookupSourceTable,
+              lookupSource.getColumns,
+              query.querySpace,
+              query.getQueryID)
+            val seq = Await.result(lookupSource.request(keyValueSourceQuery))
+            if(seq.size > 0) {
+              val head = seq.head
+              Some(new CompositeRow(List(head, in)))      
+            } else { None }
           }
-        } else {
-          Future.value(in *:: Future.value(Spool.empty[Row]))
-        }      
+          val results = parseq.filter(_.isDefined).map(_.get)
+          // we can map the first one; the others must be inserted 
+          // into the spool before we return it
+          if(results.size > 0) {
+            val sp = results(0) *:: Future.value(Spool.empty[Row])
+            if(results.size > 1) {
+              Future.value(insertRowsIntoSpool(results.tail, sp))
+            } else {
+              Future.value(sp)
+            }
+          } else {
+            Future.value(in *:: Future.value(Spool.empty[Row]))
+          }
+        }
+      } else {
+        spool.flatMap { in => 
+          def spoolRows(futures: Array[Future[Option[Row]]]): Future[Spool[Row]] = {
+            if(futures.isEmpty) {
+              Future.value(Spool.empty[Row])
+            } else {
+              futures.head.flatMap { optRow => 
+                optRow.map(row => Future.value(row *:: spoolRows(futures.tail))).getOrElse(spoolRows(futures.tail))
+              }
+            }
+          }
+          
+          val joinables = getJoinablesFromIndexSource(in)
+          // execute this flatMap on a parallel collection
+          val parseq: Array[Future[Option[Row]]] = joinables.map { lookupTuple => 
+            val keyValueSourceQuery = new KeyBasedQuery[R](
+              lookupkeymapper.map(_(lookupTuple)).getOrElse(lookupTuple.asInstanceOf[R]),
+              lookupSourceTable,
+              lookupSource.getColumns,
+              query.querySpace,
+              query.getQueryID)
+            val fseq = lookupSource.request(keyValueSourceQuery)
+            fseq.map { seq =>  
+              if(seq.size > 0) {
+                val head = seq.head
+                Some(new CompositeRow(List(head, in)))      
+              } else { None }
+            }
+          }
+          spoolRows(parseq)
+        }
       }
     }
   }
