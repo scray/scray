@@ -30,6 +30,10 @@ import com.twitter.chill.java.UUIDSerializer
 import org.mapdb.DBMaker
 import scray.querying.caching.serialization.KeyValueCacheSerializer
 import scray.querying.description.Row
+import java.nio.ByteBuffer
+import sun.security.provider.MD5
+import scala.util.hashing.MurmurHash3
+import com.esotericsoftware.minlog.Log
 
 
 /**
