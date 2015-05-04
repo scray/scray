@@ -53,26 +53,26 @@
 			<artifactId>scrooge-core_${scala.suffix}</artifactId>
 			<version>3.17.0</version>
 		</dependency>
-        <dependency>
-            <groupId>com.twitter</groupId>
-            <artifactId>chill_${scala.suffix}</artifactId>
-            <version>0.4.0</version>
-        </dependency>
-        <dependency>
-            <groupId>com.twitter</groupId>
-            <artifactId>chill-bijection_${scala.suffix}</artifactId>
-            <version>0.4.0</version>
-        </dependency>
-        <dependency>
-            <groupId>com.twitter</groupId>
-            <artifactId>storehaus-memcache_${scala.suffix}</artifactId>
-            <version>0.9.1</version>
-        </dependency>
-        <dependency>
-        	<groupId>org.xerial.snappy</groupId>
-        	<artifactId>snappy-java</artifactId>
-        	<version>${snappy-java.version}</version>
-        </dependency>
+		<dependency>
+			<groupId>com.twitter</groupId>
+			<artifactId>chill_${scala.suffix}</artifactId>
+			<version>0.4.0</version>
+		</dependency>
+		<dependency>
+			<groupId>com.twitter</groupId>
+			<artifactId>chill-bijection_${scala.suffix}</artifactId>
+			<version>0.4.0</version>
+		</dependency>
+		<dependency>
+			<groupId>com.twitter</groupId>
+			<artifactId>storehaus-memcache_${scala.suffix}</artifactId>
+			<version>0.9.1</version>
+		</dependency>
+		<dependency>
+			<groupId>org.xerial.snappy</groupId>
+			<artifactId>snappy-java</artifactId>
+			<version>${snappy-java.version}</version>
+		</dependency>
 	</dependencies>
 
 	<build>
@@ -117,6 +117,26 @@
 						<phase>generate-test-sources</phase>
 						<goals>
 							<goal>testCompile</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+
+			<plugin>
+				<groupId>org.scalatest</groupId>
+				<artifactId>scalatest-maven-plugin</artifactId>
+				<version>1.0</version>
+				<configuration>
+					<reportsDirectory>${project.build.directory}/surefire-reports</reportsDirectory>
+					<junitxml>.</junitxml>
+					<filereports>WDF TestSuite.txt</filereports>
+					<tagsToExclude>com.seeburger.tags.IntegrationTest</tagsToExclude>					
+				</configuration>
+				<executions>
+					<execution>
+						<id>test</id>
+						<goals>
+							<goal>test</goal>
 						</goals>
 					</execution>
 				</executions>
@@ -168,5 +188,35 @@
 			<comments>A business-friendly OSS license</comments>
 		</license>
 	</licenses>
+
+	<profiles>
+		<profile>
+			<id>IntegrationTest</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.scalatest</groupId>
+						<artifactId>scalatest-maven-plugin</artifactId>
+						<version>1.0</version>
+						<configuration combine.self="override">
+							<reportsDirectory>${project.build.directory}/surefire-reports</reportsDirectory>
+							<junitxml>.</junitxml>
+							<filereports>WDF TestSuite.txt</filereports>
+							<tagsToExclude/>
+							<tagsToInclude>com.seeburger.tags.IntegrationTest</tagsToInclude>
+						</configuration>
+						<executions>
+							<execution>
+								<id>test</id>
+								<goals>
+									<goal>test</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
 
 </project>

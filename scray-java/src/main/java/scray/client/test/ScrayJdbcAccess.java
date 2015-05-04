@@ -26,7 +26,7 @@ public class ScrayJdbcAccess {
     private String URL = "jdbc:scray:stateful://localhost:18181/cassandra/SIL/SIL";
 	private String TABLE = "BISMTOlsWorkflowElement";
 	private boolean DOTS = true;
-	private int LIMIT = 2000000;
+	private int LIMIT = 80000;
 
 	public static void main(String[] args) {
 	    ScrayJdbcAccess jdbc = new ScrayJdbcAccess();
@@ -125,7 +125,7 @@ public class ScrayJdbcAccess {
 			count++;
 			totalcount++;
 			if(DOTS && totalcount % 10000L == 0) {
-			    System.out.print(".");
+			    System.out.print(totalcount);
 			}
 	        ResultSetMetaData meta = resultSet.getMetaData();
 			int size = meta.getColumnCount();

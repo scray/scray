@@ -31,7 +31,7 @@ import scala.collection.mutable.ArrayBuffer
  */
 class KeyValueCacheSerializer extends Serializer[Row] with Serializable {
 
-  override def serialize(out: DataOutput, value: Row) = {
+  override def serialize(out: DataOutput, value: Row): Unit = {
     val typ = value match {
       case simple: SimpleRow => SIMPLE_ROW
       case composite: CompositeRow => COMPOSITE_ROW
