@@ -54,6 +54,7 @@ import scala.annotation.tailrec
 import scray.querying.source.ParallelizedQueryableSource
 import scray.querying.description.internal._
 import com.twitter.util.Try
+import scray.querying.queries.QueryInformation
 
 /**
  * Simple planner to execute queries.
@@ -71,6 +72,8 @@ object Planner extends LazyLogging {
     
     basicVerifyQuery(query)
 
+    val queryInfo = Registry.createQueryInformation(query)
+    
     // TODO: memoize query-plans if basicVerifyQuery has been successful
     
     val conjunctiveQueries = distributiveOrReductionToConjunctiveQuery(query)
@@ -95,7 +98,7 @@ object Planner extends LazyLogging {
       val dispensedColumnPlan = removeDispensableColumns(filteredPlan, domainQuery, allColumns)
       
       // remove empty rows
-      val dispensedPlan = removeEmptyRows(dispensedColumnPlan, domainQuery)
+      val dispensedPlan = removeEmptyRows(dispensedColumnPlan, domainQuery, queryInfo)
       
       // if needed add an in-memory sorting step afterwards
       val executablePlan = sortedPlan(dispensedPlan, domainQuery)
@@ -528,13 +531,14 @@ object Planner extends LazyLogging {
   /**
    * Add row removal for rows which are empty
    */
-  def removeEmptyRows(filteredPlan: ComposablePlan[DomainQuery, _], domainQuery: DomainQuery): ComposablePlan[DomainQuery, _] = {
+  def removeEmptyRows(filteredPlan: ComposablePlan[DomainQuery, _], domainQuery: DomainQuery, 
+                      queryInfo: QueryInformation): ComposablePlan[DomainQuery, _] = {
     filteredPlan.getSource match {
       case lazySource: LazySource[_] => ComposablePlan.getComposablePlan(
-          new LazyEmptyRowDispenserSource(lazySource), domainQuery)
+          new LazyEmptyRowDispenserSource(lazySource, Some(queryInfo)), domainQuery)
       case eagerSource: EagerSource[_] => ComposablePlan.getComposablePlan(
           new EagerEmptyRowDispenserSource[DomainQuery, Seq[Row]](
-              eagerSource.asInstanceOf[Source[DomainQuery, Seq[Row]]]), domainQuery) 
+              eagerSource.asInstanceOf[Source[DomainQuery, Seq[Row]]], Some(queryInfo)), domainQuery) 
     }
   }
   

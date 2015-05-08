@@ -36,6 +36,12 @@ import scray.querying.monitoring.Monitor
 import com.typesafe.scalalogging.slf4j.LazyLogging
 import scray.querying.caching.MonitoringInfos
 import java.util.concurrent.atomic.AtomicBoolean
+import scray.querying.queries.QueryInformation
+import java.util.UUID
+import com.twitter.util.JavaTimer
+import com.twitter.util.Duration
+import java.util.concurrent.TimeUnit
+import com.twitter.util.Time
 
 /**
  * default trait to represent get operations on the registry
@@ -75,7 +81,11 @@ object Registry extends LazyLogging with Registry {
   private val querySpaces = new HashMap[String, QueryspaceConfiguration]
 
   private val enableCaches = new AtomicBoolean(true)
-
+  
+  // information about queries 
+  private val queryMonitor = new HashMap[UUID, QueryInformation]
+  private val queryMonitorRwLock = new ReentrantReadWriteLock
+  
   /**
    * returns the current queryspace configuration
    * Cannot be used to query the Registry for tables or columns of a queryspace,
@@ -258,4 +268,36 @@ object Registry extends LazyLogging with Registry {
    */
   def setCachingEnabled(enabled: Boolean) = enableCaches.set(enabled)
   def getCachingEnabled = enableCaches.get
+  
+  def createQueryInformation(query: Query): QueryInformation = {
+    queryMonitorRwLock.writeLock().lock()
+    try {
+      val info = new QueryInformation(query.getQueryID, query.getTableIdentifier, query.getWhereAST)
+      queryMonitor += ((query.getQueryID, info))
+      info
+    } finally {
+      queryMonitorRwLock.writeLock().unlock()
+    }
+  }
+
+  def getQueryInformations(): Map[UUID, QueryInformation] = {
+    queryMonitorRwLock.readLock().lock()
+    try {
+      queryMonitor.toMap
+    } finally {
+      queryMonitorRwLock.readLock().unlock()
+    }
+  }
+  
+  val cleanupQueryInformation = new JavaTimer(true).schedule(Duration.fromTimeUnit(1, TimeUnit.HOURS)) {
+    queryMonitorRwLock.writeLock().lock()
+    try {
+      val cutoffTime = Time.now - Duration.fromTimeUnit(1, TimeUnit.HOURS)
+      queryMonitor.filter { entry => 
+        entry._2.finished.get > 0 && entry._2.finished.get < cutoffTime.inMillis  ||     // finished more than one hour ago
+        entry._2.pollingTime.get > 0 && entry._2.pollingTime.get < cutoffTime.inMillis } // probably query has died
+    } finally {
+      queryMonitorRwLock.writeLock().unlock()
+    }
+  }
 }

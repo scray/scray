@@ -48,7 +48,7 @@ class Monitor extends LazyLogging {
   JMXHelpers.jmxRegister(new MonitoringBaseInfoBean(this), "Scray:name=Cache")
 
   /**
-   * monitor the caches
+   * monitor caches and queries
    */
   def monitor(tables: HashMap[String, HashMap[TableIdentifier, TableConfiguration[_, _, _]]]) {
     logger.debug(s"Monitoring Queryspaces with ${tables.size} entries")
