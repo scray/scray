@@ -94,9 +94,9 @@ abstract class AbstractHashJoinSource[Q <: DomainQuery, M, R /* <: Product */, V
         case _ => None
       }
     }.getOrElse {
-      // if a reasonable limit (say 2015, we try to process in parallel)
+      // if a reasonable limit (say 1000, we try to process in parallel)
       val pos = query.range.map { range => range.skip.getOrElse(0L) + range.limit.getOrElse(0L) }.getOrElse(Long.MaxValue)
-      if(pos > 2015L) {
+      if(pos > 1000L) {
         spool().flatMap { in => 
           val joinables = getJoinablesFromIndexSource(in)
           // execute this flatMap on a parallel collection

@@ -14,28 +14,33 @@
 // limitations under the License.
 package scray.querying.source
 
-import scray.querying.queries.DomainQuery
-import scray.querying.description.{Column, EmptyRow}
-import scalax.collection.immutable.Graph
+import com.twitter.concurrent.Spool
+import com.twitter.util.Future
+import com.typesafe.scalalogging.slf4j.LazyLogging
+
+import scalax.collection.GraphEdge._
 import scalax.collection.GraphEdge.DiEdge
 import scalax.collection.GraphPredef._
-import scalax.collection.GraphEdge._
-import com.twitter.concurrent.Spool
-import scray.querying.description.Row
-import com.twitter.util.Future
-import scray.querying.caching.Cache
-import scray.querying.caching.NullCache
-import org.slf4j.LoggerFactory
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import scalax.collection.immutable.Graph
+import scray.querying.caching.{Cache, NullCache}
+import scray.querying.description.{Column, EmptyRow, Row}
+import scray.querying.queries.{DomainQuery, QueryInformation}
 
 /**
  * dispenses empty rows, such that the results only contains rows which contain data
  */
-class LazyEmptyRowDispenserSource[Q <: DomainQuery](val source: LazySource[Q]) extends LazySource[Q] with LazyLogging {
+class LazyEmptyRowDispenserSource[Q <: DomainQuery](val source: LazySource[Q], val qi: Option[QueryInformation] = None) extends LazySource[Q] with LazyLogging {
   
   override def request(query: Q): LazyDataFuture = {
     logger.debug(s"Filtering empty rows lazyly for ${query.getQueryID}")
-    source.request(query).flatMap(_.filter(row => !(row.isInstanceOf[EmptyRow] || row.isEmpty)))
+    source.request(query).flatMap { filterrowspool =>       
+      qi.map(_.resultItems.getAndIncrement)
+      filterrowspool match {
+        case se if filterrowspool.isEmpty => qi.map(queryinfo => queryinfo.finished.set(System.currentTimeMillis()))
+        case _ => qi.map(queryinfo => queryinfo.pollingTime.set(System.currentTimeMillis()))
+      }
+      filterrowspool.filter(row => !(row.isInstanceOf[EmptyRow] || row.isEmpty))
+    }
   } 
 
   override def getColumns: List[Column] = source.getColumns
@@ -54,14 +59,26 @@ class LazyEmptyRowDispenserSource[Q <: DomainQuery](val source: LazySource[Q]) e
 /**
  * dispense all empty rows in the requested source
  */
-class EagerEmptyRowDispenserSource[Q <: DomainQuery, R](source: Source[Q, R]) extends EagerSource[Q] with LazyLogging {
+class EagerEmptyRowDispenserSource[Q <: DomainQuery, R](source: Source[Q, R], val qi: Option[QueryInformation] = None) extends EagerSource[Q] with LazyLogging {
+  
+  private def updateCounters(seq: => Seq[Row]): Unit = {
+    val time = System.currentTimeMillis()
+    qi.map(_.resultItems.getAndAdd(seq.size))
+    qi.map(_.finished.set(time))
+    qi.map(_.pollingTime.set(time))
+  }
   
   override def request(query: Q): EagerDataFuture = {
     logger.debug(s"Filtering empty rows eagerly for ${query.getQueryID}")
     source.request(query).flatMap(_ match {
-      case spool: Spool[_] => spool.toSeq.asInstanceOf[EagerDataFuture] //collect
-      case seq: Seq[_] => Future(seq.asInstanceOf[Seq[Row]]) // do nothing
-    }).map(_.filter(row => !(row.isInstanceOf[EmptyRow] || row.isEmpty)))
+      case spool: Spool[_] => 
+        spool.toSeq.asInstanceOf[EagerDataFuture] // collect
+      case seq: Seq[_] => 
+        Future(seq.asInstanceOf[Seq[Row]]) // do nothing
+    }).map { seq => 
+      updateCounters(seq)
+      seq.filter(row => !(row.isInstanceOf[EmptyRow] || row.isEmpty))
+    }
   }
   
   override def getColumns: List[Column] = source.getColumns
