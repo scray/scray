@@ -30,29 +30,27 @@ import scray.querying.queries.{DomainQuery, QueryInformation}
  * dispenses empty rows, such that the results only contains rows which contain data
  */
 class LazyEmptyRowDispenserSource[Q <: DomainQuery](val source: LazySource[Q], val qi: Option[QueryInformation] = None) extends LazySource[Q] with LazyLogging {
-  
+
   override def request(query: Q): LazyDataFuture = {
     logger.debug(s"Filtering empty rows lazyly for ${query.getQueryID}")
-    source.request(query).flatMap { filterrowspool =>       
-      qi.map(_.resultItems.getAndIncrement)
-      filterrowspool match {
-        case se if filterrowspool.isEmpty => qi.map(queryinfo => queryinfo.finished.set(System.currentTimeMillis()))
-        case _ => qi.map(queryinfo => queryinfo.pollingTime.set(System.currentTimeMillis()))
+    source.request(query).flatMap { _.filter { row =>
+        qi.map(_.resultItems.getAndIncrement)
+        qi.map(queryinfo => queryinfo.pollingTime.set(System.currentTimeMillis()))
+        !(row.isInstanceOf[EmptyRow] || row.isEmpty)
       }
-      filterrowspool.filter(row => !(row.isInstanceOf[EmptyRow] || row.isEmpty))
     }
-  } 
+  }
 
   override def getColumns: List[Column] = source.getColumns
-  
+
   override def isOrdered(query: Q): Boolean = source.isOrdered(query)
-  
-  override def getGraph: Graph[Source[DomainQuery, Spool[Row]], DiEdge] = source.getGraph + 
+
+  override def getGraph: Graph[Source[DomainQuery, Spool[Row]], DiEdge] = source.getGraph +
     DiEdge(source.asInstanceOf[Source[DomainQuery, Spool[Row]]],
     this.asInstanceOf[Source[DomainQuery, Spool[Row]]])
 
   override def getDiscriminant = "RowDispenser" + source.getDiscriminant
-  
+
   override def createCache: Cache[Nothing] = new NullCache
 }
 
@@ -60,36 +58,36 @@ class LazyEmptyRowDispenserSource[Q <: DomainQuery](val source: LazySource[Q], v
  * dispense all empty rows in the requested source
  */
 class EagerEmptyRowDispenserSource[Q <: DomainQuery, R](source: Source[Q, R], val qi: Option[QueryInformation] = None) extends EagerSource[Q] with LazyLogging {
-  
+
   private def updateCounters(seq: => Seq[Row]): Unit = {
     val time = System.currentTimeMillis()
     qi.map(_.resultItems.getAndAdd(seq.size))
     qi.map(_.finished.set(time))
     qi.map(_.pollingTime.set(time))
   }
-  
+
   override def request(query: Q): EagerDataFuture = {
     logger.debug(s"Filtering empty rows eagerly for ${query.getQueryID}")
     source.request(query).flatMap(_ match {
-      case spool: Spool[_] => 
+      case spool: Spool[_] =>
         spool.toSeq.asInstanceOf[EagerDataFuture] // collect
-      case seq: Seq[_] => 
+      case seq: Seq[_] =>
         Future(seq.asInstanceOf[Seq[Row]]) // do nothing
-    }).map { seq => 
+    }).map { seq =>
       updateCounters(seq)
       seq.filter(row => !(row.isInstanceOf[EmptyRow] || row.isEmpty))
     }
   }
-  
+
   override def getColumns: List[Column] = source.getColumns
-  
+
   override def isOrdered(query: Q): Boolean = source.isOrdered(query)
-    
-  override def getGraph: Graph[Source[DomainQuery, Seq[Row]], DiEdge] = source.asInstanceOf[Source[DomainQuery, Seq[Row]]].getGraph + 
+
+  override def getGraph: Graph[Source[DomainQuery, Seq[Row]], DiEdge] = source.asInstanceOf[Source[DomainQuery, Seq[Row]]].getGraph +
     DiEdge(source.asInstanceOf[Source[DomainQuery, Seq[Row]]],
     this.asInstanceOf[Source[DomainQuery, Seq[Row]]])
-    
+
   override def getDiscriminant = "RowDispenser" + source.getDiscriminant
-  
+
   override def createCache: Cache[Nothing] = new NullCache
 }

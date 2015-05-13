@@ -42,6 +42,8 @@ import com.twitter.util.JavaTimer
 import com.twitter.util.Duration
 import java.util.concurrent.TimeUnit
 import com.twitter.util.Time
+import scala.collection.mutable.ArrayBuffer
+import scray.querying.monitoring.MonitorQuery
 
 /**
  * default trait to represent get operations on the registry
@@ -73,6 +75,10 @@ object Registry extends LazyLogging with Registry {
   // Object to send monitor information to
   private val monitor = new Monitor
 
+  private val createQueryInformationListeners = new ArrayBuffer[QueryInformation => Unit]
+
+  private val querymonitor = new MonitorQuery
+
   // makes registry thread safe at the cost of some performance;
   // however, reads should not be blocking each other
   private val rwlock = new ReentrantReadWriteLock
@@ -81,11 +87,11 @@ object Registry extends LazyLogging with Registry {
   private val querySpaces = new HashMap[String, QueryspaceConfiguration]
 
   private val enableCaches = new AtomicBoolean(true)
-  
-  // information about queries 
+
+  // information about queries
   private val queryMonitor = new HashMap[UUID, QueryInformation]
   private val queryMonitorRwLock = new ReentrantReadWriteLock
-  
+
   /**
    * returns the current queryspace configuration
    * Cannot be used to query the Registry for tables or columns of a queryspace,
@@ -268,34 +274,41 @@ object Registry extends LazyLogging with Registry {
    */
   def setCachingEnabled(enabled: Boolean) = enableCaches.set(enabled)
   def getCachingEnabled = enableCaches.get
-  
+
+  def addCreateQueryInformationListener(listener: QueryInformation => Unit) =
+    createQueryInformationListeners += listener
+
   def createQueryInformation(query: Query): QueryInformation = {
     queryMonitorRwLock.writeLock().lock()
     try {
       val info = new QueryInformation(query.getQueryID, query.getTableIdentifier, query.getWhereAST)
       queryMonitor += ((query.getQueryID, info))
+      createQueryInformationListeners.foreach(_(info))
       info
     } finally {
       queryMonitorRwLock.writeLock().unlock()
     }
   }
 
-  def getQueryInformations(): Map[UUID, QueryInformation] = {
+  def getQueryInformations(qid: UUID): Option[QueryInformation] = {
     queryMonitorRwLock.readLock().lock()
     try {
-      queryMonitor.toMap
+      queryMonitor.get(qid)
     } finally {
       queryMonitorRwLock.readLock().unlock()
     }
   }
-  
+
   val cleanupQueryInformation = new JavaTimer(true).schedule(Duration.fromTimeUnit(1, TimeUnit.HOURS)) {
     queryMonitorRwLock.writeLock().lock()
     try {
       val cutoffTime = Time.now - Duration.fromTimeUnit(1, TimeUnit.HOURS)
-      queryMonitor.filter { entry => 
+      val qMon = queryMonitor.filterNot { entry =>
         entry._2.finished.get > 0 && entry._2.finished.get < cutoffTime.inMillis  ||     // finished more than one hour ago
         entry._2.pollingTime.get > 0 && entry._2.pollingTime.get < cutoffTime.inMillis } // probably query has died
+      (queryMonitor -- qMon.keys).map(_._2.destroy())
+      queryMonitor.clear()
+      queryMonitor ++= qMon
     } finally {
       queryMonitorRwLock.writeLock().unlock()
     }
