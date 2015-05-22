@@ -36,7 +36,7 @@ object ScrayMetaTServiceImpl extends ScrayMetaTService[Future] {
 
   def expiresFromNow = EXPIRATION.fromNow.inNanoseconds
 
-  def createID = { val id = UUID.randomUUID(); ScrayUUID(id.getLeastSignificantBits, id.getMostSignificantBits) }
+  def createID = { val id = UUID.randomUUID(); ScrayUUID(id.getMostSignificantBits, id.getLeastSignificantBits) }
 
   def removeExpiredEndpoints = endpoints.values.filter(ep => Time(ep.expires.get) < Time.now)
     .foreach { ep => logger.debug(s"Removing expired endpoint ${ep.host}:${ep.port}"); endpoints.remove(ep.endpointId.get) }

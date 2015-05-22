@@ -48,9 +48,9 @@ package object service {
   def inetAddr2EndpointString(iaddr: InetSocketAddress): String = s"${iaddr.getHostName}:${iaddr.getPort}"
 
   implicit def UUID2ScrayUUID(uuid: UUID): ScrayUUID =
-    ScrayUUID(uuid.getLeastSignificantBits(), uuid.getMostSignificantBits())
+    ScrayUUID(uuid.getMostSignificantBits(), uuid.getLeastSignificantBits())
 
   implicit def ScrayUUID2UUID(suuid: ScrayUUID): UUID =
-    new UUID(suuid.leastSigBits, suuid.mostSigBits)
+    new UUID(suuid.mostSigBits, suuid.leastSigBits)
 
 }

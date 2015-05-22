@@ -21,12 +21,12 @@ public class ScrayJdbcAccess {
 
 	/* defaults for options */
     private int FETCHSIZE = 50;
-    private int TIMEOUT = 1;
+    private int TIMEOUT = 10;
     private int RESULTSETS = -1;
     private String URL = "jdbc:scray:stateful://localhost:18192/cassandra/SIL/SIL";
 	private String TABLE = "BISMTOlsWorkflowElement";
 	private boolean DOTS = true;
-	private int LIMIT = 80000;
+	private int LIMIT = 10001;
 
 	public static void main(String[] args) {
 	    ScrayJdbcAccess jdbc = new ScrayJdbcAccess();

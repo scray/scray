@@ -290,7 +290,7 @@ object Registry extends LazyLogging with Registry {
     }
   }
 
-  def getQueryInformations(qid: UUID): Option[QueryInformation] = {
+  def getQueryInformation(qid: UUID): Option[QueryInformation] = {
     queryMonitorRwLock.readLock().lock()
     try {
       queryMonitor.get(qid)

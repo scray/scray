@@ -70,6 +70,7 @@ object Planner extends LazyLogging {
    */
   def planAndExecute(query: Query): Spool[Row] = {
     
+    logger.info(s"qid is ${query.getQueryID}")
     basicVerifyQuery(query)
 
     val queryInfo = Registry.createQueryInformation(query)

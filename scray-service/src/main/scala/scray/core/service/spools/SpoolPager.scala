@@ -27,34 +27,38 @@ import scray.querying.description.Row
 import scray.service.qmodel.thrifscala.ScrayTRow
 import scray.service.qmodel.thrifscala.ScrayTColumn
 import scray.service.qmodel.thrifscala.ScrayTColumnInfo
+import scray.querying.Registry
+import java.util.UUID
+import com.typesafe.scalalogging.slf4j.LazyLogging
 
 /**
  * Slice a result spool into pages.
  * Use page() to get one page of results together with a spool holding the rest of the results.
  * Use pageAll() to get a lazy spool of all pages.
  */
-class SpoolPager(sspool : ServiceSpool) {
+class SpoolPager(sspool: ServiceSpool) extends LazyLogging {
 
-  val pagesize : Int = sspool.tQueryInfo.pagesize.getOrElse(DEFAULT_PAGESIZE)
+  val pagesize: Int = sspool.tQueryInfo.pagesize.getOrElse(DEFAULT_PAGESIZE)
 
   // fetches a page worth of of converted rows and returns it paired with the remaining spool
-  def page() : Future[(Seq[ScrayTRow], Spool[Row])] = if (!sspool.spool.isEmpty) {
+  def page(): Future[(Seq[ScrayTRow], Spool[Row])] = if (!sspool.spool.isEmpty) {
     part(Seq(sspool.spool.head), sspool.spool.tail, pagesize - 1).map { pair => (pair._1 map { RowConverter.convertRow(_) }, pair._2) }
   } else {
     Future.value((Seq(ScrayTRow(None, None)), sspool.spool))
   }
 
-  def pageAll() : Future[Spool[Seq[Row]]] = pageAll(sspool.spool)
+  def pageAll(): Future[Spool[Seq[Row]]] = pageAll(sspool.spool)
 
   // lazily fetch spool rows chunked as pages
-  private def pageAll(spool : Spool[Row]) : Future[Spool[Seq[Row]]] = if (!spool.isEmpty) {
+  private def pageAll(spool: Spool[Row]): Future[Spool[Seq[Row]]] = if (!spool.isEmpty) {
     part(Seq(spool.head), spool.tail, pagesize - 1) flatMap { pair => pageAll(pair._2) map (pair._1 **:: _) }
   } else {
+    logFinishTime
     Future.value(Seq[Row](new SucceedingRow()) **:: Spool.empty)
   }
 
   // recursive function parting a given spool into an eager head (Page part) and a lazy tail (Spool part)
-  private def part(dest : Seq[Row], src : Future[Spool[Row]], pos : Int) : Future[(Seq[Row], Spool[Row])] =
+  private def part(dest: Seq[Row], src: Future[Spool[Row]], pos: Int): Future[(Seq[Row], Spool[Row])] =
     if (pos <= 0) {
       src.map { (dest, _) }
     } else {
@@ -62,8 +66,16 @@ class SpoolPager(sspool : ServiceSpool) {
         if (!spool.isEmpty) {
           part(dest :+ spool.head, spool.tail, pos - 1)
         } else {
+          logFinishTime
           Future.value((dest :+ new SucceedingRow(), Spool.empty))
         }
       }
     }
+  
+  def logFinishTime() = {
+    sspool.tQueryInfo.queryId.map(sid => new UUID(sid.mostSigBits, sid.leastSigBits)).map { uuid =>
+      logger.info(s"Finished query $uuid")
+      Registry.getQueryInformation(uuid).map(_.finished.set(System.currentTimeMillis()))
+    }
+  }
 }
