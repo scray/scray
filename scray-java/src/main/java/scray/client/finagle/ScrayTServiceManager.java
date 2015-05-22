@@ -1,18 +1,19 @@
 package scray.client.finagle;
 
-import java.net.SocketAddress;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import scray.client.jdbc.ScrayURL;
 import scray.service.qservice.thriftjava.ScrayMetaTService;
 import scray.service.qservice.thriftjava.ScrayTServiceEndpoint;
 
+import com.google.common.base.Joiner;
 import com.twitter.finagle.Thrift;
 import com.twitter.util.Await;
 import com.twitter.util.Duration;
 import com.twitter.util.Future;
-import com.google.common.base.Joiner;
 
 public class ScrayTServiceManager {
 
@@ -70,13 +71,16 @@ public class ScrayTServiceManager {
 		// initially fill the endpoint cache
 		refreshEndpoints();
 
-		// schedule refresh of endpointCache
-		new java.util.Timer().schedule(new java.util.TimerTask() {
+		TimerTask tt = new java.util.TimerTask() {			
 			@Override
 			public void run() {
 				refreshEndpoints();
 			}
-		}, REFRESH, REFRESH);
+		};
+
+		// schedule refresh of endpointCache (as daemon)
+		Timer t = new Timer(true);
+		t.scheduleAtFixedRate(tt, REFRESH, REFRESH);
 	}
 
 	void refreshEndpoints() {
