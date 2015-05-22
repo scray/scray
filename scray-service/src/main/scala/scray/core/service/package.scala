@@ -22,14 +22,28 @@ import scray.core.service.properties.ScrayServicePropertiesRegistration
 import scray.common.properties.ScrayProperties
 import scray.common.properties.predefined.PredefinedProperties
 import java.net.InetSocketAddress
+import scray.core.service.properties.ScrayServicePropertiesRegistrar
 
 package object service {
 
-  // scray server endpoint
-  val SCRAY_ENDPOINT : InetSocketAddress = ScrayProperties.getPropertyValue(PredefinedProperties.SCRAY_SERVICE_IPS).iterator().next
+  // scray query endpoint
+  val SCRAY_QUERY_ENDPOINT = new InetSocketAddress(
+    ScrayProperties.getPropertyValue(PredefinedProperties.SCRAY_SERVICE_HOST),
+    ScrayProperties.getPropertyValue(PredefinedProperties.SCRAY_QUERY_PORT))
+
+  // scray meta endpoint
+  val SCRAY_META_ENDPOINT = new InetSocketAddress(
+    ScrayProperties.getPropertyValue(PredefinedProperties.SCRAY_SERVICE_HOST),
+    ScrayProperties.getPropertyValue(PredefinedProperties.SCRAY_META_PORT))
 
   // memcached host
-  val MEMCACHED_ENDPOINT : InetSocketAddress = ScrayProperties.getPropertyValue(PredefinedProperties.SCRAY_MEMCACHED_IPS).iterator().next
+  val MEMCACHED_ENDPOINTS = ScrayProperties.getPropertyValue(PredefinedProperties.SCRAY_MEMCACHED_IPS)
+
+  // scray seeds
+  val SCRAY_SEEDS = ScrayProperties.getPropertyValue(PredefinedProperties.SCRAY_SEED_IPS)
+
+  // expiration time of enpoint registrations
+  val EXPIRATION = ScrayProperties.getPropertyValue(ScrayServicePropertiesRegistrar.SCRAY_ENDPOINT_LIFETIME)
 
   def inetAddr2EndpointString(iaddr: InetSocketAddress): String = s"${iaddr.getHostName}:${iaddr.getPort}"
 

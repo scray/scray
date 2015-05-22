@@ -2,17 +2,15 @@ package scray.core.service.spools.memcached
 
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
-
-import scala.annotation.tailrec
-
+import java.net.InetSocketAddress
 import org.slf4j.LoggerFactory
-
+import scala.annotation.tailrec
+import scala.collection.JavaConversions._
 import com.twitter.concurrent.Spool
 import com.twitter.finagle.memcached.Client
 import com.twitter.util.Duration
 import com.twitter.util.Future
 import com.twitter.util.Time
-
 import scray.core.service._
 import scray.core.service.ScrayUUID2UUID
 import scray.core.service.UUID2ScrayUUID
@@ -21,17 +19,35 @@ import scray.querying.Query
 import scray.querying.description.Row
 import scray.service.qmodel.thrifscala.ScrayTQueryInfo
 import scray.service.qmodel.thrifscala.ScrayUUID
+import com.typesafe.scalalogging.slf4j.LazyLogging
 
-class MemcachedPageRack(planAndExecute : (Query) => Spool[Row], pageTTL : Duration = DEFAULT_TTL)
+class MemcachedPageRack(planAndExecute: (Query) => Spool[Row], pageTTL: Duration = DEFAULT_TTL)
   extends PageRackImplBase(planAndExecute, pageTTL) {
-  
-  val client = Client(host = inetAddr2EndpointString(MEMCACHED_ENDPOINT))
-  val pageStore = MemcachePageStore(client, pageTTL)
+
+  val clientOption = tryClient(MEMCACHED_ENDPOINTS)
+
+  @tailrec
+  final def tryClient(meps: scala.collection.mutable.Set[InetSocketAddress]): Option[Client] = {
+    if (meps.isEmpty) return None
+    else {
+      val isa = meps.iterator.next
+      try {
+        return Some(Client(host = inetAddr2EndpointString(isa)))
+      } catch {
+        case e: Exception => return {
+          logger.warn(s"Couldn't bind to memcached socket address ${isa}.", e)
+          tryClient(meps - isa)
+        }
+      }
+    }
+  }
+
+  val pageStore = MemcachePageStore(clientOption.get, pageTTL)
 
   val POOLSIZE = 10
-  val pool : ExecutorService = Executors.newFixedThreadPool(POOLSIZE)
+  val pool: ExecutorService = Executors.newFixedThreadPool(POOLSIZE)
 
-  override def createPages(query : Query, tQueryInfo : ScrayTQueryInfo) : ScrayTQueryInfo = {
+  override def createPages(query: Query, tQueryInfo: ScrayTQueryInfo): ScrayTQueryInfo = {
     // exit if exists (first page)
     if (pageStore.get(pidKeyEncoder(PageKey(query.getQueryID, 0))).get.isDefined) return tQueryInfo
 
@@ -43,13 +59,13 @@ class MemcachedPageRack(planAndExecute : (Query) => Spool[Row], pageTTL : Durati
     val snap1 = System.currentTimeMillis()
 
     // prepare this query with the engine
-    val resultSpool : Spool[Row] = wrappedPlanAndExecute(query)
+    val resultSpool: Spool[Row] = wrappedPlanAndExecute(query)
 
     logger.info(s"PlanAndExecute of query ${updQI.queryId.get} finished in ${System.currentTimeMillis() - snap1} milis.")
     val snap2 = System.currentTimeMillis()
 
     // prepare paging (lazily)
-    val pages : Spool[Seq[Row]] = (new SpoolPager(ServiceSpool(resultSpool, updQI))).pageAll().get
+    val pages: Spool[Seq[Row]] = (new SpoolPager(ServiceSpool(resultSpool, updQI))).pageAll().get
 
     logger.info(s"Paging of query ${updQI.queryId.get} finished in ${System.currentTimeMillis() - snap2} milis.")
     val snap3 = System.currentTimeMillis()
@@ -66,10 +82,10 @@ class MemcachedPageRack(planAndExecute : (Query) => Spool[Row], pageTTL : Durati
     updQI
   }
 
-  override def getPage(key : PageKey) : Future[Option[PageValue]] = pageStore.get(pidKeyEncoder(key))
+  override def getPage(key: PageKey): Future[Option[PageValue]] = pageStore.get(pidKeyEncoder(key))
 }
 
-class MemcachedSpoolPager(pages : Future[Spool[Seq[Row]]], queryInfo : ScrayTQueryInfo, store : MemcachePageStore) extends Runnable {
+class MemcachedSpoolPager(pages: Future[Spool[Seq[Row]]], queryInfo: ScrayTQueryInfo, store: MemcachePageStore) extends Runnable {
   private val logger = LoggerFactory.getLogger(classOf[MemcachedSpoolPager])
 
   def run() {
@@ -89,7 +105,7 @@ class MemcachedSpoolPager(pages : Future[Spool[Seq[Row]]], queryInfo : ScrayTQue
   }
 
   @tailrec
-  private final def pushPages(pages : Spool[Seq[Row]], pageIdx : Int) : Unit = if (!pages.isEmpty) {
+  private final def pushPages(pages: Spool[Seq[Row]], pageIdx: Int): Unit = if (!pages.isEmpty) {
     // val snap = System.currentTimeMillis()
     store.put(pidKeyEncoder(PageKey(queryInfo.queryId.get, pageIdx)) -> Some(PageValue(pages.head, queryInfo)))
     // logger.info(s"Putting 1 page to memcached finished in ${System.currentTimeMillis() - snap} milis.")

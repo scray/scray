@@ -36,7 +36,7 @@ class MemcachedPagesSpec
   with KryoPoolRegistration {
 
   // kryo registration
-  register
+  registerSerializers
 
   // pagesize
   val PGSZ = 2

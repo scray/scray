@@ -18,22 +18,27 @@ public class ScrayStatelessTServiceAdapter implements ScrayTServiceAdapter {
 	private int pageIndex = 0;
 
 	protected ScrayStatelessTService.FutureIface client;
+	private String endpoint;
 
 	public ScrayStatelessTService.FutureIface getClient() {
+		// lazy init
+		if (client == null) {
+			client = Thrift.newIface(endpoint,
+					ScrayStatelessTService.FutureIface.class);
+		}
 		return client;
 	}
 
 	public ScrayStatelessTServiceAdapter(String endpoint) {
-		client = Thrift.newIface(endpoint,
-				ScrayStatelessTService.FutureIface.class);
+		this.endpoint = endpoint;
 	}
 
 	public ScrayUUID query(ScrayTQuery query, int queryTimeout)
 			throws SQLException {
 		try {
-			Future<ScrayUUID> fuuid = client.query(query);
+			Future<ScrayUUID> fuuid = getClient().query(query);
 			return Await
-					.result(fuuid, new Duration(queryTimeout * 1000000000L));
+					.result(fuuid, Duration.fromSeconds(queryTimeout));
 		} catch (Exception e) {
 			throw new SQLException(e);
 		}
@@ -42,10 +47,9 @@ public class ScrayStatelessTServiceAdapter implements ScrayTServiceAdapter {
 	public ScrayTResultFrame getResults(ScrayUUID queryId, int queryTimeout)
 			throws SQLException {
 		try {
-			Future<ScrayTResultFrame> fframe = client.getResults(queryId,
+			Future<ScrayTResultFrame> fframe = getClient().getResults(queryId,
 					pageIndex);
-			ScrayTResultFrame frame = Await.result(fframe, new Duration(
-					queryTimeout * 1000000000L));
+			ScrayTResultFrame frame = Await.result(fframe, Duration.fromSeconds(queryTimeout));
 			pageIndex += 1;
 			return frame;
 		} catch (Exception e) {

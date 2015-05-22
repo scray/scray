@@ -21,9 +21,9 @@ public class ScrayJdbcAccess {
 
 	/* defaults for options */
     private int FETCHSIZE = 50;
-    private int TIMEOUT = 60;
+    private int TIMEOUT = 1;
     private int RESULTSETS = -1;
-    private String URL = "jdbc:scray:stateful://localhost:18181/cassandra/SIL/SIL";
+    private String URL = "jdbc:scray:stateful://localhost:18192/cassandra/SIL/SIL";
 	private String TABLE = "BISMTOlsWorkflowElement";
 	private boolean DOTS = true;
 	private int LIMIT = 80000;
@@ -64,7 +64,7 @@ public class ScrayJdbcAccess {
 			long aggTime = 0;
 			long snap = System.currentTimeMillis();
 			String limitString = (LIMIT > 0)?" LIMIT " + LIMIT:"";
-			if (statement.execute("SELECT * FROM " + TABLE + " WHERE (creationTime > 1L) " + limitString)) {
+			if (statement.execute("SELECT * FROM " + TABLE + " WHERE (creationTime > 1L)" + limitString)) {
 				do {
 					count++;
 					ResultSet results = statement.getResultSet();

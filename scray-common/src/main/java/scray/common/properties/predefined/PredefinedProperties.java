@@ -1,9 +1,5 @@
 package scray.common.properties.predefined;
 
-import java.net.InetSocketAddress;
-import java.util.HashSet;
-import java.util.Set;
-
 import scray.common.properties.ConsistencyLevelProperty;
 import scray.common.properties.IntProperty;
 import scray.common.properties.SocketListProperty;
@@ -38,15 +34,14 @@ public class PredefinedProperties {
 			"INDEX_ROW_SPREAD", 15);
 	public final static StringProperty INDEX_PARALLELIZATION_COLUMN = new StringProperty(
 			"INDEX_PARALLELIZATION_COLUMN", "Spread");
-
-	private static Set<InetSocketAddress> defaultScrayServiceIps = new HashSet<InetSocketAddress>();
-
-	static {
-		defaultScrayServiceIps.add(new InetSocketAddress("0.0.0.0", 18181));
-	}
-
-	public final static SocketListProperty SCRAY_SERVICE_IPS = new SocketListProperty(
-			"SCRAY_SERVICE_IPS", 18181, defaultScrayServiceIps);
+	public final static StringProperty SCRAY_SERVICE_HOST = new StringProperty(
+			"SCRAY_SERVICE_HOST", "0.0.0.0");
+	public final static IntProperty SCRAY_QUERY_PORT = new IntProperty(
+			"SCRAY_QUERY_PORT", 18181);
+	public final static IntProperty SCRAY_META_PORT = new IntProperty(
+			"SCRAY_META_PORT", 18191);
+	public final static SocketListProperty SCRAY_SEED_IPS = new SocketListProperty(
+			"SCRAY_SEED_IPS", 18191);
 	public final static SocketListProperty SCRAY_MEMCACHED_IPS = new SocketListProperty(
 			"SCRAY_MEMCACHED_IPS", 11211);
 

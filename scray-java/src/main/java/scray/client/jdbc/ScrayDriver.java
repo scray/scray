@@ -9,6 +9,10 @@ import java.sql.SQLFeatureNotSupportedException;
 import java.util.Properties;
 import java.util.logging.Logger;
 
+import scray.client.finagle.ScrayStatefulTServiceAdapter;
+import scray.client.finagle.ScrayStatelessTServiceAdapter;
+import scray.client.finagle.ScrayTServiceAdapter;
+import scray.client.finagle.ScrayTServiceManager;
 import scray.common.properties.PropertyException;
 import scray.common.properties.ScrayProperties;
 import scray.common.properties.ScrayProperties.Phase;
@@ -43,7 +47,25 @@ public class ScrayDriver implements java.sql.Driver {
 	public Connection connect(String url, Properties info) throws SQLException {
 		try {
 			if (acceptsURL(url)) {
-				return new ScrayConnection(new ScrayURL(url));
+				ScrayURL scrayURL = new ScrayURL(url);
+				ScrayTServiceManager tManager = ScrayTServiceManager
+						.getInstance();
+				tManager.init(scrayURL);
+				ScrayTServiceAdapter tAdapter = null;
+				try {
+					if (tManager.isStatefulTService()) {
+						tAdapter = new ScrayStatefulTServiceAdapter(
+								tManager.getRandomEndpoint());
+					} else {
+						tAdapter = new ScrayStatelessTServiceAdapter(
+								tManager.getRandomEndpoint());
+					}
+				} catch (Exception e) {
+					String msg = "Error setting up scray connection.";
+					log.error(msg, e);
+					throw new SQLException(msg);
+				}
+				return new ScrayConnection(scrayURL, tAdapter);
 			} else {
 				return null;
 			}

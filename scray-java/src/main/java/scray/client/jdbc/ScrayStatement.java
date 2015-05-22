@@ -21,6 +21,9 @@ import com.twitter.scrooge.Option;
 
 public class ScrayStatement implements java.sql.Statement {
 
+	private org.slf4j.Logger log = org.slf4j.LoggerFactory
+			.getLogger(ScrayStatement.class);
+
 	public static final int DEFAULT_FETCH_SIZE = 10000;
 	public static final int DEFAULT_FETCH_DIRECTION = ResultSet.FETCH_FORWARD;
 	public static final int MAX_ROWS_MAX = 5000;
@@ -51,8 +54,9 @@ public class ScrayStatement implements java.sql.Statement {
 			currResults = new ScrayResultSet(currFrame, fetchSize,
 					fetchDirection, this);
 		} catch (Exception e) {
-		    e.printStackTrace();
-			throw new SQLException(e);
+			String msg = "Error fetching result page.";
+			log.error(msg, e);
+			throw new SQLException(msg);
 		}
 	}
 
@@ -132,7 +136,7 @@ public class ScrayStatement implements java.sql.Statement {
 	@Override
 	public boolean execute(String sql) throws SQLException {
 		checkConstraints();
-		System.out.println(sql);
+		log.debug(sql);
 		initializeQuery(sql);
 		advanceQuery();
 		return true;

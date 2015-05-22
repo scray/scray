@@ -42,12 +42,12 @@ class ThriftSpec
 
   // prepare finagle
   object TestService extends ScrayStatefulTServiceImpl(MockedSpoolRack)
-  val server = Thrift.serveIface(inetAddr2EndpointString(SCRAY_ENDPOINT), TestService)
-  val client = Thrift.newIface[ScrayStatefulTService.FutureIface](inetAddr2EndpointString(SCRAY_ENDPOINT))
+  val server = Thrift.serveIface(inetAddr2EndpointString(SCRAY_QUERY_ENDPOINT), TestService)
+  val client = Thrift.newIface[ScrayStatefulTService.FutureIface](inetAddr2EndpointString(SCRAY_QUERY_ENDPOINT))
 
   before {
     // register kryo serializers
-    register
+    registerSerializers
     println("Thrift server bound to: " + server.boundAddress)
   }
 

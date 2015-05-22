@@ -65,7 +65,7 @@ service ScrayStatelessTService {
     /**
      * Submit query
      */
-    scrayQModel.ScrayUUID query(1: scrayQModel.ScrayTQuery query) throws (1: ScrayTException ex)
+    scrayQModel.ScrayUUID query(1: scrayQModel.ScrayTQuery query) throws (1: ScrayTException ex),
     
     /**
      * Fetch query result pages by index.
@@ -73,5 +73,51 @@ service ScrayStatelessTService {
      * The operation is idempotent and safe.
      */
     ScrayTResultFrame getResults(1: scrayQModel.ScrayUUID queryId, 2: i32 pageIndex) throws (1: ScrayTException ex)
+
+}
+
+/**
+ * Scray service endpoint
+ */
+struct ScrayTServiceEndpoint {
+	1: string host,									// hostname or IP
+    2: i32 port,        							// port
+    3: optional scrayQModel.ScrayUUID endpointId	// endpoint key
+    4: optional i64 expires							// epoch expiration time
+}
+
+/**
+ * Scray meta service
+ * The service is provided by scray seed nodes
+ */
+service ScrayMetaTService {
+
+    /**
+     * Fetch a list of service endpoints.
+     * Each endpoint provides ScrayStatelessTService and ScrayStatefulTService alternatives.
+     * Queries can address different endpoints for load distribution.
+     */
+	list<ScrayTServiceEndpoint> getServiceEndpoints(),
+
+	/**
+	 * Add new service endpoint.
+	 * The endpoint will be removed after a default expiration period.
+	 */	
+	ScrayTServiceEndpoint addServiceEndpoint(ScrayTServiceEndpoint endpoint),
+	
+	/**
+	 * Restore the default expiration period of an endpoint.
+	 */	
+	void refreshServiceEndpoint(scrayQModel.ScrayUUID endpointID),
+
+	/**
+	 * Return vital sign
+	 */
+	bool ping(),
+
+	/**
+	 * Shutdown the server
+	 */
+	void shutdown(optional i64 waitNanos)
 
 }

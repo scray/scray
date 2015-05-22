@@ -19,8 +19,6 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Executor;
 
-import scray.client.finagle.ScrayStatefulTServiceAdapter;
-import scray.client.finagle.ScrayStatelessTServiceAdapter;
 import scray.client.finagle.ScrayTServiceAdapter;
 
 public class ScrayConnection implements java.sql.Connection {
@@ -29,17 +27,6 @@ public class ScrayConnection implements java.sql.Connection {
 
 	private ScrayURL scrayURL;
 	private ScrayTServiceAdapter tAdapter;
-
-	public ScrayConnection(ScrayURL scrayURL) {
-		this.scrayURL = scrayURL;
-		if (scrayURL.getProtocolMode().equals(ScrayURL.ProtocolModes.stateful)) {
-			tAdapter = new ScrayStatefulTServiceAdapter(
-					scrayURL.getHostAndPort());
-		} else {
-			tAdapter = new ScrayStatelessTServiceAdapter(
-					scrayURL.getHostAndPort());
-		}
-	}
 
 	public ScrayConnection(ScrayURL scrayURL, ScrayTServiceAdapter tAdapter) {
 		this.scrayURL = scrayURL;

@@ -15,21 +15,26 @@
 
 package scray.core.service.spools
 
-import com.twitter.concurrent.Spool
-import com.twitter.util.JavaTimer
 import java.util.concurrent.locks.ReentrantReadWriteLock
-import scray.service.qmodel.thrifscala.ScrayUUID
-import scala.collection.mutable.HashMap
-import com.twitter.util.Duration
-import scray.service.qmodel.thrifscala.ScrayTQueryInfo
 import java.util.concurrent.locks.ReadWriteLock
-import scray.querying.Query
-import com.twitter.util.Time
 import java.util.UUID
-import scray.querying.description.Row
-import com.twitter.util.TimerTask
-import scray.core.service._
+
 import org.slf4j.LoggerFactory
+
+import scala.collection.mutable.HashMap
+
+import com.twitter.concurrent.Spool
+import com.twitter.util.Duration
+import com.twitter.util.Time
+import com.twitter.util.TimerTask
+import com.twitter.util.JavaTimer
+
+import scray.querying.Query
+import scray.querying.description.Row
+
+import scray.service.qmodel.thrifscala.ScrayUUID
+import scray.service.qmodel.thrifscala.ScrayTQueryInfo
+import scray.core.service._
 
 /**
  * SpoolRack implementation offering some means to substitute the back end (query engine).
@@ -41,7 +46,7 @@ import org.slf4j.LoggerFactory
  * @param ttl time to live for query result sets
  * @param planAndExecute function connecting the query engine
  */
-class TimedSpoolRack(val ttl : Duration = DEFAULT_TTL, planAndExecute : (Query) => Spool[Row])
+class TimedSpoolRack(val ttl: Duration = DEFAULT_TTL, planAndExecute: (Query) => Spool[Row])
   extends SpoolRack {
 
   private val logger = LoggerFactory.getLogger(classOf[TimedSpoolRack])
@@ -50,7 +55,7 @@ class TimedSpoolRack(val ttl : Duration = DEFAULT_TTL, planAndExecute : (Query) 
   private val spoolMap = new HashMap[UUID, (ServiceSpool, TimerTask)]()
 
   // spoolMap operations are locked for writing
-  private final val lock : ReadWriteLock = new ReentrantReadWriteLock()
+  private final val lock: ReadWriteLock = new ReentrantReadWriteLock()
 
   // internal timer enforcing ttl
   private val timer = new JavaTimer(false)
@@ -59,10 +64,10 @@ class TimedSpoolRack(val ttl : Duration = DEFAULT_TTL, planAndExecute : (Query) 
   private def expires = Time.now + ttl
 
   // monitoring wrapper for planner function
-  private val wrappedPlanAndExecute : (Query) => Spool[Row] = (q) => { planLog(q); planAndExecute(q) }
-  private def planLog(q : Query) : Unit = logger.info(s"Planner called for query $q");
+  private val wrappedPlanAndExecute: (Query) => Spool[Row] = (q) => { planLog(q); planAndExecute(q) }
+  private def planLog(q: Query): Unit = logger.info(s"Planner called for query $q");
 
-  override def createSpool(query : Query, tQueryInfo : ScrayTQueryInfo) : ScrayTQueryInfo = {
+  override def createSpool(query: Query, tQueryInfo: ScrayTQueryInfo): ScrayTQueryInfo = {
     // exit if exists
     if (spoolMap.contains(query.getQueryID)) return tQueryInfo
 
@@ -78,7 +83,7 @@ class TimedSpoolRack(val ttl : Duration = DEFAULT_TTL, planAndExecute : (Query) 
       expires = Some(expiration.inNanoseconds))
 
     // prepare this query with the engine
-    val resultSpool : Spool[Row] = wrappedPlanAndExecute(query)
+    val resultSpool: Spool[Row] = wrappedPlanAndExecute(query)
 
     // acquire write lock
     lock.writeLock().lock()
@@ -100,7 +105,7 @@ class TimedSpoolRack(val ttl : Duration = DEFAULT_TTL, planAndExecute : (Query) 
     }
   }
 
-  override def getSpool(uuid : ScrayUUID) : Option[ServiceSpool] = {
+  override def getSpool(uuid: ScrayUUID): Option[ServiceSpool] = {
 
     // acquire read lock
     lock.readLock().lock()
@@ -115,7 +120,7 @@ class TimedSpoolRack(val ttl : Duration = DEFAULT_TTL, planAndExecute : (Query) 
     }
   }
 
-  override def updateSpool(uuid : ScrayUUID, spool : ServiceSpool) : ServiceSpool = {
+  override def updateSpool(uuid: ScrayUUID, spool: ServiceSpool): ServiceSpool = {
     // fix expiration duration
     val expiration = expires
 
@@ -145,7 +150,7 @@ class TimedSpoolRack(val ttl : Duration = DEFAULT_TTL, planAndExecute : (Query) 
     }
   }
 
-  override def removeSpool(uuid : ScrayUUID) = {
+  override def removeSpool(uuid: ScrayUUID) = {
 
     // acquire write lock
     lock.writeLock().lock()

@@ -15,61 +15,99 @@
 
 package scray.core.service
 
+import java.net.InetSocketAddress
 import com.esotericsoftware.kryo.Kryo
+import scala.collection.JavaConversions._
+import com.twitter.finagle.ListeningServer
 import com.twitter.finagle.Thrift
 import com.twitter.util.Await
+import com.twitter.util.Duration
+import com.twitter.util.Time
+import com.twitter.util.TimerTask
+import com.twitter.util.JavaTimer
 import scray.querying.description._
 import scray.querying.caching.serialization._
 import scray.common.serialization.KryoPoolSerialization
 import scray.common.serialization.numbers.KryoSerializerNumber
-import com.twitter.finagle.ListeningServer
-import java.net.InetAddress
 import scray.common.properties.ScrayProperties
-import com.twitter.util.Try
 import scray.common.properties.IntProperty
 import scray.common.properties.predefined.PredefinedProperties
+import scray.service.qservice.thrifscala.ScrayMetaTService
+import scray.service.qservice.thrifscala.ScrayTServiceEndpoint
+import scray.core.service.properties.ScrayServicePropertiesRegistration
+import scray.service.qmodel.thrifscala.ScrayUUID
 
 trait KryoPoolRegistration {
-  def register = RegisterRowCachingSerializers()
+  def registerSerializers = RegisterRowCachingSerializers()
 }
 
 abstract class ScrayStatefulTServer extends AbstractScrayTServer {
-  val server = Thrift.serveIface(getServerAddress, ScrayStatefulTServiceImpl())
-  override def getServer : ListeningServer = server
-  override def getVersion : String = "1.8"
+  val server = Thrift.serveIface(SCRAY_QUERY_ENDPOINT, ScrayStatefulTServiceImpl())
+  override def getQueryServer: ListeningServer = server
+  override def getVersion: String = "1.8.1"
 }
 
 abstract class ScrayStatelessTServer extends AbstractScrayTServer {
-  val server = Thrift.serveIface(getServerAddress, ScrayStatelessTServiceImpl())
-  override def getServer : ListeningServer = server
-  override def getVersion : String = "0.9"
+  val server = Thrift.serveIface(SCRAY_QUERY_ENDPOINT, ScrayStatelessTServiceImpl())
+  override def getQueryServer: ListeningServer = server
+  override def getVersion: String = "0.9.1"
 }
 
-object ScrayStatelessTServerTest extends ScrayStatelessTServer {
-  def getServerAddress : String = "127.0.0.1:18181"
-  def initializeResources : Unit = {}
-  def destroyResources : Unit = {}
-  override def main(args : Array[String]) = super.main(args)
-}
+abstract class AbstractScrayTServer extends KryoPoolRegistration with App {
+  // abstract functions to be customized
+  def initializeResources: Unit
+  def destroyResources: Unit
+  def getQueryServer: ListeningServer
+  def getVersion: String
+  def configureProperties
 
-abstract class AbstractScrayTServer extends KryoPoolRegistration {
+  configureProperties
 
-  def initializeResources : Unit
-  def destroyResources : Unit
-  def getServer : ListeningServer
-  def getVersion : String
+  // kryo pool registrars
+  registerSerializers
 
-  def getServerAddress : String 
+  // custom init    
+  initializeResources
 
-  def main(args : Array[String]) {
-    register // kryo pool registrars
-    initializeResources
-    println(s"Server Version ${getVersion}")
-    Await.ready(getServer)
+  // the meta service is always part of the scray server
+  val metaServer: ListeningServer = Thrift.serveIface(SCRAY_META_ENDPOINT, ScrayMetaTServiceImpl)
+
+  // endpoint registration refresh timer
+  private val refreshTimer = new JavaTimer(false)
+
+  // refresh task handle
+  private var refreshTask: Option[TimerTask] = None
+
+  // this endpoint 
+  val endpoint = ScrayTServiceEndpoint(SCRAY_QUERY_ENDPOINT.getHostName, SCRAY_QUERY_ENDPOINT.getPort)
+
+  val refreshPeriod = EXPIRATION * 2 / 3
+
+  // register this endpoint with all seeds and schedule regular refresh
+  // the refresh loop keeps the server running
+  SCRAY_SEEDS.map(inetAddr2EndpointString(_)).foreach { seedAddr =>
+    val client = Thrift.newIface[ScrayMetaTService.FutureIface](seedAddr)
+    if (Await.result(client.ping())) {
+      val _ep = Await.result(client.addServiceEndpoint(endpoint))
+      refreshTask = Some(refreshTimer.schedule(refreshPeriod)(refresh(_ep.endpointId.get)))
+    }
   }
 
-  def shutdown : Unit = {
-    destroyResources
-    getServer.close()
+  println(s"Scray Server Version ${getVersion} started on " +
+    s"${SCRAY_QUERY_ENDPOINT.getHostName}:${SCRAY_QUERY_ENDPOINT.getPort}/${SCRAY_META_ENDPOINT.getPort}. " +
+    "Waiting for client requests...")
+
+  /**
+   * Refresh the registry entry
+   */
+  def refresh(id: ScrayUUID): Unit = {
+    SCRAY_SEEDS.map(inetAddr2EndpointString(_)).foreach { seedAddr =>
+      val client = Thrift.newIface[ScrayMetaTService.FutureIface](seedAddr)
+      if (Await.result(client.ping())) {
+        client.refreshServiceEndpoint(id)
+      }
+    }
   }
+
+  override def finalize = { destroyResources }
 }
