@@ -67,10 +67,10 @@ class MonitoringInfoBean(name: String) extends DynamicMBean with LazyLogging {
 
   override def setAttribute(attribute: Attribute): Unit = {}
 
-      val att1Info = new MBeanAttributeInfo("sizeGB", "java.lang.Double", "Dies ist das ertse Attribut", true, false, false)
-    val att2Info = new MBeanAttributeInfo("entries", "java.lang.Long", "Dies ist das zweite Attribut", true, false, false)
-    val att3Info = new MBeanAttributeInfo("currentSize", "java.lang.Long", "Dies ist das ertse Attribut", true, false, false)
-    val att4Info = new MBeanAttributeInfo("freeSize", "java.lang.Long", "Dies ist das zweite Attribut", true, false, false)
+    val att1Info = new MBeanAttributeInfo("sizeGB", "double", "Attribut", true, false, false)
+    val att2Info = new MBeanAttributeInfo("entries", "long", "Attribut", true, false, false)
+    val att3Info = new MBeanAttributeInfo("currentSize", "long", "Attribut", true, false, false)
+    val att4Info = new MBeanAttributeInfo("freeSize", "long", "Attribut", true, false, false)
     val attribs = Array[MBeanAttributeInfo](att1Info, att2Info, att3Info, att4Info)
 
     val p1Info = new MBeanParameterInfo("sizeGB", "java.lang.Double", "New cache size")
@@ -84,7 +84,7 @@ class MonitoringInfoBean(name: String) extends DynamicMBean with LazyLogging {
     val info = new MBeanInfo(this.getClass.getName, "TestBean for Scray",
       attribs, null, ops, null)
 
-  
+
   override def getMBeanInfo(): MBeanInfo = info
 
   override def setAttributes(attributes: AttributeList): AttributeList =
