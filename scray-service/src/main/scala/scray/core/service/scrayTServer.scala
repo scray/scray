@@ -89,7 +89,7 @@ abstract class AbstractScrayTServer extends KryoPoolRegistration with App {
     val client = Thrift.newIface[ScrayMetaTService.FutureIface](seedAddr)
     if (Await.result(client.ping())) {
       val _ep = Await.result(client.addServiceEndpoint(endpoint))
-      refreshTask = Some(refreshTimer.schedule(refreshPeriod)(refresh(_ep.endpointId.get)))
+      refreshTask = Some(refreshTimer.schedule(refreshPeriod.fromNow, refreshPeriod)(refresh(_ep.endpointId.get)))
     }
   }
 
