@@ -91,7 +91,7 @@ public class ScrayTServiceManager {
 			log.info("Refreshed scray service endpoints: "
 					+ Joiner.on(", ").join(endpointCache));
 		} catch (Exception e) {
-			log.warn("Could not refresh scray service enpoint cache.");
+			log.warn("Could not refresh scray service enpoint cache.",e);
 		}
 	}
 
