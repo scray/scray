@@ -26,14 +26,22 @@ import scray.core.service.properties.ScrayServicePropertiesRegistrar
 
 package object service {
 
-  // scray query endpoint
-  val SCRAY_QUERY_ENDPOINT = new InetSocketAddress(
-    ScrayProperties.getPropertyValue(PredefinedProperties.SCRAY_SERVICE_HOST),
+  // scray query endpoints
+  val SCRAY_QUERY_LISTENING_ENDPOINT = new InetSocketAddress(
+    ScrayProperties.getPropertyValue(PredefinedProperties.SCRAY_SERVICE_LISTENING_ADDRESS),
+    ScrayProperties.getPropertyValue(PredefinedProperties.SCRAY_QUERY_PORT))
+  
+  val SCRAY_QUERY_HOST_ENDPOINT = new InetSocketAddress(
+    ScrayProperties.getPropertyValue(PredefinedProperties.SCRAY_SERVICE_HOST_ADDRESS),
     ScrayProperties.getPropertyValue(PredefinedProperties.SCRAY_QUERY_PORT))
 
-  // scray meta endpoint
-  val SCRAY_META_ENDPOINT = new InetSocketAddress(
-    ScrayProperties.getPropertyValue(PredefinedProperties.SCRAY_SERVICE_HOST),
+  // scray meta endpoints
+  val SCRAY_META_LISTENING_ENDPOINT = new InetSocketAddress(
+    ScrayProperties.getPropertyValue(PredefinedProperties.SCRAY_SERVICE_LISTENING_ADDRESS),
+    ScrayProperties.getPropertyValue(PredefinedProperties.SCRAY_META_PORT))
+
+    val SCRAY_META_HOST_ENDPOINT = new InetSocketAddress(
+    ScrayProperties.getPropertyValue(PredefinedProperties.SCRAY_SERVICE_HOST_ADDRESS),
     ScrayProperties.getPropertyValue(PredefinedProperties.SCRAY_META_PORT))
 
   // memcached host

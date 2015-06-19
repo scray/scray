@@ -16,6 +16,7 @@
 package scray.core.service
 
 import java.util.UUID
+
 import com.twitter.util.Future
 import com.twitter.util.Time
 import scray.service.qmodel.thrifscala.ScrayUUID
@@ -28,18 +29,28 @@ import com.twitter.util.Duration
 import com.twitter.util.Time
 import com.twitter.util.JavaTimer
 
+// For alternative concurrent map implementation
+// import java.util.concurrent.ConcurrentHashMap
+// import scala.collection.JavaConversions._
+
 object ScrayMetaTServiceImpl extends ScrayMetaTService[Future] {
 
   private val logger = LoggerFactory.getLogger(ScrayMetaTServiceImpl.getClass)
 
-  private val endpoints = scala.collection.mutable.HashMap[ScrayUUID, ScrayTServiceEndpoint]()
+  private val endpoints: scala.collection.concurrent.Map[ScrayUUID, ScrayTServiceEndpoint] =
+    // Alternative concurrent map implementation: ConcurrentHashMap[ScrayUUID, ScrayTServiceEndpoint]
+    new scala.collection.concurrent.TrieMap[ScrayUUID, ScrayTServiceEndpoint]
 
   def expiresFromNow = EXPIRATION.fromNow.inNanoseconds
 
   def createID = { val id = UUID.randomUUID(); ScrayUUID(id.getMostSignificantBits, id.getLeastSignificantBits) }
 
+  /**
+   *  Remove expired endpoints.
+   *  The function is being triggered by a timer thread and applies CAS semantics.
+   */
   def removeExpiredEndpoints = endpoints.values.filter(ep => Time(ep.expires.get) < Time.now)
-    .foreach { ep => logger.debug(s"Removing expired endpoint ${ep.host}:${ep.port}"); endpoints.remove(ep.endpointId.get) }
+    .foreach { ep => logger.info(s"Removing expired endpoint ${ep.host}:${ep.port}"); endpoints.remove(ep.endpointId.get, ep) }
 
   /**
    * Fetch a list of service endpoints.
@@ -47,7 +58,7 @@ object ScrayMetaTServiceImpl extends ScrayMetaTService[Future] {
    * Queries can address different endpoints for load distribution.
    */
   def getServiceEndpoints(): Future[Seq[ScrayTServiceEndpoint]] = {
-    logger.info("Meta service request: 'getServiceEndpoints'")
+    logger.debug("Meta service request: 'getServiceEndpoints'")
     removeExpiredEndpoints
     Future.value(endpoints.values.toSeq)
   }
@@ -58,6 +69,7 @@ object ScrayMetaTServiceImpl extends ScrayMetaTService[Future] {
    */
   def addServiceEndpoint(endpoint: ScrayTServiceEndpoint): Future[ScrayTServiceEndpoint] = {
     logger.info(s"Meta service request: 'addServiceEndpoint' with endpoint=$endpoint")
+    // we'll always add the endpoint regardless of redundancy
     val _ep = endpoint.copy(endpointId = Some(createID), expires = Some(expiresFromNow))
     endpoints.put(_ep.endpointId.get, _ep)
     Future.value(_ep)
@@ -67,23 +79,26 @@ object ScrayMetaTServiceImpl extends ScrayMetaTService[Future] {
    * Restore the default expiration period of an endpoint.
    */
   def refreshServiceEndpoint(endpointID: ScrayUUID): Future[Unit] = {
-    logger.info(s"Meta service request: 'refreshServiceEndpoint' with endpointID=$endpointID")
-    if (endpoints.contains(endpointID))
-      endpoints.update(endpointID, endpoints.get(endpointID).get.copy(expires = Some(expiresFromNow)))
+    logger.debug(s"Meta service request: 'refreshServiceEndpoint' with endpointID=$endpointID")
+    endpoints.get(endpointID) match {
+      // refresh w/ CAS semantics
+      case Some(_ep) => endpoints.replace(endpointID, _ep, _ep.copy(expires = Some(expiresFromNow)))
+      case None      =>
+    }
     Future.value()
   }
 
   /**
    * Return vital sign
    */
-  def ping(): Future[Boolean] = { logger.info("Meta service request: 'ping'"); Future.value(true) }
+  def ping(): Future[Boolean] = { logger.debug("Meta service request: 'ping'"); Future.value(true) }
 
   /**
    * Shutdown the server
    */
   def shutdown(waitNanos: Option[Long]): Future[Unit] = {
     val DEFAULT_SHUTDOWN_TIMEOUT = Duration.fromSeconds(10).fromNow
-    logger.info(s"Meta service request: 'shutdown' with waitNanos=$waitNanos")
+    logger.debug(s"Meta service request: 'shutdown' with waitNanos=$waitNanos")
     val waitUntil = waitNanos.map(Duration.fromNanoseconds(_).fromNow).getOrElse(DEFAULT_SHUTDOWN_TIMEOUT)
     new JavaTimer(false).schedule(waitUntil)(System.exit(0))
     Future.value()

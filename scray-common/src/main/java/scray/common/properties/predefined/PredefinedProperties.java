@@ -34,8 +34,10 @@ public class PredefinedProperties {
 			"INDEX_ROW_SPREAD", 15);
 	public final static StringProperty INDEX_PARALLELIZATION_COLUMN = new StringProperty(
 			"INDEX_PARALLELIZATION_COLUMN", "Spread");
-	public final static StringProperty SCRAY_SERVICE_HOST = new StringProperty(
-			"SCRAY_SERVICE_HOST", "0.0.0.0");
+	public final static StringProperty SCRAY_SERVICE_HOST_ADDRESS = new StringProperty(
+			"SCRAY_SERVICE_HOST_ADDRESS");
+	public final static StringProperty SCRAY_SERVICE_LISTENING_ADDRESS = new StringProperty(
+			"SCRAY_SERVICE_LISTENING_ADDRESS", "0.0.0.0");
 	public final static IntProperty SCRAY_QUERY_PORT = new IntProperty(
 			"SCRAY_QUERY_PORT", 18181);
 	public final static IntProperty SCRAY_META_PORT = new IntProperty(

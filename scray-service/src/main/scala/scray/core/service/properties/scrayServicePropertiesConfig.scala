@@ -11,7 +11,8 @@ object ScrayServicePropertiesRegistrar extends ScrayPropertyRegistration.Propert
     new DurationProperty("SCRAY_ENDPOINT_LIFETIME", Duration(5, TimeUnit.MINUTES))
 
   override def register(): Unit = {
-    ScrayProperties.registerProperty(PredefinedProperties.SCRAY_SERVICE_HOST)
+    ScrayProperties.registerProperty(PredefinedProperties.SCRAY_SERVICE_HOST_ADDRESS)
+    ScrayProperties.registerProperty(PredefinedProperties.SCRAY_SERVICE_LISTENING_ADDRESS)
     ScrayProperties.registerProperty(PredefinedProperties.SCRAY_QUERY_PORT)
     ScrayProperties.registerProperty(PredefinedProperties.SCRAY_META_PORT)
     ScrayProperties.registerProperty(PredefinedProperties.SCRAY_MEMCACHED_IPS)

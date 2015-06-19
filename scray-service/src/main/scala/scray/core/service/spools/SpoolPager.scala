@@ -30,6 +30,7 @@ import scray.service.qmodel.thrifscala.ScrayTColumnInfo
 import scray.querying.Registry
 import java.util.UUID
 import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.twitter.util.Time
 
 /**
  * Slice a result spool into pages.
@@ -53,7 +54,7 @@ class SpoolPager(sspool: ServiceSpool) extends LazyLogging {
   private def pageAll(spool: Spool[Row]): Future[Spool[Seq[Row]]] = if (!spool.isEmpty) {
     part(Seq(spool.head), spool.tail, pagesize - 1) flatMap { pair => pageAll(pair._2) map (pair._1 **:: _) }
   } else {
-    logFinishTime
+    logFin(Time.now)
     Future.value(Seq[Row](new SucceedingRow()) **:: Spool.empty)
   }
 
@@ -66,16 +67,16 @@ class SpoolPager(sspool: ServiceSpool) extends LazyLogging {
         if (!spool.isEmpty) {
           part(dest :+ spool.head, spool.tail, pos - 1)
         } else {
-          logFinishTime
+          logFin(Time.now)
           Future.value((dest :+ new SucceedingRow(), Spool.empty))
         }
       }
     }
-  
-  def logFinishTime() = {
+
+  def logFin(end: Time) = {
     sspool.tQueryInfo.queryId.map(sid => new UUID(sid.mostSigBits, sid.leastSigBits)).map { uuid =>
-      logger.info(s"Finished query $uuid")
-      Registry.getQueryInformation(uuid).map(_.finished.set(System.currentTimeMillis()))
+      logger.info(s"Finished query ${uuid} at ${end}.")
+      Registry.getQueryInformation(uuid).map(_.finished.set(end.inMilliseconds))
     }
   }
 }

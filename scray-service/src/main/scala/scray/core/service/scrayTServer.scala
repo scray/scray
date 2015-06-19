@@ -42,15 +42,15 @@ trait KryoPoolRegistration {
 }
 
 abstract class ScrayStatefulTServer extends AbstractScrayTServer {
-  val server = Thrift.serveIface(SCRAY_QUERY_ENDPOINT, ScrayStatefulTServiceImpl())
+  val server = Thrift.serveIface(SCRAY_QUERY_LISTENING_ENDPOINT, ScrayStatefulTServiceImpl())
   override def getQueryServer: ListeningServer = server
-  override def getVersion: String = "1.8.1"
+  override def getVersion: String = "1.8.2"
 }
 
 abstract class ScrayStatelessTServer extends AbstractScrayTServer {
-  val server = Thrift.serveIface(SCRAY_QUERY_ENDPOINT, ScrayStatelessTServiceImpl())
+  val server = Thrift.serveIface(SCRAY_QUERY_LISTENING_ENDPOINT, ScrayStatelessTServiceImpl())
   override def getQueryServer: ListeningServer = server
-  override def getVersion: String = "0.9.1"
+  override def getVersion: String = "0.9.2"
 }
 
 abstract class AbstractScrayTServer extends KryoPoolRegistration with App {
@@ -70,7 +70,7 @@ abstract class AbstractScrayTServer extends KryoPoolRegistration with App {
   initializeResources
 
   // the meta service is always part of the scray server
-  val metaServer: ListeningServer = Thrift.serveIface(SCRAY_META_ENDPOINT, ScrayMetaTServiceImpl)
+  val metaServer: ListeningServer = Thrift.serveIface(SCRAY_META_LISTENING_ENDPOINT, ScrayMetaTServiceImpl)
 
   // endpoint registration refresh timer
   private val refreshTimer = new JavaTimer(false)
@@ -79,7 +79,7 @@ abstract class AbstractScrayTServer extends KryoPoolRegistration with App {
   private var refreshTask: Option[TimerTask] = None
 
   // this endpoint 
-  val endpoint = ScrayTServiceEndpoint(SCRAY_QUERY_ENDPOINT.getHostName, SCRAY_QUERY_ENDPOINT.getPort)
+  val endpoint = ScrayTServiceEndpoint(SCRAY_QUERY_HOST_ENDPOINT.getHostString, SCRAY_QUERY_HOST_ENDPOINT.getPort)
 
   val refreshPeriod = EXPIRATION * 2 / 3
 
@@ -94,7 +94,7 @@ abstract class AbstractScrayTServer extends KryoPoolRegistration with App {
   }
 
   println(s"Scray Server Version ${getVersion} started on " +
-    s"${SCRAY_QUERY_ENDPOINT.getHostName}:${SCRAY_QUERY_ENDPOINT.getPort}/${SCRAY_META_ENDPOINT.getPort}. " +
+    s"${SCRAY_QUERY_HOST_ENDPOINT.getHostString}:${SCRAY_QUERY_HOST_ENDPOINT.getPort}/${SCRAY_META_HOST_ENDPOINT.getPort}. " +
     "Waiting for client requests...")
 
   /**

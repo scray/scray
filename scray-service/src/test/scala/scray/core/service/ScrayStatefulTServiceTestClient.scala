@@ -17,7 +17,7 @@ object ScrayTServiceTestClient extends TQuerySamples {
 
     // prepare client
     val client = Thrift.newIface[ScrayStatefulTService.FutureIface](
-        s"${SCRAY_QUERY_ENDPOINT.getHostName}:${SCRAY_QUERY_ENDPOINT.getPort}")
+        s"${SCRAY_QUERY_HOST_ENDPOINT.getHostName}:${SCRAY_QUERY_HOST_ENDPOINT.getPort}")
 
     //call service
     val res = client.query(queryObj) onFailure { e => throw e } onSuccess { r => println(s"Received '$r'.") }

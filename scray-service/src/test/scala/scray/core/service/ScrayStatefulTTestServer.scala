@@ -31,7 +31,7 @@ object ScrayStatefulTTestServer extends KryoPoolRegistration with MockedPlanner 
   val VALUES = Array(1, 2, 3, 4, 1.3, 2.7, bigBuf, "foo", "bar", "baz")
 
   val server = Thrift.serveIface(
-      inetAddr2EndpointString(SCRAY_QUERY_ENDPOINT), 
+      inetAddr2EndpointString(SCRAY_QUERY_LISTENING_ENDPOINT), 
       GenStatefulTestService(ROWS, MAXCOLS, VALUES))
 
   def main(args: Array[String]) {
