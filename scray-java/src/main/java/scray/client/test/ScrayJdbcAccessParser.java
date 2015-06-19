@@ -10,7 +10,7 @@ import org.apache.commons.cli.ParseException;
 public class ScrayJdbcAccessParser
 {
     private static enum OPTIONS {
-        help("h"), table("t"), numsets("n"), url("u"), timeout("o"), fetchsize("f"), dots("d"), limit("l");
+        help("h"), statement("s"), numsets("n"), url("u"), timeout("o"), fetchsize("f"), dots("d");
         private String arg = null; 
         private OPTIONS(String arg) {
             this.arg = arg;
@@ -27,14 +27,14 @@ public class ScrayJdbcAccessParser
         url.setArgName("URL");
         url.setRequired(false);
         options.addOption(url);
-        Option numsets = new Option(OPTIONS.numsets.getArg(), "numsets", true, "number of result sets to fetch, -1 for none (default) -> multiply with f");
+        Option numsets = new Option(OPTIONS.numsets.getArg(), "numsets", true, "number of result sets to fetch, -1 for all (default) -> multiply with f");
         numsets.setArgName("NUMBER");
         numsets.setRequired(false);
         options.addOption(numsets);
-        Option table = new Option(OPTIONS.table.getArg(), "table", true, "table name to query");
-        table.setArgName("TABLE");
-        table.setRequired(false);
-        options.addOption(table);
+        Option statement = new Option(OPTIONS.statement.getArg(), "statement", true, "the query statement.");
+        statement.setArgName("STATEMENT");
+        statement.setRequired(false);
+        options.addOption(statement);
         Option timeout = new Option(OPTIONS.timeout.getArg(), "timeout", true, "timeout, default = 60");
         timeout.setArgName("SECONDS");
         timeout.setRequired(false);
@@ -43,10 +43,6 @@ public class ScrayJdbcAccessParser
         fetchsize.setArgName("SIZE");
         fetchsize.setRequired(false);
         options.addOption(fetchsize);
-        Option limit = new Option(OPTIONS.limit.getArg(), "limit", true, "limit for query, -1 = none, default");
-        limit.setArgName("MAX");
-        limit.setRequired(false);
-        options.addOption(limit);
         Option help = new Option(OPTIONS.help.getArg(), "help", false, "print usage information");
         help.setRequired(false);
         options.addOption(help);
@@ -60,8 +56,8 @@ public class ScrayJdbcAccessParser
         if(cl.hasOption(OPTIONS.url.getArg())) {
             jdbc.setURL(cl.getOptionValue(OPTIONS.url.getArg()));
         }
-        if(cl.hasOption(OPTIONS.table.getArg())) {
-            jdbc.setTABLE(cl.getOptionValue(OPTIONS.table.getArg()));
+        if(cl.hasOption(OPTIONS.statement.getArg())) {
+            jdbc.setSTATEMENT(cl.getOptionValue(OPTIONS.statement.getArg()));
         }
         if(cl.hasOption(OPTIONS.timeout.getArg())) {
             try {
@@ -82,14 +78,6 @@ public class ScrayJdbcAccessParser
         if(cl.hasOption(OPTIONS.fetchsize.getArg())) {
             try {
                 jdbc.setFETCHSIZE(Integer.parseInt(cl.getOptionValue(OPTIONS.fetchsize.getArg())));
-            } catch(NumberFormatException n) {
-                printParserError(n);
-                return false;
-            }
-        }
-        if(cl.hasOption(OPTIONS.limit.getArg())) {
-            try {
-                jdbc.setLIMIT(Integer.parseInt(cl.getOptionValue(OPTIONS.limit.getArg())));
             } catch(NumberFormatException n) {
                 printParserError(n);
                 return false;
