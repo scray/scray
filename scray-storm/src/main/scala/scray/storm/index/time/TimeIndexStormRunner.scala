@@ -27,8 +27,12 @@ import shapeless.ops.hlist._
 import scray.storm.scheme.GeneralJournalScheme
 import com.twitter.tormenta.spout.Spout
 import scray.storm.scheme.ScrayKafkaJournalEntry
+import com.twitter.util.Time
 
-
+/**
+ * Main runner for storm based online indexing
+ * TODO: abstract Cassandra away, i.e. use MergableStore abstraction
+ */
 class TimeIndexStormRunner[InKey <: String, InVal, Value, RefStreamType] (val streamer: TimeIndexStreamerOnline[InKey, InVal, Value, RefStreamType], 
         lookupFunction: RefStreamType => (InKey, InVal), columnFamily: CQLCassandraConfiguration.StoreColumnFamily, 
         batcher: Batcher, readReference: DataInputStream => RefStreamType)
@@ -48,24 +52,18 @@ class TimeIndexStormRunner[InKey <: String, InVal, Value, RefStreamType] (val st
   }
   
   def getStore(consistency: ConsistencyLevel): Storm#Store[(Tuple2[Int, Int], Tuple1[Long]), Set[Value]] = {
-    // check that the store is there; if not we create it
+    // TODO: check that the store is there; if not we create it
     val mergeSemigroup = new SetMonoid[Value]
-    //
     
     val store = new CQLCassandraCollectionStore[HListTypeRK, HListTypeCK, Set[Value], Value, SerializersTypeRK, SerializersTypeCK](
       columnFamily, serializersRK, columnNamesRK, serializersCK, columnNamesCK, valueColumnName, consistency)(mergeSemigroup)
-//    val tupleStore = new CassandraTupleStore[TupleTypeRK, TupleTypeCK, Set[Value], HListTypeRK, HListTypeCK, SerializersTypeRK, SerializersTypeCK](
-//            store, ((0,0), Tuple1(0l))) with MergeableStore[TupleTypeKey, Set[Value]]  {
-//        override def semigroup = mergeSemigroup
-//        override def merge(kv: TupleTypeKey): Future[Option[Set[Value]]] = {
-//          Future.value(None)
-//        }
-//    }
     val tupleStore = new Mergeable[((Tuple2[Int, Int], Tuple1[Long]), BatchID), Set[Value]] {
       override def semigroup = mergeSemigroup
       override def merge(kv: (((Tuple2[Int, Int], Tuple1[Long]), BatchID), Set[Value])): Future[Option[Set[Value]]] = {
-        Future.value(None)
+        // actually we would need to sync here, but set-add-operations are idempotent, so we ignore this for now
+        store.merge(((kv._1._1._1._1 :: kv._1._1._1._2 :: HNil, kv._1._1._2._1 :: kv._1._2 :: HNil), kv._2))
       }
+      override def close(time: Time) = Future.value[Unit](store.close(time))
     }
     MergeableStoreFactory({ () => tupleStore }, batcher)
   }
