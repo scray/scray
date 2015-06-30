@@ -16,7 +16,6 @@
 package scray.core.service
 
 import java.util.UUID
-
 import com.twitter.util.Future
 import com.twitter.util.Time
 import scray.service.qmodel.thrifscala.ScrayUUID
@@ -28,14 +27,13 @@ import scray.core.service.properties.ScrayServicePropertiesRegistrar
 import com.twitter.util.Duration
 import com.twitter.util.Time
 import com.twitter.util.JavaTimer
+import com.typesafe.scalalogging.slf4j.LazyLogging
 
 // For alternative concurrent map implementation
 // import java.util.concurrent.ConcurrentHashMap
 // import scala.collection.JavaConversions._
 
-object ScrayMetaTServiceImpl extends ScrayMetaTService[Future] {
-
-  private val logger = LoggerFactory.getLogger(ScrayMetaTServiceImpl.getClass)
+object ScrayMetaTServiceImpl extends ScrayMetaTService[Future] with LazyLogging {
 
   private val endpoints: scala.collection.concurrent.Map[ScrayUUID, ScrayTServiceEndpoint] =
     // Alternative concurrent map implementation: ConcurrentHashMap[ScrayUUID, ScrayTServiceEndpoint]
@@ -52,13 +50,17 @@ object ScrayMetaTServiceImpl extends ScrayMetaTService[Future] {
   def removeExpiredEndpoints = endpoints.values.filter(ep => Time(ep.expires.get) < Time.now)
     .foreach { ep => logger.info(s"Removing expired endpoint ${ep.host}:${ep.port}"); endpoints.remove(ep.endpointId.get, ep) }
 
+  def serviceRequestLogHeader = {
+   "Meta service request" 
+  }
+
   /**
    * Fetch a list of service endpoints.
    * Each endpoint provides ScrayStatelessTService and ScrayStatefulTService alternatives.
    * Queries can address different endpoints for load distribution.
    */
   def getServiceEndpoints(): Future[Seq[ScrayTServiceEndpoint]] = {
-    logger.debug("Meta service request: 'getServiceEndpoints'")
+    logger.debug(serviceRequestLogHeader + " Operation='getServiceEndpoints'")
     removeExpiredEndpoints
     Future.value(endpoints.values.toSeq)
   }
@@ -68,7 +70,7 @@ object ScrayMetaTServiceImpl extends ScrayMetaTService[Future] {
    * The endpoint will be removed after a default expiration period.
    */
   def addServiceEndpoint(endpoint: ScrayTServiceEndpoint): Future[ScrayTServiceEndpoint] = {
-    logger.info(s"Meta service request: 'addServiceEndpoint' with endpoint=$endpoint")
+    logger.info(serviceRequestLogHeader + s" Operation='addServiceEndpoint' with endpoint=$endpoint")
     // we'll always add the endpoint regardless of redundancy
     val _ep = endpoint.copy(endpointId = Some(createID), expires = Some(expiresFromNow))
     endpoints.put(_ep.endpointId.get, _ep)
@@ -79,7 +81,7 @@ object ScrayMetaTServiceImpl extends ScrayMetaTService[Future] {
    * Restore the default expiration period of an endpoint.
    */
   def refreshServiceEndpoint(endpointID: ScrayUUID): Future[Unit] = {
-    logger.debug(s"Meta service request: 'refreshServiceEndpoint' with endpointID=$endpointID")
+    logger.debug(serviceRequestLogHeader + s" Operation='refreshServiceEndpoint' with endpointID=$endpointID")
     endpoints.get(endpointID) match {
       // refresh w/ CAS semantics
       case Some(_ep) => endpoints.replace(endpointID, _ep, _ep.copy(expires = Some(expiresFromNow)))
@@ -91,7 +93,7 @@ object ScrayMetaTServiceImpl extends ScrayMetaTService[Future] {
   /**
    * Return vital sign
    */
-  def ping(): Future[Boolean] = { logger.debug("Meta service request: 'ping'"); Future.value(true) }
+  def ping(): Future[Boolean] = { logger.debug(serviceRequestLogHeader + " Operation='ping'"); Future.value(true) }
 
   /**
    * Shutdown the server
