@@ -38,7 +38,8 @@ class TimeIndexSource[Q <: DomainQuery, M, R, V](
     lookupSource: KeyValueSource[R, V],
     lookupSourceTable: TableIdentifier,
     lookupkeymapper: Option[M => R] = None,
-    sequencedmapper: Option[Int] = None)(implicit tag: ClassTag[M]) 
+    sequencedmapper: Option[Int] = None,
+    useranges: Boolean = false)(implicit tag: ClassTag[M]) 
     extends AbstractHashJoinSource[Q, M, R, V](indexsource, lookupSource, lookupSourceTable, lookupkeymapper, sequencedmapper)
     with LazyLogging {
 
@@ -59,10 +60,14 @@ class TimeIndexSource[Q <: DomainQuery, M, R, V](
   @inline private def createDomainQuery(query: Q, domains: List[Domain[_]]): Q = {
     val resultColumns = List(timeIndexConfig.indexRowColumnYear,
         timeIndexConfig.indexColumnMs, timeIndexConfig.indexReferencesColumn)
-    val range = query.getQueryRange.map { qrange => 
-      val skipLines = qrange.skip.getOrElse(0L)
-      QueryRange(None, qrange.limit.map(_ + skipLines).orElse(timeIndexConfig.maxLimit.map(_ + skipLines)))
-    }
+    val range = if(useranges) {
+        query.getQueryRange.map { qrange =>
+          val skipLines = qrange.skip.getOrElse(0L)
+          QueryRange(None, qrange.limit.map(_ + skipLines).orElse(timeIndexConfig.maxLimit.map(_ + skipLines)))
+        }
+      } else {
+        None
+      }
     DomainQuery(query.getQueryID, query.getQueryspace, resultColumns, timeIndexConfig.indexRowColumnYear.table,
         domains, Some(ColumnGrouping(timeIndexConfig.indexColumnMs)),
         Some(ColumnOrdering[Long](timeIndexConfig.indexColumnMs, 
