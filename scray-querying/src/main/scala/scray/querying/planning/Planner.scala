@@ -296,7 +296,9 @@ object Planner extends LazyLogging {
    */
   def getQueryableStore[Q, K, V](tableConfig: TableConfiguration[Q, K, V]): QueryableStore[Q, V] = tableConfig.versioned match {
     case None => tableConfig.queryableStore.get()
-    case Some(versionInfo) => versionInfo.queryableStore(versionInfo.runtimeVersion().get)
+    case Some(versionInfo) => 
+      logger.info(s"requesting store with ${versionInfo.runtimeVersion().get}")
+      versionInfo.queryableStore(versionInfo.runtimeVersion().get)
   }
 
   /**
@@ -351,13 +353,15 @@ object Planner extends LazyLogging {
     // construct a simple plan
     mainColumn.map { colConf =>
       colConf.index.flatMap(index => index.isManuallyIndexed.map { tableConf =>
-        val indexSource = new QueryableSource(getQueryableStore(tableConf.indexTableConfig),
-          query.getQueryspace, tableConf.indexTableConfig.table, index.isSorted)
-        val mainSource = new KeyValueSource(getReadableStore(tableConf.mainTableConfig), 
-          query.getQueryspace, tableConf.mainTableConfig.table, Registry.getCachingEnabled)
+        val indexTableConfig = tableConf.indexTableConfig()
+        val mainTableConfig = tableConf.mainTableConfig()
+        val indexSource = new QueryableSource(getQueryableStore(indexTableConfig),
+          query.getQueryspace, indexTableConfig.table, index.isSorted)
+        val mainSource = new KeyValueSource(getReadableStore(mainTableConfig), 
+          query.getQueryspace, mainTableConfig.table, Registry.getCachingEnabled)
         tableConf.indexConfig match {
           case simple: SimpleHashJoinConfig => new SimpleHashJoinSource(indexSource, colConf.column, 
-            mainSource, tableConf.mainTableConfig.primarykeyColumns)
+            mainSource, mainTableConfig.primarykeyColumns)
           case time: TimeIndexConfig =>
             // maybe a parallel version is available --> convert to parallel version
             val timeQueryableSource = time.parallelization match {
@@ -368,8 +372,8 @@ object Planner extends LazyLogging {
               case None => indexSource
             }
             new TimeIndexSource(time, timeQueryableSource, mainSource.asInstanceOf[KeyValueSource[Any, _]], 
-                                tableConf.mainTableConfig.table, tableConf.keymapper,
-                                time.parallelization.flatMap(_(getQueryableStore(tableConf.indexTableConfig))))
+                                mainTableConfig.table, tableConf.keymapper,
+                                time.parallelization.flatMap(_(getQueryableStore(indexTableConfig))))
           case _ => throw new IndexTypeException(query)
         }
       }).orElse {

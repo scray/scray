@@ -59,12 +59,13 @@ class CassandraQueryspaceConfiguration(
     //   - what happens if the main query doesn't use the table with the clustering column 
     query.getOrdering.flatMap { ordering =>
       Registry.getQuerySpaceColumn(query.getQueryspace, ordering.column).flatMap { colConfig =>
-        colConfig.index.flatMap(index => if(index.isManuallyIndexed.isDefined && 
-                index.isSorted && 
-                (index.isManuallyIndexed.get.indexTableConfig.queryableStore.isDefined ||
-                   (index.isManuallyIndexed.get.indexTableConfig.versioned.isDefined &&
-                    index.isManuallyIndexed.get.indexTableConfig.versioned.get.runtimeVersion().isDefined ))) {
-          Some(colConfig)
+        colConfig.index.flatMap(index => if(index.isManuallyIndexed.isDefined && index.isSorted) {
+          val itc = index.isManuallyIndexed.get.indexTableConfig()
+          if(itc.queryableStore.isDefined || (itc.versioned.isDefined && itc.versioned.get.runtimeVersion().isDefined )) {
+            Some(colConfig)
+          } else {
+            None
+          }
         } else {
           None
         }).orElse {
@@ -88,7 +89,7 @@ class CassandraQueryspaceConfiguration(
     val extractor = CassandraExtractor.getExtractor(typeReducedTable, table._2._2, table._2._3)
     val allColumns = extractor.getTableConfiguration(table._2._1).allColumns
     allColumns.map { col =>
-      val index = extractor.createManualIndexConfiguration(col, typeReducedTable, indexes, tableRowMapperMap)
+      val index = extractor.createManualIndexConfiguration(col, name, typeReducedTable, indexes, tableRowMapperMap)
       extractor.getColumnConfiguration(typeReducedTable, col, this, index)
     }
   })

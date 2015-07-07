@@ -35,18 +35,17 @@ import com.twitter.concurrent.Spool
 import scray.querying.description.Row
 import org.slf4j.LoggerFactory
 import scray.core.service.spools.TSpoolRack
+import com.typesafe.scalalogging.slf4j.LazyLogging
 
 object ScrayStatefulTServiceImpl {
   def apply() = new ScrayStatefulTServiceImpl(TSpoolRack)
 }
 
-class ScrayStatefulTServiceImpl(val rack : SpoolRack) extends ScrayStatefulTService.FutureIface {
-
-  private val logger = LoggerFactory.getLogger(classOf[ScrayStatefulTServiceImpl])
+class ScrayStatefulTServiceImpl(val rack : SpoolRack) extends ScrayStatefulTService.FutureIface with LazyLogging {
 
   def query(tQuery : ScrayTQuery) : Future[ScrayUUID] = {
 
-    logger.info(s"New 'query' request: ${tQuery}")
+    logger.debug(s"New 'query' request: ${tQuery}")
 
     val parser = new TQueryParser(tQuery)
     val parsed = parser.InputLine.run() match {
@@ -63,14 +62,14 @@ class ScrayStatefulTServiceImpl(val rack : SpoolRack) extends ScrayStatefulTServ
 
   def getResults(queryId : ScrayUUID) : Future[ScrayTResultFrame] = {
 
-    logger.debug(s"New 'getResults' request: ${queryId}")
+    logger.trace(s"New 'getResults' request: ${queryId}")
 
     rack.getSpool(queryId) match {
       case Some(spool) => {
         val snap = System.currentTimeMillis()
         // create a future page (and remaining spool)
         val pair = new SpoolPager(spool) page ()
-        logger.debug(s"Spooling for $queryId took ${System.currentTimeMillis() - snap}")
+        logger.trace(s"Spooling for $queryId took ${System.currentTimeMillis() - snap}")
         // create result frame with updated query info 
         pair.map(pair => ScrayTResultFrame(
           rack.updateSpool(queryId, ServiceSpool(pair._2, spool.tQueryInfo)).tQueryInfo, pair._1))

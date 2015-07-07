@@ -38,6 +38,7 @@ import scray.querying.source.indexing.IndexConfig
 import com.twitter.storehaus.cassandra.cql.CQLCassandraRowStore
 import scray.cassandra.util.CassandraUtils
 import scray.querying.description.VersioningConfiguration
+import scray.querying.Registry
 
 /**
  * Helper class to create a configuration for a Cassandra table
@@ -146,7 +147,7 @@ trait CassandraExtractor[S <: AbstractCQLCassandraStore[_, _]] {
   /**
    * return a manual index configuration for a column
    */
-  def createManualIndexConfiguration(column: Column, 
+  def createManualIndexConfiguration(column: Column, queryspaceName: String,
       store: S,
       indexes: Map[(AbstractCQLCassandraStore[_, _], String), (AbstractCQLCassandraStore[_, _], String, 
               IndexConfig, Option[Function1[_,_]])],
@@ -159,13 +160,17 @@ trait CassandraExtractor[S <: AbstractCQLCassandraStore[_, _]] {
       val indexExtractor = CassandraExtractor.getExtractor(indexStore, indexstoreinfo._2, indexstoreinfo._3)
       val storeinfo = mappers.get(store).get
       ManuallyIndexConfiguration[Any, Any, Any, Any, Any](
-        getTableConfiguration(storeinfo._1).asInstanceOf[TableConfiguration[Any, Any, Any]],
-        indexExtractor.getTableConfiguration(indexstoreinfo._1).asInstanceOf[TableConfiguration[Any, Any, Any]],
+        () => getTableConfigurationFunction[Any, Any, Any](getTableIdentifier(store, None), queryspaceName),
+        () => getTableConfigurationFunction[Any, Any, Any](
+            indexExtractor.getTableIdentifier(index._1.asInstanceOf[AbstractCQLCassandraStore[Any, Any]], indexstoreinfo._2), queryspaceName),
         index._4.asInstanceOf[Option[Any => Any]],
         index._3
       )
     }
   }
+  
+  private def getTableConfigurationFunction[Q, K, V](ti: TableIdentifier, space: String): TableConfiguration[Q, K, V] = 
+    Registry.getQuerySpaceTable(space, ti).get.asInstanceOf[TableConfiguration[Q, K, V]]
 }
 
 object CassandraExtractor {

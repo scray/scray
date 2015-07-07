@@ -85,8 +85,8 @@ case class IndexConfiguration (
  * information we need about this manual index
  */
 case class ManuallyIndexConfiguration[K, R, M, V, Q] (
-  mainTableConfig: TableConfiguration[Q, R, V], // the table that holds all data
-  indexTableConfig: TableConfiguration[Q, K, M], // the table that holds the index into the data of single column of mainTableConfig
+  mainTableConfig: () => TableConfiguration[Q, R, V], // the table that holds all data
+  indexTableConfig: () => TableConfiguration[Q, K, M], // the table that holds the index into the data of single column of mainTableConfig
   keymapper: Option[M => R], // map the type of the references from one table to the type of the keys of the other
   indexConfig: IndexConfig // depending on the type of the configuration we decide how to handle this
 )

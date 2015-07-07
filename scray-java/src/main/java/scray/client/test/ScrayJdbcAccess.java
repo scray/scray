@@ -12,7 +12,8 @@ import org.slf4j.LoggerFactory;
 
 public class ScrayJdbcAccess {
 
-    private static Logger logger = LoggerFactory.getLogger(ScrayJdbcAccess.class);
+	private static Logger logger = LoggerFactory
+			.getLogger(ScrayJdbcAccess.class);
 
 	private Connection connect = null;
 	private Statement statement = null;
@@ -20,37 +21,35 @@ public class ScrayJdbcAccess {
 	private long totalcount = 0L;
 
 	/* defaults for options */
-    private int FETCHSIZE = 50;
-    private int TIMEOUT = 10;
-    private int RESULTSETS = -1;
-    private String URL = "jdbc:scray:stateful://s030l0331:18191/cassandra/SILNP/SIL";
+	private int FETCHSIZE = 50;
+	private int TIMEOUT = 10;
+	private int RESULTSETS = -1;
+	private String URL = "jdbc:scray:stateful://s030l0331:18191/cassandra/SILNP/SIL";
 	private String STATEMENT = "SELECT * FROM BISMTOlsWorkflowElement WHERE (creationTime > 1L) LIMIT 10001";
 	private boolean DOTS = false;
 
 	public static void main(String[] args) {
-	    ScrayJdbcAccess jdbc = new ScrayJdbcAccess();
-	    if(ScrayJdbcAccessParser.parseCLIOptions(jdbc, args)) {
-	        try {
-	            jdbc.readDataBase();
-	        } catch (Exception e) {
-	            e.printStackTrace();
-	        }
-	    }
+		ScrayJdbcAccess jdbc = new ScrayJdbcAccess();
+		if (ScrayJdbcAccessParser.parseCLIOptions(jdbc, args)) {
+			try {
+				jdbc.readDataBase();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
 	}
 
 	public ScrayJdbcAccess() {
-        try {
-            Class.forName("scray.client.jdbc.ScrayDriver");
-        } catch(Exception e) {
-            logger.error("Could not initialize driver", e);
-        }
+		try {
+			Class.forName("scray.client.jdbc.ScrayDriver");
+		} catch (Exception e) {
+			logger.error("Could not initialize driver", e);
+		}
 	}
-
 
 	public void readDataBase() throws Exception {
 		try {
-            connect = DriverManager
-                            .getConnection(URL);
+			connect = DriverManager.getConnection(URL);
 
 			statement = connect.createStatement();
 
@@ -69,27 +68,33 @@ public class ScrayJdbcAccess {
 					long nextTime = System.currentTimeMillis() - snap;
 					aggTime += nextTime;
 
-					if(!DOTS) {
-					    System.out
-							.println("====================================================================");
-					    System.out
-							.println("====================================================================");
-					    System.out
-							.println("====================================================================");
+					if (!DOTS) {
+						System.out.println();
+						System.out
+								.println("====================================================================");
+						System.out
+								.println("====================================================================");
+						System.out
+								.println("====================================================================");
 
-					    System.out.println("Result set nr " + count + " loaded in " + nextTime + " ms.");
+						System.out.println("Result set nr " + count
+								+ " loaded in " + nextTime + " ms.");
 
-					    System.out
-							.println("====================================================================");
-					    System.out
-							.println("====================================================================");
-					    System.out
-							.println("====================================================================");
+						System.out
+								.println("====================================================================");
+						System.out
+								.println("====================================================================");
+						System.out
+								.println("====================================================================");
 					}
+					
 					writeResultSet(results);
 					snap = System.currentTimeMillis();
-				} while (statement.getMoreResults() && count != (resultSets -1));
-
+					
+				} while (statement.getMoreResults()&& count != (resultSets - 1));
+				
+				System.out.println();
+				
 				System.out
 						.println("====================================================================");
 				System.out
@@ -97,8 +102,9 @@ public class ScrayJdbcAccess {
 				System.out
 						.println("====================================================================");
 
-				System.out.println("Finished - fetched " + count
-						+ " ResultSet(s) with pagesize of " + FETCHSIZE
+				System.out.println("Finished - fetched " + totalcount
+						+ " result(s) in " + count
+						+ " result set(s) with pagesize of " + FETCHSIZE
 						+ " in " + aggTime + " ms.");
 
 				System.out
@@ -122,20 +128,21 @@ public class ScrayJdbcAccess {
 		while (resultSet.next()) {
 			count++;
 			totalcount++;
-			if(DOTS && totalcount % 10000L == 0) {
-			    System.out.print(totalcount);
-			}
-	        ResultSetMetaData meta = resultSet.getMetaData();
-			int size = meta.getColumnCount();
-			if(!DOTS) System.out.println("Row " + count + " has " + size + " columns.");
-			for (int i = 1; i <= size; i++) {
-				if(!DOTS) {
-				    String type = meta.getColumnClassName(i);
-	                Object value = resultSet.getObject(i);
-	                System.out.println("Column " + i + "  '"
-						+ meta.getColumnName(i) + "'  (" + type + ") = "
-						+ value);
+			if (!DOTS) {
+				ResultSetMetaData meta = resultSet.getMetaData();
+				int size = meta.getColumnCount();
+				System.out.println();
+				System.out.println("Row " + count + " has " + size
+						+ " columns.");
+				for (int i = 1; i <= size; i++) {
+					String type = meta.getColumnClassName(i);
+					Object value = resultSet.getObject(i);
+					System.out.println("Column " + i + "  '"
+							+ meta.getColumnName(i) + "'  (" + type + ") = "
+							+ value);
 				}
+			} else if (totalcount % 100L == 0) {
+				System.out.print(".");
 			}
 		}
 	}
@@ -157,33 +164,27 @@ public class ScrayJdbcAccess {
 		}
 	}
 
-    public void setFETCHSIZE(int fETCHSIZE)
-    {
-        FETCHSIZE = fETCHSIZE;
-    }
+	public void setFETCHSIZE(int fETCHSIZE) {
+		FETCHSIZE = fETCHSIZE;
+	}
 
-    public void setTIMEOUT(int tIMEOUT)
-    {
-        TIMEOUT = tIMEOUT;
-    }
+	public void setTIMEOUT(int tIMEOUT) {
+		TIMEOUT = tIMEOUT;
+	}
 
-    public void setRESULTSETS(int rESULTSETS)
-    {
-        RESULTSETS = rESULTSETS;
-    }
+	public void setRESULTSETS(int rESULTSETS) {
+		RESULTSETS = rESULTSETS;
+	}
 
-    public void setURL(String uRL)
-    {
-        URL = uRL;
-    }
+	public void setURL(String uRL) {
+		URL = uRL;
+	}
 
-    public void setDOTS(boolean dOTS)
-    {
-        DOTS = dOTS;
-    }
+	public void setDOTS(boolean dOTS) {
+		DOTS = dOTS;
+	}
 
-    public void setSTATEMENT(String statement)
-    {
-        STATEMENT = statement;
-    }
+	public void setSTATEMENT(String statement) {
+		STATEMENT = statement;
+	}
 }

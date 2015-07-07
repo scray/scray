@@ -18,23 +18,19 @@ package scray.core.service.spools
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import java.util.concurrent.locks.ReadWriteLock
 import java.util.UUID
-
 import org.slf4j.LoggerFactory
-
 import scala.collection.mutable.HashMap
-
 import com.twitter.concurrent.Spool
 import com.twitter.util.Duration
 import com.twitter.util.Time
 import com.twitter.util.TimerTask
 import com.twitter.util.JavaTimer
-
 import scray.querying.Query
 import scray.querying.description.Row
-
 import scray.service.qmodel.thrifscala.ScrayUUID
 import scray.service.qmodel.thrifscala.ScrayTQueryInfo
 import scray.core.service._
+import com.typesafe.scalalogging.slf4j.LazyLogging
 
 /**
  * SpoolRack implementation offering some means to substitute the back end (query engine).
@@ -47,9 +43,7 @@ import scray.core.service._
  * @param planAndExecute function connecting the query engine
  */
 class TimedSpoolRack(val ttl: Duration = DEFAULT_TTL, planAndExecute: (Query) => Spool[Row])
-  extends SpoolRack {
-
-  private val logger = LoggerFactory.getLogger(classOf[TimedSpoolRack])
+  extends SpoolRack with LazyLogging {
 
   // internal registry, mutable, concurrency controlled
   private val spoolMap = new HashMap[UUID, (ServiceSpool, TimerTask)]()
@@ -65,7 +59,7 @@ class TimedSpoolRack(val ttl: Duration = DEFAULT_TTL, planAndExecute: (Query) =>
 
   // monitoring wrapper for planner function
   private val wrappedPlanAndExecute: (Query) => Spool[Row] = (q) => { planLog(q); planAndExecute(q) }
-  private def planLog(q: Query): Unit = logger.info(s"Planner called for query $q");
+  private def planLog(q: Query): Unit = logger.debug(s"Planner called for query $q");
 
   override def createSpool(query: Query, tQueryInfo: ScrayTQueryInfo): ScrayTQueryInfo = {
     // exit if exists

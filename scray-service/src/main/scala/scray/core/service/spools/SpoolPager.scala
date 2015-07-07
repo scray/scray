@@ -75,7 +75,7 @@ class SpoolPager(sspool: ServiceSpool) extends LazyLogging {
 
   def logFin(end: Time) = {
     sspool.tQueryInfo.queryId.map(sid => new UUID(sid.mostSigBits, sid.leastSigBits)).map { uuid =>
-      logger.info(s"Finished query ${uuid} at ${end}.")
+      logger.debug(s"Finished query ${uuid} at ${end}.")
       Registry.getQueryInformation(uuid).map(_.finished.set(end.inMilliseconds))
     }
   }
