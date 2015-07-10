@@ -74,8 +74,8 @@ abstract class AbstractScrayTServer extends KryoPoolRegistration with App with L
   val metaServer: ListeningServer = Thrift.serveIface(SCRAY_META_LISTENING_ENDPOINT, ScrayMetaTServiceImpl)
 
   // endpoint registration refresh timer
-  private val refreshTimer = new JavaTimer(false)
-
+  private val refreshTimer = new JavaTimer(isDaemon = false)
+  
   // refresh task handle
   private var refreshTask: Option[TimerTask] = None
 
@@ -92,7 +92,7 @@ abstract class AbstractScrayTServer extends KryoPoolRegistration with App with L
   SCRAY_SEEDS.map(inetAddr2EndpointString(_)).foreach { seedAddr =>
     val client = Thrift.newIface[ScrayMetaTService.FutureIface](seedAddr)
     if (Await.result(client.ping())) {
-      logger.debug(s"$addrStr adding service endpoint ($endpoint) to $seedAddr.")
+      logger.info(s"$addrStr adding local service endpoint ($endpoint) to $seedAddr.")
       val _ep = Await.result(client.addServiceEndpoint(endpoint))
       refreshTask = Some(refreshTimer.schedule(refreshPeriod.fromNow, refreshPeriod)(refresh(_ep.endpointId.get)))
     }
@@ -105,10 +105,14 @@ abstract class AbstractScrayTServer extends KryoPoolRegistration with App with L
    */
   def refresh(id: ScrayUUID): Unit = {
     SCRAY_SEEDS.map(inetAddr2EndpointString(_)).foreach { seedAddr =>
-      val client = Thrift.newIface[ScrayMetaTService.FutureIface](seedAddr)
-      if (Await.result(client.ping())) {
-        logger.debug(s"$addrStr refreshing service endpoint ($id).")
-        client.refreshServiceEndpoint(id)
+      try {
+        val client = Thrift.newIface[ScrayMetaTService.FutureIface](seedAddr)
+        if (Await.result(client.ping())) {
+          logger.trace(s"$addrStr refreshing service endpoint ($id).")
+          client.refreshServiceEndpoint(id)
+        }
+      } catch {
+        case ex: Exception => logger.warn(s"Endpoint refresh failed: $ex")
       }
     }
   }

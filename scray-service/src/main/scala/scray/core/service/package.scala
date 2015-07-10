@@ -30,7 +30,7 @@ package object service {
   val SCRAY_QUERY_LISTENING_ENDPOINT = new InetSocketAddress(
     ScrayProperties.getPropertyValue(PredefinedProperties.SCRAY_SERVICE_LISTENING_ADDRESS),
     ScrayProperties.getPropertyValue(PredefinedProperties.SCRAY_QUERY_PORT))
-  
+
   val SCRAY_QUERY_HOST_ENDPOINT = new InetSocketAddress(
     ScrayProperties.getPropertyValue(PredefinedProperties.SCRAY_SERVICE_HOST_ADDRESS),
     ScrayProperties.getPropertyValue(PredefinedProperties.SCRAY_QUERY_PORT))
@@ -40,7 +40,7 @@ package object service {
     ScrayProperties.getPropertyValue(PredefinedProperties.SCRAY_SERVICE_LISTENING_ADDRESS),
     ScrayProperties.getPropertyValue(PredefinedProperties.SCRAY_META_PORT))
 
-    val SCRAY_META_HOST_ENDPOINT = new InetSocketAddress(
+  val SCRAY_META_HOST_ENDPOINT = new InetSocketAddress(
     ScrayProperties.getPropertyValue(PredefinedProperties.SCRAY_SERVICE_HOST_ADDRESS),
     ScrayProperties.getPropertyValue(PredefinedProperties.SCRAY_META_PORT))
 
@@ -60,5 +60,12 @@ package object service {
 
   implicit def ScrayUUID2UUID(suuid: ScrayUUID): UUID =
     new UUID(suuid.mostSigBits, suuid.leastSigBits)
+
+  implicit class RichBoolean(val b: Boolean) extends AnyVal {
+    final def option[A](a: => A): Option[A] = if (b) Some(a) else None
+    final def ?[A](a: => A, c: => A): A = if (b) a else c
+    final def ?(a: => Unit) = if (b) a
+    final def ϟ(a: => Unit) = if (!b) a
+  }
 
 }
