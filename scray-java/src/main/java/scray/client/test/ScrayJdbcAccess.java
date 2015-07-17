@@ -10,29 +10,46 @@ import java.sql.Statement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.*;
+
 public class ScrayJdbcAccess {
 
 	private static Logger logger = LoggerFactory
 			.getLogger(ScrayJdbcAccess.class);
 
-	private Connection connect = null;
-	private Statement statement = null;
-	private ResultSet resultSet = null;
-	private long totalcount = 0L;
+	private static final ScrayJdbcAccess scrayJdbcAccess = new ScrayJdbcAccess();
 
-	/* defaults for options */
-	private int FETCHSIZE = 50;
-	private int TIMEOUT = 10;
-	private int RESULTSETS = -1;
-	private String URL = "jdbc:scray:stateful://s030l0331:18191/cassandra/SILNP/SIL";
-	private String STATEMENT = "SELECT * FROM BISMTOlsWorkflowElement WHERE (creationTime > 1L) LIMIT 10001";
-	private boolean DOTS = false;
+	/* request options */
+	class AccessRequestOptions {
+		/* defaults */
+		int fetchsize = 50;
+		int timeout = 10;
+		int resultsets = -1;
+		String url = "jdbc:scray:stateful://s030l0331:18191/cassandra/SILNP/SIL";
+		String query = "SELECT * FROM BISMTOlsWorkflowElement WHERE (creationTime > 1L) AND (creationTime < 4000000000000L) LIMIT 10000";
+		boolean dots = false;
+		boolean stress = false;
+		int stressCount = 1000;
+	}
+
+	/* query state */
+	class QueryExecutionState {
+		Connection connect = null;
+		Statement statement = null;
+		ResultSet resultSet = null;
+		long totalcount = 0L;
+	}
 
 	public static void main(String[] args) {
-		ScrayJdbcAccess jdbc = new ScrayJdbcAccess();
-		if (ScrayJdbcAccessParser.parseCLIOptions(jdbc, args)) {
+		AccessRequestOptions options = scrayJdbcAccess.new AccessRequestOptions();
+		if (ScrayJdbcAccessParser.parseCLIOptions(options, args)) {
 			try {
-				jdbc.readDataBase();
+				if (options.stress) {
+					scrayJdbcAccess.stress(options);
+				} else {
+					scrayJdbcAccess.readDataBase(options,
+							scrayJdbcAccess.new QueryExecutionState());
+				}
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -47,28 +64,122 @@ public class ScrayJdbcAccess {
 		}
 	}
 
-	public void readDataBase() throws Exception {
+	public void stress(AccessRequestOptions opts) throws Exception {
+		QueryThreadPoolExecutor qtpe;
+		if (opts.stressCount <= 0) {
+			qtpe = new QueryThreadPoolExecutor(100);
+			int count = 0;
+			while (true) {
+				if (qtpe.workQueue.remainingCapacity() > 0) {
+					qtpe.runTask(new QueryWorker(opts, ++count));
+				}
+				Thread.sleep(1000);
+			}
+		} else {
+			qtpe = new QueryThreadPoolExecutor(opts.stressCount);
+			for (int i = 0; i < opts.stressCount; i++) {
+				qtpe.runTask(new QueryWorker(opts, i));
+			}
+		}
+		qtpe.shutDown();
+		System.out.println("Finished! :)");
+	}
+
+	class QueryThreadPoolExecutor {
+		// Threads to be kept idle all time
+		int corePoolSize = 10;
+
+		// Maximum Threads allowed in Pool
+		int maxPoolSize = 10;
+
+		// Keep alive time for waiting threads for jobs(Runnable)
+		long keepAliveTime = 10;
+
+		// This is the one who manages and start the work
+		ThreadPoolExecutor threadPool = null;
+
+		// Working queue for jobs (Runnable). We add them finally here
+		ArrayBlockingQueue<Runnable> workQueue;
+
+		public QueryThreadPoolExecutor(int nr) {
+			this.workQueue = new ArrayBlockingQueue<Runnable>(nr);
+			threadPool = new ThreadPoolExecutor(corePoolSize, maxPoolSize,
+					keepAliveTime, TimeUnit.SECONDS, workQueue);
+		}
+
+		/**
+		 * Here we add our jobs to working queue
+		 *
+		 * @param task
+		 *            a Runnable task
+		 */
+		public void runTask(Runnable task) {
+			threadPool.execute(task);
+			System.out.println("Tasks in workQueue.." + workQueue.size());
+		}
+
+		/**
+		 * Shutdown the Threadpool if it’s finished
+		 */
+		public void shutDown() {
+			threadPool.shutdown();
+		}
+
+	}
+
+	/**
+	 * This is the one who does the work This one is static for accessing from
+	 * main class
+	 */
+	private static class QueryWorker implements Runnable {
+		
+		// so we can see which job is running
+		private int jobNr;
+		private AccessRequestOptions opts;
+
+		/**
+		 * @param opts
+		 *            some query opts
+		 * @param jobNr
+		 *            number for displaying
+		 */
+		public QueryWorker(AccessRequestOptions opts, int jobNr) {
+			this.opts = opts;
+			this.jobNr = jobNr;
+		}
+
+		@Override
+		public void run() {
+			try {
+				System.out.println("Going to run query nr " + jobNr);
+				scrayJdbcAccess.readDataBase(opts,
+						scrayJdbcAccess.new QueryExecutionState());
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	public void readDataBase(AccessRequestOptions opts,
+			QueryExecutionState state) throws Exception {
 		try {
-			connect = DriverManager.getConnection(URL);
-
-			statement = connect.createStatement();
-
-			statement.setQueryTimeout(TIMEOUT);
-			statement.setFetchSize(FETCHSIZE);
-
-			int resultSets = RESULTSETS;
+			state.connect = DriverManager.getConnection(opts.url);
+			state.statement = state.connect.createStatement();
+			state.statement.setQueryTimeout(opts.timeout);
+			state.statement.setFetchSize(opts.fetchsize);
 
 			int count = 0;
 			long aggTime = 0;
 			long snap = System.currentTimeMillis();
-			if (statement.execute(STATEMENT)) {
+
+			if (state.statement.execute(opts.query)) {
 				do {
 					count++;
-					ResultSet results = statement.getResultSet();
+					ResultSet results = state.statement.getResultSet();
 					long nextTime = System.currentTimeMillis() - snap;
 					aggTime += nextTime;
 
-					if (!DOTS) {
+					if (!opts.dots) {
 						System.out.println();
 						System.out
 								.println("====================================================================");
@@ -87,14 +198,15 @@ public class ScrayJdbcAccess {
 						System.out
 								.println("====================================================================");
 					}
-					
-					writeResultSet(results);
+
+					writeResultSet(results, opts.dots, state);
 					snap = System.currentTimeMillis();
-					
-				} while (statement.getMoreResults()&& count != (resultSets - 1));
-				
+
+				} while (state.statement.getMoreResults()
+						&& count != (opts.resultsets - 1));
+
 				System.out.println();
-				
+
 				System.out
 						.println("====================================================================");
 				System.out
@@ -102,9 +214,9 @@ public class ScrayJdbcAccess {
 				System.out
 						.println("====================================================================");
 
-				System.out.println("Finished - fetched " + totalcount
+				System.out.println("Finished - fetched " + state.totalcount
 						+ " result(s) in " + count
-						+ " result set(s) with pagesize of " + FETCHSIZE
+						+ " result set(s) with pagesize of " + opts.fetchsize
 						+ " in " + aggTime + " ms.");
 
 				System.out
@@ -119,16 +231,17 @@ public class ScrayJdbcAccess {
 		} catch (Exception e) {
 			throw e;
 		} finally {
-			close();
+			close(state);
 		}
 	}
 
-	private void writeResultSet(ResultSet resultSet) throws SQLException {
+	private void writeResultSet(ResultSet resultSet, boolean dots,
+			QueryExecutionState state) throws SQLException {
 		int count = 0;
 		while (resultSet.next()) {
 			count++;
-			totalcount++;
-			if (!DOTS) {
+			state.totalcount++;
+			if (!dots) {
 				ResultSetMetaData meta = resultSet.getMetaData();
 				int size = meta.getColumnCount();
 				System.out.println();
@@ -141,16 +254,16 @@ public class ScrayJdbcAccess {
 							+ meta.getColumnName(i) + "'  (" + type + ") = "
 							+ value);
 				}
-			} else if (totalcount % 100L == 0) {
+			} else if (state.totalcount % 100L == 0) {
 				System.out.print(".");
 			}
 		}
 	}
 
-	private void close() {
-		close(resultSet);
-		close(statement);
-		close(connect);
+	private void close(QueryExecutionState state) {
+		close(state.resultSet);
+		close(state.statement);
+		close(state.connect);
 	}
 
 	private void close(AutoCloseable c) {
@@ -164,27 +277,4 @@ public class ScrayJdbcAccess {
 		}
 	}
 
-	public void setFETCHSIZE(int fETCHSIZE) {
-		FETCHSIZE = fETCHSIZE;
-	}
-
-	public void setTIMEOUT(int tIMEOUT) {
-		TIMEOUT = tIMEOUT;
-	}
-
-	public void setRESULTSETS(int rESULTSETS) {
-		RESULTSETS = rESULTSETS;
-	}
-
-	public void setURL(String uRL) {
-		URL = uRL;
-	}
-
-	public void setDOTS(boolean dOTS) {
-		DOTS = dOTS;
-	}
-
-	public void setSTATEMENT(String statement) {
-		STATEMENT = statement;
-	}
 }
