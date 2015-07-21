@@ -294,19 +294,21 @@ object Planner extends LazyLogging {
   /**
    * returns a QueryableStore and uses versioning information, if needed
    */
-  def getQueryableStore[Q, K, V](tableConfig: TableConfiguration[Q, K, V]): QueryableStore[Q, V] = tableConfig.versioned match {
+  def getQueryableStore[Q, K, V](tableConfig: TableConfiguration[Q, K, V], queryId: UUID): QueryableStore[Q, V] = tableConfig.versioned match {
     case None => tableConfig.queryableStore.get()
     case Some(versionInfo) => 
       logger.info(s"requesting store with ${versionInfo.runtimeVersion().get}")
-      versionInfo.queryableStore(versionInfo.runtimeVersion().get)
+      versionInfo.queryableStore.getStore(queryId.toString).get
+      // versionInfo.queryableStore(versionInfo.runtimeVersion().get)
   }
 
   /**
    * returns a ReadableStore and uses versioning information, if needed
    */
-  def getReadableStore[Q, K, V](tableConfig: TableConfiguration[Q, K, V]): ReadableStore[K, V] = tableConfig.versioned match {
+  def getReadableStore[Q, K, V](tableConfig: TableConfiguration[Q, K, V], queryId: UUID): ReadableStore[K, V] = tableConfig.versioned match {
     case None => tableConfig.readableStore.get()
-    case Some(versionInfo) => versionInfo.readableStore(versionInfo.runtimeVersion().get)
+    case Some(versionInfo) => versionInfo.readableStore.getStore(queryId.toString).get
+      // versionInfo.readableStore(versionInfo.runtimeVersion().get)
   }
   
   /**
@@ -321,7 +323,7 @@ object Planner extends LazyLogging {
     // whether it is ordered according to our ordering: Option[(ordered: Boolean, table)] 
     checkMaterializedViewMatching(query.getQueryspace, query.getTableIdentifier, domainQuery) match {
       case Some((ordered, viewConf)) =>
-        val qSource = new QueryableSource(getQueryableStore(viewConf.viewTable), query.getQueryspace, domainQuery.table, ordered) 
+        val qSource = new QueryableSource(getQueryableStore(viewConf.viewTable, domainQuery.getQueryID), query.getQueryspace, domainQuery.table, ordered) 
         return ComposablePlan.getComposablePlan(qSource, domainQuery)
       case _ =>
     }
@@ -355,9 +357,9 @@ object Planner extends LazyLogging {
       colConf.index.flatMap(index => index.isManuallyIndexed.map { tableConf =>
         val indexTableConfig = tableConf.indexTableConfig()
         val mainTableConfig = tableConf.mainTableConfig()
-        val indexSource = new QueryableSource(getQueryableStore(indexTableConfig),
+        val indexSource = new QueryableSource(getQueryableStore(indexTableConfig, domainQuery.getQueryID),
           query.getQueryspace, indexTableConfig.table, index.isSorted)
-        val mainSource = new KeyValueSource(getReadableStore(mainTableConfig), 
+        val mainSource = new KeyValueSource(getReadableStore(mainTableConfig, domainQuery.getQueryID), 
           query.getQueryspace, mainTableConfig.table, Registry.getCachingEnabled)
         tableConf.indexConfig match {
           case simple: SimpleHashJoinConfig => new SimpleHashJoinSource(indexSource, colConf.column, 
@@ -373,18 +375,18 @@ object Planner extends LazyLogging {
             }
             new TimeIndexSource(time, timeQueryableSource, mainSource.asInstanceOf[KeyValueSource[Any, _]], 
                                 mainTableConfig.table, tableConf.keymapper,
-                                time.parallelization.flatMap(_(getQueryableStore(indexTableConfig))))
+                                time.parallelization.flatMap(_(getQueryableStore(indexTableConfig, domainQuery.getQueryID))))
           case _ => throw new IndexTypeException(query)
         }
       }).orElse {
         Registry.getQuerySpaceTable(domainQuery.getQueryspace, domainQuery.getTableIdentifier).map { tableConf =>
-          new QueryableSource(getQueryableStore(tableConf), query.getQueryspace, tableConf.table, true)
+          new QueryableSource(getQueryableStore(tableConf, domainQuery.getQueryID), query.getQueryspace, tableConf.table, true)
         }
       }
     }.getOrElse {
       // construct plan using information on main table
       Registry.getQuerySpaceTable(domainQuery.getQueryspace, domainQuery.getTableIdentifier).map { tableConf =>
-        new QueryableSource(getQueryableStore(tableConf), query.getQueryspace, tableConf.table)
+        new QueryableSource(getQueryableStore(tableConf, domainQuery.getQueryID), query.getQueryspace, tableConf.table)
       }
     }.map(ComposablePlan.getComposablePlan(_, domainQuery)).getOrElse(throw new NoPlanException(query))
   }

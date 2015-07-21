@@ -10,7 +10,7 @@ import scala.annotation.tailrec
  */
 class GeneralJournalScheme[T](readReference: DataInputStream => T) extends Scheme[ScrayKafkaJournalEntry[T]] {
 
-  @tailrec def readFullBuffer(bais: ByteArrayInputStream, dis: DataInputStream, 
+  @tailrec private def readFullBuffer(bais: ByteArrayInputStream, dis: DataInputStream, 
                               acc: Seq[ScrayKafkaJournalEntry[T]]): Seq[ScrayKafkaJournalEntry[T]] = {
     if(bais.available() <= 0) {
       acc

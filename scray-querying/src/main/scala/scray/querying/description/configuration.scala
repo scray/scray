@@ -19,6 +19,7 @@ import scray.querying.Query
 import scray.querying.queries.DomainQuery
 import scray.querying.source.indexing.IndexConfig
 import scray.querying.description.internal.MaterializedView
+import scray.querying.source.pooling.StorePool
 
 /**
  * parent class of queryspace-configuration, used to identify which tables
@@ -114,7 +115,9 @@ case class VersioningConfiguration[Q, K, V] (
   // latestCompleteVersion: () => Option[Long], // latest complete version of the table 
   runtimeVersion: () => Option[Long], // current real-time version, which is updated continuously
   nameVersionMapping: Option[(String, Long) => String], // if needed, a mapping for the table name for the version
-  queryableStore: Long => QueryableStore[Q, V], // the versioned queryable store representation, allowing to query the store
-  readableStore: Long => ReadableStore[K, V] // the versioned readablestore, used in case this is used by a HashJoinSource
+  queryableStore: StorePool[QueryableStore[Q, V]], // the versioned queryable store representation, allowing to query the store
+  readableStore: StorePool[ReadableStore[K, V]] // the versioned readablestore, used in case this is used by a HashJoinSource
+//  queryableStore: Long => QueryableStore[Q, V], // the versioned queryable store representation, allowing to query the store
+//  readableStore: Long => ReadableStore[K, V] // the versioned readablestore, used in case this is used by a HashJoinSource
   // dataVersionMapping: () // if needed, a mapping for the data to fit the version, not supported yet
 )
