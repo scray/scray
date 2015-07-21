@@ -12,7 +12,7 @@ import java.util.logging.Logger;
 import scray.client.finagle.ScrayStatefulTServiceAdapter;
 import scray.client.finagle.ScrayStatelessTServiceAdapter;
 import scray.client.finagle.ScrayTServiceAdapter;
-import scray.client.finagle.ScrayTServiceManager;
+import scray.client.finagle.ScrayCombinedTServiceManager;
 import scray.common.properties.PropertyException;
 import scray.common.properties.ScrayProperties;
 import scray.common.properties.ScrayProperties.Phase;
@@ -48,7 +48,7 @@ public class ScrayDriver implements java.sql.Driver {
 		try {
 			if (acceptsURL(url)) {
 				ScrayURL scrayURL = new ScrayURL(url);
-				ScrayTServiceManager tManager = ScrayTServiceManager
+				ScrayCombinedTServiceManager tManager = ScrayCombinedTServiceManager
 						.getInstance();
 				tManager.init(scrayURL);
 				ScrayTServiceAdapter tAdapter = null;

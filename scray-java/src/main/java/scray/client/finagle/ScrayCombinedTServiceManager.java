@@ -6,7 +6,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import scray.client.jdbc.ScrayURL;
-import scray.service.qservice.thriftjava.ScrayMetaTService;
+import scray.service.qservice.thriftjava.ScrayCombinedStatefulTService;
 import scray.service.qservice.thriftjava.ScrayTServiceEndpoint;
 
 import com.google.common.base.Joiner;
@@ -15,44 +15,44 @@ import com.twitter.util.Await;
 import com.twitter.util.Duration;
 import com.twitter.util.Future;
 
-public class ScrayTServiceManager {
+public class ScrayCombinedTServiceManager {
 
 	private org.slf4j.Logger log = org.slf4j.LoggerFactory
-			.getLogger(ScrayTServiceManager.class);
+			.getLogger(ScrayCombinedTServiceManager.class);
 
-	private ScrayTServiceManager() {
+	private ScrayCombinedTServiceManager() {
 	}
 
 	private static class SingletonHolder {
-		static ScrayTServiceManager instance = new ScrayTServiceManager();
+		static ScrayCombinedTServiceManager instance = new ScrayCombinedTServiceManager();
 	}
 
-	public static ScrayTServiceManager getInstance() {
+	public static ScrayCombinedTServiceManager getInstance() {
 		return SingletonHolder.instance;
 	}
 
-	private class MetaServiceConnection {
-		private ScrayMetaTService.FutureIface metaServiceClient;
+	private class CombinedServiceConnection {
+		private ScrayCombinedStatefulTService.FutureIface combinedServiceClient;
 		private ScrayURL scrayURL;
 
-		MetaServiceConnection(ScrayURL scrayURL) {
+		CombinedServiceConnection(ScrayURL scrayURL) {
 			this.scrayURL = scrayURL;
 		}
 
-		ScrayMetaTService.FutureIface getMetaClient() throws SQLException {
+		ScrayCombinedStatefulTService.FutureIface getCombinedClient() throws SQLException {
 			String[] seedEndpoints = scrayURL.getHostAndPort();
 			for (int i = 0; i < seedEndpoints.length; i++) {
 				log.trace("Trying to connect to " + seedEndpoints[i]);
-				if (metaServiceClient == null) {
-					metaServiceClient = Thrift.newIface(seedEndpoints[i],
-							ScrayMetaTService.FutureIface.class);
+				if (combinedServiceClient == null) {
+					combinedServiceClient = Thrift.newIface(seedEndpoints[i],
+							ScrayCombinedStatefulTService.FutureIface.class);
 					try {
-						if (Await.result(metaServiceClient.ping()))
-							return metaServiceClient;
+						if (Await.result(combinedServiceClient.ping()))
+							return combinedServiceClient;
 					} catch (Exception ex) {
 						log.warn("Could not connect to seedEndpoint "
 								+ seedEndpoints[i], ex);
-						metaServiceClient = null;
+						combinedServiceClient = null;
 					}
 				}
 			}
@@ -62,7 +62,7 @@ public class ScrayTServiceManager {
 	}
 
 	private List<ScrayTServiceEndpoint> endpointCache = null;
-	private MetaServiceConnection connection = null;
+	private CombinedServiceConnection connection = null;
 
 	private java.util.Random rand = new java.util.Random();
 
@@ -72,9 +72,9 @@ public class ScrayTServiceManager {
 	public void init(ScrayURL scrayURL) {
 		// initialize if new, (re)initialize if different, else reuse
 		if (connection == null) {
-			connection = new MetaServiceConnection(scrayURL);
-		} else if (connection.scrayURL.equals(scrayURL)) {
-			connection = new MetaServiceConnection(scrayURL);
+			connection = new CombinedServiceConnection(scrayURL);
+		} else if (! connection.scrayURL.equals(scrayURL)) {
+			connection = new CombinedServiceConnection(scrayURL);
 		}
 
 		// initially fill the endpoint cache
@@ -95,7 +95,7 @@ public class ScrayTServiceManager {
 	void refreshEndpoints() {
 		try {
 			Future<List<ScrayTServiceEndpoint>> eplist = connection
-					.getMetaClient().getServiceEndpoints();
+					.getCombinedClient().getServiceEndpoints();
 			endpointCache = Await.result(eplist, Duration.fromSeconds(TIMEOUT));
 			log.info("Refreshed scray service endpoints: "
 					+ Joiner.on(", ").join(endpointCache));
