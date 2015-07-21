@@ -4,7 +4,7 @@ import java.sql.SQLException;
 
 import scray.service.qmodel.thriftjava.ScrayTQuery;
 import scray.service.qmodel.thriftjava.ScrayUUID;
-import scray.service.qservice.thriftjava.ScrayStatefulTService;
+import scray.service.qservice.thriftjava.ScrayCombinedStatefulTService;
 import scray.service.qservice.thriftjava.ScrayTResultFrame;
 
 import com.twitter.finagle.Thrift;
@@ -12,21 +12,21 @@ import com.twitter.util.Await;
 import com.twitter.util.Duration;
 import com.twitter.util.Future;
 
-public class ScrayStatefulTServiceAdapter implements ScrayTServiceAdapter {
+public class ScrayCombinedStatefulTServiceAdapter implements ScrayTServiceAdapter {
 
-	private ScrayStatefulTService.FutureIface client;
+	private ScrayCombinedStatefulTService.FutureIface client;
 	private String endpoint;
 
-	public ScrayStatefulTService.FutureIface getClient() {
+	public ScrayCombinedStatefulTService.FutureIface getClient() {
 		// lazy init
 		if (client == null) {
 			client = Thrift.newIface(endpoint,
-					ScrayStatefulTService.FutureIface.class);
+					ScrayCombinedStatefulTService.FutureIface.class);
 		}
 		return client;
 	}
 
-	public ScrayStatefulTServiceAdapter(String endpoint) {
+	public ScrayCombinedStatefulTServiceAdapter(String endpoint) {
 		this.endpoint = endpoint;
 	}
 

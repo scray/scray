@@ -10,7 +10,7 @@ import org.apache.commons.cli.ParseException;
 public class ScrayJdbcAccessParser {
 	private static enum OPTIONS {
 		help("h"), query("q"), numsets("n"), url("u"), timeout("o"), fetchsize(
-				"f"), dots("d"), stress("s");
+				"f"), data("d"), stress("s");
 		private String arg = null;
 
 		private OPTIONS(String arg) {
@@ -56,10 +56,10 @@ public class ScrayJdbcAccessParser {
 				"print usage information");
 		help.setRequired(false);
 		options.addOption(help);
-		Option dots = new Option(OPTIONS.dots.getArg(), "dots", false,
-				"print a dot every 10000 results instead of content");
-		dots.setRequired(false);
-		options.addOption(dots);
+		Option data = new Option(OPTIONS.data.getArg(), "data", false,
+				"Print actual datasets. Default is to print just a dot representing 10000 results.");
+		data.setRequired(false);
+		options.addOption(data);
 		Option stress = new Option(
 				OPTIONS.stress.getArg(),
 				"stress",
@@ -116,8 +116,8 @@ public class ScrayJdbcAccessParser {
 				return false;
 			}
 		}
-		if (cl.hasOption(OPTIONS.dots.getArg())) {
-			opts.dots = true;
+		if (cl.hasOption(OPTIONS.data.getArg())) {
+			opts.dots = false;
 		}
 		return true;
 	}

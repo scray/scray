@@ -121,3 +121,52 @@ service ScrayMetaTService {
 	void shutdown(optional i64 waitNanos)
 
 }
+
+/**
+ * Combined Scray service
+ * Combines ScrayMetaTService operations with ScrayStatefulTService operations
+ * The combined service is thus provided on a single endpoint (port)
+ */
+service ScrayCombinedStatefulTService {
+
+    /**
+     * Fetch a list of service endpoints.
+     * Each endpoint provides ScrayStatelessTService and ScrayStatefulTService alternatives.
+     * Queries can address different endpoints for load distribution.
+     */
+	list<ScrayTServiceEndpoint> getServiceEndpoints(),
+
+	/**
+	 * Add new service endpoint.
+	 * The endpoint will be removed after a default expiration period.
+	 */	
+	ScrayTServiceEndpoint addServiceEndpoint(ScrayTServiceEndpoint endpoint),
+	
+	/**
+	 * Restore the default expiration period of an endpoint.
+	 */	
+	void refreshServiceEndpoint(scrayQModel.ScrayUUID endpointID),
+
+	/**
+	 * Return vital sign
+	 */
+	bool ping(),
+
+	/**
+	 * Shutdown the server
+	 */
+	void shutdown(optional i64 waitNanos)
+
+	/**
+	 * Submit query
+	 */
+	scrayQModel.ScrayUUID query(1: scrayQModel.ScrayTQuery query) throws (1: ScrayTException ex)
+	
+	/**
+	 * Fetch query results
+	 * Paging state is maintained on server side.
+	 * The operation is neither idempotent nor safe.
+	 */
+	ScrayTResultFrame getResults(1: scrayQModel.ScrayUUID queryId) throws (1: ScrayTException ex)
+
+}
