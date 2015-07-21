@@ -23,15 +23,36 @@ import org.junit.Test;
 public class ScrayURLTest {
 
 	@Test
-	public void goodScrayUrlDecomposition() {
+	public void goodScrayUrl1Decomposition() {
 
-		String testurl = "jdbc:scray:stateless://127.0.0.1:8080/cassandra/myKeyspace/default";
+		String testurl = "jdbc:scray:stateless://1.2.3.4:8080/cassandra/myKeyspace/default";
 
 		try {
 			ScrayURL surl = new ScrayURL(testurl);
 			assertEquals(surl.getSubScheme(), "scray");
 			assertEquals(surl.getProtocolMode(), "stateless");
-			assertEquals(surl.getHostAndPort(), "127.0.0.1:8080");
+			assertArrayEquals(surl.getHostAndPort(),
+					new String[] { "1.2.3.4:8080", });
+			assertEquals(surl.getDbSystem(), "cassandra");
+			assertEquals(surl.getDbId(), "myKeyspace");
+			assertEquals(surl.getQuerySpace(), "default");
+		} catch (URISyntaxException e) {
+			e.printStackTrace();
+			fail();
+		}
+	}
+
+	@Test
+	public void goodScrayUrl2Decomposition() {
+
+		String testurl = "jdbc:scray:stateless://127.0.0.1,127.0.0.2:8080/cassandra/myKeyspace/default";
+
+		try {
+			ScrayURL surl = new ScrayURL(testurl);
+			assertEquals(surl.getSubScheme(), "scray");
+			assertEquals(surl.getProtocolMode(), "stateless");
+			assertArrayEquals(surl.getHostAndPort(), new String[] {
+					"127.0.0.1:8080", "127.0.0.2:8080" });
 			assertEquals(surl.getDbSystem(), "cassandra");
 			assertEquals(surl.getDbId(), "myKeyspace");
 			assertEquals(surl.getQuerySpace(), "default");
@@ -46,11 +67,14 @@ public class ScrayURLTest {
 
 		String[] testurls = {
 				"jdbc:scray:stateless",
+				"://127.0.0.1:8080/cassandra/myKeyspace/default",
 				"jdpc:scray:stateless://127.0.0.1:8080/cassandra/myKeyspace/default",
 				"jdbc:spray:stateless://127.0.0.1:8080/cassandra/myKeyspace/default",
 				"jdbc:scray://127.0.0.1:8080/cassandra/myKeyspace/default",
 				"jdbc:scray:sateless://127.0.0.1:8080/cassandra/myKeyspace/default",
 				"jdbc:scray:stateless://127.0.0.1/cassandra/myKeyspace/default",
+				"jdbc:scray:stateless://127.0.0.1,127.0.0.2/cassandra/myKeyspace/default",
+				"jdbc:scray:stateless://:8080/cassandra/myKeyspace/default",
 				"jdbc:scray:stateless://127.0.0.1:8080/cassandra/myKeyspace",
 				"jdbc:scray:stateless://127.0.0.1:8080/cassandra/myKeyspace/default/something" };
 

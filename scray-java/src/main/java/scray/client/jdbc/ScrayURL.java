@@ -4,14 +4,19 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.StringTokenizer;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * URL schema for scray connections.
  * 
- * jdbc:scray:stateless://host:port/dbSystem/dbId/querySpace
- * jdbc:scray:stateful://host:port/dbSystem/dbId/querySpace
+ * jdbc:scray:[stateless|stateful]://host[,failoverhost]:port/dbSystem/dbId/
+ * querySpace
  * 
  */
 public class ScrayURL {
+
+	Logger log = LoggerFactory.getLogger(this.getClass());
 
 	public static final String SCHEME = "jdbc";
 	public static final String SUBSCHEME = "scray";
@@ -31,18 +36,20 @@ public class ScrayURL {
 	public class UriPattern {
 
 		final static String HIER_DELIM = "://";
+		final static String IP_DELIM = ",";
+		final static String PORT_DELIM = ":";
 
-		private URI absoluteUri;
+		private URI[] absoluteUri;
 		private String fullScheme;
 		private String mainScheme;
 		private String schemeExtension;
 		private String subScheme;
 		private String hierPart;
 		private String protocolMode;
-		private String host;
-		private int port;
-		private String hostAndPort;
-		private String path;
+		private String[] host;
+		private int port = -1;
+		private String[] hostAndPort;
+		private String path = null;
 		private String dbSystem;
 		private String dbId;
 		private String querySpace;
@@ -61,44 +68,75 @@ public class ScrayURL {
 			String schemeSpecificPart = opaqueUri.getSchemeSpecificPart();
 			int startOfHier = schemeSpecificPart.indexOf(HIER_DELIM);
 
-			if (startOfHier < 0) {
+			if (startOfHier <= 0) {
 				throw new URISyntaxException(opaqueUri.toString(),
 						"Invalid URL: hierarchical part mismatch");
 			}
 
-			hierPart = schemeSpecificPart.substring(startOfHier);
-			absoluteUri = new URI(mainScheme + hierPart);
+			hierPart = schemeSpecificPart.substring(startOfHier
+					+ HIER_DELIM.length());
+			int startOfPort = hierPart.indexOf(PORT_DELIM);
 
-			/* extract host and port */
-
-			host = absoluteUri.getHost();
-
-			if (host == null) {
-				throw new URISyntaxException(host, "Invalid URL: faulty host");
+			if (startOfPort <= 0) {
+				throw new URISyntaxException(opaqueUri.toString(),
+						"Invalid URL: hosts part mismatch");
 			}
 
-			port = absoluteUri.getPort();
+			String hostsPart = hierPart.substring(0, startOfPort);
+			String restOfHier = hierPart.substring(startOfPort);
 
-			if (port == -1) {
-				throw new URISyntaxException(String.valueOf(port),
-						"Invalid URL: faulty port");
+			StringTokenizer hostTokens = new StringTokenizer(hostsPart,
+					IP_DELIM);
+
+			absoluteUri = new URI[hostTokens.countTokens()];
+			int i = 0;
+
+			while (hostTokens.hasMoreTokens()) {
+				absoluteUri[i++] = new URI(mainScheme + HIER_DELIM + hostTokens.nextToken()
+						+ restOfHier);
 			}
 
-			hostAndPort = host + ":" + String.valueOf(port);
+			host = new String[absoluteUri.length];
+			hostAndPort = new String[absoluteUri.length];
 
-			/* decompose path */
+			for (int j = 0; j < absoluteUri.length; j++) {
+				/* extract host and port */
 
-			path = absoluteUri.getPath();
+				host[j] = absoluteUri[j].getHost();
 
-			StringTokenizer pathElems = new StringTokenizer(path, "/");
+				if (host[j] == null) {
+					throw new URISyntaxException(host[j],
+							"Invalid URL: faulty host");
+				}
 
-			if (pathElems.countTokens() != 3) {
-				throw new URISyntaxException(path, "Invalid URL: faulty path");
+				if (port == -1) {
+					port = absoluteUri[j].getPort();
+
+					if (port == -1) {
+						throw new URISyntaxException(String.valueOf(port),
+								"Invalid URL: faulty port");
+					}
+				}
+
+				hostAndPort[j] = host[j] + ":" + String.valueOf(port);
+
+				/* decompose path */
+
+				if (path == null) {
+					path = absoluteUri[j].getPath();
+
+					StringTokenizer pathElems = new StringTokenizer(path, "/");
+
+					if (pathElems.countTokens() != 3) {
+						throw new URISyntaxException(path,
+								"Invalid URL: faulty path");
+					}
+
+					dbSystem = pathElems.nextToken();
+					dbId = pathElems.nextToken();
+					querySpace = pathElems.nextToken();
+				}
 			}
-
-			dbSystem = pathElems.nextToken();
-			dbId = pathElems.nextToken();
-			querySpace = pathElems.nextToken();
 
 			/* decompose extended scheme */
 
@@ -140,7 +178,7 @@ public class ScrayURL {
 			return protocolMode;
 		}
 
-		public String getHost() {
+		public String[] getHost() {
 			return host;
 		}
 
@@ -148,7 +186,7 @@ public class ScrayURL {
 			return port;
 		}
 
-		public String getHostAndPort() {
+		public String[] getHostAndPort() {
 			return hostAndPort;
 		}
 
@@ -177,7 +215,7 @@ public class ScrayURL {
 		return pattern.getProtocolMode();
 	}
 
-	public String getHost() {
+	public String[] getHost() {
 		return pattern.getHost();
 	}
 
@@ -185,7 +223,7 @@ public class ScrayURL {
 		return pattern.getPort();
 	}
 
-	public String getHostAndPort() {
+	public String[] getHostAndPort() {
 		return pattern.getHostAndPort();
 	}
 
@@ -211,5 +249,5 @@ public class ScrayURL {
 				+ ", getDbId()=" + getDbId() + ", getQuerySpace()="
 				+ getQuerySpace() + "]";
 	}
-	
+
 }
