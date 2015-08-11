@@ -15,12 +15,17 @@
 
 package scray.core.service
 
-import java.util.UUID
-import java.net.{ InetAddress, InetSocketAddress };
+import com.twitter.util.{Future, Time, Duration, JavaTimer}
 import com.typesafe.scalalogging.slf4j.LazyLogging
-import com.twitter.util.{ Future, Time, Duration, JavaTimer }
-import scray.service.qservice.thrifscala.{ ScrayTServiceEndpoint, ScrayMetaTService }
+
+import java.net.{InetAddress, InetSocketAddress}
+import java.util.UUID
+import java.util.concurrent.locks.ReentrantLock
+
+import scala.collection.mutable.HashMap
+
 import scray.service.qmodel.thrifscala.ScrayUUID
+import scray.service.qservice.thrifscala.{ScrayTServiceEndpoint, ScrayMetaTService}
 
 // For alternative concurrent map implementation
 // import java.util.concurrent.ConcurrentHashMap
@@ -31,20 +36,29 @@ object ScrayMetaTServiceImpl extends ScrayMetaTService[Future] with LazyLogging 
 
   case class ScrayServiceEndpoint(addr: InetSocketAddress, expires: Time)
 
-  private val endpoints: scala.collection.concurrent.Map[UUID, ScrayServiceEndpoint] =
+  private val lock = new ReentrantLock
+  
+  private val endpoints =
     // Alternative concurrent map implementation: ConcurrentHashMap[ScrayUUID, ScrayTServiceEndpoint]
-    new scala.collection.concurrent.TrieMap[UUID, ScrayServiceEndpoint]
+    new HashMap[UUID, ScrayServiceEndpoint]
 
   /**
    *  Remove expired endpoints.
    *  The function is being triggered by a timer thread and applies CAS semantics.
    */
-  def removeExpiredEndpoints = endpoints.iterator.filter { case (id, ep) => ep.expires < Time.now }
-    .foreach {
-      case (id, ep) =>
-        endpoints.remove(id, ep) ? { logger.warn(s"Removed expired endpoint ${ep.addr}") }
+  def removeExpiredEndpoints = {
+    lock.lock()
+    try {
+      val localHashMap = new HashMap ++ endpoints
+      localHashMap.filter{ case (id, ep) => ep.expires < Time.now }.foreach {
+          case (id, ep) =>
+              endpoints.remove(id).map(_ => logger.warn(s"Removed expired endpoint ${ep.addr}"))        
+      }
+    } finally {
+      lock.unlock()
     }
-
+  }
+    
   implicit def sep2tep(ep: (UUID, ScrayServiceEndpoint)): ScrayTServiceEndpoint = {
     ScrayTServiceEndpoint(
       ep._2.addr.getHostString,
@@ -59,9 +73,14 @@ object ScrayMetaTServiceImpl extends ScrayMetaTService[Future] with LazyLogging 
    * Queries can address different endpoints for load distribution.
    */
   def getServiceEndpoints(): Future[Seq[ScrayTServiceEndpoint]] = {
-    logger.trace(REQUESTLOGPREFIX + " Operation='getServiceEndpoints'")
-    removeExpiredEndpoints
-    Future.value(endpoints.iterator.map[ScrayTServiceEndpoint] { ep => ep } toSeq)
+    lock.lock
+    try {
+      logger.info(REQUESTLOGPREFIX + " Operation='getServiceEndpoints'")
+      removeExpiredEndpoints
+      Future.value(endpoints.iterator.map[ScrayTServiceEndpoint] { ep => ep } toSeq)
+    } finally {
+      lock.unlock()
+    }
   }
 
   implicit def tep2sep(tep: ScrayTServiceEndpoint): ScrayServiceEndpoint = new ScrayServiceEndpoint(
@@ -73,29 +92,44 @@ object ScrayMetaTServiceImpl extends ScrayMetaTService[Future] with LazyLogging 
    */
   def addServiceEndpoint(tEndpoint: ScrayTServiceEndpoint): Future[ScrayTServiceEndpoint] = {
     val ep: (UUID, ScrayServiceEndpoint) = (UUID.randomUUID() -> tEndpoint)
-    logger.info(REQUESTLOGPREFIX + s" Operation='addServiceEndpoint' with address=${ep._2.addr} expiring at ${ep._2.expires}.")
-    // we'll always add the endpoint regardless of redundancy (since we have an 'auto clean' feature)
-    endpoints.put(ep._1, ep._2)
-    Future.value(ep)
+    lock.lock()
+    try {
+      logger.info(REQUESTLOGPREFIX + s" Operation='addServiceEndpoint' with address=${ep._2.addr} expiring at ${ep._2.expires}.")
+      // we'll always add the endpoint regardless of redundancy (since we have an 'auto clean' feature)
+      endpoints.iterator.find { p => p._2.addr.getHostString == tEndpoint._1 }.map{ p =>
+        endpoints.put(p._1, p._2.copy(expires = EXPIRATION.fromNow))
+        Future.value(sep2tep(p)) 
+      }.getOrElse {
+        endpoints.put(ep._1, ep._2)    
+        Future.value(ep)
+      }
+    } finally {
+      lock.unlock()
+    }
   }
 
   /**
    * Restore the default expiration period of an endpoint.
    */
   def refreshServiceEndpoint(endpointID: ScrayUUID): Future[Unit] = {
-    logger.trace(REQUESTLOGPREFIX + s" Operation='refreshServiceEndpoint' with endpointID=$endpointID")
-    endpoints.get(endpointID) match {
-      // refresh w/ CAS semantics
-      case Some(_ep) => endpoints.replace(endpointID, _ep, _ep.copy(expires = EXPIRATION.fromNow))
-      case None      =>
+    lock.lock()
+    try {
+      logger.info(REQUESTLOGPREFIX + s" Operation='refreshServiceEndpoint' with endpointID=$endpointID")
+      endpoints.get(endpointID) match {
+        // refresh w/ CAS semantics
+        case Some(_ep) => endpoints.put(endpointID, _ep.copy(expires = EXPIRATION.fromNow))
+        case None      => 
+      }
+      Future.value()
+    } finally {
+      lock.unlock()
     }
-    Future.value()
   }
 
   /**
    * Return vital sign.
    */
-  def ping(): Future[Boolean] = { logger.trace(REQUESTLOGPREFIX + " Operation='ping'"); Future.value(true) }
+  def ping(): Future[Boolean] = { logger.info(REQUESTLOGPREFIX + " Operation='ping'"); Future.value(true) }
 
   /**
    * Shutdown the server.

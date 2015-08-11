@@ -77,7 +77,7 @@ abstract class AbstractHashJoinSource[Q <: DomainQuery, M, R /* <: Product */, V
       } else {
         insertRowsIntoSpool(rows.tail, rows.head *:: Future.value(spoolElements))
       }
-    }    
+    }
     sequencedmapper.flatMap { seqSize =>
       lookupSource match {
         case pls: ParallelizedKeyValueSource[R, V] => 

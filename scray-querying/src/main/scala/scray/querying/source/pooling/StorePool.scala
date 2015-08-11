@@ -59,13 +59,13 @@ class StorePool[S](val storefunc: Long => S, version: Option[Long], val checkFre
         }
       }
       if(res._2.isEmpty) {
-        if(stores.size < maxStores - 1) {
+        if(stores.size <= (maxStores - 1)) {
           val store = storefunc(ver)
           stores += store
           (store, stores.size - 1)
         } else {
           // return random store
-          val num = rand.nextInt(maxStores)
+          val num = rand.nextInt(stores.size)
           (stores(num), num)
         }
       } else {

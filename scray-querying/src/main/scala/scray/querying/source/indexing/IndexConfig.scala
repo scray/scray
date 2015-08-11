@@ -31,7 +31,7 @@ case class TimeIndexConfig(
     // time zone of index, only relevant for turns of the year
     timeZone: TimeZone = TimeZone.getTimeZone("UTC"), 
     // minimum year of data that is indexed
-    minimumYear: Int = 2014,
+    minimumYear: Int = 2015,
     // query limit
     maxLimit: Option[Long] = Some(5000)) extends IndexConfig
 
