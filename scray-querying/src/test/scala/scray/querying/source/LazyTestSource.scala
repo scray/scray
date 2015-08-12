@@ -25,3 +25,17 @@ class LazyTestSource(spool: Spool[Row], ordered: Boolean = true) extends LazySou
   
   object EmptySpoolException extends Exception("Spool may not be empty!")
 }
+
+class EagerTestSource(source: Seq[Row], ordered: Boolean = true) extends EagerSource[DomainQuery] with LazyLogging {
+  override def request(query: DomainQuery): EagerDataFuture = Future.value(source)
+  override def isLazy: Boolean = true
+  override def getColumns: List[Column] = source.headOption.map { x => x.getColumns }.getOrElse( throw EmptySpoolException )
+  override def isOrdered(query: DomainQuery): Boolean = ordered
+  override def getGraph: Graph[Source[DomainQuery, Seq[Row]], DiEdge] = source.asInstanceOf[Source[DomainQuery, Seq[Row]]].getGraph +
+    DiEdge(source.asInstanceOf[Source[DomainQuery, Seq[Row]]],
+    this.asInstanceOf[Source[DomainQuery, Seq[Row]]])
+  override def getDiscriminant: String = this.getClass.getName + source.headOption.map { x => x.toString }.getOrElse("Empty") 
+  override def createCache: Cache[_] = new NullCache
+  
+  object EmptySpoolException extends Exception("Spool may not be empty!")
+}
