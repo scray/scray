@@ -19,6 +19,7 @@ import javax.management.MBeanAttributeInfo
 import scray.querying.description.Equal
 import scray.querying.description.Greater
 import scray.querying.description.And
+import scray.querying.description.IsNull
 import javax.management.AttributeList
 import javax.management.Attribute
 import scray.querying.description.Or
@@ -62,6 +63,7 @@ class QueryInfoBean(qinfo: QueryInformation, beans: HashMap[String, QueryInfoBea
     case c: Smaller[_] => acc :+ (c.column.columnName, "<")
     case c: SmallerEqual[_] => acc :+ (c.column.columnName, "<=")
     case c: Unequal[_] => acc :+ (c.column.columnName, "<>")
+    case c: IsNull[_] => acc :+ (c.column.columnName, "is null")
     case c: Or => c.clauses.flatMap(cl => recurseQueryFilters(cl, List())).toList
     case c: And => c.clauses.flatMap(cl => recurseQueryFilters(cl, List())).toList
   }

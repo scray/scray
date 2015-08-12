@@ -29,6 +29,7 @@ import scray.querying.description.Smaller
 import scray.querying.description.internal.RangeValueDomain
 import scray.querying.description.SmallerEqual
 import scray.querying.description.Unequal
+import scray.querying.description.IsNull
 import scray.querying.description.internal.RangeValueDomain
 import org.scalatest.Succeeded
 import com.twitter.util.Try
@@ -205,7 +206,7 @@ class ScrayQueryingPlannerTest extends WordSpec {
       assert(result.get.head.isInstanceOf[RangeValueDomain[_]])
       assert(result.get.head.asInstanceOf[RangeValueDomain[Int]].upperBound.get.value == 3)
     }
-    "test domaine generation for unequal operator" in {      
+    "test domain generation for unequal operator" in {      
       val sq = SimpleQuery("", ti,
           where = Some(Unequal(Column("bla", ti), "bla"))
       )
@@ -213,7 +214,7 @@ class ScrayQueryingPlannerTest extends WordSpec {
       val result = planner.qualifyPredicates(sq)  
        result match {
           case _: Some[List[RangeValueDomain[_]]] => assert(true)
-          case _ => fail("Wrong domaine for this query.")
+          case _ => fail("Wrong domain for this query.")
       }
     }
     "test wrong operator combination" in {      
@@ -231,7 +232,7 @@ class ScrayQueryingPlannerTest extends WordSpec {
       val result = planner.qualifyPredicates(sq)  
       result match {
           case _: Some[List[RangeValueDomain[_]]] => assert(true)
-          case _ => fail("Wrong domaine for this query.")
+          case _ => fail("Wrong domain for this query.")
       }
     }
     "test multiple unequal" in {      
@@ -242,7 +243,7 @@ class ScrayQueryingPlannerTest extends WordSpec {
       val result = planner.qualifyPredicates(sq)  
       result match {
           case _: Some[List[RangeValueDomain[_]]] => assert(true)
-          case _ => fail("Wrong domaine for this query.")
+          case _ => fail("Wrong domain for this query.")
       }
     }
     "test unequal range operators mix" in {      
@@ -251,11 +252,9 @@ class ScrayQueryingPlannerTest extends WordSpec {
       )
       val result = planner.qualifyPredicates(planner.distributiveOrReductionToConjunctiveQuery(sq).head)  
       
-      print(result)
-      
       result match {
           case _: Some[List[RangeValueDomain[_]]] => assert(true)
-          case _ => fail("Wrong domaine for this query.")
+          case _ => fail("Wrong domain for this query.")
       }
     }
     "test operator unequal " in {      
@@ -266,25 +265,20 @@ class ScrayQueryingPlannerTest extends WordSpec {
       val result = planner.qualifyPredicates(sq)  
       result match {
           case _: Some[List[RangeValueDomain[_]]] => assert(true)
-          case _ => fail("Wrong domaine for this query.")
+          case _ => fail("Wrong domain for this query.")
+      }
+    }
+    "test operator 'is null'" in {      
+      val sq = SimpleQuery("", ti,
+          where = Some(IsNull(Column("bla", ti)))
+      )
+
+      val result = planner.qualifyPredicates(sq)
+      result.get(0) match {
+        case single: SingleValueDomain[_] => assert(single.isNull)
+        case _ => fail("Wrong domain for this query.")
       }
     }
     
   }
-//  "Scray's Panner should create dot-data" should {
-//    
-//  }
-//  "Scray's result-set column identifier" should {
-//    "find columns from tables and domains" in {
-//      val sq = SimpleQuery("", ti,
-//          where = Some(And(Equal(Column("bla11", ti), 1), Equal(Column("bla12", ti), 1)))
-//          )
-//      val result = planner.qualifyPredicates(sq)
-//      assert(result != None)
-//      assert(result.get.size == 2)
-//    }
-
-//  "Scray's identification of queried columns in the planner" should {
-//    "be able to identify all columns with a * query" in {
-//
 }

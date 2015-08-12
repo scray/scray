@@ -64,4 +64,4 @@ case class GreaterEqual[T](column: Column, value: T)(implicit val ordering: Orde
 case class Smaller[T](column: Column, value: T)(implicit val ordering: Ordering[T]) extends AtomicClause
 case class SmallerEqual[T](column: Column, value: T)(implicit val ordering: Ordering[T]) extends AtomicClause
 case class Unequal[T](column: Column, value: T)(implicit val ordering: Ordering[T]) extends AtomicClause
-
+case class IsNull[T](column: Column) extends AtomicClause

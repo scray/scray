@@ -28,7 +28,8 @@ sealed abstract class Domain[T](val column: Column)
  */
 case class SingleValueDomain[T](
   override val column: Column,
-  value: T
+  value: T,
+  isNull: Boolean = false
 )(implicit val equiv: Equiv[T]) extends Domain[T](column)
 
 /**

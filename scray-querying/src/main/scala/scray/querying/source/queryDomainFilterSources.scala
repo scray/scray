@@ -46,7 +46,11 @@ object DomainFilterSource {
   def domainCheck[T](value: T, domain: Domain[_], 
       converter: Option[DomainTypeConverter[_]]): Boolean = domain match {
     case single: SingleValueDomain[T] => Try {
-      !single.equiv.equiv(value, single.value)
+      if(single.isNull) {
+        true
+      } else {
+        !single.equiv.equiv(value, single.value)
+      }
     }.getOrElse(converter.map{converter =>
       val mapped = converter.mapDomain(domain).asInstanceOf[Option[SingleValueDomain[T]]]
       mapped.map(svd => !svd.equiv.equiv(value, svd.value)).getOrElse(true)}.getOrElse(true))

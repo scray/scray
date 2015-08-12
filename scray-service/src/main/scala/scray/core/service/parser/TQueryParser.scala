@@ -79,13 +79,14 @@ class TQueryParser(tQuery: ScrayTQuery) extends Parser {
   def _parens: Rule1[_Predicate] = rule { "(" ~ (_conjunction | _disjunction | _factor) ~ ")" }
 
   // Rules matching atomic predicates
-  def _atomicPredicate: Rule1[_AtomicPredicate] = rule { _equal | _greaterEqual | _smallerEqual | _greater | _smaller | _unequal }
+  def _atomicPredicate: Rule1[_AtomicPredicate] = rule { _equal | _greaterEqual | _smallerEqual | _greater | _smaller | _unequal | _isnull }
   def _equal: Rule1[_Equal] = rule { _identifier ~ "=" ~ _value ~> { _Equal(_, _) } }
   def _greater: Rule1[_Greater] = rule { _identifier ~ ">" ~ _value ~> { _Greater(_, _) } }
   def _smaller: Rule1[_Smaller] = rule { _identifier ~ "<" ~ _value ~> { _Smaller(_, _) } }
   def _greaterEqual: Rule1[_GreaterEqual] = rule { _identifier ~ ">=" ~ _value ~> { _GreaterEqual(_, _) } }
   def _smallerEqual: Rule1[_SmallerEqual] = rule { _identifier ~ "<=" ~ _value ~> { _SmallerEqual(_, _) } }
-  def _unequal: Rule1[_Unequal] = rule { _identifier ~ "<>" ~ _value ~> { _Unequal(_, _) } }
+  def _unequal: Rule1[_Unequal] = rule { _identifier ~ "<>" ~ _value ~> { _Unequal(_, _) }}
+  def _isnull: Rule1[_IsNull] = rule { _identifier ~ "IS NULL" ~> { _IsNull(_) }}
 
   // rules matching values - these might throw
   def _value: Rule1[_Value] = rule { _typedLiteralValue | _referencedValue | _plainLiteralValue }

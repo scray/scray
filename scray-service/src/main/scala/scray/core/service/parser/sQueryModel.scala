@@ -282,8 +282,10 @@ case class _Or(subpredicates: List[_Predicate]) extends _ComplexPredicate(subpre
 /**
  * Atomic predicate type
  */
-abstract class _AtomicPredicate(columnName: String, value: _Value) extends _Predicate {
+abstract class _AtomicPredicate(columnName: String, value: _Value, hasValue: Boolean = true) extends _Predicate {
 
+  def this(columnName: String) = this(columnName, null, false)
+  
   override def getMatched(columns: _Columns): Try[_Predicate] = if (isMatchedBy(columns)) Success(this) else
     Failure(new ScrayServiceException(
       ExceptionIDs.PARSING_ERROR,
@@ -295,17 +297,19 @@ abstract class _AtomicPredicate(columnName: String, value: _Value) extends _Pred
   }
 
   def getColumn()(implicit query: _Query): Column = query.getColumn(columnName).get.generate
-  def getValue()(implicit query: _Query): Try[Comparable[_]] = Try {
+  def getValue()(implicit query: _Query): Try[Comparable[_]] = if(hasValue) Try {
     val aval = value match {
       case lv: _LitVal => lv.deserializeLiteral.get
       case rv: _RefVal => rv.deserializeValue()(query.tQuery).get
     }
     aval.asInstanceOf[Comparable[_]]
+  } else {
+    new Failure(new Exception("Cannot request value on atomic predicates without values!"))
   }
 }
 
 /*
- * Concrete atomic predicates (=,<,>,<=,>=,<>) containing individual generators
+ * Concrete atomic predicates (=,<,>,<=,>=,<>, is null) containing individual generators
  */
 
 case class _Equal(columnName: String, value: _Value) extends _AtomicPredicate(columnName, value) {
@@ -325,6 +329,9 @@ case class _SmallerEqual(columnName: String, value: _Value) extends _AtomicPredi
 }
 case class _Unequal(columnName: String, value: _Value) extends _AtomicPredicate(columnName, value) {
   def generate()(implicit query: _Query): Unequal[_] = Unequal(getColumn, getValue.get)
+}
+case class _IsNull(columnName: String) extends _AtomicPredicate(columnName) {
+  def generate()(implicit query: _Query): IsNull[_] = IsNull(getColumn)
 }
 
 /**

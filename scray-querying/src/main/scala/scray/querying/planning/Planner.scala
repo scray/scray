@@ -25,7 +25,7 @@ import scala.collection.mutable.HashMap
 import scala.collection.parallel.immutable.ParSeq
 import scray.querying.Query
 import scray.querying.Registry
-import scray.querying.description.{And, AtomicClause, Clause, Column, ColumnConfiguration, Columns, Equal, Greater, GreaterEqual, Unequal, Or, Row, Smaller, SmallerEqual, TableIdentifier}
+import scray.querying.description.{And, AtomicClause, Clause, Column, ColumnConfiguration, Columns, Equal, Greater, GreaterEqual, IsNull, Unequal, Or, Row, Smaller, SmallerEqual, TableIdentifier}
 import scray.querying.description.ColumnOrdering
 import scray.querying.description.TableConfiguration
 import scray.querying.description.internal.{Bound, Domain, NoPlanException, NonAtomicClauseException, QueryDomainParserException, QueryDomainParserExceptionReasons, QueryspaceViolationException, QueryWithoutColumnsException, RangeValueDomain, SingleValueDomain}
@@ -164,6 +164,7 @@ object Planner extends LazyLogging {
       case smaller: Smaller[_] => checkColumnReference(smaller.column)
       case smallerequal: SmallerEqual[_] => checkColumnReference(smallerequal.column)
       case unequal: Unequal[_] => checkColumnReference(unequal.column)
+      case isnull: IsNull[_] => checkColumnReference(isnull.column)
       case _ => // do not need to check, not an atomic clause
     }
     
@@ -456,6 +457,17 @@ object Planner extends LazyLogging {
           value => { ne.ordering.compare(ne.value, value) == 0 },
           new RangeValueDomain(ne.column, List(ne.value))(ne.ordering),
           collector)
+      case in: IsNull[T] => {
+        collector.get(in.column).map { pred => pred match {
+          // this is only allowed, if it is a singleValueDomain with isNull set to true (in which case we do nothing)
+          case equal: SingleValueDomain[T] => if(!equal.isNull) {
+            throw new QueryDomainParserException(QueryDomainParserExceptionReasons.DISJOINT_EQUALITY_CONFLICT, in.column, query) 
+          }
+          case _ => throw new QueryDomainParserException(QueryDomainParserExceptionReasons.DISJOINT_EQUALITY_CONFLICT, in.column, query)
+        }}.orElse {
+          collector.put(in.column, SingleValueDomain(in.column, null, true))
+        }
+      }
     }
     // collect all predicates where columns are the same and try to define domains
     val collector = new HashMap[Column, Domain[_]]
