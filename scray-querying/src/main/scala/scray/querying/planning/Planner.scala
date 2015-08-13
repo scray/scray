@@ -383,7 +383,8 @@ object Planner extends LazyLogging {
             }
             new TimeIndexSource(time, timeQueryableSource, mainSource.asInstanceOf[KeyValueSource[Any, _]], 
                                 mainTableConfig.table, tableConf.keymapper,
-                                time.parallelization.flatMap(_(getQueryableStore(indexTableConfig, domainQuery.getQueryID))))
+                                time.parallelization.flatMap(_(getQueryableStore(indexTableConfig, domainQuery.getQueryID))),
+                                tableConf.combinedIndexColumns)
           case _ => throw new IndexTypeException(query)
         }
       }).orElse {

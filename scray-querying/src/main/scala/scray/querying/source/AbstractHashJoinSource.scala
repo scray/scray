@@ -17,6 +17,7 @@ package scray.querying.source
 import com.twitter.concurrent.Spool
 import com.twitter.util.{Await, Future}
 import scala.annotation.tailrec
+import scray.querying.description.internal.Domain
 import scala.collection.mutable.ArraySeq
 import scala.collection.parallel.mutable.ParArray
 import scalax.collection.GraphEdge.DiEdge
@@ -48,6 +49,10 @@ import scray.querying.caching.serialization.SimpleRowSerialization
 import scala.util.hashing.MurmurHash3
 import java.nio.ByteBuffer
 import com.esotericsoftware.minlog.Log
+import scray.querying.description.internal.CombinedIndexColumnMissingException
+import scray.querying.description.internal.SingleValueDomain
+import scray.querying.description.internal.RangeValueDomain
+import scray.querying.description.internal.ComposedMultivalueDomain
 
 /**
  * This hash joined source provides a template for implementing hashed-joins. This is a relational lookup.
@@ -62,10 +67,31 @@ abstract class AbstractHashJoinSource[Q <: DomainQuery, M, R /* <: Product */, V
     lookupSource: KeyValueSource[R, V],
     lookupSourceTable: TableIdentifier,
     lookupkeymapper: Option[M => R] = None,
+    combinedIndexColumns: Set[Column] = Set(),
     sequencedmapper: Option[Int] = None)
   extends LazySource[Q] with LazyLogging {
 
   import SpoolUtils._
+  
+  protected def tableTransformDomainColumn[T](domain: Domain[T], indexTable: TableIdentifier): Domain[T] = domain match {
+    case single: SingleValueDomain[T] => single.copy(column = Column(single.column.columnName, indexTable))
+    case range: RangeValueDomain[T] => range.copy(column = Column(range.column.columnName, indexTable))(range.ordering)
+    case composed: ComposedMultivalueDomain[T] => composed.copy(column = Column(composed.column.columnName, indexTable))
+  }
+  
+  protected def getCombinedIndexColumns(query: DomainQuery, indexTable: TableIdentifier): List[Domain[_]] = {
+    val combinedIndexDomains = query.getWhereAST.filter { domain => 
+      combinedIndexColumns.contains(domain.column) &&
+      domain.isInstanceOf[SingleValueDomain[_]] &&
+      !domain.asInstanceOf[SingleValueDomain[_]].isNull
+    }
+    // check that all predicates are there...
+    if(combinedIndexDomains.size != combinedIndexColumns.size) {
+      throw new CombinedIndexColumnMissingException(query)
+    }
+    // now transform request to target table (i.e. index table)
+    combinedIndexDomains.map(tableTransformDomainColumn(_, indexTable))
+  }
   
   /**
    * transforms the spool and queries the lookup source.

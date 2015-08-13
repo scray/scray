@@ -22,5 +22,6 @@ package object querying {
     // 900+ = errors for specific indexes
     val queryDomainRangeException = "SIL-Scray-Querying-901"
     val queryWildcardRangeException = "SIL-Scray-Querying-902"
+    val combinedIndexColumnMissingException = "SIL-Scray-Querying-903"
   }
 }

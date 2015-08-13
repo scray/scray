@@ -15,16 +15,20 @@
 package scray.querying.source.indexing
 
 import com.twitter.util.Time
+import com.typesafe.scalalogging.slf4j.LazyLogging
+
 import java.util.{Calendar, GregorianCalendar, TimeZone}
+
 import scala.collection.mutable.Buffer
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
+
 import scray.querying.description.{Column, ColumnGrouping, ColumnOrdering, QueryRange, Row, TableIdentifier}
 import scray.querying.description.internal.{Bound, Domain, QueryDomainRangeException, RangeValueDomain, SingleValueDomain}
+import scray.querying.description.internal.CombinedIndexColumnMissingException
+import scray.querying.description.internal.ComposedMultivalueDomain
 import scray.querying.queries.DomainQuery
 import scray.querying.source.{AbstractHashJoinSource, KeyValueSource, LazySource}
-import com.typesafe.scalalogging.slf4j.LazyLogging
-import scray.querying.description.internal.ComposedMultivalueDomain
 
 /**
  * creates an indexed-source with a hashed-join reference on a time column.
@@ -39,8 +43,9 @@ class TimeIndexSource[Q <: DomainQuery, M, R, V](
     lookupSourceTable: TableIdentifier,
     lookupkeymapper: Option[M => R] = None,
     sequencedmapper: Option[Int] = None,
+    combinedIndexColumns: Set[Column] = Set(),
     useranges: Boolean = false)(implicit tag: ClassTag[M]) 
-    extends AbstractHashJoinSource[Q, M, R, V](indexsource, lookupSource, lookupSourceTable, lookupkeymapper, sequencedmapper)
+    extends AbstractHashJoinSource[Q, M, R, V](indexsource, lookupSource, lookupSourceTable, lookupkeymapper, combinedIndexColumns, sequencedmapper)
     with LazyLogging {
 
   /**
@@ -75,14 +80,15 @@ class TimeIndexSource[Q <: DomainQuery, M, R, V](
   }
   
   override protected def transformIndexQuery(query: Q): Set[Q] = {
+    val combinedIndexDomains = getCombinedIndexColumns(query, timeIndexConfig.indexRowColumnYear.table)
     val optDomain = query.getWhereAST.find(domain => domain.column == timeIndexConfig.timeReferenceCol)
     optDomain.map(_ match {
-      case cmd: ComposedMultivalueDomain[_] => ??? // currently unsused domain type
+      case cmd: ComposedMultivalueDomain[_] => ??? // currently unused domain type
       case svd: SingleValueDomain[_] => {
         val time = Time.fromMilliseconds(svd.value.asInstanceOf[Long])
         val yearDomain = new SingleValueDomain(timeIndexConfig.indexRowColumnYear, getYearFromTime(time))
         val timeDomain = new SingleValueDomain(timeIndexConfig.indexColumnMs, time.inMilliseconds)
-        Set(createDomainQuery(query, List(yearDomain, timeDomain)))
+        Set(createDomainQuery(query, List(yearDomain, timeDomain) ++ combinedIndexDomains))
       }
       case rvd: RangeValueDomain[_] => {
         val years = Buffer[Int]()
@@ -127,13 +133,13 @@ class TimeIndexSource[Q <: DomainQuery, M, R, V](
         }
         years.map { year =>
           val yearDomain = new SingleValueDomain(timeIndexConfig.indexRowColumnYear, year)
-          createDomainQuery(query, transformedRangeValueDomain.map(List(_, yearDomain)).getOrElse(List(yearDomain)))
+          createDomainQuery(query, transformedRangeValueDomain.map(List(_, yearDomain)).getOrElse(List(yearDomain) ++ combinedIndexDomains))
         }.toSet
       } 
     }).getOrElse {
       // warning: query years all up to now!
       timeIndexConfig.minimumYear.to(getYearFromTime(Time.now)).map(year =>
-          createDomainQuery(query, List(new SingleValueDomain(timeIndexConfig.indexRowColumnYear, year)))).toSet
+          createDomainQuery(query, List(new SingleValueDomain(timeIndexConfig.indexRowColumnYear, year)) ++ combinedIndexDomains)).toSet
     }
   }
   

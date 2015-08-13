@@ -81,3 +81,7 @@ class WildcardIndexRangeException(query: DomainQuery, column: Column)
 class QueryCostsAreTooHigh(query: DomainQuery)
     extends ScrayException(ExceptionIDs.queryCostsAreTooHigh, query.getQueryID, s"""Query costs are too high. 
     Costs: ${query.getCosts}""") with Serializable
+
+class CombinedIndexColumnMissingException(query: DomainQuery)
+    extends ScrayException(ExceptionIDs.combinedIndexColumnMissingException, query.getQueryID, s"""Querying combined indexes must contain all columns.""") 
+    with Serializable
