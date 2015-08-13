@@ -343,12 +343,19 @@ object Planner extends LazyLogging {
     // if we do not have a sorting nor a grouping, we try to find the first hand-made index
     val mainColumn: Option[ColumnConfiguration] = sortedColumnConfig.orElse(groupedColumnConfig).orElse{
       domainQuery.domains.map { domain =>
-        Registry.getQuerySpaceColumn(query.getQueryspace, domain.column).flatMap{col => 
-          if(col.index.map(_.isManuallyIndexed.isDefined).getOrElse(false)) {
-            Some(col)
-          } else {
-            None
+        if(!(domain match {
+          case single: SingleValueDomain[_] => single.isNull
+          case _ => false 
+        })) {
+          Registry.getQuerySpaceColumn(query.getQueryspace, domain.column).flatMap{col => 
+            if(col.index.map(_.isManuallyIndexed.isDefined).getOrElse(false)) {
+              Some(col)
+            } else {
+              None
+            }
           }
+        } else { 
+          None
         }
       }.find(_.isDefined).getOrElse(None)
     }

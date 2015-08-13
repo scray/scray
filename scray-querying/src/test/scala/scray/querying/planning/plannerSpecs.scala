@@ -211,9 +211,9 @@ class ScrayQueryingPlannerTest extends WordSpec {
           where = Some(Unequal(Column("bla", ti), "bla"))
       )
 
-      val result = planner.qualifyPredicates(sq)  
-       result match {
-          case _: Some[List[RangeValueDomain[_]]] => assert(true)
+      val result = planner.qualifyPredicates(sq).get(0)
+      result match {
+          case _: RangeValueDomain[_] => assert(true)
           case _ => fail("Wrong domain for this query.")
       }
     }
@@ -222,16 +222,16 @@ class ScrayQueryingPlannerTest extends WordSpec {
           where = Some(And(Unequal(Column("bla", ti), "bla"), Equal(Column("bla", ti), "bla")))
       )
       
-       intercept[Exception]{planner.qualifyPredicates(sq)} 
+      intercept[Exception]{planner.qualifyPredicates(sq)} 
     }
     "test operators greater and unequal together" in {      
       val sq = SimpleQuery("", ti,
           where = Some(And(Unequal(Column("bla", ti), "bla"), Greater(Column("bla", ti), "bla")))
       )
 
-      val result = planner.qualifyPredicates(sq)  
+      val result = planner.qualifyPredicates(sq).get(0)  
       result match {
-          case _: Some[List[RangeValueDomain[_]]] => assert(true)
+          case _: RangeValueDomain[_] => assert(true)
           case _ => fail("Wrong domain for this query.")
       }
     }
@@ -240,9 +240,9 @@ class ScrayQueryingPlannerTest extends WordSpec {
           where = Some(And(Unequal[String](Column("bla", ti), "bla1"), Unequal[String](Column("bla", ti), "bla2")))
       )
 
-      val result = planner.qualifyPredicates(sq)  
+      val result = planner.qualifyPredicates(sq).get(0)
       result match {
-          case _: Some[List[RangeValueDomain[_]]] => assert(true)
+          case _: RangeValueDomain[_] => assert(true)
           case _ => fail("Wrong domain for this query.")
       }
     }
@@ -250,10 +250,10 @@ class ScrayQueryingPlannerTest extends WordSpec {
       val sq = SimpleQuery("", ti,
           where = Some(And(Unequal(Column("bla", ti), "bla1"), Smaller(Column("bla", ti), "bla2")))
       )
-      val result = planner.qualifyPredicates(planner.distributiveOrReductionToConjunctiveQuery(sq).head)  
+      val result = planner.qualifyPredicates(planner.distributiveOrReductionToConjunctiveQuery(sq).head).get(0)  
       
       result match {
-          case _: Some[List[RangeValueDomain[_]]] => assert(true)
+          case _: RangeValueDomain[_] => assert(true)
           case _ => fail("Wrong domain for this query.")
       }
     }
@@ -262,9 +262,9 @@ class ScrayQueryingPlannerTest extends WordSpec {
           where = Some(Unequal(Column("bla", ti), "bla"))
       )
 
-      val result = planner.qualifyPredicates(sq)  
+      val result = planner.qualifyPredicates(sq).get(0)
       result match {
-          case _: Some[List[RangeValueDomain[_]]] => assert(true)
+          case _: RangeValueDomain[_] => assert(true)
           case _ => fail("Wrong domain for this query.")
       }
     }
@@ -279,6 +279,5 @@ class ScrayQueryingPlannerTest extends WordSpec {
         case _ => fail("Wrong domain for this query.")
       }
     }
-    
   }
 }
