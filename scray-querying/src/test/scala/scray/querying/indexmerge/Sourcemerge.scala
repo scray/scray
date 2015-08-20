@@ -36,10 +36,10 @@ class Sourcemerge extends WordSpec {
       // Generate spool with data
       val ti = TableIdentifier("cassandra", "mytestspace", "mycf")
       val cols = 1.until(10).map(i => Column(s"bla$i", ti))
-      val sr1 = SimpleRow(ArrayBuffer(RowColumn(cols(0), 1), RowColumn(cols(1), "A")))  
-      val sr2 = SimpleRow(ArrayBuffer(RowColumn(cols(1), 2), RowColumn(cols(2), "B")))  
-      val sr3 = SimpleRow(ArrayBuffer(RowColumn(cols(0), 3), RowColumn(cols(1), "C")))
-      val sr4 = SimpleRow(ArrayBuffer(RowColumn(cols(0), 4), RowColumn(cols(1), "D")))
+      val sr1 = SimpleRow(ArrayBuffer(RowColumn(cols(0), 1), RowColumn(cols(1), Set("A"))))  
+      val sr2 = SimpleRow(ArrayBuffer(RowColumn(cols(2), 2), RowColumn(cols(1), Set("B"))))  
+      val sr3 = SimpleRow(ArrayBuffer(RowColumn(cols(0), 3), RowColumn(cols(1), Set("C"))))
+      val sr4 = SimpleRow(ArrayBuffer(RowColumn(cols(0), 4), RowColumn(cols(1), Set("D"))))
       
       val spool = Future(sr1 **:: sr2 **:: sr3 **:: Spool.empty[Row])
       val seq = Future(Seq(sr1, sr2, sr3, sr4))
@@ -56,13 +56,24 @@ class Sourcemerge extends WordSpec {
 
      val expectedResults = Set[Row](sr1, sr2, sr3)
 
-     @tailrec def checkResults[A](value : Set[A], count: Int, spool: Spool[A]): Boolean = spool match {
+     @tailrec def checkResults(value : Set[Row], count: Int, spool: Spool[Row]): Boolean = spool match {
         case Spool.Empty  => value.size == count
-        case _ => 
-          if(!value.contains(spool.head)) false else checkResults(value, count+1, Await.result(spool.tail))
+        case _ =>
+          import Sourcemerge.RowSetContainsChecker
+          if(!value.rowIsContained(spool.head)) false else checkResults(value, count+1, Await.result(spool.tail))
       }
-
-      assert(true == checkResults(expectedResults, 0, Await.result(mappingSource)))
+      assert(true === checkResults(expectedResults, 0, Await.result(mappingSource)))
     }
    }
+}
+object Sourcemerge {
+     implicit class RowSetContainsChecker(rowset: Set[Row]) {
+        def rowIsContained(row: Row) = {
+          rowset.find { setrow =>
+            !setrow.getColumns.find { col => setrow.getColumnValue(col) != row.getColumnValue(col)}.isDefined
+          }.isDefined
+        }
+      }
+           
+  
 }
