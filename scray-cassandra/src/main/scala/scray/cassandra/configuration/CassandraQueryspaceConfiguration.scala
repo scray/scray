@@ -48,7 +48,7 @@ class CassandraQueryspaceConfiguration(
     val tables: Set[(AbstractCQLCassandraStore[_, _], ((_) => Row, Option[String], Option[VersioningConfiguration[_, _, _]]))],
     // mapping from indexed table and the indexed column to the table containing the index and the ref column
     indexes: Map[(AbstractCQLCassandraStore[_, _], String),
-      (AbstractCQLCassandraStore[_, _], String, IndexConfig, Option[Function1[_,_]])]
+      (AbstractCQLCassandraStore[_, _], String, IndexConfig, Option[Function1[_,_]], Set[String])]
 ) extends QueryspaceConfiguration(name) {
   
   lazy val tableRowMapperMap: Map[AbstractCQLCassandraStore[_, _], ((_) => Row, Option[String], Option[VersioningConfiguration[_, _, _]])] = tables.toMap

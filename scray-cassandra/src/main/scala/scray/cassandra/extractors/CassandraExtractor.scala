@@ -150,7 +150,7 @@ trait CassandraExtractor[S <: AbstractCQLCassandraStore[_, _]] {
   def createManualIndexConfiguration(column: Column, queryspaceName: String,
       store: S,
       indexes: Map[(AbstractCQLCassandraStore[_, _], String), (AbstractCQLCassandraStore[_, _], String, 
-              IndexConfig, Option[Function1[_,_]])],
+              IndexConfig, Option[Function1[_,_]], Set[String])],
       mappers: Map[AbstractCQLCassandraStore[_, _], ((_) => Row, Option[String], Option[VersioningConfiguration[_, _, _]])]):
         Option[ManuallyIndexConfiguration[_, _, _, _, _]] = {
     indexes.get((store, column.columnName)).map { (index) =>
@@ -159,11 +159,13 @@ trait CassandraExtractor[S <: AbstractCQLCassandraStore[_, _]] {
       val indexstoreinfo = mappers.get(indexStore).get
       val indexExtractor = CassandraExtractor.getExtractor(indexStore, indexstoreinfo._2, indexstoreinfo._3)
       val storeinfo = mappers.get(store).get
+      val mainDataTableTI = getTableIdentifier(store, None)
       ManuallyIndexConfiguration[Any, Any, Any, Any, Any](
-        () => getTableConfigurationFunction[Any, Any, Any](getTableIdentifier(store, None), queryspaceName),
+        () => getTableConfigurationFunction[Any, Any, Any](mainDataTableTI, queryspaceName),
         () => getTableConfigurationFunction[Any, Any, Any](
             indexExtractor.getTableIdentifier(index._1.asInstanceOf[AbstractCQLCassandraStore[Any, Any]], indexstoreinfo._2), queryspaceName),
         index._4.asInstanceOf[Option[Any => Any]],
+        index._5.map(Column(_, mainDataTableTI)),
         index._3
       )
     }
