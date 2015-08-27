@@ -14,48 +14,74 @@
 // limitations under the License.
 package scray.querying.planning
 
+import java.util.UUID
+import scala.annotation.tailrec
+import scala.collection.mutable.HashMap
+import scala.collection.parallel.immutable.ParSeq
 import com.twitter.concurrent.Spool
 import com.twitter.storehaus.QueryableStore
 import com.twitter.storehaus.ReadableStore
 import com.twitter.util.Await
 import com.twitter.util.Future
 import com.typesafe.scalalogging.slf4j.LazyLogging
-import java.util.UUID
-import scala.collection.mutable.HashMap
-import scala.collection.parallel.immutable.ParSeq
 import scray.querying.Query
 import scray.querying.Registry
-import scray.querying.description.{And, AtomicClause, Clause, Column, ColumnConfiguration, Columns, Equal, Greater, GreaterEqual, IsNull, Unequal, Or, Row, Smaller, SmallerEqual, TableIdentifier}
+import scray.querying.description.And
+import scray.querying.description.AtomicClause
+import scray.querying.description.Clause
+import scray.querying.description.Column
+import scray.querying.description.ColumnConfiguration
 import scray.querying.description.ColumnOrdering
+import scray.querying.description.Columns
+import scray.querying.description.Equal
+import scray.querying.description.Greater
+import scray.querying.description.GreaterEqual
+import scray.querying.description.IsNull
+import scray.querying.description.Or
+import scray.querying.description.Row
+import scray.querying.description.Smaller
+import scray.querying.description.SmallerEqual
 import scray.querying.description.TableConfiguration
-import scray.querying.description.internal.{Bound, Domain, NoPlanException, NonAtomicClauseException, QueryDomainParserException, QueryDomainParserExceptionReasons, QueryspaceViolationException, QueryWithoutColumnsException, RangeValueDomain, SingleValueDomain}
+import scray.querying.description.TableIdentifier
+import scray.querying.description.Unequal
+import scray.querying.description.internal._
+import scray.querying.description.internal.Bound
+import scray.querying.description.internal.Domain
 import scray.querying.description.internal.IndexTypeException
-import scray.querying.description.internal.QueryspaceViolationTableUnavailableException
+import scray.querying.description.internal.MaterializedView
+import scray.querying.description.internal.NoPlanException
+import scray.querying.description.internal.NonAtomicClauseException
+import scray.querying.description.internal.QueryDomainParserException
+import scray.querying.description.internal.QueryDomainParserExceptionReasons
+import scray.querying.description.internal.QueryWithoutColumnsException
 import scray.querying.description.internal.QueryspaceColumnViolationException
+import scray.querying.description.internal.QueryspaceViolationException
+import scray.querying.description.internal.QueryspaceViolationTableUnavailableException
+import scray.querying.description.internal.RangeValueDomain
+import scray.querying.description.internal.SingleValueDomain
 import scray.querying.description.internal.SingleValueDomain
 import scray.querying.queries.DomainQuery
+import scray.querying.queries.QueryInformation
 import scray.querying.source.EagerCollectingDomainFilterSource
 import scray.querying.source.EagerEmptyRowDispenserSource
 import scray.querying.source.EagerSource
+import scray.querying.source.IndexMergeSource
+import scray.querying.source.IndexMergeSource
 import scray.querying.source.KeyValueSource
 import scray.querying.source.LazyEmptyRowDispenserSource
 import scray.querying.source.LazyQueryColumnDispenserSource
 import scray.querying.source.LazyQueryDomainFilterSource
 import scray.querying.source.LazySource
 import scray.querying.source.OrderingEagerMappingSource
+import scray.querying.source.ParallelizedQueryableSource
 import scray.querying.source.QueryableSource
 import scray.querying.source.SimpleHashJoinSource
 import scray.querying.source.Source
 import scray.querying.source.indexing.SimpleHashJoinConfig
 import scray.querying.source.indexing.TimeIndexConfig
 import scray.querying.source.indexing.TimeIndexSource
-import scray.querying.description.internal.MaterializedView
-import scala.annotation.tailrec
-import scray.querying.source.ParallelizedQueryableSource
-import scray.querying.description.internal._
-import com.twitter.util.Try
-import scray.querying.queries.QueryInformation
-
+import scray.querying.source.MergeReferenceColumns
+import scray.querying.source.IdentityEagerCollectingQueryMappingSource
 /**
  * Simple planner to execute queries.
  * For each query do:
@@ -320,6 +346,31 @@ object Planner extends LazyLogging {
    * 3. perform filter resolution
    */
   def findMainQueryPlan[T](query: Query, domainQuery: DomainQuery): ComposablePlan[DomainQuery, _] = {
+
+   def isIndexMergable: List[ColumnConfiguration] = domainQuery.domains.map { domain =>
+        if(!(domain match {
+          case single: SingleValueDomain[_] => single.isNull
+          case _ => false 
+        })) {
+          logger.debug(Registry.getQuerySpace(query.getQueryspace).get.getColumns.toString())
+          logger.debug("1 "+ domain.column + "\n\n\n\n\n\n" + Registry.getQuerySpaceColumn(query.getQueryspace, domain.column) + "||")
+          Registry.getQuerySpaceColumn(query.getQueryspace, domain.column).flatMap{col => 
+            if(col.index.map(_.isManuallyIndexed.isDefined).getOrElse(false)) {
+              logger.debug("2 " + "\n\n\n\n\n\n")
+              Some(col)
+            } else {
+              logger.debug("3 " + "\n\n\n\n\n\n")
+              None
+            }
+          }
+        } else {
+          logger.debug("4 " + "\n\n\n\n\n\n")
+          None
+        }
+      }.filter(_.isDefined).map(_.get)
+      
+      logger.debug("2 " + "\n\n\n\n\n\n")
+    
     // 1. check if we have a matching materialized view prepared and 
     // whether it is ordered according to our ordering: Option[(ordered: Boolean, table)] 
     checkMaterializedViewMatching(query.getQueryspace, query.getTableIdentifier, domainQuery) match {
@@ -340,51 +391,85 @@ object Planner extends LazyLogging {
       Registry.getQuerySpace(query.getQueryspace).flatMap(_.queryCanBeGrouped(query))
     }
 
-    // if we do not have a sorting nor a grouping, we try to find the first hand-made index
-    val mainColumn: Option[ColumnConfiguration] = sortedColumnConfig.orElse(groupedColumnConfig).orElse{
-      domainQuery.domains.map { domain =>
-        if(!(domain match {
-          case single: SingleValueDomain[_] => single.isNull
-          case _ => false 
-        })) {
-          Registry.getQuerySpaceColumn(query.getQueryspace, domain.column).flatMap{col => 
-            if(col.index.map(_.isManuallyIndexed.isDefined).getOrElse(false)) {
-              Some(col)
-            } else {
-              None
-            }
-          }
-        } else { 
-          None
-        }
-      }.find(_.isDefined).getOrElse(None)
+    val listOfIndexedColumns = isIndexMergable
+    
+    val mainColumns = sortedColumnConfig.orElse(groupedColumnConfig).map { sortOrGroup =>
+     logger.debug("Is sorted..." + "\n\n\n\n\n\n")
+      // sort with an additional index to be merged in
+      List(sortOrGroup) ++ listOfIndexedColumns
+    }.getOrElse { 
+      logger.debug("Is NOT sorted..." + listOfIndexedColumns.size +"\n\n\n\n\n\n")
+
+      // if we do not have a sorting nor a grouping, we try to find all hand-made indexes
+      listOfIndexedColumns
+      
     }
 
     // construct a simple plan
-    mainColumn.map { colConf =>
+    mainColumns.headOption.map { colConf => 
       colConf.index.flatMap(index => index.isManuallyIndexed.map { tableConf =>
         val indexTableConfig = tableConf.indexTableConfig()
-        val mainTableConfig = tableConf.mainTableConfig()
-        val indexSource = new QueryableSource(getQueryableStore(indexTableConfig, domainQuery.getQueryID),
-          query.getQueryspace, indexTableConfig.table, index.isSorted)
-        val mainSource = new KeyValueSource(getReadableStore(mainTableConfig, domainQuery.getQueryID), 
-          query.getQueryspace, mainTableConfig.table, Registry.getCachingEnabled)
+        val lookupTableConfig = tableConf.mainTableConfig()
+        val indexSource = new QueryableSource(
+          getQueryableStore(
+              indexTableConfig, 
+              domainQuery.getQueryID
+           ),
+          query.getQueryspace, 
+          indexTableConfig.table, 
+          index.isSorted
+        )
+        val lookupSource = new KeyValueSource(
+            getReadableStore(
+                lookupTableConfig, 
+                domainQuery.getQueryID
+             ), 
+             query.getQueryspace, 
+             lookupTableConfig.table, 
+             Registry.getCachingEnabled
+        )
         tableConf.indexConfig match {
-          case simple: SimpleHashJoinConfig => new SimpleHashJoinSource(indexSource, colConf.column, 
-            mainSource, mainTableConfig.primarykeyColumns)
+          case simple: SimpleHashJoinConfig => new SimpleHashJoinSource(indexSource, colConf.column,
+            lookupSource, lookupTableConfig.primarykeyColumns)
           case time: TimeIndexConfig =>
             // maybe a parallel version is available --> convert to parallel version
             val timeQueryableSource = time.parallelization match {
               // case Some(parFunc) => indexSource
-              case Some(parFunc) => new ParallelizedQueryableSource(indexSource.store, indexSource.space, 
-                      time.parallelizationColumn.get, parFunc(indexSource.store), time.ordering, 
-                      query.getOrdering.filter(_.descending).isDefined)
+              case Some(parFunc) =>
+                new ParallelizedQueryableSource(indexSource.store, indexSource.space,
+                  time.parallelizationColumn.get, parFunc(indexSource.store), time.ordering,
+                  query.getOrdering.filter(_.descending).isDefined)
               case None => indexSource
             }
-            new TimeIndexSource(time, timeQueryableSource, mainSource.asInstanceOf[KeyValueSource[Any, _]], 
-                                mainTableConfig.table, tableConf.keymapper,
-                                time.parallelization.flatMap(_(getQueryableStore(indexTableConfig, domainQuery.getQueryID))),
-                                tableConf.combinedIndexColumns)
+            val finalIndexSource = if (mainColumns.size > 1) {
+              // TODO  use more than two
+              mainColumns.tail.headOption.map { colConf =>
+                colConf.index.flatMap(index2 => index2.isManuallyIndexed.map { tableConf2 =>
+                  logger.debug(s"Planning to merge two index columns ${time.timeReferenceCol} and ${tableConf2.indexConfig.indexReferencesColumn}")
+                  val indexTableConfig2 = tableConf2.indexTableConfig()
+                  val lookupTableConfig2 = tableConf2.mainTableConfig()
+                  val indexSource2 = new QueryableSource(
+                    getQueryableStore(
+                      indexTableConfig2,
+                      domainQuery.getQueryID),
+                    query.getQueryspace,
+                    indexTableConfig2.table,
+                    index2.isSorted);
+
+                  new IndexMergeSource(
+                    MergeReferenceColumns[DomainQuery, Spool[Row], LazySource[DomainQuery]](timeQueryableSource, time.indexReferencesColumn, index),
+                    MergeReferenceColumns[DomainQuery, Seq[Row], EagerSource[DomainQuery]](
+                      new IdentityEagerCollectingQueryMappingSource(indexSource2),
+                      tableConf2.indexConfig.indexReferencesColumn,
+                      index2))
+                })
+              }.flatten.getOrElse(throw new RuntimeException("Transformation not possible."))
+            } else {
+              timeQueryableSource
+            }
+            new TimeIndexSource(time, finalIndexSource, lookupSource.asInstanceOf[KeyValueSource[Any, _]],
+              lookupTableConfig.table, tableConf.keymapper,
+              time.parallelization.flatMap(_(getQueryableStore(indexTableConfig, domainQuery.getQueryID))))
           case _ => throw new IndexTypeException(query)
         }
       }).orElse {

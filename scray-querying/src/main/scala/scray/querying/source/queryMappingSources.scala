@@ -59,7 +59,7 @@ abstract class LazyQueryMappingSource[Q <: DomainQuery](source: LazySource[Q])
    * subclasses implement transformSpoolElement
    */
   override def request(query: Q): LazyDataFuture = {
-    logger.debug(s"Transforming elements lazyly for ${query.getQueryID}")
+    logger.info(s"Transforming elements lazyly for ${query.getQueryID}")
     init(query)
     if(optimized) {
       source.request(query)
@@ -128,4 +128,11 @@ abstract class EagerCollectingQueryMappingSource[Q <: DomainQuery, R](source: So
     this.asInstanceOf[Source[DomainQuery, Seq[Row]]])
     
   override def createCache: Cache[Nothing] = new NullCache 
+}
+
+class IdentityEagerCollectingQueryMappingSource[Q <: DomainQuery, R](source: Source[Q, R])
+  extends EagerCollectingQueryMappingSource[Q, R](source) with LazyLogging {
+  override def transformSeqElement(element: Row, query: Q): Row = element
+  override def getColumns: List[scray.querying.description.Column] = source.getColumns
+  override def getDiscriminant: String = source.getDiscriminant + ""
 }

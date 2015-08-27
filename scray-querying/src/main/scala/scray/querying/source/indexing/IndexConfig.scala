@@ -8,7 +8,7 @@ import com.twitter.storehaus.QueryableStore
  * all indexes that are allowed must have a configuration
  * that inherits from this
  */
-sealed trait IndexConfig extends Serializable
+sealed class IndexConfig(val indexReferencesColumn: Column) extends Serializable
 
 /**
  * configuration for TimeIndexSource
@@ -21,7 +21,7 @@ case class TimeIndexConfig(
     // column in the index-table that contains the time information in ms
     indexColumnMs: Column,
     // column in the index-table that contains the references into the lookup-source
-    indexReferencesColumn: Column,
+    override val indexReferencesColumn: Column,
     // if this index can be queried in parallel and how much parallelization is available
     parallelization: Option[(QueryableStore[_ , _]) => Option[Int]] = None,
     // which column is used for parallelization
@@ -33,7 +33,7 @@ case class TimeIndexConfig(
     // minimum year of data that is indexed
     minimumYear: Int = 2015,
     // query limit
-    maxLimit: Option[Long] = Some(5000)) extends IndexConfig
+    maxLimit: Option[Long] = Some(5000)) extends IndexConfig(indexReferencesColumn)
 
 /**
  * configuration for WildcardIndexSource
@@ -46,7 +46,7 @@ case class WildcardIndexConfig(
     // UTF8-Column for the name which is indexed
     indexNameColumn: Column,
     // column in the index-table that contains the references into the lookup-source
-    indexReferencesColumn: Column,
+    override val indexReferencesColumn: Column,
     // the number of characters in the prefix
     numberOfPrefixCharacters: Int,
     // if the index is lower case, i.e. enables
@@ -54,9 +54,9 @@ case class WildcardIndexConfig(
     // if the prefix is present in the data
     prefixPresent: Boolean,
     // query limit
-    maxLimit: Option[Long] = Some(5000)) extends IndexConfig    
+    maxLimit: Option[Long] = Some(5000)) extends IndexConfig(indexReferencesColumn)    
 
 /**
  * simple in-stream index
  */
-case class SimpleHashJoinConfig() extends IndexConfig
+case class SimpleHashJoinConfig(override val indexReferencesColumn: Column) extends IndexConfig(indexReferencesColumn)
