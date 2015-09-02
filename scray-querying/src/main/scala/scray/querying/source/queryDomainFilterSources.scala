@@ -14,31 +14,32 @@
 // limitations under the License.
 package scray.querying.source
 
-import scray.querying.description.Column
-import scray.querying.description.EmptyRow
-import scray.querying.description.Row
-import scray.querying.description.internal.Domain
-import scray.querying.description.internal.RangeValueDomain
-import scray.querying.description.internal.SingleValueDomain
+import scray.querying.description.{ Column, EmptyRow, Row }
 import scray.querying.queries.DomainQuery
-import scray.querying.description.internal.ComposedMultivalueDomain
-import scray.querying.description.internal.StringDomainConverter
-import scray.querying.description.internal.BooleanDomainConverter
-import scray.querying.description.internal.IntDomainConverter
-import scray.querying.description.internal.LongDomainConverter
-import scray.querying.description.internal.BigIntDomainConverter
-import scray.querying.description.internal.JBigIntegerDomainConverter
+import scray.querying.description.internal.{ 
+  Domain,
+  RangeValueDomain,
+  SingleValueDomain,
+  ComposedMultivalueDomain,
+  StringDomainConverter,
+  BooleanDomainConverter,
+  IntDomainConverter,
+  LongDomainConverter,
+  BigIntDomainConverter,
+  JBigIntegerDomainConverter,
+  DoubleDomainConverter,
+  BigDecimalDomainConverter,
+  JBigDecimalDomainConverter,
+  DomainTypeConverter
+}
 import java.math.{BigInteger => JBigInteger, BigDecimal => JBigDecimal}
-import scray.querying.description.internal.DoubleDomainConverter
-import scray.querying.description.internal.BigDecimalDomainConverter
-import scray.querying.description.internal.JBigDecimalDomainConverter
-import scray.querying.description.internal.DomainTypeConverter
 import com.twitter.util.Try
+import com.typesafe.scalalogging.slf4j.LazyLogging
 
 /**
  * Common code for domain checking
  */
-object DomainFilterSource {
+object DomainFilterSource extends LazyLogging {
   
   /**
    * check if the provided value is compatible with the domains
@@ -90,7 +91,10 @@ class LazyQueryDomainFilterSource[Q <: DomainQuery](source: LazySource[Q])
     // if we find a domain which is not matched by this Row we throw it (the Row) away
     query.getWhereAST.find { domain =>
       element.getColumnValue[Any](domain.column) match {
-        case None => true
+        case None => domain match {
+          case single: SingleValueDomain[_] if single.isNull => false
+          case _ => true
+        }
         case Some(value) => DomainFilterSource.domainCheck(value, domain, DomainFilterSource.getDomainConverter(value))
       }
     } match {
@@ -119,7 +123,10 @@ class EagerCollectingDomainFilterSource[Q <: DomainQuery, R](source: Source[Q, R
     element.filter { row => 
       query.getWhereAST.find { domain =>
         row.getColumnValue[Any](domain.column) match {
-          case None => true
+          case None => domain match {
+            case single: SingleValueDomain[_] if single.isNull => false
+            case _ => true
+          }
           case Some(value) => DomainFilterSource.domainCheck(value, domain, DomainFilterSource.getDomainConverter(value))
         }
       } match {
