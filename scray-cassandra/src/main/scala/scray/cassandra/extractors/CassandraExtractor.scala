@@ -39,6 +39,19 @@ import com.twitter.storehaus.cassandra.cql.CQLCassandraRowStore
 import scray.cassandra.util.CassandraUtils
 import scray.querying.description.VersioningConfiguration
 import scray.querying.Registry
+import com.datastax.driver.core.TableMetadata
+import scray.querying.description.VersioningConfiguration
+import scray.querying.queries.DomainQuery
+import scray.querying.source.indexing.IndexConfig
+import scray.querying.description.QueryspaceConfiguration
+import scray.querying.description.TableIdentifier
+import scray.querying.description.IndexConfiguration
+import scray.querying.description.TableConfiguration
+import scray.querying.description.ManuallyIndexConfiguration
+import scray.querying.description.AutoIndexConfiguration
+import scray.querying.description.ColumnConfiguration
+import org.yaml.snakeyaml.Yaml
+import java.util.regex.Pattern
 
 /**
  * Helper class to create a configuration for a Cassandra table
@@ -100,15 +113,38 @@ trait CassandraExtractor[S <: AbstractCQLCassandraStore[_, _]] {
   def getMetadata(cf: StoreColumnFamily): KeyspaceMetadata = CassandraUtils.getKeyspaceMetadata(cf)
   
   /**
+   * return whether and maybe how the given column is auto-indexed by Cassandra-Lucene-Plugin 
+   */
+  private def getColumnCassandraLuceneIndexed(tmOpt: Option[TableMetadata], column: Column): Option[AutoIndexConfiguration] = {
+    val cmOpt = tmOpt.flatMap { tm => Option(tm.getColumn(Metadata.quote(CassandraExtractor.LUCENE_COLUMN_NAME))) }
+    val schemaOpt = cmOpt.flatMap (cm => Option(cm.getIndex).map(_.getOption(CassandraExtractor.LUCENE_INDEX_SCHEMA_OPTION_NAME)))
+    schemaOpt.map { schema =>
+      val outerMatcher = CassandraExtractor.outerPattern.matcher(schema) 
+      if(outerMatcher.matches()) {
+        val fieldString = outerMatcher.group(1)
+        if(CassandraExtractor.innerPattern.split(fieldString, -1).find { _.trim() == column.columnName }.isDefined) {
+          cmOpt.get.getType
+          Some(AutoIndexConfiguration(isRangeIndex = true, isFullTextIndex = true))
+        } else {
+          None
+        }
+      } else {
+        None
+      }
+    }.getOrElse{None}
+  }
+  
+  /**
    * checks that a column has been indexed by Cassandra itself, so no manual indexing
    * if the table has not yet been created (the version must still be computed) we assume no indexing 
    */
-  def checkColumnCassandraAutoIndexed(store: S, column: Column): Boolean = {
+  def checkColumnCassandraAutoIndexed(store: S, column: Column): (Boolean, Option[AutoIndexConfiguration]) = {
     val metadata = Option(getMetadata(store.columnFamily))
-    metadata.flatMap{_ => 
-      val tm = CassandraUtils.getTableMetadata(store.columnFamily, metadata)
-      val cm = Option(tm).map(_.getColumn(Metadata.quote(column.columnName)))
+    val tm = metadata.flatMap(_ => Option(CassandraUtils.getTableMetadata(store.columnFamily, metadata)))
+    val autoIndex = metadata.flatMap{_ => 
+      val cm = tm.map(_.getColumn(Metadata.quote(column.columnName)))
       cm.flatMap(colmeta => Option(colmeta.getIndex()))}.isDefined
+    (autoIndex, getColumnCassandraLuceneIndexed(tm, column))
   }
 
   /**
@@ -119,10 +155,12 @@ trait CassandraExtractor[S <: AbstractCQLCassandraStore[_, _]] {
       querySpace: QueryspaceConfiguration,
       index: Option[ManuallyIndexConfiguration[_, _, _, _, _]]): ColumnConfiguration = {
     val indexConfig = index match {
-      case None => if(checkColumnCassandraAutoIndexed(store, column)) {
-          Some(IndexConfiguration(true, None, false, false, false)) 
+      case None => 
+        val autoIndex = checkColumnCassandraAutoIndexed(store, column)
+        if(autoIndex._1) {
+          Some(IndexConfiguration(true, None, false, false, false, autoIndex._2)) 
         } else { None }
-      case Some(idx) => Some(IndexConfiguration(true, Some(idx), true, true, true)) 
+      case Some(idx) => Some(IndexConfiguration(true, Some(idx), true, true, true, None)) 
     }
     ColumnConfiguration(column, querySpace, indexConfig)
   }
@@ -193,4 +231,9 @@ object CassandraExtractor {
   }
   
   val DB_ID: String = "cassandra"
+  val LUCENE_COLUMN_NAME: String = "lucene"
+  val LUCENE_INDEX_SCHEMA_OPTION_NAME: String = "schema"
+
+  lazy val outerPattern = Pattern.compile("^\\s*\\{\\s*fields\\s*:\\s*\\{(.*)\\s*}\\s*\\}\\s*$", Pattern.DOTALL)
+  lazy val innerPattern = Pattern.compile("\\s*:\\s*\\{.*?\\}\\s*,?\\s*", Pattern.DOTALL)
 }

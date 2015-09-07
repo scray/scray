@@ -1,3 +1,17 @@
+// See the LICENCE.txt file distributed with this work for additional
+// information regarding copyright ownership.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 package scray.cassandra.util
 
 import com.datastax.driver.core.{ KeyspaceMetadata, Metadata, TableMetadata }
@@ -5,6 +19,7 @@ import com.twitter.storehaus.cassandra.cql.CQLCassandraConfiguration.StoreColumn
 import org.yaml.snakeyaml.Yaml
 import com.twitter.util.Try
 import java.util.{ Map => JMap, HashMap => JHashMap }
+import com.datastax.driver.core.ResultSet
 
 object CassandraUtils {
 
@@ -31,14 +46,14 @@ object CassandraUtils {
    * Uses YAML to store properties in a string.
    * If you need synchronization please use external synchronization, e.g. Zookeeper.
    */
-  def writeTablePropertyToCassandra(cf: StoreColumnFamily, property: String, value: String) = {
+  def writeTablePropertyToCassandra(cf: StoreColumnFamily, property: String, value: String): ResultSet = {
     val yaml = createYaml(property, value, getTablePropertiesFromCassandra(cf))
     val cql = s"ALTER TABLE ${cf.getPreparedNamed} WITH comment='$yaml'"
     cf.session.getSession.execute(cql)
   }
 
   def createYaml(property: String, value: String, currentMap: Option[JMap[String, String]] = None): String = {
-    def escapeQuotes(str: String) = str.replaceAll("'", "''")
+    def escapeQuotes(str: String): String = str.replaceAll("'", "''")
     val map = currentMap match {
       case Some(properties) =>
         properties.put(property, value)

@@ -1,19 +1,29 @@
+// See the LICENCE.txt file distributed with this work for additional
+// information regarding copyright ownership.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 package scray.cassandra.rows
 
-import com.datastax.driver.core.{Row => CassRow}
+import com.datastax.driver.core.{Row => CassRow, ColumnDefinitions}
 import scray.querying.description.Row
 import com.twitter.storehaus.cassandra.cql.CQLCassandraRowStore
 import com.websudos.phantom.CassandraPrimitive
 import scala.annotation.tailrec
-import scala.collection.mutable.ArrayBuffer
-import scray.querying.description.RowColumn
-import com.datastax.driver.core.ColumnDefinitions
-import scray.querying.description.TableIdentifier
-import scray.querying.description.Column
+import scala.collection.mutable.{ArrayBuffer, ListBuffer}
+import scray.querying.description.{Column, RowColumn, SimpleRow, TableIdentifier}
 import scray.cassandra.extractors.CassandraExtractor
-import scala.collection.mutable.ListBuffer
-import scray.querying.description.SimpleRow
 import java.nio.ByteBuffer
+import scala.collection.JavaConverters._
 
 /**
  * a generic mapper to map cassandra rows emitted by CQLCassandraRowStore to scray rows 
@@ -49,7 +59,6 @@ object GenericCassandraRowStoreMapper {
     
   def rowMapper[K: CassandraPrimitive](store: CQLCassandraRowStore[K], tableName: Option[String])(implicit typeMap: Map[String, CassandraPrimitive[_]]): 
     ((K, CassRow)) => Row = (kv) => {
-    import scala.collection.JavaConverters._
     val (key, cassrow) = kv
     val ti = tableName.map(TableIdentifier(CassandraExtractor.DB_ID, store.columnFamily.session.getKeyspacename, _)).getOrElse {
         TableIdentifier(CassandraExtractor.DB_ID, store.columnFamily.session.getKeyspacename, store.columnFamily.getName)}

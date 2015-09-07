@@ -16,19 +16,18 @@ package scray.cassandra.extractors
 
 import scray.querying.queries.DomainQuery
 import com.twitter.storehaus.cassandra.cql.AbstractCQLCassandraStore
-import scray.querying.description.internal.SingleValueDomain
-import scray.querying.description.internal.Domain
+import scray.querying.description.internal.{Domain, RangeValueDomain, SingleValueDomain}
 import scray.querying.description.Column
-import scray.querying.description.internal.RangeValueDomain
-import scray.querying.description.internal.RangeValueDomain
+import scray.querying.Registry
+import com.typesafe.scalalogging.slf4j.LazyLogging
+import DomainToCQLQueryMapper.{AND_LITERAL, EMPTY_LITERAL, ORDER_LITERAL, DESC_LITERAL, LIMIT_LITERAL}
 
 /**
  * performs mapping of DomainQueries to valid Cassandra CQL queries,
  * containing all the possible predicates for a single table as defined
  * in the domains
  */
-class DomainToCQLQueryMapper[S <: AbstractCQLCassandraStore[_, _]] {
-  import DomainToCQLQueryMapper.{AND_LITERAL, EMPTY_LITERAL, ORDER_LITERAL, DESC_LITERAL, LIMIT_LITERAL}
+class DomainToCQLQueryMapper[S <: AbstractCQLCassandraStore[_, _]] extends LazyLogging {
   
   /**
    * add an ordering specification, if needed
@@ -57,7 +56,7 @@ class DomainToCQLQueryMapper[S <: AbstractCQLCassandraStore[_, _]] {
   def getQueryMapping(store: S, extractor: CassandraExtractor[S], storeTableNickName: Option[String]): DomainQuery => String = {
     (query) => {
       // first check that we have fixed all partition keys
-      getRowKeyQueryMapping(store, query, extractor, storeTableNickName).map { queryStringBegin =>
+      val r = getRowKeyQueryMapping(store, query, extractor, storeTableNickName).map { queryStringBegin =>
         // if this is the case the query can fix clustering keys and the last one may be a rangedomain 
         val baseQuery = getClusterKeyQueryMapping(store, query, extractor, storeTableNickName) match {
           case None => queryStringBegin
@@ -69,6 +68,8 @@ class DomainToCQLQueryMapper[S <: AbstractCQLCassandraStore[_, _]] {
         // we must make sure we have a single index for the col we select (only use one)
         enforceLimit(getValueKeyQueryMapping(store, query, extractor, storeTableNickName).getOrElse(""), query)
       }
+      logger.info(s"Query String for Cassandra is $r")
+      r
     }
   }
   
@@ -176,14 +177,30 @@ class DomainToCQLQueryMapper[S <: AbstractCQLCassandraStore[_, _]] {
   
   private def getValueKeyQueryMapping(store: S, query: DomainQuery, extractor: CassandraExtractor[S],
       storeTableNickName: Option[String]): Option[String] = {
-    val valueCols = extractor.getValueColumns.filter(valueCol => extractor.checkColumnCassandraAutoIndexed(store, valueCol))
-    query.domains.find{dom => valueCols.find { valueCol => 
-        dom.column.columnName == valueCol.columnName && 
-        dom.isInstanceOf[SingleValueDomain[_]] &&
-        dom.column.table.tableId == storeTableNickName.getOrElse(store.columnFamily.getName) &&
-        dom.column.table.dbId == store.columnFamily.session.getKeyspacename &&
-        dom.column.table.dbSystem == extractor.getDBSystem
-    }.isDefined}.map(svd => convertSingleValueDomain(svd.asInstanceOf[SingleValueDomain[_]]))
+    val valueCols = extractor.getValueColumns.map { valueCol => 
+      Registry.getQuerySpaceColumn(query.getQueryspace, valueCol)     
+    }.filter(cd => cd.isDefined && cd.get.index.isDefined && cd.get.index.get.isAutoIndexed).
+    partition(cd => cd.get.index.get.autoIndexConfiguration.isDefined)
+    val resultQuery = if(valueCols._1.size > 0) {
+      // if we have lucene entries, we use those as those are supposed to be more flexible
+      val ti = valueCols._1(0).get.column.table
+      val domains = query.getWhereAST.filter { dom => 
+        valueCols._1.find{ optcolDef => optcolDef.get.column.columnName == dom.column.columnName}.isDefined} 
+      DomainToJSONLuceneQueryMapper.getLuceneColumnsQueryMapping(query, domains, ti)
+    } else {
+      None
+    }
+    resultQuery.orElse {
+      // if we a standard Cassandra index we use the first in the list of defined valuesColumns
+      query.domains.find{dom => valueCols._2.find { valueColConf =>
+        val valueCol = valueColConf.get.column
+          dom.column.columnName == valueCol.columnName && 
+          dom.isInstanceOf[SingleValueDomain[_]] &&
+          dom.column.table.tableId == storeTableNickName.getOrElse(store.columnFamily.getName) &&
+          dom.column.table.dbId == store.columnFamily.session.getKeyspacename &&
+          dom.column.table.dbSystem == extractor.getDBSystem
+      }.isDefined}.map(svd => convertSingleValueDomain(svd.asInstanceOf[SingleValueDomain[_]]))
+    }
   }
 }
 

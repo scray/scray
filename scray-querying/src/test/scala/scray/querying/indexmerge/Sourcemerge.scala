@@ -49,8 +49,8 @@ class Sourcemerge extends WordSpec {
       val mainSource = new LazyTestSource(spool.get())
       val refereceSource = new EagerTestSource(seq.get())
       
-      val main = MergeReferenceColumns[DomainQuery, Spool[Row], LazySource[DomainQuery]](mainSource, cols(1), IndexConfiguration(true, None, true, true, true))
-      val reference = MergeReferenceColumns[DomainQuery, Seq[Row], EagerSource[DomainQuery]](refereceSource, cols(1), IndexConfiguration(true, None, true, true, true))
+      val main = MergeReferenceColumns[DomainQuery, Spool[Row], LazySource[DomainQuery]](mainSource, cols(1), IndexConfiguration(true, None, true, true, true, None))
+      val reference = MergeReferenceColumns[DomainQuery, Seq[Row], EagerSource[DomainQuery]](refereceSource, cols(1), IndexConfiguration(true, None, true, true, true, None))
       
       val mappingSource  = new  IndexMergeSource(main, reference).request(new DomainQuery(null, null,  null, null, null, null, null, null))
 
