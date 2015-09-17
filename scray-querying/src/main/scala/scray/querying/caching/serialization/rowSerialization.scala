@@ -19,6 +19,7 @@ import com.esotericsoftware.kryo.io.{ Input, Output }
 import scray.querying.description.{ Column, CompositeRow, Row, RowColumn, TableIdentifier, SimpleRow }
 import scala.collection.mutable.ArrayBuffer
 import scala.annotation.tailrec
+import scala.math.BigInt
 import scray.common.serialization.KryoPoolSerialization
 import scray.common.serialization.numbers.KryoSerializerNumber
 
@@ -35,6 +36,7 @@ object RegisterRowCachingSerializers {
       KryoPoolSerialization.register(classOf[RowColumn[_]], new RowColumnSerialization, KryoSerializerNumber.rowcolumn.getNumber())
       KryoPoolSerialization.register(classOf[SimpleRow], new SimpleRowSerialization, KryoSerializerNumber.simplerow.getNumber())
       KryoPoolSerialization.register(classOf[CompositeRow], new CompositeRowSerialization, KryoSerializerNumber.compositerow.getNumber())
+      KryoPoolSerialization.register(classOf[BigInt], new BigIntSerialization, KryoSerializerNumber.BigInteger.getNumber())
     }
   }
 }
@@ -134,3 +136,16 @@ class ColumnSerialization extends KSerializer[Column] {
   }
 }
 
+/**
+ * serialization for scala.math.BigInt that is compatible with Java-BigInteger
+ */
+class BigIntSerialization extends KSerializer[BigInt] {
+
+  override def write(k: Kryo, o: Output, v: BigInt): Unit = {
+    o.writeString(v.toString)
+  }
+
+  override def read(k: Kryo, i: Input, c: Class[BigInt]): BigInt = {
+    BigInt(i.readString)
+  }
+}

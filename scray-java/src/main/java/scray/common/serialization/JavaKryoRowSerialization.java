@@ -17,6 +17,7 @@ package scray.common.serialization;
 import java.util.ArrayList;
 import java.util.Set;
 import java.util.UUID;
+import java.math.BigInteger;
 
 import scray.common.serialization.numbers.KryoRowTypeNumber;
 import scray.common.serialization.numbers.KryoSerializerNumber;
@@ -43,6 +44,7 @@ public class JavaKryoRowSerialization {
 		kryo.register(Set.class, new JavaSetSerializer<>(), KryoSerializerNumber.Set3.getNumber());
 		kryo.register(Set.class, new JavaSetSerializer<>(), KryoSerializerNumber.Set4.getNumber());
 		kryo.register(Set.class, new JavaSetSerializer<>(), KryoSerializerNumber.Set.getNumber());
+		kryo.register(BigInteger.class, new JavaBigIntegerSerializer(), KryoSerializerNumber.BigInteger.getNumber());
 		kryo.register(UUID.class, new UUIDSerializer(), KryoSerializerNumber.UUID.getNumber());
 	}
 	
@@ -146,7 +148,7 @@ public class JavaKryoRowSerialization {
 		    	}
 		    }
 			return new JavaCompositeRow(abuf);
-		}		
+		}
 	}
 	
 	/**
@@ -161,6 +163,22 @@ public class JavaKryoRowSerialization {
 		@Override
 		public JavaBatchID read(Kryo k, Input i, Class<JavaBatchID> type) {
 			return new JavaBatchID(i.readLong());
-		}		
+		}
 	}
+
+	/**
+	 * kryo serializer for BigIntegers
+	 */
+	public static class JavaBigIntegerSerializer extends Serializer<BigInteger> {
+		@Override
+		public void write(Kryo k, Output o, BigInteger bi) {
+			o.writeString(bi.toString());
+		}
+
+		@Override
+		public BigInteger read(Kryo k, Input i, Class<BigInteger> type) {
+			return new BigInteger(i.readString());
+		}
+	}
+
 }
