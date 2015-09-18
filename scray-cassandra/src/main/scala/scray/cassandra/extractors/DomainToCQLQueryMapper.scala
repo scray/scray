@@ -181,8 +181,10 @@ class DomainToCQLQueryMapper[S <: AbstractCQLCassandraStore[_, _]] extends LazyL
       Registry.getQuerySpaceColumn(query.getQueryspace, valueCol)     
     }.filter(cd => cd.isDefined && cd.get.index.isDefined && cd.get.index.get.isAutoIndexed).
     partition(cd => cd.get.index.get.autoIndexConfiguration.isDefined)
+    logger.debug(s"value Columns that are indexed: $valueCols")
     val resultQuery = if(valueCols._1.size > 0) {
       // if we have lucene entries, we use those as those are supposed to be more flexible
+      logger.debug(s"Using Lucene index on ${valueCols._1}")
       val ti = valueCols._1(0).get.column.table
       val domains = query.getWhereAST.filter { dom => 
         valueCols._1.find{ optcolDef => optcolDef.get.column.columnName == dom.column.columnName}.isDefined} 

@@ -52,11 +52,12 @@ import scray.querying.description.AutoIndexConfiguration
 import scray.querying.description.ColumnConfiguration
 import org.yaml.snakeyaml.Yaml
 import java.util.regex.Pattern
+import com.typesafe.scalalogging.slf4j.LazyLogging
 
 /**
  * Helper class to create a configuration for a Cassandra table
  */
-trait CassandraExtractor[S <: AbstractCQLCassandraStore[_, _]] {
+trait CassandraExtractor[S <: AbstractCQLCassandraStore[_, _]] extends LazyLogging {
 
   /**
    * returns a list of columns for this specific store; implementors must override this
@@ -118,12 +119,14 @@ trait CassandraExtractor[S <: AbstractCQLCassandraStore[_, _]] {
   private def getColumnCassandraLuceneIndexed(tmOpt: Option[TableMetadata], column: Column): Option[AutoIndexConfiguration] = {
     val cmOpt = tmOpt.flatMap { tm => Option(tm.getColumn(Metadata.quote(CassandraExtractor.LUCENE_COLUMN_NAME))) }
     val schemaOpt = cmOpt.flatMap (cm => Option(cm.getIndex).map(_.getOption(CassandraExtractor.LUCENE_INDEX_SCHEMA_OPTION_NAME)))
-    schemaOpt.map { schema =>
+    schemaOpt.flatMap { schema =>
+      logger.debug(s"Lucene index schema is: $schema")
       val outerMatcher = CassandraExtractor.outerPattern.matcher(schema) 
       if(outerMatcher.matches()) {
         val fieldString = outerMatcher.group(1)
         if(CassandraExtractor.innerPattern.split(fieldString, -1).find { _.trim() == column.columnName }.isDefined) {
           cmOpt.get.getType
+          logger.debug(s"Found Lucene-indexed column ${column.columnName} for table ${tmOpt.get.getName}")
           Some(AutoIndexConfiguration(isRangeIndex = true, isFullTextIndex = true))
         } else {
           None
@@ -131,7 +134,7 @@ trait CassandraExtractor[S <: AbstractCQLCassandraStore[_, _]] {
       } else {
         None
       }
-    }.getOrElse{None}
+    }
   }
   
   /**
@@ -144,7 +147,12 @@ trait CassandraExtractor[S <: AbstractCQLCassandraStore[_, _]] {
     val autoIndex = metadata.flatMap{_ => 
       val cm = tm.map(_.getColumn(Metadata.quote(column.columnName)))
       cm.flatMap(colmeta => Option(colmeta.getIndex()))}.isDefined
-    (autoIndex, getColumnCassandraLuceneIndexed(tm, column))
+    val autoIndexConfig = getColumnCassandraLuceneIndexed(tm, column)
+    if(autoIndexConfig.isDefined) {
+      (true, autoIndexConfig)
+    } else {
+      (autoIndex, None)    
+    }
   }
 
   /**
@@ -158,6 +166,7 @@ trait CassandraExtractor[S <: AbstractCQLCassandraStore[_, _]] {
       case None => 
         val autoIndex = checkColumnCassandraAutoIndexed(store, column)
         if(autoIndex._1) {
+          logger.debug(s"autoIndex-config: ${autoIndex._2}")
           Some(IndexConfiguration(true, None, false, false, false, autoIndex._2)) 
         } else { None }
       case Some(idx) => Some(IndexConfiguration(true, Some(idx), true, true, true, None)) 
