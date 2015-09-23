@@ -41,19 +41,20 @@ public class ScrayCombinedTServiceManager {
 
 		ScrayCombinedStatefulTService.FutureIface getCombinedClient() throws SQLException {
 			String[] seedEndpoints = scrayURL.getHostAndPort();
+            log.debug("Connecting to endpoints for MetaService");
 			for (int i = 0; i < seedEndpoints.length; i++) {
-				log.trace("Trying to connect to " + seedEndpoints[i]);
+				log.debug("Trying to connect to " + seedEndpoints[i]);
 				if (combinedServiceClient == null) {
 					combinedServiceClient = Thrift.newIface(seedEndpoints[i],
 							ScrayCombinedStatefulTService.FutureIface.class);
-					try {
-						if (Await.result(combinedServiceClient.ping()))
-							return combinedServiceClient;
-					} catch (Exception ex) {
-						log.warn("Could not connect to seedEndpoint "
-								+ seedEndpoints[i], ex);
-						combinedServiceClient = null;
-					}
+				}
+				try {
+					if (Await.result(combinedServiceClient.ping()))
+						return combinedServiceClient;
+				} catch (Exception ex) {
+					log.warn("Could not connect to seedEndpoint "
+							+ seedEndpoints[i], ex);
+					combinedServiceClient = null;
 				}
 			}
 			log.error("No seedEndpoint found with valid meta service.");
