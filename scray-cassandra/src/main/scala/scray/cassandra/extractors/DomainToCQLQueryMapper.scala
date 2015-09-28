@@ -187,7 +187,7 @@ class DomainToCQLQueryMapper[S <: AbstractCQLCassandraStore[_, _]] extends LazyL
       logger.debug(s"Using Lucene index on ${valueCols._1}")
       val ti = valueCols._1(0).get.column.table
       val domains = query.getWhereAST.filter { dom => 
-        valueCols._1.find{ optcolDef => optcolDef.get.column.columnName == dom.column.columnName}.isDefined} 
+        valueCols._1.find{optcolDef => optcolDef.get.column.columnName == dom.column.columnName}.isDefined} 
       DomainToJSONLuceneQueryMapper.getLuceneColumnsQueryMapping(query, domains, ti)
     } else {
       None

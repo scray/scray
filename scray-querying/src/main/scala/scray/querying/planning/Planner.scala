@@ -347,30 +347,29 @@ object Planner extends LazyLogging {
    */
   def findMainQueryPlan[T](query: Query, domainQuery: DomainQuery): ComposablePlan[DomainQuery, _] = {
 
-   def isIndexMergable: List[ColumnConfiguration] = domainQuery.domains.map { domain =>
+    def isIndexMergable: List[ColumnConfiguration] = domainQuery.domains.map { domain =>
         if(!(domain match {
           case single: SingleValueDomain[_] => single.isNull
           case _ => false 
         })) {
-          logger.debug(Registry.getQuerySpace(query.getQueryspace).get.getColumns.toString())
-          logger.debug("1 "+ domain.column + "\n\n\n\n\n\n" + Registry.getQuerySpaceColumn(query.getQueryspace, domain.column) + "||")
           Registry.getQuerySpaceColumn(query.getQueryspace, domain.column).flatMap{col => 
             if(col.index.map(_.isManuallyIndexed.isDefined).getOrElse(false)) {
-              logger.debug("2 " + "\n\n\n\n\n\n")
               Some(col)
             } else {
-              logger.debug("3 " + "\n\n\n\n\n\n")
               None
             }
           }
         } else {
-          logger.debug("4 " + "\n\n\n\n\n\n")
           None
         }
-      }.filter(_.isDefined).map(_.get)
-      
-      logger.debug("2 " + "\n\n\n\n\n\n")
+      }.filter(_.isDefined).map(_.get) // --- END isIndexMergable ---
     
+      
+    def isAutoIndexWithSplit(column: Column): Boolean = {
+        Registry.getQuerySpaceColumn(query.getQueryspace, column).flatMap { colConf =>
+          colConf.index.flatMap { index => index.autoIndexConfiguration.map { autoIndex => autoIndex.rangePartioned } }
+        }.isDefined
+      } // --- END isAutoIndexWithSplit ---
     // 1. check if we have a matching materialized view prepared and 
     // whether it is ordered according to our ordering: Option[(ordered: Boolean, table)] 
     checkMaterializedViewMatching(query.getQueryspace, query.getTableIdentifier, domainQuery) match {
@@ -394,15 +393,11 @@ object Planner extends LazyLogging {
     val listOfIndexedColumns = isIndexMergable
     
     val mainColumns = sortedColumnConfig.orElse(groupedColumnConfig).map { sortOrGroup =>
-     logger.debug("Is sorted..." + "\n\n\n\n\n\n")
       // sort with an additional index to be merged in
       List(sortOrGroup) ++ listOfIndexedColumns
     }.getOrElse { 
-      logger.debug("Is NOT sorted..." + listOfIndexedColumns.size +"\n\n\n\n\n\n")
-
       // if we do not have a sorting nor a grouping, we try to find all hand-made indexes
       listOfIndexedColumns
-      
     }
 
     // construct a simple plan
@@ -421,11 +416,11 @@ object Planner extends LazyLogging {
         )
         val lookupSource = new KeyValueSource(
             getReadableStore(
-                lookupTableConfig, 
+                lookupTableConfig,
                 domainQuery.getQueryID
              ), 
-             query.getQueryspace, 
-             lookupTableConfig.table, 
+             query.getQueryspace,
+             lookupTableConfig.table,
              Registry.getCachingEnabled
         )
         tableConf.indexConfig match {
@@ -480,7 +475,19 @@ object Planner extends LazyLogging {
     }.getOrElse {
       // construct plan using information on main table
       Registry.getQuerySpaceTable(domainQuery.getQueryspace, domainQuery.getTableIdentifier).map { tableConf =>
-        new QueryableSource(getQueryableStore(tableConf, domainQuery.getQueryID), query.getQueryspace, tableConf.table)
+        domainQuery.getWhereAST.find { x => 
+          // if an auto-indexed column with an auto-indexing configuration is used, we will check it doesn't need to be split
+          isAutoIndexWithSplit(x.column) && domainQuery.getOrdering.map { ord => ord.column == x.column }.getOrElse(false)
+        }.flatMap { autoIndexAndSplitColumnDomain =>
+          Registry.getQuerySpaceColumn(query.getQueryspace, autoIndexAndSplitColumnDomain.column).flatMap { colConf =>
+            colConf.index.flatMap { index => index.autoIndexConfiguration.map { autoIndex => autoIndex.rangePartioned }}
+          }.map { rangePartioned =>
+            // TODO: add SplittedAutoIndexQueryableSource, here
+            new QueryableSource(getQueryableStore(tableConf, domainQuery.getQueryID), query.getQueryspace, tableConf.table)
+          }
+        }.getOrElse {
+          new QueryableSource(getQueryableStore(tableConf, domainQuery.getQueryID), query.getQueryspace, tableConf.table)
+        }
       }
     }.map(ComposablePlan.getComposablePlan(_, domainQuery)).getOrElse(throw new NoPlanException(query))
   }

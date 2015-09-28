@@ -23,6 +23,7 @@ import scray.querying.description.internal.RangeValueDomain
 import scray.querying.description.internal.RangeValueDomain
 import scray.querying.Registry
 import scray.querying.description.TableIdentifier
+import scray.querying.description.ColumnOrdering
 
 /**
  * performs mapping of DomainQueries to valid JSON Lucene queries,
@@ -60,6 +61,12 @@ object DomainToJSONLuceneQueryMapper {
     case range: RangeValueDomain[_] => convertRangeValueDomain(range)
   }
   
+  private def sortIndex(optOrdering: Option[ColumnOrdering[_]], domains: List[Domain[_]]): String = optOrdering.map { ordering =>
+      domains.find { x => x.column == ordering.column } .map { _ =>
+        s""", sort : { fields : [ { field : "${ordering.column.columnName}" , reverse : ${ordering.descending} } ] } """
+      }.getOrElse("")
+    }.getOrElse("")
+  
   def getLuceneColumnsQueryMapping(query: DomainQuery, domains: List[Domain[_]], ti: TableIdentifier): Option[String] = {
     val result = new StringBuilder
     // check for those domains only containing garbage
@@ -77,6 +84,7 @@ object DomainToJSONLuceneQueryMapper {
       } else {
         result ++= validDomains.head
       }
+      result ++= sortIndex(query.getOrdering, domains)
       result ++= " }' "
       Some(result.toString)
     } else {

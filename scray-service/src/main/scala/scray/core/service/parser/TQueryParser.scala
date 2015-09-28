@@ -20,11 +20,12 @@ import scray.querying.Query
 import scray.querying.description._
 import scray.service.qmodel.thrifscala.ScrayTQuery
 import org.parboiled2.ParserInput.apply
+import com.typesafe.scalalogging.slf4j.LazyLogging
 
 /**
  * Thrift query parser resulting in a _Query model
  */
-class TQueryParser(tQuery: ScrayTQuery) extends Parser {
+class TQueryParser(tQuery: ScrayTQuery) extends Parser with LazyLogging {
   override val input: ParserInput = tQuery.queryExpression
 
   implicit def wspStr(s: String): Rule0 = rule { str(s) ~ zeroOrMore(' ') }
@@ -52,7 +53,7 @@ class TQueryParser(tQuery: ScrayTQuery) extends Parser {
 
   // Rules matching 'post predicates'
   def _groupby: Rule1[_Grouping] = rule { "GROUP BY" ~ _identifier ~> { (nam: String) => _Grouping(nam) } }
-  def _orderby: Rule1[_Ordering] = rule { "ORDER BY" ~ _identifier ~ optional(capture("DESC") | capture("ASC")) ~> { (nam: String, desc: Option[String]) => _Ordering(nam, desc.map(_.equals("DESC")).getOrElse(false)) } }
+  def _orderby: Rule1[_Ordering] = rule { "ORDER BY" ~ _identifier ~ optional(capture("DESC") | capture("ASC")) ~> { (nam: String, desc: Option[String]) => _Ordering(nam, desc.map(_.trim.equals("DESC")).getOrElse(false)) } }
 
   // Rules matching columns
   def _columns: Rule1[_Columns] = rule { _asterixColumn | _columnSet }

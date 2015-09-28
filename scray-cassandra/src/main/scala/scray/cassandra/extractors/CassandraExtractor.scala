@@ -116,18 +116,19 @@ trait CassandraExtractor[S <: AbstractCQLCassandraStore[_, _]] extends LazyLoggi
   /**
    * return whether and maybe how the given column is auto-indexed by Cassandra-Lucene-Plugin 
    */
-  private def getColumnCassandraLuceneIndexed(tmOpt: Option[TableMetadata], column: Column): Option[AutoIndexConfiguration] = {
+  private def getColumnCassandraLuceneIndexed(tmOpt: Option[TableMetadata], column: Column): Option[AutoIndexConfiguration[_]] = {
     val cmOpt = tmOpt.flatMap { tm => Option(tm.getColumn(Metadata.quote(CassandraExtractor.LUCENE_COLUMN_NAME))) }
     val schemaOpt = cmOpt.flatMap (cm => Option(cm.getIndex).map(_.getOption(CassandraExtractor.LUCENE_INDEX_SCHEMA_OPTION_NAME)))
     schemaOpt.flatMap { schema =>
-      logger.debug(s"Lucene index schema is: $schema")
+      logger.trace(s"Lucene index schema is: $schema")
       val outerMatcher = CassandraExtractor.outerPattern.matcher(schema) 
       if(outerMatcher.matches()) {
         val fieldString = outerMatcher.group(1)
         if(CassandraExtractor.innerPattern.split(fieldString, -1).find { _.trim() == column.columnName }.isDefined) {
           cmOpt.get.getType
           logger.debug(s"Found Lucene-indexed column ${column.columnName} for table ${tmOpt.get.getName}")
-          Some(AutoIndexConfiguration(isRangeIndex = true, isFullTextIndex = true))
+          // TODO: insert information about splitting, if necessary
+          Some(AutoIndexConfiguration[Any](isRangeIndex = true, isFullTextIndex = true))
         } else {
           None
         }
@@ -141,7 +142,7 @@ trait CassandraExtractor[S <: AbstractCQLCassandraStore[_, _]] extends LazyLoggi
    * checks that a column has been indexed by Cassandra itself, so no manual indexing
    * if the table has not yet been created (the version must still be computed) we assume no indexing 
    */
-  def checkColumnCassandraAutoIndexed(store: S, column: Column): (Boolean, Option[AutoIndexConfiguration]) = {
+  def checkColumnCassandraAutoIndexed(store: S, column: Column): (Boolean, Option[AutoIndexConfiguration[_]]) = {
     val metadata = Option(getMetadata(store.columnFamily))
     val tm = metadata.flatMap(_ => Option(CassandraUtils.getTableMetadata(store.columnFamily, metadata)))
     val autoIndex = metadata.flatMap{_ => 
@@ -166,7 +167,6 @@ trait CassandraExtractor[S <: AbstractCQLCassandraStore[_, _]] extends LazyLoggi
       case None => 
         val autoIndex = checkColumnCassandraAutoIndexed(store, column)
         if(autoIndex._1) {
-          logger.debug(s"autoIndex-config: ${autoIndex._2}")
           Some(IndexConfiguration(true, None, false, false, false, autoIndex._2)) 
         } else { None }
       case Some(idx) => Some(IndexConfiguration(true, Some(idx), true, true, true, None)) 

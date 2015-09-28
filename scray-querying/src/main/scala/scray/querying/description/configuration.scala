@@ -80,15 +80,16 @@ case class IndexConfiguration (
   isSorted: Boolean, // if this is a sorted index, e.g. by means of a clustering key
   isGrouped: Boolean, // if this is a sorted index, we think of grouping as to be a sort without ordering requirements
   isRangeQueryable: Boolean, // if this index can be range queried
-  autoIndexConfiguration: Option[AutoIndexConfiguration] 
+  autoIndexConfiguration: Option[AutoIndexConfiguration[_]] 
 )
 
 /**
  * represents auto-indexed columns with additional properties 
  */
-case class AutoIndexConfiguration (
+case class AutoIndexConfiguration[T] (
   isRangeIndex: Boolean = false, // if ranges can be queried efficiently on this index 
-  isFullTextIndex: Boolean = false // whether we can perform queries like wildcard, phrase, etc. 
+  isFullTextIndex: Boolean = false, // whether we can perform queries like wildcard, phrase, etc. 
+  rangePartioned: Option[((T, T)) => List[T]] = None // if the range needs to be partioned and how
 )
 
 /**
