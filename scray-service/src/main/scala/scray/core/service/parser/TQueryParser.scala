@@ -30,7 +30,7 @@ class TQueryParser(tQuery: ScrayTQuery) extends Parser with LazyLogging {
 
   implicit def wspStr(s: String): Rule0 = rule { str(s) ~ zeroOrMore(' ') }
 
-  def InputLine: Rule1[_Query] = rule { _queryStatement ~ EOI }
+  def InputLine: Rule1[_Query] = rule { _queryStatement.named("AndyStatement") ~ EOI }
 
   // Currently unused: Rule for constructing simple queries from parsing results
   // this can be used to create engine queries (Query) directly instead of service queries (_Query)
@@ -90,17 +90,19 @@ class TQueryParser(tQuery: ScrayTQuery) extends Parser with LazyLogging {
   def _isnull: Rule1[_IsNull] = rule { _identifier ~ "IS NULL" ~> { _IsNull(_) }}
 
   // rules matching values - these might throw
-  def _value: Rule1[_Value] = rule { _typedLiteralValue | _referencedValue | _plainLiteralValue }
+  def _value: Rule1[_Value] = rule { _typedLiteralValue.named("TypedLiteral") | _referencedValue.named("Reference") | _plainLiteralValue.named("PlainValue") }
   def _typedLiteralValue: Rule1[_LitVal] = rule { _typedLiteral ~> { (tag: String, lit: String) => _LitVal(lit, Some(tag)) } }
   def _plainLiteralValue: Rule1[_LitVal] = rule { _untypedLiteral ~> { (lit: String) => _LitVal(lit, None) } }
   def _referencedValue: Rule1[_RefVal] = rule { _reference ~> { (ref: String) => _RefVal(ref) } }
 
   // Rules matching value literals
   def _typedLiteral: Rule2[String, String] = rule { _typetag ~ { _quotedValueChars | _unquotedValueChars } }
-  def _untypedLiteral: Rule1[String] = rule { _quotedValueChars | _unquotedValueChars }
+  def _untypedLiteral: Rule1[String] = rule { _emptyQuotes.named("EmptyQuotes") | _quotedValueChars.named("Quoted") | _unquotedValueChars.named("Unquoted") }
 
   def _unquotedValueChars: Rule1[String] = rule { capture(oneOrMore(UnquotedValueChars)) ~ zeroOrMore(' ') }
-  def _quotedValueChars: Rule1[String] = rule { capture(str("'")) ~ capture(oneOrMore(QuotedValueChars)) ~ capture(str("'")) ~ zeroOrMore(' ') ~> { (a: String, b: String, c: String) => a + b + c } }
+  
+  def _emptyQuotes: Rule1[String] = rule { capture(str("''")) ~ zeroOrMore(' ') ~> { (a:String) => a } }
+  def _quotedValueChars: Rule1[String] = rule { capture(str("'")) ~ capture(zeroOrMore(QuotedValueChars)) ~ capture(str("'")) ~ zeroOrMore(' ') ~> { (a: String, b: String, c: String) => a + b + c } }
 
   val QuotedValueChars = CharPredicate.Printable -- '\u0027'
   val UnquotedValueChars = CharPredicate.AlphaNum ++ '.' ++ '-' ++ '+'
