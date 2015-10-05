@@ -14,16 +14,16 @@
 // limitations under the License.
 package scray.querying.planning
 
-import java.util.UUID
-import scala.annotation.tailrec
-import scala.collection.mutable.HashMap
-import scala.collection.parallel.immutable.ParSeq
 import com.twitter.concurrent.Spool
 import com.twitter.storehaus.QueryableStore
 import com.twitter.storehaus.ReadableStore
 import com.twitter.util.Await
 import com.twitter.util.Future
 import com.typesafe.scalalogging.slf4j.LazyLogging
+import java.util.UUID
+import scala.annotation.tailrec
+import scala.collection.mutable.HashMap
+import scala.collection.parallel.immutable.ParSeq
 import scray.querying.Query
 import scray.querying.Registry
 import scray.querying.description.And
@@ -65,6 +65,7 @@ import scray.querying.queries.QueryInformation
 import scray.querying.source.EagerCollectingDomainFilterSource
 import scray.querying.source.EagerEmptyRowDispenserSource
 import scray.querying.source.EagerSource
+import scray.querying.source.IdentityEagerCollectingQueryMappingSource
 import scray.querying.source.IndexMergeSource
 import scray.querying.source.IndexMergeSource
 import scray.querying.source.KeyValueSource
@@ -72,16 +73,18 @@ import scray.querying.source.LazyEmptyRowDispenserSource
 import scray.querying.source.LazyQueryColumnDispenserSource
 import scray.querying.source.LazyQueryDomainFilterSource
 import scray.querying.source.LazySource
+import scray.querying.source.LimitIncreasingQueryableSource
 import scray.querying.source.OrderingEagerMappingSource
 import scray.querying.source.ParallelizedQueryableSource
 import scray.querying.source.QueryableSource
 import scray.querying.source.SimpleHashJoinSource
 import scray.querying.source.Source
+import scray.querying.source.SplittedAutoIndexQueryableSource
+import scray.querying.source.SplittedAutoIndexQueryableSource
 import scray.querying.source.indexing.SimpleHashJoinConfig
 import scray.querying.source.indexing.TimeIndexConfig
 import scray.querying.source.indexing.TimeIndexSource
 import scray.querying.source.MergeReferenceColumns
-import scray.querying.source.IdentityEagerCollectingQueryMappingSource
 /**
  * Simple planner to execute queries.
  * For each query do:
@@ -370,6 +373,7 @@ object Planner extends LazyLogging {
           colConf.index.flatMap { index => index.autoIndexConfiguration.map { autoIndex => autoIndex.rangePartioned } }
         }.isDefined
       } // --- END isAutoIndexWithSplit ---
+    
     // 1. check if we have a matching materialized view prepared and 
     // whether it is ordered according to our ordering: Option[(ordered: Boolean, table)] 
     checkMaterializedViewMatching(query.getQueryspace, query.getTableIdentifier, domainQuery) match {
@@ -476,6 +480,7 @@ object Planner extends LazyLogging {
       // construct plan using information on main table
       Registry.getQuerySpaceTable(domainQuery.getQueryspace, domainQuery.getTableIdentifier).map { tableConf =>
         domainQuery.getWhereAST.find { x => 
+          // TODO: head for RangeValueDomains first!!!
           // if an auto-indexed column with an auto-indexing configuration is used, we will check it doesn't need to be split
           isAutoIndexWithSplit(x.column) && domainQuery.getOrdering.map { ord => ord.column == x.column }.getOrElse(false)
         }.flatMap { autoIndexAndSplitColumnDomain =>
@@ -483,10 +488,21 @@ object Planner extends LazyLogging {
             colConf.index.flatMap { index => index.autoIndexConfiguration.map { autoIndex => autoIndex.rangePartioned }}
           }.map { rangePartioned =>
             // TODO: add SplittedAutoIndexQueryableSource, here
-            new QueryableSource(getQueryableStore(tableConf, domainQuery.getQueryID), query.getQueryspace, tableConf.table)
+            new SplittedAutoIndexQueryableSource(getQueryableStore(tableConf, domainQuery.getQueryID), query.getQueryspace, 
+                                                 tableConf.table, autoIndexAndSplitColumnDomain.column, rangePartioned)
+            // new QueryableSource(getQueryableStore(tableConf, domainQuery.getQueryID), query.getQueryspace, tableConf.table)
           }
         }.getOrElse {
-          new QueryableSource(getQueryableStore(tableConf, domainQuery.getQueryID), query.getQueryspace, tableConf.table)
+//          new SplittedAutoIndexQueryableSource(getQueryableStore(tableConf, domainQuery.getQueryID), query.getQueryspace, 
+//                                                 tableConf.table, autoIndexAndSplitColumnDomain.column, None)
+          // if the query has a limit we can use some query increaser
+          query.getQueryRange.flatMap { range =>
+            range.limit.map { limit => 
+              new LimitIncreasingQueryableSource(getQueryableStore(tableConf, domainQuery.getQueryID), query.getQueryspace, tableConf.table)
+            }
+          }.getOrElse {
+            new QueryableSource(getQueryableStore(tableConf, domainQuery.getQueryID), query.getQueryspace, tableConf.table)
+          }
         }
       }
     }.map(ComposablePlan.getComposablePlan(_, domainQuery)).getOrElse(throw new NoPlanException(query))

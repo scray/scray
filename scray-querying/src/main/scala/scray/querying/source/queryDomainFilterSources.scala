@@ -85,14 +85,15 @@ object DomainFilterSource extends LazyLogging {
  * TODO: exclude filters which have already been applied due to usage in database system 
  */
 class LazyQueryDomainFilterSource[Q <: DomainQuery](source: LazySource[Q]) 
-  extends LazyQueryMappingSource[Q](source) {
+  extends LazyQueryMappingSource[Q](source) with LazyLogging {
   
   override def transformSpoolElement(element: Row, query: Q): Row = {
     // if we find a domain which is not matched by this Row we throw it (the Row) away
     query.getWhereAST.find { domain =>
       element.getColumnValue[Any](domain.column) match {
         case None => domain match {
-          case single: SingleValueDomain[_] if single.isNull => false
+          case single: SingleValueDomain[_] if single.isNull => 
+            false
           case _ => true
         }
         case Some(value) => DomainFilterSource.domainCheck(value, domain, DomainFilterSource.getDomainConverter(value))

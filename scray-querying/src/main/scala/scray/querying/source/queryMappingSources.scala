@@ -59,7 +59,7 @@ abstract class LazyQueryMappingSource[Q <: DomainQuery](source: LazySource[Q])
    * subclasses implement transformSpoolElement
    */
   override def request(query: Q): LazyDataFuture = {
-    logger.info(s"Transforming elements lazyly for ${query.getQueryID}")
+    logger.debug(s"Transforming elements lazyly for ${query.getQueryID}")
     init(query)
     if(optimized) {
       source.request(query)

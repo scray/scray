@@ -44,8 +44,8 @@ object ScrayStatefulTServiceImpl {
 class ScrayStatefulTServiceImpl(val rack : SpoolRack) extends ScrayStatefulTService.FutureIface with LazyLogging {
 
   def query(tQuery : ScrayTQuery) : Future[ScrayUUID] = {
-
-    logger.debug(s"New 'query' request: ${tQuery}")
+    logger.info(s"Query: ${tQuery._3}")
+    logger.trace(s"New 'query' request: ${tQuery}")
 
     val parser = new TQueryParser(tQuery)
     val parsed = parser.InputLine.run() match {

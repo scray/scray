@@ -83,7 +83,7 @@ abstract class ScrayCombinedStatefulTServer extends KryoPoolRegistration with Ap
   SCRAY_SEEDS.map(inetAddr2EndpointString(_)).foreach { seedAddr =>
     try {
       if (Await.result(getClient(seedAddr).ping(), Duration(20, TimeUnit.SECONDS))) {
-        logger.info(s"$addrStr adding local service endpoint ($endpoint) to $seedAddr.")
+        logger.debug(s"$addrStr adding local service endpoint ($endpoint) to $seedAddr.")
         val _ep = Await.result(getClient(seedAddr).addServiceEndpoint(endpoint), Duration(20, TimeUnit.SECONDS))
         // refreshTask = Some(refreshTimer.schedule(refreshPeriod.fromNow, refreshPeriod)(refresh(_ep.endpointId.get)))
         refreshTask = Some(refreshTimer.schedule(refreshPeriod.fromNow, refreshPeriod)(refresh(_ep.endpointId.get)))
@@ -112,9 +112,9 @@ abstract class ScrayCombinedStatefulTServer extends KryoPoolRegistration with Ap
   def refresh(id: ScrayUUID, time: Int = 1): Unit = {
     SCRAY_SEEDS.map(inetAddr2EndpointString(_)).foreach { seedAddr =>
       try {
-        logger.info(s"$addrStr trying to refresh service endpoint ($id).")
+        logger.trace(s"$addrStr trying to refresh service endpoint ($id).")
         if (Await.result(getClient(seedAddr).ping(), Duration(20, TimeUnit.SECONDS))) {
-          logger.info(s"$addrStr refreshing service endpoint ($id).")
+          logger.debug(s"$addrStr refreshing service endpoint ($id).")
           // client.refreshServiceEndpoint(id)
           Await.result(getClient(seedAddr).addServiceEndpoint(endpoint), Duration(20, TimeUnit.SECONDS))
         }
