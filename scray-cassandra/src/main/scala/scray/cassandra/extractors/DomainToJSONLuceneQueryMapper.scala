@@ -14,16 +14,11 @@
 // limitations under the License.
 package scray.cassandra.extractors
 
-import scray.querying.queries.DomainQuery
 import com.twitter.storehaus.cassandra.cql.AbstractCQLCassandraStore
-import scray.querying.description.internal.SingleValueDomain
-import scray.querying.description.internal.Domain
-import scray.querying.description.Column
-import scray.querying.description.internal.RangeValueDomain
-import scray.querying.description.internal.RangeValueDomain
 import scray.querying.Registry
-import scray.querying.description.TableIdentifier
-import scray.querying.description.ColumnOrdering
+import scray.querying.description.{Column, ColumnOrdering, TableIdentifier}
+import scray.querying.description.internal.{Domain, RangeValueDomain, SingleValueDomain}
+import scray.querying.queries.DomainQuery
 
 /**
  * performs mapping of DomainQueries to valid JSON Lucene queries,

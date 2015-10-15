@@ -92,8 +92,7 @@ class LazyQueryDomainFilterSource[Q <: DomainQuery](source: LazySource[Q])
     query.getWhereAST.find { domain =>
       element.getColumnValue[Any](domain.column) match {
         case None => domain match {
-          case single: SingleValueDomain[_] if single.isNull => 
-            false
+          case single: SingleValueDomain[_] if single.isNull => false
           case _ => true
         }
         case Some(value) => DomainFilterSource.domainCheck(value, domain, DomainFilterSource.getDomainConverter(value))

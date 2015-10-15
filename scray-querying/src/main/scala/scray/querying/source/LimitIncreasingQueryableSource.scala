@@ -30,56 +30,27 @@ import com.typesafe.scalalogging.slf4j.LazyLogging
 import scray.querying.caching.NullCache
 import com.twitter.util.Await
 import scala.annotation.tailrec
+import LimitIncreasingQueryableSource.{ITERATOR_EXTENDER_FUNCTION, WrappingIteratorExtender, skipIteratorEntries}
 
 /**
  * queries a Storehaus-store. Assumes that the Seq returnes by QueryableStore is a lazy sequence (i.e. view)
  */
 class LimitIncreasingQueryableSource[K, V](override val store: QueryableStore[K, V], override val space: String, table: TableIdentifier, 
-        override val isOrdered: Boolean = false, limitIncreasingFactor: Int = 2) 
+        override val isOrdered: Boolean = false) 
     extends QueryableSource[K, V](store, space, table, isOrdered) with LazyLogging {
-
-  /**
-   * extend Spool[Row] with a method which is able to fetch new data if the limit has been reached
-   */
-  implicit class SpoolExtender(spool: Spool[Row]) {
-    def extend(origQuery: DomainQuery, f : (DomainQuery, Long, Long) => Spool[Row], max: Long, current: Long): Future[Spool[Row]] = {
-      def _tail = spool.tail flatMap (_.extend(origQuery, f, max, current - 1))
-      if(spool.isEmpty) {
-        if(current == 0) {
-          // fetch another dataset
-          f(origQuery, max * limitIncreasingFactor, max).extend(origQuery, f, max * limitIncreasingFactor, max * limitIncreasingFactor)
-        } else {
-          // we're finished with our query
-          Future.value(Spool.empty[Row])
-        }
-      } else {
-        Future.value(spool.head *:: _tail)
-      }
-    }
-  }
-
+  
   /**
    * create function to fetch new data with, which uses a given limit
    */
-  def fetchAndSkipData: (DomainQuery, Long, Long) => Spool[Row] = (query, limit, skip) => Await.result {
-    @tailrec def consumeUntil0(count: Long, spool: => Spool[Row]): Future[Spool[Row]] = {
-      if(spool.isEmpty || count == 0) {
-        Future.value(spool)
-      } else {
-        def tail = Await.result(spool.tail)
-        consumeUntil0(count - 1, tail)
-      }
-    }
+  def fetchAndSkipDataIterator: ITERATOR_EXTENDER_FUNCTION[V] = (query, limit, skip) => Await.result {
     val increasedLimitQuery = query.copy(range = Some(query.getQueryRange.get.copy(limit = Some(limit))))
     logger.debug(s"re-fetch query with increased limit $limit to fetch more results : ${increasedLimitQuery}")
-    store.queryable.get(queryMapping(increasedLimitQuery)).transform {
-      case Throw(y) => Future.exception(y)
-      case Return(x) =>
-        // construct lazy spool
-        val spool = QueryableSource.iteratorToSpool[V](x.getOrElse(Seq[V]()).view.iterator, valueToRow)
-        consumeUntil0(skip, Await.result(spool))
+    store.queryable.get(queryMapping(increasedLimitQuery)).map { x =>
+      val it = x.getOrElse(Seq[V]()).view.iterator
+      skipIteratorEntries(skip, it)
     }
   }
+
   
   override def request(query: DomainQuery): Future[Spool[Row]] = {
     logger.debug(s"Requesting data from store with LimitIncreasingQueryableSource on query ${query}")
@@ -89,7 +60,8 @@ class LimitIncreasingQueryableSource[K, V](override val store: QueryableStore[K,
         // construct lazy spool
         query.getQueryRange.flatMap { range =>
           range.limit.map { limit => 
-            QueryableSource.iteratorToSpool[V](x.getOrElse(Seq[V]()).view.iterator, valueToRow).flatMap(_.extend(query, fetchAndSkipData, limit, limit))
+            // QueryableSource.iteratorToSpool[V](x.getOrElse(Seq[V]()).view.iterator, valueToRow).flatMap(_.extend(query, fetchAndSkipData, limit, limit))
+            QueryableSource.iteratorToSpool[V](new WrappingIteratorExtender(query, x.getOrElse(Seq[V]()).view.iterator, fetchAndSkipDataIterator, limit), valueToRow)
           }
         }.getOrElse {
           super.request(query)
@@ -99,4 +71,66 @@ class LimitIncreasingQueryableSource[K, V](override val store: QueryableStore[K,
 
   override def getGraph: Graph[Source[DomainQuery, Spool[Row]], DiEdge] = Graph.from(List(this), List())
   
+}
+
+object LimitIncreasingQueryableSource extends LazyLogging {
+  
+  type ITERATOR_EXTENDER_FUNCTION[T] = (DomainQuery, Long, Long) => Iterator[T]
+  
+  def limitIncreasingFactor = 2
+
+  /**
+   * skips a number of entries from an Iterator
+   */
+  @tailrec def skipIteratorEntries[V](count: Long, iterator: => Iterator[V]): Iterator[V] = {
+    if(!iterator.hasNext || count == 0) {
+      iterator
+    } else {
+      iterator.next
+      skipIteratorEntries(count - 1, iterator)
+    }
+  }
+  
+  /**
+   * Iterator-Class which is able to fetch new data if the limit has been reached
+   * Stack-safe variant of the above extender usable with iterators...
+   * A single instance is not safe against multi-threading, i.e. each thread needs it's own instance.
+   */
+  class WrappingIteratorExtender[T](query: DomainQuery, it: Iterator[T], f : ITERATOR_EXTENDER_FUNCTION[T], initialMax: Long) extends Iterator[T] {
+    var current = initialMax
+    var max = initialMax 
+    var currentIterator = it
+    
+    private def fetchNext = {
+      currentIterator = f(query, max * limitIncreasingFactor, max)
+      current = max * (limitIncreasingFactor - 1)
+      max *= limitIncreasingFactor
+    }
+    
+    def hasNext: Boolean = currentIterator.hasNext ||  {
+        if(current == 0) {
+          fetchNext
+          currentIterator.hasNext
+        } else {
+          false
+        }
+      }
+      
+    def next(): T = {
+      if(currentIterator.hasNext) {
+        try {
+          currentIterator.next()
+        } finally {
+          current -= 1
+        }
+      } else {
+        if(current == 0) {
+          fetchNext
+          currentIterator.next()
+        } else {
+          null.asInstanceOf[T]
+        }
+      }
+    }
+  }
 }
