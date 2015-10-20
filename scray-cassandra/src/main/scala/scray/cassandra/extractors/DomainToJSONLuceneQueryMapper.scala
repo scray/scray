@@ -40,11 +40,11 @@ object DomainToJSONLuceneQueryMapper {
     if(vdomain.lowerBound.isDefined || vdomain.upperBound.isDefined) {
       result ++= s""" { type : "range", field : "${vdomain.column.columnName}", """
       vdomain.lowerBound.map { bound =>
-        result ++= s""" lower: "${bound.value}" , includeLower: "${bound.inclusive}" """
+        result ++= s""" lower: "${bound.value}" , include_lower: "${bound.inclusive}" """
         vdomain.upperBound.map ( _ => result ++= "," )
       } 
       vdomain.upperBound.map { bound =>
-        result ++= s""" upper: "${bound.value}" , includeUpper: "${bound.inclusive}" """
+        result ++= s""" upper: "${bound.value}" , include_upper: "${bound.inclusive}" """
       }
       result ++= s""" } """
     }

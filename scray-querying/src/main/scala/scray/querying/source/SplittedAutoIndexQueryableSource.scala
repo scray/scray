@@ -14,32 +14,31 @@
 // limitations under the License.
 package scray.querying.source
 
+import com.google.common.collect.EvictingQueue
 import com.twitter.concurrent.Spool
 import com.twitter.concurrent.Spool.*::
 import com.twitter.storehaus.QueryableStore
-import com.twitter.util.{Await, Future, Throw, Return}
+import com.twitter.util.{Await, Duration, Future, FuturePool, Throw, Return}
 import com.typesafe.scalalogging.slf4j.LazyLogging
+import java.util.concurrent.{Executors, TimeUnit}
 import scalax.collection.GraphEdge._
 import scalax.collection.GraphEdge.DiEdge
 import scalax.collection.GraphPredef._
 import scalax.collection.immutable.Graph
 import scray.querying.Registry
-import scray.querying.description.{Column, Row}
-import scray.querying.description.EmptyRow
-import scray.querying.description.TableIdentifier
-import scray.querying.description.internal.{ Domain, RangeValueDomain, Bound, SingleValueDomain }
+import scray.querying.description.{Column, EmptyRow, QueryRange, Row, TableIdentifier}
+import scray.querying.description.internal.{ ComposedMultivalueDomain, Domain, RangeValueDomain, Bound, SingleValueDomain }
 import scray.querying.queries.DomainQuery
-import scray.querying.source.SplittedAutoIndexQueryableSource.{ITERATOR_FUNCTION, WrappingIteratorRequestor}
-import scray.querying.description.QueryRange
+import scray.querying.source.SplittedAutoIndexQueryableSource.{ITERATOR_FUNCTION, WrappingIteratorRequestor, EmptyIterator, limitIncreasingFactor, numberOfQueriesToPrefetch}
 import scray.querying.source.LimitIncreasingQueryableSource.{skipIteratorEntries}
-import com.twitter.util.Duration
-import java.util.concurrent.TimeUnit
-import scray.querying.description.internal.ComposedMultivalueDomain
+import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * queries a Storehaus-store using a splitting algorithm. Assumes that the Seq returned by QueryableStore is a lazy sequence (i.e. view)
  */
-class SplittedAutoIndexQueryableSource[K, V, T: Ordering](override val store: QueryableStore[K, V], override val space: String, table: TableIdentifier, splitcolumn: Column, rangeSplitter: Option[((T, T), Boolean) => Iterator[(T, T)]], override val isOrdered: Boolean = false) 
+class SplittedAutoIndexQueryableSource[K, V, T: Ordering](override val store: QueryableStore[K, V], override val space: String, 
+        table: TableIdentifier, splitcolumn: Column, rangeSplitter: Option[((T, T), Boolean) => Iterator[(T, T)]], 
+        override val isOrdered: Boolean = false) 
     extends QueryableSource[K, V](store, space, table, isOrdered) with LazyLogging {
 
   private def transformWhereAST(domains: List[Domain[_]], bounds: (T, T)): List[Domain[_]] = {
@@ -66,10 +65,7 @@ class SplittedAutoIndexQueryableSource[K, V, T: Ordering](override val store: Qu
     logger.debug(s"re-fetch query with different range $split to fetch more results : ${splitQuery}")
     store.queryable.get(queryMapping(splitQuery)).map { x =>
       val it = x.getOrElse(Seq[V]()).view.iterator
-      skip.map(count => skipIteratorEntries(count, it)).getOrElse(new Iterator[V]{
-        override def hasNext: Boolean = false
-        override def next: V = null.asInstanceOf[V]}
-      )
+      skip.map(count => skipIteratorEntries(count, it)).getOrElse(new EmptyIterator[V])
     }
   }
   
@@ -97,7 +93,6 @@ class SplittedAutoIndexQueryableSource[K, V, T: Ordering](override val store: Qu
   
   override def request(query: DomainQuery): Future[Spool[Row]] = {
     val reversed = query.getOrdering.map(_.descending).getOrElse(false)
-    logger.debug("Reversed ordering: " + reversed)
     rangeSplitter.flatMap(splitter => query.getWhereAST.find { x => x.column == splitcolumn }.map { _ match {
       case range: RangeValueDomain[T] => 
         // in this case we re-write the query to multiple queries with smaller ranges
@@ -105,7 +100,8 @@ class SplittedAutoIndexQueryableSource[K, V, T: Ordering](override val store: Qu
           val splits = splitter((range.lowerBound.get.value, range.upperBound.get.value), reversed)
           val limitCount = query.getQueryRange.flatMap(_.limit)
           if(splits.hasNext) {
-            val it = fetchNewData(query, limitCount, Some(0L), splits.next())
+            val prefetcher = new PrefetchingSplitIterator[V, T](query, fetchNewData, splits, limitCount, limitIncreasingFactor, numberOfQueriesToPrefetch.get)
+            val it = prefetcher.next()
               // QueryableSource.iteratorToSpool[V](x.getOrElse(Seq[V]()).view.iterator, valueToRow).flatMap(_.append(query, fetchNewData, splits, limitCount))
             QueryableSource.iteratorToSpool[V](new WrappingIteratorRequestor(query, it, splits, fetchNewData, limitCount), valueToRow)
           } else {
@@ -131,35 +127,61 @@ object SplittedAutoIndexQueryableSource extends LazyLogging {
 
   def limitIncreasingFactor = 2
   
+  val numberOfQueriesToPrefetch = new AtomicInteger(5)
+  
+  class EmptyIterator[V] extends Iterator[V] {
+    override def hasNext: Boolean = false
+    override def next: V = null.asInstanceOf[V]
+  }
+  
   class WrappingIteratorRequestor[V, T](query: DomainQuery, it: Iterator[V], 
-          splitIterator: Iterator[(T, T)], f: ITERATOR_FUNCTION[V, T], initialMax: Option[Long]) 
+          splitIterator: Iterator[(T, T)], f: ITERATOR_FUNCTION[V, T], initialMax: Option[Long],
+          prefetcher: Option[PrefetchingSplitIterator[V, T]] = None) 
           extends Iterator[V] {
-    var current = initialMax
-    var max = initialMax 
-    var currentIterator = it
-    var lastNumberOfReturnedValues = 0L
-    var currentSplit = splitIterator.next()
+    private var current = initialMax
+    private var max = initialMax 
+    private var currentIterator = it
+    private var lastNumberOfReturnedValues = 0L
+    private var currentSplit = splitIterator.next()
     
     // fetch until all splits are done
     // for each split fetch until the number of results does not exceed given limits
     
-    private def fetchNext = {
-      currentIterator = f(query, max.map(_ * limitIncreasingFactor), max, currentSplit)
+    private def fetchNext(fetchPrefetch: Boolean = false) = {
+      val skipParam = if(fetchPrefetch) {
+        Some(0L)
+      } else {
+        max
+      }
+      currentIterator = if(fetchPrefetch) {
+        prefetcher.map { prefetch =>
+          val itres = prefetch.next()
+          currentSplit = prefetch.getCurrentSplit
+          itres
+        }.getOrElse(f(query, max.map(_ * limitIncreasingFactor), skipParam, currentSplit))
+      } else {
+        f(query, max.map(_ * limitIncreasingFactor), skipParam, currentSplit)
+      }
       current = max.map(_ * (limitIncreasingFactor - 1))
+      if(fetchPrefetch) {
+        current = Some(0L)
+      } else {
+        current = max.map(_ * (limitIncreasingFactor - 1))        
+      }
       max = max.map(_ * limitIncreasingFactor)
     }
     
     override def hasNext: Boolean = currentIterator.hasNext ||  {
         if(current.isDefined && current.get == 0) {
-          fetchNext
+          fetchNext()
           currentIterator.hasNext
         } else {
-          if(splitIterator.hasNext) {
+          if((prefetcher.isDefined && prefetcher.get.hasNext) || splitIterator.hasNext) {
             do {
-              currentSplit = splitIterator.next()
               max = initialMax
-              fetchNext
-            } while(!currentIterator.hasNext && splitIterator.hasNext)
+              prefetcher.getOrElse(currentSplit = splitIterator.next())
+              fetchNext(true)
+            } while(!currentIterator.hasNext && ((prefetcher.isDefined && prefetcher.get.hasNext) || splitIterator.hasNext))
             currentIterator.hasNext
           } else {
             false
@@ -177,23 +199,26 @@ object SplittedAutoIndexQueryableSource extends LazyLogging {
       } else {
         if(current.isDefined && current.get == 0) {
           // watch for exact limit matches...
-          fetchNext
+          fetchNext()
           currentIterator.next()
         } else {
           // fetch next split, if there is one
-          if(splitIterator.hasNext) {
+          if((prefetcher.isDefined && prefetcher.get.hasNext) || splitIterator.hasNext) {
             // watch out for empty splits -> fetch more, then
             do {
-              currentSplit = splitIterator.next()
               max = initialMax
-              fetchNext
-            } while(!currentIterator.hasNext && splitIterator.hasNext)
+              prefetcher.getOrElse(currentSplit = splitIterator.next())
+              fetchNext(true)
+            } while(!currentIterator.hasNext && ((prefetcher.isDefined && prefetcher.get.hasNext) || splitIterator.hasNext))
             if(currentIterator.hasNext) {
+              current = current.map(_ - 1)
               currentIterator.next()
             } else {
+              current = Some(0L)
               null.asInstanceOf[V]
             }
           } else {
+            current = Some(0L)
             null.asInstanceOf[V]
           }
         }
@@ -201,6 +226,46 @@ object SplittedAutoIndexQueryableSource extends LazyLogging {
     }
   }
 }
+
+/**
+ * Iterator that executes queries in advance and in parallel, such that results can be more
+ * efficiently inserted into the spool.
+ * This is not thread-safe! 
+ */
+class PrefetchingSplitIterator[V, T](query: DomainQuery, fetch: SplittedAutoIndexQueryableSource.ITERATOR_FUNCTION[V, T],
+        splitIterator: Iterator[(T, T)], max: Option[Long], limitIncreasingFactor: Int, prefetchSize: Int = 5) extends Iterator[Iterator[V]] {
+  private val queue = EvictingQueue.create[Future[Iterator[V]]](prefetchSize)
+  private val threadPool = FuturePool(Executors.newFixedThreadPool(prefetchSize))
+  private var currentSplit: Option[(T, T)] = None
+  
+  def getCurrentSplit: (T, T) = currentSplit.getOrElse(splitIterator.next())
+  
+  private def fillQueue(): Unit = {
+    if((queue.size() < prefetchSize) && splitIterator.hasNext) {
+      queue.add(threadPool {
+        currentSplit = Some(splitIterator.next)
+        fetch(query, max.map(_ * limitIncreasingFactor), Some(0L), currentSplit.get)
+      })
+    }
+  }
+  
+  private def fetchElementFromQueue(): Iterator[V] = {
+    fillQueue()
+    if(queue.isEmpty()) {
+      new SplittedAutoIndexQueryableSource.EmptyIterator[V]
+    } else {
+      Await.result(queue.poll())
+    }
+  }
+  
+  override def hasNext: Boolean = {
+    fillQueue()
+    queue.isEmpty()
+  }
+  
+  override def next: Iterator[V] = fetchElementFromQueue()
+}
+
 
 /**
  * slice a given range into pieces which can be eaten by SplittedAutoIndexQueryableSource
@@ -216,9 +281,9 @@ trait Splitter[T] {
  */
 class SimpleLinearTimeBasedSplitter extends Splitter[Long] {
   
-  var configDurationName = "duration"
-  var configDelimiter = " "
-  var splitSize: Duration = Duration.fromSeconds(1800)
+  private var configDurationName = "duration"
+  private var configDelimiter = " "
+  private var splitSize: Duration = Duration.fromSeconds(1800)
   
   override def readConfig(config: Map[String, String]): Unit = config.get(configDurationName).foreach { str => 
     val arr = str.split(configDelimiter)
