@@ -14,6 +14,8 @@
 // limitations under the License.
 package scray.querying.description
 
+import java.util.regex.Pattern
+
 /**
  * a prefixed-declaration of a simple query-clause AST
  */
@@ -25,7 +27,7 @@ sealed trait Clause
  */
 case class Or(clauses: Clause*) extends Clause {
   def flatten: Or = {
-    new Or(clauses.flatMap { clause => 
+    new Or(clauses.flatMap { clause =>
       clause match {
         case or: Or => {
           or.clauses
@@ -42,7 +44,7 @@ case class Or(clauses: Clause*) extends Clause {
  */
 case class And(clauses: Clause*) extends Clause {
   def flatten: And = {
-    new And(clauses.flatMap { clause => 
+    new And(clauses.flatMap { clause =>
       clause match {
         case and: And => {
           and.flatten.clauses
@@ -65,3 +67,15 @@ case class Smaller[T](column: Column, value: T)(implicit val ordering: Ordering[
 case class SmallerEqual[T](column: Column, value: T)(implicit val ordering: Ordering[T]) extends AtomicClause
 case class Unequal[T](column: Column, value: T)(implicit val ordering: Ordering[T]) extends AtomicClause
 case class IsNull[T](column: Column) extends AtomicClause
+case class Wildcard[T <: String](column: Column, value: T) extends AtomicClause
+
+object WildcardChecker {
+  /**
+   * check if a value is matching a given wildcard string
+   */
+  def checkValueAgainstPredicate[T <: String](that: T, other: T): Boolean = {
+    val pattern = Pattern.compile(that.replaceAll("\\*", ".*").replaceAll("\\\\.\\*", "\\\\*").replaceAll("\\?", ".?").replaceAll("\\\\.\\?", "\\\\?"))
+    pattern.matcher(other).matches()
+  }
+}
+

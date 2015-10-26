@@ -16,7 +16,7 @@ package scray.querying.source
 
 import scray.querying.description.{ Column, EmptyRow, Row }
 import scray.querying.queries.DomainQuery
-import scray.querying.description.internal.{ 
+import scray.querying.description.internal.{
   Domain,
   RangeValueDomain,
   SingleValueDomain,
@@ -35,20 +35,23 @@ import scray.querying.description.internal.{
 import java.math.{BigInteger => JBigInteger, BigDecimal => JBigDecimal}
 import com.twitter.util.Try
 import com.typesafe.scalalogging.slf4j.LazyLogging
+import scray.querying.description.WildcardChecker
 
 /**
  * Common code for domain checking
  */
 object DomainFilterSource extends LazyLogging {
-  
+
   /**
    * check if the provided value is compatible with the domains
    */
-  def domainCheck[T](value: T, domain: Domain[_], 
+  def domainCheck[T](value: T, domain: Domain[_],
       converter: Option[DomainTypeConverter[_]]): Boolean = domain match {
     case single: SingleValueDomain[T] => Try {
       if(single.isNull) {
         true
+      } else if(single.isWildcard){
+        !WildcardChecker.checkValueAgainstPredicate(single.value.asInstanceOf[String], value.asInstanceOf[String])
       } else {
         !single.equiv.equiv(value, single.value)
       }
@@ -62,7 +65,7 @@ object DomainFilterSource extends LazyLogging {
       mapped.map(rvd => Try(!rvd.valueIsInBounds(value)).getOrElse(true)).getOrElse(true)}.getOrElse(true))
     case composed: ComposedMultivalueDomain[T] => composed.domains.find(!domainCheck(value, _, converter)).isEmpty
   }
-  
+
   /**
    * determine filter converter mappers for the value
    */
@@ -77,16 +80,16 @@ object DomainFilterSource extends LazyLogging {
     case db: BigDecimal => Some(BigDecimalDomainConverter)
     case dbj: JBigDecimal => Some(JBigDecimalDomainConverter)
     case _ => None
-  } 
+  }
 }
 
 /**
  * used to filter rows according to the domain parameters supplied
- * TODO: exclude filters which have already been applied due to usage in database system 
+ * TODO: exclude filters which have already been applied due to usage in database system
  */
-class LazyQueryDomainFilterSource[Q <: DomainQuery](source: LazySource[Q]) 
+class LazyQueryDomainFilterSource[Q <: DomainQuery](source: LazySource[Q])
   extends LazyQueryMappingSource[Q](source) {
-  
+
   override def transformSpoolElement(element: Row, query: Q): Row = {
     // if we find a domain which is not matched by this Row we throw it (the Row) away
     query.getWhereAST.find { domain =>
@@ -102,13 +105,13 @@ class LazyQueryDomainFilterSource[Q <: DomainQuery](source: LazySource[Q])
       case Some(x) => new EmptyRow
     }
   }
-  
+
   /**
-   * LazyQueryDomainFilterSource doesn't throw away columns (only rows), 
+   * LazyQueryDomainFilterSource doesn't throw away columns (only rows),
    * so we report back all columns from upstream
    */
   override def getColumns: List[Column] = source.getColumns
-  
+
   override def getDiscriminant = "Filter" + source.getDiscriminant
 }
 
@@ -116,11 +119,11 @@ class LazyQueryDomainFilterSource[Q <: DomainQuery](source: LazySource[Q])
 /**
  * used to filter rows according to the domain parameters supplied
  */
-class EagerCollectingDomainFilterSource[Q <: DomainQuery, R](source: Source[Q, R]) 
+class EagerCollectingDomainFilterSource[Q <: DomainQuery, R](source: Source[Q, R])
   extends EagerCollectingQueryMappingSource[Q, R](source) {
 
   override def transformSeq(element: Seq[Row], query: Q): Seq[Row] = {
-    element.filter { row => 
+    element.filter { row =>
       query.getWhereAST.find { domain =>
         row.getColumnValue[Any](domain.column) match {
           case None => domain match {
@@ -139,6 +142,6 @@ class EagerCollectingDomainFilterSource[Q <: DomainQuery, R](source: Source[Q, R
   override def transformSeqElement(element: Row, query: Q): Row = element
 
   override def getColumns: List[Column] = source.getColumns
-  
+
   override def getDiscriminant = "Filter" + source.getDiscriminant
 }

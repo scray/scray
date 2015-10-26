@@ -29,8 +29,10 @@ sealed abstract class Domain[T](val column: Column)
 case class SingleValueDomain[T](
   override val column: Column,
   value: T,
-  isNull: Boolean = false
+  isNull: Boolean = false,
+  isWildcard: Boolean = false
 )(implicit val equiv: Equiv[T]) extends Domain[T](column)
+
 
 /**
  * A single interval on the values of column, represents <, >, <= or >=
@@ -40,20 +42,20 @@ case class RangeValueDomain[T](
   override val column: Column,
   lowerBound: Option[Bound[T]], // None means no lower bound
   upperBound: Option[Bound[T]],// None means no upper bound
-  unequalValues: List[T] = List() 
-  
+  unequalValues: List[T] = List()
+
   // exclusions: Option[List[T]]
 )(implicit val ordering: Ordering[T]) extends Domain[T](column) {
-  
+
   def this(column: Column, unequalValues: List[T])(implicit order: Ordering[T]) = this(column, None, None, unequalValues)(order)
-  
+
   /**
    * checks if the current RangeValueDomain is a sub-interval of rangeValueDomain
    */
   def isSubIntervalOf(rangeValueDomain: RangeValueDomain[T]): Boolean = {
     val ures = rangeValueDomain.upperBound.map { uBound =>
       upperBound match {
-        case Some(upper) => if(ordering.compare(upper.value, uBound.value) < 0 || 
+        case Some(upper) => if(ordering.compare(upper.value, uBound.value) < 0 ||
             (upper.value == uBound.value && uBound.inclusive)) {
           true
         } else {
@@ -64,7 +66,7 @@ case class RangeValueDomain[T](
     }.getOrElse(true)
     val lres = rangeValueDomain.lowerBound.map { lBound =>
       lowerBound match {
-        case Some(lower) => if(ordering.compare(lower.value, lBound.value) > 0 || 
+        case Some(lower) => if(ordering.compare(lower.value, lBound.value) > 0 ||
             (lower.value == lBound.value && lBound.inclusive)) {
           true
         } else {
@@ -75,14 +77,14 @@ case class RangeValueDomain[T](
     }.getOrElse(true)
     ures && lres
   }
-  
+
   /**
    * finds the smallest possible interval from two intervals
    */
   def bisect(rangeValueDomain: RangeValueDomain[T]): Option[RangeValueDomain[T]] = {
     val lower = if(rangeValueDomain.lowerBound.isEmpty) lowerBound else {
       rangeValueDomain.lowerBound.flatMap(llower => { lowerBound.map { _ =>
-        val comp = ordering.compare(llower.value, lowerBound.get.value) 
+        val comp = ordering.compare(llower.value, lowerBound.get.value)
         if(comp == 0) {
           Bound[T](llower.inclusive && rangeValueDomain.lowerBound.get.inclusive, llower.value)
         } else if(comp < 0) {
@@ -106,38 +108,38 @@ case class RangeValueDomain[T](
       }.orElse(rangeValueDomain.upperBound)
       })
     }
-    lower match { 
+    lower match {
       case None => if((upper.isDefined && column == rangeValueDomain.column) || (rangeValueDomain.unequalValues.size > 0)) {
         upper match {
-          case None => Some(RangeValueDomain[T](column, None, upper)) 
-          case _    =>  Some(RangeValueDomain[T](column, None, upper, 
-                      (unequalValues ++ rangeValueDomain.unequalValues).filter { x => 
-                      ordering.compare(x, upper.get.value) < 0 || (ordering.compare(x, upper.get.value) == 0 && upper.get.inclusive)})) 
+          case None => Some(RangeValueDomain[T](column, None, upper))
+          case _    =>  Some(RangeValueDomain[T](column, None, upper,
+                      (unequalValues ++ rangeValueDomain.unequalValues).filter { x =>
+                      ordering.compare(x, upper.get.value) < 0 || (ordering.compare(x, upper.get.value) == 0 && upper.get.inclusive)}))
           }
-        } else { 
-          None 
-        } 
+        } else {
+          None
+        }
       case Some(newLower) => upper match {
-          case None => 
+          case None =>
             if((rangeValueDomain.unequalValues.size > 0)) {
               return   Some(RangeValueDomain[T](column, lower, None,
-                      (unequalValues ++ rangeValueDomain.unequalValues).filter { x => 
+                      (unequalValues ++ rangeValueDomain.unequalValues).filter { x =>
                     ordering.compare(x, lower.get.value) > 0 || (ordering.compare(x, lower.get.value) == 0 && lower.get.inclusive)}))
             } else {
               return Some(RangeValueDomain[T](column, lower, None) )
             }
           case Some(newUpper) => if((column != rangeValueDomain.column) ||
-            (ordering.compare(newLower.value, newUpper.value) > 0) || 
+            (ordering.compare(newLower.value, newUpper.value) > 0) ||
             ((!(newLower.inclusive && newUpper.inclusive)) && (ordering.compare(newLower.value, newUpper.value) == 0))) {
                None
-          } else { 
+          } else {
             if((rangeValueDomain.unequalValues.size > 0)) {
                return Some(RangeValueDomain[T](column, lower, upper,
-                      (unequalValues ++ rangeValueDomain.unequalValues).filter { x => 
+                      (unequalValues ++ rangeValueDomain.unequalValues).filter { x =>
                     (ordering.compare(x, lower.get.value) > 0 || (ordering.compare(x, lower.get.value) == 0 && lower.get.inclusive)) &&
                     ordering.compare(x, upper.get.value) < 0 || (ordering.compare(x, upper.get.value) == 0 && upper.get.inclusive)}))
             }else {
-              Some(RangeValueDomain[T](column, lower, upper)) 
+              Some(RangeValueDomain[T](column, lower, upper))
             }
           }
       }
@@ -153,9 +155,9 @@ case class RangeValueDomain[T](
         case Some(upper) =>
           upperBound match {
             case None => Some(new RangeValueDomain[T](column, None, None))
-            case Some(thisupper) => 
+            case Some(thisupper) =>
               val ord = ordering.compare(thisupper.value, upper.value)
-              val res = if(ord >= 0) { 
+              val res = if(ord >= 0) {
                 (thisupper.value, if(ord > 0) { thisupper.inclusive } else { thisupper.inclusive | upper.inclusive })
               } else {
                 (upper.value, upper.inclusive)
@@ -169,18 +171,18 @@ case class RangeValueDomain[T](
           upperBound match {
             case None =>
               val ord = ordering.compare(thislower.value, upper.value)
-              if(ord < 0 || (ord == 0 && (thislower.inclusive | upper.inclusive))) {  
+              if(ord < 0 || (ord == 0 && (thislower.inclusive | upper.inclusive))) {
                 Some(new RangeValueDomain[T](column, None, None))
               } else {
                 None
-              } 
+              }
             case Some(thisupper) =>
               val ord = ordering.compare(thisupper.value, upper.value)
               if(ord < 0) {
                 Some(new RangeValueDomain[T](column, None, Some(upper)))
               } else {
                 if(ord == 0) {
-                  Some(new RangeValueDomain[T](column, None, 
+                  Some(new RangeValueDomain[T](column, None,
                       Some(new Bound[T](thisupper.inclusive | upper.inclusive, upper.value))))
                 } else {
                   val low = ordering.compare(thislower.value, upper.value)
@@ -216,7 +218,7 @@ case class RangeValueDomain[T](
                 Some(new RangeValueDomain[T](column, None, Some(thisupper)))
               } else {
                 if(up == 0) {
-                  Some(new RangeValueDomain[T](column, None, 
+                  Some(new RangeValueDomain[T](column, None,
                       Some(new Bound[T](thisupper.inclusive | upper.inclusive, upper.value))))
                 } else {
                   Some(new RangeValueDomain[T](column, None, Some(upper)))
@@ -235,20 +237,20 @@ case class RangeValueDomain[T](
               Some(new RangeValueDomain[T](column, Some(lower), None))
             } else {
               if(ord == 0) {
-                Some(new RangeValueDomain[T](column, 
+                Some(new RangeValueDomain[T](column,
                     Some(new Bound[T](thislower.inclusive | lower.inclusive, lower.value)), None))
               } else {
                 Some(new RangeValueDomain[T](column, Some(thislower), None))
               }
             }
-          case Some(thisupper) => 
+          case Some(thisupper) =>
             val ord = ordering.compare(lower.value, thisupper.value)
             if(ord > 0 || ord == 0 && !(lower.inclusive | thisupper.inclusive)) {
               None
             } else {
               ordering.compare(lower.value, thislower.value) match {
                 case a if a > 0 => Some(new RangeValueDomain[T](column, Some(thislower), None))
-                case b if b == 0 => Some(new RangeValueDomain[T](column, 
+                case b if b == 0 => Some(new RangeValueDomain[T](column,
                     Some(new Bound[T](thislower.inclusive | lower.inclusive, lower.value)), None))
                 case _ => Some(new RangeValueDomain[T](column, Some(lower), None))
               }
@@ -262,7 +264,7 @@ case class RangeValueDomain[T](
             } else {
               ordering.compare(thislower.value, lower.value) match {
                 case a if a > 0 => Some(new RangeValueDomain[T](column, Some(lower), None))
-                case b if b == 0 => Some(new RangeValueDomain[T](column, 
+                case b if b == 0 => Some(new RangeValueDomain[T](column,
                     Some(new Bound[T](thislower.inclusive | lower.inclusive, lower.value)), None))
                 case _ => Some(new RangeValueDomain[T](column, Some(thislower), None))
               }
@@ -279,7 +281,7 @@ case class RangeValueDomain[T](
                     } else {
                       Some(new RangeValueDomain[T](column,
                           Some(new Bound[T](thislower.inclusive | lower.inclusive, thislower.value)),
-                          Some(new Bound[T](thislower.inclusive | lower.inclusive, thisupper.value))))                      
+                          Some(new Bound[T](thislower.inclusive | lower.inclusive, thisupper.value))))
                     }
                   case a12 if a12 < 0 =>
                     Some(rangeValueDomain)
@@ -288,7 +290,7 @@ case class RangeValueDomain[T](
                   Some(new RangeValueDomain[T](column, Some(lower), Some(thisupper)))
                 case _ => None
               }
-              case b if b == 0 && (thisupper.inclusive | lower.inclusive) => 
+              case b if b == 0 && (thisupper.inclusive | lower.inclusive) =>
                 Some(new RangeValueDomain[T](column, Some(thislower), Some(upper)))
               case _ => None
             }
@@ -297,9 +299,9 @@ case class RangeValueDomain[T](
     }
   }
   def valueIsInBounds(value: T): Boolean = {
-    lowerBound.map(lower => ordering.compare(lower.value, value) < 0 || 
+    lowerBound.map(lower => ordering.compare(lower.value, value) < 0 ||
         (lower.inclusive && ordering.compare(lower.value, value) == 0)).getOrElse(true) &&
-    upperBound.map(upper => ordering.compare(upper.value, value) > 0 || 
+    upperBound.map(upper => ordering.compare(upper.value, value) > 0 ||
         (upper.inclusive && ordering.compare(upper.value, value) == 0)).getOrElse(true) &&
     unequalValues.find ( _ == value ).isEmpty
   }
@@ -318,7 +320,7 @@ case class RangeValueDomain[T](
  * represents a domain which has multiple ranges, i.e. is
  * composed of several other domains which are combined by or
  */
-case class ComposedMultivalueDomain[T](override val column: Column, domains: Set[Domain[T]]) 
+case class ComposedMultivalueDomain[T](override val column: Column, domains: Set[Domain[T]])
   extends Domain[T](column)
 
 
