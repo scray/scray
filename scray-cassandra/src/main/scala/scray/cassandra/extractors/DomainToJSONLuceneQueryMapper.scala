@@ -31,16 +31,16 @@ object DomainToJSONLuceneQueryMapper extends LazyLogging {
     if(vdomain.isNull) {
       ""
     } else if(vdomain.isWildcard) {
-       val search =    vdomain.value.toString()
-       // todo/optimize: replace **, *?, etc by *
+       val search = vdomain.value.toString()
+       // TODO/optimize: replace **, *?, etc by *
        if((search.endsWith("*") || search.endsWith("?")) && search.length() > 1) {
-           val search2 : String = search.substring(0, search.length() -1)
-           if(!search2.contains("*") && !search2.contains("?")) {
+         val search2 : String = search.substring(0, search.length() -1)
+         if(!search2.contains("*") && !search2.contains("?")) {
            return s""" { type  : "prefix", field : "${vdomain.column.columnName}", value : "${search2}" } """
-           }
+         }
        }
        s""" { type  : "wildcard", field : "${vdomain.column.columnName}", value : "${vdomain.value}" } """
-    }else {
+    } else {
       s""" { type : "match", field : "${vdomain.column.columnName}", value : "${vdomain.value}" } """
     }
   }
