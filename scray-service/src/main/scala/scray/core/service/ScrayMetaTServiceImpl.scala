@@ -75,7 +75,7 @@ object ScrayMetaTServiceImpl extends ScrayMetaTService[Future] with LazyLogging 
   def getServiceEndpoints(): Future[Seq[ScrayTServiceEndpoint]] = {
     lock.lock
     try {
-      logger.info(REQUESTLOGPREFIX + " Operation='getServiceEndpoints'")
+      logger.trace(REQUESTLOGPREFIX + " Operation='getServiceEndpoints'")
       removeExpiredEndpoints
       Future.value(endpoints.iterator.map[ScrayTServiceEndpoint] { ep => ep } toSeq)
     } finally {
@@ -94,7 +94,7 @@ object ScrayMetaTServiceImpl extends ScrayMetaTService[Future] with LazyLogging 
     val ep: (UUID, ScrayServiceEndpoint) = (UUID.randomUUID() -> tEndpoint)
     lock.lock()
     try {
-      logger.info(REQUESTLOGPREFIX + s" Operation='addServiceEndpoint' with address=${ep._2.addr} expiring at ${ep._2.expires}.")
+      logger.trace(REQUESTLOGPREFIX + s" Operation='addServiceEndpoint' with address=${ep._2.addr} expiring at ${ep._2.expires}.")
       // we'll always add the endpoint regardless of redundancy (since we have an 'auto clean' feature)
       endpoints.iterator.find { p => p._2.addr.getHostString == tEndpoint._1 }.map{ p =>
         endpoints.put(p._1, p._2.copy(expires = EXPIRATION.fromNow))
@@ -114,7 +114,7 @@ object ScrayMetaTServiceImpl extends ScrayMetaTService[Future] with LazyLogging 
   def refreshServiceEndpoint(endpointID: ScrayUUID): Future[Unit] = {
     lock.lock()
     try {
-      logger.info(REQUESTLOGPREFIX + s" Operation='refreshServiceEndpoint' with endpointID=$endpointID")
+      logger.trace(REQUESTLOGPREFIX + s" Operation='refreshServiceEndpoint' with endpointID=$endpointID")
       endpoints.get(endpointID) match {
         // refresh w/ CAS semantics
         case Some(_ep) => endpoints.put(endpointID, _ep.copy(expires = EXPIRATION.fromNow))
@@ -129,7 +129,7 @@ object ScrayMetaTServiceImpl extends ScrayMetaTService[Future] with LazyLogging 
   /**
    * Return vital sign.
    */
-  def ping(): Future[Boolean] = { logger.info(REQUESTLOGPREFIX + " Operation='ping'"); Future.value(true) }
+  def ping(): Future[Boolean] = { logger.debug(REQUESTLOGPREFIX + " Operation='ping'"); Future.value(true) }
 
   /**
    * Shutdown the server.

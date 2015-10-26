@@ -59,6 +59,10 @@ abstract class QueryspaceConfiguration(val name: String) {
    */
   def getColumns: List[ColumnConfiguration]
   
+  /**
+   * re-initialize this queryspace, possibly re-reading the configuration from somewhere
+   */
+  def reInitialize: Unit
 }
 
 
@@ -89,7 +93,8 @@ case class IndexConfiguration (
 case class AutoIndexConfiguration[T] (
   isRangeIndex: Boolean = false, // if ranges can be queried efficiently on this index 
   isFullTextIndex: Boolean = false, // whether we can perform queries like wildcard, phrase, etc. 
-  rangePartioned: Option[((T, T)) => List[T]] = None // if the range needs to be partioned and how
+  isSorted: Boolean = false,
+  rangePartioned: Option[((T, T), Boolean) => Iterator[(T, T)]] = None // if the range needs to be partitioned and how
 )
 
 /**

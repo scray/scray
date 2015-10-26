@@ -33,6 +33,7 @@ import scray.querying.queries.DomainQuery
 import scray.querying.description.internal.SingleValueDomain
 import scray.querying.description.internal.RangeValueDomain
 import scala.annotation.tailrec
+import scray.querying.source.Splitter
 
 /**
  * configuration of a simple Cassandra-based query space.
@@ -48,7 +49,8 @@ class CassandraQueryspaceConfiguration(
     val tables: Set[(AbstractCQLCassandraStore[_, _], ((_) => Row, Option[String], Option[VersioningConfiguration[_, _, _]]))],
     // mapping from indexed table and the indexed column to the table containing the index and the ref column
     indexes: Map[(AbstractCQLCassandraStore[_, _], String),
-      (AbstractCQLCassandraStore[_, _], String, IndexConfig, Option[Function1[_,_]], Set[String])]
+      (AbstractCQLCassandraStore[_, _], String, IndexConfig, Option[Function1[_,_]], Set[String])],
+    splitters: Map[Column, Splitter[_]]
 ) extends QueryspaceConfiguration(name) {
   
   lazy val tableRowMapperMap: Map[AbstractCQLCassandraStore[_, _], ((_) => Row, Option[String], Option[VersioningConfiguration[_, _, _]])] = tables.toMap
@@ -90,7 +92,7 @@ class CassandraQueryspaceConfiguration(
     val allColumns = extractor.getTableConfiguration(table._2._1).allColumns
     allColumns.map { col =>
       val index = extractor.createManualIndexConfiguration(col, name, typeReducedTable, indexes, tableRowMapperMap)
-      extractor.getColumnConfiguration(typeReducedTable, col, this, index)
+      extractor.getColumnConfiguration(typeReducedTable, col, this, index, splitters)
     }
   })
   
@@ -146,4 +148,10 @@ class CassandraQueryspaceConfiguration(
       None
     }
   }
+  
+  /**
+   * reloads the query-space configuration
+   * TODO: invent some mechanism to do the reload 
+   */
+  override def reInitialize: Unit = {} 
 }

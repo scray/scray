@@ -88,7 +88,7 @@ object DomainFilterSource extends LazyLogging {
  * TODO: exclude filters which have already been applied due to usage in database system
  */
 class LazyQueryDomainFilterSource[Q <: DomainQuery](source: LazySource[Q])
-  extends LazyQueryMappingSource[Q](source) {
+  extends LazyQueryMappingSource[Q](source) with LazyLogging {
 
   override def transformSpoolElement(element: Row, query: Q): Row = {
     // if we find a domain which is not matched by this Row we throw it (the Row) away

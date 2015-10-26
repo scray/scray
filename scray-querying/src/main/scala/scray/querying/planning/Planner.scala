@@ -14,16 +14,16 @@
 // limitations under the License.
 package scray.querying.planning
 
-import java.util.UUID
-import scala.annotation.tailrec
-import scala.collection.mutable.HashMap
-import scala.collection.parallel.immutable.ParSeq
 import com.twitter.concurrent.Spool
 import com.twitter.storehaus.QueryableStore
 import com.twitter.storehaus.ReadableStore
 import com.twitter.util.Await
 import com.twitter.util.Future
 import com.typesafe.scalalogging.slf4j.LazyLogging
+import java.util.UUID
+import scala.annotation.tailrec
+import scala.collection.mutable.HashMap
+import scala.collection.parallel.immutable.ParSeq
 import scray.querying.Query
 import scray.querying.Registry
 import scray.querying.description.And
@@ -65,6 +65,7 @@ import scray.querying.queries.QueryInformation
 import scray.querying.source.EagerCollectingDomainFilterSource
 import scray.querying.source.EagerEmptyRowDispenserSource
 import scray.querying.source.EagerSource
+import scray.querying.source.IdentityEagerCollectingQueryMappingSource
 import scray.querying.source.IndexMergeSource
 import scray.querying.source.IndexMergeSource
 import scray.querying.source.KeyValueSource
@@ -72,17 +73,21 @@ import scray.querying.source.LazyEmptyRowDispenserSource
 import scray.querying.source.LazyQueryColumnDispenserSource
 import scray.querying.source.LazyQueryDomainFilterSource
 import scray.querying.source.LazySource
+import scray.querying.source.LimitIncreasingQueryableSource
 import scray.querying.source.OrderingEagerMappingSource
 import scray.querying.source.ParallelizedQueryableSource
 import scray.querying.source.QueryableSource
 import scray.querying.source.SimpleHashJoinSource
 import scray.querying.source.Source
+import scray.querying.source.SplittedAutoIndexQueryableSource
+import scray.querying.source.SplittedAutoIndexQueryableSource
 import scray.querying.source.indexing.SimpleHashJoinConfig
 import scray.querying.source.indexing.TimeIndexConfig
 import scray.querying.source.indexing.TimeIndexSource
 import scray.querying.source.MergeReferenceColumns
 import scray.querying.source.IdentityEagerCollectingQueryMappingSource
 import scray.querying.description.WildcardChecker
+
 /**
  * Simple planner to execute queries.
  * For each query do:
@@ -374,8 +379,10 @@ object Planner extends LazyLogging {
           colConf.index.flatMap { index => index.autoIndexConfiguration.map { autoIndex => autoIndex.rangePartioned } }
         }.isDefined
       } // --- END isAutoIndexWithSplit ---
+
     // 1. check if we have a matching materialized view prepared and
     // whether it is ordered according to our ordering: Option[(ordered: Boolean, table)]
+
     checkMaterializedViewMatching(query.getQueryspace, query.getTableIdentifier, domainQuery) match {
       case Some((ordered, viewConf)) =>
         val qSource = new QueryableSource(getQueryableStore(viewConf.viewTable, domainQuery.getQueryID), query.getQueryspace, domainQuery.table, ordered)
@@ -479,18 +486,43 @@ object Planner extends LazyLogging {
     }.getOrElse {
       // construct plan using information on main table
       Registry.getQuerySpaceTable(domainQuery.getQueryspace, domainQuery.getTableIdentifier).map { tableConf =>
+
         domainQuery.getWhereAST.find { x =>
+          // TODO: head for RangeValueDomains first!!!
           // if an auto-indexed column with an auto-indexing configuration is used, we will check it doesn't need to be split
           isAutoIndexWithSplit(x.column) && domainQuery.getOrdering.map { ord => ord.column == x.column }.getOrElse(false)
         }.flatMap { autoIndexAndSplitColumnDomain =>
           Registry.getQuerySpaceColumn(query.getQueryspace, autoIndexAndSplitColumnDomain.column).flatMap { colConf =>
-            colConf.index.flatMap { index => index.autoIndexConfiguration.map { autoIndex => autoIndex.rangePartioned }}
+            colConf.index.flatMap { index => index.autoIndexConfiguration.map { autoIndex => (index.isSorted, autoIndex.rangePartioned) }}
           }.map { rangePartioned =>
-            // TODO: add SplittedAutoIndexQueryableSource, here
-            new QueryableSource(getQueryableStore(tableConf, domainQuery.getQueryID), query.getQueryspace, tableConf.table)
+            autoIndexAndSplitColumnDomain match {
+              case range : RangeValueDomain[tempT] =>
+                def splittedSource[K, V, Q](ordering: Ordering[tempT]): SplittedAutoIndexQueryableSource[K, V, tempT] =
+                  new SplittedAutoIndexQueryableSource[K, V, tempT](getQueryableStore(tableConf.asInstanceOf[TableConfiguration[K, Q, V]],
+                                                  domainQuery.getQueryID), query.getQueryspace, tableConf.table,
+                                                  autoIndexAndSplitColumnDomain.column, rangePartioned._2.asInstanceOf[
+                                                    Option[((tempT, tempT), Boolean) ⇒ Iterator[(tempT, tempT)]]], rangePartioned._1)(
+                                                         ordering)
+                logger.debug("Using SplittedAutoIndexQueryableSource $autoIndexAndSplitColumnDomain")
+                                                         splittedSource(range.ordering)
+              case _ =>
+                logger.debug(s"Using LimitIncreasingQueryableSource $autoIndexAndSplitColumnDomain")
+                new LimitIncreasingQueryableSource(getQueryableStore(tableConf, domainQuery.getQueryID),
+                                                   query.getQueryspace, tableConf.table, rangePartioned._1)
+            }
+            // new QueryableSource(getQueryableStore(tableConf, domainQuery.getQueryID), query.getQueryspace, tableConf.table)
           }
         }.getOrElse {
-          new QueryableSource(getQueryableStore(tableConf, domainQuery.getQueryID), query.getQueryspace, tableConf.table)
+//          new SplittedAutoIndexQueryableSource(getQueryableStore(tableConf, domainQuery.getQueryID), query.getQueryspace,
+//                                                 tableConf.table, autoIndexAndSplitColumnDomain.column, None)
+          // if the query has a limit we can use some query increaser
+          query.getQueryRange.flatMap { range =>
+            range.limit.map { limit =>
+              new LimitIncreasingQueryableSource(getQueryableStore(tableConf, domainQuery.getQueryID), query.getQueryspace, tableConf.table)
+            }
+          }.getOrElse {
+            new QueryableSource(getQueryableStore(tableConf, domainQuery.getQueryID), query.getQueryspace, tableConf.table)
+          }
         }
       }
     }.map(ComposablePlan.getComposablePlan(_, domainQuery)).getOrElse(throw new NoPlanException(query))
@@ -642,9 +674,8 @@ object Planner extends LazyLogging {
     plan.getSource match {
       case lazySource: LazySource[_] => ComposablePlan.getComposablePlan(
           new LazyQueryDomainFilterSource(lazySource), domainQuery)
-      case eagerSource: EagerSource[_] => ComposablePlan.getComposablePlan(
-          new EagerCollectingDomainFilterSource[DomainQuery, Seq[Row]](
-              eagerSource.asInstanceOf[Source[DomainQuery, Seq[Row]]]), domainQuery)
+      case eagerSource: EagerSource[tmpT] => ComposablePlan.getComposablePlan(
+          new EagerCollectingDomainFilterSource[tmpT, Seq[Row]](eagerSource), domainQuery)
     }
   }
 
@@ -657,9 +688,8 @@ object Planner extends LazyLogging {
       filteredPlan.getSource match {
         case lazySource: LazySource[_] => ComposablePlan.getComposablePlan(
             new LazyQueryColumnDispenserSource(lazySource), domainQuery)
-        case eagerSource: EagerSource[_] => ComposablePlan.getComposablePlan(
-          new EagerCollectingDomainFilterSource[DomainQuery, Seq[Row]](
-              eagerSource.asInstanceOf[Source[DomainQuery, Seq[Row]]]), domainQuery)
+        case eagerSource: EagerSource[tmpT] => ComposablePlan.getComposablePlan(
+          new EagerCollectingDomainFilterSource[tmpT, Seq[Row]](eagerSource), domainQuery)
       }
     } else {
       filteredPlan
@@ -674,9 +704,8 @@ object Planner extends LazyLogging {
     filteredPlan.getSource match {
       case lazySource: LazySource[_] => ComposablePlan.getComposablePlan(
           new LazyEmptyRowDispenserSource(lazySource, Some(queryInfo)), domainQuery)
-      case eagerSource: EagerSource[_] => ComposablePlan.getComposablePlan(
-          new EagerEmptyRowDispenserSource[DomainQuery, Seq[Row]](
-              eagerSource.asInstanceOf[Source[DomainQuery, Seq[Row]]], Some(queryInfo)), domainQuery)
+      case eagerSource: EagerSource[tmpT] => ComposablePlan.getComposablePlan(
+          new EagerEmptyRowDispenserSource[tmpT, Seq[Row]](eagerSource, Some(queryInfo)), domainQuery)
     }
   }
 
@@ -686,11 +715,11 @@ object Planner extends LazyLogging {
   def sortedPlan(dispensedPlan: ComposablePlan[DomainQuery, _], domainQuery: DomainQuery): ComposablePlan[DomainQuery, _] = {
     dispensedPlan match {
       case ocp: OrderedComposablePlan[DomainQuery, _] => if(ocp.getSource.isOrdered(domainQuery)) ocp else {
+        logger.debug("NEED TO ORDER")
         val source = ocp.getSource match {
-          case lazySource: LazySource[_] => new OrderingEagerMappingSource[DomainQuery, Spool[Row]](
-              lazySource.asInstanceOf[Source[DomainQuery, Spool[Row]]])
-          case eagerSource: EagerSource[_] => new OrderingEagerMappingSource[DomainQuery, Seq[Row]](
-              eagerSource.asInstanceOf[Source[DomainQuery, Seq[Row]]])
+
+          case lazySource: LazySource[tmpT] => new OrderingEagerMappingSource[tmpT, Spool[Row]](lazySource)
+          case eagerSource: EagerSource[tmpT] => new OrderingEagerMappingSource[tmpT, Seq[Row]](eagerSource)
         }
         new OrderedComposablePlan(source, domainQuery.getOrdering)
       }
@@ -713,7 +742,7 @@ object Planner extends LazyLogging {
     }.seq
 
     if(futures.size == 0) {
-      Spool.Empty.asInstanceOf[Spool[Row]]
+      Spool.empty[Row]
     } else if(futures.size == 1) {
       // in case we only have results for one query we can quickly return them
       Await.result(futures.head._2) match {

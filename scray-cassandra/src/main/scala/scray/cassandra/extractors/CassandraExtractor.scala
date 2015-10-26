@@ -14,45 +14,30 @@
 // limitations under the License.
 package scray.cassandra.extractors
 
-import com.datastax.driver.core.KeyspaceMetadata
-import com.twitter.storehaus.cassandra.cql.AbstractCQLCassandraStore
-import com.twitter.storehaus.cassandra.cql.CQLCassandraCollectionStore
+import com.datastax.driver.core.{ KeyspaceMetadata, Metadata, TableMetadata }
+import com.twitter.storehaus.cassandra.cql.{ AbstractCQLCassandraStore, CQLCassandraCollectionStore, CQLCassandraRowStore, CQLCassandraStoreTupleValues }
 import com.twitter.storehaus.cassandra.cql.CQLCassandraConfiguration.StoreColumnFamily
-import scray.querying.description.Column
-import scray.querying.description.ManuallyIndexConfiguration
-import scray.querying.description.ColumnConfiguration
-import scray.querying.description.QueryspaceConfiguration
-import scray.querying.description.IndexConfiguration
-import scray.querying.description.TableIdentifier
-import scray.querying.description.TableConfiguration
-import scray.querying.description.TableConfiguration
-import scray.querying.description.Row
-import scray.querying.queries.DomainQuery
-import scray.querying.description.internal.SingleValueDomain
-import scray.querying.description.internal.SingleValueDomain
-import scray.querying.description.IndexConfiguration
-import scray.querying.description.ManuallyIndexConfiguration
-import com.twitter.storehaus.cassandra.cql.CQLCassandraStoreTupleValues
-import com.datastax.driver.core.Metadata
-import scray.querying.source.indexing.IndexConfig
-import com.twitter.storehaus.cassandra.cql.CQLCassandraRowStore
-import scray.cassandra.util.CassandraUtils
-import scray.querying.description.VersioningConfiguration
-import scray.querying.Registry
-import com.datastax.driver.core.TableMetadata
-import scray.querying.description.VersioningConfiguration
-import scray.querying.queries.DomainQuery
-import scray.querying.source.indexing.IndexConfig
-import scray.querying.description.QueryspaceConfiguration
-import scray.querying.description.TableIdentifier
-import scray.querying.description.IndexConfiguration
-import scray.querying.description.TableConfiguration
-import scray.querying.description.ManuallyIndexConfiguration
-import scray.querying.description.AutoIndexConfiguration
-import scray.querying.description.ColumnConfiguration
-import org.yaml.snakeyaml.Yaml
-import java.util.regex.Pattern
 import com.typesafe.scalalogging.slf4j.LazyLogging
+import java.util.regex.Pattern
+import org.yaml.snakeyaml.Yaml
+import scray.cassandra.util.CassandraUtils
+import scray.querying.Registry
+import scray.querying.description.{
+  AutoIndexConfiguration,
+  Column,
+  ManuallyIndexConfiguration,
+  ColumnConfiguration,
+  QueryspaceConfiguration,
+  IndexConfiguration,
+  TableIdentifier, 
+  TableConfiguration,
+  Row,
+  VersioningConfiguration
+}
+import scray.querying.description.internal.SingleValueDomain
+import scray.querying.queries.DomainQuery
+import scray.querying.source.Splitter
+import scray.querying.source.indexing.IndexConfig
 
 /**
  * Helper class to create a configuration for a Cassandra table
@@ -116,7 +101,8 @@ trait CassandraExtractor[S <: AbstractCQLCassandraStore[_, _]] extends LazyLoggi
   /**
    * return whether and maybe how the given column is auto-indexed by Cassandra-Lucene-Plugin 
    */
-  private def getColumnCassandraLuceneIndexed(tmOpt: Option[TableMetadata], column: Column): Option[AutoIndexConfiguration[_]] = {
+  private def getColumnCassandraLuceneIndexed(tmOpt: Option[TableMetadata], column: Column, 
+                                              splitters: Map[Column, Splitter[_]]): Option[AutoIndexConfiguration[_]] = {
     val cmOpt = tmOpt.flatMap { tm => Option(tm.getColumn(Metadata.quote(CassandraExtractor.LUCENE_COLUMN_NAME))) }
     val schemaOpt = cmOpt.flatMap (cm => Option(cm.getIndex).map(_.getOption(CassandraExtractor.LUCENE_INDEX_SCHEMA_OPTION_NAME)))
     schemaOpt.flatMap { schema =>
@@ -126,9 +112,13 @@ trait CassandraExtractor[S <: AbstractCQLCassandraStore[_, _]] extends LazyLoggi
         val fieldString = outerMatcher.group(1)
         if(CassandraExtractor.innerPattern.split(fieldString, -1).find { _.trim() == column.columnName }.isDefined) {
           cmOpt.get.getType
-          logger.debug(s"Found Lucene-indexed column ${column.columnName} for table ${tmOpt.get.getName}")
-          // TODO: insert information about splitting, if necessary
-          Some(AutoIndexConfiguration[Any](isRangeIndex = true, isFullTextIndex = true))
+          if(splitters.get(column).isDefined) {
+            logger.debug(s"Found Lucene-indexed column ${column.columnName} for table ${tmOpt.get.getName} with splitting option")
+          } else {
+            logger.debug(s"Found Lucene-indexed column ${column.columnName} for table ${tmOpt.get.getName}")
+          }
+          Some(AutoIndexConfiguration[Any](isRangeIndex = true, isFullTextIndex = true, isSorted = true,
+                  rangePartioned = splitters.get(column).map(_.splitter).asInstanceOf[Option[((Any, Any), Boolean) => Iterator[(Any, Any)]]]))
         } else {
           None
         }
@@ -142,13 +132,13 @@ trait CassandraExtractor[S <: AbstractCQLCassandraStore[_, _]] extends LazyLoggi
    * checks that a column has been indexed by Cassandra itself, so no manual indexing
    * if the table has not yet been created (the version must still be computed) we assume no indexing 
    */
-  def checkColumnCassandraAutoIndexed(store: S, column: Column): (Boolean, Option[AutoIndexConfiguration[_]]) = {
+  def checkColumnCassandraAutoIndexed(store: S, column: Column, splitters: Map[Column, Splitter[_]]): (Boolean, Option[AutoIndexConfiguration[_]]) = {
     val metadata = Option(getMetadata(store.columnFamily))
     val tm = metadata.flatMap(_ => Option(CassandraUtils.getTableMetadata(store.columnFamily, metadata)))
     val autoIndex = metadata.flatMap{_ => 
       val cm = tm.map(_.getColumn(Metadata.quote(column.columnName)))
       cm.flatMap(colmeta => Option(colmeta.getIndex()))}.isDefined
-    val autoIndexConfig = getColumnCassandraLuceneIndexed(tm, column)
+    val autoIndexConfig = getColumnCassandraLuceneIndexed(tm, column, splitters)
     if(autoIndexConfig.isDefined) {
       (true, autoIndexConfig)
     } else {
@@ -162,12 +152,14 @@ trait CassandraExtractor[S <: AbstractCQLCassandraStore[_, _]] extends LazyLoggi
   def getColumnConfiguration(store: S, 
       column: Column,
       querySpace: QueryspaceConfiguration,
-      index: Option[ManuallyIndexConfiguration[_, _, _, _, _]]): ColumnConfiguration = {
+      index: Option[ManuallyIndexConfiguration[_, _, _, _, _]],
+      splitters: Map[Column, Splitter[_]]): ColumnConfiguration = {
     val indexConfig = index match {
       case None => 
-        val autoIndex = checkColumnCassandraAutoIndexed(store, column)
+        val autoIndex = checkColumnCassandraAutoIndexed(store, column, splitters)
         if(autoIndex._1) {
-          Some(IndexConfiguration(true, None, false, false, false, autoIndex._2)) 
+          Some(IndexConfiguration(true, None, autoIndex._2.map(_.isRangeIndex).getOrElse(false), 
+                                  false, autoIndex._2.map(_.isRangeIndex).getOrElse(false), autoIndex._2)) 
         } else { None }
       case Some(idx) => Some(IndexConfiguration(true, Some(idx), true, true, true, None)) 
     }
@@ -179,8 +171,9 @@ trait CassandraExtractor[S <: AbstractCQLCassandraStore[_, _]] extends LazyLoggi
    */
   def getColumnConfigurations(store: S,
       querySpace: QueryspaceConfiguration, 
-      indexes: Map[String, ManuallyIndexConfiguration[_, _, _, _, _]]): List[ColumnConfiguration] = {
-    getColumns.map(col => getColumnConfiguration(store, col, querySpace, indexes.get(col.columnName)))
+      indexes: Map[String, ManuallyIndexConfiguration[_, _, _, _, _]],
+      splitters: Map[Column, Splitter[_]]): List[ColumnConfiguration] = {
+    getColumns.map(col => getColumnConfiguration(store, col, querySpace, indexes.get(col.columnName), splitters))
   }
   
   /**

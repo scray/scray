@@ -14,17 +14,12 @@
 // limitations under the License.
 package scray.cassandra.extractors
 
-import scray.querying.queries.DomainQuery
 import com.twitter.storehaus.cassandra.cql.AbstractCQLCassandraStore
-import scray.querying.description.internal.SingleValueDomain
-import scray.querying.description.internal.Domain
-import scray.querying.description.Column
-import scray.querying.description.internal.RangeValueDomain
-import scray.querying.description.internal.RangeValueDomain
 import scray.querying.Registry
-import scray.querying.description.TableIdentifier
-import scray.querying.description.ColumnOrdering
 import com.typesafe.scalalogging.slf4j.LazyLogging
+import scray.querying.description.{Column, ColumnOrdering, TableIdentifier}
+import scray.querying.description.internal.{Domain, RangeValueDomain, SingleValueDomain}
+import scray.querying.queries.DomainQuery
 
 /**
  * performs mapping of DomainQueries to valid JSON Lucene queries,
@@ -56,11 +51,11 @@ object DomainToJSONLuceneQueryMapper extends LazyLogging {
     if(vdomain.lowerBound.isDefined || vdomain.upperBound.isDefined) {
       result ++= s""" { type : "range", field : "${vdomain.column.columnName}", """
       vdomain.lowerBound.map { bound =>
-        result ++= s""" lower: "${bound.value}" , includeLower: "${bound.inclusive}" """
+        result ++= s""" lower: "${bound.value}" , include_lower: "${bound.inclusive}" """
         vdomain.upperBound.map ( _ => result ++= "," )
       }
       vdomain.upperBound.map { bound =>
-        result ++= s""" upper: "${bound.value}" , includeUpper: "${bound.inclusive}" """
+        result ++= s""" upper: "${bound.value}" , include_upper: "${bound.inclusive}" """
       }
       result ++= s""" } """
     }
