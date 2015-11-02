@@ -1,19 +1,22 @@
 package scray.client.finagle;
 
 import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
-
-import scray.client.jdbc.ScrayURL;
-import scray.service.qservice.thriftjava.ScrayMetaTService;
-import scray.service.qservice.thriftjava.ScrayTServiceEndpoint;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import com.google.common.base.Joiner;
 import com.twitter.finagle.Thrift;
 import com.twitter.util.Await;
 import com.twitter.util.Duration;
 import com.twitter.util.Future;
+
+import scray.client.jdbc.ScrayURL;
+import scray.service.qservice.thriftjava.ScrayMetaTService;
+import scray.service.qservice.thriftjava.ScrayTServiceEndpoint;
 
 public class ScrayTServiceManager {
 
@@ -61,64 +64,83 @@ public class ScrayTServiceManager {
 		}
 	}
 
-	private List<ScrayTServiceEndpoint> endpointCache = null;
-	private MetaServiceConnection connection = null;
+	private static Map<String, List<ScrayTServiceEndpoint>> endpointCache = new HashMap<String, List<ScrayTServiceEndpoint>>();
 
+	private static Map<String, MetaServiceConnection> connections = new HashMap<String, MetaServiceConnection>();
+	private static ReentrantReadWriteLock connectionLock = new ReentrantReadWriteLock(); 
+	
+	private ScrayURL scrayURL = null;
+	
 	private java.util.Random rand = new java.util.Random();
 
 	private int TIMEOUT = 10; // secs
 	private long REFRESH = 3 * 60 * 1000; // milis
 
-	public void init(ScrayURL scrayURL) {
+	public void init(final ScrayURL scrayURL) {
+		this.scrayURL = scrayURL;
 		// initialize if new, (re)initialize if different, else reuse
-		if (connection == null) {
-			connection = new MetaServiceConnection(scrayURL);
-		} else if (connection.scrayURL.equals(scrayURL)) {
-			connection = new MetaServiceConnection(scrayURL);
+		connectionLock.writeLock().lock();
+		try {
+			if (connections.get(scrayURL.toString()) == null) {
+				connections.put(scrayURL.toString(), new MetaServiceConnection(scrayURL));
+				TimerTask tt = new java.util.TimerTask() {
+					private String url = scrayURL.toString();
+					@Override
+					public void run() {
+						refreshEndpoints(url);
+					}
+				};
+				// schedule refresh of endpointCache (as daemon)
+				Timer t = new Timer(true);
+				t.scheduleAtFixedRate(tt, REFRESH, REFRESH);
+			} 
+			
+			// initially fill the endpoint cache
+			refreshEndpoints(scrayURL.toString());
+	
+		} finally {
+			connectionLock.writeLock().unlock();
 		}
-
-		// initially fill the endpoint cache
-		refreshEndpoints();
-
-		TimerTask tt = new java.util.TimerTask() {
-			@Override
-			public void run() {
-				refreshEndpoints();
-			}
-		};
-
-		// schedule refresh of endpointCache (as daemon)
-		Timer t = new Timer(true);
-		t.scheduleAtFixedRate(tt, REFRESH, REFRESH);
 	}
 
-	void refreshEndpoints() {
+	void refreshEndpoints(String url) {
+		connectionLock.writeLock().lock();
 		try {
-			Future<List<ScrayTServiceEndpoint>> eplist = connection
-					.getMetaClient().getServiceEndpoints();
-			endpointCache = Await.result(eplist, Duration.fromSeconds(TIMEOUT));
-			log.info("Refreshed scray service endpoints: "
-					+ Joiner.on(", ").join(endpointCache));
-		} catch (Exception e) {
-			log.warn("Could not refresh scray service enpoint cache.", e);
+			try {
+				Future<List<ScrayTServiceEndpoint>> eplist = connections.get(url)
+						.getMetaClient().getServiceEndpoints();
+				List<ScrayTServiceEndpoint> endpoints = Await.result(eplist, Duration.fromSeconds(TIMEOUT));
+				endpointCache.put(url, endpoints);
+				log.info("Refreshed scray service endpoints: "
+						+ Joiner.on(", ").join(endpoints));
+			} catch (Exception e) {
+				log.warn("Could not refresh scray service enpoint cache.", e);
+			}
+		} finally {
+			connectionLock.writeLock().unlock();
 		}
 	}
 
 	public String getRandomEndpoint() throws SQLException {
-		String msg = "Error connecting with BDQ Scray Service: no endpoint available.";
-
-		if (endpointCache == null) {
-			log.error(msg);
-			throw new SQLException(msg);
-		}
-
+		connectionLock.readLock().lock();
 		try {
-			int nextIdx = rand.nextInt(endpointCache.size());
-			ScrayTServiceEndpoint nextEp = endpointCache.get(nextIdx);
-			return getHostAndPort(nextEp);
-		} catch (Exception e) {
-			log.error(msg, e);
-			throw new SQLException(msg);
+			String msg = "Error connecting with BDQ Scray Service: no endpoint available.";
+	
+			if (endpointCache == null || scrayURL == null || endpointCache.get(scrayURL.toString()) == null) {
+				log.error(msg);
+				throw new SQLException(msg);
+			}
+	
+			try {
+				int nextIdx = rand.nextInt(endpointCache.size());
+				ScrayTServiceEndpoint nextEp = endpointCache.get(scrayURL.toString()).get(nextIdx);
+				return getHostAndPort(nextEp);
+			} catch (Exception e) {
+				log.error(msg, e);
+				throw new SQLException(msg);
+			}
+		} finally {
+			connectionLock.readLock().unlock();
 		}
 	}
 
@@ -128,20 +150,25 @@ public class ScrayTServiceManager {
 	}
 
 	public List<ScrayTServiceEndpoint> getEndpointCache() {
-		return endpointCache;
+		connectionLock.readLock().lock();
+		try {
+			return (endpointCache == null || scrayURL == null || endpointCache.get(scrayURL.toString()) == null)?null:endpointCache.get(scrayURL.toString());
+		} finally {
+			connectionLock.readLock().unlock();
+		}
 	}
 
 	public ScrayURL getScrayURL() {
-		return connection.scrayURL;
+		return scrayURL;
 	}
 
 	public boolean isStatefulTService() {
-		return connection.scrayURL.getProtocolMode().equals(
+		return scrayURL.getProtocolMode().equals(
 				ScrayURL.ProtocolModes.stateful.name());
 	}
 
 	public boolean isStatelessTService() {
-		return connection.scrayURL.getProtocolMode().equals(
+		return scrayURL.getProtocolMode().equals(
 				ScrayURL.ProtocolModes.stateless.name());
 	}
 }
