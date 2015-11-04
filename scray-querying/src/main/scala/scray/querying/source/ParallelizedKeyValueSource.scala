@@ -43,8 +43,8 @@ import com.twitter.util.Try
  * The query is comprised of a set of keys.
  */
 class ParallelizedKeyValueSource[K, V](override val store: ReadableStore[K, V], 
-    space: String, table: TableIdentifier, enableCaching: Boolean = true) 
-    extends KeyValueSource[K, V](store, space, table, enableCaching) with LazyLogging {
+    space: String, version: Int, table: TableIdentifier, enableCaching: Boolean = true) 
+    extends KeyValueSource[K, V](store, space, version, table, enableCaching) with LazyLogging {
 
   def request(query: KeySetBasedQuery[K]): Future[Seq[Row]] = {
     if(enableCaching) {

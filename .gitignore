@@ -40,3 +40,7 @@ build.log
 # output not in target directory
 build.log
 .cache
+
+# some generated output should not be gitted
+src-gen
+xtend-gen

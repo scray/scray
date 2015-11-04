@@ -32,13 +32,13 @@ abstract class QueryspaceConfiguration(val name: String) {
    * without an extra in-memory step introduced by scray-querying the
    * results will be ordered if the queryspace can choose the main table
    */
-  def queryCanBeOrdered(query: Query): Option[ColumnConfiguration]
+  def queryCanBeOrdered(query: DomainQuery): Option[ColumnConfiguration]
   
   /**
    * if this queryspace can group accoring to query all by itself, i.e. 
    * without an extra in-memory step introduced by scray-querying
    */
-  def queryCanBeGrouped(query: Query): Option[ColumnConfiguration]
+  def queryCanBeGrouped(query: DomainQuery): Option[ColumnConfiguration]
   
   /**
    * If this queryspace can handle the query using the materialized view provided.
@@ -51,18 +51,18 @@ abstract class QueryspaceConfiguration(val name: String) {
    * returns configuration of tables which are included in this query space
    * Internal use! 
    */
-  def getTables: Set[TableConfiguration[_, _, _]]
+  def getTables(version: Int): Set[TableConfiguration[_, _, _]]
   
   /**
    * returns columns which can be included in this query space
    * Internal use! 
    */
-  def getColumns: List[ColumnConfiguration]
+  def getColumns(version: Int): List[ColumnConfiguration]
   
   /**
    * re-initialize this queryspace, possibly re-reading the configuration from somewhere
    */
-  def reInitialize: Unit
+  def reInitialize(oldversion: Int): QueryspaceConfiguration
 }
 
 

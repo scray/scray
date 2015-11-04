@@ -15,76 +15,28 @@
 package scray.querying.planning
 
 import com.twitter.concurrent.Spool
-import com.twitter.storehaus.QueryableStore
-import com.twitter.storehaus.ReadableStore
-import com.twitter.util.Await
-import com.twitter.util.Future
+import com.twitter.storehaus.{ QueryableStore, ReadableStore }
+import com.twitter.util.{ Await, Future }
 import com.typesafe.scalalogging.slf4j.LazyLogging
 import java.util.UUID
 import scala.annotation.tailrec
 import scala.collection.mutable.HashMap
 import scala.collection.parallel.immutable.ParSeq
-import scray.querying.Query
-import scray.querying.Registry
-import scray.querying.description.And
-import scray.querying.description.AtomicClause
-import scray.querying.description.Clause
-import scray.querying.description.Column
-import scray.querying.description.ColumnConfiguration
-import scray.querying.description.ColumnOrdering
-import scray.querying.description.Columns
-import scray.querying.description.Equal
-import scray.querying.description.Greater
-import scray.querying.description.GreaterEqual
-import scray.querying.description.IsNull
-import scray.querying.description.Or
-import scray.querying.description.Row
-import scray.querying.description.Smaller
-import scray.querying.description.SmallerEqual
-import scray.querying.description.TableConfiguration
-import scray.querying.description.TableIdentifier
-import scray.querying.description.Unequal
+import scray.querying.{Query, Registry}
+import scray.querying.description.{ And, AtomicClause, Clause, Column, ColumnConfiguration, ColumnOrdering, Columns, Equal, Greater, GreaterEqual }
+import scray.querying.description.{ IsNull, Or, Row, Smaller, SmallerEqual, TableConfiguration, TableIdentifier, Unequal }
 import scray.querying.description.internal._
-import scray.querying.description.internal.Bound
-import scray.querying.description.internal.Domain
-import scray.querying.description.internal.IndexTypeException
-import scray.querying.description.internal.MaterializedView
-import scray.querying.description.internal.NoPlanException
-import scray.querying.description.internal.NonAtomicClauseException
-import scray.querying.description.internal.QueryDomainParserException
-import scray.querying.description.internal.QueryDomainParserExceptionReasons
-import scray.querying.description.internal.QueryWithoutColumnsException
-import scray.querying.description.internal.QueryspaceColumnViolationException
-import scray.querying.description.internal.QueryspaceViolationException
-import scray.querying.description.internal.QueryspaceViolationTableUnavailableException
-import scray.querying.description.internal.RangeValueDomain
-import scray.querying.description.internal.SingleValueDomain
-import scray.querying.description.internal.SingleValueDomain
-import scray.querying.queries.DomainQuery
-import scray.querying.queries.QueryInformation
-import scray.querying.source.EagerCollectingDomainFilterSource
-import scray.querying.source.EagerEmptyRowDispenserSource
-import scray.querying.source.EagerSource
-import scray.querying.source.IdentityEagerCollectingQueryMappingSource
-import scray.querying.source.IndexMergeSource
-import scray.querying.source.IndexMergeSource
-import scray.querying.source.KeyValueSource
-import scray.querying.source.LazyEmptyRowDispenserSource
-import scray.querying.source.LazyQueryColumnDispenserSource
-import scray.querying.source.LazyQueryDomainFilterSource
-import scray.querying.source.LazySource
-import scray.querying.source.LimitIncreasingQueryableSource
-import scray.querying.source.OrderingEagerMappingSource
-import scray.querying.source.ParallelizedQueryableSource
-import scray.querying.source.QueryableSource
-import scray.querying.source.SimpleHashJoinSource
-import scray.querying.source.Source
-import scray.querying.source.SplittedAutoIndexQueryableSource
-import scray.querying.source.SplittedAutoIndexQueryableSource
-import scray.querying.source.indexing.SimpleHashJoinConfig
-import scray.querying.source.indexing.TimeIndexConfig
-import scray.querying.source.indexing.TimeIndexSource
-import scray.querying.source.MergeReferenceColumns
+import scray.querying.description.internal.{ Bound, Domain, IndexTypeException, MaterializedView, NoPlanException, NonAtomicClauseException }
+import scray.querying.description.internal.{ QueryDomainParserException, QueryDomainParserExceptionReasons, QueryWithoutColumnsException }
+import scray.querying.description.internal.{ QueryspaceColumnViolationException, QueryspaceViolationException, QueryspaceViolationTableUnavailableException }
+import scray.querying.description.internal.{ RangeValueDomain, SingleValueDomain }
+import scray.querying.queries.{ DomainQuery, QueryInformation }
+import scray.querying.source.{ EagerCollectingDomainFilterSource, EagerEmptyRowDispenserSource, EagerSource, IdentityEagerCollectingQueryMappingSource }
+import scray.querying.source.{ IndexMergeSource, KeyValueSource, LazyEmptyRowDispenserSource, LazyQueryColumnDispenserSource, LazyQueryDomainFilterSource }
+import scray.querying.source.{ LazySource, LimitIncreasingQueryableSource, OrderingEagerMappingSource, ParallelizedQueryableSource, QueryableSource }
+import scray.querying.source.{ SimpleHashJoinSource, Source, SplittedAutoIndexQueryableSource, MergeReferenceColumns } 
+import scray.querying.source.indexing.{ SimpleHashJoinConfig, TimeIndexConfig, TimeIndexSource }
+
 /**
  * Simple planner to execute queries.
  * For each query do:
@@ -100,7 +52,7 @@ object Planner extends LazyLogging {
   def planAndExecute(query: Query): Spool[Row] = {
     
     logger.info(s"qid is ${query.getQueryID}")
-    basicVerifyQuery(query)
+    val version = basicVerifyQuery(query)
 
     val queryInfo = Registry.createQueryInformation(query)
     
@@ -115,7 +67,7 @@ object Planner extends LazyLogging {
     // planning of conjunctive queries can be done in parallel
     val plans = conjunctiveQueries.par.map { cQuery => 
       // transform query into a query only containing domains
-      val domainQuery = transformQueryDomains(cQuery)
+      val domainQuery = transformQueryDomains(cQuery, version)
     
       // find the main plan
       val plan = findMainQueryPlan(cQuery, domainQuery)
@@ -154,12 +106,15 @@ object Planner extends LazyLogging {
   /**
    * verify basic query properties
    */
-  @inline def basicVerifyQuery(query: Query): Unit = {
+  @inline def basicVerifyQuery(query: Query): Int = {
+    // then we can retrieve the latest version of this queryspace
+    val version = Registry.getLatestVersion(query.getQueryspace).getOrElse(throw new QueryspaceViolationException(query))
+
     // check that the queryspace is there
-    Registry.getQuerySpace(query.getQueryspace).orElse(throw new QueryspaceViolationException(query))
+    Registry.getQuerySpace(query.getQueryspace, version).orElse(throw new QueryspaceViolationException(query))
     
     // check that the table is registered in the queryspace
-    Registry.getQuerySpaceTable(query.getQueryspace, query.getTableIdentifier).orElse{
+    Registry.getQuerySpaceTable(query.getQueryspace, version, query.getTableIdentifier).orElse{
       throw new QueryspaceViolationException(query)
     }.map { tableConf =>
       if(!(tableConf.queryableStore.isDefined || tableConf.readableStore.isDefined)) {
@@ -171,7 +126,7 @@ object Planner extends LazyLogging {
     
     // def to throw if a column is not registered 
     @inline def checkColumnReference(reference: Column): Unit = {
-      Registry.getQuerySpaceColumn(query.getQueryspace, reference) match {
+      Registry.getQuerySpaceColumn(query.getQueryspace, version, reference) match {
         case None => throw new QueryspaceColumnViolationException(query, reference)
         case _ => // column is registered, o.k.
       }
@@ -200,6 +155,9 @@ object Planner extends LazyLogging {
     // check that all referenced columns in orderby, groupby are registered
     query.getGrouping.map(grouping => checkColumnReference(grouping.column))
     query.getOrdering.map(ordering => checkColumnReference(ordering.column))
+    
+    // return version being used
+    version
   }
   
   /**
@@ -306,7 +264,7 @@ object Planner extends LazyLogging {
         findMaterializedViews(views.tail, resultlist)
       }
     }
-    Registry.getQuerySpaceTable(space, table).flatMap { config =>
+    Registry.getQuerySpaceTable(space, domQuery.querySpaceVersion, table).flatMap { config =>
       val views = findMaterializedViews(config.materializedViews, Nil)
       if(!views.isEmpty) {
         val orderedViews = views.filter(_._1)
@@ -355,7 +313,7 @@ object Planner extends LazyLogging {
           case single: SingleValueDomain[_] => single.isNull
           case _ => false 
         })) {
-          Registry.getQuerySpaceColumn(query.getQueryspace, domain.column).flatMap{col => 
+          Registry.getQuerySpaceColumn(query.getQueryspace, domainQuery.querySpaceVersion, domain.column).flatMap{col => 
             if(col.index.map(_.isManuallyIndexed.isDefined).getOrElse(false)) {
               Some(col)
             } else {
@@ -369,7 +327,7 @@ object Planner extends LazyLogging {
     
       
     def isAutoIndexWithSplit(column: Column): Boolean = {
-        Registry.getQuerySpaceColumn(query.getQueryspace, column).flatMap { colConf =>
+        Registry.getQuerySpaceColumn(query.getQueryspace, domainQuery.querySpaceVersion, column).flatMap { colConf =>
           colConf.index.flatMap { index => index.autoIndexConfiguration.map { autoIndex => autoIndex.rangePartioned } }
         }.isDefined
       } // --- END isAutoIndexWithSplit ---
@@ -378,7 +336,8 @@ object Planner extends LazyLogging {
     // whether it is ordered according to our ordering: Option[(ordered: Boolean, table)] 
     checkMaterializedViewMatching(query.getQueryspace, query.getTableIdentifier, domainQuery) match {
       case Some((ordered, viewConf)) =>
-        val qSource = new QueryableSource(getQueryableStore(viewConf.viewTable, domainQuery.getQueryID), query.getQueryspace, domainQuery.table, ordered) 
+        val qSource = new QueryableSource(getQueryableStore(viewConf.viewTable, domainQuery.getQueryID), query.getQueryspace, 
+                                          domainQuery.querySpaceVersion, domainQuery.table, ordered) 
         return ComposablePlan.getComposablePlan(qSource, domainQuery)
       case _ =>
     }
@@ -386,12 +345,12 @@ object Planner extends LazyLogging {
     // 2. materialized views aren't available for this query. Build non-view-based plan 
     val sortedColumnConfig: Option[ColumnConfiguration] = query.getOrdering.flatMap { _ => 
       // we shall sort - do we have sorting in the query space?
-      Registry.getQuerySpace(query.getQueryspace).flatMap(_.queryCanBeOrdered(query))
+      Registry.getQuerySpace(query.getQueryspace, domainQuery.querySpaceVersion).flatMap(_.queryCanBeOrdered(domainQuery))
     }
 
     val groupedColumnConfig: Option[ColumnConfiguration] = query.getOrdering.flatMap { _ => 
       // we shall group - do we have auto-grouping?
-      Registry.getQuerySpace(query.getQueryspace).flatMap(_.queryCanBeGrouped(query))
+      Registry.getQuerySpace(query.getQueryspace, domainQuery.querySpaceVersion).flatMap(_.queryCanBeGrouped(domainQuery))
     }
 
     val listOfIndexedColumns = isIndexMergable
@@ -414,7 +373,8 @@ object Planner extends LazyLogging {
               indexTableConfig, 
               domainQuery.getQueryID
            ),
-          query.getQueryspace, 
+          query.getQueryspace,
+          domainQuery.querySpaceVersion,
           indexTableConfig.table, 
           index.isSorted
         )
@@ -424,6 +384,7 @@ object Planner extends LazyLogging {
                 domainQuery.getQueryID
              ), 
              query.getQueryspace,
+             domainQuery.querySpaceVersion,
              lookupTableConfig.table,
              Registry.getCachingEnabled
         )
@@ -435,7 +396,7 @@ object Planner extends LazyLogging {
             val timeQueryableSource = time.parallelization match {
               // case Some(parFunc) => indexSource
               case Some(parFunc) =>
-                new ParallelizedQueryableSource(indexSource.store, indexSource.space,
+                new ParallelizedQueryableSource(indexSource.store, indexSource.space, domainQuery.querySpaceVersion,
                   time.parallelizationColumn.get, parFunc(indexSource.store), time.ordering,
                   query.getOrdering.filter(_.descending).isDefined)
               case None => indexSource
@@ -452,6 +413,7 @@ object Planner extends LazyLogging {
                       indexTableConfig2,
                       domainQuery.getQueryID),
                     query.getQueryspace,
+                    domainQuery.querySpaceVersion,
                     indexTableConfig2.table,
                     index2.isSorted);
 
@@ -472,26 +434,26 @@ object Planner extends LazyLogging {
           case _ => throw new IndexTypeException(query)
         }
       }).orElse {
-        Registry.getQuerySpaceTable(domainQuery.getQueryspace, domainQuery.getTableIdentifier).map { tableConf =>
-          new QueryableSource(getQueryableStore(tableConf, domainQuery.getQueryID), query.getQueryspace, tableConf.table, true)
+        Registry.getQuerySpaceTable(domainQuery.getQueryspace, domainQuery.querySpaceVersion, domainQuery.getTableIdentifier).map { tableConf =>
+          new QueryableSource(getQueryableStore(tableConf, domainQuery.getQueryID), query.getQueryspace, domainQuery.querySpaceVersion, tableConf.table, true)
         }
       }
     }.getOrElse {
       // construct plan using information on main table
-      Registry.getQuerySpaceTable(domainQuery.getQueryspace, domainQuery.getTableIdentifier).map { tableConf =>
+      Registry.getQuerySpaceTable(domainQuery.getQueryspace, domainQuery.querySpaceVersion, domainQuery.getTableIdentifier).map { tableConf =>
         domainQuery.getWhereAST.find { x => 
           // TODO: head for RangeValueDomains first!!!
           // if an auto-indexed column with an auto-indexing configuration is used, we will check it doesn't need to be split
           isAutoIndexWithSplit(x.column) && domainQuery.getOrdering.map { ord => ord.column == x.column }.getOrElse(false)
         }.flatMap { autoIndexAndSplitColumnDomain =>
-          Registry.getQuerySpaceColumn(query.getQueryspace, autoIndexAndSplitColumnDomain.column).flatMap { colConf =>
+          Registry.getQuerySpaceColumn(query.getQueryspace, domainQuery.querySpaceVersion, autoIndexAndSplitColumnDomain.column).flatMap { colConf =>
             colConf.index.flatMap { index => index.autoIndexConfiguration.map { autoIndex => (index.isSorted, autoIndex.rangePartioned) }}
           }.map { rangePartioned =>
             autoIndexAndSplitColumnDomain match {
               case range : RangeValueDomain[tempT] => 
                 def splittedSource[K, V, Q](ordering: Ordering[tempT]): SplittedAutoIndexQueryableSource[K, V, tempT] =
                   new SplittedAutoIndexQueryableSource[K, V, tempT](getQueryableStore(tableConf.asInstanceOf[TableConfiguration[K, Q, V]], 
-                                                  domainQuery.getQueryID), query.getQueryspace, tableConf.table, 
+                                                  domainQuery.getQueryID), query.getQueryspace, domainQuery.querySpaceVersion, tableConf.table, 
                                                   autoIndexAndSplitColumnDomain.column, rangePartioned._2.asInstanceOf[
                                                     Option[((tempT, tempT), Boolean) ⇒ Iterator[(tempT, tempT)]]], rangePartioned._1)(
                                                          ordering)
@@ -499,8 +461,8 @@ object Planner extends LazyLogging {
                                                          splittedSource(range.ordering)
               case _ =>
                 logger.debug(s"Using LimitIncreasingQueryableSource $autoIndexAndSplitColumnDomain")
-                new LimitIncreasingQueryableSource(getQueryableStore(tableConf, domainQuery.getQueryID), 
-                                                   query.getQueryspace, tableConf.table, rangePartioned._1)
+                new LimitIncreasingQueryableSource(getQueryableStore(tableConf, domainQuery.getQueryID), query.getQueryspace,
+                                                   domainQuery.querySpaceVersion, tableConf.table, rangePartioned._1)
             }
             // new QueryableSource(getQueryableStore(tableConf, domainQuery.getQueryID), query.getQueryspace, tableConf.table)
           }
@@ -510,10 +472,11 @@ object Planner extends LazyLogging {
           // if the query has a limit we can use some query increaser
           query.getQueryRange.flatMap { range =>
             range.limit.map { limit => 
-              new LimitIncreasingQueryableSource(getQueryableStore(tableConf, domainQuery.getQueryID), query.getQueryspace, tableConf.table)
+              new LimitIncreasingQueryableSource(getQueryableStore(tableConf, domainQuery.getQueryID), 
+                                                 query.getQueryspace, domainQuery.querySpaceVersion, tableConf.table)
             }
           }.getOrElse {
-            new QueryableSource(getQueryableStore(tableConf, domainQuery.getQueryID), query.getQueryspace, tableConf.table)
+            new QueryableSource(getQueryableStore(tableConf, domainQuery.getQueryID), query.getQueryspace, domainQuery.querySpaceVersion, tableConf.table)
           }
         }
       }
@@ -614,12 +577,12 @@ object Planner extends LazyLogging {
    * identifies columns which are being queried.
    * TODO: add functions that can be queried
    */
-  @inline def identifyColumns(list: Columns, table: TableIdentifier, domains: List[Domain[_]], query: Query): List[Column] = {
+  @inline def identifyColumns(list: Columns, table: TableIdentifier, domains: List[Domain[_]], query: Query, version: Int): List[Column] = {
     list.columns match {
       case Right(cols) => cols
       case Left(all) => { // the result will be all possible columns, i.e. all from the table + columns from domains
         if(all) {
-          (Registry.getQuerySpaceTable(query.getQueryspace, table).getOrElse {
+          (Registry.getQuerySpaceTable(query.getQueryspace, version, table).getOrElse {
               throw new QueryspaceViolationException(query)
             }.allColumns.toSet ++ domains.map(dom => dom.column).toSet).toList
         } else { throw new QueryWithoutColumnsException(query) }
@@ -630,12 +593,13 @@ object Planner extends LazyLogging {
   /**
    * transforms a predicate-based query into a (internal) domain-based one
    */
-  @inline def transformQueryDomains(query: Query): DomainQuery = {
+  @inline def transformQueryDomains(query: Query, version: Int): DomainQuery = {
     val domains = qualifyPredicates(query).getOrElse(List())
     val table = query.getTableIdentifier
     DomainQuery(query.getQueryID,
-        query.getQueryspace, 
-        identifyColumns(query.getResultSetColumns, table, domains, query),
+        query.getQueryspace,
+        version,
+        identifyColumns(query.getResultSetColumns, table, domains, query, version),
         table,
         domains,
         query.getGrouping,

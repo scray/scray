@@ -38,10 +38,10 @@ import scray.querying.caching.serialization.RegisterRowCachingSerializers
  * A source that queries a Storehaus-store for a given value.
  * The query is comprised of a simple key in this case.
  */
-class KeyValueSource[K, V](val store: ReadableStore[K, V], 
-    space: String, table: TableIdentifier, enableCaching: Boolean = true) extends EagerSource[KeyBasedQuery[K]] with LazyLogging {
+class KeyValueSource[K, V](val store: ReadableStore[K, V], space: String, version: Int,
+    table: TableIdentifier, enableCaching: Boolean = true) extends EagerSource[KeyBasedQuery[K]] with LazyLogging {
 
-  private val queryspaceTable = Registry.getQuerySpaceTable(space, table)
+  private val queryspaceTable = Registry.getQuerySpaceTable(space, version, table)
   protected val cache = Registry.getCache[Row, KeyValueCache[K, Row]](this)
   
   val valueToRow: ((K, V)) => Row = queryspaceTable.get.rowMapper.asInstanceOf[((K, V)) => Row]

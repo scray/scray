@@ -55,12 +55,12 @@ class CassandraQueryspaceConfiguration(
   
   lazy val tableRowMapperMap: Map[AbstractCQLCassandraStore[_, _], ((_) => Row, Option[String], Option[VersioningConfiguration[_, _, _]])] = tables.toMap
   
-  override def queryCanBeOrdered(query: Query): Option[ColumnConfiguration] = {
+  override def queryCanBeOrdered(query: DomainQuery): Option[ColumnConfiguration] = {
     // TODO: maybe this is right for some cases, but we must implement all:
     //   - what happens if the manual index is not going to be used
     //   - what happens if the main query doesn't use the table with the clustering column 
     query.getOrdering.flatMap { ordering =>
-      Registry.getQuerySpaceColumn(query.getQueryspace, ordering.column).flatMap { colConfig =>
+      Registry.getQuerySpaceColumn(query.getQueryspace, query.querySpaceVersion, ordering.column).flatMap { colConfig =>
         colConfig.index.flatMap(index => if(index.isManuallyIndexed.isDefined && index.isSorted) {
           val itc = index.isManuallyIndexed.get.indexTableConfig()
           if(itc.queryableStore.isDefined || (itc.versioned.isDefined && itc.versioned.get.runtimeVersion().isDefined )) {
@@ -71,7 +71,7 @@ class CassandraQueryspaceConfiguration(
         } else {
           None
         }).orElse {
-          Registry.getQuerySpaceTable(query.getQueryspace, ordering.column.table).flatMap { table =>
+          Registry.getQuerySpaceTable(query.getQueryspace, query.querySpaceVersion, ordering.column.table).flatMap { table =>
             if(table.clusteringKeyColumns.size > 0 && table.clusteringKeyColumns(0) == ordering.column ) {
               Some(colConfig)
             } else {
@@ -83,20 +83,20 @@ class CassandraQueryspaceConfiguration(
     }
   }
   
-  override def queryCanBeGrouped(query: Query): Option[ColumnConfiguration] = queryCanBeOrdered(query)
+  override def queryCanBeGrouped(query: DomainQuery): Option[ColumnConfiguration] = queryCanBeOrdered(query)
   
-  override def getColumns: List[ColumnConfiguration] = tables.toList.flatMap ( table => {
+  override def getColumns(version: Int): List[ColumnConfiguration] = tables.toList.flatMap ( table => {
     // TODO: fix this ugly stuff (for now we leave it, as fixing this will only increase type safety)
     val typeReducedTable = table._1.asInstanceOf[AbstractCQLCassandraStore[Any, Any]]
     val extractor = CassandraExtractor.getExtractor(typeReducedTable, table._2._2, table._2._3)
     val allColumns = extractor.getTableConfiguration(table._2._1).allColumns
     allColumns.map { col =>
-      val index = extractor.createManualIndexConfiguration(col, name, typeReducedTable, indexes, tableRowMapperMap)
+      val index = extractor.createManualIndexConfiguration(col, name, version, typeReducedTable, indexes, tableRowMapperMap)
       extractor.getColumnConfiguration(typeReducedTable, col, this, index, splitters)
     }
   })
   
-  override def getTables: Set[TableConfiguration[_, _, _]] = tables.map ( table => {
+  override def getTables(version: Int): Set[TableConfiguration[_, _, _]] = tables.map ( table => {
     // TODO: fix this ugly stuff (for now we leave it, as fixing this will only increase type safety)
     val typeReducedTable = table._1.asInstanceOf[AbstractCQLCassandraStore[Any, Any]]
     val extractor = CassandraExtractor.getExtractor(typeReducedTable, table._2._2, table._2._3)
@@ -153,5 +153,5 @@ class CassandraQueryspaceConfiguration(
    * reloads the query-space configuration
    * TODO: invent some mechanism to do the reload 
    */
-  override def reInitialize: Unit = {} 
+  override def reInitialize(oldversion: Int): QueryspaceConfiguration = this 
 }

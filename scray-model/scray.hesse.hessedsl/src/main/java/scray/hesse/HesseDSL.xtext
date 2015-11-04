@@ -1,0 +1,141 @@
+grammar scray.hesse.HesseDSL with org.eclipse.xtext.common.Terminals
+
+generate hesseDSL "http://www.hesse.scray/HesseDSL"
+
+import "http://www.eclipse.org/emf/2002/Ecore" as ecore
+
+Model:
+	header=Header (bodyStatements+=BodyStatement)+;
+
+// ----------- HEADER ---------------
+	
+Header:
+	{Header}
+	(name=ModelNameDefinition)?
+	(queryspace=QueryspaceDefinition)?
+	(headerElements += AbstractHeaderElement)*;
+	
+AbstractHeaderElement:
+	DefaultDBMSHeaderElement | DefaultDBIDElement;
+
+ModelNameDefinition:
+	'NAME' name=ID ';'?;
+
+QueryspaceDefinition:
+	'USE' 'QUERYSPACE' name=ID ';'?;
+	
+DefaultDBMSHeaderElement:
+	'USE' 'DEFAULT' 'DBMS' name=SupportedDBMSSystems ';'?;
+	
+enum SupportedDBMSSystems:
+	CASSANDRA='cassandra';
+
+DefaultDBIDElement:
+	'USE' 'DEFAULT' 'DB' name=ID ';'?;
+
+// ------------- BODY ----------------
+
+BodyStatement:
+	ViewStatement | MaterializedViewStatement;
+	
+ViewStatement:
+	'CREATE' 'VIEW' name=ID 'AS' select=SelectStatement;
+
+MaterializedViewStatement:
+	'CREATE' 'MATERIALIZED' 'VIEW' name=ID 'AS' select=SelectStatement;
+
+SelectStatement:
+	'SELECT' columns=ResultColumnDefinitions 'FROM' tables=TableDefinitions (filters=FilterDefinitions)?;
+	
+ResultColumnDefinitions:
+	(allColumns?='*') | columns+=RenamableColumnDefinition (',' columns+=RenamableColumnDefinition)*;
+
+RenamableColumnDefinition:
+	column=AbstractResultColumnDefinition ('AS' alternateName=ID)?;
+
+AbstractResultColumnDefinition:
+	AbstractTerminalColumnDefinition | FunctionColumn;
+
+AbstractTerminalColumnDefinition:
+	SelectColumn | ConstantColumn;
+	
+SelectColumn: // TODO make tableName a reference to a table-declaration
+	(tableName=ID'.')?name=ID;
+
+ConstantColumn:
+	ConstantIntColumn | ConstantStringColumn | ConstantDoubleColumnvalue | ConstantLongValue;
+
+FunctionColumn: 
+	function=AbstractFunctionName '(' parameters+=AbstractTerminalColumnDefinition (',' parameters+=AbstractTerminalColumnDefinition)* ')';	
+
+AbstractFunctionName:
+	BuiltinFunction | UserDefinedFunction;
+
+UserDefinedFunction:
+	// TODO references to created functions within the same Hesse-document 
+	name=ID;
+
+BuiltinFunction:
+	name=BuiltinFunctions;
+
+enum BuiltinFunctions:
+	SUM='SUM' | PROD='PROD' | MAX='MAX' | MIN='MIN' | AVG='AVG' | STDDEV='STDDEV_POP' | LAST='LAST' | FIRST='FIRST' | COUNT='COUNT' | VARPOP='VAR_POP';
+
+FilterDefinitions: // we need to specify predicates
+	'WHERE' predicates=OrPredicates;
+
+OrPredicates:
+	predicates+=AndPredicates ('OR' predicates+=AndPredicates)*;
+
+AndPredicates:
+	predicates+=BasicPredicates ('AND' predicates+=BasicPredicates)*;
+
+BasicPredicates:
+	BinaryPredicate | UnaryPredicate | NegationPredicate | BracketPredicate;
+
+NegationPredicate:
+	'NOT' '(' predicate=OrPredicates ')';
+
+BracketPredicate:
+	'(' predicate=OrPredicates ')';
+
+BinaryPredicate:
+	left=AbstractResultColumnDefinition comparator=BinaryPredicateComparator right=AbstractResultColumnDefinition;
+
+enum BinaryPredicateComparator:
+	EQUAL='=' | SMALLER='<' | GREATER='>' | SMALLEREQUAL='<=' | GREATEREQUAL='>=' | UNEQUAL='<>' | LIKE='LIKE';
+
+UnaryPredicate:
+	left=AbstractResultColumnDefinition comparator=UnaryPredicateComparator;
+
+UnaryPredicateComparator: ISNULL | ISNOTNULL;
+
+TableDefinitions:
+	tables+=RenamableTableDefinition (',' tables+=RenamableTableDefinition)*;
+		
+RenamableTableDefinition:
+	table=AbstractTableDefinition ('AS' alternateName=ID)?;
+
+AbstractTableDefinition:
+	/* ViewReferencingTable | */ SubSelectingTable | PrimitiveTable;
+
+//ViewReferencingTable:
+//	reference=[ViewStatement];
+
+SubSelectingTable:
+	'(' select=SelectStatement ')';
+	
+PrimitiveTable:
+	name=ID;
+
+// ------------- additional Data Types and resp. Columns ----------------
+DECIMAL returns ecore::EDouble: '-'?INT'.'INT('E'('+'|'-')?INT)?;
+LONG returns ecore::ELong: '-'?INT'L';
+//DATE returns ecore::EDate: INT'-'INT'-'INT;
+ISNULL: 'IS' 'NULL';
+ISNOTNULL: 'IS' 'NOT' 'NULL';
+
+ConstantIntColumn: value=INT;
+ConstantStringColumn: value=STRING;
+ConstantDoubleColumnvalue: value=DECIMAL;
+ConstantLongValue: value=LONG;

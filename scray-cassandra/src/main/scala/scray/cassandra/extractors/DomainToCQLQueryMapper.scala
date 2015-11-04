@@ -178,7 +178,7 @@ class DomainToCQLQueryMapper[S <: AbstractCQLCassandraStore[_, _]] extends LazyL
   private def getValueKeyQueryMapping(store: S, query: DomainQuery, extractor: CassandraExtractor[S],
       storeTableNickName: Option[String]): Option[String] = {
     val valueCols = extractor.getValueColumns.map { valueCol => 
-      Registry.getQuerySpaceColumn(query.getQueryspace, valueCol)     
+      Registry.getQuerySpaceColumn(query.getQueryspace, query.querySpaceVersion, valueCol)     
     }.filter(cd => cd.isDefined && cd.get.index.isDefined && cd.get.index.get.isAutoIndexed).
     partition(cd => cd.get.index.get.autoIndexConfiguration.isDefined)
     logger.trace(s"value Columns that are indexed: $valueCols")

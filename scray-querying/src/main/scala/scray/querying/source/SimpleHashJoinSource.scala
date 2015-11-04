@@ -60,6 +60,7 @@ class SimpleHashJoinSource[Q <: DomainQuery, K, R, V](
         lookupSourceJoinColumns,
         lookupSource.getColumns,
         query.querySpace,
+        query.querySpaceVersion,
         query.getQueryID)
       val seq = Await.result(lookupSource.request(keyValueSourceQuery))
       if(seq.size > 0) {

@@ -32,10 +32,10 @@ import scray.querying.caching.NullCache
 /**
  * queries a Storehaus-store. Assumes that the Seq returnes by QueryableStore is a lazy sequence (i.e. view)
  */
-class QueryableSource[K, V](val store: QueryableStore[K, V], val space: String, table: TableIdentifier, val isOrdered: Boolean = false) 
+class QueryableSource[K, V](val store: QueryableStore[K, V], val space: String, val version: Int, table: TableIdentifier, val isOrdered: Boolean = false) 
     extends LazySource[DomainQuery] with LazyLogging {
 
-  protected val queryspaceTable = Registry.getQuerySpaceTable(space, table) 
+  protected val queryspaceTable = Registry.getQuerySpaceTable(space, version, table) 
   
   val valueToRow: (V) => Row = queryspaceTable.get.rowMapper.asInstanceOf[(V) => Row]
   
@@ -58,7 +58,7 @@ class QueryableSource[K, V](val store: QueryableStore[K, V], val space: String, 
    */
   override def isOrdered(query: DomainQuery): Boolean = {
     isOrdered || (query.getOrdering match {
-      case Some(col) => Registry.getQuerySpaceColumn(space, col.column) match {
+      case Some(col) => Registry.getQuerySpaceColumn(space, query.querySpaceVersion, col.column) match {
           case None => false
           case Some(colConfig) => colConfig.index.map(_.isSorted).getOrElse(false)
         }

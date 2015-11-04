@@ -44,6 +44,7 @@ import java.util.concurrent.TimeUnit
 import com.twitter.util.Time
 import scala.collection.mutable.ArrayBuffer
 import scray.querying.monitoring.MonitorQuery
+import com.twitter.util.Try
 
 /**
  * default trait to represent get operations on the registry
@@ -53,17 +54,27 @@ trait Registry {
   /**
    * returns the current queryspace configuration
    */
-  @inline def getQuerySpace(space: String): Option[QueryspaceConfiguration]
+  @inline def getQuerySpace(space: String, version: Int): Option[QueryspaceConfiguration]
 
   /**
    * returns a column configuration
    */
-  @inline def getQuerySpaceColumn(space: String, column: Column): Option[ColumnConfiguration]
+  @inline def getQuerySpaceColumn(space: String, version: Int, column: Column): Option[ColumnConfiguration]
 
   /**
    * returns a table configuration
    */
-  @inline def getQuerySpaceTable(space: String, ti: TableIdentifier): Option[TableConfiguration[_, _, _]]
+  @inline def getQuerySpaceTable(space: String, version: Int, ti: TableIdentifier): Option[TableConfiguration[_, _, _]]
+  
+  /**
+   * returns the latest version of a given query space
+   */
+  @inline def getLatestVersion(space: String): Option[Int]
+
+  /**
+   * returns all available version of a given query space
+   */
+  @inline def getVersions(space: String): Set[Int]
 }
 
 
@@ -79,12 +90,14 @@ object Registry extends LazyLogging with Registry {
 
   private val querymonitor = new MonitorQuery
 
+  
   // makes registry thread safe at the cost of some performance;
   // however, reads should not be blocking each other
   private val rwlock = new ReentrantReadWriteLock
 
   // all querySpaces, that can be queried
   private val querySpaces = new HashMap[String, QueryspaceConfiguration]
+  private val querySpaceVersions = new HashMap[String, Set[Int]]
 
   private val enableCaches = new AtomicBoolean(true)
 
@@ -93,14 +106,31 @@ object Registry extends LazyLogging with Registry {
   private val queryMonitorRwLock = new ReentrantReadWriteLock
 
   /**
+   * returns the latest version of a given query space
+   */
+  @inline override def getLatestVersion(space: String): Option[Int] = Try(getVersions(space).max).toOption
+
+  /**
+   * returns all available version of a given query space
+   */
+  @inline override def getVersions(space: String): Set[Int] = {
+    rwlock.readLock.lock
+    try {
+      querySpaceVersions.get(space).getOrElse(Set())      
+    } finally {
+      rwlock.readLock().unlock()
+    }
+  }
+  
+  /**
    * returns the current queryspace configuration
    * Cannot be used to query the Registry for tables or columns of a queryspace,
    * because of concurrent updates. Use more specific methods instead.
    */
-  @inline override def getQuerySpace(space: String): Option[QueryspaceConfiguration] = {
+  @inline override def getQuerySpace(space: String, version: Int): Option[QueryspaceConfiguration] = {
     rwlock.readLock.lock
     try {
-      querySpaces.get(space)
+      querySpaces.get(space + version)
     } finally {
       rwlock.readLock.unlock
     }
@@ -112,10 +142,10 @@ object Registry extends LazyLogging with Registry {
   /**
    * returns a table configuration
    */
-  @inline def getQuerySpaceTable(space: String, ti: TableIdentifier): Option[TableConfiguration[_, _, _]] = {
+  @inline def getQuerySpaceTable(space: String, version: Int, ti: TableIdentifier): Option[TableConfiguration[_, _, _]] = {
     rwlock.readLock.lock
     try {
-      querySpaceTables.get(space).flatMap(_.get(ti))
+      querySpaceTables.get(space + version).flatMap(_.get(ti))
     } finally {
       rwlock.readLock.unlock
     }
@@ -127,81 +157,82 @@ object Registry extends LazyLogging with Registry {
   /**
    * returns a column configuration
    */
-  @inline override def getQuerySpaceColumn(space: String, column: Column): Option[ColumnConfiguration] = {
+  @inline override def getQuerySpaceColumn(space: String, version: Int, column: Column): Option[ColumnConfiguration] = {
     rwlock.readLock.lock
     try {
-      querySpaceColumns.get(space).flatMap(_.get(column))
+      querySpaceColumns.get(space + version).flatMap(_.get(column))
     } finally {
       rwlock.readLock.unlock
     }
   }
 
   /**
-   * Register a new querySpace
+   * Register a querySpace, producing a new version
    */
-  def registerQuerySpace(querySpace: QueryspaceConfiguration): Unit = {
+  def registerQuerySpace(querySpace: QueryspaceConfiguration, version: Option[Int] = None): Int = {
     rwlock.writeLock.lock
     try {
-      querySpaces.put(querySpace.name, querySpace)
-      querySpaceColumns.put(querySpace.name, new HashMap[Column, ColumnConfiguration])
-      querySpaceTables.put(querySpace.name, new HashMap[TableIdentifier, TableConfiguration[_, _, _]])
-      querySpace.getColumns.foreach(col => querySpaceColumns.get(querySpace.name).map(_.put(col.column, col)))
-      querySpace.getTables.foreach(table => querySpaceTables.get(querySpace.name).map(_.put(table.table, table)))
+      val newVersion = version.orElse(getLatestVersion(querySpace.name).map(_ + 1)).getOrElse(1)
+      querySpaces.put(querySpace.name + newVersion, querySpace)
+      querySpaceColumns.put(querySpace.name + newVersion, new HashMap[Column, ColumnConfiguration])
+      querySpaceTables.put(querySpace.name + newVersion, new HashMap[TableIdentifier, TableConfiguration[_, _, _]])
+      querySpace.getColumns(newVersion).foreach(col => querySpaceColumns.get(querySpace.name + newVersion).map(_.put(col.column, col)))
+      querySpace.getTables(newVersion).foreach(table => querySpaceTables.get(querySpace.name + newVersion).map(_.put(table.table, table)))
+      querySpaceVersions.put(querySpace.name, querySpaceVersions.get(querySpace.name).getOrElse(Set()) + newVersion)
+      newVersion
     } finally {
       rwlock.writeLock.unlock
+      monitor.monitor(querySpaceTables)
     }
-    monitor.monitor(querySpaceTables)
   }
-
-
 
   /**
-   * return a "private" copy of a query space in this registry to be used
-   * without synchronization. The planner will attach the returned objects to
-   * each DomainQuery for easy access. Concurrent modifications of the registry
-   * will therefore only marginally affect running queries (changes to mutable
-   * list will.
+   * Must be called to update tables and columns information. It suffices to update columns which
+   * actually have been updated. Does not update the queryspace-object itself - only the information
+   * that is really used by the planner is given a new version.
+   * TODO: find a mechanism to throw out old versions
    */
-  def getRegistryQueryspaceCopy(querySpace: String): Registry = {
-    rwlock.readLock.lock
-    try {
-      new Registry {
-        private val columns = querySpaceColumns.get(querySpace).map(_.clone()).getOrElse(new HashMap())
-        private val tables = querySpaceTables.get(querySpace).map(_.clone()).getOrElse(new HashMap())
-        @inline def getQuerySpace(space: String): Option[QueryspaceConfiguration] = {
-          None
+  def updateQuerySpace(querySpace: String, tables: Set[(TableIdentifier, TableConfiguration[_ , _, _], List[ColumnConfiguration])]): Unit = {
+    if(tables.size > 0) {
+      rwlock.writeLock.lock
+      try {
+        // get is o.k. since this method may not be called if the qs has not been previously created
+        val oldVersion = getLatestVersion(querySpace).get
+        val newVersion = oldVersion + 1
+        logger.debug(s"Creating new version for query-space $querySpace, updating $oldVersion to $newVersion by providing ${tables.size} new tables.")
+        // copy the stuff over...
+        querySpaceTables.get(querySpace + oldVersion).map { qtables =>
+          val newQuerySpaceTables = new HashMap[TableIdentifier, TableConfiguration[_, _, _]]
+          newQuerySpaceTables ++= qtables
+          querySpaceTables.put(querySpace + newVersion, newQuerySpaceTables)
         }
-        @inline def getQuerySpaceColumn(space: String, column: Column): Option[ColumnConfiguration] = {
-          space match {
-            case `querySpace` => columns.get(column)
-            case _ => None
-          }
+        querySpaceColumns.get(querySpace + oldVersion).map { qcolumns =>
+          val newQuerySpaceColumns = new HashMap[Column, ColumnConfiguration]
+          newQuerySpaceColumns ++= qcolumns
+          querySpaceColumns.put(querySpace + newVersion, newQuerySpaceColumns)
         }
-        @inline def getQuerySpaceTable(space: String, ti: TableIdentifier): Option[TableConfiguration[_, _, _]] = {
-          space match {
-            case `querySpace` => tables.get(ti)
-            case _ => None
-          }
-        }
+        // replace old with new ones
+        tables.foreach(table => updateTableInformation(querySpace, newVersion, table._1, table._2, table._3))
+      } finally {
+        rwlock.writeLock.unlock
       }
-    } finally {
-      rwlock.readLock.unlock
     }
   }
-
+  
   /**
    * Must be called to update the table and columns information. It suffices to update columns which
    * actually have been updated. Does not update the queryspace-object itself - only the information
    * that is really used by the planner.
    */
-  def updateTableInformation(
+  private def updateTableInformation(
       querySpace: String,
+      version: Int,
       tableid: TableIdentifier,
       tableconfig: TableConfiguration[_ , _, _],
-      columConfigsToUpdate: List[ColumnConfiguration] = List()) = {
+      columConfigsToUpdate: List[ColumnConfiguration] = List()): Unit = {
     rwlock.writeLock.lock
     try {
-      querySpaceTables.get(querySpace).map(_.put(tableid, tableconfig))
+      querySpaceTables.get(querySpace + version).map(_.put(tableid, tableconfig))
       columConfigsToUpdate.foreach(col => querySpaceColumns.get(querySpace).map(_.put(col.column, col)))
       // TODO: invalidate relevant caches, if these exist in the future :)
     } finally {

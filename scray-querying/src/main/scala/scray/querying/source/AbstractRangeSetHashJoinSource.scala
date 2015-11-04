@@ -57,7 +57,7 @@ abstract class AbstractRangeSetHashJoinSource[Q <: DomainQuery, M, R /* <: Produ
       val skipLines = qrange.skip.getOrElse(0L)
       QueryRange(None, qrange.limit.map(_ + skipLines).orElse(maxLimit.map(_ + skipLines)))
     }
-    DomainQuery(query.getQueryID, query.getQueryspace, resultColumns, getPrefixIndexColumn.table,
+    DomainQuery(query.getQueryID, query.getQueryspace, query.querySpaceVersion, resultColumns, getPrefixIndexColumn.table,
         domains, Some(ColumnGrouping(getValueIndexColumn)),
         Some(ColumnOrdering[T](getValueIndexColumn,
                 query.getOrdering.filter(_.descending).isDefined)), range).asInstanceOf[Q]

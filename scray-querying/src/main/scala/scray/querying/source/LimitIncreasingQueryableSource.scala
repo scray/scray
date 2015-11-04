@@ -35,9 +35,9 @@ import LimitIncreasingQueryableSource.{ITERATOR_EXTENDER_FUNCTION, WrappingItera
 /**
  * queries a Storehaus-store. Assumes that the Seq returnes by QueryableStore is a lazy sequence (i.e. view)
  */
-class LimitIncreasingQueryableSource[K, V](override val store: QueryableStore[K, V], override val space: String, table: TableIdentifier, 
-        override val isOrdered: Boolean = false) 
-    extends QueryableSource[K, V](store, space, table, isOrdered) with LazyLogging {
+class LimitIncreasingQueryableSource[K, V](override val store: QueryableStore[K, V], override val space: String, 
+        override val version: Int, table: TableIdentifier, override val isOrdered: Boolean = false) 
+    extends QueryableSource[K, V](store, space, version, table, isOrdered) with LazyLogging {
   
   /**
    * create function to fetch new data with, which uses a given limit

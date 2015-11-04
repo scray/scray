@@ -32,10 +32,9 @@ import scala.annotation.tailrec
  * queries a Storehaus-store with a number of parallel queries. 
  * Assumes that the Seq returnes by QueryableStore is a lazy sequence (i.e. view)
  */
-class ParallelizedQueryableSource[K, V](override val store: QueryableStore[K, V], override val space: String, 
-        parallelizationColumn: Column, parallelization: Option[Int], ordering: Option[(Row, Row) => Boolean],
-        descending: Boolean) extends QueryableSource[K, V](store, space, parallelizationColumn.table, 
-                ordering.isDefined) with LazyLogging {
+class ParallelizedQueryableSource[K, V](override val store: QueryableStore[K, V], override val space: String, override val version: Int,
+        parallelizationColumn: Column, parallelization: Option[Int], ordering: Option[(Row, Row) => Boolean], descending: Boolean) 
+        extends QueryableSource[K, V](store, space, version, parallelizationColumn.table, ordering.isDefined) with LazyLogging {
   
   @inline def getTransformedDomainQuery(query: DomainQuery, number: Int): K =
     queryMapping(query.transformedAstCopy(SingleValueDomain[Int](parallelizationColumn, number) :: query.getWhereAST))

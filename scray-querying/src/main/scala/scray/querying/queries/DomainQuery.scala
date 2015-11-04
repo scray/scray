@@ -28,6 +28,7 @@ import scray.querying.description.internal.QueryCostsAreTooHigh
 case class DomainQuery(
     val id: UUID,
     val querySpace: String, 
+    val querySpaceVersion: Int,
     val columns: List[Column],
     val table: TableIdentifier,
     val domains: List[Domain[_]],

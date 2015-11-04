@@ -37,9 +37,9 @@ import java.util.concurrent.atomic.AtomicInteger
  * queries a Storehaus-store using a splitting algorithm. Assumes that the Seq returned by QueryableStore is a lazy sequence (i.e. view)
  */
 class SplittedAutoIndexQueryableSource[K, V, T: Ordering](override val store: QueryableStore[K, V], override val space: String, 
-        table: TableIdentifier, splitcolumn: Column, rangeSplitter: Option[((T, T), Boolean) => Iterator[(T, T)]], 
+        override val version: Int, table: TableIdentifier, splitcolumn: Column, rangeSplitter: Option[((T, T), Boolean) => Iterator[(T, T)]], 
         override val isOrdered: Boolean = false) 
-    extends QueryableSource[K, V](store, space, table, isOrdered) with LazyLogging {
+    extends QueryableSource[K, V](store, space, version, table, isOrdered) with LazyLogging {
 
   private def transformWhereAST(domains: List[Domain[_]], bounds: (T, T)): List[Domain[_]] = {
     domains.map { domain => 
@@ -74,7 +74,7 @@ class SplittedAutoIndexQueryableSource[K, V, T: Ordering](override val store: Qu
    */
   def isASTContainingNonAutoIndexedColumns(query: DomainQuery): Boolean = {
     query.getWhereAST.find { domain => 
-      Registry.getQuerySpaceColumn(query.getQueryspace, domain.column).flatMap { colDef =>
+      Registry.getQuerySpaceColumn(query.getQueryspace, query.querySpaceVersion, domain.column).flatMap { colDef =>
         colDef.index.map { index => index.isAutoIndexed && index.autoIndexConfiguration.isDefined }
       }.isEmpty
     }.isDefined
@@ -85,7 +85,7 @@ class SplittedAutoIndexQueryableSource[K, V, T: Ordering](override val store: Qu
    */
   def delegateToOtherSource(query: DomainQuery): Future[Spool[Row]] = {
     if(query.getQueryRange.isDefined && query.getQueryRange.get.limit.isDefined) {
-      new LimitIncreasingQueryableSource(store, space, table, isOrdered).request(query)
+      new LimitIncreasingQueryableSource(store, space, query.querySpaceVersion, table, isOrdered).request(query)
     } else {
       super.request(query)
     }

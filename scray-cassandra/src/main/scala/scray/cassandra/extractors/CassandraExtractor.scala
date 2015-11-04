@@ -187,8 +187,7 @@ trait CassandraExtractor[S <: AbstractCQLCassandraStore[_, _]] extends LazyLoggi
   /**
    * return a manual index configuration for a column
    */
-  def createManualIndexConfiguration(column: Column, queryspaceName: String,
-      store: S,
+  def createManualIndexConfiguration(column: Column, queryspaceName: String, version: Int, store: S,
       indexes: Map[(AbstractCQLCassandraStore[_, _], String), (AbstractCQLCassandraStore[_, _], String, 
               IndexConfig, Option[Function1[_,_]], Set[String])],
       mappers: Map[AbstractCQLCassandraStore[_, _], ((_) => Row, Option[String], Option[VersioningConfiguration[_, _, _]])]):
@@ -201,9 +200,10 @@ trait CassandraExtractor[S <: AbstractCQLCassandraStore[_, _]] extends LazyLoggi
       val storeinfo = mappers.get(store).get
       val mainDataTableTI = getTableIdentifier(store, None)
       ManuallyIndexConfiguration[Any, Any, Any, Any, Any](
-        () => getTableConfigurationFunction[Any, Any, Any](mainDataTableTI, queryspaceName),
+        () => getTableConfigurationFunction[Any, Any, Any](mainDataTableTI, queryspaceName, version),
         () => getTableConfigurationFunction[Any, Any, Any](
-            indexExtractor.getTableIdentifier(index._1.asInstanceOf[AbstractCQLCassandraStore[Any, Any]], indexstoreinfo._2), queryspaceName),
+            indexExtractor.getTableIdentifier(index._1.asInstanceOf[AbstractCQLCassandraStore[Any, Any]], indexstoreinfo._2), 
+            queryspaceName, version),
         index._4.asInstanceOf[Option[Any => Any]],
         index._5.map(Column(_, mainDataTableTI)),
         index._3
@@ -211,8 +211,8 @@ trait CassandraExtractor[S <: AbstractCQLCassandraStore[_, _]] extends LazyLoggi
     }
   }
   
-  private def getTableConfigurationFunction[Q, K, V](ti: TableIdentifier, space: String): TableConfiguration[Q, K, V] = 
-    Registry.getQuerySpaceTable(space, ti).get.asInstanceOf[TableConfiguration[Q, K, V]]
+  private def getTableConfigurationFunction[Q, K, V](ti: TableIdentifier, space: String, version: Int): TableConfiguration[Q, K, V] = 
+    Registry.getQuerySpaceTable(space, version, ti).get.asInstanceOf[TableConfiguration[Q, K, V]]
 }
 
 object CassandraExtractor {
