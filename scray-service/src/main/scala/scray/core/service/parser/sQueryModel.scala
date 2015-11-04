@@ -285,7 +285,7 @@ case class _Or(subpredicates: List[_Predicate]) extends _ComplexPredicate(subpre
 abstract class _AtomicPredicate(columnName: String, value: _Value, hasValue: Boolean = true) extends _Predicate {
 
   def this(columnName: String) = this(columnName, null, false)
-  
+
   override def getMatched(columns: _Columns): Try[_Predicate] = if (isMatchedBy(columns)) Success(this) else
     Failure(new ScrayServiceException(
       ExceptionIDs.PARSING_ERROR,
@@ -332,6 +332,9 @@ case class _Unequal(columnName: String, value: _Value) extends _AtomicPredicate(
 }
 case class _IsNull(columnName: String) extends _AtomicPredicate(columnName) {
   def generate()(implicit query: _Query): IsNull[_] = IsNull(getColumn)
+}
+case class _Wildcard(columnName: String, value: _Value) extends _AtomicPredicate(columnName, value) {
+  def generate()(implicit query: _Query): Wildcard[_] = Wildcard(getColumn, getValue.get.asInstanceOf[String])
 }
 
 /**

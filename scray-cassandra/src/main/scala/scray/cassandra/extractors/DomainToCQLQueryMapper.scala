@@ -28,7 +28,7 @@ import DomainToCQLQueryMapper.{AND_LITERAL, EMPTY_LITERAL, ORDER_LITERAL, DESC_L
  * in the domains
  */
 class DomainToCQLQueryMapper[S <: AbstractCQLCassandraStore[_, _]] extends LazyLogging {
-  
+
   /**
    * add an ordering specification, if needed
    */
@@ -48,23 +48,28 @@ class DomainToCQLQueryMapper[S <: AbstractCQLCassandraStore[_, _]] extends LazyL
       EMPTY_LITERAL
     }
   }.getOrElse(orgQuery)
-  
-  
+
+
   /**
    * returns a function mapping from Domains to CQL-Strings used in Where clauses
    */
   def getQueryMapping(store: S, extractor: CassandraExtractor[S], storeTableNickName: Option[String]): DomainQuery => String = {
+
+
+
     (query) => {
+         //logger.info(s"Query: ${query}")
+
       // first check that we have fixed all partition keys
       val r = getRowKeyQueryMapping(store, query, extractor, storeTableNickName).map { queryStringBegin =>
-        // if this is the case the query can fix clustering keys and the last one may be a rangedomain 
+        // if this is the case the query can fix clustering keys and the last one may be a rangedomain
         val baseQuery = getClusterKeyQueryMapping(store, query, extractor, storeTableNickName) match {
           case None => queryStringBegin
           case Some(queryPart) => s"$queryStringBegin$AND_LITERAL$queryPart"
         }
         enforceLimit(baseQuery, query)
       }.getOrElse {
-        // if there is not a partition and maybe a clustering column 
+        // if there is not a partition and maybe a clustering column
         // we must make sure we have a single index for the col we select (only use one)
         enforceLimit(getValueKeyQueryMapping(store, query, extractor, storeTableNickName).getOrElse(""), query)
       }
@@ -72,7 +77,7 @@ class DomainToCQLQueryMapper[S <: AbstractCQLCassandraStore[_, _]] extends LazyL
       r
     }
   }
-  
+
   /**
    * sets given limits at the provided query
    */
@@ -87,17 +92,17 @@ class DomainToCQLQueryMapper[S <: AbstractCQLCassandraStore[_, _]] extends LazyL
       }
     }.getOrElse(queryString)
   }
-  
+
   private def convertValue[T](value: T) = value match {
     case v: String => s"'$v' "
-    case _ => s"${value.toString} " 
+    case _ => s"${value.toString} "
   }
-  
-  // private def convertDomainToTargetDomain(domain: Domain[_]): 
-  
-  private def convertSingleValueDomain(vdomain: SingleValueDomain[_]): String = 
+
+  // private def convertDomainToTargetDomain(domain: Domain[_]):
+
+  private def convertSingleValueDomain(vdomain: SingleValueDomain[_]): String =
     s""" "${vdomain.column.columnName}"=${convertValue(vdomain.value)}"""
-  
+
   private def convertRangeValueDomain(vdomain: RangeValueDomain[_]): String = {
     vdomain.lowerBound.map { bound =>
       val comp = bound.inclusive match {
@@ -116,13 +121,13 @@ class DomainToCQLQueryMapper[S <: AbstractCQLCassandraStore[_, _]] extends LazyL
       }
       s"""$and"${vdomain.column.columnName}" $comp ${convertValue(bound.value)}"""
     }.getOrElse("")
-  } 
+  }
 
-  private def getRowKeyQueryMapping(store: S, query: DomainQuery, 
+  private def getRowKeyQueryMapping(store: S, query: DomainQuery,
       extractor: CassandraExtractor[S], storeTableNickName: Option[String]): Option[String] = {
     val rowColumns = extractor.getRowKeyColumns
     val foundRowKeyDomains = rowColumns.flatMap(col => query.domains.filter { dom => dom match {
-      case svd: SingleValueDomain[_] => svd.column.columnName == col.columnName && 
+      case svd: SingleValueDomain[_] => svd.column.columnName == col.columnName &&
         svd.column.table.tableId == storeTableNickName.getOrElse(store.columnFamily.getName) &&
         svd.column.table.dbId == store.columnFamily.session.getKeyspacename &&
         svd.column.table.dbSystem == extractor.getDBSystem
@@ -132,7 +137,7 @@ class DomainToCQLQueryMapper[S <: AbstractCQLCassandraStore[_, _]] extends LazyL
       Some(foundRowKeyDomains.map(svd => convertSingleValueDomain(svd.asInstanceOf[SingleValueDomain[_]])).mkString(AND_LITERAL))
     } else {
       None
-    }    
+    }
   }
 
   /**
@@ -141,17 +146,17 @@ class DomainToCQLQueryMapper[S <: AbstractCQLCassandraStore[_, _]] extends LazyL
    */
   private def clusterColumnDomains(cols: List[Column], store: S, query: DomainQuery, extractor: CassandraExtractor[S],
       storeTableNickName: Option[String]): List[Domain[_]] = {
-    if(cols == Nil) { 
-      Nil 
+    if(cols == Nil) {
+      Nil
     } else {
       // find relevant domain
-      val domain = query.domains.find { dom => 
-        dom.column.columnName == cols.head.columnName && 
+      val domain = query.domains.find { dom =>
+        dom.column.columnName == cols.head.columnName &&
         dom.column.table.tableId == storeTableNickName.getOrElse(store.columnFamily.getName) &&
         dom.column.table.dbId == store.columnFamily.session.getKeyspacename &&
         dom.column.table.dbSystem == extractor.getDBSystem
       }
-      domain.collect { 
+      domain.collect {
         case svd: SingleValueDomain[_] => svd :: clusterColumnDomains(cols.tail, store, query, extractor, storeTableNickName)
         case rvd: RangeValueDomain[_] => rvd :: Nil
       }.getOrElse {
@@ -159,7 +164,7 @@ class DomainToCQLQueryMapper[S <: AbstractCQLCassandraStore[_, _]] extends LazyL
       }
     }
   }
-  
+
   private def getClusterKeyQueryMapping(store: S, query: DomainQuery, extractor: CassandraExtractor[S],
       storeTableNickName: Option[String]): Option[String] = {
     val clusterCols = extractor.getClusteringKeyColumns
@@ -174,7 +179,7 @@ class DomainToCQLQueryMapper[S <: AbstractCQLCassandraStore[_, _]] extends LazyL
       case _ => Some(cqlQuery)
     }
   }
-  
+
   private def getValueKeyQueryMapping(store: S, query: DomainQuery, extractor: CassandraExtractor[S],
       storeTableNickName: Option[String]): Option[String] = {
     val valueCols = extractor.getValueColumns.map { valueCol => 
@@ -186,8 +191,8 @@ class DomainToCQLQueryMapper[S <: AbstractCQLCassandraStore[_, _]] extends LazyL
       // if we have lucene entries, we use those as those are supposed to be more flexible
       logger.debug(s"Using Lucene index on ${valueCols._1}")
       val ti = valueCols._1(0).get.column.table
-      val domains = query.getWhereAST.filter { dom => 
-        valueCols._1.find{optcolDef => optcolDef.get.column.columnName == dom.column.columnName}.isDefined} 
+      val domains = query.getWhereAST.filter { dom =>
+        valueCols._1.find{optcolDef => optcolDef.get.column.columnName == dom.column.columnName}.isDefined}
       DomainToJSONLuceneQueryMapper.getLuceneColumnsQueryMapping(query, domains, ti)
     } else {
       None
@@ -196,7 +201,7 @@ class DomainToCQLQueryMapper[S <: AbstractCQLCassandraStore[_, _]] extends LazyL
       // if we a standard Cassandra index we use the first in the list of defined valuesColumns
       query.domains.find{dom => valueCols._2.find { valueColConf =>
         val valueCol = valueColConf.get.column
-          dom.column.columnName == valueCol.columnName && 
+          dom.column.columnName == valueCol.columnName &&
           dom.isInstanceOf[SingleValueDomain[_]] &&
           dom.column.table.tableId == storeTableNickName.getOrElse(store.columnFamily.getName) &&
           dom.column.table.dbId == store.columnFamily.session.getKeyspacename &&
