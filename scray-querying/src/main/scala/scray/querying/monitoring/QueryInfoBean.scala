@@ -23,6 +23,7 @@ import scray.querying.description.IsNull
 import javax.management.AttributeList
 import javax.management.Attribute
 import scray.querying.description.Or
+import scray.querying.description.Wildcard
 
 class QueryInfoBean(qinfo: QueryInformation, beans: HashMap[String, QueryInfoBean]) extends DynamicMBean with LazyLogging {
 
@@ -64,6 +65,7 @@ class QueryInfoBean(qinfo: QueryInformation, beans: HashMap[String, QueryInfoBea
     case c: SmallerEqual[_] => acc :+ (c.column.columnName, "<=")
     case c: Unequal[_] => acc :+ (c.column.columnName, "<>")
     case c: IsNull[_] => acc :+ (c.column.columnName, "is null")
+    case c: Wildcard[_] => acc :+ (c.column.columnName, "LIKE")
     case c: Or => c.clauses.flatMap(cl => recurseQueryFilters(cl, List())).toList
     case c: And => c.clauses.flatMap(cl => recurseQueryFilters(cl, List())).toList
   }
