@@ -57,19 +57,19 @@ class QueryInfoBean(qinfo: QueryInformation, beans: HashMap[String, QueryInfoBea
     qinfo.table.tableId
   }
 
-  def recurseQueryFilters(clause: Clause, acc: List[(String, String)]): List[(String, String)] = clause match {
-    case c: Equal[_] => acc :+ (c.column.columnName, "=")
-    case c: Greater[_] => acc :+ (c.column.columnName, ">")
-    case c: GreaterEqual[_] => acc :+ (c.column.columnName, ">=")
-    case c: Smaller[_] => acc :+ (c.column.columnName, "<")
-    case c: SmallerEqual[_] => acc :+ (c.column.columnName, "<=")
-    case c: Unequal[_] => acc :+ (c.column.columnName, "<>")
-    case c: IsNull[_] => acc :+ (c.column.columnName, "is null")
-    case c: Wildcard[_] => acc :+ (c.column.columnName, "LIKE")
+  def recurseQueryFilters(clause: Clause, acc: List[(String, String, String)]): List[(String, String, String)] = clause match {
+
+    case c: Equal[_] => acc :+ (c.column.columnName, "=", c.value.toString())
+    case c: Greater[_] => acc :+ (c.column.columnName, ">", c.value.toString())
+    case c: GreaterEqual[_] => acc :+ (c.column.columnName, ">=", c.value.toString())
+    case c: Smaller[_] => acc :+ (c.column.columnName, "<", c.value.toString())
+    case c: SmallerEqual[_] => acc :+ (c.column.columnName, "<=", c.value.toString())
+    case c: Unequal[_] => acc :+ (c.column.columnName, "<>", c.value.toString())
+    case c: IsNull[_] => acc :+ (c.column.columnName, "is null", "")
+    case c: Wildcard[_] => acc :+ (c.column.columnName, "LIKE", c.value.toString())
     case c: Or => c.clauses.flatMap(cl => recurseQueryFilters(cl, List())).toList
     case c: And => c.clauses.flatMap(cl => recurseQueryFilters(cl, List())).toList
   }
-
   //filters
   def getFilters(): String = {
     qinfo.where.map { clause =>
