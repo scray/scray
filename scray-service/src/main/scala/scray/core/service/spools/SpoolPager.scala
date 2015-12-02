@@ -54,29 +54,30 @@ class SpoolPager(sspool: ServiceSpool) extends LazyLogging {
   private def pageAll(spool: Spool[Row]): Future[Spool[Seq[Row]]] = if (!spool.isEmpty) {
     part(Seq(spool.head), spool.tail, pagesize - 1) flatMap { pair => pageAll(pair._2) map (pair._1 **:: _) }
   } else {
-    logFin(Time.now)
+    logFin(System.currentTimeMillis())
     Future.value(Seq[Row](new SucceedingRow()) **:: Spool.empty)
   }
 
   // recursive function parting a given spool into an eager head (Page part) and a lazy tail (Spool part)
   private def part(dest: Seq[Row], src: Future[Spool[Row]], pos: Int): Future[(Seq[Row], Spool[Row])] =
     if (pos <= 0) {
+      logFin(System.currentTimeMillis())
       src.map { (dest, _) }
     } else {
       src.flatMap { spool =>
         if (!spool.isEmpty) {
           part(dest :+ spool.head, spool.tail, pos - 1)
         } else {
-          logFin(Time.now)
+          logFin(System.currentTimeMillis())
           Future.value((dest :+ new SucceedingRow(), Spool.empty))
         }
       }
     }
 
-  def logFin(end: Time) = {
+  def logFin(end: Long) = {
     sspool.tQueryInfo.queryId.map(sid => new UUID(sid.mostSigBits, sid.leastSigBits)).map { uuid =>
       logger.debug(s"Finished query ${uuid} at ${end}.")
-      Registry.getQueryInformation(uuid).map(_.finished.set(end.inMilliseconds))
+      Registry.getQueryInformation(uuid).map(_.finished.set(end))
     }
   }
 }
