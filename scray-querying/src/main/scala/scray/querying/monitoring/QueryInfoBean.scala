@@ -56,6 +56,14 @@ class QueryInfoBean(qinfo: QueryInformation, beans: HashMap[String, QueryInfoBea
   def getTableId(): String = {
     qinfo.table.tableId
   }
+  
+  def getFinishedPlanningTime(): Long = {
+    qinfo.finishedPlanningTime.get()
+  }
+  
+  def getRequestSentTime(): Long = {
+    qinfo.requestSentTime.get
+  }
 
   def recurseQueryFilters(clause: Clause, acc: List[(String, String, String)]): List[(String, String, String)] = clause match {
 
@@ -98,7 +106,15 @@ class QueryInfoBean(qinfo: QueryInformation, beans: HashMap[String, QueryInfoBea
               if (attribute == "tableId") {
                 new JString(getTableId())
               } else {
-                null
+                if (attribute == "finishedPlanningTime") {
+                  new JLong(getFinishedPlanningTime())
+                } else {
+                  if (attribute == "requestSentTime") {
+                    new JLong(getFinishedPlanningTime())
+                  } else {
+                    null
+                  }
+                }
               }
             }
           }
@@ -115,7 +131,9 @@ class QueryInfoBean(qinfo: QueryInformation, beans: HashMap[String, QueryInfoBea
   val att4Info = new MBeanAttributeInfo("resultItems", "long", "Attribut", true, false, false)
   val att5Info = new MBeanAttributeInfo("filters", "String", "Attribut", true, false, false)
   val att6Info = new MBeanAttributeInfo("tableId", "String", "Attribut", true, false, false)
-  val attribs = Array[MBeanAttributeInfo](att1Info, att2Info, att3Info, att4Info, att5Info, att6Info )
+  val att7Info = new MBeanAttributeInfo("finishedPlanningTime", "long", "Attribut", true, false, false)
+  val att8Info = new MBeanAttributeInfo("requestSentTime", "long", "Attribut", true, false, false)
+  val attribs = Array[MBeanAttributeInfo](att1Info, att2Info, att3Info, att4Info, att5Info, att6Info, att7Info, att8Info)
 
   val ops = null
 

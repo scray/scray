@@ -32,7 +32,7 @@ import scray.querying.queries.{DomainQuery, QueryInformation}
 class LazyEmptyRowDispenserSource[Q <: DomainQuery](val source: LazySource[Q], val qi: Option[QueryInformation] = None) extends LazySource[Q] with LazyLogging {
 
   override def request(query: Q): LazyDataFuture = {
-    logger.debug(s"Filtering empty rows lazyly for ${query.getQueryID}")
+    logger.debug(s"Filtering empty rows lazyly for ${query.getQueryID}")  
     source.request(query).flatMap { _.filter { row =>
         qi.map(_.resultItems.getAndIncrement)
         qi.map(queryinfo => queryinfo.pollingTime.set(System.currentTimeMillis()))

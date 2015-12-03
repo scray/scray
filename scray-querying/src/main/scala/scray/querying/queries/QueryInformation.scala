@@ -27,6 +27,16 @@ class QueryInformation(val qid: UUID, val table: TableIdentifier,
    */
   val finished = new AtomicLong(-1L)
   
+  /**
+   * time when planing finished
+   */
+  val finishedPlanningTime = new AtomicLong(-1L)
+  
+  /**
+   * time when data request was sent to database
+   */
+  val requestSentTime = new AtomicLong(-1L)
+  
   private val destructionListeners = new ArrayBuffer[DESTRUCTOR] 
   
   def registerDestructionListerner(listener: DESTRUCTOR) = destructionListeners += listener 
