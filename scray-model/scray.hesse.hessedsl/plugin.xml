@@ -5,7 +5,7 @@
 
   <extension point="org.eclipse.emf.ecore.generated_package">
     <package 
-       uri = "http://scray/HesseDSL" 
+       uri = "http://www.hesse.scray/HesseDSL" 
        class = "scray.hesse.HesseDSLPackage"
        genModel = "model/generated/HesseDSL.genmodel" /> 
     
