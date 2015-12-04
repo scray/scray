@@ -59,7 +59,7 @@ class LimitIncreasingQueryableSource[K, V](override val store: QueryableStore[K,
       case Return(x) => 
         // construct lazy spool
         query.getQueryRange.flatMap { range =>
-          range.limit.map { limit => 
+          range.limit.map { limit =>
             // QueryableSource.iteratorToSpool[V](x.getOrElse(Seq[V]()).view.iterator, valueToRow).flatMap(_.extend(query, fetchAndSkipData, limit, limit))
             QueryableSource.iteratorToSpool[V](new WrappingIteratorExtender(query, x.getOrElse(Seq[V]()).view.iterator, fetchAndSkipDataIterator, limit), valueToRow)
           }

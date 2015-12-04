@@ -23,6 +23,7 @@ import scray.querying.description.IsNull
 import javax.management.AttributeList
 import javax.management.Attribute
 import scray.querying.description.Or
+import scray.querying.description.Wildcard
 
 class QueryInfoBean(qinfo: QueryInformation, beans: HashMap[String, QueryInfoBean]) extends DynamicMBean with LazyLogging {
 
@@ -55,19 +56,28 @@ class QueryInfoBean(qinfo: QueryInformation, beans: HashMap[String, QueryInfoBea
   def getTableId(): String = {
     qinfo.table.tableId
   }
+  
+  def getFinishedPlanningTime(): Long = {
+    qinfo.finishedPlanningTime.get()
+  }
+  
+  def getRequestSentTime(): Long = {
+    qinfo.requestSentTime.get
+  }
 
-  def recurseQueryFilters(clause: Clause, acc: List[(String, String)]): List[(String, String)] = clause match {
-    case c: Equal[_] => acc :+ (c.column.columnName, "=")
-    case c: Greater[_] => acc :+ (c.column.columnName, ">")
-    case c: GreaterEqual[_] => acc :+ (c.column.columnName, ">=")
-    case c: Smaller[_] => acc :+ (c.column.columnName, "<")
-    case c: SmallerEqual[_] => acc :+ (c.column.columnName, "<=")
-    case c: Unequal[_] => acc :+ (c.column.columnName, "<>")
-    case c: IsNull[_] => acc :+ (c.column.columnName, "is null")
+  def recurseQueryFilters(clause: Clause, acc: List[(String, String, String)]): List[(String, String, String)] = clause match {
+
+    case c: Equal[_] => acc :+ (c.column.columnName, "=", c.value.toString())
+    case c: Greater[_] => acc :+ (c.column.columnName, ">", c.value.toString())
+    case c: GreaterEqual[_] => acc :+ (c.column.columnName, ">=", c.value.toString())
+    case c: Smaller[_] => acc :+ (c.column.columnName, "<", c.value.toString())
+    case c: SmallerEqual[_] => acc :+ (c.column.columnName, "<=", c.value.toString())
+    case c: Unequal[_] => acc :+ (c.column.columnName, "<>", c.value.toString())
+    case c: IsNull[_] => acc :+ (c.column.columnName, "is null", "")
+    case c: Wildcard[_] => acc :+ (c.column.columnName, "LIKE", c.value.toString())
     case c: Or => c.clauses.flatMap(cl => recurseQueryFilters(cl, List())).toList
     case c: And => c.clauses.flatMap(cl => recurseQueryFilters(cl, List())).toList
   }
-
   //filters
   def getFilters(): String = {
     qinfo.where.map { clause =>
@@ -76,33 +86,16 @@ class QueryInfoBean(qinfo: QueryInformation, beans: HashMap[String, QueryInfoBea
     }.getOrElse("")
   }
 
-  override def getAttribute(attribute: String): Object = {
-
-    if (attribute == "startTime") {
-      new JLong(getStartTime())
-    } else {
-      if (attribute == "finished") {
-        new JLong(getFinished())
-      } else {
-        if (attribute == "pollingTime") {
-          new JLong(getPollingTime())
-        } else {
-          if (attribute == "resultItems") {
-            new JLong(getResultItems())
-          } else {
-            if (attribute == "filters") {
-              new JString(getFilters())
-            } else {
-              if (attribute == "tableId") {
-                new JString(getTableId())
-              } else {
-                null
-              }
-            }
-          }
-        }
-      }
-    }
+  override def getAttribute(attribute: String): Object = attribute match {
+    case "startTime" => new JLong(getStartTime())
+    case "finished" => new JLong(getFinished())
+    case "pollingTime" => new JLong(getPollingTime())
+    case "resultItems" => new JLong(getResultItems())
+    case "filters" => new JString(getFilters())
+    case "tableId" => new JString(getTableId())
+    case "finishedPlanningTime" => new JLong(getFinishedPlanningTime())
+    case "requestSentTime" => new JLong(getFinishedPlanningTime())
+    case _ => null
   }
 
   override def setAttribute(attribute: Attribute): Unit = {}
@@ -113,7 +106,9 @@ class QueryInfoBean(qinfo: QueryInformation, beans: HashMap[String, QueryInfoBea
   val att4Info = new MBeanAttributeInfo("resultItems", "long", "Attribut", true, false, false)
   val att5Info = new MBeanAttributeInfo("filters", "String", "Attribut", true, false, false)
   val att6Info = new MBeanAttributeInfo("tableId", "String", "Attribut", true, false, false)
-  val attribs = Array[MBeanAttributeInfo](att1Info, att2Info, att3Info, att4Info, att5Info, att6Info )
+  val att7Info = new MBeanAttributeInfo("finishedPlanningTime", "long", "Attribut", true, false, false)
+  val att8Info = new MBeanAttributeInfo("requestSentTime", "long", "Attribut", true, false, false)
+  val attribs = Array[MBeanAttributeInfo](att1Info, att2Info, att3Info, att4Info, att5Info, att6Info, att7Info, att8Info)
 
   val ops = null
 

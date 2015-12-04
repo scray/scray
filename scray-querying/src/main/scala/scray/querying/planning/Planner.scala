@@ -16,7 +16,7 @@ package scray.querying.planning
 
 import com.twitter.concurrent.Spool
 import com.twitter.storehaus.{ QueryableStore, ReadableStore }
-import com.twitter.util.{ Await, Future }
+import com.twitter.util.{ Await, Future, Time }
 import com.typesafe.scalalogging.slf4j.LazyLogging
 import java.util.UUID
 import scala.annotation.tailrec
@@ -97,11 +97,12 @@ object Planner extends LazyLogging {
     val ordering = plans.find((execution) => execution._1.isInstanceOf[OrderedComposablePlan[_, _]]).
       map(_._1.asInstanceOf[OrderedComposablePlan[DomainQuery, _]])
 
+    queryInfo.finishedPlanningTime.set(System.currentTimeMillis())
     logger.debug(s"Plan computed for query: ${query.getQueryID.toString}")
 
     // run the plans and merge if it is needed
     MergingResultSpool.seekingLimitingSpoolTransformer(
-        executePlans(plans.asInstanceOf[ParSeq[(OrderedComposablePlan[DomainQuery,_], DomainQuery)]], ordering == None, ordering),
+        executePlans(plans.asInstanceOf[ParSeq[(OrderedComposablePlan[DomainQuery,_], DomainQuery)]], ordering == None, ordering, queryInfo),
         query.getQueryRange)
   }
 
@@ -692,9 +693,12 @@ object Planner extends LazyLogging {
    */
   def executePlans(plans: ParSeq[(ComposablePlan[DomainQuery, _], DomainQuery)],
       unOrdered: Boolean,
-      ordering: Option[OrderedComposablePlan[DomainQuery, _]]): Spool[Row] = {
+      ordering: Option[OrderedComposablePlan[DomainQuery, _]],
+      queryInfo: QueryInformation): Spool[Row] = {
+    
+    // Store request time for jmx statistics
+    queryInfo.requestSentTime.set(System.currentTimeMillis())
     // run all at once
-    val t1 = System.currentTimeMillis()
     val futures = plans.par.map { (execution) =>
       val source = execution._1.getSource
       (source.isLazy, source.request(execution._2))

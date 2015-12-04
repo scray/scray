@@ -223,7 +223,11 @@ object MergingResultSpool {
           } else {
             if(count < skip + range.get.limit.get) {
               // re-insert data
-              spool.head *:: Future.value(slspooltcount(Await.result(spool.tail), count + 1L, skip))
+              if(count == skip + range.get.limit.get - 1L) {
+                spool.head *:: Future.value(Spool.empty[Row])
+              } else {
+                spool.head *:: Future.value(slspooltcount(Await.result(spool.tail), count + 1L, skip))
+              }
             } else {
               // limit has been reached, return the empty spool
               Spool.empty[Row]
