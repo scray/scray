@@ -86,41 +86,16 @@ class QueryInfoBean(qinfo: QueryInformation, beans: HashMap[String, QueryInfoBea
     }.getOrElse("")
   }
 
-  override def getAttribute(attribute: String): Object = {
-
-    if (attribute == "startTime") {
-      new JLong(getStartTime())
-    } else {
-      if (attribute == "finished") {
-        new JLong(getFinished())
-      } else {
-        if (attribute == "pollingTime") {
-          new JLong(getPollingTime())
-        } else {
-          if (attribute == "resultItems") {
-            new JLong(getResultItems())
-          } else {
-            if (attribute == "filters") {
-              new JString(getFilters())
-            } else {
-              if (attribute == "tableId") {
-                new JString(getTableId())
-              } else {
-                if (attribute == "finishedPlanningTime") {
-                  new JLong(getFinishedPlanningTime())
-                } else {
-                  if (attribute == "requestSentTime") {
-                    new JLong(getFinishedPlanningTime())
-                  } else {
-                    null
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
+  override def getAttribute(attribute: String): Object = attribute match {
+    case "startTime" => new JLong(getStartTime())
+    case "finished" => new JLong(getFinished())
+    case "pollingTime" => new JLong(getPollingTime())
+    case "resultItems" => new JLong(getResultItems())
+    case "filters" => new JString(getFilters())
+    case "tableId" => new JString(getTableId())
+    case "finishedPlanningTime" => new JLong(getFinishedPlanningTime())
+    case "requestSentTime" => new JLong(getFinishedPlanningTime())
+    case _ => null
   }
 
   override def setAttribute(attribute: Attribute): Unit = {}
