@@ -263,4 +263,47 @@ public class ScrayJdbcTest {
 			fail();
 		}
 	}
+	
+	@Test
+	public void testConnectionPool() throws SQLException {
+		ScrayDriver d = new ScrayDriver();
+		
+		class Client implements Runnable {
+			ScrayConnection connection = null;
+			
+			public Client(ScrayConnection connection) {
+				this.connection = connection;
+			}
+			
+			@Override
+			public void run() {
+				try {
+					Thread.sleep(5000);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+				connection.setInUse(false);
+			}
+		}
+
+		try {
+			System.out.println(d.connect(null, null));
+			System.out.println(d.connect(null, null));
+			ScrayConnection connection3 = (ScrayConnection) d.connect(null, null);
+			System.out.println(d.connect(null, null));
+			System.out.println(d.connect(null, null));
+			new Thread(new Client(connection3)).start();
+			System.out.println(d.connect(null, null));
+			System.out.println(d.connect(null, null));
+			System.out.println(d.connect(null, null));
+			ScrayConnection connection12 = (ScrayConnection) d.connect(null, null);
+			ScrayConnection connection13 = (ScrayConnection) d.connect(null, null);
+			new Thread(new Client(connection12)).start();
+			new Thread(new Client(connection13)).start();
+			System.out.println(d.connect(null, null));
+
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
 }

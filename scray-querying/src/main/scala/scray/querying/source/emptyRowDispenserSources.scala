@@ -33,13 +33,14 @@ class LazyEmptyRowDispenserSource[Q <: DomainQuery](val source: LazySource[Q], v
   
   override def request(query: Q): LazyDataFuture = {
     logger.debug(s"Filtering empty rows lazyly for ${query.getQueryID}")  
-    source.request(query).flatMap { x => x.collect { new PartialFunction[Row, Row] {
-      override def apply(row: Row): Row = {
-        qi.map(_.resultItems.getAndIncrement);
-        qi.map(queryinfo => queryinfo.pollingTime.set(System.currentTimeMillis()));
-        row
-      }
-      override def isDefinedAt(row: Row): Boolean = {
+    source.request(query).flatMap { x => x.collect { 
+      new PartialFunction[Row, Row] {
+        override def apply(row: Row): Row = {
+          qi.map(_.resultItems.getAndIncrement);
+          qi.map(queryinfo => queryinfo.pollingTime.set(System.currentTimeMillis()));
+          row
+        }
+        override def isDefinedAt(row: Row): Boolean = {
         !(row.isInstanceOf[EmptyRow] || row.isEmpty)
       }        
     }}}
