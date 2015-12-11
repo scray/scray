@@ -2,30 +2,43 @@ package scray.client.jdbc;
 
 import java.net.URISyntaxException;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.DriverPropertyInfo;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
 import java.util.Properties;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Logger;
 
+import scray.client.finagle.ScrayCombinedTServiceManager;
 import scray.client.finagle.ScrayStatefulTServiceAdapter;
 import scray.client.finagle.ScrayStatelessTServiceAdapter;
 import scray.client.finagle.ScrayTServiceAdapter;
-import scray.client.finagle.ScrayCombinedTServiceManager;
-import scray.common.properties.PropertyException;
-import scray.common.properties.ScrayProperties;
-import scray.common.properties.ScrayProperties.Phase;
-import scray.common.properties.predefined.PredefinedProperties;
 
+/**
+ * ScrayDriver as singleton.
+ *
+ */
 public class ScrayDriverSingle implements java.sql.Driver {
 	
 	private static ScrayDriverSingle instance = null;
+	private ScrayConnection connection = null;
+	
+	private ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock();
+	
+	private ScrayConnection getConnection() {
+		return instance.connection;
+	}
+	
+	private void setConnection(ScrayConnection connection) {
+		instance.connection = connection;
+	}
 	
 	private static org.slf4j.Logger log = org.slf4j.LoggerFactory
 			.getLogger(ScrayDriver.class);
 	
-	private ScrayDriverSingle() {}
+	private ScrayDriverSingle() {
+	}
 	
 	public static ScrayDriverSingle getScrayDriverSingle() {
 		if(instance == null) {
@@ -34,28 +47,37 @@ public class ScrayDriverSingle implements java.sql.Driver {
 		return instance;
 	}
 
-	static {
-		try {
-			try {
-				ScrayProperties
-						.registerProperty(PredefinedProperties.RESULT_COMPRESSION_MIN_SIZE);
-				ScrayProperties.setPhase(Phase.config);
-				ScrayProperties.setPhase(Phase.use);
-			} catch (PropertyException p) {
-				throw new RuntimeException(p);
-			}
-			// Register the ScrayDriver with DriverManager
-			ScrayDriver driverInst = new ScrayDriver();
-			DriverManager.registerDriver(driverInst);
-			// System.setSecurityManager(new RMISecurityManager());
-
-		} catch (SQLException e) {
-			log.error("Error registering jdbc driver.", e);
-		}
-	}
-
 	@Override
 	public Connection connect(String url, Properties info) throws SQLException {
+		rwLock.readLock().lock();
+		try {
+			if(getConnection() == null) {
+				rwLock.readLock().unlock();
+				rwLock.writeLock().lock();
+				try {
+					if(getConnection() == null) {
+						setConnection(generateNewConnection(url, info));
+					}
+				} finally {
+					rwLock.writeLock().unlock();
+					rwLock.readLock().lock();
+				}
+			}
+			return getConnection();
+		} finally {
+			rwLock.readLock().unlock();
+		}
+	}
+	
+	/**
+	 * create the connection
+	 * @param url
+	 * @param info
+	 * @return
+	 * @throws SQLException
+	 */
+	private ScrayConnection generateNewConnection(String url, Properties info) throws SQLException {
+		log.info("Connecting pool with {} connections.", url);
 		try {
 			if (acceptsURL(url)) {
 				ScrayURL scrayURL = new ScrayURL(url);

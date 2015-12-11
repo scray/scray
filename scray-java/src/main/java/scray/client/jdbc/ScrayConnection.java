@@ -18,6 +18,7 @@ import java.sql.Struct;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import scray.client.finagle.ScrayTServiceAdapter;
 
@@ -27,6 +28,8 @@ public class ScrayConnection implements java.sql.Connection {
 
 	private ScrayURL scrayURL;
 	private ScrayTServiceAdapter tAdapter;
+	private AtomicBoolean isInUse = new AtomicBoolean(); // true if connection is currently used for a querry.
+	private AtomicBoolean isFailed = new AtomicBoolean(false);
 
 	public ScrayConnection(ScrayURL scrayURL, ScrayTServiceAdapter tAdapter) {
 		this.scrayURL = scrayURL;
@@ -329,4 +332,19 @@ public class ScrayConnection implements java.sql.Connection {
 		throw new SQLFeatureNotSupportedException();
 	}
 
+	public boolean isInUse() {
+		return isInUse.get();
+	}
+
+	public synchronized void setInUse(boolean isInUse) {
+		this.isInUse = new AtomicBoolean(isInUse);
+	}
+
+	public AtomicBoolean getIsFailed() {
+		return isFailed;
+	}
+
+	public void setIsFailed(AtomicBoolean isFailed) {
+		this.isFailed = isFailed;
+	}
 }

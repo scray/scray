@@ -1,6 +1,5 @@
 package scray.client.jdbc;
 
-import java.net.URISyntaxException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.DriverPropertyInfo;
@@ -9,20 +8,59 @@ import java.sql.SQLFeatureNotSupportedException;
 import java.util.Properties;
 import java.util.logging.Logger;
 
-import scray.client.finagle.ScrayStatefulTServiceAdapter;
-import scray.client.finagle.ScrayStatelessTServiceAdapter;
-import scray.client.finagle.ScrayTServiceAdapter;
-import scray.client.finagle.ScrayCombinedTServiceManager;
 import scray.common.properties.PropertyException;
 import scray.common.properties.ScrayProperties;
 import scray.common.properties.ScrayProperties.Phase;
 import scray.common.properties.predefined.PredefinedProperties;
 
+/**
+ * Wrapper to ensure that one instance of the JDBC driver exists.
+ */
 public class ScrayDriver implements java.sql.Driver {
+	private ScrayDriverSingle instance = null;
+	
+	public ScrayDriver() {
+		instance = ScrayDriverSingle.getScrayDriverSingle();
+	}
+	
+	private static org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(ScrayDriver.class);
 
-	private static org.slf4j.Logger log = org.slf4j.LoggerFactory
-			.getLogger(ScrayDriver.class);
 
+	@Override
+	public Connection connect(String url, Properties info) throws SQLException {
+		return instance.connect(url, info);
+	}
+
+	@Override
+	public boolean acceptsURL(String url) throws SQLException {
+		return instance.acceptsURL(url);
+	}
+
+	@Override
+	public DriverPropertyInfo[] getPropertyInfo(String url, Properties info) throws SQLException {
+		return instance.getPropertyInfo(url, info);
+	}
+
+	@Override
+	public int getMajorVersion() {
+		return instance.getMajorVersion();
+	}
+
+	@Override
+	public int getMinorVersion() {
+		return instance.getMinorVersion();
+	}
+
+	@Override
+	public boolean jdbcCompliant() {
+		return instance.jdbcCompliant();
+	}
+
+	@Override
+	public Logger getParentLogger() throws SQLFeatureNotSupportedException {
+		return instance.getParentLogger();
+	}
+	
 	static {
 		try {
 			try {
@@ -42,72 +80,4 @@ public class ScrayDriver implements java.sql.Driver {
 			log.error("Error registering jdbc driver.", e);
 		}
 	}
-
-	@Override
-	public Connection connect(String url, Properties info) throws SQLException {
-		try {
-			if (acceptsURL(url)) {
-				ScrayURL scrayURL = new ScrayURL(url);
-				ScrayCombinedTServiceManager tManager = ScrayCombinedTServiceManager
-						.getInstance();
-				tManager.init(scrayURL);
-				ScrayTServiceAdapter tAdapter = null;
-				try {
-					if (tManager.isStatefulTService()) {
-						tAdapter = new ScrayStatefulTServiceAdapter(
-								tManager.getRandomEndpoint());
-					} else {
-						tAdapter = new ScrayStatelessTServiceAdapter(
-								tManager.getRandomEndpoint());
-					}
-				} catch (Exception e) {
-					String msg = "Error setting up scray connection.";
-					log.error(msg, e);
-					throw new SQLException(msg);
-				}
-				return new ScrayConnection(scrayURL, tAdapter);
-			} else {
-				return null;
-			}
-		} catch (URISyntaxException e) {
-			throw new SQLException(e);
-		}
-	}
-
-	@Override
-	public boolean acceptsURL(String url) throws SQLException {
-		try {
-			new ScrayURL(url);
-		} catch (URISyntaxException e) {
-			return false;
-		}
-		return true;
-	}
-
-	@Override
-	public DriverPropertyInfo[] getPropertyInfo(String url, Properties info)
-			throws SQLException {
-		throw new SQLFeatureNotSupportedException();
-	}
-
-	@Override
-	public int getMajorVersion() {
-		return 1;
-	}
-
-	@Override
-	public int getMinorVersion() {
-		return 0;
-	}
-
-	@Override
-	public boolean jdbcCompliant() {
-		return false;
-	}
-
-	@Override
-	public Logger getParentLogger() throws SQLFeatureNotSupportedException {
-		throw new SQLFeatureNotSupportedException();
-	}
-
 }
