@@ -93,7 +93,7 @@ public class ScrayJdbcAccess {
 		int maxPoolSize = 10;
 
 		// Keep alive time for waiting threads for jobs(Runnable)
-		long keepAliveTime = 100;
+		long keepAliveTime = 10;
 
 		// This is the one who manages and start the work
 		ThreadPoolExecutor threadPool = null;
@@ -163,15 +163,14 @@ public class ScrayJdbcAccess {
 	public void readDataBase(AccessRequestOptions opts,
 			QueryExecutionState state) throws Exception {
 		try {
-			long snap0 = System.currentTimeMillis();
 			state.connect = DriverManager.getConnection(opts.url);
-			long snap = System.currentTimeMillis();
 			state.statement = state.connect.createStatement();
 			state.statement.setQueryTimeout(opts.timeout);
 			state.statement.setFetchSize(opts.fetchsize);
 
 			int count = 0;
 			long aggTime = 0;
+			long snap = System.currentTimeMillis();
 
 			if (state.statement.execute(opts.query)) {
 				do {
@@ -180,6 +179,25 @@ public class ScrayJdbcAccess {
 					long nextTime = System.currentTimeMillis() - snap;
 					aggTime += nextTime;
 
+					if (!opts.dots) {
+						System.out.println();
+						System.out
+								.println("====================================================================");
+						System.out
+								.println("====================================================================");
+						System.out
+								.println("====================================================================");
+
+						System.out.println("Result set nr " + count
+								+ " loaded in " + nextTime + " ms.");
+
+						System.out
+								.println("====================================================================");
+						System.out
+								.println("====================================================================");
+						System.out
+								.println("====================================================================");
+					}
 
 					writeResultSet(results, opts.dots, state);
 					snap = System.currentTimeMillis();
@@ -210,43 +228,6 @@ public class ScrayJdbcAccess {
 
 			}
 
-			if (state.statement.execute(opts.query)) {
-				do {
-					count++;
-					ResultSet results = state.statement.getResultSet();
-					long nextTime = System.currentTimeMillis() - snap;
-					aggTime += nextTime;
-
-
-					writeResultSet(results, opts.dots, state);
-					snap = System.currentTimeMillis();
-
-				} while (state.statement.getMoreResults()
-						&& count != (opts.resultsets - 1));
-
-				System.out.println();
-
-				System.out
-						.println("====================================================================");
-				System.out
-						.println("====================================================================");
-				System.out
-						.println("====================================================================");
-
-				System.out.println("Finished - fetched " + state.totalcount
-						+ " result(s) in " + count
-						+ " result set(s) with pagesize of " + opts.fetchsize
-						+ " in " + aggTime + " ms.");
-
-				System.out
-						.println("====================================================================");
-				System.out
-						.println("====================================================================");
-				System.out
-						.println("====================================================================");
-
-			}
-			System.out.println("snap connection startup:" + (snap - snap0));
 		} catch (Exception e) {
 			throw e;
 		} finally {
@@ -260,18 +241,22 @@ public class ScrayJdbcAccess {
 		while (resultSet.next()) {
 			count++;
 			state.totalcount++;
+			if (!dots) {
 				ResultSetMetaData meta = resultSet.getMetaData();
 				int size = meta.getColumnCount();
-				//System.out.println();
-				//System.out.println("Row " + count + " has " + size
-				//		+ " columns.");
+				System.out.println();
+				System.out.println("Row " + count + " has " + size
+						+ " columns.");
 				for (int i = 1; i <= size; i++) {
 					String type = meta.getColumnClassName(i);
 					Object value = resultSet.getObject(i);
-//					System.out.println("Column " + i + "  '"
-//							+ meta.getColumnName(i) + "'  (" + type + ") = "
-//							+ value);
+					System.out.println("Column " + i + "  '"
+							+ meta.getColumnName(i) + "'  (" + type + ") = "
+							+ value);
 				}
+			} else if (state.totalcount % 100L == 0) {
+				System.out.print(".");
+			}
 		}
 	}
 
