@@ -61,23 +61,23 @@ public class ScrayDriver implements java.sql.Driver {
 		return instance.getParentLogger();
 	}
 	
-//	static {
-//		try {
-//			try {
-//				ScrayProperties
-//						.registerProperty(PredefinedProperties.RESULT_COMPRESSION_MIN_SIZE);
-//				ScrayProperties.setPhase(Phase.config);
-//				ScrayProperties.setPhase(Phase.use);
-//			} catch (PropertyException p) {
-//				throw new RuntimeException(p);
-//			}
-//			// Register the ScrayDriver with DriverManager
-//			ScrayDriver driverInst = new ScrayDriver();
-//			DriverManager.registerDriver(driverInst);
-//			// System.setSecurityManager(new RMISecurityManager());
-//
-//		} catch (SQLException e) {
-//			log.error("Error registering jdbc driver.", e);
-//		}
-//	}
+	static {
+		try {
+			try {
+				ScrayProperties
+						.registerProperty(PredefinedProperties.RESULT_COMPRESSION_MIN_SIZE);
+				ScrayProperties.setPhase(Phase.config);
+				ScrayProperties.setPhase(Phase.use);
+			} catch (PropertyException p) {
+				throw new RuntimeException(p);
+			}
+			// Register the ScrayDriver with DriverManager
+			ScrayDriver driverInst = new ScrayDriver();
+			DriverManager.registerDriver(driverInst);
+			// System.setSecurityManager(new RMISecurityManager());
+
+		} catch (SQLException e) {
+			log.error("Error registering jdbc driver.", e);
+		}
+	}
 }

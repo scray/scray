@@ -20,8 +20,10 @@ public class ScrayStatefulTServiceAdapter implements ScrayTServiceAdapter {
 	public ScrayStatefulTService.FutureIface getClient() {
 		// lazy init
 		if (client == null) {
+			
 			client = Thrift.newIface(endpoint,
 					ScrayStatefulTService.FutureIface.class);
+			// client = Thrift.
 		}
 		return client;
 	}

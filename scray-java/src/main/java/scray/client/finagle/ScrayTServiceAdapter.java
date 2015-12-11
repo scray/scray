@@ -13,5 +13,4 @@ public interface ScrayTServiceAdapter {
 
 	public ScrayTResultFrame getResults(ScrayUUID queryId, int queryTimeout)
 			throws SQLException;
-		
 }
