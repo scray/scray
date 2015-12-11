@@ -1,29 +1,47 @@
 package scray.client.finagle;
 
 import java.sql.SQLException;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import scray.service.qmodel.thriftjava.ScrayTQuery;
 import scray.service.qmodel.thriftjava.ScrayUUID;
 import scray.service.qservice.thriftjava.ScrayStatefulTService;
 import scray.service.qservice.thriftjava.ScrayTResultFrame;
 
+import com.twitter.finagle.Service;
 import com.twitter.finagle.Thrift;
+import com.twitter.finagle.builder.ClientBuilder;
+import com.twitter.finagle.thrift.ThriftClientFramedCodec;
+import com.twitter.finagle.thrift.ThriftClientRequest;
 import com.twitter.util.Await;
 import com.twitter.util.Duration;
 import com.twitter.util.Future;
 
 public class ScrayStatefulTServiceAdapter implements ScrayTServiceAdapter {
 
-	private ScrayStatefulTService.FutureIface client;
+	private ScrayStatefulTService.FutureIface client = null;
+	private ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock();
 	private String endpoint;
 
 	public ScrayStatefulTService.FutureIface getClient() {
-		// lazy init
-		if (client == null) {
-			
-			client = Thrift.newIface(endpoint,
-					ScrayStatefulTService.FutureIface.class);
-			// client = Thrift.
+		rwLock.readLock().lock();
+		try {
+			if(client == null) {
+				rwLock.readLock().unlock();
+				rwLock.writeLock().lock();
+				try {
+					if(client == null) {
+						client = Thrift.<ScrayStatefulTService.FutureIface>newIface(endpoint,
+								ScrayStatefulTService.FutureIface.class);
+						
+					}
+				} finally {
+					rwLock.writeLock().unlock();
+					rwLock.readLock().lock();
+				}
+			}
+		} finally {
+			rwLock.readLock().unlock();
 		}
 		return client;
 	}

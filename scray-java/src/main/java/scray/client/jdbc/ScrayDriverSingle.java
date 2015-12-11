@@ -7,6 +7,7 @@ import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Logger;
 
 import scray.client.finagle.ScrayCombinedTServiceManager;
@@ -21,10 +22,16 @@ import scray.client.finagle.ScrayTServiceAdapter;
 public class ScrayDriverSingle implements java.sql.Driver {
 	
 	private static ScrayDriverSingle instance = null;
-	private AtomicReference<ScrayConnection> connection = null;
+	private ScrayConnection connection = null;
 	
-	private AtomicReference<ScrayConnection> getConnection() {
+	private ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock();
+	
+	private ScrayConnection getConnection() {
 		return instance.connection;
+	}
+	
+	private void setConnection(ScrayConnection connection) {
+		instance.connection = connection;
 	}
 	
 	private static org.slf4j.Logger log = org.slf4j.LoggerFactory
@@ -42,8 +49,24 @@ public class ScrayDriverSingle implements java.sql.Driver {
 
 	@Override
 	public Connection connect(String url, Properties info) throws SQLException {
-		getConnection().compareAndSet(null, generateNewConnection(url, info));		
-		return getConnection().get();
+		rwLock.readLock().lock();
+		try {
+			if(getConnection() == null) {
+				rwLock.readLock().unlock();
+				rwLock.writeLock().lock();
+				try {
+					if(getConnection() == null) {
+						setConnection(generateNewConnection(url, info));
+					}
+				} finally {
+					rwLock.writeLock().unlock();
+					rwLock.readLock().lock();
+				}
+			}
+			return getConnection();
+		} finally {
+			rwLock.readLock().unlock();
+		}
 	}
 	
 	/**
