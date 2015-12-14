@@ -2,12 +2,9 @@ package scray.querying.monitoring
 
 import java.lang.{ Long => JLong }
 import java.lang.{ String => JString }
-
 import scala.collection.convert.WrapAsScala._
 import scala.collection.mutable.HashMap
-
 import com.typesafe.scalalogging.slf4j.LazyLogging
-
 import javax.management.Attribute
 import javax.management.AttributeList
 import javax.management.DynamicMBean
@@ -27,12 +24,14 @@ import scray.querying.description.SmallerEqual
 import scray.querying.description.Unequal
 import scray.querying.description.Wildcard
 import scray.querying.queries.QueryInformation
+import javax.management.ObjectName
 
 class QueryInfoBean(qinfo: QueryInformation, beans: HashMap[String, QueryInfoBean]) extends DynamicMBean with LazyLogging {
 
   qinfo.registerDestructionListerner(destructionListerner)
 
   def destructionListerner() {
+    JMXHelpers.jmxUnregister(QueryInfoBean.getObjectName(qinfo))
     beans.remove(qinfo.qid.toString())
   }
 
@@ -142,4 +141,9 @@ class QueryInfoBean(qinfo: QueryInformation, beans: HashMap[String, QueryInfoBea
 
   override def invoke(actionName: String, params: Array[Object], signature: Array[String]): Object = null
 
+}
+
+object QueryInfoBean {
+  import JMXHelpers._
+  def getObjectName(qinfo: QueryInformation): ObjectName = s"Scray:00=Queries,name=${qinfo.qid.toString()}"
 }

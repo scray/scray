@@ -22,6 +22,8 @@ private object JMXHelpers {
   implicit def string2objectName(name: String): ObjectName = new ObjectName(name)
   def jmxRegister(ob: Object, obname: ObjectName) =
     ManagementFactory.getPlatformMBeanServer.registerMBean(ob, obname)
+  def jmxUnregister(obname: ObjectName) =
+    ManagementFactory.getPlatformMBeanServer.unregisterMBean(obname)
 }
 
 /**
