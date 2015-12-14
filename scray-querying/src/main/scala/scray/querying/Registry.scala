@@ -330,16 +330,17 @@ object Registry extends LazyLogging with Registry {
     }
   }
 
-  val cleanupQueryInformation = new JavaTimer(true).schedule(Duration.fromTimeUnit(1, TimeUnit.HOURS)) {
+  val cleanupQueryInformation = new JavaTimer(true).schedule(Duration.fromTimeUnit(15, TimeUnit.MINUTES)) {
     queryMonitorRwLock.writeLock().lock()
     try {
       val cutoffTime = Time.now - Duration.fromTimeUnit(1, TimeUnit.HOURS)
-      val qMon = queryMonitor.filterNot { entry =>
-        entry._2.finished.get > 0 && entry._2.finished.get < cutoffTime.inMillis  ||     // finished more than one hour ago
-        entry._2.pollingTime.get > 0 && entry._2.pollingTime.get < cutoffTime.inMillis } // probably query has died
-      (queryMonitor -- qMon.keys).map(_._2.destroy())
-      queryMonitor.clear()
-      queryMonitor ++= qMon
+      val qMon = queryMonitor.filter { entry =>
+        ((entry._2.finished.get > 0) && (entry._2.finished.get < cutoffTime.inMillis))  ||     // finished more than one hour ago
+        ((entry._2.pollingTime.get > 0) && (entry._2.pollingTime.get < cutoffTime.inMillis)) } // probably query has died
+      qMon.foreach{ entry => 
+        entry._2.destroy()
+        queryMonitor -= entry._1
+      }
     } finally {
       queryMonitorRwLock.writeLock().unlock()
     }
