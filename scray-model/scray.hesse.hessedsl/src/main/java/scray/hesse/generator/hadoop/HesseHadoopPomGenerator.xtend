@@ -63,6 +63,11 @@ class HesseHadoopPomGenerator {
 					<version>6.22.0</version>
 				</dependency>
 				<dependency>
+					<groupId>com.twitter</groupId>
+					<artifactId>chill_2.10</artifactId>
+					<version>0.7.2</version>
+				</dependency>
+				<dependency>
 					<groupId>joda-time</groupId>
 					<artifactId>joda-time</artifactId>
 					<version>2.9.1</version>

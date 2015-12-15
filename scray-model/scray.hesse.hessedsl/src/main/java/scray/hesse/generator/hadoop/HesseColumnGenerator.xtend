@@ -11,6 +11,8 @@ import scray.hesse.hesseDSL.ConstantIntColumn
 import scray.hesse.hesseDSL.ConstantLongValue
 import scray.hesse.hesseDSL.ConstantStringColumn
 import scray.hesse.hesseDSL.SelectColumn
+import scray.hesse.generator.HeaderInformation
+import scray.hesse.hesseDSL.MaterializedViewStatement
 
 /**
  * generate column specifications
@@ -45,11 +47,13 @@ class HesseColumnGenerator {
 	 * generates code that pulls a column out from the row
 	 * TODO: allow and check for table references 
 	 */
-	static def Parameter generateRowColumnSpecification(SelectColumn col, StringBuffer buffer, GeneratorState state) {
+	static def Parameter generateRowColumnSpecification(SelectColumn col, StringBuffer buffer, GeneratorState state, HeaderInformation header, MaterializedViewStatement view) {
 		val varname = "column" + state.nextVarNumberAndIncrement
 		buffer.append("val ")
 		buffer.append(varname)
-		buffer.append(" = row.getObject(\"\"\"")
+		buffer.append(" = ")
+		buffer.append(HesseHadoopLibraryGenerator::getLib(header, view))
+		buffer.append(".getAnyObject(value, \"\"\"")
 		buffer.append(col.name)
 		buffer.append("\"\"\")")
 		buffer.append(System.lineSeparator)

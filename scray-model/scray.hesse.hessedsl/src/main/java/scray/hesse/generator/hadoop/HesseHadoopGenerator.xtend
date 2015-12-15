@@ -40,11 +40,24 @@ class HesseHadoopGenerator implements HessePlaformGenerator {
 		state.protectedRegions.readProtectedRegionsFromFile(asmfilename, state, true)
 		state.fsa.generateFile(asmfilename, assemblygenerator.generateAssembly(state, header, view, bodyStatements))		
 
+		// generate library file
+		val libfilename = header.modelname + "/src/main/scala/" + header.modelname + "/" + HesseHadoopLibraryGenerator::getLib(header, view) + ".scala"
+		state.protectedRegions.readProtectedRegionsFromFile(libfilename, state, false)
+		state.fsa.generateFile(libfilename, HesseHadoopLibraryGenerator::generateLibrary(header, view))
+		
 		// generate job file
 		val jobgenerator = new HesseHadoopJobGenerator
 		val jobfilename = header.modelname + "/src/main/scala/" + header.modelname + "/" + header.modelname + view.name + "HadoopJob.scala"
 		state.protectedRegions.readProtectedRegionsFromFile(jobfilename, state, false)
 		state.fsa.generateFile(jobfilename, jobgenerator.generateFileBody(state, header, view, bodyStatements))
+
+		// generate writables files
+		val writablegenerator = new HesseHadoopWritableGenerator
+		val writablefilename = header.modelname + "/src/main/scala/" + header.modelname + "/" + header.modelname + view.name + "HadoopJobWritables.scala"
+		val pubcoludefsfilename = header.modelname + "/src/main/scala/" + header.modelname + "/PublicizedColumnDefinitions.scala"
+		state.protectedRegions.readProtectedRegionsFromFile(writablefilename, state, false)
+		state.fsa.generateFile(pubcoludefsfilename, writablegenerator.generatePublicizedColumnDefinitions)
+		state.fsa.generateFile(writablefilename, writablegenerator.generateWritables(header, view))
 	}
 
 }

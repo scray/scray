@@ -43,7 +43,7 @@ class HesseHadoopMapperFiltering {
 				HesseColumnGenerator::generateConstantColumnSpecification(abscol)
 			}
 			SelectColumn: {
-				HesseColumnGenerator::generateRowColumnSpecification(abscol, buffer, state)
+				HesseColumnGenerator::generateRowColumnSpecification(abscol, buffer, state, header, view)
 			}
 			default: {
 				throw new GeneratorError("Column type is unknown: " + abscol.getClass.getName)
