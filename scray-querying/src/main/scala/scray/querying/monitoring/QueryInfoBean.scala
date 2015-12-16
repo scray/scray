@@ -58,37 +58,37 @@ class QueryInfoBean(qinfo: QueryInformation, beans: HashMap[String, QueryInfoBea
   def getTableId(): String = {
     qinfo.table.tableId
   }
-  
+
   def getFinishedPlanningTime(): Long = {
     qinfo.finishedPlanningTime.get()
   }
-  
+
   def getRequestSentTime(): Long = {
     qinfo.requestSentTime.get
   }
 
   private def handleSubClauses(buffer: StringBuilder, clauses: List[Clause], combiner: String): StringBuilder = {
-    clauses.foldLeft(0) { (count, cl) => 
-      if(count > 0) { 
+    clauses.foldLeft(0) { (count, cl) =>
+      if(count > 0) {
         buffer ++= combiner
       }
-      buffer ++= " ( "
+      buffer ++= "( "
       recurseQueryFilters(buffer, cl)
-      buffer ++= " ) "
+      buffer ++= " )"
       count + 1
     }
     buffer
   }
-  
+
   def recurseQueryFilters(buffer: StringBuilder, clause: Clause): StringBuilder = clause match {
-    case c: Equal[_] =>  buffer ++= c.column.columnName + "=" + c.value.toString()
-    case c: Greater[_] => buffer ++= c.column.columnName + ">" + c.value.toString()
-    case c: GreaterEqual[_] => buffer ++= c.column.columnName + ">=" + c.value.toString()
-    case c: Smaller[_] => buffer ++= c.column.columnName + "<" + c.value.toString()
-    case c: SmallerEqual[_] => buffer ++= c.column.columnName + "<=" + c.value.toString()
-    case c: Unequal[_] => buffer ++= c.column.columnName + "<>" + c.value.toString()
-    case c: IsNull[_] => buffer ++= c.column.columnName + "is null"
-    case c: Wildcard[_] => buffer ++= c.column.columnName + "LIKE" + c.value.toString()
+    case c: Equal[_] =>  buffer ++= c.column.columnName + " = " + c.value.toString()
+    case c: Greater[_] => buffer ++= c.column.columnName + " > " + c.value.toString()
+    case c: GreaterEqual[_] => buffer ++= c.column.columnName + " >= " + c.value.toString()
+    case c: Smaller[_] => buffer ++= c.column.columnName + " < " + c.value.toString()
+    case c: SmallerEqual[_] => buffer ++= c.column.columnName + " <= " + c.value.toString()
+    case c: Unequal[_] => buffer ++= c.column.columnName + " <> " + c.value.toString()
+    case c: IsNull[_] => buffer ++= c.column.columnName + " is null "
+    case c: Wildcard[_] => buffer ++= c.column.columnName + " LIKE " + c.value.toString()
     case c: Or => handleSubClauses(buffer, c.clauses.toList, "OR")
     case c: And => handleSubClauses(buffer, c.clauses.toList, "AND")
   }
