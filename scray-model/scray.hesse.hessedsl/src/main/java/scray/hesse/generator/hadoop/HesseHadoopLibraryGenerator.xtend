@@ -14,12 +14,13 @@ class HesseHadoopLibraryGenerator {
 		// generated using Hesse!
 		package «header.modelname»
 		
-		import java.util.Date
+		import com.datastax.driver.core.{ColumnDefinitions, DataType, Row}
+		import java.lang.{Integer => JInteger}
+		import java.math.{BigInteger => JBigInteger, BigDecimal => JBigDecimal}
 		import java.text.SimpleDateFormat
+		import java.util.{Calendar, Date}
 		import scala.util.Try
 		import scala.math.{BigInt, BigDecimal}
-		import java.math.{BigInteger => JBigInteger, BigDecimal => JBigDecimal}
-		import java.long.{Integer => JInteger}
 		
 		object «getLib(header, view)» {
 			
@@ -30,16 +31,16 @@ class HesseHadoopLibraryGenerator {
 			}
 			
 			def stringToDate(date: String): Date = {
-				val sf = date.subString(0, 11)
+				val sf = date.substring(0, 11)
 				val df1 = new SimpleDateFormat("dd.MM.yyyy")
 				val df2 = new SimpleDateFormat("yyyy-MM-dd")
-				val df3 = new SimpleDateForamt("MM/dd/yyyy")
+				val df3 = new SimpleDateFormat("MM/dd/yyyy")
 				Try(df1.parse(sf)).getOrElse(Try(df2.parse(sf)).getOrElse(df3.parse(sf)))
 			}
 			
 			def dateLib(timestamp: Long): Date = {
 				val cal = Calendar.getInstance()
-				cal.setTime(new Date(date))	
+				cal.setTime(new Date(timestamp))	
 				cal.set(Calendar.HOUR, 0)
 				cal.set(Calendar.MINUTE, 0)
 				cal.set(Calendar.SECOND, 0)
@@ -85,8 +86,8 @@ class HesseHadoopLibraryGenerator {
 			
 			def castToFloat(input: Any): Float = Try {
 				input match {
-					case i: Int => i.toDouble
-					case i: JInteger => i.doubleValue
+					case i: Int => i.toFloat
+					case i: JInteger => i.floatValue
 					case d: Double => d.toFloat
 					case l: Long => l.toFloat
 					case f: Float => f
@@ -112,6 +113,27 @@ class HesseHadoopLibraryGenerator {
 					case s => s.toString.toInt
 				}
 			}.getOrElse { throw new RuntimeException("TIME: Could not cast input \" + input + \" to Long") }
+			
+			def getAnyObject(column: String, typ: DataType.Name, row: Row) = typ match {
+			    case DataType.Name.ASCII | DataType.Name.TEXT | DataType.Name.VARCHAR => row.getString(column)
+			    case DataType.Name.BIGINT | DataType.Name.COUNTER => row.getLong(column)
+			    case DataType.Name.BLOB => row.getBytes(column)
+			    case DataType.Name.BOOLEAN => row.getBool(column)
+			    case DataType.Name.DECIMAL => row.getDecimal(column)
+			    case DataType.Name.DOUBLE => row.getDouble(column)
+			    case DataType.Name.INT => row.getInt(column)
+			    case DataType.Name.VARINT => row.getVarint(column)
+			    case DataType.Name.FLOAT => row.getFloat(column)
+			    case DataType.Name.TIMESTAMP => row.getDate(column)
+			    case DataType.Name.UUID | DataType.Name.TIMEUUID => row.getUUID(column)
+			    case DataType.Name.INET => row.getInet(column)
+			}
+			
+			def getAnyObject(definition: ColumnDefinitions.Definition, row: Row): Any = 
+				getAnyObject(definition.getName, definition.getType.getName, row)
+			
+			def getAnyObject(row: Row, column: String): Any = 
+				getAnyObject(column, row.getColumnDefinitions.getType(column).getName, row)
 		}
 		'''
 	}

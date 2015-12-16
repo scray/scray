@@ -62,7 +62,7 @@ class HesseFunctionGenerator {
 		function.parameters.map [ parameter |
 			switch(parameter) {
 				FunctionColumn: generateFunction(where, parameter, buffer, state, header, view, bodyStatements)
-				AbstractTerminalColumnDefinition: generateTerminalColumn(parameter, buffer, state)
+				AbstractTerminalColumnDefinition: generateTerminalColumn(parameter, buffer, state, header, view)
 				default: {
 					throw new GeneratorError("Function-Parameter-Definition type is unknown: " + parameter.getClass.getName)				
 				}
@@ -73,10 +73,10 @@ class HesseFunctionGenerator {
 	/**
 	 * generates terminal parameter code
 	 */
-	private def Parameter generateTerminalColumn(AbstractTerminalColumnDefinition coldef, StringBuffer buffer, GeneratorState state) {
+	private def Parameter generateTerminalColumn(AbstractTerminalColumnDefinition coldef, StringBuffer buffer, GeneratorState state, HeaderInformation header, MaterializedViewStatement view) {
 		switch(coldef) {
 			ConstantColumn: HesseColumnGenerator::generateConstantColumnSpecification(coldef)
-			SelectColumn: HesseColumnGenerator::generateRowColumnSpecification(coldef, buffer, state)
+			SelectColumn: HesseColumnGenerator::generateRowColumnSpecification(coldef, buffer, state, header, view)
 			default: {
 				throw new GeneratorError("Column-Definition type is unknown: " + coldef.getClass.getName)
 			}

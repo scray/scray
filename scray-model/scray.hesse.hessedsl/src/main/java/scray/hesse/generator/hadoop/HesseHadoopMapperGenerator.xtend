@@ -16,6 +16,7 @@ class HesseHadoopMapperGenerator {
 	 * generates Mapper code
 	 */
 	def generateMapper(GeneratorState state, HeaderInformation header, MaterializedViewStatement view, List<BodyStatement> bodyStatements) {		
+		val HesseHadoopWritableGenerator wrtGenerator = new HesseHadoopWritableGenerator
 		
 		val VarAndFilters filtering = (new HesseHadoopMapperFiltering).generateFilteringAndFunctionApplication(state, header, view, bodyStatements)
 		'''
@@ -56,16 +57,18 @@ class HesseHadoopMapperGenerator {
 					«filtering.code»
 					var filterResult = «filtering.varname»
 				«ENDIF»
+				var outValue = new blablaRowBytesWritable(value)
+				var outKey = new blablaKeyBytesWritable(«wrtGenerator.getKeyColumnNames(view).map [ entry |
+						HesseHadoopLibraryGenerator::getLib(header, view) + ".getAnyObject(value, \"\"\"" + entry + "\"\"\")"
+					].join(", ")»)
 				«state.protectedRegions.protect("MAPPER_MAP", "// place additional mapper map code here", false)»
 				«/* TODO: we need to: filter and group */»
-				outValue.setSize
 				«IF filtering != null»
-					
 					if(filterResult) {
-						ouput.collect(outKey, outValue)
+						output.collect(outKey, outValue)
 					}
 				«ELSE»
-					ouput.collect(outKey, outValue)
+					output.collect(outKey, outValue)
 				«ENDIF»
 			}
 			
