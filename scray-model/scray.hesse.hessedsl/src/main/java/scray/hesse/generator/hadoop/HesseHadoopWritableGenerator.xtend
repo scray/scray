@@ -2,6 +2,7 @@ package scray.hesse.generator.hadoop
 
 import java.util.ArrayList
 import java.util.List
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import scray.hesse.generator.GeneratorState
 import scray.hesse.generator.HeaderInformation
@@ -16,6 +17,72 @@ import scray.hesse.hesseDSL.SupportedDBMSSystems
  * writes temporary information 
  */
 class HesseHadoopWritableGenerator {
+	
+	/**
+	 * generate scala file with 
+	 */
+	def generateWritables(HeaderInformation header, MaterializedViewStatement view) {
+		'''
+		package «header.modelname»
+		
+		import com.datastax.driver.core.{ColumnDefinitions, PublicizedColumnDefinitions, Row, DataType, UDTValue, Token, TupleValue}
+		import com.google.common.reflect.TypeToken
+		import java.math.{BigInteger => JBigInteger, BigDecimal => JBigDecimal}
+		import java.net.InetAddress
+		import java.nio.ByteBuffer
+		import java.util.{Date, UUID, Set => JSet, Map => JMap, List => JList, Iterator => JIterator}
+		import org.apache.hadoop.io.Writable
+		import scala.collection.mutable.LinkedHashMap
+		import scala.math.{BigInt, BigDecimal}
+		import scala.util.Try
+		
+		«generateTemporaryRow(header, view)»
+		
+		«generateKeyWritable(getKeyColumnNames(view), header, view)»
+		
+		«generateValueWritable(header, view)»
+		'''
+	}
+	
+	/**
+	 * work around protected constructor problem
+	 */
+	def generatePublicizedColumnDefinitions() {
+		'''
+		package com.datastax.driver.core
+		abstract class PublicizedColumnDefinitions() extends ColumnDefinitions(Array[ColumnDefinitions.Definition]()) {}
+		object PublicizedColumnDefinitions {
+		  def getTypeFromName(typname: DataType.Name): DataType = typname match {
+		    case DataType.Name.ASCII => DataType.ascii()
+		    case DataType.Name.BIGINT => DataType.bigint()
+		    case DataType.Name.BLOB => DataType.blob()
+		    case DataType.Name.BOOLEAN => DataType.cboolean()
+		    case DataType.Name.COUNTER => DataType.counter()
+		    case DataType.Name.DECIMAL => DataType.decimal()
+		    case DataType.Name.DOUBLE => DataType.cdouble()
+		    case DataType.Name.FLOAT => DataType.cfloat()
+		    case DataType.Name.INET => DataType.inet()
+		    case DataType.Name.INT => DataType.cint()
+		    case DataType.Name.TEXT => DataType.text()
+		    case DataType.Name.TIMESTAMP => DataType.timestamp()
+		    case DataType.Name.UUID => DataType.uuid()
+		    case DataType.Name.VARCHAR => DataType.varchar()
+		    case DataType.Name.VARINT => DataType.varint()
+		    case DataType.Name.TIMEUUID => DataType.timeuuid()
+		    case DataType.Name.LIST => DataType.list(null)
+		    case DataType.Name.SET => DataType.set(null)
+		    case DataType.Name.MAP => DataType.map(null, null)
+		    case DataType.Name.CUSTOM => DataType.custom("custom")
+		  }
+		  class PublicizedDefinition(keyspace: String, table: String, name: String, typ: DataType) 
+		  extends ColumnDefinitions.Definition(keyspace, table, name, typ) {
+		    def this(keyspace: String, table: String, name: String, typname: DataType.Name) = {
+		      this(keyspace, table, name, getTypeFromName(typname))
+		    }
+		  }
+		}
+		'''
+	}
 	
 	/**
 	 * identify columns we need to use in the key (and the order) to transfer to the reducer and sort
@@ -66,21 +133,25 @@ class HesseHadoopWritableGenerator {
 		 * communicate and store complete row data in custom Hadoop format
 		 */
 		class «header.modelname + view.name»RowBytesWritable extends Writable {
-			import com.twitter.chill._
 			import java.io.{DataInput, DataOutput}
+			import scala.collection.JavaConverters._
+			import com.twitter.chill._
 			
 			val kryo = ScalaKryoInstantiator.defaultPool
 			
 			var rowopt: Option[Row] = None
 			
-			this(row: Row) = {
+			def this(row: Row) = {
 				this()
 				rowopt = Some(row)
 			}
 			
 			override def write(out: DataOutput): Unit = {
 				«IF header.isDBMSUsed(#[view], SupportedDBMSSystems.CASSANDRA)»
-					val map = rowopt.map(row => row.getColumnDefinitions.iterator.map { definition => definition.name -> row.getObject(definition.name) }.toMap[String, Any]).getOrElse(Map[String, Any]())
+					val map = rowopt.map(row => row.getColumnDefinitions.iterator.asScala.map { definition => 
+						definition.getName -> ((definition, «HesseHadoopLibraryGenerator::getLib(header, view)».getAnyObject(definition, row))) }.
+						toMap[String, (ColumnDefinitions.Definition, Any)]).
+						getOrElse(Map[String, (ColumnDefinitions.Definition, Any)]())
 				«ELSEIF header.isDBMSUsed(#[view], SupportedDBMSSystems.MYSQL) || header.isDBMSUsed(#[view], SupportedDBMSSystems.ORACLE)»
 					val map = rowopt.map(row => row.asInstanceOf[«header.modelname + view.name»CQLCassandraRow].columns).getOrElse(Map[String, Any]())
 				«ENDIF»
@@ -88,7 +159,10 @@ class HesseHadoopWritableGenerator {
 				map.foreach { entry =>
 					val (key, value) = entry
 					out.writeUTF(key)
-					val valuebytes = kryo.toBytesWithClass(key)
+					out.writeUTF(value._1.getType.getName.name())
+					out.writeUTF(value._1.getTable)
+					out.writeUTF(value._1.getKeyspace)
+					val valuebytes = kryo.toBytesWithClass(value._2)
 					out.writeInt(valuebytes.length)
 					out.write(valuebytes)
 				}
@@ -96,13 +170,18 @@ class HesseHadoopWritableGenerator {
 			override def readFields(in: DataInput): Unit = {
 				val numberOfEntries = in.readInt
 				val resultMap = new LinkedHashMap[String, Any]
+				val definitionMap = new LinkedHashMap[String, ColumnDefinitions.Definition]
 				(1 to numberOfEntries).foreach { _ =>
 					val key = in.readUTF
+					val namedType = in.readUTF
+					val tablename = in.readUTF
+					val keyspacename = in.readUTF
 					val bytes = new Array[Byte](in.readInt)
 					val value = kryo.fromBytes(bytes)
+					definitionMap += ((key, new PublicizedColumnDefinitions.PublicizedDefinition(keyspacename, tablename, key, DataType.Name.valueOf(namedType))))
 					resultMap += ((key, value))
 				}
-				new «header.modelname + view.name»CQLCassandraRow(resultMap)
+				new «header.modelname + view.name»CQLCassandraRow(resultMap, definitionMap)
 			}
 		}
 		
@@ -142,6 +221,22 @@ class HesseHadoopWritableGenerator {
 			varbuffer.append(name)
 			varbuffer.append(": Any = null")
 			varbuffer.append(System::lineSeparator)
+		]
+		val parambuffer = new StringBuffer
+		val constructorbuffer = new StringBuffer
+		val first = new AtomicBoolean(false)
+		variables.forEach [ name |
+			if(first.get) {
+				parambuffer.append(", ")
+			}
+			first.set(true)
+			parambuffer.append(name)
+			parambuffer.append(": Any")
+			constructorbuffer.append("this.")
+			constructorbuffer.append(name)
+			constructorbuffer.append(" = ")
+			constructorbuffer.append(name)
+			constructorbuffer.append(System::lineSeparator)
 		]
 		val count = new AtomicInteger(0)
 		val writebuffer = new StringBuffer
@@ -185,10 +280,15 @@ class HesseHadoopWritableGenerator {
 		 * communicate and store complete row data in custom Hadoop format for «prefix»
 		 */
 		class «header.modelname + view.name + prefix»BytesWritable extends Writable {
-			import com.twitter.chill._
 			import java.io.{DataInput, DataOutput}
+			import com.twitter.chill._
 			
 			val kryo = ScalaKryoInstantiator.defaultPool
+			
+			def this(«parambuffer.toString») = {
+				this()
+				«constructorbuffer.toString»
+			}
 			
 			«varbuffer.toString»
 			
@@ -222,10 +322,26 @@ class HesseHadoopWritableGenerator {
 		 * a simple cassandra row implementation which we also map data from all other stores to
 		 * to get a single accessor to our data.
 		 */
-		class «header.modelname + view.name»CQLCassandraRow(columns: LinkedHashMap[String, _]) extends Row {
+		class «header.modelname + view.name»CQLCassandraRow(columns: LinkedHashMap[String, _], coldefs: LinkedHashMap[String, ColumnDefinitions.Definition]) extends Row {
 			import scala.collection.JavaConverters._
+			private class LocColumnDefinitions extends PublicizedColumnDefinitions {
+				override def size: Int = coldefs.size
+				override def contains(name: String): Boolean = coldefs.contains(name)
+				override def getName(i: Int): String = coldefs.foldLeft((0, None: Option[String])){ (cnt, entry) => 
+					if(cnt._1 == i){ (cnt._1 + 1, Some(entry._1))} else { (cnt._1 + 1, cnt._2) } }._2.getOrElse(null)
+				override def getKeyspace(i: Int): String = getKeyspace(getName(i))
+				override def getKeyspace(name: String): String = coldefs.get(name).get.getKeyspace
+				override def getTable(name: String): String = coldefs.get(name).get.getTable
+				override def getTable(i: Int): String = getTable(getName(i))
+				override def getType(i: Int): DataType = getType(getName(i))
+				override def getType(name: String): DataType = coldefs.get(name).map(_.getType).getOrElse(null)
+				override def asList(): JList[ColumnDefinitions.Definition] = coldefs.values.toList.asJava
+				override def getIndexOf(name: String): Int = coldefs.foldLeft((-1, -1)) { (cnt, entry) =>
+					if(entry._1 == name) { (cnt._1 + 1, cnt._1 + 1) } else { (cnt._1 + 1, cnt._2) } }._2
+				override def iterator(): JIterator[ColumnDefinitions.Definition] = asList().iterator()
+			}
 			private def get[T](name: String) = columns.get(name).get.asInstanceOf[T]
-			override def getColumnDefinitions(): ColumnDefinitions = ???
+			override def getColumnDefinitions(): ColumnDefinitions = new LocColumnDefinitions()
 			override def isNull(i: Int): Boolean = ???
 			override def isNull(name: String): Boolean = columns.get(name).isEmpty
 			override def getBool(i: Int): Boolean = ???
@@ -273,8 +389,8 @@ class HesseHadoopWritableGenerator {
 			override def getPartitionKeyToken(): Token = ???
 			override def getToken(name: String): Token = get[Token](name)
 		  	override def getToken(i: Int): Token = ???
-		  	override def getObject(name: String): Object = get[Object](name)
-		 	override def getObject(i: Int): Object = ???
+		  	def getObject(name: String): Object = get[Object](name)
+		 	def getObject(i: Int): Object = ???
 		}
 		'''
 	}
@@ -302,7 +418,7 @@ class HesseHadoopWritableGenerator {
 				val meta = rs.getMetaData
 				val colCount = meta.getColumnCount
 				val columns = (1 to colCount).map { colNumber =>
-					(meta.getColumnName(colNumber,
+					(meta.getColumnName(colNumber),
 					meta.getColumnType(colNumber) match {
 						case Types.BIGINT => rs.getLong(colNumber)
 						case Types.CHAR | Types.VARCHAR | Types.LONGVARCHAR => rs.getString(colNumber)
@@ -317,9 +433,31 @@ class HesseHadoopWritableGenerator {
 						case Types.INTEGER => rs.getInt(colNumber)
 					})
 				}
+				val coldefs = (1 to colCount).map { colNumber =>
+					val name = meta.getColumnName(colNumber)
+					val table = meta.getTableName(colNumber)
+					(name, new ColumnDefinitions.Definition {
+						override def getKeyspace(): String = ""
+						override def getName(): String = name
+						override def getTable(): String = table
+						override def getType(): DataType = meta.getColumnType(colNumber) match {
+							case Types.BIGINT => DataType.bigint()
+							case Types.CHAR | Types.VARCHAR | Types.LONGVARCHAR => DataType.ascii()
+							case Types.BINARY | Types.VARBINARY | Types.LONGVARBINARY => DataType.blob()
+							case Types.BIT => DataType.cboolean()
+							case Types.NUMERIC | Types.DECIMAL => DataType.decimal()
+							case Types.REAL => DataType.cfloat()
+							case Types.FLOAT | Types.DOUBLE => DataType.cdouble()
+							case Types.DATE | Types.TIMESTAMP | Types.TIME => DataType.timestamp()
+							case Types.TINYINT => DataType.cint()
+							case Types.SMALLINT => DataType.cint()
+							case Types.INTEGER => DataType.cint()
+						}
+					})
+				}
 				val columnMap = new LinkedHashMap[]
 				columnMap ++= columns.toMap
-				row = Some(new «header.modelname + view.name»CQLCassandraRow(columnMap))
+				row = Some(new «header.modelname + view.name»CQLCassandraRow(columnMap, coldefs))
 			}
 			
 			// writes a set to db

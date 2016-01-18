@@ -5,31 +5,33 @@ import java.lang.{ String => JString }
 import scala.collection.convert.WrapAsScala._
 import scala.collection.mutable.HashMap
 import com.typesafe.scalalogging.slf4j.LazyLogging
+import javax.management.Attribute
+import javax.management.AttributeList
 import javax.management.DynamicMBean
 import javax.management.DynamicMBean
+import javax.management.MBeanAttributeInfo
+import javax.management.MBeanInfo
+import scray.querying.description.And
 import scray.querying.description.AtomicClause
 import scray.querying.description.Clause
-import scray.querying.queries.QueryInformation
-import javax.management.MBeanInfo
-import scray.querying.description.Smaller
-import scray.querying.description.GreaterEqual
-import scray.querying.description.SmallerEqual
-import scray.querying.description.Unequal
-import javax.management.MBeanAttributeInfo
 import scray.querying.description.Equal
 import scray.querying.description.Greater
-import scray.querying.description.And
+import scray.querying.description.GreaterEqual
 import scray.querying.description.IsNull
-import javax.management.AttributeList
-import javax.management.Attribute
 import scray.querying.description.Or
+import scray.querying.description.Smaller
+import scray.querying.description.SmallerEqual
+import scray.querying.description.Unequal
 import scray.querying.description.Wildcard
+import scray.querying.queries.QueryInformation
+import javax.management.ObjectName
 
 class QueryInfoBean(qinfo: QueryInformation, beans: HashMap[String, QueryInfoBean]) extends DynamicMBean with LazyLogging {
 
   qinfo.registerDestructionListerner(destructionListerner)
 
   def destructionListerner() {
+    JMXHelpers.jmxUnregister(QueryInfoBean.getObjectName(qinfo))
     beans.remove(qinfo.qid.toString())
   }
 
@@ -56,33 +58,44 @@ class QueryInfoBean(qinfo: QueryInformation, beans: HashMap[String, QueryInfoBea
   def getTableId(): String = {
     qinfo.table.tableId
   }
-  
+
   def getFinishedPlanningTime(): Long = {
     qinfo.finishedPlanningTime.get()
   }
-  
+
   def getRequestSentTime(): Long = {
     qinfo.requestSentTime.get
   }
 
-  def recurseQueryFilters(clause: Clause, acc: List[(String, String, String)]): List[(String, String, String)] = clause match {
+  private def handleSubClauses(buffer: StringBuilder, clauses: List[Clause], combiner: String): StringBuilder = {
+    clauses.foldLeft(0) { (count, cl) =>
+      if(count > 0) {
+        buffer ++= combiner
+      }
+      buffer ++= "( "
+      recurseQueryFilters(buffer, cl)
+      buffer ++= " )"
+      count + 1
+    }
+    buffer
+  }
 
-    case c: Equal[_] => acc :+ (c.column.columnName, "=", c.value.toString())
-    case c: Greater[_] => acc :+ (c.column.columnName, ">", c.value.toString())
-    case c: GreaterEqual[_] => acc :+ (c.column.columnName, ">=", c.value.toString())
-    case c: Smaller[_] => acc :+ (c.column.columnName, "<", c.value.toString())
-    case c: SmallerEqual[_] => acc :+ (c.column.columnName, "<=", c.value.toString())
-    case c: Unequal[_] => acc :+ (c.column.columnName, "<>", c.value.toString())
-    case c: IsNull[_] => acc :+ (c.column.columnName, "is null", "")
-    case c: Wildcard[_] => acc :+ (c.column.columnName, "LIKE", c.value.toString())
-    case c: Or => c.clauses.flatMap(cl => recurseQueryFilters(cl, List())).toList
-    case c: And => c.clauses.flatMap(cl => recurseQueryFilters(cl, List())).toList
+  def recurseQueryFilters(buffer: StringBuilder, clause: Clause): StringBuilder = clause match {
+    case c: Equal[_] =>  buffer ++= c.column.columnName + " = " + c.value.toString()
+    case c: Greater[_] => buffer ++= c.column.columnName + " > " + c.value.toString()
+    case c: GreaterEqual[_] => buffer ++= c.column.columnName + " >= " + c.value.toString()
+    case c: Smaller[_] => buffer ++= c.column.columnName + " < " + c.value.toString()
+    case c: SmallerEqual[_] => buffer ++= c.column.columnName + " <= " + c.value.toString()
+    case c: Unequal[_] => buffer ++= c.column.columnName + " <> " + c.value.toString()
+    case c: IsNull[_] => buffer ++= c.column.columnName + " is null "
+    case c: Wildcard[_] => buffer ++= c.column.columnName + " LIKE " + c.value.toString()
+    case c: Or => handleSubClauses(buffer, c.clauses.toList, "OR")
+    case c: And => handleSubClauses(buffer, c.clauses.toList, "AND")
   }
   //filters
   def getFilters(): String = {
     qinfo.where.map { clause =>
-      val sorted = recurseQueryFilters(clause, List()).sortWith((a, b) => a._1 < b._1)
-      sorted.toString()
+      recurseQueryFilters(new StringBuilder, clause).toString
     }.getOrElse("")
   }
 
@@ -128,4 +141,9 @@ class QueryInfoBean(qinfo: QueryInformation, beans: HashMap[String, QueryInfoBea
 
   override def invoke(actionName: String, params: Array[Object], signature: Array[String]): Object = null
 
+}
+
+object QueryInfoBean {
+  import JMXHelpers._
+  def getObjectName(qinfo: QueryInformation): ObjectName = s"Scray:00=Queries,name=${qinfo.qid.toString()}"
 }

@@ -47,7 +47,7 @@ class HesseHadoopJobGenerator {
 		import org.apache.hadoop.io._
 		import org.apache.hadoop.mapred._
 		import org.apache.hadoop.util.{ Tool, ToolRunner }
-		import java.util.Date
+		import java.util.{Date, Iterator => JIterator, UUID, Set => JSet, Map => JMap}
 		import scala.util.Try
 		import scala.collection.mutable.LinkedHashMap
 		import java.security.MessageDigest
@@ -58,12 +58,6 @@ class HesseHadoopJobGenerator {
 		
 		«state.protectedRegions.protect("IMPORTS_MAIN_FILE", "// place additional imports here", false)»
 		
-		«writableGenerator.generateTemporaryRow(header, view)»
-		
-		«writableGenerator.generateKeyWritable(writableGenerator.getKeyColumnNames(view), header, view)»
-		
-		«writableGenerator.generateValueWritable(header, view)»
-
 		«mapperGenerator.generateMapper(state, header, view, bodyStatements)»
 		
 		«reducerGenerator.generateReducer(state, header, view, bodyStatements)»
@@ -94,10 +88,10 @@ class HesseHadoopJobGenerator {
 		 */
 		def main(args: Array[String]) = {
 			«IF header.isDBMSUsed(bodyStatements, SupportedDBMSSystems.CASSANDRA)»
-			session.execute(s"CREATE KEYSPACE IF NOT EXISTS $WITH replication = $replication;")
+			session.execute(s"CREATE KEYSPACE IF NOT EXISTS WITH replication = $replication;")
 			«ENDIF»
 			«state.protectedRegions.protect("MAIN_PRE_PROCESSING", "// place protected pre-processing code here", false)»
-			val exitCode = ToolRunner.run(new JobConf(), TestJob, args)
+			val exitCode = ToolRunner.run(new JobConf(), «header.modelname + view.name»HadoopJob, args)
 			«state.protectedRegions.protect("MAIN_POST_PROCESSING", "// place protected post-processing code here", false)»
 			«IF header.isDBMSUsed(bodyStatements, SupportedDBMSSystems.CASSANDRA)»
 			session.close
@@ -118,8 +112,10 @@ class HesseHadoopJobGenerator {
 		override def run(args: Array[String]): Int = {
 			val config = getConf().asInstanceOf[JobConf]
 			val conf = new JobConf(config, «header.modelname + view.name»HadoopJob.getClass)
+			conf.setOutputKeyClass(classOf[«header.modelname + view.name»KeyBytesWritable])
+			conf.setOutputValueClass(classOf[«header.modelname + view.name»RowBytesWritable])
 			«state.protectedRegions.protect("RUN_PRE_PROCESSING", "// place protected pre-processing code here", false)»
-			val exitCode = ToolRunner.run(new JobConf(), TestJob, args)
+			val exitCode = ToolRunner.run(new JobConf(), «header.modelname + view.name»HadoopJob, args)
 			JobClient.runJob(conf)
 			«state.protectedRegions.protect("RUN_POST_PROCESSING", "// place protected post-processing and return code here
 			0", false)»
