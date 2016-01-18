@@ -52,15 +52,18 @@ public class PropertyFileStorage implements PropertyStorage {
 		props = new Properties();
 
 		try {
-
+System.out.println("0" + location + "\n\n\n");
 			if (fileLocationType.equals(FileLocationTypes.JarPropertiesFile)) {
 				props.load(ScrayProperties.class.getClassLoader()
 						.getResourceAsStream(location));
 			} else if (fileLocationType
 					.equals(FileLocationTypes.LocalPropertiesFile)) {
+				System.out.println(location + "\t" + System.getProperty(location));
 				if(System.getProperty(location) != null) {
-					props.load(new FileInputStream(System.getProperty(location)));
+					System.out.println("1" + location + "\n\n\n");
+					props.load(new FileInputStream(location));
 				} else {
+					System.out.println("2" + location + "\t" + System.getenv(location) + "\n\n\n");
 					props.load(new FileInputStream(System.getenv(location)));
 				}
 			}

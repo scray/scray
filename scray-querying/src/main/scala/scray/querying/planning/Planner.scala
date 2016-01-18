@@ -50,10 +50,24 @@ object Planner extends LazyLogging {
    * plans the execution and starts it
    */
   def planAndExecute(query: Query): Spool[Row] = {
-    logger.info(s"qid is ${query.getQueryID}")
+    val queryInfo = Registry.createQueryInformation(query)
+    val plans = plan(query, queryInfo)
+    
+    // do we need to order?
+    val ordering = plans.find((execution) => execution._1.isInstanceOf[OrderedComposablePlan[_, _]]).
+      map(_._1.asInstanceOf[OrderedComposablePlan[DomainQuery, _]])
+    
+    
+    // run the plans and merge if it is needed
+    MergingResultSpool.seekingLimitingSpoolTransformer(
+        executePlans(plans.asInstanceOf[ParSeq[(OrderedComposablePlan[DomainQuery,_], DomainQuery)]], ordering == None, ordering, queryInfo),
+        query.getQueryRange)
+  }
+  
+  def plan(query: Query, queryInfo: QueryInformation) = {
+        logger.info(s"qid is ${query.getQueryID}")
     val version = basicVerifyQuery(query)
 
-    val queryInfo = Registry.createQueryInformation(query)
 
     // TODO: memoize query-plans if basicVerifyQuery has been successful
 
@@ -93,17 +107,7 @@ object Planner extends LazyLogging {
       (executablePlan, domainQuery)
     }
 
-    // do we need to order?
-    val ordering = plans.find((execution) => execution._1.isInstanceOf[OrderedComposablePlan[_, _]]).
-      map(_._1.asInstanceOf[OrderedComposablePlan[DomainQuery, _]])
-
-    queryInfo.finishedPlanningTime.set(System.currentTimeMillis())
-    logger.debug(s"Plan computed for query: ${query.getQueryID.toString}")
-
-    // run the plans and merge if it is needed
-    MergingResultSpool.seekingLimitingSpoolTransformer(
-        executePlans(plans.asInstanceOf[ParSeq[(OrderedComposablePlan[DomainQuery,_], DomainQuery)]], ordering == None, ordering, queryInfo),
-        query.getQueryRange)
+    plans
   }
 
   /**

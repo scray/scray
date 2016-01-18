@@ -67,13 +67,11 @@ class Sourcemerge extends WordSpec {
    }
 }
 object Sourcemerge {
-     implicit class RowSetContainsChecker(rowset: Set[Row]) {
-        def rowIsContained(row: Row) = {
-          rowset.find { setrow =>
-            !setrow.getColumns.find { col => setrow.getColumnValue(col) != row.getColumnValue(col)}.isDefined
-          }.isDefined
-        }
-      }
-           
-  
+  implicit class RowSetContainsChecker(rowset: Set[Row]) {
+    def rowIsContained(row: Row) = {
+      rowset.find { setrow =>
+        !setrow.getColumns.find { col => setrow.getColumnValue(col) != row.getColumnValue(col)}.isDefined
+      }.isDefined
+    }
+  }
 }

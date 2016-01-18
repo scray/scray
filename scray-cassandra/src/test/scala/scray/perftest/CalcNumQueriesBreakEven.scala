@@ -81,7 +81,6 @@ object CalcNumQueriesBreakEven {
         val query: QUERY = QueryBuilder.select().all().from(config.columnFamilyName).where(_)
         // issue single query to pull all data into memory, if possible (to be able to compare)        
         val results = recursiveQuery(query, config.numberOfRows, config, config.keyColumnName, rand)
-        
       } 
     }.getOrElse{
       println("Could not parse command line args!")

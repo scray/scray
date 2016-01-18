@@ -35,7 +35,7 @@ import com.typesafe.scalalogging.slf4j.LazyLogging
 /**
  * SpoolRack implementation offering some means to substitute the back end (query engine).
  *
- * Uses reentrand read write lock to safeguard concurrent modifications.
+ * Uses reentrant read write lock to safeguard concurrent modifications.
  *
  * Spool garbage collection controlled explicitly by task management.
  *

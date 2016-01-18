@@ -32,7 +32,7 @@ import scray.querying.caching.NullCache
  * All queryable components in scray should be Sources.
  */
 trait Source[Q <: DomainQuery, T] {
-
+  
   def request(query: Q): Future[T]
 
   /**
