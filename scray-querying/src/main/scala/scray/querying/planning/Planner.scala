@@ -50,8 +50,7 @@ object Planner extends LazyLogging {
    * plans the execution and starts it
    */
   def planAndExecute(query: Query): Spool[Row] = {
-    val queryInfo = Registry.createQueryInformation(query)
-    val plans = plan(query, queryInfo)
+    val (plans, queryInfo) = Planner.plan(query)
     
     // do we need to order?
     val ordering = plans.find((execution) => execution._1.isInstanceOf[OrderedComposablePlan[_, _]]).
@@ -64,8 +63,10 @@ object Planner extends LazyLogging {
         query.getQueryRange)
   }
   
-  def plan(query: Query, queryInfo: QueryInformation) = {
-        logger.info(s"qid is ${query.getQueryID}")
+  def plan(query: Query) = {
+    val queryInfo = Registry.createQueryInformation(query)
+
+    logger.info(s"qid is ${query.getQueryID}")
     val version = basicVerifyQuery(query)
 
 
@@ -107,7 +108,7 @@ object Planner extends LazyLogging {
       (executablePlan, domainQuery)
     }
 
-    plans
+    (plans, queryInfo)
   }
 
   /**
