@@ -47,6 +47,7 @@ class KeyValueSource[K, V](val store: ReadableStore[K, V], space: String, versio
   val valueToRow: ((K, V)) => Row = queryspaceTable.get.rowMapper.asInstanceOf[((K, V)) => Row]
 
   override def request(query: KeyBasedQuery[K]): Future[Seq[Row]] = {
+    query.queryInfo.addNewCosts {(n: Long) => {n + 42}}
     if(enableCaching) {
       cache.retrieve(query).map { value =>
           Future.value(Seq(value))

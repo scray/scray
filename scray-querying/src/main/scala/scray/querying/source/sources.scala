@@ -26,6 +26,8 @@ import scray.querying.description.Row
 import scray.querying.queries.DomainQuery
 import scray.querying.caching.Cache
 import scray.querying.caching.NullCache
+import scray.querying.source.costs.QueryCosts
+import scray.querying.source.costs.QueryCostFunctionFactory
 
 /**
  * sources take queries and produce future results.
@@ -35,6 +37,11 @@ trait Source[Q <: DomainQuery, T] {
   
   def request(query: Q): Future[T]
 
+  /**
+   * Return estimated costs for this query in this state
+   */
+  def getCosts(query: Q)(implicit costFunc: QueryCostFunctionFactory): QueryCosts = costFunc.apply(this).apply(query) 
+  
   /**
    * the result will be comprised of a set of columns
    */
@@ -93,6 +100,7 @@ trait EagerSource[Q <: DomainQuery] extends Source[Q, Seq[Row]] {
  */
 class NullSource[Q <: DomainQuery] extends LazySource[Q] {
   override def request(query: Q): LazyDataFuture = Future(Spool.Empty)
+  override def getCosts(query: Q): QueryCosts = QueryCosts(0.0, 0L)
   override def getColumns: List[Column] = List()
   override def isOrdered(query: Q): Boolean = true
   override def getGraph: Graph[Source[DomainQuery, Spool[Row]], DiEdge] = Graph.empty[Source[DomainQuery, Spool[Row]], DiEdge]

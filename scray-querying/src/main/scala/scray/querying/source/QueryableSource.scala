@@ -42,6 +42,7 @@ class QueryableSource[K, V](val store: QueryableStore[K, V], val space: String, 
   val queryMapping: DomainQuery => K = queryspaceTable.get.domainQueryMapping.asInstanceOf[DomainQuery => K]
   
   override def request(query: DomainQuery): Future[Spool[Row]] = {
+    query.queryInfo.addNewCosts {(n: Long) => {n + 42}}
     logger.debug(s"Requesting data from store with ${query.getQueryID}")
     store.queryable.get(queryMapping(query)).transform {
       case Throw(y) => Future.exception(y)

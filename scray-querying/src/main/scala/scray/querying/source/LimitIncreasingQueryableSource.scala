@@ -53,6 +53,7 @@ class LimitIncreasingQueryableSource[K, V](override val store: QueryableStore[K,
 
   
   override def request(query: DomainQuery): Future[Spool[Row]] = {
+    query.queryInfo.addNewCosts {(n: Long) => {n + 42}}
     logger.debug(s"Requesting data from store with LimitIncreasingQueryableSource on query ${query}")
     store.queryable.get(queryMapping(query)).transform {
       case Throw(y) => Future.exception(y)

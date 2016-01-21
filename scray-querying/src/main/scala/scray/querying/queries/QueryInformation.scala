@@ -5,6 +5,7 @@ import java.util.UUID
 import scala.collection.mutable.ArrayBuffer
 import scray.querying.description.TableIdentifier
 import scray.querying.description.Clause
+import scala.collection.mutable.MutableList
 
 /**
  * information on queries that can be monitored
@@ -40,7 +41,7 @@ class QueryInformation(val qid: UUID, val table: TableIdentifier,
   private val destructionListeners = new ArrayBuffer[DESTRUCTOR] 
   
   def registerDestructionListerner(listener: DESTRUCTOR) = destructionListeners += listener 
-  
+   
   def destroy() = {
     destructionListeners.foreach(_())
     destructionListeners.clear()
