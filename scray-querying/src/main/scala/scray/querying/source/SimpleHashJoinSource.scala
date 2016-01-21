@@ -31,6 +31,8 @@ import com.typesafe.scalalogging.slf4j.LazyLogging
 import scray.querying.description.EmptyRow
 import scray.querying.source.costs.QueryCosts
 import scray.querying.source.costs.QueryCostFunctionFactory
+import scray.querying.source.costs.LinearQueryCostFuntionFactory.defaultFactory
+
 
 /**
  * This hash joined source provides a means to implement referential lookups (a simple join).
@@ -43,19 +45,22 @@ import scray.querying.source.costs.QueryCostFunctionFactory
  * To make this an inner join results must be filtered by setting isInner to true.
  */
 class SimpleHashJoinSource[Q <: DomainQuery, K, R, V](
-    source: LazySource[Q],
+    val source: LazySource[Q],
     sourceJoinColumn: Column,
-    lookupSource: KeyValueSource[R, V],
+    val lookupSource: KeyValueSource[R, V],
     lookupSourceJoinColumns: List[Column],
     typeMapper: K => R = (k: K) => k.asInstanceOf[R],
-    isInner: Boolean = false)()
+    isInner: Boolean = false)
   extends LazySource[Q] with LazyLogging {
 
   /**
    * estimation is based on assumption that this will be a left outer join
    */
-  override def getCosts(query: Q)(factory: QueryCostFunctionFactory): QueryCosts = {
-    factory.apply(this).apply(query)
+  override def getCosts(query: Q)(implicit factory: QueryCostFunctionFactory): QueryCosts = {
+	  val sourceCosts = source.getCosts(query)(defaultFactory)
+	  val lookupCosts = lookupSource.getCosts(getSimpleKeyBasedQuery(query, None))
+	  val amount = sourceCosts.estimatedAmount + sourceCosts.estimatedCardinality * lookupCosts.estimatedAmount
+	  QueryCosts(amount, sourceCosts.estimatedCardinality)
   }
   
   def getSimpleKeyBasedQuery(query: Q, inCol: Option[K]): SimpleKeyBasedQuery[R] = new SimpleKeyBasedQuery[R](

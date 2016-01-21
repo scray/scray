@@ -40,7 +40,7 @@ trait Source[Q <: DomainQuery, T] {
   /**
    * Return estimated costs for this query in this state
    */
-  def getCosts(query: Q)(implicit costFunc: QueryCostFunctionFactory): QueryCosts = costFunc.apply(this).apply(query) 
+  def getCosts(query: Q)(implicit costFunc: QueryCostFunctionFactory): QueryCosts = costFunc.getCostFunction(this).apply(query)
   
   /**
    * the result will be comprised of a set of columns
@@ -100,7 +100,7 @@ trait EagerSource[Q <: DomainQuery] extends Source[Q, Seq[Row]] {
  */
 class NullSource[Q <: DomainQuery] extends LazySource[Q] {
   override def request(query: Q): LazyDataFuture = Future(Spool.Empty)
-  override def getCosts(query: Q): QueryCosts = QueryCosts(0.0, 0L)
+  //override def applay(query: Q): QueryCosts = QueryCosts(0.0, 0L)
   override def getColumns: List[Column] = List()
   override def isOrdered(query: Q): Boolean = true
   override def getGraph: Graph[Source[DomainQuery, Spool[Row]], DiEdge] = Graph.empty[Source[DomainQuery, Spool[Row]], DiEdge]

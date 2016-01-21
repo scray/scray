@@ -14,28 +14,76 @@
 // limitations under the License.
 package scray.querying.planning
 
-import com.twitter.concurrent.Spool
-import com.twitter.storehaus.{ QueryableStore, ReadableStore }
-import com.twitter.util.{ Await, Future, Time }
-import com.typesafe.scalalogging.slf4j.LazyLogging
 import java.util.UUID
 import scala.annotation.tailrec
 import scala.collection.mutable.HashMap
 import scala.collection.parallel.immutable.ParSeq
-import scray.querying.{Query, Registry}
-import scray.querying.description.{ And, AtomicClause, Clause, Column, ColumnConfiguration, ColumnOrdering, Columns, Equal, Greater, GreaterEqual }
-import scray.querying.description.{ IsNull, Or, Row, Smaller, SmallerEqual, TableConfiguration, TableIdentifier, Unequal, Wildcard, WildcardChecker }
+import com.twitter.concurrent.Spool
+import com.twitter.storehaus.QueryableStore
+import com.twitter.storehaus.ReadableStore
+import com.twitter.util.Await
+import com.twitter.util.Future
+import com.typesafe.scalalogging.slf4j.LazyLogging
+import scray.querying.Query
+import scray.querying.Registry
+import scray.querying.description.And
+import scray.querying.description.AtomicClause
+import scray.querying.description.Clause
+import scray.querying.description.Column
+import scray.querying.description.ColumnConfiguration
+import scray.querying.description.ColumnOrdering
+import scray.querying.description.Columns
+import scray.querying.description.Equal
+import scray.querying.description.Greater
+import scray.querying.description.GreaterEqual
+import scray.querying.description.IsNull
+import scray.querying.description.Or
+import scray.querying.description.Row
+import scray.querying.description.Smaller
+import scray.querying.description.SmallerEqual
+import scray.querying.description.TableConfiguration
+import scray.querying.description.TableIdentifier
+import scray.querying.description.Unequal
+import scray.querying.description.Wildcard
+import scray.querying.description.WildcardChecker
 import scray.querying.description.internal._
-import scray.querying.description.internal.{ Bound, Domain, IndexTypeException, MaterializedView, NoPlanException, NonAtomicClauseException }
-import scray.querying.description.internal.{ QueryDomainParserException, QueryDomainParserExceptionReasons, QueryWithoutColumnsException }
-import scray.querying.description.internal.{ QueryspaceColumnViolationException, QueryspaceViolationException, QueryspaceViolationTableUnavailableException }
-import scray.querying.description.internal.{ RangeValueDomain, SingleValueDomain }
-import scray.querying.queries.{ DomainQuery, QueryInformation }
-import scray.querying.source.{ EagerCollectingDomainFilterSource, EagerEmptyRowDispenserSource, EagerSource, IdentityEagerCollectingQueryMappingSource }
-import scray.querying.source.{ IndexMergeSource, KeyValueSource, LazyEmptyRowDispenserSource, LazyQueryColumnDispenserSource, LazyQueryDomainFilterSource }
-import scray.querying.source.{ LazySource, LimitIncreasingQueryableSource, OrderingEagerMappingSource, ParallelizedQueryableSource, QueryableSource }
-import scray.querying.source.{ SimpleHashJoinSource, Source, SplittedAutoIndexQueryableSource, MergeReferenceColumns } 
-import scray.querying.source.indexing.{ SimpleHashJoinConfig, TimeIndexConfig, TimeIndexSource }
+import scray.querying.description.internal.Bound
+import scray.querying.description.internal.Domain
+import scray.querying.description.internal.IndexTypeException
+import scray.querying.description.internal.MaterializedView
+import scray.querying.description.internal.NoPlanException
+import scray.querying.description.internal.NonAtomicClauseException
+import scray.querying.description.internal.QueryDomainParserException
+import scray.querying.description.internal.QueryDomainParserExceptionReasons
+import scray.querying.description.internal.QueryWithoutColumnsException
+import scray.querying.description.internal.QueryspaceColumnViolationException
+import scray.querying.description.internal.QueryspaceViolationException
+import scray.querying.description.internal.QueryspaceViolationTableUnavailableException
+import scray.querying.description.internal.RangeValueDomain
+import scray.querying.description.internal.SingleValueDomain
+import scray.querying.queries.DomainQuery
+import scray.querying.queries.QueryInformation
+import scray.querying.source.EagerCollectingDomainFilterSource
+import scray.querying.source.EagerEmptyRowDispenserSource
+import scray.querying.source.EagerSource
+import scray.querying.source.IdentityEagerCollectingQueryMappingSource
+import scray.querying.source.IndexMergeSource
+import scray.querying.source.KeyValueSource
+import scray.querying.source.LazyEmptyRowDispenserSource
+import scray.querying.source.LazyQueryColumnDispenserSource
+import scray.querying.source.LazyQueryDomainFilterSource
+import scray.querying.source.LazySource
+import scray.querying.source.LimitIncreasingQueryableSource
+import scray.querying.source.OrderingEagerMappingSource
+import scray.querying.source.ParallelizedQueryableSource
+import scray.querying.source.QueryableSource
+import scray.querying.source.SimpleHashJoinSource
+import scray.querying.source.Source
+import scray.querying.source.SplittedAutoIndexQueryableSource
+import scray.querying.source.indexing.SimpleHashJoinConfig
+import scray.querying.source.indexing.TimeIndexConfig
+import scray.querying.source.indexing.TimeIndexSource
+import scray.querying.source.MergeReferenceColumns
 
 /**
  * Simple planner to execute queries.
@@ -397,9 +445,8 @@ object Planner extends LazyLogging {
              lookupTableConfig.table,
              Registry.getCachingEnabled
         )
-        tableConf.indexConfig match {
-          case simple: SimpleHashJoinConfig => new SimpleHashJoinSource(indexSource, colConf.column,
-            lookupSource, lookupTableConfig.primarykeyColumns)
+        tableConf.indexConfig match { //            //                  source      sourceJoinColumn lookupSource lookupSourceJoinColumns      ,typeMapper: K => R = (k: K) => k.asInstanceOf[R],
+          case simple: SimpleHashJoinConfig => new SimpleHashJoinSource(indexSource, colConf.column, lookupSource, lookupTableConfig.primarykeyColumns)//(defaultFactory)
           case time: TimeIndexConfig =>
             // maybe a parallel version is available --> convert to parallel version
             val timeQueryableSource = time.parallelization match {

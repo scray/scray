@@ -99,12 +99,10 @@ abstract class EagerCollectingQueryMappingSource[Q <: DomainQuery, R](source: So
   /**
    * estimates the costs of processing a single row
    */
-  def costEstimatorPerRow: Double
-  
-  override def getCosts(query: Q)(factory: QueryCostFunctionFactory): QueryCosts = {
-    factory.apply(this).apply(query)
+  def costEstimatorPerRow: Double = {
+    1.0
   }
-  
+   
   /**
    * simple implementation starts collecting and a conversion process
    * subclasses implement transformSpoolElement
