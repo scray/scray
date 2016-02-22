@@ -100,7 +100,6 @@ trait EagerSource[Q <: DomainQuery] extends Source[Q, Seq[Row]] {
  */
 class NullSource[Q <: DomainQuery] extends LazySource[Q] {
   override def request(query: Q): LazyDataFuture = Future(Spool.Empty)
-  //override def applay(query: Q): QueryCosts = QueryCosts(0.0, 0L)
   override def getColumns: List[Column] = List()
   override def isOrdered(query: Q): Boolean = true
   override def getGraph: Graph[Source[DomainQuery, Spool[Row]], DiEdge] = Graph.empty[Source[DomainQuery, Spool[Row]], DiEdge]
