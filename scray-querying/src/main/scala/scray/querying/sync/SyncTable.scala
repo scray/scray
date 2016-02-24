@@ -3,9 +3,12 @@ package scray.querying.sync.types
 import scala.reflect.runtime.universe._
 import shapeless._
 import com.datastax.driver.core.Statement
+import scala.collection.JavaConverters._
 
 
-case class Table[T <: Columns](val keySpace: String, val tableName: String, val columns: T) {}
+abstract case class Table[T <: Columns[_ <: Column[_]]](val keySpace: String, val tableName: String, val columns: T) {
+  // def getInsertStatement[InsertStatementT]: InsertStatementT 
+}
 
 trait Column[T] {
   val name: String
@@ -13,21 +16,22 @@ trait Column[T] {
   def getDBType = { dbTypeDetector(this) }
 }
 
-sealed trait Columns { 
+sealed trait Columns[ColumnT <: Column[_]] { 
   val time: Column[Long]
 
-  def foldLeft[B](z: B)(f: (B, Column[_]) => B): B = {
+  def foldLeft[B](z: B)(f: (B, ColumnT) => B): B = {
     allVals.foldLeft(z)(f)
   }
 
-  val allVals: List[Column[_]]
+  val allVals: List[ColumnT]
   lazy val primKey = "(" + time.name + ")"
   lazy val indexes: Option[List[String]] = None
 }
 
-abstract class DbSession[In1, T](val dbHostname: String) {
-  def execute(statement: In1): T
-  def execute(statement: String): T
+abstract class DbSession[Statement,InsertIn, Result](val dbHostname: String) {
+  def execute(statement: Statement): Result
+  def execute(statement: String): Result
+  def insert(statement: InsertIn): Result
 }
 
 /**
@@ -53,7 +57,7 @@ object CassandraTypeName {
 }
 
 
-class SyncTableColumns() extends Columns {
+class SyncTableColumns() extends Columns[Column[_]] {
   val jobname = new ColumnE[String]("jobname", CassandraTypeName.getCassandraTypeName(_))
   override val time = new ColumnE[Long]("time", CassandraTypeName.getCassandraTypeName(_))
   val lock = new ColumnE[Boolean]("lock", CassandraTypeName.getCassandraTypeName(_))
@@ -65,10 +69,10 @@ class SyncTableColumns() extends Columns {
   val completed = new ColumnE[Boolean]("completed", CassandraTypeName.getCassandraTypeName(_))
   override lazy val primKey = s"(${jobname.name}, ${online.name}, ${nr.name})"
   override lazy val indexes = Option(List(lock.name))
-  override val allVals: List[Column[_]] = tablename :: jobname ::batches :: onlineVersions :: time :: nr :: lock :: online :: completed :: Nil
+  override val allVals = tablename :: jobname ::batches :: onlineVersions :: time :: nr :: lock :: online :: completed :: Nil
 }
 
-class SyncTableColumnsValues(nrV: Int, jobnameV: String, timeV: Long, lockV: Boolean, onlineV: Boolean, completedV: Boolean, tablenameV: String, batchesV: Int, onlineVersionsV: Int) extends Columns {
+class SyncTableColumnsValues(nrV: Int, jobnameV: String, timeV: Long, lockV: Boolean, onlineV: Boolean, completedV: Boolean, tablenameV: String, batchesV: Int, onlineVersionsV: Int) extends Columns[ColumnV[_]] {
   val jobname = new ColumnV[String]("jobname", CassandraTypeName.getCassandraTypeName, jobnameV)
   override val time = new ColumnV[Long]("time", CassandraTypeName.getCassandraTypeName, timeV)
   val lock = new ColumnV[Boolean]("lock", CassandraTypeName.getCassandraTypeName, lockV)
@@ -80,29 +84,38 @@ class SyncTableColumnsValues(nrV: Int, jobnameV: String, timeV: Long, lockV: Boo
   val completed = new ColumnV[Boolean]("completed", CassandraTypeName.getCassandraTypeName, completedV)
   override lazy val primKey = s"(${jobname.name}, ${online.name}, ${nr.name})"
   override lazy val indexes = Option(List(lock.name))
-  override val allVals: List[Column[_]] = tablename :: jobname :: time :: batches :: onlineVersions :: nr :: lock :: online :: completed :: Nil
+  override val allVals = tablename :: jobname :: time :: batches :: onlineVersions :: nr :: lock :: online :: completed :: Nil
 }
 
-class SyncTableEmpty(keySpace: String) extends Table(keySpace: String, tableName = "\"SyncTable\"", columns = new SyncTableColumns) {}                                                                                                                              
-class SyncTableWithValues(keySpace: String, nrV: Int, jobnameV: String, timeV: Long, lockV: Boolean, onlineV: Boolean, completedV: Boolean, tablenameV: String, batchesV: Int, onlineVersionsV: Int) extends Table(keySpace: String, tableName = "\"SyncTable\"", columns = new SyncTableColumnsValues(nrV, jobnameV, timeV, lockV, onlineV, completedV, tablenameV, batchesV, onlineVersionsV)){}
+class SyncTableEmpty(keySpace: String) extends Table[SyncTableColumns](keySpace: String, tableName = "\"SyncTable\"", columns = new SyncTableColumns) {}                                                                                                                              
+class SyncTableWithValues(keySpace: String, nrV: Int, jobnameV: String, timeV: Long, lockV: Boolean, onlineV: Boolean, completedV: Boolean, tablenameV: String, batchesV: Int, onlineVersionsV: Int) extends Table[SyncTableColumnsValues](keySpace: String, tableName = "\"SyncTable\"", columns = new SyncTableColumnsValues(nrV, jobnameV, timeV, lockV, onlineV, completedV, tablenameV, batchesV, onlineVersionsV)){}
 
 /**
  * Data tables
  */
 
-class EmptyExampleDataColumns extends Columns {
+class EmptyExampleDataColumns extends Columns[ColumnE[_]] {
   override val time = new ColumnE[Long]("time", CassandraTypeName.getCassandraTypeName)
   val lock = new ColumnE[Boolean]("lock", CassandraTypeName.getCassandraTypeName)
   val completed = new ColumnE[Boolean]("completed", CassandraTypeName.getCassandraTypeName)
   val sum = new ColumnE[Long]("sum", CassandraTypeName.getCassandraTypeName)
-  override val allVals: List[Column[_]] = time :: lock :: sum :: completed :: Nil
+  override val allVals: List[ColumnE[_]] = time :: lock :: sum :: completed :: Nil
 }
 
-class DataTable[T <: DataColumns[S], S](keySpace: String, tableName: String, columns: T) extends Table(keySpace, tableName, columns) {}
+// Columns[Column[_]]
+class DataTable[T <: DataColumns[_]](keySpace: String, tableName: String, columns: T) extends Table[DataColumns[_]](keySpace, tableName, columns) {}
+
 case class CassandraTableLocation(keySpace: String, table: String)
 
-class DataColumns[+T](timeV: Long) extends Columns {
+abstract class DataColumns[T](timeV: Long) extends Columns[ColumnV[_]] {
   override val time = new ColumnV[Long]("time", CassandraTypeName.getCassandraTypeName, timeV)
-  def getInsertStatement: T 
-  override val allVals: List[Column[_]] = time :: Nil
+  override val allVals: List[ColumnV[_]] = time :: Nil
+  def getInsertStatement(keyspace: String, tableName: String): T 
 }
+
+///**
+// * 
+// */
+//class CassandraSumDataTable extends DataTable[] {
+//  
+//}

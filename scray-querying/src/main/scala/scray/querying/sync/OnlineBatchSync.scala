@@ -16,12 +16,12 @@ import java.util.{ Iterator => JIterator }
 import com.datastax.driver.core.querybuilder.Insert
 
 
-abstract class OnlineBatchSync extends LazyLogging {
+abstract class OnlineBatchSync[T <: DataColumns[S], S] extends LazyLogging {
 
   /**
    * Generate and register tables for a new job.
    */
-  def initJob[T <: DataColumns[S], S <: Insert](jobName: String, numberOfBatches: Int, dataTable: DataColumns[S])
+  def initJob(jobName: String, numberOfBatches: Int, dataTable: T)
 
   /**
    * Lock online table if it is used by another spark job.
@@ -46,16 +46,13 @@ abstract class OnlineBatchSync extends LazyLogging {
   def batchTableIsLocked(jobName: String, nr: Int): Boolean
   
   def getHeadBatch(jobName: String): Option[CassandraTableLocation]
-  
-  // def insert[T <: DataColumns[S], S](jobName: String, data: T)
-  
- 
+  // def insert(jobName: String, data: T)
 }
 
-class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[SimpleStatement, ResultSet]]) extends OnlineBatchSync {
+class OnlineBatchSyncCassandra[T <: DataColumns[Insert]](dbHostname: String, dbSession: Option[DbSession[Statement, Insert, ResultSet]]) extends OnlineBatchSync[T, Insert]  {
 
   // Create or use a given DB session.
-  val session = dbSession.getOrElse(new DbSession[SimpleStatement, ResultSet](dbHostname) {
+  val session = dbSession.getOrElse(new DbSession[SimpleStatement, Insert, ResultSet](dbHostname) {
     val cassandraSession = Cluster.builder().addContactPoint(dbHostname).build().connect()
 
     override def execute(statement: String): ResultSet = {
@@ -65,6 +62,14 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
     def execute(statement: Statement): ResultSet = {
       cassandraSession.execute(statement)
     }
+    
+    def insert(statement: Insert): ResultSet = {
+      cassandraSession.execute(statement)
+    }
+
+    def execute(statement: SimpleStatement): ResultSet = {
+      cassandraSession.execute(statement)
+    }
   })
 
   val syncTable: Table[SyncTableColumns] = new SyncTableEmpty("\"ABC\"")
@@ -72,10 +77,8 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
   /**
    * Generate and register tables for a new job.
    */
-  def initJob[T <: DataColumns[S], S <: Insert](jobName: String, numberOfBatches: Int, dataColumns: T) {
-
-    createKeyspace(syncTable)
-    println(createIndexString(syncTable))
+  def initJob(jobName: String, numberOfBatches: Int, dataColumns: T): Unit = {
+    createKeyspace[SyncTableColumns](syncTable)
     syncTable.columns.indexes match {
       case _: Some[List[String]] => session.execute(createIndexString(syncTable))
       case _                     =>
@@ -85,7 +88,7 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
     1 to numberOfBatches foreach { i =>
 
       // Create batch data tables
-      session.execute(createSingleTableString(new DataTable[DataColumns[Insert], Insert](syncTable.keySpace, getBatchJobName(jobName, i), dataColumns)))
+      session.execute(createSingleTableString(new DataTable(syncTable.keySpace, getBatchJobName(jobName, i), dataColumns)))
 
       // Register batch table
       session.execute(QueryBuilder.insertInto(syncTable.keySpace, syncTable.tableName)
@@ -101,7 +104,9 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
     // Create and register online tables
     1 to 3 foreach { i =>
       // Create online data tables
-      session.execute(createSingleTableString(new DataTable[DataColumns[Insert], Insert](syncTable.keySpace, getOnlineJobName(jobName, i), dataColumns)))
+      // Columns[Column[_]]
+      val ff = new DataTable[DataColumns[Insert]](syncTable.keySpace, getOnlineJobName(jobName, i), dataColumns)
+      session.execute(createSingleTableString(new DataTable(syncTable.keySpace, getOnlineJobName(jobName, i), dataColumns)))
 
       // Register online tables
       session.execute(QueryBuilder.insertInto(syncTable.keySpace, syncTable.tableName)
@@ -125,10 +130,12 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
     Option(CassandraTableLocation(syncTable.keySpace, newestBatch.getLong(syncTable.columns.time.name).toString()))
   }
   
-//  def insertInOnlineTable[T <: DataColumns[S], S <: Insert](jobName: String, nr: Int, data: T) {
-//    val statement = QueryBuilder.insertInto(syncTable.keySpace, getOnlineJobName(jobName, nr))
-//    session.execute(statement)
-//  }
+  def insertInOnlineTable(jobName: String, nr: Int, data: Table[DataColumns[Insert]]) {
+    val statement = data.columns.foldLeft(QueryBuilder.insertInto(syncTable.keySpace, syncTable.tableName)) {
+      (acc, column) => acc.value(column.name, column.value)
+    }
+    session.insert(statement)
+  }
 
 //  def getTailBatch(jobName: String, session: Session): Option[CassandraTableLocation] = {
 //    val headBatchQuery: RegularStatement = QueryBuilder.select().from(table.keySpace + "." + table.columnFamily).
@@ -143,8 +150,9 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
   /**
    * Create base keyspace and table
    */
-  def createKeyspace[T <: Columns](table: Table[T]): Unit = {
+  def createKeyspace[F <: Columns[_ <: Column[_]]](table: Table[F]): Unit = {
     session.execute(s"CREATE KEYSPACE IF NOT EXISTS ${table.keySpace} WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor' : 1};")
+    //   def createSingleTableString[T <: Columns[F], F <: Column[String]](table: Table[T]): String = {
     session.execute(createSingleTableString(table))
   }
 
@@ -245,7 +253,7 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
     session.execute(simpleStatement);
   }
 
-  def createSingleTableString[T <: Columns](table: Table[T]): String = {
+  def createSingleTableString[F <: Columns[_ <: Column[_]]](table: Table[F]): String = {
     val createStatement = s"CREATE TABLE IF NOT EXISTS ${table.keySpace + "." + table.tableName} (" +
       s"${table.columns.foldLeft("")((acc, next) => { acc + next.name + " " + next.getDBType + ", " })} " +
       s"PRIMARY KEY ${table.columns.primKey})"
@@ -254,7 +262,7 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
     createStatement
   }
 
-  private def createIndexString[T <: Columns](table: Table[T]): String = {
+  private def createIndexString[T <: Columns[Column[_]]](table: Table[T]): String = {
     s"CREATE INDEX IF NOT EXISTS ON ${table.keySpace}.${table.tableName} (${table.columns.indexes.getOrElse(List("")).head})"
   }
 
