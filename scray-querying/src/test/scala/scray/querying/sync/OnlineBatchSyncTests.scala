@@ -1,45 +1,74 @@
 package scray.querying.costs
 
+import scala.annotation.tailrec
 import org.junit.runner.RunWith
 import org.scalatest.WordSpec
 import org.scalatest.junit.JUnitRunner
-import scray.querying.description.SimpleRow
-import scray.querying.description.TableIdentifier
-import scray.querying.description.Column
-import scray.querying.description.RowColumn
-import com.twitter.util.Future
+import com.datastax.driver.core.ResultSet
+import com.datastax.driver.core.SimpleStatement
 import scray.querying.description.Row
-import scray.querying.description.ColumnOrdering
-import com.twitter.util.Await
-import com.twitter.concurrent.Spool
-import scala.annotation.tailrec
-import scala.collection.mutable.ArrayBuffer
-import scray.querying.source.costs.LinearQueryCostFuntionFactory
 import scray.querying.sync.OnlineBatchSyncCassandra
 import scray.querying.sync.types.DataColumns
-
-
+import scray.querying.sync.types.DbSession
+import org.cassandraunit.utils.EmbeddedCassandraServerHelper
+import com.datastax.driver.core.Cluster
+import org.scalatest.BeforeAndAfter
+import scray.querying.sync.types.DataTable
+import scray.querying.sync.types.TestDataColumns
+import scray.querying.sync.types.Column
+import scray.querying.sync.types.ColumnV
+import scray.querying.sync.types.CassandraTypeName
+import com.datastax.driver.core.querybuilder.QueryBuilder
 
 @RunWith(classOf[JUnitRunner])
-class OnlineBatchSyncTests extends WordSpec {
+class OnlineBatchSyncTests extends WordSpec with BeforeAndAfter {
+  var dbconnection: Option[DbSession[SimpleStatement, ResultSet]] = None
+  
+  before {
+        dbconnection = Option(new DbSession[SimpleStatement, ResultSet]("127.0.0.1") {
+        EmbeddedCassandraServerHelper.startEmbeddedCassandra(EmbeddedCassandraServerHelper.CASSANDRA_RNDPORT_YML_FILE)
+        val cassandraSession = Cluster.builder().addContactPoint("127.0.0.1").withPort(EmbeddedCassandraServerHelper.getNativeTransportPort).build().connect()
+
+        override def execute(statement: String): ResultSet = {
+          cassandraSession.execute(statement)
+        }
+
+        def execute(statement: SimpleStatement): ResultSet = {
+          cassandraSession.execute(statement)
+        }
+      })
+  }
+
+  after {}
   "OnlineBatchSync " should {
     " " in {
-      val table = new OnlineBatchSyncCassandra("andreas", None)
-      table.initJob("job55", 2, new DataColumns(1L))      
+      val table = new OnlineBatchSyncCassandra("", dbconnection)
+      table.initJob("job55", 3, new DataColumns(1L))
     }
-    "find newest batch" in {
-      val table = new OnlineBatchSyncCassandra("andreas", None)
-      table.initJob("job55", 2, new DataColumns(1L))    
-
-      table.lockTable("job55")
+   "lock table" in {
+      val table = new OnlineBatchSyncCassandra("", dbconnection)
+      table.selectAll()
+      table.lockOnlineTable("job55", 1)
+      table.selectAll()
+      assert(table.onlineTableIsLocked("job55", 1) === true)
+      assert(table.onlineTableIsLocked("job55", 2) === false)
     }
-    "lock and unlock table" in {
-      val table = new OnlineBatchSyncCassandra("andreas", None)
-      table.initJob("job55", 2, new DataColumns(1L))
+    "find latest online batch" in {
+      val table = new OnlineBatchSyncCassandra("", dbconnection)
       
-      println(table.isLocked("job55"))
-    }
+      class TestDataColumns(timeV: Long, sumV: Long) extends DataColumns[Insert](timeV) {
+        val sum = new ColumnV[Long]("sum", CassandraTypeName.getCassandraTypeName, sumV)
+        override def getInsertStatement() = {
+          val a = QueryBuilder.insertInto(table)
+        }
+        override val allVals: List[Column[_]] = time :: sum :: Nil
+      }
     
+            
+      val dataTable = new TestDataTable()
+      dbconnection.get.execute(statement)
+    }
+
   }
-  
+
 }
