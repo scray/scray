@@ -14,18 +14,20 @@ import org.cassandraunit.utils.EmbeddedCassandraServerHelper
 import com.datastax.driver.core.Cluster
 import org.scalatest.BeforeAndAfter
 import scray.querying.sync.types.DataTable
-import scray.querying.sync.types.TestDataColumns
 import scray.querying.sync.types.Column
 import scray.querying.sync.types.ColumnV
 import scray.querying.sync.types.CassandraTypeName
 import com.datastax.driver.core.querybuilder.QueryBuilder
+import com.datastax.driver.core.querybuilder.Insert
+import com.datastax.driver.core.Statement
+import scray.querying.sync.types.SumDataColumns
 
 @RunWith(classOf[JUnitRunner])
 class OnlineBatchSyncTests extends WordSpec with BeforeAndAfter {
-  var dbconnection: Option[DbSession[SimpleStatement, ResultSet]] = None
+  var dbconnection: Option[DbSession[Statement, Insert, ResultSet]] = None
   
   before {
-        dbconnection = Option(new DbSession[SimpleStatement, ResultSet]("127.0.0.1") {
+        dbconnection = Option(new DbSession[Statement,Insert, ResultSet]("127.0.0.1") {
         EmbeddedCassandraServerHelper.startEmbeddedCassandra(EmbeddedCassandraServerHelper.CASSANDRA_RNDPORT_YML_FILE)
         val cassandraSession = Cluster.builder().addContactPoint("127.0.0.1").withPort(EmbeddedCassandraServerHelper.getNativeTransportPort).build().connect()
 
@@ -33,7 +35,11 @@ class OnlineBatchSyncTests extends WordSpec with BeforeAndAfter {
           cassandraSession.execute(statement)
         }
 
-        def execute(statement: SimpleStatement): ResultSet = {
+        def execute(statement: Statement): ResultSet = {
+          cassandraSession.execute(statement)
+        }
+
+        def insert(statement: Insert): ResultSet = {
           cassandraSession.execute(statement)
         }
       })
@@ -42,8 +48,8 @@ class OnlineBatchSyncTests extends WordSpec with BeforeAndAfter {
   after {}
   "OnlineBatchSync " should {
     " " in {
-      val table = new OnlineBatchSyncCassandra("", dbconnection)
-      table.initJob("job55", 3, new DataColumns(1L))
+      val table = new OnlineBatchSyncCassandra[SumDataColumns]("", dbconnection)
+      table.initJob("job55", 3, new SumDataColumns(1456402973L, 1L))
     }
    "lock table" in {
       val table = new OnlineBatchSyncCassandra("", dbconnection)
@@ -53,21 +59,29 @@ class OnlineBatchSyncTests extends WordSpec with BeforeAndAfter {
       assert(table.onlineTableIsLocked("job55", 1) === true)
       assert(table.onlineTableIsLocked("job55", 2) === false)
     }
-    "find latest online batch" in {
+   "insert Data" in {
       val table = new OnlineBatchSyncCassandra("", dbconnection)
-      
-      class TestDataColumns(timeV: Long, sumV: Long) extends DataColumns[Insert](timeV) {
-        val sum = new ColumnV[Long]("sum", CassandraTypeName.getCassandraTypeName, sumV)
-        override def getInsertStatement() = {
-          val a = QueryBuilder.insertInto(table)
-        }
-        override val allVals: List[Column[_]] = time :: sum :: Nil
-      }
-    
-            
-      val dataTable = new TestDataTable()
-      dbconnection.get.execute(statement)
-    }
+      table.selectAll()
+      table.lockOnlineTable("job55", 1)
+      table.selectAll()
+      table.insertInOnlineTable("job55", 1, new SumDataColumns(1456402973L, 1L))
+      table.selectAll()
+   }
+//    "find latest online batch" in {
+//      val table = new OnlineBatchSyncCassandra("", dbconnection)
+//      
+//      class TestDataColumns(timeV: Long, sumV: Long) extends DataColumns[Insert](timeV) {
+//        val sum = new ColumnV[Long]("sum", CassandraTypeName.getCassandraTypeName, sumV)
+//        override def getInsertStatement() = {
+//          val a = QueryBuilder.insertInto(table)
+//        }
+//        override val allVals: List[Column[_]] = time :: sum :: Nil
+//      }
+//    
+//            
+//      val dataTable = new TestDataTable()
+//      dbconnection.get.execute(statement)
+//    }
 
   }
 

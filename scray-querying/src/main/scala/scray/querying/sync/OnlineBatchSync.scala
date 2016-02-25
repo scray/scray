@@ -16,7 +16,7 @@ import java.util.{ Iterator => JIterator }
 import com.datastax.driver.core.querybuilder.Insert
 
 
-abstract class OnlineBatchSync[T <: DataColumns[S], S] extends LazyLogging {
+abstract class OnlineBatchSync[T <: DataColumns] extends LazyLogging {
 
   /**
    * Generate and register tables for a new job.
@@ -46,10 +46,14 @@ abstract class OnlineBatchSync[T <: DataColumns[S], S] extends LazyLogging {
   def batchTableIsLocked(jobName: String, nr: Int): Boolean
   
   def getHeadBatch(jobName: String): Option[CassandraTableLocation]
-  // def insert(jobName: String, data: T)
+  
+  def insertInBatchTable(jobName: String, nr: Int, data: DataColumns)
+  def insertInOnlineTable(jobName: String, nr: Int, data: DataColumns)
+
+  
 }
 
-class OnlineBatchSyncCassandra[T <: DataColumns[Insert]](dbHostname: String, dbSession: Option[DbSession[Statement, Insert, ResultSet]]) extends OnlineBatchSync[T, Insert]  {
+class OnlineBatchSyncCassandra[T <: DataColumns](dbHostname: String, dbSession: Option[DbSession[Statement, Insert, ResultSet]]) extends OnlineBatchSync[T]  {
 
   // Create or use a given DB session.
   val session = dbSession.getOrElse(new DbSession[SimpleStatement, Insert, ResultSet](dbHostname) {
@@ -105,7 +109,7 @@ class OnlineBatchSyncCassandra[T <: DataColumns[Insert]](dbHostname: String, dbS
     1 to 3 foreach { i =>
       // Create online data tables
       // Columns[Column[_]]
-      val ff = new DataTable[DataColumns[Insert]](syncTable.keySpace, getOnlineJobName(jobName, i), dataColumns)
+      val ff = new DataTable[DataColumns](syncTable.keySpace, getOnlineJobName(jobName, i), dataColumns)
       session.execute(createSingleTableString(new DataTable(syncTable.keySpace, getOnlineJobName(jobName, i), dataColumns)))
 
       // Register online tables
@@ -130,8 +134,15 @@ class OnlineBatchSyncCassandra[T <: DataColumns[Insert]](dbHostname: String, dbS
     Option(CassandraTableLocation(syncTable.keySpace, newestBatch.getLong(syncTable.columns.time.name).toString()))
   }
   
-  def insertInOnlineTable(jobName: String, nr: Int, data: Table[DataColumns[Insert]]) {
-    val statement = data.columns.foldLeft(QueryBuilder.insertInto(syncTable.keySpace, syncTable.tableName)) {
+  def insertInOnlineTable(jobName: String, nr: Int, data: DataColumns) {
+    val statement = data.foldLeft(QueryBuilder.insertInto(syncTable.keySpace, getOnlineJobName(jobName, nr))) {
+      (acc, column) => acc.value(column.name, column.value)
+    }
+    session.insert(statement)
+  }
+  
+  def insertInBatchTable(jobName: String, nr: Int, data: DataColumns) {
+    val statement = data.foldLeft(QueryBuilder.insertInto(syncTable.keySpace, getBatchJobName(jobName, nr))) {
       (acc, column) => acc.value(column.name, column.value)
     }
     session.insert(statement)

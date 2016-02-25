@@ -4,11 +4,11 @@ import scala.reflect.runtime.universe._
 import shapeless._
 import com.datastax.driver.core.Statement
 import scala.collection.JavaConverters._
+import com.datastax.driver.core.querybuilder.Insert
+import com.datastax.driver.core.querybuilder.QueryBuilder
 
 
-abstract case class Table[T <: Columns[_ <: Column[_]]](val keySpace: String, val tableName: String, val columns: T) {
-  // def getInsertStatement[InsertStatementT]: InsertStatementT 
-}
+abstract case class Table[T <: Columns[_ <: Column[_]]](val keySpace: String, val tableName: String, val columns: T) {}
 
 trait Column[T] {
   val name: String
@@ -102,20 +102,23 @@ class EmptyExampleDataColumns extends Columns[ColumnE[_]] {
   override val allVals: List[ColumnE[_]] = time :: lock :: sum :: completed :: Nil
 }
 
-// Columns[Column[_]]
-class DataTable[T <: DataColumns[_]](keySpace: String, tableName: String, columns: T) extends Table[DataColumns[_]](keySpace, tableName, columns) {}
+class DataTable[T <: DataColumns](keySpace: String, tableName: String, columns: T) extends Table[DataColumns](keySpace, tableName, columns) {}
 
 case class CassandraTableLocation(keySpace: String, table: String)
 
-abstract class DataColumns[T](timeV: Long) extends Columns[ColumnV[_]] {
+abstract class DataColumns(timeV: Long) extends Columns[ColumnV[_]] {
   override val time = new ColumnV[Long]("time", CassandraTypeName.getCassandraTypeName, timeV)
   override val allVals: List[ColumnV[_]] = time :: Nil
-  def getInsertStatement(keyspace: String, tableName: String): T 
 }
 
-///**
-// * 
-// */
-//class CassandraSumDataTable extends DataTable[] {
-//  
-//}
+class SumDataColumns(val timeV: Long, val sumV: Long) extends DataColumns(timeV) {
+  override val time = new ColumnV[Long]("time", CassandraTypeName.getCassandraTypeName, timeV)
+  val sum = new ColumnV[Long]("sum", CassandraTypeName.getCassandraTypeName, sumV)
+  override val allVals: List[ColumnV[_]] = time :: sum :: Nil
+}
+
+
+class CassandraSumDataTable(keySpace: String, tableName: String, columns: DataColumns) extends DataTable[DataColumns](keySpace, tableName, columns) {
+  QueryBuilder.insertInto(keySpace, tableName)
+ 
+}
