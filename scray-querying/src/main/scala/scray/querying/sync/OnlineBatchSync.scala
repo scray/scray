@@ -31,19 +31,18 @@ abstract class OnlineBatchSync[T <: DataColumns] extends LazyLogging {
    * Unlock online table to make it available for a new job.
    */
   def unlockOnlineTable(jobName: String, nr: Int)
+  def isOnlineTableLocked(jobName: String, nr: Int): Boolean
   
    /**
    * Lock online table if it is used by another spark job.
    */
   def lockBatchTable(jobName: String, nr: Int)
+  def isBatchTableLocked(jobName: String, nr: Int): Boolean
 
    /**
    * Unlock batch table to make it available for a new job.
    */
   def unlockBatchTable(jobName: String, nr: Int)
-  
-  def onlineTableIsLocked(jobName: String, nr: Int): Boolean
-  def batchTableIsLocked(jobName: String, nr: Int): Boolean
   
   def getHeadBatch(jobName: String): Option[CassandraTableLocation]
   
@@ -135,17 +134,30 @@ class OnlineBatchSyncCassandra[T <: DataColumns](dbHostname: String, dbSession: 
   }
   
   def insertInOnlineTable(jobName: String, nr: Int, data: DataColumns) {
-    val statement = data.foldLeft(QueryBuilder.insertInto(syncTable.keySpace, getOnlineJobName(jobName, nr))) {
-      (acc, column) => acc.value(column.name, column.value)
+    if(! this.isOnlineTableLocked(jobName, nr)) {
+      this.lockOnlineTable(jobName, nr)
+      val statement = data.foldLeft(QueryBuilder.insertInto(syncTable.keySpace, getOnlineJobName(jobName, nr))) {
+        (acc, column) => acc.value(column.name, column.value)
+      }
+      session.insert(statement)
+      this.unlockBatchTable(jobName, nr)
+    } else {
+      logger.error(s"Online table for job ${jobName} is locked. It is not possible to insert Data.")
     }
-    session.insert(statement)
   }
   
+  
   def insertInBatchTable(jobName: String, nr: Int, data: DataColumns) {
-    val statement = data.foldLeft(QueryBuilder.insertInto(syncTable.keySpace, getBatchJobName(jobName, nr))) {
-      (acc, column) => acc.value(column.name, column.value)
+    if(! this.isBatchTableLocked(jobName, nr)) {
+      this.lockBatchTable(jobName, nr)
+      val statement = data.foldLeft(QueryBuilder.insertInto(syncTable.keySpace, getBatchJobName(jobName, nr))) {
+        (acc, column) => acc.value(column.name, column.value)
+      }
+      session.insert(statement)
+      this.unlockBatchTable(jobName, nr)
+    } else {
+      logger.error(s"Online table for job ${jobName} is locked. It is not possible to insert Data.")
     }
-    session.insert(statement)
   }
 
 //  def getTailBatch(jobName: String, session: Session): Option[CassandraTableLocation] = {
@@ -201,7 +213,8 @@ class OnlineBatchSyncCassandra[T <: DataColumns](dbHostname: String, dbSession: 
     setLock(jobName, nr, true, false)
   }
 
-  def onlineTableIsLocked(jobName: String, nr: Int): Boolean = {
+
+  def isOnlineTableLocked(jobName: String, nr: Int): Boolean = {
     logger.debug(s"Unlock table for job: ${jobName}")
     val res = execute(QueryBuilder.select().all().from(syncTable.keySpace, syncTable.tableName).where(
       QueryBuilder.eq(syncTable.columns.jobname.name, jobName)).
@@ -211,7 +224,7 @@ class OnlineBatchSyncCassandra[T <: DataColumns](dbHostname: String, dbSession: 
     (res.all().size() > 0)
   }
   
-  def batchTableIsLocked(jobName: String, nr: Int): Boolean = {
+  def isBatchTableLocked(jobName: String, nr: Int): Boolean = {
     logger.debug(s"Unlock table for job: ${jobName}")
     val res = execute(QueryBuilder.select().all().from(syncTable.keySpace, syncTable.tableName).
         where(QueryBuilder.eq(syncTable.columns.jobname.name, jobName)).

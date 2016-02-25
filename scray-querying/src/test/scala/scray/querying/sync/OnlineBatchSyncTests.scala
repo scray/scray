@@ -56,8 +56,8 @@ class OnlineBatchSyncTests extends WordSpec with BeforeAndAfter {
       table.selectAll()
       table.lockOnlineTable("job55", 1)
       table.selectAll()
-      assert(table.onlineTableIsLocked("job55", 1) === true)
-      assert(table.onlineTableIsLocked("job55", 2) === false)
+      assert(table.isOnlineTableLocked("job55", 1) === true)
+      assert(table.isOnlineTableLocked("job55", 2) === false)
     }
    "insert Data" in {
       val table = new OnlineBatchSyncCassandra("", dbconnection)
