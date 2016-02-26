@@ -59,32 +59,21 @@ class OnlineBatchSyncTests extends WordSpec with BeforeAndAfter {
       assert(table.isOnlineTableLocked("job55", 1) === true)
       assert(table.isOnlineTableLocked("job55", 2) === false)
     }
-   "insert Data" in {
+   "insert and read data" in {
       val table = new OnlineBatchSyncCassandra("", dbconnection)
-      table.selectAll()
       table.unlockOnlineTable("job55", 1)
-      table.selectAll()
       table.insertInOnlineTable("job55", 1, new SumDataColumns(1456402973L, 1L))
       
       assert(table.getOnlineJobData("job55", 1).time.value === 1456402973L)
       assert(table.getOnlineJobData("job55", 1).sum.value === 1L)
    }
-//    "find latest online batch" in {
-//      val table = new OnlineBatchSyncCassandra("", dbconnection)
-//      
-//      class TestDataColumns(timeV: Long, sumV: Long) extends DataColumns[Insert](timeV) {
-//        val sum = new ColumnV[Long]("sum", CassandraTypeName.getCassandraTypeName, sumV)
-//        override def getInsertStatement() = {
-//          val a = QueryBuilder.insertInto(table)
-//        }
-//        override val allVals: List[Column[_]] = time :: sum :: Nil
-//      }
-//    
-//            
-//      val dataTable = new TestDataTable()
-//      dbconnection.get.execute(statement)
-//    }
-
+    "find latest online batch" in {
+      val table = new OnlineBatchSyncCassandra("", dbconnection)
+      
+       val nr = table.getHeadBatch("job55")
+       assert(table.getOnlineJobData("job55", nr.getOrElse(0)).time.value === 1456402973L)
+       assert(table.getOnlineJobData("job55", nr.getOrElse(0)).sum.value === 1L)
+    }
   }
 
 }

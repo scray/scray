@@ -260,9 +260,11 @@ class OnlineBatchSyncCassandra[T <: DataColumns](dbHostname: String, dbSession: 
       val iter = rows.iterator()
       val sumDataColumns = new SumDataColumns(42L, 42L)
       if(rows.all().size() > 0) {
-        val columns = rows.all().get(0)
-        Option(SumDataColumns(columns.getLong(sumDataColumns.time.name), columns.getLong(sumDataColumns.sum.name)))
+        val column = rows.all().get(0)
+        logger.debug(s"Get online data for job ${jobname}: ${column}") 
+        Option(SumDataColumns(column.getLong(sumDataColumns.time.name), column.getLong(sumDataColumns.sum.name)))
       } else {
+        logger.info(s"No data for job ${jobname} ${nr} found")
         None
       }
   }
