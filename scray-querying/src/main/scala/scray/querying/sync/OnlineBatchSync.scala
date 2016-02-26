@@ -258,7 +258,7 @@ class OnlineBatchSyncCassandra[T <: DataColumns](dbHostname: String, dbSession: 
   def getOnlineJobData(jobname: String, nr: Int): SumDataColumns = {   
       val rows = execute(QueryBuilder.select().all().from(syncTable.keySpace, getOnlineJobName(jobname, nr)))
       val iter = rows.iterator()
-      val sumDataColumns = new SumDataColumns(1L, 2L)
+      val sumDataColumns = new SumDataColumns(42L, 42L)
       val columns = rows.all().get(0)
       
       SumDataColumns(columns.getLong(sumDataColumns.time.name), columns.getLong(sumDataColumns.sum.name))

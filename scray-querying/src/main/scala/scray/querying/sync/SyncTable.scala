@@ -113,8 +113,8 @@ abstract class DataColumns(timeV: Long) extends Columns[ColumnV[_]] {
   override val allVals: List[ColumnV[_]] = time :: Nil
   
   override def toString(): String = {
-    val columnNames = allVals.foldLeft("")((acc, column) => "|" + acc + column.name + "\t|")
-    val values = allVals.foldLeft("")((acc, column) => "|" + acc + column.value + "\t|")
+    val columnNames = allVals.foldLeft("")((acc, column) => "|" + acc + column.name + "|")
+    val values = allVals.foldLeft("")((acc, column) => "|" + acc + column.value + "|")
     
     columnNames + "\n" + values
   }
