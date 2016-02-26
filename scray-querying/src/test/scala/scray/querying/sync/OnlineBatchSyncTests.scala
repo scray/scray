@@ -62,10 +62,14 @@ class OnlineBatchSyncTests extends WordSpec with BeforeAndAfter {
    "insert Data" in {
       val table = new OnlineBatchSyncCassandra("", dbconnection)
       table.selectAll()
-      table.lockOnlineTable("job55", 1)
+      table.unlockOnlineTable("job55", 1)
       table.selectAll()
       table.insertInOnlineTable("job55", 1, new SumDataColumns(1456402973L, 1L))
-      table.selectAll()
+      //table.selectAll()
+      
+      println("\t\t\t\t\t\tffffffffffffffffffffffffffffffffffffffffffffff")
+      println(table.getOnlineJobData("job55", 1))
+      println("\t\t\t\t\t\tffffffffffffffffffffffffffffffffffffffffffffff")
    }
 //    "find latest online batch" in {
 //      val table = new OnlineBatchSyncCassandra("", dbconnection)

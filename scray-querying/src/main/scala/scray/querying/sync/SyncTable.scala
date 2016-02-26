@@ -16,9 +16,11 @@ trait Column[T] {
   def getDBType = { dbTypeDetector(this) }
 }
 
-sealed trait Columns[ColumnT <: Column[_]] { 
+abstract case class Columns[ColumnT <: Column[_]]() { 
   val time: Column[Long]
 
+  def create[ColumnT](implicit manifest : Manifest[ColumnT]) = manifest.erasure.newInstance.asInstanceOf[ColumnT]
+  
   def foldLeft[B](z: B)(f: (B, ColumnT) => B): B = {
     allVals.foldLeft(z)(f)
   }
@@ -109,12 +111,23 @@ case class CassandraTableLocation(keySpace: String, table: String)
 abstract class DataColumns(timeV: Long) extends Columns[ColumnV[_]] {
   override val time = new ColumnV[Long]("time", CassandraTypeName.getCassandraTypeName, timeV)
   override val allVals: List[ColumnV[_]] = time :: Nil
+  
+  override def toString(): String = {
+    val columnNames = allVals.foldLeft("")((acc, column) => "|" + acc + column.name + "\t|")
+    val values = allVals.foldLeft("")((acc, column) => "|" + acc + column.value + "\t|")
+    
+    columnNames + "\n" + values
+  }
 }
 
-class SumDataColumns(val timeV: Long, val sumV: Long) extends DataColumns(timeV) {
+class SumDataColumns(timeV: Long, sumV: Long) extends DataColumns(timeV) {
   override val time = new ColumnV[Long]("time", CassandraTypeName.getCassandraTypeName, timeV)
   val sum = new ColumnV[Long]("sum", CassandraTypeName.getCassandraTypeName, sumV)
   override val allVals: List[ColumnV[_]] = time :: sum :: Nil
+}
+
+object SumDataColumns {
+  def apply(timeV: Long, sumV: Long) = new SumDataColumns(timeV, sumV);
 }
 
 

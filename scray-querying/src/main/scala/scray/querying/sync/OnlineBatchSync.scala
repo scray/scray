@@ -1,19 +1,23 @@
 package scray.querying.sync
 
-import scray.querying.sync.types._
-import com.datastax.driver.core.Cluster
-import com.typesafe.scalalogging.slf4j.LazyLogging
-import com.datastax.driver.core.querybuilder.QueryBuilder
-import com.datastax.driver.core.SimpleStatement
-import com.datastax.driver.core.RegularStatement
-import com.datastax.driver.core.ConsistencyLevel
-import com.datastax.driver.core.ResultSet
-import com.datastax.driver.core.Statement
-import scala.annotation.tailrec
-import com.datastax.driver.core.Session
-import com.datastax.driver.core.Row
 import java.util.{ Iterator => JIterator }
+
+import scala.annotation.tailrec
+
+import com.datastax.driver.core.Cluster
+import com.datastax.driver.core.ConsistencyLevel
+import com.datastax.driver.core.RegularStatement
+import com.datastax.driver.core.ResultSet
+import com.datastax.driver.core.Row
+import com.datastax.driver.core.Session
+import com.datastax.driver.core.SimpleStatement
+import com.datastax.driver.core.Statement
 import com.datastax.driver.core.querybuilder.Insert
+import com.datastax.driver.core.querybuilder.QueryBuilder
+import com.typesafe.scalalogging.slf4j.LazyLogging
+import scray.querying.sync.types._
+
+import scray.querying.sync.types._
 
 
 abstract class OnlineBatchSync[T <: DataColumns] extends LazyLogging {
@@ -26,28 +30,30 @@ abstract class OnlineBatchSync[T <: DataColumns] extends LazyLogging {
   /**
    * Lock online table if it is used by another spark job.
    */
-  def lockOnlineTable(jobName: String, nr: Int)
+  def lockOnlineTable(jobName: String, nr: Int): Boolean
    /**
    * Unlock online table to make it available for a new job.
    */
-  def unlockOnlineTable(jobName: String, nr: Int)
+  def unlockOnlineTable(jobName: String, nr: Int): Boolean
   def isOnlineTableLocked(jobName: String, nr: Int): Boolean
   
    /**
    * Lock online table if it is used by another spark job.
    */
-  def lockBatchTable(jobName: String, nr: Int)
+  def lockBatchTable(jobName: String, nr: Int): Boolean
   def isBatchTableLocked(jobName: String, nr: Int): Boolean
 
    /**
    * Unlock batch table to make it available for a new job.
    */
-  def unlockBatchTable(jobName: String, nr: Int)
+  def unlockBatchTable(jobName: String, nr: Int): Boolean
   
   def getHeadBatch(jobName: String): Option[CassandraTableLocation]
   
   def insertInBatchTable(jobName: String, nr: Int, data: DataColumns)
   def insertInOnlineTable(jobName: String, nr: Int, data: DataColumns)
+  
+  //def getJobData[ColumnsT <: Columns[_]](jobName: String, nr: Int): ColumnsT
 
   
 }
@@ -134,8 +140,7 @@ class OnlineBatchSyncCassandra[T <: DataColumns](dbHostname: String, dbSession: 
   }
   
   def insertInOnlineTable(jobName: String, nr: Int, data: DataColumns) {
-    if(! this.isOnlineTableLocked(jobName, nr)) {
-      this.lockOnlineTable(jobName, nr)
+    if(this.lockOnlineTable(jobName, nr)) {
       val statement = data.foldLeft(QueryBuilder.insertInto(syncTable.keySpace, getOnlineJobName(jobName, nr))) {
         (acc, column) => acc.value(column.name, column.value)
       }
@@ -148,8 +153,7 @@ class OnlineBatchSyncCassandra[T <: DataColumns](dbHostname: String, dbSession: 
   
   
   def insertInBatchTable(jobName: String, nr: Int, data: DataColumns) {
-    if(! this.isBatchTableLocked(jobName, nr)) {
-      this.lockBatchTable(jobName, nr)
+    if(this.lockBatchTable(jobName, nr)) { 
       val statement = data.foldLeft(QueryBuilder.insertInto(syncTable.keySpace, getBatchJobName(jobName, nr))) {
         (acc, column) => acc.value(column.name, column.value)
       }
@@ -182,7 +186,7 @@ class OnlineBatchSyncCassandra[T <: DataColumns](dbHostname: String, dbSession: 
   /**
    * Lock table if it is used by another spark job.
    */
-  def lockOnlineTable(jobName: String, nr: Int) {
+  def lockOnlineTable(jobName: String, nr: Int): Boolean = {
     logger.debug(s"Lock online table for job: ${jobName} ")
     setLock(jobName, nr, true, true)
   }
@@ -190,7 +194,7 @@ class OnlineBatchSyncCassandra[T <: DataColumns](dbHostname: String, dbSession: 
    /**
    * Lock online table if it is used by another spark job.
    */
-  def lockBatchTable(jobName: String, nr: Int) {
+  def lockBatchTable(jobName: String, nr: Int): Boolean = {
     logger.debug(s"Lock batch table for job: ${jobName} ${nr}")
     setLock(jobName, nr, false, true)
   }
@@ -198,16 +202,15 @@ class OnlineBatchSyncCassandra[T <: DataColumns](dbHostname: String, dbSession: 
   /**
    * Unlock batch table to make it available for a new job.
    */
-  def unlockBatchTable(jobName: String, nr: Int) {
+  def unlockBatchTable(jobName: String, nr: Int): Boolean = {
     logger.debug(s"Unlock batch table for job: ${jobName} ${nr}")
-    
     setLock(jobName, nr, false, false)
   }
   
    /**
    * Unlock batch table to make it available for a new job.
    */
-  def unlockOnlineTable(jobName: String, nr: Int) {
+  def unlockOnlineTable(jobName: String, nr: Int): Boolean =  {
     logger.debug(s"Unlock online table for job: ${jobName} ${nr}")
     
     setLock(jobName, nr, true, false)
@@ -234,14 +237,13 @@ class OnlineBatchSyncCassandra[T <: DataColumns](dbHostname: String, dbSession: 
     (res.all().size() > 0)
   }
 
-  private def setLock(jobName: String, nr: Int, online: Boolean, newState: Boolean) = {
+  private def setLock(jobName: String, nr: Int, online: Boolean, newState: Boolean): Boolean = {
     executeQuorum(QueryBuilder.update(syncTable.keySpace + "." + syncTable.tableName).
         `with`(QueryBuilder.set(syncTable.columns.lock.name, newState)).
         where(QueryBuilder.eq(syncTable.columns.jobname.name, jobName)).
         and(QueryBuilder.eq(syncTable.columns.online.name, online)).
         and(QueryBuilder.eq(syncTable.columns.nr.name, nr)).
-        onlyIf(QueryBuilder.eq(syncTable.columns.lock.name, !newState)))
-        
+        onlyIf(QueryBuilder.eq(syncTable.columns.lock.name, !newState)))   
   }
   def selectAll() = {
     val rows = execute(QueryBuilder.select().all().from(syncTable.keySpace, syncTable.tableName))
@@ -252,7 +254,17 @@ class OnlineBatchSyncCassandra[T <: DataColumns](dbHostname: String, dbSession: 
       println(iter.next())
     }
   }
-  private def executeQuorum(statement: RegularStatement) = {
+  
+  def getOnlineJobData(jobname: String, nr: Int): SumDataColumns = {   
+      val rows = execute(QueryBuilder.select().all().from(syncTable.keySpace, getOnlineJobName(jobname, nr)))
+      val iter = rows.iterator()
+      val sumDataColumns = new SumDataColumns(1L, 2L)
+      val columns = rows.all().get(0)
+      
+      SumDataColumns(columns.getLong(sumDataColumns.time.name), columns.getLong(sumDataColumns.sum.name))
+  }
+  
+  private def executeQuorum(statement: RegularStatement): Boolean = {
     println(statement.toString())
     logger.debug("Lock table: " + statement)
     val simpleStatement = new SimpleStatement(statement.toString())
@@ -263,8 +275,10 @@ class OnlineBatchSyncCassandra[T <: DataColumns](dbHostname: String, dbSession: 
      
     if (row.getBool("[applied]")) {
       logger.debug(s"Execute ${simpleStatement}");
+      true
     } else {
       logger.error(s"It is currently not possible to execute ${simpleStatement} ")
+      false
     }
   }
 
@@ -325,5 +339,4 @@ class OnlineBatchSyncCassandra[T <: DataColumns](dbHostname: String, dbSession: 
       val row = rows.next()
       accNewestRow(row, rows)
     }
-
 }
