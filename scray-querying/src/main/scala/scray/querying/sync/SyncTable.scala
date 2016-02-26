@@ -106,8 +106,6 @@ class EmptyExampleDataColumns extends Columns[ColumnE[_]] {
 
 class DataTable[T <: DataColumns](keySpace: String, tableName: String, columns: T) extends Table[DataColumns](keySpace, tableName, columns) {}
 
-case class CassandraTableLocation(keySpace: String, table: String)
-
 abstract class DataColumns(timeV: Long) extends Columns[ColumnV[_]] {
   override val time = new ColumnV[Long]("time", CassandraTypeName.getCassandraTypeName, timeV)
   override val allVals: List[ColumnV[_]] = time :: Nil

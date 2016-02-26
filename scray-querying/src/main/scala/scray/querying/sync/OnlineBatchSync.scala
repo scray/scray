@@ -48,7 +48,7 @@ abstract class OnlineBatchSync[T <: DataColumns] extends LazyLogging {
    */
   def unlockBatchTable(jobName: String, nr: Int): Boolean
   
-  def getHeadBatch(jobName: String): Option[CassandraTableLocation]
+  def getHeadBatch(jobName: String): Option[Int]
   
   def insertInBatchTable(jobName: String, nr: Int, data: DataColumns)
   def insertInOnlineTable(jobName: String, nr: Int, data: DataColumns)
@@ -129,14 +129,14 @@ class OnlineBatchSyncCassandra[T <: DataColumns](dbHostname: String, dbSession: 
     }
   }
 
-  def getHeadBatch(jobName: String): Option[CassandraTableLocation] = {
+  def getHeadBatch(jobName: String): Option[Int] = {
     val headBatchQuery: RegularStatement = QueryBuilder.select().from(syncTable.keySpace + "." + syncTable.tableName).
       where(QueryBuilder.eq(syncTable.columns.jobname.name, jobName))
     val headBatches = this.execute(headBatchQuery)
 
     // Find newest version 
-    val newestBatch = this.getNewestRow(headBatches.iterator())
-    Option(CassandraTableLocation(syncTable.keySpace, newestBatch.getLong(syncTable.columns.time.name).toString()))
+    val newestBatchNr = this.getNewestRow(headBatches.iterator()).getInt(syncTable.columns.nr.name)
+    Option(newestBatchNr)
   }
   
   def insertInOnlineTable(jobName: String, nr: Int, data: DataColumns) {
@@ -255,13 +255,16 @@ class OnlineBatchSyncCassandra[T <: DataColumns](dbHostname: String, dbSession: 
     }
   }
   
-  def getOnlineJobData(jobname: String, nr: Int): SumDataColumns = {   
+  def getOnlineJobData(jobname: String, nr: Int): Option[SumDataColumns] = {   
       val rows = execute(QueryBuilder.select().all().from(syncTable.keySpace, getOnlineJobName(jobname, nr)))
       val iter = rows.iterator()
       val sumDataColumns = new SumDataColumns(42L, 42L)
-      val columns = rows.all().get(0)
-      
-      SumDataColumns(columns.getLong(sumDataColumns.time.name), columns.getLong(sumDataColumns.sum.name))
+      if(rows.all().size() > 0) {
+        val columns = rows.all().get(0)
+        Option(SumDataColumns(columns.getLong(sumDataColumns.time.name), columns.getLong(sumDataColumns.sum.name)))
+      } else {
+        None
+      }
   }
   
   private def executeQuorum(statement: RegularStatement): Boolean = {
