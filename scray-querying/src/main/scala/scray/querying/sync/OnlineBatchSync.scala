@@ -24,8 +24,14 @@ abstract class OnlineBatchSync[T <: DataColumns] extends LazyLogging {
 
   /**
    * Generate and register tables for a new job.
+   * Check if tables are not locked.
    */
-  def initJob(jobName: String, numberOfBatches: Int, dataTable: T)
+  def initJobMaster(jobName: String, numberOfBatches: Int, dataTable: T)
+  
+  /**
+   * Check if tables exists and tables are locked
+   */
+  def initJobWorker(jobName: String, numberOfBatches: Int, dataTable: T)
 
   /**
    * Lock online table if it is used by another spark job.
@@ -52,6 +58,11 @@ abstract class OnlineBatchSync[T <: DataColumns] extends LazyLogging {
   
   def insertInBatchTable(jobName: String, nr: Int, data: DataColumns)
   def insertInOnlineTable(jobName: String, nr: Int, data: DataColumns)
+  
+  /**
+   * Returns next job number of no job is currently running.
+   */
+  def getNextBatch(): Option[Int]
   
   //def getJobData[ColumnsT <: Columns[_]](jobName: String, nr: Int): ColumnsT
 
@@ -81,13 +92,13 @@ class OnlineBatchSyncCassandra[T <: DataColumns](dbHostname: String, dbSession: 
     }
   })
 
-  val syncTable: Table[SyncTableColumns] = new SyncTableEmpty("\"ABC\"")
+  val syncTable = new SyncTableEmpty("\"ABC\"")
 
   /**
    * Generate and register tables for a new job.
    */
   def initJob(jobName: String, numberOfBatches: Int, dataColumns: T): Unit = {
-    createKeyspace[SyncTableColumns](syncTable)
+    createKeyspace(syncTable)
     syncTable.columns.indexes match {
       case _: Some[List[String]] => session.execute(createIndexString(syncTable))
       case _                     =>
@@ -149,6 +160,7 @@ class OnlineBatchSyncCassandra[T <: DataColumns](dbHostname: String, dbSession: 
     } else {
       logger.error(s"Online table for job ${jobName} is locked. It is not possible to insert Data.")
     }
+    this.unlockOnlineTable(jobName, nr)
   }
   
   
@@ -215,6 +227,14 @@ class OnlineBatchSyncCassandra[T <: DataColumns](dbHostname: String, dbSession: 
     
     setLock(jobName, nr, true, false)
   }
+  
+  def getNextBatch(): Option[Int] = {
+    // Get latest completed batch nr.
+    
+    // Return nr + 1 % number of batches.
+    
+    None
+   }
 
 
   def isOnlineTableLocked(jobName: String, nr: Int): Boolean = {
@@ -245,6 +265,12 @@ class OnlineBatchSyncCassandra[T <: DataColumns](dbHostname: String, dbSession: 
         and(QueryBuilder.eq(syncTable.columns.nr.name, nr)).
         onlyIf(QueryBuilder.eq(syncTable.columns.lock.name, !newState)))   
   }
+  
+  def getSynctable(jobName: String): Option[Table[Columns[ColumnV[_]]]] = {
+    val rows = execute(QueryBuilder.select().all().from(syncTable.keySpace, syncTable.tableName).where(QueryBuilder.eq(syncTable.columns.jobname.name, jobName)))
+    None
+  }
+  
   def selectAll() = {
     val rows = execute(QueryBuilder.select().all().from(syncTable.keySpace, syncTable.tableName))
     
