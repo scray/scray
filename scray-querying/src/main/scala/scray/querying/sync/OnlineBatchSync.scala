@@ -1,9 +1,7 @@
 package scray.querying.sync
 
 import java.util.{ Iterator => JIterator }
-
 import scala.annotation.tailrec
-
 import com.datastax.driver.core.Cluster
 import com.datastax.driver.core.ConsistencyLevel
 import com.datastax.driver.core.RegularStatement
@@ -16,8 +14,14 @@ import com.datastax.driver.core.querybuilder.Insert
 import com.datastax.driver.core.querybuilder.QueryBuilder
 import com.typesafe.scalalogging.slf4j.LazyLogging
 import scray.querying.sync.types._
-
 import scray.querying.sync.types._
+import java.util.ArrayList
+import scala.collection.mutable.ArrayBuffer
+import scray.querying.sync.types.SumDataColumns
+import scray.querying.sync.types.SyncTableEmpty
+import scray.querying.sync.types.DataTable
+import scray.querying.sync.types.DataColumns
+import scray.querying.sync.types.SyncTableColumnsValues
 
 
 abstract class OnlineBatchSync[T <: DataColumns] extends LazyLogging {
@@ -26,7 +30,7 @@ abstract class OnlineBatchSync[T <: DataColumns] extends LazyLogging {
    * Generate and register tables for a new job.
    * Check if tables are not locked.
    */
-  def initJobMaster(jobName: String, numberOfBatches: Int, dataTable: T)
+  def initJobClient(jobName: String, numberOfBatches: Int, dataTable: T)
   
   /**
    * Check if tables exists and tables are locked
@@ -65,15 +69,20 @@ abstract class OnlineBatchSync[T <: DataColumns] extends LazyLogging {
   def getNextBatch(): Option[Int]
   
   //def getJobData[ColumnsT <: Columns[_]](jobName: String, nr: Int): ColumnsT
-
   
+  /**
+   * Delete SyncTable and all datatables.
+   */
+  def purgeAllTables()
+  
+  def getSyncTable: Table[SyncTableColumnsValues[List[_]]]
 }
 
 class OnlineBatchSyncCassandra[T <: DataColumns](dbHostname: String, dbSession: Option[DbSession[Statement, Insert, ResultSet]]) extends OnlineBatchSync[T]  {
 
   // Create or use a given DB session.
   val session = dbSession.getOrElse(new DbSession[SimpleStatement, Insert, ResultSet](dbHostname) {
-    val cassandraSession = Cluster.builder().addContactPoint(dbHostname).build().connect()
+    val cassandraSession = Cluster.builder().addContactPoint("aaa").build().connect()
 
     override def execute(statement: String): ResultSet = {
       cassandraSession.execute(statement)
@@ -96,8 +105,33 @@ class OnlineBatchSyncCassandra[T <: DataColumns](dbHostname: String, dbSession: 
 
   /**
    * Generate and register tables for a new job.
+   * Check if tables are not locked.
    */
-  def initJob(jobName: String, numberOfBatches: Int, dataColumns: T): Unit = {
+  def initJobClient(jobName: String, numberOfBatches: Int, dataTable: T) {
+    this.crateTablesIfNotExists(jobName, numberOfBatches, dataTable)
+    
+    // Check if table is not locked
+    var tableIsUnLocked=true
+    1 to numberOfBatches foreach { i => 
+      tableIsUnLocked &= this.isBatchTableLocked(jobName, i)
+      tableIsUnLocked &= this.isOnlineTableLocked(jobName, i)
+    }
+    
+    if(!tableIsUnLocked) {
+      throw new IllegalStateException("One job with the same name is already running")
+    }
+
+  }
+  
+  /**
+   * Check if tables exists and tables are locked
+   */
+  def initJobWorker(jobName: String, numberOfBatches: Int, dataTable: T) {
+    
+  }
+  
+
+  def crateTablesIfNotExists(jobName: String, numberOfBatches: Int, dataColumns: T): Unit = {
     createKeyspace(syncTable)
     syncTable.columns.indexes match {
       case _: Some[List[String]] => session.execute(createIndexString(syncTable))
@@ -125,7 +159,6 @@ class OnlineBatchSyncCassandra[T <: DataColumns](dbHostname: String, dbSession: 
     1 to 3 foreach { i =>
       // Create online data tables
       // Columns[Column[_]]
-      val ff = new DataTable[DataColumns](syncTable.keySpace, getOnlineJobName(jobName, i), dataColumns)
       session.execute(createSingleTableString(new DataTable(syncTable.keySpace, getOnlineJobName(jobName, i), dataColumns)))
 
       // Register online tables
@@ -257,7 +290,7 @@ class OnlineBatchSyncCassandra[T <: DataColumns](dbHostname: String, dbSession: 
     (res.all().size() > 0)
   }
 
-  private def setLock(jobName: String, nr: Int, online: Boolean, newState: Boolean): Boolean = {
+  def setLock(jobName: String, nr: Int, online: Boolean, newState: Boolean): Boolean = {
     executeQuorum(QueryBuilder.update(syncTable.keySpace + "." + syncTable.tableName).
         `with`(QueryBuilder.set(syncTable.columns.lock.name, newState)).
         where(QueryBuilder.eq(syncTable.columns.jobname.name, jobName)).
@@ -274,7 +307,6 @@ class OnlineBatchSyncCassandra[T <: DataColumns](dbHostname: String, dbSession: 
   def selectAll() = {
     val rows = execute(QueryBuilder.select().all().from(syncTable.keySpace, syncTable.tableName))
     
-    println(rows.getColumnDefinitions)
     val iter = rows.all().iterator()
     while(iter.hasNext()) {
       println(iter.next())
@@ -295,6 +327,77 @@ class OnlineBatchSyncCassandra[T <: DataColumns](dbHostname: String, dbSession: 
       }
   }
   
+  def purgeAllTables() = {
+    
+    session.execute(s"DROP KEYSPACE ${syncTable.keySpace}")
+  }
+  
+  def getSyncTable: Table[SyncTableColumnsValues[IndexedSeq[_]]] = {
+    val rowsIter = execute(QueryBuilder.select().all().from(syncTable.keySpace, syncTable.tableName)).iterator()
+    
+     val nrV = new ArrayBuffer[Int]()
+     val jobnameV = new ArrayBuffer[String]()
+     val timeV = new ArrayBuffer[Long]()
+     val lockV = new ArrayBuffer[Boolean]()
+     val onlineV = new ArrayBuffer[Boolean]()
+     val completedV = new ArrayBuffer[Boolean]()
+     val tablenameV = new ArrayBuffer[String]()
+     val batchesV = new ArrayBuffer[Int]()
+     val onlineVersionsV = new ArrayBuffer[Int]()
+     val stateV = new ArrayBuffer[String]()
+     
+     while(rowsIter.hasNext()) {
+      val row = rowsIter.next()
+      
+      nrV.+=(row.getInt(syncTable.columns.nr.name))
+      jobnameV += row.getString(syncTable.columns.jobname.name)
+      timeV += row.getLong(syncTable.columns.time.name)
+      lockV += row.getBool(syncTable.columns.lock.name)
+      onlineV += row.getBool(syncTable.columns.online.name)
+      completedV += row.getBool(syncTable.columns.completed.name)
+      tablenameV += row.getString(syncTable.columns.tablename.name)
+      batchesV += row.getInt(syncTable.columns.batches.name)
+      onlineVersionsV += row.getInt(syncTable.columns.onlineVersions.name)
+      stateV += row.getString(syncTable.columns.state.name)
+    }
+     
+    val columnsA = new SyncTableColumnsValuesS(nrV, jobnameV, timeV, lockV, onlineV, completedV, tablenameV, batchesV, onlineVersionsV, stateV)
+    
+    class Result extends Table[SyncTableColumnsValues[_]](keySpace = "", tableName = "\"SyncTable\"", columns = columnsA)
+    
+    return new Result
+   }
+//    println(rows.getColumnDefinitions)
+//    val iter = rows.all().iterator()
+//    while(iter.hasNext()) {
+//      println(iter.next())
+//    }
+    
+//    val result = new SyncTableColumnsValues(
+//        nrV, 
+//        jobnameV, 
+//        timeV, 
+//        lockV, 
+//        onlineV,
+//        completedV, 
+//        tablenameV, 
+//        batchesV, 
+//        onlineVersionsV, 
+//        stateV)
+      val result = new SyncTableColumnsValues[List[_]](
+        2, 
+        "Na", 
+        1L, 
+        false, 
+        false,
+        false, 
+        "t1", 
+        1, 
+        1, 
+        "SART")
+      val r2 = 
+     r2
+  }
   private def executeQuorum(statement: RegularStatement): Boolean = {
     println(statement.toString())
     logger.debug("Lock table: " + statement)

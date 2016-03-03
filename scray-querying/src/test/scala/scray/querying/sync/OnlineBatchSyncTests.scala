@@ -20,7 +20,6 @@ import scray.querying.sync.types.CassandraTypeName
 import com.datastax.driver.core.querybuilder.QueryBuilder
 import com.datastax.driver.core.querybuilder.Insert
 import com.datastax.driver.core.Statement
-import scray.querying.sync.types.SumDataColumns
 
 @RunWith(classOf[JUnitRunner])
 class OnlineBatchSyncTests extends WordSpec with BeforeAndAfter {
@@ -30,6 +29,7 @@ class OnlineBatchSyncTests extends WordSpec with BeforeAndAfter {
         dbconnection = Option(new DbSession[Statement,Insert, ResultSet]("127.0.0.1") {
         EmbeddedCassandraServerHelper.startEmbeddedCassandra(EmbeddedCassandraServerHelper.CASSANDRA_RNDPORT_YML_FILE)
         val cassandraSession = Cluster.builder().addContactPoint("127.0.0.1").withPort(EmbeddedCassandraServerHelper.getNativeTransportPort).build().connect()
+        EmbeddedCassandraServerHelper.cleanEmbeddedCassandra()
 
         override def execute(statement: String): ResultSet = {
           cassandraSession.execute(statement)
@@ -45,22 +45,40 @@ class OnlineBatchSyncTests extends WordSpec with BeforeAndAfter {
       })
   }
 
-  after {}
+  after {
+    EmbeddedCassandraServerHelper.cleanEmbeddedCassandra()
+  }
   "OnlineBatchSync " should {
-    " " in {
+    " init client" in {
+      clean()
       val table = new OnlineBatchSyncCassandra[SumDataColumns]("", dbconnection)
-      table.initJob("job55", 3, new SumDataColumns(1456402973L, 1L))
+      table.initJobClient("job55", 3, new SumDataColumns(1456402973L, 1L))
+    }
+    " throw exception if job already exists" in {
+      clean()
+      val table = new OnlineBatchSyncCassandra[SumDataColumns]("", dbconnection)
+      table.initJobClient("job56", 3, new SumDataColumns(1456402973L, 1L))
+      try {
+          table.initJobClient("job56", 3, new SumDataColumns(1456402973L, 1L))
+      } catch {
+        case _: IllegalStateException => clean
+      }
     }
    "lock table" in {
-      val table = new OnlineBatchSyncCassandra("", dbconnection)
-      table.selectAll()
+     clean()
+      val table = new OnlineBatchSyncCassandra[SumDataColumns]("", dbconnection)
+      table.initJobClient("job55", 3, new SumDataColumns(1456402973L, 1L))
+
       table.lockOnlineTable("job55", 1)
       table.selectAll()
       assert(table.isOnlineTableLocked("job55", 1) === true)
       assert(table.isOnlineTableLocked("job55", 2) === false)
     }
    "insert and read data" in {
-      val table = new OnlineBatchSyncCassandra("", dbconnection)
+      clean()
+      val table = new OnlineBatchSyncCassandra[SumDataColumns]("", dbconnection)
+      table.initJobClient("job55", 3, new SumDataColumns(1456402973L, 1L))
+      
       table.unlockOnlineTable("job55", 1)
       table.insertInOnlineTable("job55", 1, new SumDataColumns(1456402973L, 1L))
       
@@ -68,12 +86,17 @@ class OnlineBatchSyncTests extends WordSpec with BeforeAndAfter {
       assert(table.getOnlineJobData("job55", 1).get.sum.value === 1L)
    }
     "find latest online batch" in {
-      val table = new OnlineBatchSyncCassandra("", dbconnection)
+      clean()
+      val table = new OnlineBatchSyncCassandra[SumDataColumns]("", dbconnection)
+      table.initJobClient("job55", 3, new SumDataColumns(1456402973L, 1L))
       
        val nr = table.getHeadBatch("job55")
        assert(table.getOnlineJobData("job55", nr.getOrElse(0)).get.time.value === 1456402973L)
        assert(table.getOnlineJobData("job55", nr.getOrElse(0)).get.sum.value === 1L)
     }
   }
-
+  def clean() {
+    EmbeddedCassandraServerHelper.cleanEmbeddedCassandra()
+    Thread.sleep(1000)
+  }
 }
