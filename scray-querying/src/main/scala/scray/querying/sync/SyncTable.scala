@@ -23,7 +23,7 @@ import scala.reflect.ClassTag
 import scray.querying.sync.cassandra.CassandraImplementation._
 
 
-class Table[T <: AbstractRows[_ <: Column[_]]](val keySpace: String, val tableName: String, val columns: T) {}
+class Table[T <: AbstractRows](val keySpace: String, val tableName: String, val columns: T) {}
 
 trait DBColumnImplementation[T] {
   def getDBType: String
@@ -37,23 +37,29 @@ class Column [T : DBColumnImplementation](val name: String) { self =>
   def getDBType: String = dbimpl.getDBType   
 }
 
-abstract class AbstractRows[ColumnT <: Column[_]] { 
-  val columns: List[ColumnT]
+abstract class AbstractRows { 
+  type ColumnType
+  val columns: List[ColumnType]
   val primeryKey = ""
-  val indexes: Option[List[Column[_]]] = None
+  val indexes: Option[List[ColumnType]] = None
  
-  def foldLeft[B](z: B)(f: (B, ColumnT) => B): B = {
+  def foldLeft[B](z: B)(f: (B, ColumnType) => B): B = {
     columns.foldLeft(z)(f)
   }
 }
 
-class ColumnWithValue[ColumnT: DBColumnImplementation, ValueT](name: String, val value: ValueT) extends Column[ColumnT](name) {}
+abstract class ArbitrarylyTypedRows extends AbstractRows {
+  override type ColumnType = Column[_]
+}
 
-class RowWithValue[ColumnT <: ColumnWithValue[_, _]](columnsV: List[ColumnT], primaryKeyV: String, indexesV: Option[List[ColumnT]]) extends AbstractRows[ColumnWithValue[_, _]] {
+class ColumnWithValue[ColumnT: DBColumnImplementation](name: String, val value: ColumnT) extends Column[ColumnT](name) {}
+
+class RowWithValue(columnsV: List[ColumnWithValue[_]], primaryKeyV: String, indexesV: Option[List[ColumnWithValue[_]]]) extends AbstractRows {
+  override type ColumnType = ColumnWithValue[_]
   override val columns = columnsV
   override val primeryKey = primaryKeyV
   override val indexes = indexesV
-  
+
   class ff extends Iterator[String] {
     def hasNext: Boolean = ???
     def next(): String = ???
@@ -67,37 +73,24 @@ abstract class DbSession[Statement,InsertIn, Result](val dbHostname: String) {
 }
 
 
-//object SyncTableBasicClasses {
-//  type BLA = ColumnString :: ColumnBoolean :: HNil
-//  import scray.querying.sync.types.FF.AbstractDbTypeMapping
-//  class SyncTableRowEmpty(dbTypMap: AbstractDbTypeMapping) extends AbstractRows[Column] {
-//
-//    val jobname = new ColumnString("jobname", dbTypMap)
-//    val versionNr = new ColumnInt("versionNr", dbTypMap)
-//    val batcheVersion = new ColumnInt("batcheVersion", dbTypMap)
-//    val onlineVersions = new ColumnInt("onlineVersions", dbTypMap)
-//    val tablename = new ColumnString("tablename", dbTypMap)
-//    val locked = new ColumnBoolean("locked", dbTypMap)
-//    val online = new ColumnBoolean("online", dbTypMap)
-//    val completed = new ColumnBoolean("completed", dbTypMap)
-//    val state =  new ColumnString("state", dbTypMap)
-//    
-//    override val columns = jobname :: versionNr :: batcheVersion :: onlineVersions :: tablename :: locked :: online :: completed :: state :: Nil
-//    override val primeryKey = s"(${jobname.name}, ${online.name}, ${versionNr.name})"
-//    override val indexes: Option[List[Column]] = Option(List(locked))
-//    
-//    columns.foreach { x => x.getDBType }
-//  }
-//  
-//  trait DbTypeMapping[T] extends FF.AbstractDbTypeMapping {
-//    def getDbType(column: T): String
-//    def getDbType(column: ColumnString): String
-//    def getDbType(column: ColumnBoolean): String
-//  }
-//  
-//
-//
-//}
+object SyncTableBasicClasses {
+  class SyncTableRowEmpty() extends ArbitrarylyTypedRows {
+
+    val jobname = new Column[String]("jobname")
+    val versionNr = new Column[Int]("versionNr")
+    val batcheVersion = new Column[Int]("batcheVersion")
+    val onlineVersions = new Column[Int]("onlineVersions")
+    val tablename = new Column[String]("tablename")
+    val locked = new Column[Boolean]("locked")
+    val online = new Column[Boolean]("online")
+    val completed = new Column[Boolean]("completed")
+    val state =  new Column[String]("state")
+    
+    override val columns = jobname :: versionNr :: batcheVersion :: onlineVersions :: tablename :: locked :: online :: completed :: state :: Nil
+    override val primeryKey = s"(${jobname.name}, ${online.name}, ${versionNr.name})"
+    override val indexes: Option[List[Column[_]]] = Option(List(locked))
+  }
+}
 
 
 ///**
