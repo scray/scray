@@ -38,9 +38,9 @@ class Column [T : DBColumnImplementation](val name: String) { self =>
 }
 
 abstract class AbstractRows { 
-  type ColumnType
+  type ColumnType <: Column[_]
   val columns: List[ColumnType]
-  val primeryKey = ""
+  val primaryKey = ""
   val indexes: Option[List[ColumnType]] = None
  
   def foldLeft[B](z: B)(f: (B, ColumnType) => B): B = {
@@ -57,7 +57,7 @@ class ColumnWithValue[ColumnT: DBColumnImplementation](name: String, val value: 
 class RowWithValue(columnsV: List[ColumnWithValue[_]], primaryKeyV: String, indexesV: Option[List[ColumnWithValue[_]]]) extends AbstractRows {
   override type ColumnType = ColumnWithValue[_]
   override val columns = columnsV
-  override val primeryKey = primaryKeyV
+  override val primaryKey = primaryKeyV
   override val indexes = indexesV
 
   class ff extends Iterator[String] {
@@ -72,13 +72,31 @@ abstract class DbSession[Statement,InsertIn, Result](val dbHostname: String) {
   def insert(statement: InsertIn): Result
 }
 
+object SyncTable {
+  def apply(keySpace: String, tableName: String) = {
+    new Table(keySpace, tableName, new SyncTableBasicClasses.SyncTableRowEmpty)
+  }
+}
+
+object VoidTable {
+  def apply(keySpace: String, tableName: String, columns: AbstractRows) = {
+    new Table(keySpace, tableName, columns)
+  }
+}
+object DataTable {
+  def apply(keySpace: String, tableName: String, columns: RowWithValue) = {
+    new Table(keySpace, tableName, columns)
+  }
+}
 
 object SyncTableBasicClasses {
+  
   class SyncTableRowEmpty() extends ArbitrarylyTypedRows {
 
     val jobname = new Column[String]("jobname")
     val versionNr = new Column[Int]("versionNr")
-    val batcheVersion = new Column[Int]("batcheVersion")
+    val creationTime = new Column[Long]("creationTime")
+    val batcheVersions = new Column[Int]("batcheVersion")
     val onlineVersions = new Column[Int]("onlineVersions")
     val tablename = new Column[String]("tablename")
     val locked = new Column[Boolean]("locked")
@@ -86,136 +104,15 @@ object SyncTableBasicClasses {
     val completed = new Column[Boolean]("completed")
     val state =  new Column[String]("state")
     
-    override val columns = jobname :: versionNr :: batcheVersion :: onlineVersions :: tablename :: locked :: online :: completed :: state :: Nil
-    override val primeryKey = s"(${jobname.name}, ${online.name}, ${versionNr.name})"
+    override val columns = jobname :: creationTime :: versionNr :: batcheVersions :: onlineVersions :: tablename :: locked :: online :: completed :: state :: Nil
+    override val primaryKey = s"(${jobname.name}, ${online.name}, ${versionNr.name})"
     override val indexes: Option[List[Column[_]]] = Option(List(locked))
   }
 }
 
-
-///**
-// * Column with values.
-// */
-//class ColumnV[T](nname: String, ndbTypeDetector: Column => String, val value: T) extends Column { 
-//  override val name = nname
-//  override protected val dbTypeDetector = ndbTypeDetector
-//}
-//
-//
-//object CassandraTypeName {
-//  def getCassandraTypeName(value: Column): String = {
-//    value match {
-//      case _ if typeOf[value.T] =:= typeOf[String]  => "text"
-//      case _ if typeOf[value.T] =:= typeOf[Boolean] => "boolean"
-//      case _ if typeOf[value.T] =:= typeOf[Long]    => "bigint"
-//      case _ if typeOf[value.T] =:= typeOf[Int]     => "int"
-//      case _                                        => "text"
-//    }
-//  }
-//}
 //object SyncTableInitFunction {
-//  type TableInitFunctionT[ColumnClass <: Column, ParamsT, ColumnType] = Tuple2[ParamsT => ColumnClass, ParamsT]
-//  
-//  implicit def createColumnV[T](name: String, dbTypeDetector: Column => String, value: T): ColumnV[T] = new ColumnV[T](name, dbTypeDetector, value)
-//  
-//  def createEmptyColumn[ColumnType](nname: String): Column = {
-//    new Column {
-//      override val name = nname
-//      override protected val dbTypeDetector = CassandraTypeName.getCassandraTypeName(_: Column)
-//    }
-//  }
-//
-//}
-//
-//
-//import scray.querying.sync.types.SyncTableInitFunction.TableInitFunctionT
-//import scray.querying.sync.types.SyncTableInitFunction.{createEmptyColumn, createColumnV}
-//class SyncTableColumns[ColumnT <: Column , Params](
-//    jobnameInit: TableInitFunctionT[ColumnT, Params, String],
-//    versionNrInit: TableInitFunctionT[ColumnT, Params, Int],
-//    stateInit: TableInitFunctionT[ColumnT, Params, String],
-//    batchVersionsInit: TableInitFunctionT[ColumnT, Params, Int],
-//    onlineVersionsInit: TableInitFunctionT[ColumnT, Params, Int],
-//    lockedInit: TableInitFunctionT[ColumnT, Params, Boolean],
-//    onlineInit: TableInitFunctionT[ColumnT, Params, Boolean],
-//    completedInit: TableInitFunctionT[ColumnT, Params, Boolean],
-//    tablenameInit: TableInitFunctionT[ColumnT, Params, String]
-//) extends Columns[Column] {
-//  
-//  val jobname = jobnameInit._1 (jobnameInit._2)
-//  val versionNr = versionNrInit._1 (versionNrInit._2)
-//  val batchesVersions = batchVersionsInit._1 (batchVersionsInit._2)
-//  val onlineVersions = onlineInit._1 (onlineInit._2)
-//  val locked = lockedInit._1 (lockedInit._2)
-//  val online = onlineInit._1 (onlineInit._2)
-//  val tablename = tablenameInit._1 (tablenameInit._2)
-//  val completed = completedInit._1 (completedInit._2)
-//  val state = stateInit._1 (stateInit._2)
-//  override lazy val allVals: List[Column] = time :: jobname :: locked :: online :: versionNr :: batchesVersions :: onlineVersions :: tablename :: completed :: state :: Nil
-//  override lazy val primKey = s"(${jobname.name}, ${online.name}, ${versionNr.name})"
-//  override lazy val indexes = Option(List(locked.name))
-//}
-//
-//object SyncTableColumns {
-//  def apply() = {
-//    new SyncTableColumns(
-//        (createEmptyColumn[String]  _, "jobname"),
-//        (createEmptyColumn[Int]     _, "versionNr"),
-//        (createEmptyColumn[String]  _, "state"),
-//        (createEmptyColumn[Int]     _, "batchVersions"),
-//        (createEmptyColumn[Int]     _, "onlineVersions"),
-//        (createEmptyColumn[Boolean] _, "locked"),
-//        (createEmptyColumn[Boolean] _, "online"),
-//        (createEmptyColumn[Boolean] _, "completed"),
-//        (createEmptyColumn[String]  _, "tablename")
-//        )
-//  }
-//}
-//
-//class DataColumns[ColumnT <: ColumnWithValue[_] , Params, F](
-//    jobnameInit: TableInitFunctionT[ColumnT, Params, String],
-//    versionNrInit: TableInitFunctionT[ColumnT, Params, Int],
-//    stateInit: TableInitFunctionT[ColumnT, Params, String],
-//    batchVersionsInit: TableInitFunctionT[ColumnT, Params, Int],
-//    onlineVersionsInit: TableInitFunctionT[ColumnT, Params, Int],
-//    lockedInit: TableInitFunctionT[ColumnT, Params, Boolean],
-//    onlineInit: TableInitFunctionT[ColumnT, Params, Boolean],
-//    completedInit: TableInitFunctionT[ColumnT, Params, Boolean],
-//    tablenameInit: TableInitFunctionT[ColumnT, Params, String]
-//) extends Columns[Column] {
-//  
-//  val jobname = jobnameInit._1 (jobnameInit._2)
-//  val versionNr = versionNrInit._1 (versionNrInit._2)
-//  val batchesVersions = batchVersionsInit._1 (batchVersionsInit._2)
-//  val onlineVersions = onlineInit._1 (onlineInit._2)
-//  val locked = lockedInit._1 (lockedInit._2)
-//  val online = onlineInit._1 (onlineInit._2)
-//  val tablename = tablenameInit._1 (tablenameInit._2)
-//  val completed = completedInit._1 (completedInit._2)
-//  val state = stateInit._1 (stateInit._2)
-//  override lazy val allVals: List[Column] = time :: jobname :: locked :: online :: versionNr :: batchesVersions :: onlineVersions :: tablename :: completed :: state :: Nil
-//  override lazy val primKey = s"(${jobname.name}, ${online.name}, ${versionNr.name})"
-//  override lazy val indexes = Option(List(locked.name))
-//}
-//
-//object DataColumns {
-//  def apply() = {
-//    new SyncTableColumns(
-//        (createEmptyColumn[String]  _, "jobname"),
-//        (createEmptyColumn[Int]     _, "versionNr"),
-//        (createEmptyColumn[String]  _, "state"),
-//        (createEmptyColumn[Int]     _, "batchVersions"),
-//        (createEmptyColumn[Int]     _, "onlineVersions"),
-//        (createEmptyColumn[Boolean] _, "locked"),
-//        (createEmptyColumn[Boolean] _, "online"),
-//        (createEmptyColumn[Boolean] _, "completed"),
-//        (createEmptyColumn[String]  _, "tablename")
-//        )
-//  }
-//}
-//
-//
-//
+
+
 //class SyncTableColumnsE() extends SyncTableColumns[Column[_]] {
 //  override val jobname = new Column[String]("jobname", CassandraTypeName.getCassandraTypeName(_))
 //  override val time = new Column[Long]("time", CassandraTypeName.getCassandraTypeName(_))
