@@ -17,37 +17,30 @@ import scray.querying.sync.types.ColumnInt
 import scray.querying.sync.types.ColumnString
 import scray.querying.sync.types.ColumnLong
 import scray.querying.sync.types.ColumnBoolean
-import scray.querying.sync.types.SyncTableBasicClasses.DbTypeMapping
+import scray.querying.sync.cassandra.CassandraImplementation._
 
 @RunWith(classOf[JUnitRunner])
 class SyncTableTests extends WordSpec {
-  // Example db type mapper
-  object dbTypes extends DbTypeMapping {
-    def getDbType(column: Column): String = { "" }
-    def getDbType(column: ColumnInt): String = { "" }
-    def getDbType(column: ColumnLong): String = { "" }
-    def getDbType(column: ColumnString): String = { "" }
-    def getDbType(column: ColumnBoolean): String = { "" }
-  }
+  
   
   "Tables " should {
     " return DB type" in {
-       val c1 = new ColumnString("c1", dbTypes)
+       val c1 = new Column[String]("c1")
        
        assert(c1.name === "c1")
-       assert(c1.getDBType === "String")
+       assert(c1.getDBType === "text")
     }
     " set and get values " in {
-      val c1 = new ColumnWithValue[Boolean, String]("c1", dbTypes, "v1")
+      val c1 = new ColumnWithValue[Boolean, String]("c1", "v1")
       
        assert(c1.name === "c1")
        assert(c1.value === "v1")
-       assert(c1.getDBType === "DB_TYPE_1")
+       assert(c1.getDBType === "boolean")
     }
     " test foldLeft on rows " in {
-      val columns = new ColumnWithValue[Boolean, Int]("c1", dbTypes, 1) :: 
-                    new ColumnWithValue[Boolean, String]("c2", dbTypes, "2") :: 
-                    new ColumnWithValue[Boolean, Boolean]("c3", dbTypes, true) :: Nil
+      val columns = new ColumnWithValue[Boolean, Int]("c1", 1) :: 
+                    new ColumnWithValue[Boolean, String]("c2", "2") :: 
+                    new ColumnWithValue[Boolean, Boolean]("c3", true) :: Nil
 
       val row1 = new RowWithValue(columns, "p1", Some(columns))
       
@@ -57,11 +50,7 @@ class SyncTableTests extends WordSpec {
       assert(namesAsString === "c1c2c3")
       assert(valuesAsString === "12true")
     }
-    " generate a table " in {
-      
-        val syncTable = new SyncTableRowEmpty(dbTypes)
-
-      
+    " generate a table " in { 
     }
   }
   

@@ -20,6 +20,7 @@ import java.sql.Timestamp
 import java.sql.Time
 import java.sql.Ref
 import scala.reflect.ClassTag
+import scray.querying.sync.cassandra.CassandraImplementation._
 
 
 class Table[T <: AbstractRows[_ <: Column[_]]](val keySpace: String, val tableName: String, val columns: T) {}
@@ -36,50 +37,36 @@ class Column [T : DBColumnImplementation](val name: String) { self =>
   def getDBType: String = dbimpl.getDBType   
 }
 
-
-
-class ColumnInt(name: String)(implicit dbimpl: DBColumnImplementation[Int]) extends Column[Int](name) 
-//class ColumnLong(name: String, dbTypeDetector: DbTypeMapping.AbstractDbTypeMapping[ColumnLong]) extends Column(name) {
-//  this.setDbTypeDetector(dbTypeDetector)
-//}
-//class ColumnString(name: String, dbTypeDetector: DbTypeMapping.AbstractDbTypeMapping[ColumnString]) extends Column(name) { type THATSME = ColumnString }
-//class ColumnBoolean(name: String, dbTypeDetector: DbTypeMapping.AbstractDbTypeMapping) extends Column(name, dbTypeDetector) {}
-
-
 abstract class AbstractRows[ColumnT <: Column[_]] { 
-  
-  type COLUMN_TYPES <: HList
-  
-  def foldLeft[B](z: B)(f: (B, ColumnT) => B): B = {
-    columns.foldLeft(z)(f)
-  }
-
   val columns: List[ColumnT]
   val primeryKey = ""
   val indexes: Option[List[Column[_]]] = None
+ 
+  def foldLeft[B](z: B)(f: (B, ColumnT) => B): B = {
+    columns.foldLeft(z)(f)
+  }
+}
+
+class ColumnWithValue[ColumnT: DBColumnImplementation, ValueT](name: String, val value: ValueT) extends Column[ColumnT](name) {}
+
+class RowWithValue[ColumnT <: ColumnWithValue[_, _]](columnsV: List[ColumnT], primaryKeyV: String, indexesV: Option[List[ColumnT]]) extends AbstractRows[ColumnWithValue[_, _]] {
+  override val columns = columnsV
+  override val primeryKey = primaryKeyV
+  override val indexes = indexesV
+  
+  class ff extends Iterator[String] {
+    def hasNext: Boolean = ???
+    def next(): String = ???
+  }
+}
+
+abstract class DbSession[Statement,InsertIn, Result](val dbHostname: String) {
+  def execute(statement: Statement): Result
+  def execute(statement: String): Result
+  def insert(statement: InsertIn): Result
 }
 
 
-//
-//class ColumnWithValue[ColumnT, ValueT](name: String, dbTypeDetector: FF.AbstractDbTypeMapping, val value: ValueT) extends Column(name, dbTypeDetector) {}
-//class RowWithValue[ColumnT <: ColumnWithValue[_, _]](columnsV: List[ColumnT], primaryKeyV: String, indexesV: Option[List[Column]]) extends AbstractRows[ColumnWithValue[_, _]] {
-//  override val columns = columnsV
-//  override val primeryKey = primaryKeyV
-//  override val indexes = indexesV
-//  
-//  class ff extends Iterator[String] {
-//    def hasNext: Boolean = ???
-//    def next(): String = ???
-//  }
-//}
-//
-//abstract class DbSession[Statement,InsertIn, Result](val dbHostname: String) {
-//  def execute(statement: Statement): Result
-//  def execute(statement: String): Result
-//  def insert(statement: InsertIn): Result
-//}
-//
-//
 //object SyncTableBasicClasses {
 //  type BLA = ColumnString :: ColumnBoolean :: HNil
 //  import scray.querying.sync.types.FF.AbstractDbTypeMapping
