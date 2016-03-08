@@ -47,11 +47,11 @@ class OnlineBatchSyncTests extends WordSpec with BeforeAndAfter {
   }
 
   after {
-    EmbeddedCassandraServerHelper.cleanEmbeddedCassandra()
+    // EmbeddedCassandraServerHelper.cleanEmbeddedCassandra()
   }
   "OnlineBatchSync " should {
     " init client" in {
-      clean()
+      //clean()
       
       class SumColumns() extends ArbitrarylyTypedRows {
         val sum = new Column[Long]("sum")
@@ -65,7 +65,7 @@ class OnlineBatchSyncTests extends WordSpec with BeforeAndAfter {
       table.initJobClient[SumColumns]("job55", 3, new SumColumns)
     }
     " throw exception if job already exists" in {
-      clean()
+      //clean()
       
       class SumColumns() extends ArbitrarylyTypedRows {
         val sum = new Column[Long]("sum")

@@ -54,7 +54,7 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
     }
   })
 
-  val syncTable = SyncTable("\"SILIDX_TEST\"", "SyncTable")
+  val syncTable = SyncTable("SILIDX_TEST", "SyncTable")
 
   /**
    * Generate and register tables for a new job.
