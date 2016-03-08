@@ -35,7 +35,7 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
 
   // Create or use a given DB session.
   val session = dbSession.getOrElse(new DbSession[SimpleStatement, Insert, ResultSet](dbHostname) {
-    val cassandraSession = Cluster.builder().addContactPoint("aaa").build().connect()
+    val cassandraSession = Cluster.builder().addContactPoint("andreas").build().connect()
 
     override def execute(statement: String): ResultSet = {
       cassandraSession.execute(statement)
@@ -54,7 +54,7 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
     }
   })
 
-  val syncTable = SyncTable("\"SILIDX\"", "SyncTable")
+  val syncTable = SyncTable("\"SILIDX_TEST\"", "SyncTable")
 
   /**
    * Generate and register tables for a new job.
@@ -82,7 +82,7 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
   def crateTablesIfNotExists[T <: AbstractRows](jobName: String, numberOfBatches: Int, dataColumns: T): Unit = {
     createKeyspace(syncTable)
     syncTable.columns.indexes match {
-      case _: Some[List[Column[_]]] => session.execute(createIndexString(syncTable))
+      case _: Some[List[String]] => session.execute(createIndexString(syncTable))
       case _                     =>
     }
 
@@ -377,7 +377,6 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
       s"${table.columns.foldLeft("")((acc, next) => { acc + next.name + " " + next.getDBType + ", " })} " +
       s"PRIMARY KEY ${table.columns.primaryKey})"
     logger.debug(s"Create table String: ${createStatement} ")
-    println(s"Create table String: ${createStatement} ")
     createStatement
   }
 

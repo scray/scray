@@ -38,7 +38,7 @@ class SyncTableTests extends WordSpec {
                     new ColumnWithValue[String]("c2", "2") :: 
                     new ColumnWithValue[Boolean]("c3", true) :: Nil
 
-      val row1 = new RowWithValue(columns, "p1", Some(columns))
+      val row1 = new RowWithValue(columns, "p1", None)
       
       val namesAsString =  row1.foldLeft("")((acc, column) => acc + column.name)
       val valuesAsString = row1.foldLeft("")((acc, column) => acc + column.value)
@@ -49,7 +49,7 @@ class SyncTableTests extends WordSpec {
     " test db type detection in tables " in { 
       
       val s = new SyncTableRowEmpty()
-      assert(s.indexes.get.head.name === "locked")
+      assert(s.indexes.get.head === "locked")
       assert(s.columns.head.getDBType === "text")
     }
   }

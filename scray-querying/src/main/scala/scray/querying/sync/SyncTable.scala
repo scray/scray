@@ -41,7 +41,7 @@ abstract class AbstractRows {
   type ColumnType <: Column[_]
   val columns: List[ColumnType]
   val primaryKey = ""
-  val indexes: Option[List[ColumnType]] = None
+  val indexes: Option[List[String]] = None
  
   def foldLeft[B](z: B)(f: (B, ColumnType) => B): B = {
     columns.foldLeft(z)(f)
@@ -54,7 +54,7 @@ abstract class ArbitrarylyTypedRows extends AbstractRows {
 
 class ColumnWithValue[ColumnT: DBColumnImplementation](name: String, val value: ColumnT) extends Column[ColumnT](name) {}
 
-class RowWithValue(columnsV: List[ColumnWithValue[_]], primaryKeyV: String, indexesV: Option[List[ColumnWithValue[_]]]) extends AbstractRows {
+class RowWithValue(columnsV: List[ColumnWithValue[_]], primaryKeyV: String, indexesV: Option[List[String]]) extends AbstractRows {
   override type ColumnType = ColumnWithValue[_]
   override val columns = columnsV
   override val primaryKey = primaryKeyV
@@ -106,7 +106,7 @@ object SyncTableBasicClasses {
     
     override val columns = jobname :: creationTime :: versionNr :: batcheVersions :: onlineVersions :: tablename :: locked :: online :: completed :: state :: Nil
     override val primaryKey = s"(${jobname.name}, ${online.name}, ${versionNr.name})"
-    override val indexes: Option[List[Column[_]]] = Option(List(locked))
+    override val indexes: Option[List[String]] = Option(List(locked.name))
   }
 }
 

@@ -58,22 +58,32 @@ class OnlineBatchSyncTests extends WordSpec with BeforeAndAfter {
 
         override val columns = sum :: Nil
         override val primaryKey = s"(${sum.name})"
-        override val indexes: Option[List[Column[_]]] = None
+        override val indexes: Option[List[String]] = None
       }
       
       val table = new OnlineBatchSyncCassandra("", dbconnection)
       table.initJobClient[SumColumns]("job55", 3, new SumColumns)
     }
-//    " throw exception if job already exists" in {
-//      clean()
-//      val table = new OnlineBatchSyncCassandra[SumDataColumns]("", dbconnection)
-//      table.initJobClient("job56", 3, new SumDataColumns(1456402973L, 1L))
-//      try {
-//          table.initJobClient("job56", 3, new SumDataColumns(1456402973L, 1L))
-//      } catch {
-//        case _: IllegalStateException => clean
-//      }
-//    }
+    " throw exception if job already exists" in {
+      clean()
+      
+      class SumColumns() extends ArbitrarylyTypedRows {
+        val sum = new Column[Long]("sum")
+
+        override val columns = sum :: Nil
+        override val primaryKey = s"(${sum.name})"
+        override val indexes: Option[List[String]] = None
+      }
+      
+      val table = new OnlineBatchSyncCassandra("", dbconnection)
+      table.initJobClient("job56", 3, new SumColumns())
+      
+      try {
+          table.initJobClient("job56", 3, new SumColumns())
+      } catch {
+        case _: IllegalStateException => clean
+      }
+    }
 //   "lock table" in {
 //     clean()
 //      val table = new OnlineBatchSyncCassandra[SumDataColumns]("", dbconnection)
