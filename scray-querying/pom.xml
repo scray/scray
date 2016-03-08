@@ -12,6 +12,19 @@
 	<description>query engine core source code</description>
 
 	<dependencies>
+	
+	        <dependency>
+            <groupId>com.websudos</groupId>
+            <artifactId>phantom-dsl_2.10</artifactId>
+            <version>1.4.0</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.datastax.cassandra</groupId>
+                    <artifactId>cassandra-driver-core</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+	
 		<dependency>
 			<groupId>scray</groupId>
 			<artifactId>scray-common</artifactId>

@@ -6,45 +6,111 @@ import com.datastax.driver.core.Statement
 import scala.collection.JavaConverters._
 import com.datastax.driver.core.querybuilder.Insert
 import com.datastax.driver.core.querybuilder.QueryBuilder
+import com.websudos.phantom.CassandraPrimitive._
+import com.websudos.phantom.CassandraPrimitive
+import java.sql.Struct
+import java.sql.RowId
+import java.sql.Clob
+import java.net.URL
+import java.math.BigInteger
+import java.sql.NClob
+import java.sql.Blob
+import java.sql.SQLXML
+import java.sql.Timestamp
+import java.sql.Time
+import java.sql.Ref
+import scala.reflect.ClassTag
 
-abstract case class Table[T <: AbstractRows[_ <: Column[_]]](val keySpace: String, val tableName: String, val columns: T) {}
 
-class Column[T] (
-    val name: String,
-    protected val dbTypeDetector: Column[T] => String
-  ) {
-    def getDBType = { dbTypeDetector(this) }
+class Table[T <: AbstractRows[_ <: Column[_]]](val keySpace: String, val tableName: String, val columns: T) {}
+
+trait DBColumnImplementation[T] {
+  def getDBType: String
 }
 
+
+class Column [T : DBColumnImplementation](val name: String) { self => 
+  val dbimpl = implicitly[DBColumnImplementation[T]]
+  
+  // type DB_TYPE
+  def getDBType: String = dbimpl.getDBType   
+}
+
+
+
+class ColumnInt(name: String)(implicit dbimpl: DBColumnImplementation[Int]) extends Column[Int](name) 
+//class ColumnLong(name: String, dbTypeDetector: DbTypeMapping.AbstractDbTypeMapping[ColumnLong]) extends Column(name) {
+//  this.setDbTypeDetector(dbTypeDetector)
+//}
+//class ColumnString(name: String, dbTypeDetector: DbTypeMapping.AbstractDbTypeMapping[ColumnString]) extends Column(name) { type THATSME = ColumnString }
+//class ColumnBoolean(name: String, dbTypeDetector: DbTypeMapping.AbstractDbTypeMapping) extends Column(name, dbTypeDetector) {}
+
+
 abstract class AbstractRows[ColumnT <: Column[_]] { 
+  
+  type COLUMN_TYPES <: HList
   
   def foldLeft[B](z: B)(f: (B, ColumnT) => B): B = {
     columns.foldLeft(z)(f)
   }
 
-  val columns: List[ColumnT] = Nil
+  val columns: List[ColumnT]
   val primeryKey = ""
   val indexes: Option[List[Column[_]]] = None
 }
 
-class ColumnWithValue[ColumnT, ValueT](name: String, dbTypeDetector: Column[ColumnT] => String, val value: ValueT) extends Column[ColumnT](name, dbTypeDetector) {}
-class RowWithValue[ColumnT <: ColumnWithValue[_, _]](columnsV: List[ColumnT], primaryKeyV: String, indexesV: Option[List[Column[_]]]) extends AbstractRows[ColumnWithValue[_, _]] {
-  override val columns = columnsV
-  override val primeryKey = primaryKeyV
-  override val indexes = indexesV
-  
-  class ff extends Iterator[String] {
-    def hasNext: Boolean = ???
-    def next(): String = ???
-  }
-  
-}
 
-abstract class DbSession[Statement,InsertIn, Result](val dbHostname: String) {
-  def execute(statement: Statement): Result
-  def execute(statement: String): Result
-  def insert(statement: InsertIn): Result
-}
+//
+//class ColumnWithValue[ColumnT, ValueT](name: String, dbTypeDetector: FF.AbstractDbTypeMapping, val value: ValueT) extends Column(name, dbTypeDetector) {}
+//class RowWithValue[ColumnT <: ColumnWithValue[_, _]](columnsV: List[ColumnT], primaryKeyV: String, indexesV: Option[List[Column]]) extends AbstractRows[ColumnWithValue[_, _]] {
+//  override val columns = columnsV
+//  override val primeryKey = primaryKeyV
+//  override val indexes = indexesV
+//  
+//  class ff extends Iterator[String] {
+//    def hasNext: Boolean = ???
+//    def next(): String = ???
+//  }
+//}
+//
+//abstract class DbSession[Statement,InsertIn, Result](val dbHostname: String) {
+//  def execute(statement: Statement): Result
+//  def execute(statement: String): Result
+//  def insert(statement: InsertIn): Result
+//}
+//
+//
+//object SyncTableBasicClasses {
+//  type BLA = ColumnString :: ColumnBoolean :: HNil
+//  import scray.querying.sync.types.FF.AbstractDbTypeMapping
+//  class SyncTableRowEmpty(dbTypMap: AbstractDbTypeMapping) extends AbstractRows[Column] {
+//
+//    val jobname = new ColumnString("jobname", dbTypMap)
+//    val versionNr = new ColumnInt("versionNr", dbTypMap)
+//    val batcheVersion = new ColumnInt("batcheVersion", dbTypMap)
+//    val onlineVersions = new ColumnInt("onlineVersions", dbTypMap)
+//    val tablename = new ColumnString("tablename", dbTypMap)
+//    val locked = new ColumnBoolean("locked", dbTypMap)
+//    val online = new ColumnBoolean("online", dbTypMap)
+//    val completed = new ColumnBoolean("completed", dbTypMap)
+//    val state =  new ColumnString("state", dbTypMap)
+//    
+//    override val columns = jobname :: versionNr :: batcheVersion :: onlineVersions :: tablename :: locked :: online :: completed :: state :: Nil
+//    override val primeryKey = s"(${jobname.name}, ${online.name}, ${versionNr.name})"
+//    override val indexes: Option[List[Column]] = Option(List(locked))
+//    
+//    columns.foreach { x => x.getDBType }
+//  }
+//  
+//  trait DbTypeMapping[T] extends FF.AbstractDbTypeMapping {
+//    def getDbType(column: T): String
+//    def getDbType(column: ColumnString): String
+//    def getDbType(column: ColumnBoolean): String
+//  }
+//  
+//
+//
+//}
 
 
 ///**
