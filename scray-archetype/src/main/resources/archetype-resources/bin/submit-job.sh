@@ -1,13 +1,16 @@
 #!/bin/bash
 
-ORIGDIR=$(cwd)
+ORIGDIR=$(pwd)
 
-BASEDIR=$(dirname "$0")
-cd $BASDIR/..
+BASEDIR=$(dirname $(readlink -f $0))
+cd $BASEDIR/..
 
-function usage() {
-  echo "usage: $0 <Options> <Job arguments>\n\
---master <URL>    specify spark master. Required!\n\
+function usage {
+  echo -e "Usage: $0 <Options> <Job arguments>\n\
+Options:\n\
+  --master <URL>                    specify spark master. Required!\n\
+  --total-executor-cores <NUMBER>   number of cores to use. Required!\n\
+  --help                            display this usage information\n\
 "
 }
 
@@ -20,31 +23,34 @@ fi
 
 if [ -z "$SPARK_SUBMIT" ]; then
   echo "ERROR: Either have spark-submit on the PATH or SPARK_HOME must be set. Exiting."
-  usage()
+  usage
   exit 1
 fi
 
+ARGUMENTS=()
 # find spark master argument
 while [[ $# > 0 ]]; do
   if [[ $1 == "--master" ]]; then
     SPARK_MASTER=$2
     shift 2
-  elsif [[ $1 == "--help" ]]; then
-    usage()
+  elif [[ $1 == "--total-executor-cores" ]]; then
+    CORES=$2
+    shift 2
+  elif [[ $1 == "--help" ]]; then
+    usage
     exit 0
   else
+    ARGUMENTS+=("$1")
     shift 1
   fi
 done
 
 if [ -z "$SPARK_MASTER" ]; then
   echo "ERROR: Need spark master URL to be specifies with --master <URL> . Exiting."
-  usage()
+  usage
   exit 2
 fi
 
-echo "Arguments: $@"
-
-exec $SPARK_SUBMIT --master $SPARK_MASTER --class ${package}.${job-name} target/${artifactId}-${version}-jar-with-dependencies.jar $@
+exec $SPARK_SUBMIT --master $SPARK_MASTER --total-executor-cores $CORES --class ${package}.${job-name} target/${artifactId}-${version}-jar-with-dependencies.jar ${ARGUMENTS[@]}
 
 cd $ORIGDIR
