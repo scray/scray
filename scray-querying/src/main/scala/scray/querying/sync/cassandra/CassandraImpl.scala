@@ -64,13 +64,15 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
     this.crateTablesIfNotExists(jobName, numberOfBatches, dataTable)
     
     // Check if table is not locked
-    var tableIsUnLocked=true
+    var tableIsLocked=true
     1 to numberOfBatches foreach { i => 
-      tableIsUnLocked &= this.isBatchTableLocked(jobName, i)
-      tableIsUnLocked &= this.isOnlineTableLocked(jobName, i)
+      println(this.isBatchTableLocked(jobName, i))
+      println(this.isOnlineTableLocked(jobName, i))
+      tableIsLocked &= this.isBatchTableLocked(jobName, i)
+      tableIsLocked &= this.isOnlineTableLocked(jobName, i)
     }
     
-    if(!tableIsUnLocked) {
+    if(tableIsLocked) {
       throw new IllegalStateException("One job with the same name is already running")
     }
 
@@ -238,7 +240,7 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
   }
 
   def setLock(jobName: String, nr: Int, online: Boolean, newState: Boolean): Boolean = {
-    executeQuorum(QueryBuilder.update(syncTable.keySpace + "." + syncTable.tableName).
+    executeQuorum(QueryBuilder.update(syncTable.keySpace, syncTable.tableName).
         `with`(QueryBuilder.set(syncTable.columns.locked.name, newState)).
         where(QueryBuilder.eq(syncTable.columns.jobname.name, jobName)).
         and(QueryBuilder.eq(syncTable.columns.online.name, online)).
