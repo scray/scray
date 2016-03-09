@@ -1,3 +1,4 @@
+#set( $symbol_dollar = '$' )
 #!/bin/bash
 
 ORIGDIR=$(pwd)
@@ -51,6 +52,6 @@ if [ -z "$SPARK_MASTER" ]; then
   exit 2
 fi
 
-exec $SPARK_SUBMIT --master $SPARK_MASTER --total-executor-cores $CORES --class ${package}.${job-name} target/${artifactId}-${version}-jar-with-dependencies.jar ${ARGUMENTS[@]}
+exec $SPARK_SUBMIT --master $SPARK_MASTER --total-executor-cores $CORES --class ${package}.${job-name} target/${artifactId}-${version}-jar-with-dependencies.jar ${symbol_dollar}{ARGUMENTS[@]}
 
 cd $ORIGDIR
