@@ -21,6 +21,7 @@ import scray.querying.sync.types.ArbitrarylyTypedRows
 import scray.querying.sync.types.ColumnWithValue
 import scray.querying.sync.cassandra.CassandraImplementation._
 import scray.querying.sync.cassandra.OnlineBatchSyncCassandra
+import scray.querying.sync.types.RowWithValue
 
 @RunWith(classOf[JUnitRunner])
 class OnlineBatchSyncTests extends WordSpec with BeforeAndAfter {
@@ -84,17 +85,22 @@ class OnlineBatchSyncTests extends WordSpec with BeforeAndAfter {
       assert(table.isOnlineTableLocked("job57", 1) === true)
       assert(table.isOnlineTableLocked("job57", 2) === false)
     }
-    //   "insert and read data" in {
-    //      clean()
-    //      val table = new OnlineBatchSyncCassandra[SumDataColumns]("", dbconnection)
-    //      table.initJobClient("job55", 3, new SumDataColumns(1456402973L, 1L))
-    //      
-    //      table.unlockOnlineTable("job55", 1)
-    //      table.insertInOnlineTable("job55", 1, new SumDataColumns(1456402973L, 1L))
-    //      
-    //      assert(table.getOnlineJobData("job55", 1).get.time.value === 1456402973L)
-    //      assert(table.getOnlineJobData("job55", 1).get.sum.value === 1L)
-    //   }
+//    "insert and read data" in {
+//      val table = new OnlineBatchSyncCassandra("", dbconnection)
+//      table.initJobClient("job58", 3, new SumTestColumns())
+//
+//      class SumTestColumnsWithValue() extends RowWithValue {
+//        val sum = new ColumnWithValue[Long]("sum", 100)
+//
+//        override val columns = sum :: Nil
+//        override val primaryKey = s"(${sum.name})"
+//        override val indexes: Option[List[String]] = None
+//      }
+//
+//      table.insertInOnlineTable("job58", 1, new SumTestColumnsWithValue())
+//
+//      assert(table.getOnlineJobData("job55", 1).get.sum.value === 100L)
+//    }
     //    "find latest online batch" in {
     //      clean()
     //      val table = new OnlineBatchSyncCassandra[SumDataColumns]("", dbconnection)

@@ -24,10 +24,10 @@ import scray.querying.sync.types.SyncTableBasicClasses.SyncTableRowEmpty
 
 
 object CassandraImplementation {
-  implicit def genericCassandraColumnImplicit[T](implicit cassImmplicit: CassandraPrimitive[T]): DBColumnImplementation[T] = new DBColumnImplementation[T]  {
-    override def getDBType: String = {
-      cassImmplicit.cassandraType
-    }
+  implicit def genericCassandraColumnImplicit[T](implicit cassImplicit: CassandraPrimitive[T]): DBColumnImplementation[T] = new DBColumnImplementation[T]  {
+    override def getDBType: String = cassImplicit.cassandraType
+    override def fromDBType(value: AnyRef): T = cassImplicit.fromCType(value)
+    override def toDBType(value: T): AnyRef = cassImplicit.toCType(value)
   }
 }
 
@@ -75,7 +75,6 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
     if(tableIsLocked) {
       throw new IllegalStateException("One job with the same name is already running")
     }
-
   }
   
   /**
@@ -132,33 +131,33 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
 //    val newestBatchNr = this.getNewestRow(headBatches.iterator()).getInt(syncTable.columns.nr.name)
 //    Option(newestBatchNr)
 //  }
-//  
-//  def insertInOnlineTable(jobName: String, nr: Int, data: DataColumns) {
-//    if(this.lockOnlineTable(jobName, nr)) {
-//      val statement = data.foldLeft(QueryBuilder.insertInto(syncTable.keySpace, getOnlineJobName(jobName, nr))) {
-//        (acc, column) => acc.value(column.name, column.value)
-//      }
-//      session.insert(statement)
-//      this.unlockBatchTable(jobName, nr)
-//    } else {
-//      logger.error(s"Online table for job ${jobName} is locked. It is not possible to insert Data.")
-//    }
-//    this.unlockOnlineTable(jobName, nr)
-//  }
-//  
-//  
-//  def insertInBatchTable(jobName: String, nr: Int, data: DataColumns) {
-//    if(this.lockBatchTable(jobName, nr)) { 
-//      val statement = data.foldLeft(QueryBuilder.insertInto(syncTable.keySpace, getBatchJobName(jobName, nr))) {
-//        (acc, column) => acc.value(column.name, column.value)
-//      }
-//      session.insert(statement)
-//      this.unlockBatchTable(jobName, nr)
-//    } else {
-//      logger.error(s"Online table for job ${jobName} is locked. It is not possible to insert Data.")
-//    }
-//  }
-//
+ 
+  def insertInOnlineTable(jobName: String, nr: Int, data: RowWithValue) {
+    if(this.lockOnlineTable(jobName, nr)) {
+      val statement = data.foldLeft(QueryBuilder.insertInto(syncTable.keySpace, getOnlineJobName(jobName, nr))) {
+        (acc, column) => acc.value(column.name, column.value)
+      }
+      session.insert(statement)
+      this.unlockBatchTable(jobName, nr)
+    } else {
+      logger.error(s"Online table for job ${jobName} is locked. It is not possible to insert Data.")
+    }
+    this.unlockOnlineTable(jobName, nr)
+  }
+  
+  
+  def insertInBatchTable(jobName: String, nr: Int, data: RowWithValue) {
+    if(this.lockBatchTable(jobName, nr)) { 
+      val statement = data.foldLeft(QueryBuilder.insertInto(syncTable.keySpace, getBatchJobName(jobName, nr))) {
+        (acc, column) => acc.value(column.name, column.value)
+      }
+      session.insert(statement)
+      this.unlockBatchTable(jobName, nr)
+    } else {
+      logger.error(s"Online table for job ${jobName} is locked. It is not possible to insert Data.")
+    }
+  }
+
 ////  def getTailBatch(jobName: String, session: Session): Option[CassandraTableLocation] = {
 ////    val headBatchQuery: RegularStatement = QueryBuilder.select().from(table.keySpace + "." + table.columnFamily).
 ////      where().and((QueryBuilder.eq(table.columns(0)._1, jobName))).and((QueryBuilder.eq(table.columns(3)._1, false)))
@@ -252,30 +251,37 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
 //    val rows = execute(QueryBuilder.select().all().from(syncTable.keySpace, syncTable.tableName).where(QueryBuilder.eq(syncTable.columns.jobname.name, jobName)))
 //    None
 //  }
-//  
-//  def selectAll() = {
-//    val rows = execute(QueryBuilder.select().all().from(syncTable.keySpace, syncTable.tableName))
-//    
-//    val iter = rows.all().iterator()
-//    while(iter.hasNext()) {
-//      println(iter.next())
+
+//  def getOnlineJobData[T <: RowWithValue](jobname: String, nr: Int, result: T): Option[List[T]] = {   
+//    def handleColumnWithValue[U](currentRow: Row, destinationColumn: ColumnWithValue[U]): U = {
+//      val dbimpl = destinationColumn.dbimpl
+//      dbimpl.fromDBType(currentRow.get(destinationColumn.name, dbimpl.toDBType(destinationColumn.value).getClass()))
 //    }
-//  }
-//  
-//  def getOnlineJobData(jobname: String, nr: Int): Option[SumDataColumns] = {   
-//      val rows = execute(QueryBuilder.select().all().from(syncTable.keySpace, getOnlineJobName(jobname, nr)))
-//      val iter = rows.iterator()
-//      val sumDataColumns = new SumDataColumns(42L, 42L)
-//      if(rows.all().size() > 0) {
-//        val column = rows.all().get(0)
-//        logger.debug(s"Get online data for job ${jobname}: ${column}") 
-//        Option(SumDataColumns(column.getLong(sumDataColumns.time.name), column.getLong(sumDataColumns.sum.name)))
+//    
+//    def fillValue[U](currentRow: Row, destinationColumn: ColumnWithValue[U]) = {
+//      destinationColumn.value = handleColumnWithValue(currentRow, destinationColumn)
+//    }
+//    
+//    val rows = execute(QueryBuilder.select().all().from(syncTable.keySpace, getOnlineJobName(jobname, nr)))
+//    val dbDataIter = rows.iterator()
+//
+//      if(dbDataIter.hasNext())
+//        while(dbDataIter.hasNext()) {
+//          result.columns.map { destinationColumn =>
+//            fillValue(dbDataIter.next(), destinationColumn)
+//          }
+//        }
+//               
+//        
+//        true
+//        
+//        //Option(SumDataColumns(column.getLong(sumDataColumns.time.name), column.getLong(sumDataColumns.sum.name)))
 //      } else {
-//        logger.info(s"No data for job ${jobname} ${nr} found")
+//        logger.error(s"No data for job ${jobname} ${nr} found")
 //        None
 //      }
 //  }
-//  
+ 
 //  def purgeAllTables() = {
 //    
 //    session.execute(s"DROP KEYSPACE ${syncTable.keySpace}")

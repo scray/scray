@@ -54,8 +54,8 @@ abstract class OnlineBatchSync extends LazyLogging {
 //  
 //  def getHeadBatch(jobName: String): Option[Int]
 //  
-//  def insertInBatchTable(jobName: String, nr: Int, data: RowWithValue)
-//  def insertInOnlineTable(jobName: String, nr: Int, data: RowWithValue)
+  def insertInBatchTable(jobName: String, nr: Int, data: RowWithValue)
+  def insertInOnlineTable(jobName: String, nr: Int, data: RowWithValue)
 //  
 //  /**
 //   * Returns next job number of no job is currently running.

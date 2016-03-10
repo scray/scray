@@ -14,44 +14,93 @@ import scray.querying.sync.types.RowWithValue
 import scray.querying.sync.types.SyncTableBasicClasses.SyncTableRowEmpty
 import scray.querying.sync.types.Table
 import scray.querying.sync.cassandra.CassandraImplementation._
+import com.twitter.algebird.SetValue
+
 
 @RunWith(classOf[JUnitRunner])
 class SyncTableTests extends WordSpec {
-  
-  
+
   "Tables " should {
     " return DB type" in {
-       val c1 = new Column[String]("c1")
-       
-       assert(c1.name === "c1")
-       assert(c1.getDBType === "text")
+      val c1 = new Column[String]("c1")
+
+      assert(c1.name === "c1")
+      assert(c1.getDBType === "text")
     }
     " set and get values " in {
       val c1 = new ColumnWithValue[String]("c1", "v1")
-      
-       assert(c1.name === "c1")
-       assert(c1.value === "v1")
-       assert(c1.getDBType === "text")
+      val c2 = c1.copy()
+
+      assert(c2.name === "c1")
+      assert(c2.value === "v1")
+      assert(c2.getDBType === "text")
     }
     " test foldLeft on rows " in {
-      val columns = new ColumnWithValue[Int]("c1", 1) :: 
-                    new ColumnWithValue[String]("c2", "2") :: 
-                    new ColumnWithValue[Boolean]("c3", true) :: Nil
+        val columns = new ColumnWithValue[Int]("c1", 1) ::
+                      new ColumnWithValue[String]("c2", "2") ::
+                      new ColumnWithValue[Boolean]("c3", true) :: Nil
 
       val row1 = new RowWithValue(columns, "p1", None)
-      
-      val namesAsString =  row1.foldLeft("")((acc, column) => acc + column.name)
+
+      val namesAsString = row1.foldLeft("")((acc, column) => acc + column.name)
       val valuesAsString = row1.foldLeft("")((acc, column) => acc + column.value)
-      
+
       assert(namesAsString === "c1c2c3")
       assert(valuesAsString === "12true")
     }
-    " test db type detection in tables " in { 
-      
+    " test db type detection in tables " in {
+
       val s = new SyncTableRowEmpty()
       assert(s.indexes.get.head === "locked")
       assert(s.columns.head.getDBType === "text")
     }
+    " clone rows " in {
+      
+      val c1 = new ColumnWithValue[Int]("c1", 1)
+      val c2 = new ColumnWithValue[String]("c2", "2")
+      val c3 = new ColumnWithValue[Boolean]("c3", true)
+         
+      val columns = c1 :: c2 :: c3 :: Nil
+          
+      val row1 = new RowWithValue(columns, "p1", None)
+      
+      val row2 = row1.copy()
+      row2.columns.map { x =>  
+        x.value match {
+          case s: String => 
+            x.asInstanceOf[ColumnWithValue[String]].setValue("3")
+          case i: Int =>
+             x.asInstanceOf[ColumnWithValue[Int]].setValue(2)
+          case i: Boolean =>
+             x.asInstanceOf[ColumnWithValue[Boolean]].setValue(false) 
+        }
+      }
+
+      // Check if new values exists
+      row2.columns.map { x =>  
+        x.value match {
+          case s: String => 
+            assert(x.asInstanceOf[ColumnWithValue[String]].value === "3")
+          case i: Int =>
+             assert(x.asInstanceOf[ColumnWithValue[Int]].value === 2)
+          case i: Boolean =>
+             assert(x.asInstanceOf[ColumnWithValue[Boolean]].value === false) 
+        }
+      }
+      
+      // Check if old values still exists
+      row1.columns.map { x =>  
+        x.value match {
+          case s: String => 
+            assert(x.asInstanceOf[ColumnWithValue[String]].value === "2")
+          case i: Int =>
+             assert(x.asInstanceOf[ColumnWithValue[Int]].value === 1)
+          case i: Boolean =>
+             assert(x.asInstanceOf[ColumnWithValue[Boolean]].value === true) 
+        }
+      }
+
+    }
   }
-  
+
 }

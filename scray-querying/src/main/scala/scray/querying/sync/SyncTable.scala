@@ -22,27 +22,27 @@ import java.sql.Ref
 import scala.reflect.ClassTag
 import scray.querying.sync.cassandra.CassandraImplementation._
 
-
 class Table[T <: AbstractRows](val keySpace: String, val tableName: String, val columns: T) {}
 
 trait DBColumnImplementation[T] {
   def getDBType: String
+  def fromDBType(value: AnyRef): T
+  def toDBType(value: T): AnyRef
 }
 
-
-class Column [T : DBColumnImplementation](val name: String) { self => 
+class Column[T: DBColumnImplementation](val name: String) { self =>
   val dbimpl = implicitly[DBColumnImplementation[T]]
-  
+
   // type DB_TYPE
-  def getDBType: String = dbimpl.getDBType   
+  def getDBType: String = dbimpl.getDBType
 }
 
-abstract class AbstractRows { 
+abstract class AbstractRows {
   type ColumnType <: Column[_]
   val columns: List[ColumnType]
   val primaryKey = ""
   val indexes: Option[List[String]] = None
- 
+
   def foldLeft[B](z: B)(f: (B, ColumnType) => B): B = {
     columns.foldLeft(z)(f)
   }
@@ -52,21 +52,27 @@ abstract class ArbitrarylyTypedRows extends AbstractRows {
   override type ColumnType = Column[_]
 }
 
-class ColumnWithValue[ColumnT: DBColumnImplementation](name: String, val value: ColumnT) extends Column[ColumnT](name) {}
-
-class RowWithValue(columnsV: List[ColumnWithValue[_]], primaryKeyV: String, indexesV: Option[List[String]]) extends AbstractRows {
-  override type ColumnType = ColumnWithValue[_]
-  override val columns = columnsV
-  override val primaryKey = primaryKeyV
-  override val indexes = indexesV
-
-  class ff extends Iterator[String] {
-    def hasNext: Boolean = ???
-    def next(): String = ???
+case class ColumnWithValue[ColumnT: DBColumnImplementation](override val name: String, var value: ColumnT) extends Column[ColumnT](name) {
+  def setValue(a: ColumnT): Unit = { value = a }
+  override def clone(): ColumnWithValue[ColumnT] = {
+    new ColumnWithValue(this.name, this.value)
   }
 }
 
-abstract class DbSession[Statement,InsertIn, Result](val dbHostname: String) {
+class RowWithValue(
+    override val columns: List[ColumnWithValue[_]],
+    override val primaryKey: String,
+    override val indexes: Option[List[String]]) extends AbstractRows {
+
+  override type ColumnType = ColumnWithValue[_]
+
+  def copy(): RowWithValue = {
+    val columnCopies = this.columns.foldLeft(List[ColumnWithValue[_]]())((acc, column) => { column.clone() :: acc })
+    new RowWithValue(columnCopies, this.primaryKey, this.indexes)
+  }
+}
+
+abstract class DbSession[Statement, InsertIn, Result](val dbHostname: String) {
   def execute(statement: Statement): Result
   def execute(statement: String): Result
   def insert(statement: InsertIn): Result
@@ -90,7 +96,7 @@ object DataTable {
 }
 
 object SyncTableBasicClasses {
-  
+
   class SyncTableRowEmpty() extends ArbitrarylyTypedRows {
 
     val jobname = new Column[String]("jobname")
@@ -102,8 +108,8 @@ object SyncTableBasicClasses {
     val locked = new Column[Boolean]("locked")
     val online = new Column[Boolean]("online")
     val completed = new Column[Boolean]("completed")
-    val state =  new Column[String]("state")
-    
+    val state = new Column[String]("state")
+
     override val columns = jobname :: creationTime :: versionNr :: batcheVersions :: onlineVersions :: tablename :: locked :: online :: completed :: state :: Nil
     override val primaryKey = s"(${jobname.name}, ${online.name}, ${versionNr.name})"
     override val indexes: Option[List[String]] = Option(List(locked.name))
