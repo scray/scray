@@ -21,6 +21,7 @@ import java.util.ArrayList
 import scala.collection.mutable.ArrayBuffer
 import scray.querying.sync.OnlineBatchSync
 import scray.querying.sync.types.SyncTableBasicClasses.SyncTableRowEmpty
+import scala.collection.mutable.ListBuffer
 
 
 object CassandraImplementation {
@@ -252,35 +253,38 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
 //    None
 //  }
 
-//  def getOnlineJobData[T <: RowWithValue](jobname: String, nr: Int, result: T): Option[List[T]] = {   
-//    def handleColumnWithValue[U](currentRow: Row, destinationColumn: ColumnWithValue[U]): U = {
-//      val dbimpl = destinationColumn.dbimpl
-//      dbimpl.fromDBType(currentRow.get(destinationColumn.name, dbimpl.toDBType(destinationColumn.value).getClass()))
-//    }
-//    
-//    def fillValue[U](currentRow: Row, destinationColumn: ColumnWithValue[U]) = {
-//      destinationColumn.value = handleColumnWithValue(currentRow, destinationColumn)
-//    }
-//    
-//    val rows = execute(QueryBuilder.select().all().from(syncTable.keySpace, getOnlineJobName(jobname, nr)))
-//    val dbDataIter = rows.iterator()
-//
-//      if(dbDataIter.hasNext())
-//        while(dbDataIter.hasNext()) {
-//          result.columns.map { destinationColumn =>
-//            fillValue(dbDataIter.next(), destinationColumn)
-//          }
-//        }
-//               
-//        
-//        true
-//        
-//        //Option(SumDataColumns(column.getLong(sumDataColumns.time.name), column.getLong(sumDataColumns.sum.name)))
-//      } else {
-//        logger.error(s"No data for job ${jobname} ${nr} found")
-//        None
-//      }
-//  }
+  def getOnlineJobData[T <: RowWithValue](jobname: String, nr: Int, result: T): Option[List[RowWithValue]] = {   
+    def handleColumnWithValue[U](currentRow: Row, destinationColumn: ColumnWithValue[U]): U = {
+      val dbimpl = destinationColumn.dbimpl
+      dbimpl.fromDBType(currentRow.get(destinationColumn.name, dbimpl.toDBType(destinationColumn.value).getClass()))
+    }
+    
+    def fillValue[U](currentRow: Row, destinationColumn: ColumnWithValue[U]) = {
+      destinationColumn.value = handleColumnWithValue(currentRow, destinationColumn)
+    }
+    
+    val rows = execute(QueryBuilder.select().all().from(syncTable.keySpace, getOnlineJobName(jobname, nr)))
+    val dbDataIter = rows.iterator()
+    
+    var columns =  new ListBuffer[RowWithValue]()
+
+      if(dbDataIter.hasNext()) {
+        while(dbDataIter.hasNext()) {
+          val nextRow = result.copy()
+          nextRow.columns.map { destinationColumn =>
+            fillValue(dbDataIter.next(), destinationColumn)
+          }
+         columns += nextRow
+        }
+
+        Some(columns.toList)
+        
+        //Option(SumDataColumns(column.getLong(sumDataColumns.time.name), column.getLong(sumDataColumns.sum.name)))
+      } else {
+        logger.error(s"No data for job ${jobname} ${nr} found")
+        None
+      }
+  }
  
 //  def purgeAllTables() = {
 //    

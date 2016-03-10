@@ -85,22 +85,22 @@ class OnlineBatchSyncTests extends WordSpec with BeforeAndAfter {
       assert(table.isOnlineTableLocked("job57", 1) === true)
       assert(table.isOnlineTableLocked("job57", 2) === false)
     }
-//    "insert and read data" in {
-//      val table = new OnlineBatchSyncCassandra("", dbconnection)
-//      table.initJobClient("job58", 3, new SumTestColumns())
-//
-//      class SumTestColumnsWithValue() extends RowWithValue {
-//        val sum = new ColumnWithValue[Long]("sum", 100)
-//
-//        override val columns = sum :: Nil
-//        override val primaryKey = s"(${sum.name})"
-//        override val indexes: Option[List[String]] = None
-//      }
-//
-//      table.insertInOnlineTable("job58", 1, new SumTestColumnsWithValue())
-//
-//      assert(table.getOnlineJobData("job55", 1).get.sum.value === 100L)
-//    }
+    "insert and read data" in {
+      val table = new OnlineBatchSyncCassandra("", dbconnection)
+      table.initJobClient("job58", 3, new SumTestColumns())
+
+      val sum = new ColumnWithValue[Long]("sum", 100)
+      val columns = sum :: Nil
+      val primaryKey = s"(${sum.name})"
+      val indexes: Option[List[String]] = None
+
+      table.insertInOnlineTable("job58", 1, new RowWithValue(columns, primaryKey, indexes))
+
+      val columnsR = new ColumnWithValue[Long]("sum", 200) :: Nil
+      val columValue = table.getOnlineJobData("job58", 1, new RowWithValue(columnsR, primaryKey, indexes)).get.head.columns.head.value.toString()
+
+      assert(columValue === "100")
+    }
     //    "find latest online batch" in {
     //      clean()
     //      val table = new OnlineBatchSyncCassandra[SumDataColumns]("", dbconnection)
