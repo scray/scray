@@ -23,16 +23,15 @@ import scray.querying.sync.OnlineBatchSync
 import scray.querying.sync.types.SyncTableBasicClasses.SyncTableRowEmpty
 import scala.collection.mutable.ListBuffer
 
-
 object CassandraImplementation {
-  implicit def genericCassandraColumnImplicit[T](implicit cassImplicit: CassandraPrimitive[T]): DBColumnImplementation[T] = new DBColumnImplementation[T]  {
+  implicit def genericCassandraColumnImplicit[T](implicit cassImplicit: CassandraPrimitive[T]): DBColumnImplementation[T] = new DBColumnImplementation[T] {
     override def getDBType: String = cassImplicit.cassandraType
     override def fromDBType(value: AnyRef): T = cassImplicit.fromCType(value)
     override def toDBType(value: T): AnyRef = cassImplicit.toCType(value)
   }
 }
 
-class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[Statement, Insert, ResultSet]]) extends OnlineBatchSync  {
+class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[Statement, Insert, ResultSet]]) extends OnlineBatchSync {
 
   // Create or use a given DB session.
   val session = dbSession.getOrElse(new DbSession[SimpleStatement, Insert, ResultSet](dbHostname) {
@@ -45,7 +44,7 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
     def execute(statement: Statement): ResultSet = {
       cassandraSession.execute(statement)
     }
-    
+
     def insert(statement: Insert): ResultSet = {
       cassandraSession.execute(statement)
     }
@@ -63,21 +62,21 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
    */
   def initJobClient[T <: AbstractRows](jobName: String, numberOfBatches: Int, dataTable: T) {
     this.crateTablesIfNotExists(jobName, numberOfBatches, dataTable)
-    
+
     // Check if table is not locked
-    var tableIsLocked=true
-    1 to numberOfBatches foreach { i => 
+    var tableIsLocked = true
+    1 to numberOfBatches foreach { i =>
       println(this.isBatchTableLocked(jobName, i))
       println(this.isOnlineTableLocked(jobName, i))
       tableIsLocked &= this.isBatchTableLocked(jobName, i)
       tableIsLocked &= this.isOnlineTableLocked(jobName, i)
     }
-    
-    if(tableIsLocked) {
+
+    if (tableIsLocked) {
       throw new IllegalStateException("One job with the same name is already running")
     }
   }
-  
+
   /**
    * Check if tables exists and tables are locked
    */
@@ -123,18 +122,18 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
     }
   }
 
-//  def getHeadBatch(jobName: String): Option[Int] = {
-//    val headBatchQuery: RegularStatement = QueryBuilder.select().from(syncTable.keySpace + "." + syncTable.tableName).
-//      where(QueryBuilder.eq(syncTable.columns.jobname.name, jobName))
-//    val headBatches = this.execute(headBatchQuery)
-//
-//    // Find newest version 
-//    val newestBatchNr = this.getNewestRow(headBatches.iterator()).getInt(syncTable.columns.nr.name)
-//    Option(newestBatchNr)
-//  }
- 
+  def getHeadBatch(jobName: String): Option[Int] = {
+    val headBatchQuery: RegularStatement = QueryBuilder.select().from(syncTable.keySpace,  syncTable.tableName).
+      where(QueryBuilder.eq(syncTable.columns.jobname.name, jobName))
+    val headBatches = this.execute(headBatchQuery)
+
+    // Find newest version 
+    val newestBatchNr = this.getNewestRow(headBatches.iterator()).getInt(syncTable.columns.versionNr.name)
+    Option(newestBatchNr)
+  }
+
   def insertInOnlineTable(jobName: String, nr: Int, data: RowWithValue) {
-    if(this.lockOnlineTable(jobName, nr)) {
+    if (this.lockOnlineTable(jobName, nr)) {
       val statement = data.foldLeft(QueryBuilder.insertInto(syncTable.keySpace, getOnlineJobName(jobName, nr))) {
         (acc, column) => acc.value(column.name, column.value)
       }
@@ -145,10 +144,9 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
     }
     this.unlockOnlineTable(jobName, nr)
   }
-  
-  
+
   def insertInBatchTable(jobName: String, nr: Int, data: RowWithValue) {
-    if(this.lockBatchTable(jobName, nr)) { 
+    if (this.lockBatchTable(jobName, nr)) {
       val statement = data.foldLeft(QueryBuilder.insertInto(syncTable.keySpace, getBatchJobName(jobName, nr))) {
         (acc, column) => acc.value(column.name, column.value)
       }
@@ -159,15 +157,15 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
     }
   }
 
-////  def getTailBatch(jobName: String, session: Session): Option[CassandraTableLocation] = {
-////    val headBatchQuery: RegularStatement = QueryBuilder.select().from(table.keySpace + "." + table.columnFamily).
-////      where().and((QueryBuilder.eq(table.columns(0)._1, jobName))).and((QueryBuilder.eq(table.columns(3)._1, false)))
-////    val headBatches = session.execute(headBatchQuery)
-////
-////    // Find newest version 
-////    val newestBatch = this.getOldestRow(headBatches.iterator())
-////    Option(CassandraTableLocation(table.keySpace, newestBatch.getString(5)))
-////  }
+  ////  def getTailBatch(jobName: String, session: Session): Option[CassandraTableLocation] = {
+  ////    val headBatchQuery: RegularStatement = QueryBuilder.select().from(table.keySpace + "." + table.columnFamily).
+  ////      where().and((QueryBuilder.eq(table.columns(0)._1, jobName))).and((QueryBuilder.eq(table.columns(3)._1, false)))
+  ////    val headBatches = session.execute(headBatchQuery)
+  ////
+  ////    // Find newest version 
+  ////    val newestBatch = this.getOldestRow(headBatches.iterator())
+  ////    Option(CassandraTableLocation(table.keySpace, newestBatch.getString(5)))
+  ////  }
 
   /**
    * Create base keyspace and table
@@ -184,8 +182,8 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
     logger.debug(s"Lock online table for job: ${jobName} ")
     setLock(jobName, nr, true, true)
   }
-  
-   /**
+
+  /**
    * Lock online table if it is used by another spark job.
    */
   def lockBatchTable(jobName: String, nr: Int): Boolean = {
@@ -200,163 +198,163 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
     logger.debug(s"Unlock batch table for job: ${jobName} ${nr}")
     setLock(jobName, nr, false, false)
   }
-  
-   /**
+
+  /**
    * Unlock batch table to make it available for a new job.
    */
-  def unlockOnlineTable(jobName: String, nr: Int): Boolean =  {
+  def unlockOnlineTable(jobName: String, nr: Int): Boolean = {
     logger.debug(s"Unlock online table for job: ${jobName} ${nr}")
-    
+
     setLock(jobName, nr, true, false)
   }
-//  
-//  def getNextBatch(): Option[Int] = {
-//    // Get latest completed batch nr.
-//    
-//    // Return nr + 1 % number of batches.
-//    
-//    None
-//   }
-//
-//
+  //  
+  //  def getNextBatch(): Option[Int] = {
+  //    // Get latest completed batch nr.
+  //    
+  //    // Return nr + 1 % number of batches.
+  //    
+  //    None
+  //   }
+  //
+  //
   def isOnlineTableLocked(jobName: String, nr: Int): Boolean = {
     logger.debug(s"Unlock table for job: ${jobName}")
     val res = execute(QueryBuilder.select().all().from(syncTable.keySpace, syncTable.tableName).where(
       QueryBuilder.eq(syncTable.columns.jobname.name, jobName)).
-       and(QueryBuilder.eq(syncTable.columns.online.name, true)).
-       and(QueryBuilder.eq(syncTable.columns.versionNr.name, nr)).
-       and(QueryBuilder.eq(syncTable.columns.locked.name, true)))
+      and(QueryBuilder.eq(syncTable.columns.online.name, true)).
+      and(QueryBuilder.eq(syncTable.columns.versionNr.name, nr)).
+      and(QueryBuilder.eq(syncTable.columns.locked.name, true)))
     (res.all().size() > 0)
   }
-  
+
   def isBatchTableLocked(jobName: String, nr: Int): Boolean = {
     logger.debug(s"Unlock table for job: ${jobName}")
     val res = execute(QueryBuilder.select().all().from(syncTable.keySpace, syncTable.tableName).
-        where(QueryBuilder.eq(syncTable.columns.jobname.name, jobName)).
-       and(QueryBuilder.eq(syncTable.columns.online.name, false)).
-       and(QueryBuilder.eq(syncTable.columns.versionNr.name, nr)).
-       and(QueryBuilder.eq(syncTable.columns.locked.name, true)))
+      where(QueryBuilder.eq(syncTable.columns.jobname.name, jobName)).
+      and(QueryBuilder.eq(syncTable.columns.online.name, false)).
+      and(QueryBuilder.eq(syncTable.columns.versionNr.name, nr)).
+      and(QueryBuilder.eq(syncTable.columns.locked.name, true)))
     (res.all().size() > 0)
   }
 
   def setLock(jobName: String, nr: Int, online: Boolean, newState: Boolean): Boolean = {
     executeQuorum(QueryBuilder.update(syncTable.keySpace, syncTable.tableName).
-        `with`(QueryBuilder.set(syncTable.columns.locked.name, newState)).
-        where(QueryBuilder.eq(syncTable.columns.jobname.name, jobName)).
-        and(QueryBuilder.eq(syncTable.columns.online.name, online)).
-        and(QueryBuilder.eq(syncTable.columns.versionNr.name, nr)).
-        onlyIf(QueryBuilder.eq(syncTable.columns.locked.name, !newState)))   
+      `with`(QueryBuilder.set(syncTable.columns.locked.name, newState)).
+      where(QueryBuilder.eq(syncTable.columns.jobname.name, jobName)).
+      and(QueryBuilder.eq(syncTable.columns.online.name, online)).
+      and(QueryBuilder.eq(syncTable.columns.versionNr.name, nr)).
+      onlyIf(QueryBuilder.eq(syncTable.columns.locked.name, !newState)))
   }
-  
-//  def getSynctable(jobName: String): Option[Table[Columns[ColumnV[_]]]] = {
-//    val rows = execute(QueryBuilder.select().all().from(syncTable.keySpace, syncTable.tableName).where(QueryBuilder.eq(syncTable.columns.jobname.name, jobName)))
-//    None
-//  }
 
-  def getOnlineJobData[T <: RowWithValue](jobname: String, nr: Int, result: T): Option[List[RowWithValue]] = {   
+  //  def getSynctable(jobName: String): Option[Table[Columns[ColumnV[_]]]] = {
+  //    val rows = execute(QueryBuilder.select().all().from(syncTable.keySpace, syncTable.tableName).where(QueryBuilder.eq(syncTable.columns.jobname.name, jobName)))
+  //    None
+  //  }
+
+  def getOnlineJobData[T <: RowWithValue](jobname: String, nr: Int, result: T): Option[List[RowWithValue]] = {
     def handleColumnWithValue[U](currentRow: Row, destinationColumn: ColumnWithValue[U]): U = {
       val dbimpl = destinationColumn.dbimpl
       dbimpl.fromDBType(currentRow.get(destinationColumn.name, dbimpl.toDBType(destinationColumn.value).getClass()))
     }
-    
+
     def fillValue[U](currentRow: Row, destinationColumn: ColumnWithValue[U]) = {
       destinationColumn.value = handleColumnWithValue(currentRow, destinationColumn)
     }
-    
+
     val rows = execute(QueryBuilder.select().all().from(syncTable.keySpace, getOnlineJobName(jobname, nr)))
     val dbDataIter = rows.iterator()
-    
-    var columns =  new ListBuffer[RowWithValue]()
 
-      if(dbDataIter.hasNext()) {
-        while(dbDataIter.hasNext()) {
-          val nextRow = result.copy()
-          nextRow.columns.map { destinationColumn =>
-            fillValue(dbDataIter.next(), destinationColumn)
-          }
-         columns += nextRow
+    var columns = new ListBuffer[RowWithValue]()
+
+    if (dbDataIter.hasNext()) {
+      while (dbDataIter.hasNext()) {
+        val nextRow = result.copy()
+        nextRow.columns.map { destinationColumn =>
+          fillValue(dbDataIter.next(), destinationColumn)
         }
-
-        Some(columns.toList)
-        
-        //Option(SumDataColumns(column.getLong(sumDataColumns.time.name), column.getLong(sumDataColumns.sum.name)))
-      } else {
-        logger.error(s"No data for job ${jobname} ${nr} found")
-        None
+        columns += nextRow
       }
+
+      Some(columns.toList)
+
+      //Option(SumDataColumns(column.getLong(sumDataColumns.time.name), column.getLong(sumDataColumns.sum.name)))
+    } else {
+      logger.error(s"No data for job ${jobname} ${nr} found")
+      None
+    }
   }
- 
-//  def purgeAllTables() = {
-//    
-//    session.execute(s"DROP KEYSPACE ${syncTable.keySpace}")
-//  }
-//  
-//  def getSyncTable: Table[SyncTableColumnsValues[IndexedSeq[_]]] = {
-//    val rowsIter = execute(QueryBuilder.select().all().from(syncTable.keySpace, syncTable.tableName)).iterator()
-//    
-//     val nrV = new ArrayBuffer[Int]()
-//     val jobnameV = new ArrayBuffer[String]()
-//     val timeV = new ArrayBuffer[Long]()
-//     val lockV = new ArrayBuffer[Boolean]()
-//     val onlineV = new ArrayBuffer[Boolean]()
-//     val completedV = new ArrayBuffer[Boolean]()
-//     val tablenameV = new ArrayBuffer[String]()
-//     val batchesV = new ArrayBuffer[Int]()
-//     val onlineVersionsV = new ArrayBuffer[Int]()
-//     val stateV = new ArrayBuffer[String]()
-//     
-//     while(rowsIter.hasNext()) {
-//      val row = rowsIter.next()
-//      
-//      nrV.+=(row.getInt(syncTable.columns.nr.name))
-//      jobnameV += row.getString(syncTable.columns.jobname.name)
-//      timeV += row.getLong(syncTable.columns.time.name)
-//      lockV += row.getBool(syncTable.columns.lock.name)
-//      onlineV += row.getBool(syncTable.columns.online.name)
-//      completedV += row.getBool(syncTable.columns.completed.name)
-//      tablenameV += row.getString(syncTable.columns.tablename.name)
-//      batchesV += row.getInt(syncTable.columns.batches.name)
-//      onlineVersionsV += row.getInt(syncTable.columns.onlineVersions.name)
-//      stateV += row.getString(syncTable.columns.state.name)
-//    }
-//     
-//    val columnsA = new SyncTableColumnsValuesS(nrV, jobnameV, timeV, lockV, onlineV, completedV, tablenameV, batchesV, onlineVersionsV, stateV)
-//    
-//    class Result extends Table[SyncTableColumnsValues[_]](keySpace = "", tableName = "\"SyncTable\"", columns = columnsA)
-//    
-//    return new Result
-//   }
-////    println(rows.getColumnDefinitions)
-////    val iter = rows.all().iterator()
-////    while(iter.hasNext()) {
-////      println(iter.next())
-////    }
-//    
-////    val result = new SyncTableColumnsValues(
-////        nrV, 
-////        jobnameV, 
-////        timeV, 
-////        lockV, 
-////        onlineV,
-////        completedV, 
-////        tablenameV, 
-////        batchesV, 
-////        onlineVersionsV, 
-////        stateV)
-//      val result = new SyncTableColumnsValues[List[_]](
-//        2, 
-//        "Na", 
-//        1L, 
-//        false, 
-//        false,
-//        false, 
-//        "t1", 
-//        1, 
-//        1, 
-//        "SART")
-//      val r2 = 
-//     r2
-//  }
+
+  //  def purgeAllTables() = {
+  //    
+  //    session.execute(s"DROP KEYSPACE ${syncTable.keySpace}")
+  //  }
+  //  
+  //  def getSyncTable: Table[SyncTableColumnsValues[IndexedSeq[_]]] = {
+  //    val rowsIter = execute(QueryBuilder.select().all().from(syncTable.keySpace, syncTable.tableName)).iterator()
+  //    
+  //     val nrV = new ArrayBuffer[Int]()
+  //     val jobnameV = new ArrayBuffer[String]()
+  //     val timeV = new ArrayBuffer[Long]()
+  //     val lockV = new ArrayBuffer[Boolean]()
+  //     val onlineV = new ArrayBuffer[Boolean]()
+  //     val completedV = new ArrayBuffer[Boolean]()
+  //     val tablenameV = new ArrayBuffer[String]()
+  //     val batchesV = new ArrayBuffer[Int]()
+  //     val onlineVersionsV = new ArrayBuffer[Int]()
+  //     val stateV = new ArrayBuffer[String]()
+  //     
+  //     while(rowsIter.hasNext()) {
+  //      val row = rowsIter.next()
+  //      
+  //      nrV.+=(row.getInt(syncTable.columns.nr.name))
+  //      jobnameV += row.getString(syncTable.columns.jobname.name)
+  //      timeV += row.getLong(syncTable.columns.time.name)
+  //      lockV += row.getBool(syncTable.columns.lock.name)
+  //      onlineV += row.getBool(syncTable.columns.online.name)
+  //      completedV += row.getBool(syncTable.columns.completed.name)
+  //      tablenameV += row.getString(syncTable.columns.tablename.name)
+  //      batchesV += row.getInt(syncTable.columns.batches.name)
+  //      onlineVersionsV += row.getInt(syncTable.columns.onlineVersions.name)
+  //      stateV += row.getString(syncTable.columns.state.name)
+  //    }
+  //     
+  //    val columnsA = new SyncTableColumnsValuesS(nrV, jobnameV, timeV, lockV, onlineV, completedV, tablenameV, batchesV, onlineVersionsV, stateV)
+  //    
+  //    class Result extends Table[SyncTableColumnsValues[_]](keySpace = "", tableName = "\"SyncTable\"", columns = columnsA)
+  //    
+  //    return new Result
+  //   }
+  ////    println(rows.getColumnDefinitions)
+  ////    val iter = rows.all().iterator()
+  ////    while(iter.hasNext()) {
+  ////      println(iter.next())
+  ////    }
+  //    
+  ////    val result = new SyncTableColumnsValues(
+  ////        nrV, 
+  ////        jobnameV, 
+  ////        timeV, 
+  ////        lockV, 
+  ////        onlineV,
+  ////        completedV, 
+  ////        tablenameV, 
+  ////        batchesV, 
+  ////        onlineVersionsV, 
+  ////        stateV)
+  //      val result = new SyncTableColumnsValues[List[_]](
+  //        2, 
+  //        "Na", 
+  //        1L, 
+  //        false, 
+  //        false,
+  //        false, 
+  //        "t1", 
+  //        1, 
+  //        1, 
+  //        "SART")
+  //      val r2 = 
+  //     r2
+  //  }
   private def executeQuorum(statement: RegularStatement): Boolean = {
     println(statement.toString())
     logger.debug("Lock table: " + statement)
@@ -365,7 +363,7 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
 
     val rs = session.execute(simpleStatement);
     val row = rs.one();
-     
+
     if (row.getBool("[applied]")) {
       logger.debug(s"Execute ${simpleStatement}");
       true
@@ -398,37 +396,37 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
 
   private def getBatchJobName(jobname: String, nr: Int): String = { jobname + "_batch" + nr }
   private def getOnlineJobName(jobname: String, nr: Int): String = { jobname + "_online" + nr }
-//  
-//      def getNewestRow(rows: java.util.Iterator[Row]): Row = {
-//      import scala.math.Ordering._
-//      val comp = implicitly[Ordering[Long]]
-//      getComptRow(rows, comp.gt)
-//    }
-//    
-//    def getOldestRow(rows: java.util.Iterator[Row]): Row = {
-//      import scala.math.Ordering._
-//      val comp = implicitly[Ordering[Long]]
-//      getComptRow(rows, comp.lt)
-//    }
-//    
-//    def getComptRow(rows: JIterator[Row], comp: (Long, Long) => Boolean): Row = {
-//      @tailrec def accNewestRow(prevRow: Row, nextRows: JIterator[Row]): Row = {
-//        if(nextRows.hasNext) {
-//          val localRow = nextRows.next()
-//          println()
-//          val max = if(comp(prevRow.getLong(syncTable.columns.time.name), localRow.getLong(syncTable.columns.time.name))) {
-//            prevRow
-//          } else {
-//            localRow
-//          }
-//          accNewestRow(max, nextRows)
-//        } else {
-//          prevRow
-//        }
-//      }
-//      import scala.collection.convert.WrapAsScala.asScalaIterator
-//      
-//      val row = rows.next()
-//      accNewestRow(row, rows)
-//    }
+
+  def getNewestRow(rows: java.util.Iterator[Row]): Row = {
+    import scala.math.Ordering._
+    val comp = implicitly[Ordering[Long]]
+    getComptRow(rows, comp.gt)
+  }
+
+  def getOldestRow(rows: java.util.Iterator[Row]): Row = {
+    import scala.math.Ordering._
+    val comp = implicitly[Ordering[Long]]
+    getComptRow(rows, comp.lt)
+  }
+
+  def getComptRow(rows: JIterator[Row], comp: (Long, Long) => Boolean): Row = {
+    @tailrec def accNewestRow(prevRow: Row, nextRows: JIterator[Row]): Row = {
+      if (nextRows.hasNext) {
+        val localRow = nextRows.next()
+        println()
+        val max = if (comp(prevRow.getLong(syncTable.columns.creationTime.name), localRow.getLong(syncTable.columns.creationTime.name))) {
+          prevRow
+        } else {
+          localRow
+        }
+        accNewestRow(max, nextRows)
+      } else {
+        prevRow
+      }
+    }
+    import scala.collection.convert.WrapAsScala.asScalaIterator
+
+    val row = rows.next()
+    accNewestRow(row, rows)
+  }
 }

@@ -101,15 +101,21 @@ class OnlineBatchSyncTests extends WordSpec with BeforeAndAfter {
 
       assert(columValue === "100")
     }
-    //    "find latest online batch" in {
-    //      clean()
-    //      val table = new OnlineBatchSyncCassandra[SumDataColumns]("", dbconnection)
-    //      table.initJobClient("job55", 3, new SumDataColumns(1456402973L, 1L))
-    //      
-    //       val nr = table.getHeadBatch("job55")
-    //       assert(table.getOnlineJobData("job55", nr.getOrElse(0)).get.time.value === 1456402973L)
-    //       assert(table.getOnlineJobData("job55", nr.getOrElse(0)).get.sum.value === 1L)
-    //    }
+    "find latest online batch" in {
+      clean()
+      val table = new OnlineBatchSyncCassandra("", dbconnection)
+
+      val sum = new ColumnWithValue[Long]("sum", 100)
+      val columns = sum :: Nil
+      val primaryKey = s"(${sum.name})"
+      val indexes: Option[List[String]] = None
+
+      table.initJobClient("job59", 3, new RowWithValue(columns, primaryKey, indexes))
+
+      val nr = table.getHeadBatch("job59")
+      table.insertInOnlineTable("job59", 3, new RowWithValue(columns, primaryKey, indexes))
+      assert(table.getOnlineJobData("job59", nr.getOrElse(0), new RowWithValue(columns, primaryKey, indexes)).get.head.columns.head.value === 100L)
+    }
   }
   def clean() {
     EmbeddedCassandraServerHelper.cleanEmbeddedCassandra()
