@@ -46,4 +46,5 @@ class OrderingEagerMappingSource[Q <: DomainQuery, R](source: Source[Q, R])
   override def getDiscriminant = "Ordering" + source.getDiscriminant
   
   override def createCache: Cache[Nothing] = new NullCache
+  
 }

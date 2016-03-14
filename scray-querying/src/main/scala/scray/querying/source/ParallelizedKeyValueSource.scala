@@ -47,6 +47,7 @@ class ParallelizedKeyValueSource[K, V](override val store: ReadableStore[K, V],
     extends KeyValueSource[K, V](store, space, version, table, enableCaching) with LazyLogging {
 
   def request(query: KeySetBasedQuery[K]): Future[Seq[Row]] = {
+        query.queryInfo.addNewCosts {(n: Long) => {n + 42}}
     if(enableCaching) {
       // retrieve values that are already cached
       val buffer = new ArrayBuffer[K]

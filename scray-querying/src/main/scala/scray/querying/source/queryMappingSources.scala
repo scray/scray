@@ -25,6 +25,8 @@ import scray.querying.caching.NullCache
 import scray.querying.description.Row
 import scray.querying.queries.DomainQuery
 import scala.collection.mutable.ArrayBuffer
+import scray.querying.source.costs.QueryCosts
+import scray.querying.source.costs.QueryCostFunctionFactory
 
 /**
  * A source to lazily post-process data from a provided lazy source.
@@ -59,6 +61,7 @@ abstract class LazyQueryMappingSource[Q <: DomainQuery](source: LazySource[Q])
    * subclasses implement transformSpoolElement
    */
   override def request(query: Q): LazyDataFuture = {
+    query.queryInfo.addNewCosts {(n: Long) => {n + 42}}
     logger.debug(s"Transforming elements lazyly for ${query.getQueryID}")
     init(query)
     if(optimized) {
@@ -93,6 +96,13 @@ abstract class LazyQueryMappingSource[Q <: DomainQuery](source: LazySource[Q])
 abstract class EagerCollectingQueryMappingSource[Q <: DomainQuery, R](source: Source[Q, R]) 
   extends EagerSource[Q] with LazyLogging {
 
+  /**
+   * estimates the costs of processing a single row
+   */
+  def costEstimatorPerRow: Double = {
+    1.0
+  }
+   
   /**
    * simple implementation starts collecting and a conversion process
    * subclasses implement transformSpoolElement

@@ -92,6 +92,7 @@ class SplittedAutoIndexQueryableSource[K, V, T: Ordering](override val store: Qu
   }
   
   override def request(query: DomainQuery): Future[Spool[Row]] = {
+    query.queryInfo.addNewCosts {(n: Long) => {n + 42}}
     val reversed = query.getOrdering.map(_.descending).getOrElse(false)
     rangeSplitter.flatMap(splitter => query.getWhereAST.find { x => x.column == splitcolumn }.map { _ match {
       case range: RangeValueDomain[T] => 
