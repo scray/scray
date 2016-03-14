@@ -15,6 +15,7 @@ import scray.querying.sync.types.SyncTableBasicClasses.SyncTableRowEmpty
 import scray.querying.sync.types.Table
 import scray.querying.sync.cassandra.CassandraImplementation._
 import com.twitter.algebird.SetValue
+import scray.querying.sync.types.Columns
 
 
 @RunWith(classOf[JUnitRunner])
@@ -99,7 +100,27 @@ class SyncTableTests extends WordSpec {
              assert(x.asInstanceOf[ColumnWithValue[Boolean]].value === true) 
         }
       }
+    }
+    
+    " add multiple rows " in {
+      val columns = new Column[String]("a") :: new Column[String]("b")  :: new Column[String]("c") :: Nil
+      val columnsObject  = new Columns(columns, "", None)
+      
+      val table =  new Table("ks1", "tn1", columnsObject)
+      
+      val newData1 = new ColumnWithValue[String]("c2", "2") :: new ColumnWithValue[String]("c2", "2") :: new ColumnWithValue[String]("c2", "2") :: Nil
+      val newData2 = new ColumnWithValue[String]("c2", "3") :: new ColumnWithValue[String]("c2", "2") :: new ColumnWithValue[String]("c2", "3") :: Nil
+      val newData3 = new ColumnWithValue[String]("c2", "4") :: new ColumnWithValue[String]("c2", "2") :: new ColumnWithValue[String]("c2", "4") :: Nil
 
+      table.addRow(new RowWithValue(newData1, "", None))
+      table.addRow(new RowWithValue(newData1, "", None))
+      table.addRow(new RowWithValue(newData2, "", None))
+      table.addRow(new RowWithValue(newData3, "", None))
+      
+      assert(table.getRows.head.columns.head.value === "2")
+      assert(table.getRows.tail.head.columns.head.value === "2")
+      assert(table.getRows.tail.tail.head.columns.head.value === "3")
+      assert(table.getRows.tail.tail.tail.head.columns.head.value === "4")
     }
   }
 

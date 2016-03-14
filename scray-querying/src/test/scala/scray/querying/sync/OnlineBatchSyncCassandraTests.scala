@@ -22,6 +22,10 @@ import scray.querying.sync.types.ColumnWithValue
 import scray.querying.sync.cassandra.CassandraImplementation._
 import scray.querying.sync.cassandra.OnlineBatchSyncCassandra
 import scray.querying.sync.types.RowWithValue
+import shapeless._
+import syntax.singleton._
+import scray.querying.sync.types.ColumnWithValue
+import shapeless.ops.hlist._
 
 @RunWith(classOf[JUnitRunner])
 class OnlineBatchSyncTests extends WordSpec with BeforeAndAfter {
@@ -115,6 +119,66 @@ class OnlineBatchSyncTests extends WordSpec with BeforeAndAfter {
       val nr = table.getHeadBatch("job59")
       table.insertInOnlineTable("job59", 3, new RowWithValue(columns, primaryKey, indexes))
       assert(table.getOnlineJobData("job59", nr.getOrElse(0), new RowWithValue(columns, primaryKey, indexes)).get.head.columns.head.value === 100L)
+    }
+    
+    "use hlist" in {
+      
+      class A {
+        type TextField <: {
+          val nr : Long
+          val r: Int
+          val chicken: Long
+        }
+      }
+      
+      
+      trait B {
+        object printlnMapper extends Poly1 {
+          implicit def default[T] = at[T](a => a.toString)
+        }
+        type C[R] <: Column[R]
+        type F012 = C[String]:: C[Long] :: C[Int] :: HNil 
+        type F1 = Column[String]:: Column[Long] :: Column[Int] :: HNil 
+        def bla(a: F012){}
+        def addRow(a: F012)(implicit ev0: Mapper[printlnMapper.type, F012])
+      }
+      
+      class R extends B {
+        type C[Int] = Column[Int]
+        
+        override def addRow(a: F012)(implicit ev0: Mapper[printlnMapper.type, F012]) {
+          a.map(printlnMapper)
+        }
+      }
+      
+      val a = new R
+      
+      val f1 = new ColumnWithValue[String]("abc", "abc") :: new ColumnWithValue[Long]("abc", 1L) :: new ColumnWithValue[Int]("abc", 1) :: HNil
+      
+      object printlnMapper extends Poly1 {
+        implicit def default[T] = at[T](a => a.toString)
+      }
+      
+      // a.addRow(f1)(implicit ev0: Mapper[a.printlnMapper.type, a.F012])
+
+      
+     
+//      
+//      object cyz extends ~>> {
+//        def at[Int ∨ String] = 
+//      }
+//      
+//      val b = new B(implicit ev0: Mapper[F2, ColumnWithValue, F1]) {
+//        type C[R] = Column[R]
+//        val p: F0 = new Column[String]("abc") :: new Column[Long]("ff") :: new Column[Int]("a") :: HNil
+//        val s: F1 = new ColumnWithValue[String]("abc", "abc") :: new ColumnWithValue[Long]("abc", 1L) :: new ColumnWithValue[Int]("abc", 1) :: HNil
+//        type F2 = String :: Long :: Int :: HNil 
+//        def addRow(row: F2)  
+//      }
+//      p.m
+//      
+//      b.blub(p)
+//      
     }
   }
   def clean() {

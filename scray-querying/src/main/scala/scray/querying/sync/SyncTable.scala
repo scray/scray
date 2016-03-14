@@ -21,8 +21,19 @@ import java.sql.Time
 import java.sql.Ref
 import scala.reflect.ClassTag
 import scray.querying.sync.cassandra.CassandraImplementation._
+import scala.collection.mutable.ListBuffer
 
-class Table[T <: AbstractRows](val keySpace: String, val tableName: String, val columns: T) {}
+class Table[T <: AbstractRows](val keySpace: String, val tableName: String, val columns: T) {
+  val rows: ListBuffer[RowWithValue]= ListBuffer[RowWithValue]()
+  
+  def addRow(row: RowWithValue) {
+    rows += row
+  }
+  
+  def getRows = {
+    rows
+  }
+}
 
 trait DBColumnImplementation[T] {
   def getDBType: String
@@ -70,6 +81,14 @@ class RowWithValue(
     val columnCopies = this.columns.foldLeft(List[ColumnWithValue[_]]())((acc, column) => { column.clone() :: acc })
     new RowWithValue(columnCopies, this.primaryKey, this.indexes)
   }
+}
+
+class Columns(
+  override val columns: List[Column[_]],
+  override val primaryKey: String,
+  override val indexes: Option[List[String]]) extends AbstractRows {
+  
+  override type ColumnType = Column[_]
 }
 
 abstract class DbSession[Statement, InsertIn, Result](val dbHostname: String) {
