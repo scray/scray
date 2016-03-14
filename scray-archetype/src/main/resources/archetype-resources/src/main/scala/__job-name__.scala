@@ -8,6 +8,11 @@ import org.apache.spark.streaming.dstream.InputDStream
 import com.typesafe.scalalogging.slf4j.LazyLogging
 import ${package}.cli.{Config, Options}
 import scala.collection.mutable.Queue
+import scray.querying.sync.types.ArbitrarylyTypedRows
+import scray.querying.sync.types.Column
+import scray.querying.sync.cassandra.CassandraImplementation._
+import scray.querying.sync.OnlineBatchSync
+import scray.querying.sync.cassandra.OnlineBatchSyncCassandra
 
 /**
  * @author <author@name.org>
@@ -62,6 +67,12 @@ object ${job-name} extends LazyLogging {
    */
   def batch(config: Config) = {
     logger.info(s"Using Batch mode.")
+    val syncTable: OnlineBatchSync = new OnlineBatchSyncCassandra(config.cassandraHost.getOrElse("andreas"), None)
+    try {
+      table.lockBatchTable("${job-name}", 1)
+    } catch(e: Exception) {
+      
+    }
     val sc = setupSparkBatchConfig(config.master)()
     val batchJob = new BatchJob(sc)
     batchJob.batchAggregate()
@@ -85,12 +96,24 @@ object ${job-name} extends LazyLogging {
 
     ssc.awaitTermination()
   }
+  
+  object ExampleTable extends ArbitrarylyTypedRows {
+    val time = new Column[Long]("time")
+    val name = new Column[String]("name")
+    val sum = new Column[Int]("sum")
+         
+    override val columns = time :: name :: sum :: Nil
+    override val primaryKey = time.name
+    override val indexes = None
+  }
 
   def main(args : Array[String]) = {
     Options.parse(args) match {
       case Some(config) =>
+       val syncTable: OnlineBatchSync = new OnlineBatchSyncCassandra(config.cassandraHost.getOrElse("andreas"), None)
+        syncTable.initJobClient[SumTestColumns]("${job-name}", 3, ExampleTable)
         config.batch match {
-          case true => batch(config)
+          case true =>  batch(config)
           case false => stream(config)
         }
       case None =>

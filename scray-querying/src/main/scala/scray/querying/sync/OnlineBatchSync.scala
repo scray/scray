@@ -24,7 +24,7 @@ abstract class OnlineBatchSync extends LazyLogging {
    * Generate and register tables for a new job.
    * Check if tables are not locked.
    */
-  def initJobClient[T <: RowWithValue](jobName: String, numberOfBatches: Int, dataTable: T)
+  def initJobClient[T <: ArbitrarylyTypedRows](jobName: String, numberOfBatches: Int, dataTable: T)
   
 //  /**
 //   * Check if tables exists and tables are locked

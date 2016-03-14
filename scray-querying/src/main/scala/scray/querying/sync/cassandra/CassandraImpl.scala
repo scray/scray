@@ -35,7 +35,7 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
 
   // Create or use a given DB session.
   val session = dbSession.getOrElse(new DbSession[SimpleStatement, Insert, ResultSet](dbHostname) {
-    val cassandraSession = Cluster.builder().addContactPoint("andreas").build().connect()
+    val cassandraSession = Cluster.builder().addContactPoint(dbHostname).build().connect()
 
     override def execute(statement: String): ResultSet = {
       cassandraSession.execute(statement)
@@ -54,7 +54,7 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
     }
   })
 
-  val syncTable = SyncTable("SILIDX_TEST", "SyncTable")
+  val syncTable = SyncTable("SILIDX", "SyncTable")
 
   /**
    * Generate and register tables for a new job.
