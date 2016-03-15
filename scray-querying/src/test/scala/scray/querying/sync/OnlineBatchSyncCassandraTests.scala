@@ -120,6 +120,21 @@ class OnlineBatchSyncTests extends WordSpec with BeforeAndAfter {
       table.insertInOnlineTable("job59", 3, new RowWithValue(columns, primaryKey, indexes))
       assert(table.getOnlineJobData("job59", nr.getOrElse(0), new RowWithValue(columns, primaryKey, indexes)).get.head.columns.head.value === 100L)
     }
+    "find latest online batch" in {
+      clean()
+      val table = new OnlineBatchSyncCassandra("", dbconnection)
+
+      val sum = new ColumnWithValue[Long]("sum", 100)
+      val columns = sum :: Nil
+      val primaryKey = s"(${sum.name})"
+      val indexes: Option[List[String]] = None
+
+      table.initJobClient("job59", 3, new RowWithValue(columns, primaryKey, indexes))
+
+      val nr = table.getHeadBatch("job59")
+      table.insertInOnlineTable("job59", 3, new RowWithValue(columns, primaryKey, indexes))
+      assert(table.getOnlineJobData("job59", nr.getOrElse(0), new RowWithValue(columns, primaryKey, indexes)).get.head.columns.head.value === 100L)
+    }
     
     "use hlist" in {
       
