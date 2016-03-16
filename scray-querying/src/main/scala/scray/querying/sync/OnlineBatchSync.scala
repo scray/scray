@@ -23,7 +23,7 @@ abstract class OnlineBatchSync extends LazyLogging {
   /**
    * Generate and register tables for a new job.
    */
-  def initJobClient[T <: ArbitrarylyTypedRows](jobName: String, numberOfBatches: Int, dataTable: T)
+  def initJobClient[T <: ArbitrarylyTypedRows](job: JobInfo, dataTable: T)
   
 //  /**
 //   * Check if tables exists and tables are locked
@@ -33,18 +33,17 @@ abstract class OnlineBatchSync extends LazyLogging {
   /**
    * Lock online table if it is used by another spark job.
    */
-  def lockOnlineTable(jobName: String, nr: Int): Boolean
+  def lockOnlineTable(job: JobInfo): Boolean
    /**
    * Unlock online table to make it available for a new job.
    */
-  def unlockOnlineTable(jobName: String, nr: Int): Boolean
-  def isOnlineTableLocked(jobName: String, nr: Int): Boolean
+  def unlockOnlineTable(job: JobInfo): Boolean
+  //def isOnlineTableLocked(jobName: JobInfo): Boolean
   
    /**
    * Lock online table if it is used by another spark job.
    */
-  def lockBatchTable(jobName: String, nr: Int): Boolean
-  def isBatchTableLocked(jobName: String, nr: Int): Boolean
+  def lockBatchTable(job: JobInfo): Boolean
 
 //   /**
 //   * Unlock batch table to make it available for a new job.
@@ -53,8 +52,8 @@ abstract class OnlineBatchSync extends LazyLogging {
 //  
 //  def getHeadBatch(jobName: String): Option[Int]
 //  
-  def insertInBatchTable(jobName: String, nr: Int, data: RowWithValue)
-  def insertInOnlineTable(jobName: String, nr: Int, data: RowWithValue)
+  def insertInBatchTable(jobName: JobInfo, nr: Int, data: RowWithValue)
+  def insertInOnlineTable(jobName: JobInfo, nr: Int, data: RowWithValue)
 //  
 //  /**
 //   * Returns next job number of no job is currently running.
@@ -69,4 +68,17 @@ abstract class OnlineBatchSync extends LazyLogging {
 //  def purgeAllTables()
   
   // def getSyncTable: Table[SyncTableColumnsValues[List[_]]]
+}
+
+
+class JobInfo(
+  val name: String,
+  val numberOfBatcheVersions: Int = 3,
+  val numberOfOnlineVersions: Int = 3
+  ) {}
+
+object JobInfo {
+ def apply(name: String) = {
+    new JobInfo(name)
+  }
 }

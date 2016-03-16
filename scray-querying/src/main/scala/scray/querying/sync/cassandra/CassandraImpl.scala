@@ -22,6 +22,7 @@ import scala.collection.mutable.ArrayBuffer
 import scray.querying.sync.OnlineBatchSync
 import scray.querying.sync.types.SyncTableBasicClasses.SyncTableRowEmpty
 import scala.collection.mutable.ListBuffer
+import scray.querying.sync.JobInfo
 
 object CassandraImplementation {
   implicit def genericCassandraColumnImplicit[T](implicit cassImplicit: CassandraPrimitive[T]): DBColumnImplementation[T] = new DBColumnImplementation[T] {
@@ -60,16 +61,16 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
    * Generate and register tables for a new job.
    * Check if tables are not locked.
    */
-  def initJobClient[T <: AbstractRows](jobName: String, numberOfBatches: Int, dataTable: T) {
-    this.crateTablesIfNotExists(jobName, numberOfBatches, dataTable)
+  def initJobClient[T <: AbstractRows](job: JobInfo, dataTable: T) {
+    this.crateTablesIfNotExists(job, dataTable)
 
     // Check if table is not locked
     var tableIsLocked = true
-    1 to numberOfBatches foreach { i =>
-      println(this.isBatchTableLocked(jobName, i))
-      println(this.isOnlineTableLocked(jobName, i))
-      tableIsLocked &= this.isBatchTableLocked(jobName, i)
-      tableIsLocked &= this.isOnlineTableLocked(jobName, i)
+    1 to job.numberOfBatcheVersions foreach { i =>
+      println(this.isBatchTableLocked(job))
+      println(this.isOnlineTableLocked(job))
+      tableIsLocked &= this.isBatchTableLocked(job)
+      tableIsLocked &= this.isOnlineTableLocked(job)
     }
 
     if (tableIsLocked) {
@@ -80,7 +81,7 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
   /**
    * Check if tables exists and tables are locked
    */
-  def crateTablesIfNotExists[T <: AbstractRows](jobName: String, numberOfBatches: Int, dataColumns: T): Unit = {
+  def crateTablesIfNotExists[T <: AbstractRows](job: JobInfo, dataColumns: T): Unit = {
     createKeyspace(syncTable)
     syncTable.columns.indexes match {
       case _: Some[List[String]] => session.execute(createIndexString(syncTable))
@@ -88,17 +89,17 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
     }
 
     // Create data tables and register them in sync table
-    1 to numberOfBatches foreach { i =>
+    1 to job.numberOfBatcheVersions foreach { i =>
 
       // Create batch data tables
-      session.execute(createSingleTableString(VoidTable(syncTable.keySpace, getBatchJobName(jobName, i), dataColumns)))
+      session.execute(createSingleTableString(VoidTable(syncTable.keySpace, getBatchJobName(job.name, i), dataColumns)))
 
       // Register batch table
       session.execute(QueryBuilder.insertInto(syncTable.keySpace, syncTable.tableName)
-        .value(syncTable.columns.jobname.name, jobName)
+        .value(syncTable.columns.jobname.name, job.name)
         .value(syncTable.columns.online.name, false)
         .value(syncTable.columns.versionNr.name, i)
-        .value(syncTable.columns.tablename.name, getBatchJobName(syncTable.keySpace + "." + jobName, i))
+        .value(syncTable.columns.tablename.name, getBatchJobName(syncTable.keySpace + "." + job.name, i))
         .value(syncTable.columns.completed.name, false)
         .value(syncTable.columns.locked.name, false)
         .value(syncTable.columns.creationTime.name, System.currentTimeMillis()).toString())
@@ -108,14 +109,14 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
     1 to 3 foreach { i =>
       // Create online data tables
       // Columns[Column[_]]
-      session.execute(createSingleTableString(VoidTable(syncTable.keySpace, getOnlineJobName(jobName, i), dataColumns)))
+      session.execute(createSingleTableString(VoidTable(syncTable.keySpace, getOnlineJobName(job.name, i), dataColumns)))
 
       // Register online tables
       session.execute(QueryBuilder.insertInto(syncTable.keySpace, syncTable.tableName)
         .value(syncTable.columns.online.name, true)
-        .value(syncTable.columns.jobname.name, jobName)
+        .value(syncTable.columns.jobname.name, job.name)
         .value(syncTable.columns.versionNr.name, i)
-        .value(syncTable.columns.tablename.name, getOnlineJobName(syncTable.keySpace + "." + jobName, i))
+        .value(syncTable.columns.tablename.name, getOnlineJobName(syncTable.keySpace + "." + job.name, i))
         .value(syncTable.columns.completed.name, false)
         .value(syncTable.columns.locked.name, false)
         .value(syncTable.columns.creationTime.name, System.currentTimeMillis()).toString())
@@ -132,28 +133,28 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
     Option(newestBatchNr)
   }
 
-  def insertInOnlineTable(jobName: String, nr: Int, data: RowWithValue) {
-    if (this.lockOnlineTable(jobName, nr)) {
-      val statement = data.foldLeft(QueryBuilder.insertInto(syncTable.keySpace, getOnlineJobName(jobName, nr))) {
+  def insertInOnlineTable(job: JobInfo, nr: Int, data: RowWithValue) {
+    if (this.lockOnlineTable(job)) {
+      val statement = data.foldLeft(QueryBuilder.insertInto(syncTable.keySpace, getOnlineJobName(job.name, nr))) {
         (acc, column) => acc.value(column.name, column.value)
       }
       session.insert(statement)
-      this.unlockBatchTable(jobName, nr)
+      this.unlockBatchTable(job)
     } else {
-      logger.error(s"Online table for job ${jobName} is locked. It is not possible to insert Data.")
+      logger.error(s"Online table for job ${job.name} is locked. It is not possible to insert Data.")
     }
-    this.unlockOnlineTable(jobName, nr)
+    this.unlockOnlineTable(job)
   }
 
-  def insertInBatchTable(jobName: String, nr: Int, data: RowWithValue) {
-    if (this.lockBatchTable(jobName, nr)) {
-      val statement = data.foldLeft(QueryBuilder.insertInto(syncTable.keySpace, getBatchJobName(jobName, nr))) {
+  def insertInBatchTable(job: JobInfo, nr: Int, data: RowWithValue) {
+    if (this.lockBatchTable(job)) {
+      val statement = data.foldLeft(QueryBuilder.insertInto(syncTable.keySpace, getBatchJobName(job.name, nr))) {
         (acc, column) => acc.value(column.name, column.value)
       }
       session.insert(statement)
-      this.unlockBatchTable(jobName, nr)
+      this.unlockBatchTable(job)
     } else {
-      logger.error(s"Online table for job ${jobName} is locked. It is not possible to insert Data.")
+      logger.error(s"Online table for job ${job.name} is locked. It is not possible to insert Data.")
     }
   }
 
@@ -178,34 +179,34 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
   /**
    * Lock table if it is used by another spark job.
    */
-  def lockOnlineTable(jobName: String, nr: Int): Boolean = {
-    logger.debug(s"Lock online table for job: ${jobName} ")
-    setLock(jobName, nr, true, true)
+  def lockOnlineTable(job: JobInfo): Boolean = {
+    logger.debug(s"Lock online table for job: ${job.name} ")
+    setLock(job, 1, true, true)
   }
 
   /**
    * Lock online table if it is used by another spark job.
    */
-  def lockBatchTable(jobName: String, nr: Int): Boolean = {
-    logger.debug(s"Lock batch table for job: ${jobName} ${nr}")
-    setLock(jobName, nr, false, true)
+  def lockBatchTable(job: JobInfo): Boolean = {
+    logger.debug(s"Lock batch table for job: ${job.name}")
+    setLock(job, 1, false, true)
   }
 
   /**
    * Unlock batch table to make it available for a new job.
    */
-  def unlockBatchTable(jobName: String, nr: Int): Boolean = {
-    logger.debug(s"Unlock batch table for job: ${jobName} ${nr}")
-    setLock(jobName, nr, false, false)
+  def unlockBatchTable(job: JobInfo): Boolean = {
+    logger.debug(s"Unlock batch table for job: ${job.name} ")
+    setLock(job, 1, false, false)
   }
 
   /**
    * Unlock batch table to make it available for a new job.
    */
-  def unlockOnlineTable(jobName: String, nr: Int): Boolean = {
-    logger.debug(s"Unlock online table for job: ${jobName} ${nr}")
+  def unlockOnlineTable(job: JobInfo): Boolean = {
+    logger.debug(s"Unlock online table for job: ${job.name}")
 
-    setLock(jobName, nr, true, false)
+    setLock(job, 1, true, false)
   }
   //  
   //  def getNextBatch(): Option[Int] = {
@@ -217,32 +218,30 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
   //   }
   //
   //
-  def isOnlineTableLocked(jobName: String, nr: Int): Boolean = {
-    logger.debug(s"Unlock table for job: ${jobName}")
+  def isOnlineTableLocked(job: JobInfo): Boolean = {
+    logger.debug(s"Unlock table for job: ${job.name}")
     val res = execute(QueryBuilder.select().all().from(syncTable.keySpace, syncTable.tableName).where(
-      QueryBuilder.eq(syncTable.columns.jobname.name, jobName)).
+      QueryBuilder.eq(syncTable.columns.jobname.name, job.name)).
       and(QueryBuilder.eq(syncTable.columns.online.name, true)).
-      and(QueryBuilder.eq(syncTable.columns.versionNr.name, nr)).
       and(QueryBuilder.eq(syncTable.columns.locked.name, true)))
     (res.all().size() > 0)
   }
 
-  def isBatchTableLocked(jobName: String, nr: Int): Boolean = {
-    logger.debug(s"Unlock table for job: ${jobName}")
+  def isBatchTableLocked(job: JobInfo): Boolean = {
+    logger.debug(s"Unlock table for job: ${job.name}")
     val res = execute(QueryBuilder.select().all().from(syncTable.keySpace, syncTable.tableName).
-      where(QueryBuilder.eq(syncTable.columns.jobname.name, jobName)).
+      where(QueryBuilder.eq(syncTable.columns.jobname.name, job.name)).
       and(QueryBuilder.eq(syncTable.columns.online.name, false)).
-      and(QueryBuilder.eq(syncTable.columns.versionNr.name, nr)).
       and(QueryBuilder.eq(syncTable.columns.locked.name, true)))
     (res.all().size() > 0)
   }
 
-  def setLock(jobName: String, nr: Int, online: Boolean, newState: Boolean): Boolean = {
+  def setLock(job: JobInfo, version: Int, online: Boolean, newState: Boolean): Boolean = {
     executeQuorum(QueryBuilder.update(syncTable.keySpace, syncTable.tableName).
       `with`(QueryBuilder.set(syncTable.columns.locked.name, newState)).
-      where(QueryBuilder.eq(syncTable.columns.jobname.name, jobName)).
+      where(QueryBuilder.eq(syncTable.columns.jobname.name, job.name)).
       and(QueryBuilder.eq(syncTable.columns.online.name, online)).
-      and(QueryBuilder.eq(syncTable.columns.versionNr.name, nr)).
+      and(QueryBuilder.eq(syncTable.columns.versionNr.name, version))
       onlyIf(QueryBuilder.eq(syncTable.columns.locked.name, !newState)))
   }
 

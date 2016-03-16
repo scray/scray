@@ -84,7 +84,7 @@ class SyncTableTests extends WordSpec {
             assert(x.asInstanceOf[ColumnWithValue[String]].value === "3")
           case i: Int =>
              assert(x.asInstanceOf[ColumnWithValue[Int]].value === 2)
-          case i: Boolean =>
+          case b: Boolean =>
              assert(x.asInstanceOf[ColumnWithValue[Boolean]].value === false) 
         }
       }
@@ -96,7 +96,7 @@ class SyncTableTests extends WordSpec {
             assert(x.asInstanceOf[ColumnWithValue[String]].value === "2")
           case i: Int =>
              assert(x.asInstanceOf[ColumnWithValue[Int]].value === 1)
-          case i: Boolean =>
+          case b: Boolean =>
              assert(x.asInstanceOf[ColumnWithValue[Boolean]].value === true) 
         }
       }
