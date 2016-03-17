@@ -379,7 +379,7 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
   private def executeQuorum(statement: Statement): Boolean = {
     logger.debug("Execute query: " + statement)
     val simpleStatement = new SimpleStatement(statement.toString())
-    simpleStatement.setConsistencyLevel(ConsistencyLevel.QUORUM)
+    statement.setConsistencyLevel(ConsistencyLevel.QUORUM)
 
     val rs = session.execute(statement);
     val row = rs.one();
