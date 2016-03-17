@@ -62,16 +62,14 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
 
   /**
    * Generate and register tables for a new job.
-   * Check if tables are not locked.
    */
   def initJobClient[T <: AbstractRows](job: JobInfo, dataTable: T) {
     this.crateTablesIfNotExists(job, dataTable)
 
-    // Check if table is not locked
+    // Check if table is not locked. 
+    // To ensure that tables are locked use lockBatchTable/lockOnlineTable.
     var tableIsLocked = true
     1 to job.numberOfBatcheVersions foreach { i =>
-      println(this.isBatchTableLocked(job))
-      println(this.isOnlineTableLocked(job))
       tableIsLocked &= this.isBatchTableLocked(job)
       tableIsLocked &= this.isOnlineTableLocked(job)
     }
@@ -105,11 +103,13 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
         .value(syncTable.columns.tablename.name, getBatchJobName(syncTable.keySpace + "." + job.name, i))
         .value(syncTable.columns.completed.name, false)
         .value(syncTable.columns.locked.name, false)
-        .value(syncTable.columns.creationTime.name, System.currentTimeMillis()).toString())
+        .value(syncTable.columns.creationTime.name, System.currentTimeMillis())
+        .ifNotExists)
+        
     }
 
     // Create and register online tables
-    1 to 3 foreach { i =>
+    1 to job.numberOfOnlineVersions foreach { i =>
       // Create online data tables
       // Columns[Column[_]]
       session.execute(createSingleTableString(VoidTable(syncTable.keySpace, getOnlineJobName(job.name, i), dataColumns)))
@@ -122,7 +122,8 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
         .value(syncTable.columns.tablename.name, getOnlineJobName(syncTable.keySpace + "." + job.name, i))
         .value(syncTable.columns.completed.name, false)
         .value(syncTable.columns.locked.name, false)
-        .value(syncTable.columns.creationTime.name, System.currentTimeMillis()).toString())
+        .value(syncTable.columns.creationTime.name, System.currentTimeMillis())
+        .ifNotExists)
     }
   }
 
@@ -187,8 +188,9 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
     
     val rowsToLock = new BatchStatement()
     1 to job.numberOfOnlineVersions foreach { 
-      version => rowsToLock.add(getSetLockStatement(job, version, true, true))
+      version => rowsToLock.add(geLockStatement(job, version, true, true))
     }
+    //println("\n\n\n" + executeQuorum(geLockStatement(job, 1, true, true)) + "\n\n\n")
     executeQuorum(rowsToLock)
   }
 
@@ -200,7 +202,7 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
     
     val rowsToLock = new BatchStatement()
     1 to job.numberOfOnlineVersions foreach { 
-      version => rowsToLock.add(getSetLockStatement(job, version, false, true))
+      version => rowsToLock.add(geLockStatement(job, version, false, true))
     }
     executeQuorum(rowsToLock)
   }
@@ -213,7 +215,7 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
    
     val rowsToUnlock = new BatchStatement()
     1 to job.numberOfOnlineVersions foreach { 
-      version => rowsToUnlock.add(getSetLockStatement(job, version, false, false))
+      version => rowsToUnlock.add(geLockStatement(job, version, false, false))
     }
     executeQuorum(rowsToUnlock)
   }
@@ -226,7 +228,7 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
     
     val rowsToUnlock = new BatchStatement()
     1 to job.numberOfOnlineVersions foreach { 
-      version => rowsToUnlock.add(getSetLockStatement(job, version, true, false))
+      version => rowsToUnlock.add(geLockStatement(job, version, true, false))
     }
     executeQuorum(rowsToUnlock)
   }
@@ -240,6 +242,11 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
   //   }
   //
   //
+  
+  /**
+   * Check if online table is locked.
+   * To ensure that online table is locked use lockOnlineTable.
+   */
   def isOnlineTableLocked(job: JobInfo): Boolean = {
     logger.debug(s"Unlock table for job: ${job.name}")
     val res = execute(QueryBuilder.select().all().from(syncTable.keySpace, syncTable.tableName).where(
@@ -249,6 +256,10 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
     (res.all().size() > 0)
   }
 
+    /**
+   * Check if batch table is locked.
+   * To ensure that batch table is locked use lockBatchTable.
+   */
   def isBatchTableLocked(job: JobInfo): Boolean = {
     logger.debug(s"Unlock table for job: ${job.name}")
     val res = execute(QueryBuilder.select().all().from(syncTable.keySpace, syncTable.tableName).
@@ -258,7 +269,7 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
     (res.all().size() > 0)
   }
 
-  def getSetLockStatement(job: JobInfo, version: Int, online: Boolean, newState: Boolean):  Conditions = {
+  def geLockStatement(job: JobInfo, version: Int, online: Boolean, newState: Boolean):  Conditions = {
      QueryBuilder.update(syncTable.keySpace, syncTable.tableName).
       `with`(QueryBuilder.set(syncTable.columns.locked.name, newState)).
       where(QueryBuilder.eq(syncTable.columns.jobname.name, job.name)).
