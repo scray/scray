@@ -97,13 +97,13 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
 
       // Register batch table
       session.execute(QueryBuilder.insertInto(syncTable.keySpace, syncTable.tableName)
-        .value(syncTable.columns.jobname.name, job.name)
-        .value(syncTable.columns.online.name, false)
         .value(syncTable.columns.versionNr.name, i)
-        .value(syncTable.columns.tablename.name, getBatchJobName(syncTable.keySpace + "." + job.name, i))
-        .value(syncTable.columns.completed.name, false)
+        .value(syncTable.columns.online.name, false)
+        .value(syncTable.columns.jobname.name, job.name)
         .value(syncTable.columns.locked.name, false)
+        .value(syncTable.columns.completed.name, false)
         .value(syncTable.columns.creationTime.name, System.currentTimeMillis())
+        .value(syncTable.columns.tablename.name, getBatchJobName(syncTable.keySpace + "." + job.name, i))
         .ifNotExists)
         
     }
@@ -119,10 +119,11 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
         .value(syncTable.columns.online.name, true)
         .value(syncTable.columns.jobname.name, job.name)
         .value(syncTable.columns.versionNr.name, i)
-        .value(syncTable.columns.tablename.name, getOnlineJobName(syncTable.keySpace + "." + job.name, i))
+        .value(syncTable.columns.versions.name, job.numberOfOnlineVersions)
         .value(syncTable.columns.completed.name, false)
         .value(syncTable.columns.locked.name, false)
         .value(syncTable.columns.creationTime.name, System.currentTimeMillis())
+        .value(syncTable.columns.tablename.name, getOnlineJobName(syncTable.keySpace + "." + job.name, i))
         .ifNotExists)
     }
   }
@@ -190,7 +191,6 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
     1 to job.numberOfOnlineVersions foreach { 
       version => rowsToLock.add(geLockStatement(job, version, true, true))
     }
-    //println("\n\n\n" + executeQuorum(geLockStatement(job, 1, true, true)) + "\n\n\n")
     executeQuorum(rowsToLock)
   }
 
