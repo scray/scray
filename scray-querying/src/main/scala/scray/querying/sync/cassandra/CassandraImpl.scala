@@ -23,6 +23,9 @@ import scray.querying.sync.OnlineBatchSync
 import scray.querying.sync.types.SyncTableBasicClasses.SyncTableRowEmpty
 import scala.collection.mutable.ListBuffer
 import scray.querying.sync.JobInfo
+import com.datastax.driver.core.BatchStatement
+import com.datastax.driver.core.querybuilder.Update.Where
+import com.datastax.driver.core.querybuilder.Update.Conditions
 
 object CassandraImplementation {
   implicit def genericCassandraColumnImplicit[T](implicit cassImplicit: CassandraPrimitive[T]): DBColumnImplementation[T] = new DBColumnImplementation[T] {
@@ -35,7 +38,7 @@ object CassandraImplementation {
 class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[Statement, Insert, ResultSet]]) extends OnlineBatchSync {
 
   // Create or use a given DB session.
-  val session = dbSession.getOrElse(new DbSession[SimpleStatement, Insert, ResultSet](dbHostname) {
+  val session = dbSession.getOrElse(new DbSession[Statement, Insert, ResultSet](dbHostname) {
     val cassandraSession = Cluster.builder().addContactPoint(dbHostname).build().connect()
 
     override def execute(statement: String): ResultSet = {
@@ -181,7 +184,12 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
    */
   def lockOnlineTable(job: JobInfo): Boolean = {
     logger.debug(s"Lock online table for job: ${job.name} ")
-    setLock(job, 1, true, true)
+    
+    val rowsToLock = new BatchStatement()
+    1 to job.numberOfOnlineVersions foreach { 
+      version => rowsToLock.add(getSetLockStatement(job, version, true, true))
+    }
+    executeQuorum(rowsToLock)
   }
 
   /**
@@ -189,7 +197,12 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
    */
   def lockBatchTable(job: JobInfo): Boolean = {
     logger.debug(s"Lock batch table for job: ${job.name}")
-    setLock(job, 1, false, true)
+    
+    val rowsToLock = new BatchStatement()
+    1 to job.numberOfOnlineVersions foreach { 
+      version => rowsToLock.add(getSetLockStatement(job, version, false, true))
+    }
+    executeQuorum(rowsToLock)
   }
 
   /**
@@ -197,7 +210,12 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
    */
   def unlockBatchTable(job: JobInfo): Boolean = {
     logger.debug(s"Unlock batch table for job: ${job.name} ")
-    setLock(job, 1, false, false)
+   
+    val rowsToUnlock = new BatchStatement()
+    1 to job.numberOfOnlineVersions foreach { 
+      version => rowsToUnlock.add(getSetLockStatement(job, version, false, false))
+    }
+    executeQuorum(rowsToUnlock)
   }
 
   /**
@@ -205,8 +223,12 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
    */
   def unlockOnlineTable(job: JobInfo): Boolean = {
     logger.debug(s"Unlock online table for job: ${job.name}")
-
-    setLock(job, 1, true, false)
+    
+    val rowsToUnlock = new BatchStatement()
+    1 to job.numberOfOnlineVersions foreach { 
+      version => rowsToUnlock.add(getSetLockStatement(job, version, true, false))
+    }
+    executeQuorum(rowsToUnlock)
   }
   //  
   //  def getNextBatch(): Option[Int] = {
@@ -236,13 +258,13 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
     (res.all().size() > 0)
   }
 
-  def setLock(job: JobInfo, version: Int, online: Boolean, newState: Boolean): Boolean = {
-    executeQuorum(QueryBuilder.update(syncTable.keySpace, syncTable.tableName).
+  def getSetLockStatement(job: JobInfo, version: Int, online: Boolean, newState: Boolean):  Conditions = {
+     QueryBuilder.update(syncTable.keySpace, syncTable.tableName).
       `with`(QueryBuilder.set(syncTable.columns.locked.name, newState)).
       where(QueryBuilder.eq(syncTable.columns.jobname.name, job.name)).
       and(QueryBuilder.eq(syncTable.columns.online.name, online)).
-      and(QueryBuilder.eq(syncTable.columns.versionNr.name, version))
-      onlyIf(QueryBuilder.eq(syncTable.columns.locked.name, !newState)))
+      and(QueryBuilder.eq(syncTable.columns.versionNr.name, version)).
+      onlyIf(QueryBuilder.eq(syncTable.columns.locked.name, !newState))
   }
 
   //  def getSynctable(jobName: String): Option[Table[Columns[ColumnV[_]]]] = {
@@ -354,13 +376,12 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
   //      val r2 = 
   //     r2
   //  }
-  private def executeQuorum(statement: RegularStatement): Boolean = {
-    println(statement.toString())
-    logger.debug("Lock table: " + statement)
+  private def executeQuorum(statement: Statement): Boolean = {
+    logger.debug("Execute query: " + statement)
     val simpleStatement = new SimpleStatement(statement.toString())
-    simpleStatement.setConsistencyLevel(ConsistencyLevel.ALL)
+    simpleStatement.setConsistencyLevel(ConsistencyLevel.QUORUM)
 
-    val rs = session.execute(simpleStatement);
+    val rs = session.execute(statement);
     val row = rs.one();
 
     if (row.getBool("[applied]")) {
