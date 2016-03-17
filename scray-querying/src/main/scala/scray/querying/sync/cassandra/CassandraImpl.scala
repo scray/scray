@@ -61,9 +61,9 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
   val syncTable = SyncTable("SILIDX", "SyncTable")
 
   /**
-   * Generate and register tables for a new job.
+   * Create and register tables for a new job.
    */
-  def initJobClient[T <: AbstractRows](job: JobInfo, dataTable: T) {
+  def createNewJob[T <: AbstractRows](job: JobInfo, dataTable: T) {
     this.crateTablesIfNotExists(job, dataTable)
 
     // Check if table is not locked. 
@@ -77,12 +77,18 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
     if (tableIsLocked) {
       throw new IllegalStateException("One job with the same name is already running")
     }
+    
+    // Detect new versions
+    val nextBatchVersion = getNewestBatchVersion(job).get % job.numberOfBatcheVersions + 1
+    val nextOnlineVersion = getNewestOnlineVersion(job).get % job.numberOfOnlineVersions + 1
+    
+        
   }
 
   /**
    * Check if tables exists and tables are locked
    */
-  def crateTablesIfNotExists[T <: AbstractRows](job: JobInfo, dataColumns: T): Unit = {
+  private def crateTablesIfNotExists[T <: AbstractRows](job: JobInfo, dataColumns: T): Unit = {
     createKeyspace(syncTable)
     syncTable.columns.indexes match {
       case _: Some[List[String]] => session.execute(createIndexString(syncTable))
@@ -102,7 +108,9 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
         .value(syncTable.columns.jobname.name, job.name)
         .value(syncTable.columns.locked.name, false)
         .value(syncTable.columns.completed.name, false)
+        .value(syncTable.columns.state.name, State.NEW.toString())
         .value(syncTable.columns.creationTime.name, System.currentTimeMillis())
+        .value(syncTable.columns.versions.name, job.numberOfBatcheVersions)
         .value(syncTable.columns.tablename.name, getBatchJobName(syncTable.keySpace + "." + job.name, i))
         .ifNotExists)
         
@@ -122,15 +130,31 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
         .value(syncTable.columns.versions.name, job.numberOfOnlineVersions)
         .value(syncTable.columns.completed.name, false)
         .value(syncTable.columns.locked.name, false)
+        .value(syncTable.columns.state.name, State.NEW.toString())
         .value(syncTable.columns.creationTime.name, System.currentTimeMillis())
         .value(syncTable.columns.tablename.name, getOnlineJobName(syncTable.keySpace + "." + job.name, i))
         .ifNotExists)
     }
   }
 
-  def getHeadBatch(jobName: String): Option[Int] = {
+  
+  def getNewestBatchVersion(job: JobInfo): Option[Int] = {
     val headBatchQuery: RegularStatement = QueryBuilder.select().from(syncTable.keySpace,  syncTable.tableName).
-      where(QueryBuilder.eq(syncTable.columns.jobname.name, jobName))
+      where(QueryBuilder.eq(syncTable.columns.jobname.name, job.name))
+      .and(QueryBuilder.eq(syncTable.columns.online.name, false))
+      
+    val headBatches = this.execute(headBatchQuery)
+
+    // Find newest version 
+    val newestBatchNr = this.getNewestRow(headBatches.iterator()).getInt(syncTable.columns.versionNr.name)
+    Option(newestBatchNr)
+  }
+  
+  private def getNewestOnlineVersion(job: JobInfo): Option[Int] = {
+    val headBatchQuery: RegularStatement = QueryBuilder.select().from(syncTable.keySpace,  syncTable.tableName).
+      where(QueryBuilder.eq(syncTable.columns.jobname.name, job.name))
+      .and(QueryBuilder.eq(syncTable.columns.online.name, true))
+      
     val headBatches = this.execute(headBatchQuery)
 
     // Find newest version 

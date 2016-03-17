@@ -79,28 +79,35 @@ class OnlineBatchSyncTests extends WordSpec with BeforeAndAfter with BeforeAndAf
     " init client" in {
 
       val table = new OnlineBatchSyncCassandra("", dbconnection)
-      table.initJobClient[SumTestColumns](JobInfo("job55"), new SumTestColumns)
+      table.createNewJob[SumTestColumns](JobInfo("job55"), new SumTestColumns)
     }
     " throw exception if job already exists" in {
       val table = new OnlineBatchSyncCassandra("", dbconnection)
-      table.initJobClient(JobInfo("job56"), new SumTestColumns())
+      table.createNewJob(JobInfo("job56"), new SumTestColumns())
 
       try {
-        table.initJobClient(JobInfo("job56"), new SumTestColumns())
+        table.createNewJob(JobInfo("job56"), new SumTestColumns())
       } catch {
         case _: IllegalStateException => true
       }
     }
     "lock table" in {
       val table = new OnlineBatchSyncCassandra("", dbconnection)
-      table.initJobClient(JobInfo("job57"), new SumTestColumns())
+      table.createNewJob(JobInfo("job57"), new SumTestColumns())
 
-      table.lockOnlineTable(JobInfo("job57"))
+      assert(table.lockOnlineTable(JobInfo("job57")) === true)
       assert(table.isOnlineTableLocked(JobInfo("job57")) === true)
+    }
+    "lock table only once" in {
+      val table = new OnlineBatchSyncCassandra("", dbconnection)
+      table.createNewJob(JobInfo("job57"), new SumTestColumns())
+
+      assert(table.lockOnlineTable(JobInfo("job57")) === true)
+      assert(table.lockOnlineTable(JobInfo("job57")) === false)
     }
     "insert and read data" in {
       val table = new OnlineBatchSyncCassandra("", dbconnection)
-      table.initJobClient(JobInfo("job58"), new SumTestColumns())
+      table.createNewJob(JobInfo("job58"), new SumTestColumns())
 
       val sum = new ColumnWithValue[Long]("sum", 100)
       val columns = sum :: Nil
@@ -122,11 +129,24 @@ class OnlineBatchSyncTests extends WordSpec with BeforeAndAfter with BeforeAndAf
       val primaryKey = s"(${sum.name})"
       val indexes: Option[List[String]] = None
 
-      table.initJobClient(JobInfo("job59"), new RowWithValue(columns, primaryKey, indexes))
+      table.createNewJob(JobInfo("job59"), new RowWithValue(columns, primaryKey, indexes))
 
-      val nr = table.getHeadBatch("job59")
+      val nr = table.getNewestBatchVersion(JobInfo("job59"))
       table.insertInOnlineTable(JobInfo("job59"), 3, new RowWithValue(columns, primaryKey, indexes))
       assert(table.getOnlineJobData("job59", nr.getOrElse(0), new RowWithValue(columns, primaryKey, indexes)).get.head.columns.head.value === 100L)
+    }
+    "run an example usecase" in {
+      val table = new OnlineBatchSyncCassandra("", dbconnection)
+      val JOB_NAME = "JOB_100"
+
+      val sum = new ColumnWithValue[Long]("sum", 100)
+      val columns = sum :: Nil
+      val primaryKey = s"(${sum.name})"
+      val indexes: Option[List[String]] = None
+
+      table.createNewJob(JobInfo(JOB_NAME), new RowWithValue(columns, primaryKey, indexes))
+
+      val nr = table.getHeadBatch(JobInfo("job59"))
     }
     
     "use hlist" in {

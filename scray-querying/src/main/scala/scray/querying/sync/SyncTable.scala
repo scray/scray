@@ -121,7 +121,7 @@ object SyncTableBasicClasses {
     val jobname = new Column[String]("jobname")
     val versionNr = new Column[Int]("versionNr")
     val creationTime = new Column[Long]("creationTime")
-    val versions = new Column[Int]("version")
+    val versions = new Column[Int]("versions")
     val tablename = new Column[String]("tablename")
     val locked = new Column[Boolean]("locked")
     val online = new Column[Boolean]("online")
@@ -132,6 +132,10 @@ object SyncTableBasicClasses {
     override val primaryKey = s"(${jobname.name}, ${online.name}, ${versionNr.name})"
     override val indexes: Option[List[String]] = Option(List(locked.name))
   }
+}
+object State extends Enumeration {
+  type State = Value
+  val NEW, NEXT_JOB, RUNNING, FINISHED = Value
 }
 
 //object SyncTableInitFunction {
