@@ -209,8 +209,8 @@ class OnlineBatchSyncTests extends WordSpec with BeforeAndAfter with BeforeAndAf
         and(QueryBuilder.eq(syncTable.columns.locked.name, true))
         and(QueryBuilder.eq(syncTable.columns.state.name, State.NEXT_JOB.toString))).all
        
-       assert(r1.size === 1)
-       assert(r2.size === 0)
+       assert(r1.size === 0)
+       assert(r2.size === 2)
        assert(r3.size === 0)
        assert(r1.get(0).getString(syncTable.columns.versionNr.name) === 1)
     }
