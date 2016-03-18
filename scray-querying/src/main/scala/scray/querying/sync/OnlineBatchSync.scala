@@ -25,6 +25,13 @@ abstract class OnlineBatchSync extends LazyLogging {
    */
   def createNewJob[T <: ArbitrarylyTypedRows](job: JobInfo, dataTable: T)
   
+  def startNextBatchJob(job: JobInfo): Boolean
+  def startNextOnlineJob(job: JobInfo): Boolean
+  
+  //def completeBatchJob(job: JobInfo): Boolean
+  //def completeOnlineJob(job: JobInfo): Boolean
+  
+  
 //  /**
 //   * Check if tables exists and tables are locked
 //   */

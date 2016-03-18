@@ -77,13 +77,44 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
     if (tableIsLocked) {
       throw new IllegalStateException("One job with the same name is already running")
     }
-    
-    // Detect new versions
-    val nextBatchVersion = getNewestBatchVersion(job).get % job.numberOfBatcheVersions + 1
-    val nextOnlineVersion = getNewestOnlineVersion(job).get % job.numberOfOnlineVersions + 1
-    
-        
   }
+  
+  def startNextBatchJob(job: JobInfo): Boolean = {
+    
+    this.lockBatchTable(job)
+
+    // Mark next version
+    val nextBatchVersion = getNewestBatchVersion(job).get % job.numberOfBatcheVersions + 1
+    logger.debug(s"Set next batch version to ${nextBatchVersion}") 
+    
+    val query = QueryBuilder.update(syncTable.keySpace, syncTable.tableName)
+      .`with`(QueryBuilder.set(syncTable.columns.state.name, State.NEXT_JOB.toString()))
+      .where(QueryBuilder.eq(syncTable.columns.jobname.name, job.name))
+      .and(QueryBuilder.eq(syncTable.columns.online.name, false))
+      .and(QueryBuilder.eq(syncTable.columns.versionNr.name, nextBatchVersion))
+      .onlyIf(QueryBuilder.eq(syncTable.columns.locked.name, true))
+
+    executeQuorum(query)
+  }
+  
+  def startNextOnlineJob(job: JobInfo): Boolean = {
+    
+    this.lockOnlineTable(job)
+
+    // Mark next version
+    val nextOnlineVersion = getNewestBatchVersion(job).get % job.numberOfOnlineVersions + 1
+    logger.debug(s"Set next batch version to ${nextOnlineVersion}") 
+    
+    val query = QueryBuilder.update(syncTable.keySpace, syncTable.tableName)
+      .`with`(QueryBuilder.set(syncTable.columns.state.name, State.NEXT_JOB.toString()))
+      .where(QueryBuilder.eq(syncTable.columns.jobname.name, job.name))
+      .and(QueryBuilder.eq(syncTable.columns.online.name, true))
+      .and(QueryBuilder.eq(syncTable.columns.versionNr.name, nextOnlineVersion))
+      .onlyIf(QueryBuilder.eq(syncTable.columns.locked.name, true))
+
+    executeQuorum(query)
+  }
+  
 
   /**
    * Check if tables exists and tables are locked
@@ -113,7 +144,6 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
         .value(syncTable.columns.versions.name, job.numberOfBatcheVersions)
         .value(syncTable.columns.tablename.name, getBatchJobName(syncTable.keySpace + "." + job.name, i))
         .ifNotExists)
-        
     }
 
     // Create and register online tables
@@ -144,7 +174,8 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
       .and(QueryBuilder.eq(syncTable.columns.online.name, false))
       
     val headBatches = this.execute(headBatchQuery)
-
+    // println(headBatches.all())
+    
     // Find newest version 
     val newestBatchNr = this.getNewestRow(headBatches.iterator()).getInt(syncTable.columns.versionNr.name)
     Option(newestBatchNr)
@@ -412,29 +443,36 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
   //     r2
   //  }
   private def executeQuorum(statement: Statement): Boolean = {
-    logger.debug("Execute query: " + statement)
-    val simpleStatement = new SimpleStatement(statement.toString())
+    val a = new BatchStatement
+    a.getStatements
+    
+    statement match {
+      case bStatement: BatchStatement =>  logger.debug("Execute batch statement: " + bStatement.getStatements)
+      case _ =>                            logger.debug("Execute query: " + statement)
+    }
+    
     statement.setConsistencyLevel(ConsistencyLevel.QUORUM)
 
     val rs = session.execute(statement);
     val row = rs.one();
 
     if (row.getBool("[applied]")) {
-      logger.debug(s"Execute ${simpleStatement}");
+      logger.debug(s"Execute ${statement}");
       true
     } else {
-      logger.error(s"It is currently not possible to execute ${simpleStatement} ")
+      statement match {
+        case bStatement: BatchStatement =>  logger.error("It is currently not possible to execute : " + bStatement.getStatements)
+        case _ =>                           logger.error("It is currently not possible to execute : " + statement)
+       }
       false
     }
   }
 
   private def execute(statement: RegularStatement) = {
-    println(statement.toString())
-    logger.debug("Lock table: " + statement)
-    val simpleStatement = new SimpleStatement(statement.toString())
-    simpleStatement.setConsistencyLevel(ConsistencyLevel.QUORUM);
+    logger.debug("Execute: " + statement)
+    statement.setConsistencyLevel(ConsistencyLevel.QUORUM);
 
-    session.execute(simpleStatement);
+    session.execute(statement);
   }
 
   def createSingleTableString[T <: AbstractRows](table: Table[T]): String = {
@@ -468,7 +506,7 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
     @tailrec def accNewestRow(prevRow: Row, nextRows: JIterator[Row]): Row = {
       if (nextRows.hasNext) {
         val localRow = nextRows.next()
-        println()
+        logger.debug(s"Work with row ${localRow}")
         val max = if (comp(prevRow.getLong(syncTable.columns.creationTime.name), localRow.getLong(syncTable.columns.creationTime.name))) {
           prevRow
         } else {
@@ -476,12 +514,14 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
         }
         accNewestRow(max, nextRows)
       } else {
+        logger.debug(s"Return newest row ${prevRow}")
         prevRow
       }
     }
     import scala.collection.convert.WrapAsScala.asScalaIterator
 
     val row = rows.next()
+    logger.debug(s"Inspect new row ${rows.size}")
     accNewestRow(row, rows)
   }
 }
