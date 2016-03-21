@@ -152,28 +152,46 @@ class OnlineBatchSyncTests extends WordSpec with BeforeAndAfter with BeforeAndAf
 //      table.insertInOnlineTable(JobInfo("job59"), 3, new RowWithValue(columns, primaryKey, indexes))
 //      assert(table.getOnlineJobData("job59", nr.getOrElse(0), new RowWithValue(columns, primaryKey, indexes)).get.head.columns.head.value === 100L)
 //    }
-//    " mark new batch job version " in {
-//      val table = new OnlineBatchSyncCassandra("", dbconnection)
-//      val syncTable = SyncTable("SILIDX", "SyncTable")
-//      val JOB_NAME = "JOB_100"
-//
-//      val sum = new ColumnWithValue[Long]("sum", 100)
-//      val columns = sum :: Nil
-//      val primaryKey = s"(${sum.name})"
-//      val indexes: Option[List[String]] = None
-//
-//      table.createNewJob(JobInfo(JOB_NAME), new RowWithValue(columns, primaryKey, indexes))
-//      table.startNextBatchJob(JobInfo("job59"))
-//           
-//      val res = dbconnection.get.execute(QueryBuilder.select().all().from(syncTable.keySpace, syncTable.tableName).
-//        where(QueryBuilder.eq(syncTable.columns.jobname.name, JOB_NAME)).
-//        and(QueryBuilder.eq(syncTable.columns.online.name, false)).
-//        and(QueryBuilder.eq(syncTable.columns.locked.name, true))
-//        and(QueryBuilder.eq(syncTable.columns.state.name, State.NEXT_JOB))).all
-//       
-//       assert(res.size === 1)
-//       assert(res.get(0).getString(syncTable.columns.versionNr.name) === 1)
-//    }
+    " mark new batch job version " in {
+      val table = new OnlineBatchSyncCassandra("", dbconnection)
+      val syncTable = SyncTable("SILIDX", "SyncTable")
+      val JOB_NAME = "JOB_100"
+
+      val sum = new ColumnWithValue[Long]("sum", 100)
+      val columns = sum :: Nil
+      val primaryKey = s"(${sum.name})"
+      val indexes: Option[List[String]] = None
+
+      table.createNewJob(JobInfo(JOB_NAME), new RowWithValue(columns, primaryKey, indexes))
+      table.startNextOnlineJob(JobInfo(JOB_NAME))
+           
+      val r1 = dbconnection.get.execute(QueryBuilder.select().all().from(syncTable.keySpace, syncTable.tableName).
+        allowFiltering().
+        where(QueryBuilder.eq(syncTable.columns.jobname.name, JOB_NAME)).
+        and(QueryBuilder.eq(syncTable.columns.online.name, true)).
+        and(QueryBuilder.eq(syncTable.columns.versionNr.name, 1))
+        and(QueryBuilder.eq(syncTable.columns.locked.name, true))
+        and(QueryBuilder.eq(syncTable.columns.state.name, State.NEXT_JOB.toString))).all
+      val r2 = dbconnection.get.execute(QueryBuilder.select().all().from(syncTable.keySpace, syncTable.tableName).
+        allowFiltering().
+        where(QueryBuilder.eq(syncTable.columns.jobname.name, JOB_NAME)).
+        and(QueryBuilder.eq(syncTable.columns.online.name, true)).
+        and(QueryBuilder.eq(syncTable.columns.versionNr.name, 2))
+        and(QueryBuilder.eq(syncTable.columns.locked.name, true))
+        and(QueryBuilder.eq(syncTable.columns.state.name, State.NEXT_JOB.toString))).all
+      val r3 = dbconnection.get.execute(QueryBuilder.select().all().from(syncTable.keySpace, syncTable.tableName).
+        allowFiltering().
+        where(QueryBuilder.eq(syncTable.columns.jobname.name, JOB_NAME)).
+        and(QueryBuilder.eq(syncTable.columns.online.name, true)).
+        and(QueryBuilder.eq(syncTable.columns.versionNr.name, 3))
+        and(QueryBuilder.eq(syncTable.columns.locked.name, true))
+        and(QueryBuilder.eq(syncTable.columns.state.name, State.NEXT_JOB.toString))).all
+       
+       assert(r1.size === 1)
+       assert(r2.size === 0)
+       assert(r3.size === 0)
+       assert(r1.get(0).getString(syncTable.columns.versionNr.name) === 1)
+    }
     " mark new online job version " in {
       val table = new OnlineBatchSyncCassandra("", dbconnection)
       val syncTable = SyncTable("SILIDX", "SyncTable")
@@ -209,8 +227,8 @@ class OnlineBatchSyncTests extends WordSpec with BeforeAndAfter with BeforeAndAf
         and(QueryBuilder.eq(syncTable.columns.locked.name, true))
         and(QueryBuilder.eq(syncTable.columns.state.name, State.NEXT_JOB.toString))).all
        
-       assert(r1.size === 0)
-       assert(r2.size === 2)
+       assert(r1.size === 1)
+       assert(r2.size === 0)
        assert(r3.size === 0)
        assert(r1.get(0).getString(syncTable.columns.versionNr.name) === 1)
     }

@@ -28,7 +28,7 @@ abstract class OnlineBatchSync extends LazyLogging {
   def startNextBatchJob(job: JobInfo): Boolean
   def startNextOnlineJob(job: JobInfo): Boolean
   
-  //def completeBatchJob(job: JobInfo): Boolean
+  def completeBatchJob(job: JobInfo): Boolean
   //def completeOnlineJob(job: JobInfo): Boolean
   
   
