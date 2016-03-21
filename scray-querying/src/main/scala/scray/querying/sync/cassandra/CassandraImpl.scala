@@ -81,58 +81,37 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
   }
   
   def startNextBatchJob(job: JobInfo): Boolean = {
-    
-    this.lockBatchTable(job)
-
-    // Mark next version
-    val nextBatchVersion = getNewestBatchVersion(job).get % job.numberOfBatcheVersions
-    logger.debug(s"Set next batch version to ${nextBatchVersion}") 
-    
-    val nextJobStatement = QueryBuilder.update(syncTable.keySpace, syncTable.tableName)
-      .`with`(QueryBuilder.set(syncTable.columns.state.name, State.NEXT_JOB.toString()))
-      .where(QueryBuilder.eq(syncTable.columns.jobname.name, job.name))
-      .and(QueryBuilder.eq(syncTable.columns.online.name, false))
-      .and(QueryBuilder.eq(syncTable.columns.versionNr.name, nextBatchVersion))
-      .onlyIf(QueryBuilder.eq(syncTable.columns.locked.name, true))
-
-    executeQuorum(nextJobStatement)
-    
-    val startStatement = QueryBuilder.update(syncTable.keySpace, syncTable.tableName)
-      .`with`(QueryBuilder.set(syncTable.columns.state.name, State.RUNNING.toString()))
-      .where(QueryBuilder.eq(syncTable.columns.jobname.name, job.name))
-      .and(QueryBuilder.eq(syncTable.columns.online.name, false))
-      .and(QueryBuilder.eq(syncTable.columns.versionNr.name, nextBatchVersion))
-      .onlyIf(QueryBuilder.eq(syncTable.columns.locked.name, true))
-
-    executeQuorum(startStatement)
+    this.startJob(job, false)
   }
   
-  def startNextOnlineJob(job: JobInfo): Boolean = {
+  def startNextOnlineJob(job: JobInfo): Boolean = { 
+    this.startJob(job, true)
+  }
+  
+  private def startJob(job: JobInfo, online: Boolean): Boolean = {
+    var nextVersion: Option[Int] = None
     
-    this.lockOnlineTable(job)
-
-    // Mark next version
-    val nextOnlineVersion = getNewestBatchVersion(job).get % job.numberOfOnlineVersions
-    logger.debug(s"Set next batch version to ${nextOnlineVersion}") 
-    
-    val query = QueryBuilder.update(syncTable.keySpace, syncTable.tableName)
-      .`with`(QueryBuilder.set(syncTable.columns.state.name, State.NEXT_JOB.toString()))
-      .where(QueryBuilder.eq(syncTable.columns.jobname.name, job.name))
-      .and(QueryBuilder.eq(syncTable.columns.online.name, true))
-      .and(QueryBuilder.eq(syncTable.columns.versionNr.name, nextOnlineVersion))
-      .onlyIf(QueryBuilder.eq(syncTable.columns.locked.name, true))
-
-    executeQuorum(query)
+    if(online) {
+      this.lockOnlineTable(job)
+      nextVersion = Some(getNewestOnlineVersion(job).get % job.numberOfOnlineVersions)
+      logger.debug(s"Set next batch version to ${nextVersion.get}") 
+    } else {
+      this.lockBatchTable(job)
+      nextVersion = Some(getNewestBatchVersion(job).get % job.numberOfBatcheVersions)
+      logger.debug(s"Set next batch version to ${nextVersion.get}") 
+    }
     
     val startStatement = QueryBuilder.update(syncTable.keySpace, syncTable.tableName)
       .`with`(QueryBuilder.set(syncTable.columns.state.name, State.RUNNING.toString()))
       .where(QueryBuilder.eq(syncTable.columns.jobname.name, job.name))
-      .and(QueryBuilder.eq(syncTable.columns.online.name, true))
-      .and(QueryBuilder.eq(syncTable.columns.versionNr.name, nextOnlineVersion))
+      .and(QueryBuilder.eq(syncTable.columns.online.name, online))
+      .and(QueryBuilder.eq(syncTable.columns.versionNr.name, nextVersion.get))
       .onlyIf(QueryBuilder.eq(syncTable.columns.locked.name, true))
 
-    executeQuorum(startStatement)
+     executeQuorum(startStatement)
   }
+  
+
   
   def completeBatchJob(job: JobInfo): Boolean = {
     
