@@ -155,87 +155,58 @@ class OnlineBatchSyncTests extends WordSpec with BeforeAndAfter with BeforeAndAf
     " mark new batch job version " in {
       val table = new OnlineBatchSyncCassandra("", dbconnection)
       val syncTable = SyncTable("SILIDX", "SyncTable")
-      val JOB_NAME = "JOB_100"
+      val job = JobInfo("JOB_100")
 
       val sum = new ColumnWithValue[Long]("sum", 100)
       val columns = sum :: Nil
       val primaryKey = s"(${sum.name})"
       val indexes: Option[List[String]] = None
 
-      table.createNewJob(JobInfo(JOB_NAME), new RowWithValue(columns, primaryKey, indexes))
-      table.startNextOnlineJob(JobInfo(JOB_NAME))
-           
-      val r1 = dbconnection.get.execute(QueryBuilder.select().all().from(syncTable.keySpace, syncTable.tableName).
-        allowFiltering().
-        where(QueryBuilder.eq(syncTable.columns.jobname.name, JOB_NAME)).
-        and(QueryBuilder.eq(syncTable.columns.online.name, true)).
-        and(QueryBuilder.eq(syncTable.columns.versionNr.name, 1))
-        and(QueryBuilder.eq(syncTable.columns.locked.name, true))
-        and(QueryBuilder.eq(syncTable.columns.state.name, State.NEXT_JOB.toString))).all
-      val r2 = dbconnection.get.execute(QueryBuilder.select().all().from(syncTable.keySpace, syncTable.tableName).
-        allowFiltering().
-        where(QueryBuilder.eq(syncTable.columns.jobname.name, JOB_NAME)).
-        and(QueryBuilder.eq(syncTable.columns.online.name, true)).
-        and(QueryBuilder.eq(syncTable.columns.versionNr.name, 2))
-        and(QueryBuilder.eq(syncTable.columns.locked.name, true))
-        and(QueryBuilder.eq(syncTable.columns.state.name, State.NEXT_JOB.toString))).all
-      val r3 = dbconnection.get.execute(QueryBuilder.select().all().from(syncTable.keySpace, syncTable.tableName).
-        allowFiltering().
-        where(QueryBuilder.eq(syncTable.columns.jobname.name, JOB_NAME)).
-        and(QueryBuilder.eq(syncTable.columns.online.name, true)).
-        and(QueryBuilder.eq(syncTable.columns.versionNr.name, 3))
-        and(QueryBuilder.eq(syncTable.columns.locked.name, true))
-        and(QueryBuilder.eq(syncTable.columns.state.name, State.NEXT_JOB.toString))).all
-       
-       assert(r1.size === 1)
-       assert(r2.size === 0)
-       assert(r3.size === 0)
-       assert(r1.get(0).getString(syncTable.columns.versionNr.name) === 1)
+      table.createNewJob(job, new RowWithValue(columns, primaryKey, indexes))
+      table.startNextBatchJob(job) 
+
+      assert(table.getBatchJobState(job, 0).equals(State.RUNNING))
+      assert(table.getBatchJobState(job, 1).equals(State.NEW))
+      assert(table.getBatchJobState(job, 2).equals(State.NEW))
     }
     " mark new online job version " in {
       val table = new OnlineBatchSyncCassandra("", dbconnection)
       val syncTable = SyncTable("SILIDX", "SyncTable")
-      val JOB_NAME = "JOB_100"
+      val jobInfo = JobInfo("JOB_100")
 
       val sum = new ColumnWithValue[Long]("sum", 100)
       val columns = sum :: Nil
       val primaryKey = s"(${sum.name})"
       val indexes: Option[List[String]] = None
 
-      table.createNewJob(JobInfo(JOB_NAME), new RowWithValue(columns, primaryKey, indexes))
-      table.startNextBatchJob(JobInfo(JOB_NAME))
-           
-      val r1 = dbconnection.get.execute(QueryBuilder.select().all().from(syncTable.keySpace, syncTable.tableName).
-        allowFiltering().
-        where(QueryBuilder.eq(syncTable.columns.jobname.name, JOB_NAME)).
-        and(QueryBuilder.eq(syncTable.columns.online.name, false)).
-        and(QueryBuilder.eq(syncTable.columns.versionNr.name, 1))
-        and(QueryBuilder.eq(syncTable.columns.locked.name, true))
-        and(QueryBuilder.eq(syncTable.columns.state.name, State.NEXT_JOB.toString))).all
-      val r2 = dbconnection.get.execute(QueryBuilder.select().all().from(syncTable.keySpace, syncTable.tableName).
-        allowFiltering().
-        where(QueryBuilder.eq(syncTable.columns.jobname.name, JOB_NAME)).
-        and(QueryBuilder.eq(syncTable.columns.online.name, false)).
-        and(QueryBuilder.eq(syncTable.columns.versionNr.name, 2))
-        and(QueryBuilder.eq(syncTable.columns.locked.name, true))
-        and(QueryBuilder.eq(syncTable.columns.state.name, State.NEXT_JOB.toString))).all
-      val r3 = dbconnection.get.execute(QueryBuilder.select().all().from(syncTable.keySpace, syncTable.tableName).
-        allowFiltering().
-        where(QueryBuilder.eq(syncTable.columns.jobname.name, JOB_NAME)).
-        and(QueryBuilder.eq(syncTable.columns.online.name, false)).
-        and(QueryBuilder.eq(syncTable.columns.versionNr.name, 3))
-        and(QueryBuilder.eq(syncTable.columns.locked.name, true))
-        and(QueryBuilder.eq(syncTable.columns.state.name, State.NEXT_JOB.toString))).all
-       
-       assert(r1.size === 1)
-       assert(r2.size === 0)
-       assert(r3.size === 0)
-       assert(r1.get(0).getString(syncTable.columns.versionNr.name) === 1)
+      table.createNewJob(jobInfo, new RowWithValue(columns, primaryKey, indexes))
+      table.startNextOnlineJob(jobInfo)
+      
+      println(table.getOnlineJobState(jobInfo, 0))
+      println(table.getOnlineJobState(jobInfo, 1))
+      println(table.getOnlineJobState(jobInfo, 2))
+      
+      assert(table.getOnlineJobState(jobInfo, 0).equals(State.RUNNING))
+      assert(table.getOnlineJobState(jobInfo, 1).equals(State.NEW))
+      assert(table.getOnlineJobState(jobInfo, 2).equals(State.NEW))
     }
-    
-    
-    
-    
+    " start and stop jobs " in {
+      val table = new OnlineBatchSyncCassandra("andreas", None)
+      val syncTable = SyncTable("SILIDX", "SyncTable")
+      val job = JobInfo("JOB_100")
+
+      val sum = new ColumnWithValue[Long]("sum", 100)
+      val columns = sum :: Nil
+      val primaryKey = s"(${sum.name})"
+      val indexes: Option[List[String]] = None
+
+      table.createNewJob(job, new RowWithValue(columns, primaryKey, indexes))
+      table.startNextBatchJob(job)
+      assert(table.getBatchJobState(job, 0).equals(State.RUNNING))
+      table.completeBatchJob(job)
+      assert(table.getBatchJobState(job, 0).equals(State.COMPLETED))
+    }
+
     
     "use hlist" in {
       

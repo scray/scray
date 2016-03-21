@@ -1,6 +1,7 @@
 package scray.querying.sync
 
 import java.util.{ Iterator => JIterator }
+import scray.querying.sync.types.State.State
 import scala.annotation.tailrec
 import com.datastax.driver.core.Cluster
 import com.datastax.driver.core.ConsistencyLevel
@@ -29,6 +30,8 @@ abstract class OnlineBatchSync extends LazyLogging {
   def startNextOnlineJob(job: JobInfo): Boolean
   
   def completeBatchJob(job: JobInfo): Boolean
+  def getOnlineJobState(job: JobInfo, version: Int): State
+  def getBatchJobState(job: JobInfo, version: Int): State
   //def completeOnlineJob(job: JobInfo): Boolean
   
   
