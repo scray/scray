@@ -1,4 +1,4 @@
-package scray.querying.costs
+package scray.querying.sync
 
 import scala.annotation.tailrec
 import org.junit.runner.RunWith
