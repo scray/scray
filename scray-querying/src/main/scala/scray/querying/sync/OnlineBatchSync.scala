@@ -18,6 +18,8 @@ import scray.querying.sync.types._
 import scray.querying.sync.types._
 import java.util.ArrayList
 import scala.collection.mutable.ArrayBuffer
+import scala.util.Try
+
 
 abstract class OnlineBatchSync extends LazyLogging {
 
@@ -26,13 +28,25 @@ abstract class OnlineBatchSync extends LazyLogging {
    */
   def createNewJob[T <: ArbitrarylyTypedRows](job: JobInfo, dataTable: T)
   
-  def startNextBatchJob(job: JobInfo): Boolean
-  def startNextOnlineJob(job: JobInfo): Boolean
+  def startNextBatchJob(job: JobInfo): Try[Unit]
+  def startNextOnlineJob(job: JobInfo): Try[Unit]
   
-  def completeBatchJob(job: JobInfo): Boolean
+  def getRunningBatchJobVersion(job: JobInfo): Option[Int]
+  def getRunningOnlineJobVersion(job: JobInfo): Option[Int]
+  
+  def insertInBatchTable(jobName: JobInfo, nr: Int, data: RowWithValue): Try[Unit]
+  def insertInOnlineTable(jobName: JobInfo, nr: Int, data: RowWithValue): Try[Unit]
+  
+  def completeBatchJob(job: JobInfo): Try[Unit]
+  def completeOnlineJob(job: JobInfo): Try[Unit]
+  
   def getOnlineJobState(job: JobInfo, version: Int): State
   def getBatchJobState(job: JobInfo, version: Int): State
-  //def completeOnlineJob(job: JobInfo): Boolean
+  
+  def getOnlineJobData[T <: RowWithValue](jobname: String, nr: Int, result: T): Option[List[RowWithValue]]
+  def getBatchJobData[T <: RowWithValue](jobname: String, nr: Int, result: T): Option[List[RowWithValue]]
+  
+ 
   
   
 //  /**
@@ -62,8 +76,7 @@ abstract class OnlineBatchSync extends LazyLogging {
 //  
 //  def getHeadBatch(jobName: String): Option[Int]
 //  
-  def insertInBatchTable(jobName: JobInfo, nr: Int, data: RowWithValue)
-  def insertInOnlineTable(jobName: JobInfo, nr: Int, data: RowWithValue)
+
 //  
 //  /**
 //   * Returns next job number of no job is currently running.
@@ -92,3 +105,7 @@ object JobInfo {
     new JobInfo(name)
   }
 }
+
+case class RunningJobExistsException(message: String) extends Exception(message)
+case class NoRunningJobExistsException(message: String) extends Exception(message)
+case class StatementExecutionError(message: String) extends Exception(message)
