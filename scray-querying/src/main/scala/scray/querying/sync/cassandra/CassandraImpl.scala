@@ -143,7 +143,7 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
             .map { _ + 1 % job.numberOfOnlineVersions }
             .map { newVersion =>
               logger.debug(s"Set next batch version to ${newVersion}")
-              createStartStatement(newVersion, false)
+              createStartStatement(newVersion, true)
             }
             .map { statement => executeQuorum(statement) }
           Try()

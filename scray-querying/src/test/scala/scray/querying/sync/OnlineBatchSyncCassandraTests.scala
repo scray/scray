@@ -134,14 +134,11 @@ class OnlineBatchSyncTests extends WordSpec with BeforeAndAfter with BeforeAndAf
       val indexes: Option[List[String]] = None
 
       table.createNewJob(jobInfo, new RowWithValue(columns, primaryKey, indexes))     
-      println("..............................................................................")
       table.startNextBatchJob(jobInfo)
-      println("--------------------------------------------------------------------------------")
-
-//      table.startNextOnlineJob(jobInfo)
-// 
-//      assert(table.getRunningBatchJobVersion(jobInfo).get == 0)
-//      assert(table.getRunningOnlineJobVersion(jobInfo).get == 0)
+      table.startNextOnlineJob(jobInfo)
+ 
+      assert(table.getRunningBatchJobVersion(jobInfo).get == 1)
+      assert(table.getRunningOnlineJobVersion(jobInfo).get == 1)
     }
 //    "switch to next job " in {
 //      val table = new OnlineBatchSyncCassandra("", dbconnection)
