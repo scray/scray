@@ -1,27 +1,15 @@
 package scray.querying.sync.types
 
-import scala.reflect.runtime.universe._
-import shapeless._
-import com.datastax.driver.core.Statement
 import scala.collection.JavaConverters._
-import com.datastax.driver.core.querybuilder.Insert
-import com.datastax.driver.core.querybuilder.QueryBuilder
+import scala.collection.mutable.ListBuffer
+import scala.reflect.runtime.universe._
+
+import com.datastax.driver.core.Statement
 import com.websudos.phantom.CassandraPrimitive._
 import com.websudos.phantom.CassandraPrimitive
-import java.sql.Struct
-import java.sql.RowId
-import java.sql.Clob
-import java.net.URL
-import java.math.BigInteger
-import java.sql.NClob
-import java.sql.Blob
-import java.sql.SQLXML
-import java.sql.Timestamp
-import java.sql.Time
-import java.sql.Ref
-import scala.reflect.ClassTag
+import scala.util.Try
+
 import scray.querying.sync.cassandra.CassandraImplementation._
-import scala.collection.mutable.ListBuffer
 
 class Table[T <: AbstractRows](val keySpace: String, val tableName: String, val columns: T) {
   val rows: ListBuffer[RowWithValue]= ListBuffer[RowWithValue]()
@@ -92,9 +80,9 @@ class Columns(
 }
 
 abstract class DbSession[Statement, InsertIn, Result](val dbHostname: String) {
-  def execute(statement: Statement): Result
-  def execute(statement: String): Result
-  def insert(statement: InsertIn): Result
+  def execute(statement: Statement): Try[Result]
+  def execute(statement: String): Try[Result]
+  def insert(statement: InsertIn): Try[Result]
 }
 
 object SyncTable {

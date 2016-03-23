@@ -60,20 +60,32 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
   val session = dbSession.getOrElse(new DbSession[Statement, Insert, ResultSet](dbHostname) {
     val cassandraSession = Cluster.builder().addContactPoint(dbHostname).build().connect()
 
-    override def execute(statement: String): ResultSet = {
-      cassandraSession.execute(statement)
+    override def execute(statement: String): Try[ResultSet] = {
+      Try {
+        val result = cassandraSession.execute(statement)
+        result.wasApplied().?(result, throw new StatementExecutionError(s"It was not possible to execute statement: ${statement}"))
+      }
     }
 
-    def execute(statement: Statement): ResultSet = {
-      cassandraSession.execute(statement)
+    def execute(statement: Statement): Try[ResultSet] = {
+     Try {
+        val result = cassandraSession.execute(statement)
+        result.wasApplied().?(result, throw new StatementExecutionError(s"It was not possible to execute statement: ${statement}"))
+      }
     }
 
-    def insert(statement: Insert): ResultSet = {
-      cassandraSession.execute(statement)
+    def insert(statement: Insert): Try[ResultSet] = {
+      Try {
+        val result = cassandraSession.execute(statement)
+        result.wasApplied().?(result, throw new StatementExecutionError(s"It was not possible to execute statement: ${statement}"))
+      }
     }
 
-    def execute(statement: SimpleStatement): ResultSet = {
-      cassandraSession.execute(statement)
+    def execute(statement: SimpleStatement): Try[ResultSet] = {
+      Try {
+        val result = cassandraSession.execute(statement)
+        result.wasApplied().?(result, throw new StatementExecutionError(s"It was not possible to execute statement: ${statement}"))
+      }
     }
   })
 
@@ -82,19 +94,22 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
   /**
    * Create and register tables for a new job.
    */
-  def createNewJob[T <: AbstractRows](job: JobInfo, dataTable: T) {
+  def createNewJob[T <: AbstractRows](job: JobInfo, dataTable: T): Try[Unit] = {
     this.crateTablesIfNotExists(job, dataTable)
 
     // Check if table is not locked. 
     // To ensure that tables are locked use lockBatchTable/lockOnlineTable.
-    var tableIsLocked = true
-    0 to job.numberOfBatcheVersions - 1 foreach { i =>
-      tableIsLocked &= this.isBatchTableLocked(job)
-      tableIsLocked &= this.isOnlineTableLocked(job)
-    }
+    val batchLocked = this.isBatchTableLocked(job)
+    val onlineLocked = this.isOnlineTableLocked(job)
 
-    if (tableIsLocked) {
-      throw new IllegalStateException("One job with the same name is already running")
+    if(batchLocked.isDefined && onlineLocked.isDefined) {
+      if(!(!batchLocked.get && !onlineLocked.get)) {
+        Try(new IllegalStateException("One job with the same name is already running"))
+      } else {
+        Try()
+      }
+    } else {
+      Try(new StatementExecutionError(""))
     }
   }
 
@@ -147,7 +162,7 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
             .map { _ + 1 % job.numberOfBatcheVersions }
             .map { newVersion =>
               logger.debug(s"Set next batch version to ${newVersion}")
-              createStartStatement(newVersion, true)
+              createStartStatement(newVersion, false)
             }
             .map { statement => executeQuorum(statement) }
           Try()
@@ -195,19 +210,27 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
       QueryBuilder.eq(syncTable.columns.jobname.name, job.name)).
       and(QueryBuilder.eq(syncTable.columns.online.name, online)).
       and(QueryBuilder.eq(syncTable.columns.state.name, State.RUNNING.toString()))).map {_.all()}
-
-    if (versions.size() > 1) {
-      logger.error(s"Inconsistant state. More than one version of job ${job.name} is running")
-      None
+    
+    if(versions.isSuccess) {
+      if (versions.get.size() > 1) {
+        logger.error(s"Inconsistant state. More than one version of job ${job.name} are running")
+        None
+      } else {
+        if(versions.get.size() == 0) {
+          None
+        } else {
+          Some(versions.get.get(0).getInt(syncTable.columns.versionNr.name))
+        }
+      }
     } else {
-      Some(versions.get(0).getInt(syncTable.columns.versionNr.name))
+      None
     }
   }
 
   /**
    * Check if tables exists and tables are locked
    */
-  private def crateTablesIfNotExists[T <: AbstractRows](job: JobInfo, dataColumns: T): Unit = {
+  private def crateTablesIfNotExists[T <: AbstractRows](job: JobInfo, dataColumns: T): Try[Unit] = {
     createKeyspace(syncTable)
     syncTable.columns.indexes match {
       case _: Some[List[String]] => createIndexStrings(syncTable).map { session.execute(_) }
@@ -251,6 +274,7 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
         .value(syncTable.columns.tablename.name, getOnlineJobName(syncTable.keySpace + "." + job.name, i))
         .ifNotExists)
     }
+    Try()
   }
 
   def getNewestBatchVersion(job: JobInfo): Option[Int] = {
@@ -300,7 +324,8 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
     }
 
     logger.debug(s"Insert data in online table ${job.name} for version ${version}: ${statement}")
-    session.insert(statement).wasApplied().toTry(Unit, throwStatementError(job.name, version, statement))
+    session.insert(statement)
+    Try()
   }
 
   private def throwStatementError(jobname: String, version: Int, statement: Statement) = {
@@ -313,7 +338,8 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
     }
 
     logger.debug(s"Insert data in batch table ${job.name} for version ${version}: ${statement}")
-    session.insert(statement).wasApplied().toTry(Unit, throwStatementError(job.name, version, statement))
+    session.insert(statement)
+    Try()
   }
 
   ////  def getTailBatch(jobName: String, session: Session): Option[CassandraTableLocation] = {
@@ -329,9 +355,15 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
   /**
    * Create base keyspace and table
    */
-  def createKeyspace[T <: AbstractRows](table: Table[T]): Unit = {
+  def createKeyspace[T <: AbstractRows](table: Table[T]): Try[Unit] = {
     session.execute(s"CREATE KEYSPACE IF NOT EXISTS ${table.keySpace} WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor' : 1};")
     session.execute(createSingleTableString(table))
+    
+//      statement match {
+//        case bStatement: BatchStatement => logger.error("It is currently not possible to execute : " + bStatement.getStatements)
+//        case _                          => logger.error("It is currently not possible to execute : " + statement)
+//      }
+     Try()
   }
 
   /**
@@ -345,6 +377,7 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
       version => rowsToLock.add(geLockStatement(job, version, true, true))
     }
     executeQuorum(rowsToLock)
+    Try()
   }
 
   /**
@@ -400,26 +433,26 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
      * Check if online table is locked.
      * To ensure that online table is locked use lockOnlineTable.
      */
-    def isOnlineTableLocked(job: JobInfo): Boolean = {
-      logger.debug(s"Unlock table for job: ${job.name}")
-      val res = execute(QueryBuilder.select().all().from(syncTable.keySpace, syncTable.tableName).where(
-        QueryBuilder.eq(syncTable.columns.jobname.name, job.name)).
-        and(QueryBuilder.eq(syncTable.columns.online.name, true)).
-        and(QueryBuilder.eq(syncTable.columns.locked.name, true)))
-      (res.all().size() > 0)
+    def isOnlineTableLocked(job: JobInfo): Option[Boolean] = {
+       logger.debug(s"Check if online table is locked for job: ${job.name}")
+       isTableLocked(job, true)
     }
   
       /**
      * Check if batch table is locked.
      * To ensure that batch table is locked use lockBatchTable.
      */
-    def isBatchTableLocked(job: JobInfo): Boolean = {
-      logger.debug(s"Unlock table for job: ${job.name}")
-      val res = execute(QueryBuilder.select().all().from(syncTable.keySpace, syncTable.tableName).
-        where(QueryBuilder.eq(syncTable.columns.jobname.name, job.name)).
-        and(QueryBuilder.eq(syncTable.columns.online.name, false)).
+    def isBatchTableLocked(job: JobInfo): Option[Boolean] = {
+       logger.debug(s"Check if batch table is locked for job: ${job.name}")
+       isTableLocked(job, false)
+    }
+    
+    private def isTableLocked(job: JobInfo, online: Boolean): Option[Boolean] = {
+      val res = execute(QueryBuilder.select().all().from(syncTable.keySpace, syncTable.tableName).where(
+        QueryBuilder.eq(syncTable.columns.jobname.name, job.name)).
+        and(QueryBuilder.eq(syncTable.columns.online.name, online)).
         and(QueryBuilder.eq(syncTable.columns.locked.name, true)))
-      (res.all().size() > 0)
+        res.map { rows => rows.all().size() == 1 }.toOption
     }
 
   def geLockStatement(job: JobInfo, version: Int, online: Boolean, newState: Boolean): Conditions = {
@@ -559,17 +592,12 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
     statement.setConsistencyLevel(ConsistencyLevel.QUORUM)
 
     val rs = session.execute(statement);
-
-    if (rs.wasApplied()) {
-      logger.debug(s"Execute ${statement}");
-      Try()
-    } else {
-      statement match {
-        case bStatement: BatchStatement => logger.error("It is currently not possible to execute : " + bStatement.getStatements)
-        case _                          => logger.error("It is currently not possible to execute : " + statement)
-      }
-      throw new StatementExecutionError(s"It was not possible to execute statement: ${statement}")
-    }
+    
+//      statement match {
+//        case bStatement: BatchStatement => logger.error("It is currently not possible to execute : " + bStatement.getStatements)
+//        case _                          => logger.error("It is currently not possible to execute : " + statement)
+//      }
+    Try()
   }
 
   private def execute(statement: RegularStatement): Try[ResultSet] = {
@@ -577,10 +605,10 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
     statement.setConsistencyLevel(ConsistencyLevel.QUORUM);
 
     val result = session.execute(statement);
-    Try {
-      result.wasApplied().?(result, throw new StatementExecutionError(s"It was not possible to execute statement: ${statement}"))
-    }
+    logger.debug(s"Result of statement ${statement}: ${result.get}")
+    result
   }
+
 
   def createSingleTableString[T <: AbstractRows](table: Table[T]): String = {
     val createStatement = s"CREATE TABLE IF NOT EXISTS ${table.keySpace + "." + table.tableName} (" +

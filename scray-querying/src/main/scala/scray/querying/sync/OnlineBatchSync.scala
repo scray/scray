@@ -26,7 +26,7 @@ abstract class OnlineBatchSync extends LazyLogging {
   /**
    * Generate and register tables for a new job.
    */
-  def createNewJob[T <: ArbitrarylyTypedRows](job: JobInfo, dataTable: T)
+  def createNewJob[T <: ArbitrarylyTypedRows](job: JobInfo, dataTable: T): Try[Unit]
   
   def startNextBatchJob(job: JobInfo): Try[Unit]
   def startNextOnlineJob(job: JobInfo): Try[Unit]
@@ -40,8 +40,8 @@ abstract class OnlineBatchSync extends LazyLogging {
   def completeBatchJob(job: JobInfo): Try[Unit]
   def completeOnlineJob(job: JobInfo): Try[Unit]
   
-  def getOnlineJobState(job: JobInfo, version: Int): State
-  def getBatchJobState(job: JobInfo, version: Int): State
+  def getOnlineJobState(job: JobInfo, version: Int): Option[State]
+  def getBatchJobState(job: JobInfo, version: Int): Option[State]
   
   def getOnlineJobData[T <: RowWithValue](jobname: String, nr: Int, result: T): Option[List[RowWithValue]]
   def getBatchJobData[T <: RowWithValue](jobname: String, nr: Int, result: T): Option[List[RowWithValue]]
@@ -57,17 +57,17 @@ abstract class OnlineBatchSync extends LazyLogging {
   /**
    * Lock online table if it is used by another spark job.
    */
-  def lockOnlineTable(job: JobInfo): Boolean
+  def lockOnlineTable(job: JobInfo): Try[Unit]
    /**
    * Unlock online table to make it available for a new job.
    */
-  def unlockOnlineTable(job: JobInfo): Boolean
+  def unlockOnlineTable(job: JobInfo): Try[Unit]
   //def isOnlineTableLocked(jobName: JobInfo): Boolean
   
    /**
    * Lock online table if it is used by another spark job.
    */
-  def lockBatchTable(job: JobInfo): Boolean
+  def lockBatchTable(job: JobInfo): Try[Unit]
 
 //   /**
 //   * Unlock batch table to make it available for a new job.
