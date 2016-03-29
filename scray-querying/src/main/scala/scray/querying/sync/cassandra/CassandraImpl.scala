@@ -31,6 +31,8 @@ import scala.util.Try
 import scray.querying.sync.RunningJobExistsException
 import scray.querying.sync.NoRunningJobExistsException
 import scray.querying.sync.StatementExecutionError
+import scala.util.Failure
+import scala.util.Success
 
 object CassandraImplementation {
   implicit def genericCassandraColumnImplicit[T](implicit cassImplicit: CassandraPrimitive[T]): DBColumnImplementation[T] = new DBColumnImplementation[T] {
@@ -154,7 +156,7 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
       this.getRunningBatchJobVersion(job) match {
         case version: Some[Int] => {
           logger.error(s"Job ${job.name} with version ${version} is currently running")
-          Try(new RunningJobExistsException(s"Batch job ${job.name} with version ${version} is currently running"))
+          Try(throw RunningJobExistsException(s"Batch job ${job.name} with version ${version} is currently running"))
         }
         case _ =>
           this.lockBatchTable(job)
@@ -189,6 +191,7 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
   private def completeJob(job: JobInfo, version: Int, online: Boolean): Try[Unit] = {
     val query = QueryBuilder.update(syncTable.keySpace, syncTable.tableName)
       .`with`(QueryBuilder.set(syncTable.columns.state.name, State.COMPLETED.toString()))
+      .and(QueryBuilder.set(syncTable.columns.creationTime.name, System.currentTimeMillis()))
       .where(QueryBuilder.eq(syncTable.columns.jobname.name, job.name))
       .and(QueryBuilder.eq(syncTable.columns.online.name, online))
       .and(QueryBuilder.eq(syncTable.columns.versionNr.name, version))
@@ -305,7 +308,7 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
       .toOption
   }
 
-  private def getNewestOnlineVersion(job: JobInfo): Option[Int] = {
+  def getNewestOnlineVersion(job: JobInfo): Option[Int] = {
     val headBatchQuery: RegularStatement = QueryBuilder.select().from(syncTable.keySpace, syncTable.tableName).
       where(QueryBuilder.eq(syncTable.columns.jobname.name, job.name))
       .and(QueryBuilder.eq(syncTable.columns.online.name, true))
@@ -324,12 +327,14 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
     }
 
     logger.debug(s"Insert data in online table ${job.name} for version ${version}: ${statement}")
-    session.insert(statement)
-    Try()
+    session.insert(statement) match {
+      case Success(_) => Try()
+      case Failure(message) => Failure(this.throwInsertStatementError(job.name, version, statement, message.toString()))
+    }
   }
 
-  private def throwStatementError(jobname: String, version: Int, statement: Statement) = {
-    throw new StatementExecutionError(s"Error while inserting data in online table ${jobname} for version ${version}. Statement: ${statement}")
+  private def throwInsertStatementError(jobname: String, version: Int, statement: Statement, message: String) = {
+    throw new StatementExecutionError(s"Error while inserting data for job ${jobname}, version ${version}. Statement: ${statement}. ${message}")
   }
   
   def insertInBatchTable(job: JobInfo, version: Int, data: RowWithValue): Try[Unit] = {
@@ -337,9 +342,10 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
       (acc, column) => acc.value(column.name, column.value)
     }
 
-    logger.debug(s"Insert data in batch table ${job.name} for version ${version}: ${statement}")
-    session.insert(statement)
-    Try()
+    session.insert(statement) match {
+      case Success(_) => Try()
+      case Failure(message) => Failure(this.throwInsertStatementError(job.name, version, statement, message.toString()))
+    }
   }
 
   ////  def getTailBatch(jobName: String, session: Session): Option[CassandraTableLocation] = {
@@ -452,7 +458,7 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
         QueryBuilder.eq(syncTable.columns.jobname.name, job.name)).
         and(QueryBuilder.eq(syncTable.columns.online.name, online)).
         and(QueryBuilder.eq(syncTable.columns.locked.name, true)))
-        res.map { rows => rows.all().size() == 1 }.toOption
+        res.map { rows => rows.all().size() > 0 }.toOption
     }
 
   def geLockStatement(job: JobInfo, version: Int, online: Boolean, newState: Boolean): Conditions = {
