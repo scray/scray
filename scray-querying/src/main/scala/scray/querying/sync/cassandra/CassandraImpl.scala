@@ -104,7 +104,7 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
   /**
    * Create and register tables for a new job.
    */
-  def initJob[T <: AbstractRows](job: JobInfo, dataTable: T): Try[Unit] = {
+  def initJob[T <: AbstractRow](job: JobInfo, dataTable: T): Try[Unit] = {
     this.crateTablesIfNotExists(job, dataTable)
 
     // Check if table is not locked. 
@@ -240,7 +240,7 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
   /**
    * Check if tables exists and tables are locked
    */
-  private def crateTablesIfNotExists[T <: AbstractRows](job: JobInfo, dataColumns: T): Try[Unit] = {
+  private def crateTablesIfNotExists[T <: AbstractRow](job: JobInfo, dataColumns: T): Try[Unit] = {
     createKeyspace(syncTable)
     syncTable.columns.indexes match {
       case _: Some[List[String]] => createIndexStrings(syncTable).map { session.execute(_) }
@@ -369,7 +369,7 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
   /**
    * Create base keyspace and table
    */
-  def createKeyspace[T <: AbstractRows](table: Table[T]): Try[Unit] = {
+  def createKeyspace[T <: AbstractRow](table: Table[T]): Try[Unit] = {
     session.execute(s"CREATE KEYSPACE IF NOT EXISTS ${table.keySpace} WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor' : 1};")
     session.execute(createSingleTableString(table))
     
@@ -627,7 +627,7 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
     }
   }
 
-  def createSingleTableString[T <: AbstractRows](table: Table[T]): String = {
+  def createSingleTableString[T <: AbstractRow](table: Table[T]): String = {
     val createStatement = s"CREATE TABLE IF NOT EXISTS ${table.keySpace + "." + table.tableName} (" +
       s"${table.columns.foldLeft("")((acc, next) => { acc + next.name + " " + next.getDBType + ", " })} " +
       s"PRIMARY KEY ${table.columns.primaryKey})"
@@ -635,7 +635,7 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
     createStatement
   }
 
-  private def createIndexStrings[T <: AbstractRows](table: Table[T]): List[String] = {
+  private def createIndexStrings[T <: AbstractRow](table: Table[T]): List[String] = {
 
     def addString(column: String): String = {
       s"CREATE INDEX IF NOT EXISTS ON ${table.keySpace}.${table.tableName} (${column})"

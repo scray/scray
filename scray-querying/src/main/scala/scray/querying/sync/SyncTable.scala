@@ -11,7 +11,7 @@ import scala.util.Try
 
 import scray.querying.sync.cassandra.CassandraImplementation._
 
-class Table[T <: AbstractRows](val keySpace: String, val tableName: String, val columns: T) {
+class Table[T <: AbstractRow](val keySpace: String, val tableName: String, val columns: T) {
   val rows: ListBuffer[RowWithValue]= ListBuffer[RowWithValue]()
   
   def addRow(row: RowWithValue) {
@@ -36,7 +36,7 @@ class Column[T: DBColumnImplementation](val name: String) { self =>
   def getDBType: String = dbimpl.getDBType
 }
 
-abstract class AbstractRows {
+abstract class AbstractRow {
   type ColumnType <: Column[_]
   val columns: List[ColumnType]
   val primaryKey = ""
@@ -47,7 +47,7 @@ abstract class AbstractRows {
   }
 }
 
-abstract class ArbitrarylyTypedRows extends AbstractRows {
+abstract class ArbitrarylyTypedRows extends AbstractRow {
   override type ColumnType = Column[_]
 }
 
@@ -61,7 +61,7 @@ case class ColumnWithValue[ColumnT: DBColumnImplementation](override val name: S
 class RowWithValue(
     override val columns: List[ColumnWithValue[_]],
     override val primaryKey: String,
-    override val indexes: Option[List[String]]) extends AbstractRows {
+    override val indexes: Option[List[String]]) extends AbstractRow {
 
   override type ColumnType = ColumnWithValue[_]
 
@@ -74,7 +74,7 @@ class RowWithValue(
 class Columns(
   override val columns: List[Column[_]],
   override val primaryKey: String,
-  override val indexes: Option[List[String]]) extends AbstractRows {
+  override val indexes: Option[List[String]]) extends AbstractRow {
   
   override type ColumnType = Column[_]
 }
@@ -92,7 +92,7 @@ object SyncTable {
 }
 
 object VoidTable {
-  def apply(keySpace: String, tableName: String, columns: AbstractRows) = {
+  def apply(keySpace: String, tableName: String, columns: AbstractRow) = {
     new Table(keySpace, tableName, columns)
   }
 }

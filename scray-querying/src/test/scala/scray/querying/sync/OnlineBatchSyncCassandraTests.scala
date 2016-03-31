@@ -136,8 +136,8 @@ class OnlineBatchSyncTests extends WordSpec with BeforeAndAfter with BeforeAndAf
     }
     "get running batch/online version " in {
       val table = new OnlineBatchSyncCassandra("", dbconnection)
+      
       val jobInfo = JobInfo("job59")
-
       val sum = new ColumnWithValue[Long]("sum", 100)
       val columns = sum :: Nil
       val primaryKey = s"(${sum.name})"
