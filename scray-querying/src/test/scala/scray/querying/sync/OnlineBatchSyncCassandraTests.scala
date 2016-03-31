@@ -35,6 +35,9 @@ import org.slf4j.bridge.SLF4JBridgeHandler
 import scray.querying.sync.types.SyncTable
 import scray.querying.sync.types.State
 import scala.util.Try
+import scray.querying.sync.cassandra.CassandraImplementation.RichBoolean
+import scala.util.Failure
+import scala.util.Success
 
 @RunWith(classOf[JUnitRunner])
 class OnlineBatchSyncTests extends WordSpec with BeforeAndAfter with BeforeAndAfterAll {
@@ -62,15 +65,30 @@ class OnlineBatchSyncTests extends WordSpec with BeforeAndAfter with BeforeAndAf
       EmbeddedCassandraServerHelper.cleanEmbeddedCassandra()
 
       override def execute(statement: String): Try[ResultSet] = {
-        Try(cassandraSession.execute(statement))
+        val result = cassandraSession.execute(statement)
+        if(result.wasApplied()) {
+          Success(result)
+        } else {
+          Failure(new StatementExecutionError(s"It was not possible to execute statement: ${statement}. Error: ${result.getExecutionInfo}"))
+        }      
       }
 
       def execute(statement: Statement): Try[ResultSet] = {
-        Try(cassandraSession.execute(statement))
+        val result = cassandraSession.execute(statement)
+        if(result.wasApplied()) {
+          Success(result)
+        } else {
+          Failure(new StatementExecutionError(s"It was not possible to execute statement: ${statement}. Error: ${result.getExecutionInfo}"))
+        }      
       }
 
       def insert(statement: Insert): Try[ResultSet] = {
-        Try(cassandraSession.execute(statement))
+        val result = cassandraSession.execute(statement)
+        if(result.wasApplied()) {
+          Success(result)
+        } else {
+          Failure(new StatementExecutionError(s"It was not possible to execute statement: ${statement}. Error: ${result.getExecutionInfo}"))
+        }
       }
     })
   }
@@ -79,51 +97,43 @@ class OnlineBatchSyncTests extends WordSpec with BeforeAndAfter with BeforeAndAf
     EmbeddedCassandraServerHelper.cleanEmbeddedCassandra()
   }
   "OnlineBatchSync " should {
-//    " init client" in {
-//
-//      val table = new OnlineBatchSyncCassandra("", dbconnection)
-//      table.createNewJob[SumTestColumns](JobInfo("job55"), new SumTestColumns)
-//    }
-//    " throw exception if job already exists" in {
-//      val table = new OnlineBatchSyncCassandra("", dbconnection)
-//      table.createNewJob(JobInfo("job56"), new SumTestColumns())
-//
-//      try {
-//        table.createNewJob(JobInfo("job56"), new SumTestColumns())
-//      } catch {
-//        case _: IllegalStateException => true
-//      }
-//    }
-//    "lock table" in {
-//      val table = new OnlineBatchSyncCassandra("", dbconnection)
-//      table.createNewJob(JobInfo("job57"), new SumTestColumns())
-//
-//      assert(table.lockOnlineTable(JobInfo("job57")) === true)
-//      assert(table.isOnlineTableLocked(JobInfo("job57")) === true)
-//    }
-//    "lock table only once" in {
-//      val table = new OnlineBatchSyncCassandra("", dbconnection)
-//      table.createNewJob(JobInfo("job57"), new SumTestColumns())
-//
-//      assert(table.lockOnlineTable(JobInfo("job57")) === true)
-//      assert(table.lockOnlineTable(JobInfo("job57")) === false)
-//    }
-//    "insert and read data" in {
-//      val table = new OnlineBatchSyncCassandra("", dbconnection)
-//      table.createNewJob(JobInfo("job58"), new SumTestColumns())
-//
-//      val sum = new ColumnWithValue[Long]("sum", 100)
-//      val columns = sum :: Nil
-//      val primaryKey = s"(${sum.name})"
-//      val indexes: Option[List[String]] = None
-//
-//      table.insertInOnlineTable(JobInfo("job58"), 1, new RowWithValue(columns, primaryKey, indexes))
-//
-//      val columnsR = new ColumnWithValue[Long]("sum", 200) :: Nil
-//      val columValue = table.getOnlineJobData("job58", 1, new RowWithValue(columnsR, primaryKey, indexes)).get.head.columns.head.value.toString()
-//
-//      assert(columValue === "100")
-//    }
+    " init client" in {
+
+      val table = new OnlineBatchSyncCassandra("", dbconnection)
+      assert(table.initJob[SumTestColumns](JobInfo("job55"), new SumTestColumns).isSuccess)
+    }
+    "lock table" in {
+      val table = new OnlineBatchSyncCassandra("", dbconnection)
+      table.initJob(JobInfo("job57"), new SumTestColumns())
+
+      table.lockOnlineTable(JobInfo("job57"))
+      println(table.isOnlineTableLocked(JobInfo("job57")).get)
+      assert(table.isOnlineTableLocked(JobInfo("job57")).get === true)
+    }
+    "lock table only once" in {
+      val table = new OnlineBatchSyncCassandra("", dbconnection)
+      table.initJob(JobInfo("job57"), new SumTestColumns())
+
+      table.lockOnlineTable(JobInfo("job57"))
+      println(table.isOnlineTableLocked(JobInfo("job57")).get)
+      //assert(table.lockOnlineTable(JobInfo("job57")).get === false)
+    }
+    "insert and read data" in {
+      val table = new OnlineBatchSyncCassandra("", dbconnection)
+      table.initJob(JobInfo("job58"), new SumTestColumns())
+
+      val sum = new ColumnWithValue[Long]("sum", 100)
+      val columns = sum :: Nil
+      val primaryKey = s"(${sum.name})"
+      val indexes: Option[List[String]] = None
+
+      table.insertInOnlineTable(JobInfo("job58"), 1, new RowWithValue(columns, primaryKey, indexes))
+
+      val columnsR = new ColumnWithValue[Long]("sum", 200) :: Nil
+      val columValue = table.getOnlineJobData("job58", 1, new RowWithValue(columnsR, primaryKey, indexes)).get.head.columns.head.value.toString()
+
+      assert(columValue === "100")
+    }
     "get running batch/online version " in {
       val table = new OnlineBatchSyncCassandra("", dbconnection)
       val jobInfo = JobInfo("job59")
@@ -133,118 +143,152 @@ class OnlineBatchSyncTests extends WordSpec with BeforeAndAfter with BeforeAndAf
       val primaryKey = s"(${sum.name})"
       val indexes: Option[List[String]] = None
 
-      table.createNewJob(jobInfo, new RowWithValue(columns, primaryKey, indexes))     
+      table.initJob(jobInfo, new RowWithValue(columns, primaryKey, indexes))     
       table.startNextBatchJob(jobInfo)
       table.startNextOnlineJob(jobInfo)
  
       assert(table.getRunningBatchJobVersion(jobInfo).get == 1)
       assert(table.getRunningOnlineJobVersion(jobInfo).get == 1)
     }
-//    "switch to next job " in {
-//      val table = new OnlineBatchSyncCassandra("", dbconnection)
-//      val jobInfo = JobInfo("job59")
-//
-//      val sum = new ColumnWithValue[Long]("sum", 100)
-//      val columns = sum :: Nil
-//      val primaryKey = s"(${sum.name})"
-//      val indexes: Option[List[String]] = None
-//
-//      table.createNewJob(jobInfo, new RowWithValue(columns, primaryKey, indexes))     
-//      table.startNextBatchJob(jobInfo)
-//      table.startNextOnlineJob(jobInfo)
-//      
-//      // Switching is not possible. Because an other job is running.
-//      assert(table.startNextBatchJob(jobInfo) === false)
-// 
-//      assert(table.getRunningBatchJobVersion(jobInfo).get === 0)
-//      assert(table.getRunningOnlineJobVersion(jobInfo).get === 0)
-//    }
-//    "mark new version " in {
-//      val table = new OnlineBatchSyncCassandra("", dbconnection)
-//      val jobInfo = JobInfo("job59")
-//
-//      val sum = new ColumnWithValue[Long]("sum", 100)
-//      val columns = sum :: Nil
-//      val primaryKey = s"(${sum.name})"
-//      val indexes: Option[List[String]] = None
-//
-//      table.createNewJob(jobInfo, new RowWithValue(columns, primaryKey, indexes))
-//      table.startNextBatchJob(jobInfo)
-//     
-//      
-//      table.insertInBatchTable(jobInfo, 0, new RowWithValue(columns, primaryKey, indexes)) 
-//      table.completeBatchJob(jobInfo)
-//
-//      assert(table.getOnlineJobData("job59", 0, new RowWithValue(columns, primaryKey, indexes)).get.head.columns.head.value === 100L)
-//    }
-//    "find latest online batch" in {
-//      val table = new OnlineBatchSyncCassandra("", dbconnection)
-//
-//      val sum = new ColumnWithValue[Long]("sum", 100)
-//      val columns = sum :: Nil
-//      val primaryKey = s"(${sum.name})"
-//      val indexes: Option[List[String]] = None
-//
-//      table.createNewJob(JobInfo("job59"), new RowWithValue(columns, primaryKey, indexes))
-//
-//      val nr = table.getNewestBatchVersion(JobInfo("job59"))
-//      table.insertInOnlineTable(JobInfo("job59"), 3, new RowWithValue(columns, primaryKey, indexes))
-//      assert(table.getOnlineJobData("job59", nr.getOrElse(0), new RowWithValue(columns, primaryKey, indexes)).get.head.columns.head.value === 100L)
-//    }
-//    " mark new batch job version " in {
-//      val table = new OnlineBatchSyncCassandra("", dbconnection)
-//      val syncTable = SyncTable("SILIDX", "SyncTable")
-//      val job = JobInfo("JOB_100")
-//
-//      val sum = new ColumnWithValue[Long]("sum", 100)
-//      val columns = sum :: Nil
-//      val primaryKey = s"(${sum.name})"
-//      val indexes: Option[List[String]] = None
-//
-//      table.createNewJob(job, new RowWithValue(columns, primaryKey, indexes))
-//      table.startNextBatchJob(job) 
-//
-//      assert(table.getBatchJobState(job, 0).equals(State.RUNNING))
-//      assert(table.getBatchJobState(job, 1).equals(State.NEW))
-//      assert(table.getBatchJobState(job, 2).equals(State.NEW))
-//    }
-//    " mark new online job version " in {
-//      val table = new OnlineBatchSyncCassandra("", dbconnection)
-//      val syncTable = SyncTable("SILIDX", "SyncTable")
-//      val jobInfo = JobInfo("JOB_100")
-//
-//      val sum = new ColumnWithValue[Long]("sum", 100)
-//      val columns = sum :: Nil
-//      val primaryKey = s"(${sum.name})"
-//      val indexes: Option[List[String]] = None
-//
-//      table.createNewJob(jobInfo, new RowWithValue(columns, primaryKey, indexes))
-//      table.startNextOnlineJob(jobInfo)
-//      
-//      println(table.getOnlineJobState(jobInfo, 0))
-//      println(table.getOnlineJobState(jobInfo, 1))
-//      println(table.getOnlineJobState(jobInfo, 2))
-//      
-//      assert(table.getOnlineJobState(jobInfo, 0).equals(State.RUNNING))
-//      assert(table.getOnlineJobState(jobInfo, 1).equals(State.NEW))
-//      assert(table.getOnlineJobState(jobInfo, 2).equals(State.NEW))
-//    }
-//    " start and stop jobs " in {
-//      val table = new OnlineBatchSyncCassandra("andreas", None)
-//      val syncTable = SyncTable("SILIDX", "SyncTable")
-//      val job = JobInfo("JOB_100")
-//
-//      val sum = new ColumnWithValue[Long]("sum", 100)
-//      val columns = sum :: Nil
-//      val primaryKey = s"(${sum.name})"
-//      val indexes: Option[List[String]] = None
-//
-//      table.createNewJob(job, new RowWithValue(columns, primaryKey, indexes))
-//      table.startNextBatchJob(job)
-//      assert(table.getBatchJobState(job, 0).equals(State.RUNNING))
-//      table.completeBatchJob(job)
-//      assert(table.getBatchJobState(job, 0).equals(State.COMPLETED))
-//    }
+    "switch to next job " in {
+      val table = new OnlineBatchSyncCassandra("", dbconnection)
+      val jobInfo = JobInfo("job59")
+
+      val sum = new ColumnWithValue[Long]("sum", 100)
+      val columns = sum :: Nil
+      val primaryKey = s"(${sum.name})"
+      val indexes: Option[List[String]] = None
+
+      table.initJob(jobInfo, new RowWithValue(columns, primaryKey, indexes))     
+      table.startNextBatchJob(jobInfo)
+      table.startNextOnlineJob(jobInfo)
+      
+      // Switching is not possible. Because an other job is running.
+      assert(table.startNextBatchJob(jobInfo).isSuccess === false)
+ 
+      assert(table.getRunningBatchJobVersion(jobInfo).get === 1)
+      assert(table.getRunningOnlineJobVersion(jobInfo).get === 1)
+    }
+    "insert and read batch data " in {
+      val table = new OnlineBatchSyncCassandra("", dbconnection)
+      val jobInfo = JobInfo("job59")
+
+      val sum = new ColumnWithValue[Long]("sum", 100)
+      val columns = sum :: Nil
+      val primaryKey = s"(${sum.name})"
+      val indexes: Option[List[String]] = None
+
+      table.initJob(jobInfo, new RowWithValue(columns, primaryKey, indexes))
+      table.startNextBatchJob(jobInfo)
+     
+      
+      table.insertInBatchTable(jobInfo, 0, new RowWithValue(columns, primaryKey, indexes)) 
+      table.completeBatchJob(jobInfo)
+
+      assert(table.getBatchJobData("job59", 0, new RowWithValue(columns, primaryKey, indexes)).get.head.columns.head.value === 100L)
+    }
+    "insert and read online data " in {
+      val table = new OnlineBatchSyncCassandra("", dbconnection)
+      val jobInfo = JobInfo("job59")
+
+      val sum = new ColumnWithValue[Long]("sum", 100)
+      val columns = sum :: Nil
+      val primaryKey = s"(${sum.name})"
+      val indexes: Option[List[String]] = None
+
+      table.initJob(jobInfo, new RowWithValue(columns, primaryKey, indexes))
+      table.startNextOnlineJob(jobInfo)
+      table.insertInOnlineTable(jobInfo, 0, new RowWithValue(columns, primaryKey, indexes)) 
+      table.completeOnlineJob(jobInfo)
+
+      assert(table.getOnlineJobData("job59", 0, new RowWithValue(columns, primaryKey, indexes)).get.head.columns.head.value === 100L)
+    }
+    "find latest online version 1" in {
+      val table = new OnlineBatchSyncCassandra("", dbconnection)
+      val jobInfo = JobInfo("job59")
+
+
+      val sum = new ColumnWithValue[Long]("sum", 100)
+      val columns = sum :: Nil
+      val primaryKey = s"(${sum.name})"
+      val indexes: Option[List[String]] = None
+
+      table.initJob(jobInfo, new RowWithValue(columns, primaryKey, indexes))
+      table.startNextOnlineJob(jobInfo)
+      val oVersion = table.getRunningOnlineJobVersion(jobInfo).get
+      table.insertInOnlineTable(jobInfo, oVersion, new RowWithValue(columns, primaryKey, indexes)) 
+      table.completeOnlineJob(jobInfo)
+      
+      val version = table.getNewestOnlineVersion(jobInfo)
+      
+      assert(table.getOnlineJobData(jobInfo.name, version.getOrElse(0), new RowWithValue(columns, primaryKey, indexes)).get.head.columns.head.value === sum.value)
+    }
+    "find latest online version 2" in {
+      val table = new OnlineBatchSyncCassandra("", dbconnection)
+
+      val sum = new ColumnWithValue[Long]("sum", 200)
+      val columns = sum :: Nil
+      val primaryKey = s"(${sum.name})"
+      val indexes: Option[List[String]] = None
+      val jobInfo = JobInfo("job59")
+
+      table.initJob(jobInfo, new RowWithValue(columns, primaryKey, indexes))
+
+      val nr = table.getNewestBatchVersion(JobInfo("job59"))
+      
+      table.insertInOnlineTable(jobInfo, nr.get, new RowWithValue(columns, primaryKey, indexes))
+      assert(table.getOnlineJobData("job59", nr.getOrElse(0), new RowWithValue(columns, primaryKey, indexes)).get.head.columns.head.value === sum.value)
+    }
+    " mark new batch job version " in {
+      val table = new OnlineBatchSyncCassandra("", dbconnection)
+      val syncTable = SyncTable("SILIDX", "SyncTable")
+      val job = JobInfo("JOB_100")
+
+      val sum = new ColumnWithValue[Long]("sum", 100)
+      val columns = sum :: Nil
+      val primaryKey = s"(${sum.name})"
+      val indexes: Option[List[String]] = None
+
+      table.initJob(job, new RowWithValue(columns, primaryKey, indexes))
+      table.startNextBatchJob(job) 
+
+      assert(table.getBatchJobState(job, 0).get.equals(State.NEW))
+      assert(table.getBatchJobState(job, 1).get.equals(State.RUNNING))
+      assert(table.getBatchJobState(job, 2).get.equals(State.NEW))
+    }
+    " mark new online job version " in {
+      val table = new OnlineBatchSyncCassandra("", dbconnection)
+      val syncTable = SyncTable("SILIDX", "SyncTable")
+      val jobInfo = JobInfo("JOB_100")
+
+      val sum = new ColumnWithValue[Long]("sum", 100)
+      val columns = sum :: Nil
+      val primaryKey = s"(${sum.name})"
+      val indexes: Option[List[String]] = None
+
+      table.initJob(jobInfo, new RowWithValue(columns, primaryKey, indexes))
+      table.startNextOnlineJob(jobInfo)
+      
+      assert(table.getOnlineJobState(jobInfo, 0).get.equals(State.NEW))
+      assert(table.getOnlineJobState(jobInfo, 1).get.equals(State.RUNNING))
+      assert(table.getOnlineJobState(jobInfo, 2).get.equals(State.NEW))
+    }
+    " start and stop jobs " in {
+      val table = new OnlineBatchSyncCassandra("", dbconnection)
+      val syncTable = SyncTable("SILIDX", "SyncTable")
+      val job = JobInfo("JOB_100")
+
+      val sum = new ColumnWithValue[Long]("sum", 100)
+      val columns = sum :: Nil
+      val primaryKey = s"(${sum.name})"
+      val indexes: Option[List[String]] = None
+
+      table.initJob(job, new RowWithValue(columns, primaryKey, indexes))
+      table.startNextBatchJob(job)
+      assert(table.getBatchJobState(job, 1).get.equals(State.RUNNING))
+      table.completeBatchJob(job)
+      assert(table.getBatchJobState(job, 1).get.equals(State.COMPLETED))
+    }
 //
 //    
 //    "use hlist" in {

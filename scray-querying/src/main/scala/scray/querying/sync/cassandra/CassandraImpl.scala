@@ -63,30 +63,38 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
     val cassandraSession = Cluster.builder().addContactPoint(dbHostname).build().connect()
 
     override def execute(statement: String): Try[ResultSet] = {
-      Try {
-        val result = cassandraSession.execute(statement)
-        result.wasApplied().?(result, throw new StatementExecutionError(s"It was not possible to execute statement: ${statement}"))
+      val result = cassandraSession.execute(statement)
+      if(result.wasApplied()) {
+        Success(result)
+      } else {
+        Failure(new StatementExecutionError(s"It was not possible to execute statement: ${statement}. Error: ${result.getExecutionInfo}"))
       }
     }
 
     def execute(statement: Statement): Try[ResultSet] = {
-     Try {
-        val result = cassandraSession.execute(statement)
-        result.wasApplied().?(result, throw new StatementExecutionError(s"It was not possible to execute statement: ${statement}"))
+      val result = cassandraSession.execute(statement)
+      if(result.wasApplied()) {
+        Success(result)
+      } else {
+        Failure(new StatementExecutionError(s"It was not possible to execute statement: ${statement}. Error: ${result.getExecutionInfo}"))
       }
     }
 
     def insert(statement: Insert): Try[ResultSet] = {
-      Try {
-        val result = cassandraSession.execute(statement)
-        result.wasApplied().?(result, throw new StatementExecutionError(s"It was not possible to execute statement: ${statement}"))
+      val result = cassandraSession.execute(statement)
+      if(result.wasApplied()) {
+        Success(result)
+      } else {
+        Failure(new StatementExecutionError(s"It was not possible to execute statement: ${statement}. Error: ${result.getExecutionInfo}"))
       }
     }
 
     def execute(statement: SimpleStatement): Try[ResultSet] = {
-      Try {
-        val result = cassandraSession.execute(statement)
-        result.wasApplied().?(result, throw new StatementExecutionError(s"It was not possible to execute statement: ${statement}"))
+      val result = cassandraSession.execute(statement)
+      if(result.wasApplied()) {
+        Success(result)
+      } else {
+        Failure(new StatementExecutionError(s"It was not possible to execute statement: ${statement}. Error: ${result.getExecutionInfo}"))
       }
     }
   })
@@ -96,7 +104,7 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
   /**
    * Create and register tables for a new job.
    */
-  def createNewJob[T <: AbstractRows](job: JobInfo, dataTable: T): Try[Unit] = {
+  def initJob[T <: AbstractRows](job: JobInfo, dataTable: T): Try[Unit] = {
     this.crateTablesIfNotExists(job, dataTable)
 
     // Check if table is not locked. 
@@ -106,12 +114,12 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
 
     if(batchLocked.isDefined && onlineLocked.isDefined) {
       if(!(!batchLocked.get && !onlineLocked.get)) {
-        Try(new IllegalStateException("One job with the same name is already running"))
+        Failure(new IllegalStateException("One job with the same name is already running"))
       } else {
         Try()
       }
     } else {
-      Try(new StatementExecutionError(""))
+      Failure(new StatementExecutionError(""))
     }
   }
 
@@ -137,18 +145,17 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
       this.getRunningOnlineJobVersion(job) match {
         case Some(version) => {
           logger.error(s"Job ${job.name} with version ${version} is currently running")
-          Try(new RunningJobExistsException(s"Online job ${job.name} with version ${version} is currently running"))
+          Failure(new RunningJobExistsException(s"Online job ${job.name} with version ${version} is currently running"))
         }
         case None => {
-          this.lockOnlineTable(job)
-          getNewestOnlineVersion(job)
-            .map { _ + 1 % job.numberOfOnlineVersions }
-            .map { newVersion =>
-              logger.debug(s"Set next batch version to ${newVersion}")
-              createStartStatement(newVersion, true)
-            }
-            .map { statement => executeQuorum(statement) }
-          Try()
+          this.lockOnlineTable(job).map { _ =>
+          val newVersion = getNewestOnlineVersion(job)
+          .getOrElse({
+            logger.debug("No completed version found use 0"); 
+            0}) + 1 % job.numberOfOnlineVersions 
+            logger.debug(s"Set next batch version to ${newVersion}")
+            executeQuorum(createStartStatement(newVersion, true))
+          }
         }
       }
     } else {
@@ -156,10 +163,10 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
       this.getRunningBatchJobVersion(job) match {
         case version: Some[Int] => {
           logger.error(s"Job ${job.name} with version ${version} is currently running")
-          Try(throw RunningJobExistsException(s"Batch job ${job.name} with version ${version} is currently running"))
+          Failure(new RunningJobExistsException(s"Batch job ${job.name} with version ${version} is currently running"))
         }
         case _ =>
-          this.lockBatchTable(job)
+          this.lockBatchTable(job).map { _ =>
           getNewestBatchVersion(job)
             .map { _ + 1 % job.numberOfBatcheVersions }
             .map { newVersion =>
@@ -167,7 +174,7 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
               createStartStatement(newVersion, false)
             }
             .map { statement => executeQuorum(statement) }
-          Try()
+          }
       }
     }
   }
@@ -312,6 +319,7 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
     val headBatchQuery: RegularStatement = QueryBuilder.select().from(syncTable.keySpace, syncTable.tableName).
       where(QueryBuilder.eq(syncTable.columns.jobname.name, job.name))
       .and(QueryBuilder.eq(syncTable.columns.online.name, true))
+      .and(QueryBuilder.eq(syncTable.columns.state.name, State.COMPLETED.toString()))
 
     // Find newest version
     this.execute(headBatchQuery)
@@ -383,7 +391,6 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
       version => rowsToLock.add(geLockStatement(job, version, true, true))
     }
     executeQuorum(rowsToLock)
-    Try()
   }
 
   /**
@@ -589,6 +596,7 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
   //      val r2 = 
   //     r2
   //  }
+  
   private def executeQuorum(statement: Statement): Try[Unit] = {
 
     statement match {
@@ -597,24 +605,27 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
     }
     statement.setConsistencyLevel(ConsistencyLevel.QUORUM)
 
-    val rs = session.execute(statement);
-    
-//      statement match {
-//        case bStatement: BatchStatement => logger.error("It is currently not possible to execute : " + bStatement.getStatements)
-//        case _                          => logger.error("It is currently not possible to execute : " + statement)
-//      }
-    Try()
+    session.execute(statement) match {
+      case Success(result) => Try()
+      case Failure(ex) => {
+          logger.error(s"Error while executing statement: ${statement}. ${ex.printStackTrace()}")
+          Try(new StatementExecutionError(ex.getLocalizedMessage))
+        } 
+    }
   }
 
   private def execute(statement: RegularStatement): Try[ResultSet] = {
     logger.debug("Execute: " + statement)
     statement.setConsistencyLevel(ConsistencyLevel.QUORUM);
 
-    val result = session.execute(statement);
-    logger.debug(s"Result of statement ${statement}: ${result.get}")
-    result
+    session.execute(statement) match {
+      case Success(result) => Try(result)
+      case Failure(ex) => {
+          logger.error(s"Error while executing statement: ${statement}. ${ex.printStackTrace()}")
+          Try(throw new StatementExecutionError(ex.getLocalizedMessage))
+        } 
+    }
   }
-
 
   def createSingleTableString[T <: AbstractRows](table: Table[T]): String = {
     val createStatement = s"CREATE TABLE IF NOT EXISTS ${table.keySpace + "." + table.tableName} (" +
