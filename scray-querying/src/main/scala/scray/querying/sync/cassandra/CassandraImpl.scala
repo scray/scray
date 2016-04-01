@@ -33,6 +33,8 @@ import scray.querying.sync.NoRunningJobExistsException
 import scray.querying.sync.StatementExecutionError
 import scala.util.Failure
 import scala.util.Success
+import scray.querying.description.TableIdentifier
+import scala.collection.mutable.HashSet
 
 object CassandraImplementation {
   implicit def genericCassandraColumnImplicit[T](implicit cassImplicit: CassandraPrimitive[T]): DBColumnImplementation[T] = new DBColumnImplementation[T] {
@@ -54,13 +56,7 @@ object CassandraImplementation {
   }
 }
 
-class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[Statement, Insert, ResultSet]]) extends OnlineBatchSync {
-
-  import CassandraImplementation.{RichBoolean, RichOption}
-  
-  // Create or use a given DB session.
-  val session = dbSession.getOrElse(new DbSession[Statement, Insert, ResultSet](dbHostname) {
-    val cassandraSession = Cluster.builder().addContactPoint(dbHostname).build().connect()
+class CassandraSessionBasedDBSession(cassandraSession: Session) extends DbSession[Statement, Insert, ResultSet](cassandraSession.getCluster.getMetadata.getAllHosts().iterator().next.getAddress.toString) {
 
     override def execute(statement: String): Try[ResultSet] = {
       val result = cassandraSession.execute(statement)
@@ -97,7 +93,19 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
         Failure(new StatementExecutionError(s"It was not possible to execute statement: ${statement}. Error: ${result.getExecutionInfo}"))
       }
     }
-  })
+  }
+
+
+class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet]) extends OnlineBatchSync {
+
+  def this(dbHostname: String) = {
+    this(new CassandraSessionBasedDBSession(Cluster.builder().addContactPoint(dbHostname).build().connect()))
+  }
+  
+  import CassandraImplementation.{RichBoolean, RichOption}
+  
+  // Create or use a given DB session.
+  val session = dbSession
 
   val syncTable = SyncTable("SILIDX", "SyncTable")
 
@@ -179,22 +187,65 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
     }
   }
 
-  def completeBatchJob(job: JobInfo): Try[Unit] = {
+  def completeBatchJob(job: JobInfo): Try[Unit] = Try {
     getRunningBatchJobVersion(job) match {
       case version: Some[Int] =>
-        this.completeJob(job, version.get, false); Try()
+        this.completeJob(job, version.get, false)
       case None               => throw new NoRunningJobExistsException(s"No running job with name: ${job.name} exists.")
     }
   }
 
-  def completeOnlineJob(job: JobInfo): Try[Unit] = {
+  def completeOnlineJob(job: JobInfo): Try[Unit] = Try {
     getRunningOnlineJobVersion(job) match {
       case version: Some[Int] =>
-        this.completeJob(job, version.get, true); Try()
+        this.completeJob(job, version.get, true); 
       case None               => throw new NoRunningJobExistsException(s"No running job with name: ${job.name} exists.")
     }
   }
 
+  override def getQueryableTableIdentifiers: List[(String, TableIdentifier, Int)] = {
+    def splitIntoTableIdentifier(tableId: String): TableIdentifier = {
+      val parts = tableId.split("\\.").reverse
+      val tablename = parts(0)
+      val keyspace = if(parts.size > 1) {
+        parts(1)
+      } else {
+        syncTable.keySpace
+      }
+      val system = if(parts.size > 2) {
+        parts(2)
+      } else {
+        "cassandra"
+      }
+      TableIdentifier(system, keyspace, tablename)
+    }
+    import scala.collection.convert.decorateAsScala.asScalaIteratorConverter
+    val jobnames = new HashSet[String]()
+    val query = QueryBuilder.select(syncTable.columns.jobname.name).from(syncTable.keySpace, syncTable.tableName)
+    val results = execute(query)
+    results.map { resultset => 
+      resultset.iterator.asScala.map { row =>
+        val currJob = row.getString(syncTable.columns.jobname.name)
+        jobnames(currJob) match {
+          case true => None
+          case false => 
+            jobnames += currJob
+            val (version, tablename) =  getNewestVersionAndTable(JobInfo(currJob), true).getOrElse {
+              getNewestVersionAndTable(JobInfo(currJob), false).getOrElse {
+                (-1, "")
+              }
+            }
+            if(version > -1) {
+              Some((currJob, splitIntoTableIdentifier(tablename), version))
+            } else {
+              None
+            }
+        }
+        // row.getString(syncTable.columns.tableidentifier.name).split("\\.")
+      }.filter(_.isDefined).map(_.get).toList
+    }.getOrElse(List())
+  }
+  
   private def completeJob(job: JobInfo, version: Int, online: Boolean): Try[Unit] = {
     val query = QueryBuilder.update(syncTable.keySpace, syncTable.tableName)
       .`with`(QueryBuilder.set(syncTable.columns.state.name, State.COMPLETED.toString()))
@@ -262,7 +313,7 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
         .value(syncTable.columns.state.name, State.NEW.toString())
         .value(syncTable.columns.creationTime.name, System.currentTimeMillis())
         .value(syncTable.columns.versions.name, job.numberOfBatcheVersions)
-        .value(syncTable.columns.tablename.name, getBatchJobName(syncTable.keySpace + "." + job.name, i))
+        .value(syncTable.columns.tableidentifier.name, getBatchJobName(syncTable.keySpace + "." + job.name, i))
         .ifNotExists)
     }
 
@@ -281,20 +332,10 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
         .value(syncTable.columns.locked.name, false)
         .value(syncTable.columns.state.name, State.NEW.toString())
         .value(syncTable.columns.creationTime.name, System.currentTimeMillis())
-        .value(syncTable.columns.tablename.name, getOnlineJobName(syncTable.keySpace + "." + job.name, i))
+        .value(syncTable.columns.tableidentifier.name, getOnlineJobName(syncTable.keySpace + "." + job.name, i))
         .ifNotExists)
     }
     Try()
-  }
-
-  def getNewestBatchVersion(job: JobInfo): Option[Int] = {
-    val headBatchQuery: RegularStatement = QueryBuilder.select().from(syncTable.keySpace, syncTable.tableName).
-      where(QueryBuilder.eq(syncTable.columns.jobname.name, job.name))
-      .and(QueryBuilder.eq(syncTable.columns.online.name, false))
-
-    // Find newest version 
-    this.execute(headBatchQuery)
-    .map { rows =>  this.getNewestRow(rows.iterator()).getInt(syncTable.columns.versionNr.name)}.toOption
   }
 
   def getOnlineJobState(job: JobInfo, version: Int): Option[State] = {
@@ -315,20 +356,25 @@ class OnlineBatchSyncCassandra(dbHostname: String, dbSession: Option[DbSession[S
       .toOption
   }
 
-  def getNewestOnlineVersion(job: JobInfo): Option[Int] = {
+  def getNewestOnlineVersion(job: JobInfo): Option[Int] = getNewestVersionAndTable(job, true).map(_._1)
+  def getNewestBatchVersion(job: JobInfo): Option[Int] = getNewestVersionAndTable(job, false).map(_._1)
+
+  private def getNewestVersionAndTable(job: JobInfo, online: Boolean): Option[(Int, String)] = {
     val headBatchQuery: RegularStatement = QueryBuilder.select().from(syncTable.keySpace, syncTable.tableName).
       where(QueryBuilder.eq(syncTable.columns.jobname.name, job.name))
-      .and(QueryBuilder.eq(syncTable.columns.online.name, true))
+      .and(QueryBuilder.eq(syncTable.columns.online.name, online))
       .and(QueryBuilder.eq(syncTable.columns.state.name, State.COMPLETED.toString()))
 
     // Find newest version
     this.execute(headBatchQuery)
       .map { _.iterator() }
       .map { iter => this.getNewestRow(iter) }
-      .map { row => row.getInt(syncTable.columns.versionNr.name) }
+      .map { row => (row.getInt(syncTable.columns.versionNr.name), row.getString(syncTable.columns.tableidentifier.name)) }
       .toOption
   }
 
+
+  
   def insertInOnlineTable(job: JobInfo, version: Int, data: RowWithValue): Try[Unit] = {
     val statement = data.foldLeft(QueryBuilder.insertInto(syncTable.keySpace, getOnlineJobName(job.name, version))) {
       (acc, column) => acc.value(column.name, column.value)

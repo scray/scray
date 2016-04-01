@@ -19,6 +19,7 @@ import scray.querying.sync.types._
 import java.util.ArrayList
 import scala.collection.mutable.ArrayBuffer
 import scala.util.Try
+import scray.querying.description.TableIdentifier
 
 
 abstract class OnlineBatchSync extends LazyLogging {
@@ -46,7 +47,7 @@ abstract class OnlineBatchSync extends LazyLogging {
   def getOnlineJobData[T <: RowWithValue](jobname: String, nr: Int, result: T): Option[List[RowWithValue]]
   def getBatchJobData[T <: RowWithValue](jobname: String, nr: Int, result: T): Option[List[RowWithValue]]
   
- 
+  def getQueryableTableIdentifiers: List[(String, TableIdentifier, Int)]
   
   
 //  /**

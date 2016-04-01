@@ -110,12 +110,12 @@ object SyncTableBasicClasses {
     val versionNr = new Column[Int]("versionNr")
     val creationTime = new Column[Long]("creationTime")
     val versions = new Column[Int]("versions")
-    val tablename = new Column[String]("tablename")
+    val tableidentifier = new Column[String]("tableidentifier")
     val locked = new Column[Boolean]("locked")
     val online = new Column[Boolean]("online")
     val state = new Column[String]("state")
 
-    override val columns = jobname :: creationTime :: versionNr :: versions :: tablename :: locked :: online :: state :: Nil
+    override val columns = jobname :: creationTime :: versionNr :: versions :: tableidentifier :: locked :: online :: state :: Nil
     override val primaryKey = s"(${jobname.name}, ${online.name}, ${versionNr.name})"
     override val indexes: Option[List[String]] = Option(List(locked.name, state.name))
   }
