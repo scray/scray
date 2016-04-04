@@ -41,7 +41,7 @@ import scala.util.Success
 
 @RunWith(classOf[JUnitRunner])
 class OnlineBatchSyncTests extends WordSpec with BeforeAndAfter with BeforeAndAfterAll {
-  var dbconnection: Option[DbSession[Statement, Insert, ResultSet]] = None
+  var dbconnection: DbSession[Statement, Insert, ResultSet] = null
 
   override def beforeAll() = {
     LogManager.getLogManager().reset();
@@ -59,7 +59,7 @@ class OnlineBatchSyncTests extends WordSpec with BeforeAndAfter with BeforeAndAf
   }
 
   before {
-    dbconnection = Option(new DbSession[Statement, Insert, ResultSet]("127.0.0.1") {
+    dbconnection = new DbSession[Statement, Insert, ResultSet]("127.0.0.1") {
       EmbeddedCassandraServerHelper.startEmbeddedCassandra(EmbeddedCassandraServerHelper.CASSANDRA_RNDPORT_YML_FILE)
       val cassandraSession = Cluster.builder().addContactPoint("127.0.0.1").withPort(EmbeddedCassandraServerHelper.getNativeTransportPort).build().connect()
       EmbeddedCassandraServerHelper.cleanEmbeddedCassandra()
@@ -90,7 +90,7 @@ class OnlineBatchSyncTests extends WordSpec with BeforeAndAfter with BeforeAndAf
           Failure(new StatementExecutionError(s"It was not possible to execute statement: ${statement}. Error: ${result.getExecutionInfo}"))
         }
       }
-    })
+    }
   }
 
   after {
@@ -99,11 +99,11 @@ class OnlineBatchSyncTests extends WordSpec with BeforeAndAfter with BeforeAndAf
   "OnlineBatchSync " should {
     " init client" in {
 
-      val table = new OnlineBatchSyncCassandra("", dbconnection)
+      val table = new OnlineBatchSyncCassandra(dbconnection)
       assert(table.initJob[SumTestColumns](JobInfo("job55"), new SumTestColumns).isSuccess)
     }
     "lock table" in {
-      val table = new OnlineBatchSyncCassandra("", dbconnection)
+      val table = new OnlineBatchSyncCassandra(dbconnection)
       table.initJob(JobInfo("job57"), new SumTestColumns())
 
       table.lockOnlineTable(JobInfo("job57"))
@@ -111,7 +111,7 @@ class OnlineBatchSyncTests extends WordSpec with BeforeAndAfter with BeforeAndAf
       assert(table.isOnlineTableLocked(JobInfo("job57")).get === true)
     }
     "lock table only once" in {
-      val table = new OnlineBatchSyncCassandra("", dbconnection)
+      val table = new OnlineBatchSyncCassandra(dbconnection)
       table.initJob(JobInfo("job57"), new SumTestColumns())
 
       table.lockOnlineTable(JobInfo("job57"))
@@ -119,7 +119,7 @@ class OnlineBatchSyncTests extends WordSpec with BeforeAndAfter with BeforeAndAf
       //assert(table.lockOnlineTable(JobInfo("job57")).get === false)
     }
     "insert and read data" in {
-      val table = new OnlineBatchSyncCassandra("", dbconnection)
+      val table = new OnlineBatchSyncCassandra(dbconnection)
       table.initJob(JobInfo("job58"), new SumTestColumns())
 
       val sum = new ColumnWithValue[Long]("sum", 100)
@@ -135,7 +135,7 @@ class OnlineBatchSyncTests extends WordSpec with BeforeAndAfter with BeforeAndAf
       assert(columValue === "100")
     }
     "get running batch/online version " in {
-      val table = new OnlineBatchSyncCassandra("", dbconnection)
+      val table = new OnlineBatchSyncCassandra(dbconnection)
       
       val jobInfo = JobInfo("job59")
       val sum = new ColumnWithValue[Long]("sum", 100)
@@ -151,7 +151,7 @@ class OnlineBatchSyncTests extends WordSpec with BeforeAndAfter with BeforeAndAf
       assert(table.getRunningOnlineJobVersion(jobInfo).get == 1)
     }
     "switch to next job " in {
-      val table = new OnlineBatchSyncCassandra("", dbconnection)
+      val table = new OnlineBatchSyncCassandra(dbconnection)
       val jobInfo = JobInfo("job59")
 
       val sum = new ColumnWithValue[Long]("sum", 100)
@@ -170,7 +170,7 @@ class OnlineBatchSyncTests extends WordSpec with BeforeAndAfter with BeforeAndAf
       assert(table.getRunningOnlineJobVersion(jobInfo).get === 1)
     }
     "insert and read batch data " in {
-      val table = new OnlineBatchSyncCassandra("", dbconnection)
+      val table = new OnlineBatchSyncCassandra(dbconnection)
       val jobInfo = JobInfo("job59")
 
       val sum = new ColumnWithValue[Long]("sum", 100)
@@ -188,7 +188,7 @@ class OnlineBatchSyncTests extends WordSpec with BeforeAndAfter with BeforeAndAf
       assert(table.getBatchJobData("job59", 0, new RowWithValue(columns, primaryKey, indexes)).get.head.columns.head.value === 100L)
     }
     "insert and read online data " in {
-      val table = new OnlineBatchSyncCassandra("", dbconnection)
+      val table = new OnlineBatchSyncCassandra(dbconnection)
       val jobInfo = JobInfo("job59")
 
       val sum = new ColumnWithValue[Long]("sum", 100)
@@ -204,7 +204,7 @@ class OnlineBatchSyncTests extends WordSpec with BeforeAndAfter with BeforeAndAf
       assert(table.getOnlineJobData("job59", 0, new RowWithValue(columns, primaryKey, indexes)).get.head.columns.head.value === 100L)
     }
     "find latest online version 1" in {
-      val table = new OnlineBatchSyncCassandra("", dbconnection)
+      val table = new OnlineBatchSyncCassandra(dbconnection)
       val jobInfo = JobInfo("job59")
 
 
@@ -224,7 +224,7 @@ class OnlineBatchSyncTests extends WordSpec with BeforeAndAfter with BeforeAndAf
       assert(table.getOnlineJobData(jobInfo.name, version.getOrElse(0), new RowWithValue(columns, primaryKey, indexes)).get.head.columns.head.value === sum.value)
     }
     "find latest online version 2" in {
-      val table = new OnlineBatchSyncCassandra("", dbconnection)
+      val table = new OnlineBatchSyncCassandra(dbconnection)
 
       val sum = new ColumnWithValue[Long]("sum", 200)
       val columns = sum :: Nil
@@ -240,7 +240,7 @@ class OnlineBatchSyncTests extends WordSpec with BeforeAndAfter with BeforeAndAf
       assert(table.getOnlineJobData("job59", nr.getOrElse(0), new RowWithValue(columns, primaryKey, indexes)).get.head.columns.head.value === sum.value)
     }
     " mark new batch job version " in {
-      val table = new OnlineBatchSyncCassandra("", dbconnection)
+      val table = new OnlineBatchSyncCassandra(dbconnection)
       val syncTable = SyncTable("SILIDX", "SyncTable")
       val job = JobInfo("JOB_100")
 
@@ -257,7 +257,7 @@ class OnlineBatchSyncTests extends WordSpec with BeforeAndAfter with BeforeAndAf
       assert(table.getBatchJobState(job, 2).get.equals(State.NEW))
     }
     " mark new online job version " in {
-      val table = new OnlineBatchSyncCassandra("", dbconnection)
+      val table = new OnlineBatchSyncCassandra(dbconnection)
       val syncTable = SyncTable("SILIDX", "SyncTable")
       val jobInfo = JobInfo("JOB_100")
 
@@ -274,7 +274,7 @@ class OnlineBatchSyncTests extends WordSpec with BeforeAndAfter with BeforeAndAf
       assert(table.getOnlineJobState(jobInfo, 2).get.equals(State.NEW))
     }
     " start and stop jobs " in {
-      val table = new OnlineBatchSyncCassandra("", dbconnection)
+      val table = new OnlineBatchSyncCassandra(dbconnection)
       val syncTable = SyncTable("SILIDX", "SyncTable")
       val job = JobInfo("JOB_100")
 

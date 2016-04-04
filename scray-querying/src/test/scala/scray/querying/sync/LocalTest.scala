@@ -57,7 +57,7 @@ class LocalTests extends WordSpec with BeforeAndAfter with BeforeAndAfterAll {
 
   "OnlineBatchSync " should {
     " throw exception if job already exists" in {
-      val table = new OnlineBatchSyncCassandra("andreas", None)
+      val table = new OnlineBatchSyncCassandra("andreas")
       table.initJob(JobInfo("job56"), new SumTestColumns())
 
       println(table.initJob(JobInfo("job56"), new SumTestColumns()).isSuccess)
