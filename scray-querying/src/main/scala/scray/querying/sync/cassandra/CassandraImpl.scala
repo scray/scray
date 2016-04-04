@@ -192,6 +192,7 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
     getRunningBatchJobVersion(job) match {
       case version: Some[Int] =>
         this.completeJob(job, version.get, false)
+        .map { _ => this.unlockBatchTable(job)}.flatten
       case None               => throw new NoRunningJobExistsException(s"No running job with name: ${job.name} exists.")
     }
   }
@@ -199,9 +200,21 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
   def completeOnlineJob(job: JobInfo): Try[Unit] = Try {
     getRunningOnlineJobVersion(job) match {
       case version: Some[Int] =>
-        this.completeJob(job, version.get, true); 
+        this.completeJob(job, version.get, true)
+        .map { _ => this.unlockOnlineTable(job)}.flatten
       case None               => throw new NoRunningJobExistsException(s"No running job with name: ${job.name} exists.")
     }
+  }
+  
+  private def completeJob(job: JobInfo, version: Int, online: Boolean): Try[Unit] = {
+    val query = QueryBuilder.update(syncTable.keySpace, syncTable.tableName)
+      .`with`(QueryBuilder.set(syncTable.columns.state.name, State.COMPLETED.toString()))
+      .and(QueryBuilder.set(syncTable.columns.creationTime.name, System.currentTimeMillis()))
+      .where(QueryBuilder.eq(syncTable.columns.jobname.name, job.name))
+      .and(QueryBuilder.eq(syncTable.columns.online.name, online))
+      .and(QueryBuilder.eq(syncTable.columns.versionNr.name, version))
+      .onlyIf(QueryBuilder.eq(syncTable.columns.locked.name, true))
+    executeQuorum(query)
   }
 
   override def getQueryableTableIdentifiers: List[(String, TableIdentifier, Int)] = {
@@ -247,17 +260,6 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
     }.getOrElse(List())
   }
   
-  private def completeJob(job: JobInfo, version: Int, online: Boolean): Try[Unit] = {
-    val query = QueryBuilder.update(syncTable.keySpace, syncTable.tableName)
-      .`with`(QueryBuilder.set(syncTable.columns.state.name, State.COMPLETED.toString()))
-      .and(QueryBuilder.set(syncTable.columns.creationTime.name, System.currentTimeMillis()))
-      .where(QueryBuilder.eq(syncTable.columns.jobname.name, job.name))
-      .and(QueryBuilder.eq(syncTable.columns.online.name, online))
-      .and(QueryBuilder.eq(syncTable.columns.versionNr.name, version))
-      .onlyIf(QueryBuilder.eq(syncTable.columns.locked.name, true))
-    executeQuorum(query)
-  }
-
   def getRunningBatchJobVersion(job: JobInfo): Option[Int] = {
     this.getRunningVersion(job, false)
   }
