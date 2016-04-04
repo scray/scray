@@ -109,7 +109,7 @@ object ${job-name} extends LazyLogging {
     val sum = new Column[Int]("sum")
          
     override val columns = time :: name :: sum :: Nil
-    override val primaryKey = time.name
+    override val primaryKey = s"(${time.name})"
     override val indexes = None
   }
 

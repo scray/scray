@@ -16,7 +16,7 @@ import scray.querying.sync.cassandra.OnlineBatchSyncCassandra
  */
 class BatchJob(@transient val sc: SparkContext) extends LazyLogging with Serializable {
   println(sc.getConf.get("spark.cassandra.connection.host"))
-  val syncTable: OnlineBatchSync = new OnlineBatchSyncCassandra(sc.getConf.get("spark.cassandra.connection.host"), None)
+  val syncTable: OnlineBatchSync = new OnlineBatchSyncCassandra(sc.getConf.get("spark.cassandra.connection.host"))
 
   /**
    * get the intial rdd to load data from
