@@ -86,7 +86,6 @@ object ${job-name} extends LazyLogging {
     logger.info(s"Using HDFS-URL=${config.hdfsDStreamURL} and Kafka-URL=${config.kafkaDStreamURL}")
     val syncTable: OnlineBatchSync = new OnlineBatchSyncCassandra(config.cassandraHost.getOrElse("127.0.0.1"))
     if(syncTable.startNextOnlineJob(JobInfo("${job-name}")).isSuccess) {
-    if(syncTable.lockOnlineTable("${job-name}", 1)) {
       val ssc = StreamingContext.getOrCreate(config.checkpointPath, setupSparkStreamingConfig(config.master, config.seconds))
       ssc.checkpoint(config.checkpointPath)
       val streamingJob = new StreamingJob(ssc)
@@ -117,8 +116,9 @@ object ${job-name} extends LazyLogging {
   def main(args : Array[String]) = {
     Options.parse(args) match {
       case Some(config) =>
-       val syncTable: OnlineBatchSync = new OnlineBatchSyncCassandra(config.cassandraHost.getOrElse(config.cassandraHost.getOrElse("127.0.0.1")), None)
-        syncTable.initJobClient("${job-name}", 3, ExampleTable)
+       val syncTable: OnlineBatchSync = new OnlineBatchSyncCassandra(config.cassandraHost.getOrElse(config.cassandraHost.getOrElse("127.0.0.1")))
+       syncTable.initJob(JobInfo("${job-name}"), ExampleTable)
+
         config.batch match {
           case true =>  batch(config)
           case false => stream(config)
