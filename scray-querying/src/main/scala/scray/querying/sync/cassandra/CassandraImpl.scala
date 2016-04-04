@@ -63,7 +63,7 @@ class CassandraSessionBasedDBSession(cassandraSession: Session) extends DbSessio
       if(result.wasApplied()) {
         Success(result)
       } else {
-        Failure(new StatementExecutionError(s"It was not possible to execute statement: ${statement}. Error: ${result.getExecutionInfo}"))
+        Failure(new StatementExecutionError(s"It was not possible to execute statement: ${statement}. Error: ${result.getExecutionInfo.getQueryTrace}"))
       }
     }
 
@@ -72,7 +72,7 @@ class CassandraSessionBasedDBSession(cassandraSession: Session) extends DbSessio
       if(result.wasApplied()) {
         Success(result)
       } else {
-        Failure(new StatementExecutionError(s"It was not possible to execute statement: ${statement}. Error: ${result.getExecutionInfo}"))
+        Failure(new StatementExecutionError(s"It was not possible to execute statement: ${statement}. Error: ${result.getExecutionInfo.getQueryTrace}"))
       }
     }
 
@@ -81,7 +81,7 @@ class CassandraSessionBasedDBSession(cassandraSession: Session) extends DbSessio
       if(result.wasApplied()) {
         Success(result)
       } else {
-        Failure(new StatementExecutionError(s"It was not possible to execute statement: ${statement}. Error: ${result.getExecutionInfo}"))
+        Failure(new StatementExecutionError(s"It was not possible to execute statement: ${statement}. Error: ${result.getExecutionInfo.getQueryTrace}"))
       }
     }
 
@@ -132,6 +132,7 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
   }
 
   def startNextBatchJob(job: JobInfo): Try[Unit] = {
+    logger.debug(s"Start next batch job ${job.name}")
     this.startJob(job, false)
   }
 
@@ -176,8 +177,9 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
         case _ =>
           this.lockBatchTable(job).map { _ =>
           getNewestBatchVersion(job)
-            .map { _ + 1 % job.numberOfBatcheVersions }
-            .map { newVersion =>
+          .getOrElse( {logger.debug("No completed version found use default version 0"); 0})
+          + 1 % job.numberOfBatcheVersions }
+          .map { newVersion =>
               logger.debug(s"Set next batch version to ${newVersion}")
               createStartStatement(newVersion, false)
             }
@@ -185,7 +187,6 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
           }
       }
     }
-  }
 
   def completeBatchJob(job: JobInfo): Try[Unit] = Try {
     getRunningBatchJobVersion(job) match {
@@ -367,10 +368,11 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
 
     // Find newest version
     this.execute(headBatchQuery)
-      .map { _.iterator() }
-      .map { iter => this.getNewestRow(iter) }
-      .map { row => (row.getInt(syncTable.columns.versionNr.name), row.getString(syncTable.columns.tableidentifier.name)) }
-      .toOption
+      .map { _.iterator() }.recover {
+        case e => {logger.error(s"DB error while fetching Newest Version ${e.getMessage}"); throw e}
+      }.toOption
+      .flatMap { iter => this.getNewestRow(iter) }
+      .map { row => (row.getInt(syncTable.columns.versionNr.name), row.getString(syncTable.columns.tableidentifier.name)) } 
   }
 
 
@@ -655,14 +657,14 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
       case Success(result) => Try()
       case Failure(ex) => {
           logger.error(s"Error while executing statement: ${statement}. ${ex.printStackTrace()}")
-          Try(new StatementExecutionError(ex.getLocalizedMessage))
+          Failure(new StatementExecutionError(ex.getLocalizedMessage))
         } 
-    }
+      }
   }
 
   private def execute(statement: RegularStatement): Try[ResultSet] = {
     logger.debug("Execute: " + statement)
-    statement.setConsistencyLevel(ConsistencyLevel.QUORUM);
+    statement.setConsistencyLevel(ConsistencyLevel.QUORUM)
 
     session.execute(statement) match {
       case Success(result) => Try(result)
@@ -693,19 +695,19 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
   private def getBatchJobName(jobname: String, nr: Int): String = { jobname + "_batch" + nr }
   private def getOnlineJobName(jobname: String, nr: Int): String = { jobname + "_online" + nr }
 
-  def getNewestRow(rows: java.util.Iterator[Row]): Row = {
+  def getNewestRow(rows: java.util.Iterator[Row]): Option[Row] = {
     import scala.math.Ordering._
     val comp = implicitly[Ordering[Long]]
     getComptRow(rows, comp.gt)
   }
 
-  def getOldestRow(rows: java.util.Iterator[Row]): Row = {
+  def getOldestRow(rows: java.util.Iterator[Row]): Option[Row] = {
     import scala.math.Ordering._
     val comp = implicitly[Ordering[Long]]
     getComptRow(rows, comp.lt)
   }
 
-  def getComptRow(rows: JIterator[Row], comp: (Long, Long) => Boolean): Row = {
+  def getComptRow(rows: JIterator[Row], comp: (Long, Long) => Boolean): Option[Row] = {
     @tailrec def accNewestRow(prevRow: Row, nextRows: JIterator[Row]): Row = {
       if (nextRows.hasNext) {
         val localRow = nextRows.next()
@@ -723,8 +725,10 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
     }
     import scala.collection.convert.WrapAsScala.asScalaIterator
 
-    val row = rows.next()
-    logger.debug(s"Inspect new row ${rows.size}")
-    accNewestRow(row, rows)
+    if(rows.hasNext()) {
+      Some(accNewestRow(rows.next(), rows))
+    } else {
+      None
+    }
   }
 }
