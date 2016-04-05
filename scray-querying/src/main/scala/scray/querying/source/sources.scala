@@ -26,6 +26,8 @@ import scray.querying.description.Row
 import scray.querying.queries.DomainQuery
 import scray.querying.caching.Cache
 import scray.querying.caching.NullCache
+import scray.querying.source.costs.QueryCosts
+import scray.querying.source.costs.QueryCostFunctionFactory
 
 /**
  * sources take queries and produce future results.
@@ -35,6 +37,11 @@ trait Source[Q <: DomainQuery, T] {
   
   def request(query: Q): Future[T]
 
+  /**
+   * Return estimated costs for this query in this state
+   */
+  def getCosts(query: Q)(implicit costFunc: QueryCostFunctionFactory): QueryCosts = costFunc.getCostFunction(this).apply(query)
+  
   /**
    * the result will be comprised of a set of columns
    */

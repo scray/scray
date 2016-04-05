@@ -8,6 +8,13 @@ import org.apache.spark.streaming.dstream.InputDStream
 import com.typesafe.scalalogging.slf4j.LazyLogging
 import ${package}.cli.{Config, Options}
 import scala.collection.mutable.Queue
+import scray.querying.sync.types.ArbitrarylyTypedRows
+import scray.querying.sync.types.Column
+import scray.querying.sync.cassandra.CassandraImplementation._
+import scray.querying.sync.OnlineBatchSync
+import scray.querying.sync.cassandra.OnlineBatchSyncCassandra
+import scray.querying.sync.JobInfo
+import scray.querying.sync.types.AbstractRow
 
 /**
  * @author <author@name.org>
@@ -62,9 +69,14 @@ object ${job-name} extends LazyLogging {
    */
   def batch(config: Config) = {
     logger.info(s"Using Batch mode.")
-    val sc = setupSparkBatchConfig(config.master)()
-    val batchJob = new BatchJob(sc)
-    batchJob.batchAggregate()
+    val syncTable: OnlineBatchSync = new OnlineBatchSyncCassandra(config.cassandraHost.getOrElse("127.0.0.1"))
+    if(syncTable.startNextBatchJob(JobInfo("${job-name}")).isSuccess) {
+      val sc = setupSparkBatchConfig(config.master)()
+      val batchJob = new BatchJob(sc)
+      batchJob.batchAggregate()
+    } else {
+      logger.error("Batch table is locked.") 
+    }
   }
 
   /**
@@ -72,25 +84,43 @@ object ${job-name} extends LazyLogging {
    */
   def stream(config: Config) = {
     logger.info(s"Using HDFS-URL=${config.hdfsDStreamURL} and Kafka-URL=${config.kafkaDStreamURL}")
-    val ssc = StreamingContext.getOrCreate(config.checkpointPath, setupSparkStreamingConfig(config.master, config.seconds))
-    ssc.checkpoint(config.checkpointPath)
-    val streamingJob = new StreamingJob(ssc)
-    val dstream = streamSetup(ssc, streamingJob, config)
-    // prepare to checkpoint in order to use some state (updateStateByKey)
-    ssc.start()
-    // TODO: write out zk information for closing this app  
-    // log out random port to connect to
-    // TODO: remove code to insert data
-    streamSomeBatches(ssc)
-
-    ssc.awaitTermination()
+    val syncTable: OnlineBatchSync = new OnlineBatchSyncCassandra(config.cassandraHost.getOrElse("127.0.0.1"))
+    if(syncTable.startNextOnlineJob(JobInfo("${job-name}")).isSuccess) {
+      val ssc = StreamingContext.getOrCreate(config.checkpointPath, setupSparkStreamingConfig(config.master, config.seconds))
+      ssc.checkpoint(config.checkpointPath)
+      val streamingJob = new StreamingJob(ssc)
+      val dstream = streamSetup(ssc, streamingJob, config)
+      // prepare to checkpoint in order to use some state (updateStateByKey)
+      ssc.start()
+      // TODO: write out zk information for closing this app  
+      // log out random port to connect to
+      // TODO: remove code to insert data
+      streamSomeBatches(ssc)
+  
+      ssc.awaitTermination()
+    } else {
+      logger.error("Streaming table locked")
+    }
+  }
+  
+  object ExampleTable extends ArbitrarylyTypedRows {
+    val time = new Column[Long]("time")
+    val name = new Column[String]("name")
+    val sum = new Column[Int]("sum")
+         
+    override val columns = time :: name :: sum :: Nil
+    override val primaryKey = s"(${time.name})"
+    override val indexes = None
   }
 
   def main(args : Array[String]) = {
     Options.parse(args) match {
       case Some(config) =>
+       val syncTable: OnlineBatchSync = new OnlineBatchSyncCassandra(config.cassandraHost.getOrElse(config.cassandraHost.getOrElse("127.0.0.1")))
+       syncTable.initJob(JobInfo("${job-name}"), ExampleTable)
+
         config.batch match {
-          case true => batch(config)
+          case true =>  batch(config)
           case false => stream(config)
         }
       case None =>
