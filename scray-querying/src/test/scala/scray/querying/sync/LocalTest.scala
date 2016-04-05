@@ -57,13 +57,42 @@
 //
 //  "OnlineBatchSync " should {
 //    " throw exception if job already exists" in {
+//            // val table = new OnlineBatchSyncCassandra(dbconnection)
 //      val table = new OnlineBatchSyncCassandra("andreas")
-//      table.initJob(JobInfo("job56"), new SumTestColumns())
 //
-//      println(table.initJob(JobInfo("job56"), new SumTestColumns()).isSuccess)
-////      if(table.createNewJob(JobInfo("job56"), new SumTestColumns()).isSuccess) {
-////        fail
-////      } 
+//      val job = JobInfo("JOB_100")
+//
+//      val sum = new ColumnWithValue[Long]("sum", 100)
+//      val columns = sum :: Nil
+//      val primaryKey = s"(${sum.name})"
+//      val indexes: Option[List[String]] = None
+//
+////      table.initJob(JobInfo("JOB_100"), new RowWithValue(columns, primaryKey, indexes))
+////      table.startNextBatchJob(JobInfo("JOB_100"))
+////      table.completeBatchJob(JobInfo("JOB_100"))
+////      
+////      table.initJob(JobInfo("JOB_200"), new RowWithValue(columns, primaryKey, indexes))
+////      table.startNextBatchJob(JobInfo("JOB_200"))
+////      table.completeBatchJob(JobInfo("JOB_200"))
+////      
+////      table.initJob(JobInfo("JOB_300"), new RowWithValue(columns, primaryKey, indexes))
+////      table.startNextBatchJob(JobInfo("JOB_300"))
+////      table.completeBatchJob(JobInfo("JOB_300"))
+//      
+//      table.initJob(JobInfo("JOB_400"), new RowWithValue(columns, primaryKey, indexes))
+//      table.startNextBatchJob(JobInfo("JOB_400"))
+//      table.completeBatchJob(JobInfo("JOB_400"))
+//
+//      println("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
+//      table.startNextBatchJob(JobInfo("JOB_400"))
+//
+//      println("zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz")
+//      table.completeBatchJob(JobInfo("JOB_400"))
+//      println("lllllllllllllllllllllllllllllllllllllllllllllllllllllllll")
+////     
+////      val results = List("JOB_100_batch1", "JOB_300_batch1", "JOB_200_batch1", "JOB_400_batch2")
+////      table.getQueryableTableIdentifiers.contains()
+////      table.getQueryableTableIdentifiers.map{tableIdentifier => println(tableIdentifier._2.tableId + "\t" + results.contains(tableIdentifier._2.tableId))}
 //
 //    }
 //  }
