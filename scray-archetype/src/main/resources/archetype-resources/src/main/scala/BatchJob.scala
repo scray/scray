@@ -11,6 +11,8 @@ import scray.querying.sync.cassandra.CassandraImplementation._
 import scray.querying.sync.OnlineBatchSync
 import scray.querying.sync.cassandra.OnlineBatchSyncCassandra
 import scray.querying.sync.JobInfo
+import scala.util.Failure
+import scala.util.Success
 
 /**
  * Class containing all the batch stuff
