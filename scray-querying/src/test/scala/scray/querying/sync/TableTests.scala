@@ -34,7 +34,7 @@ class SyncTableTests extends WordSpec {
 
       assert(c2.name === "c1")
       assert(c2.value === "v1")
-      assert(c2.getDBType === "text")
+      assert(c2.getDBType === "text") 
     }
     " test foldLeft on rows " in {
         val columns = new ColumnWithValue[Int]("c1", 1) ::
