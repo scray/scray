@@ -63,7 +63,7 @@ class CassandraSessionBasedDBSession(cassandraSession: Session) extends DbSessio
       if(result.wasApplied()) {
         Success(result)
       } else {
-        Failure(new StatementExecutionError(s"It was not possible to execute statement: ${statement}. Error: ${result.getExecutionInfo.getQueryTrace}"))
+        Failure(new StatementExecutionError(s"It was not possible to execute statement: ${statement}. Error: ${result.getExecutionInfo}"))
       }
     }
 
@@ -72,7 +72,7 @@ class CassandraSessionBasedDBSession(cassandraSession: Session) extends DbSessio
       if(result.wasApplied()) {
         Success(result)
       } else {
-        Failure(new StatementExecutionError(s"It was not possible to execute statement: ${statement}. Error: ${result.getExecutionInfo.getQueryTrace}"))
+        Failure(new StatementExecutionError(s"It was not possible to execute statement: ${statement}. Error: ${result.getExecutionInfo}"))
       }
     }
 
@@ -81,7 +81,7 @@ class CassandraSessionBasedDBSession(cassandraSession: Session) extends DbSessio
       if(result.wasApplied()) {
         Success(result)
       } else {
-        Failure(new StatementExecutionError(s"It was not possible to execute statement: ${statement}. Error: ${result.getExecutionInfo.getQueryTrace}"))
+        Failure(new StatementExecutionError(s"It was not possible to execute statement: ${statement}. Error: ${result.getExecutionInfo}"))
       }
     }
 
@@ -162,7 +162,7 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
           .getOrElse({
             logger.debug("No completed version found use 0"); 
             0}) + 1 % job.numberOfOnlineVersions 
-            logger.debug(s"Set next batch version to ${newVersion}")
+            logger.debug(s"Set next online version to ${newVersion}")
             executeQuorum(createStartStatement(newVersion, true))
           }
         }
@@ -176,9 +176,9 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
         }
         case _ =>
           this.lockBatchTable(job).map { _ =>
-          getNewestBatchVersion(job)
+          (getNewestBatchVersion(job)
           .getOrElse( {logger.debug("No completed version found use default version 0"); 0})
-          + 1 % job.numberOfBatcheVersions }
+          + 1) % job.numberOfBatcheVersions }
           .map { newVersion =>
               logger.debug(s"Set next batch version to ${newVersion}")
               createStartStatement(newVersion, false)
@@ -481,18 +481,8 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
     }
     executeQuorum(rowsToUnlock)
   }
-  //  
-  //  def getNextBatch(): Option[Int] = {
-  //    // Get latest completed batch nr.
-  //    
-  //    // Return nr + 1 % number of batches.
-  //    
-  //    None
-  //   }
-  //
-  //
 
-    /**
+  /**
      * Check if online table is locked.
      * To ensure that online table is locked use lockOnlineTable.
      */

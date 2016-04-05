@@ -48,57 +48,13 @@ abstract class OnlineBatchSync extends LazyLogging {
   def getBatchJobData[T <: RowWithValue](jobname: String, nr: Int, result: T): Option[List[RowWithValue]]
   
   def getQueryableTableIdentifiers: List[(String, TableIdentifier, Int)]
-  
-  
-//  /**
-//   * Check if tables exists and tables are locked
-//   */
-//  def initJobWorker(jobName: String, numberOfBatches: Int, dataTable: T)
-//
-  /**
-   * Lock online table if it is used by another spark job.
-   */
-  def lockOnlineTable(job: JobInfo): Try[Unit]
-   /**
-   * Unlock online table to make it available for a new job.
-   */
-  def unlockOnlineTable(job: JobInfo): Try[Unit]
-  //def isOnlineTableLocked(jobName: JobInfo): Boolean
-  
-   /**
-   * Lock online table if it is used by another spark job.
-   */
-  def lockBatchTable(job: JobInfo): Try[Unit]
-
-//   /**
-//   * Unlock batch table to make it available for a new job.
-//   */
-//  def unlockBatchTable(jobName: String, nr: Int): Boolean
-//  
-//  def getHeadBatch(jobName: String): Option[Int]
-//  
-
-//  
-//  /**
-//   * Returns next job number of no job is currently running.
-//   */
-//  def getNextBatch(): Option[Int]
-//  
-//  //def getJobData[ColumnsT <: Columns[_]](jobName: String, nr: Int): ColumnsT
-//  
-//  /**
-//   * Delete SyncTable and all datatables.
-//   */
-//  def purgeAllTables()
-  
-  // def getSyncTable: Table[SyncTableColumnsValues[List[_]]]
 }
 
 
 class JobInfo(
   val name: String,
   val numberOfBatcheVersions: Int = 3,
-  val numberOfOnlineVersions: Int = 3
+  val numberOfOnlineVersions: Int = 2
   ) {}
 
 object JobInfo {
