@@ -32,7 +32,11 @@ object Options extends LazyLogging {
     opt[String]('p', "checkpointPath") action { (x, c) =>
       c.copy(checkpointPath = x) } text("Path (default: hdfs://localhost:8020/user/hadoop/aggmsgs)")
     opt[Int]('d', "checkpointDelay") action { (x, c) =>
-    c.copy(seconds = x) } text("number of milliseconds between two checkpoints (default: 10000)")
+       c.copy(seconds = x) } text("number of milliseconds between two checkpoints (default: 10000)")
+    opt[Int]('n', "numberOfBatchVersions") action { (x, c) =>
+      c.copy(numberOfBatchVersions = x) } text("number of versions for one batch job (default: 3)")
+    opt[Int]('o', "numberOfOnlineVersions") action { (x, c) =>
+      c.copy(numberOfOnlineVersions = x) } text("number of versions for one online job (default: 1)")
   }
   
   /**
@@ -41,7 +45,7 @@ object Options extends LazyLogging {
   def parse(args: Array[String]): Option[Config] = {
     val config = parser.parse(args, Config("master"))
     config.flatMap { conf => 
-      val Config(master, batch, kafkaDStreamURL, hdfsDStreamURL, kafkaTopic, seconds, checkpointPath, checkpointDuration, cassandraHost, cassandraKeyspace) = conf
+    val Config(master, batch, kafkaDStreamURL, hdfsDStreamURL, kafkaTopic, seconds, checkpointPath, checkpointDuration, cassandraHost, cassandraKeyspace, numberOfBatchVersions, numberOfOnlineVersions) = conf
       if(!batch) {
         kafkaDStreamURL.flatMap { kafka => 
           if(kafkaTopic.isDefined) {
