@@ -10,6 +10,11 @@
 	<artifactId>scray-querying</artifactId>
 	<name>Scray - Querying</name>
 	<description>query engine core source code</description>
+ 	<packaging>bundle</packaging>
+
+ 	<properties>
+		<maven-bundle-plugin.version>3.0.1</maven-bundle-plugin.version>
+	</properties>
 
 	<dependencies>
 
@@ -78,7 +83,7 @@
 		<dependency>
 			<groupId>com.twitter</groupId>
 			<artifactId>chill_2.10</artifactId>
-			<version>0.4.0</version>
+			<version>0.8.0</version>
 		</dependency>
 		<dependency>
 			<groupId>com.google.guava</groupId>
@@ -107,6 +112,34 @@
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.felix</groupId>
+				<artifactId>maven-bundle-plugin</artifactId>
+				<version>${maven-bundle-plugin.version}</version>
+				<extensions>true</extensions>
+				<configuration>
+					<instructions>
+						<Bundle-SymbolicName>${project.artifactId}</Bundle-SymbolicName>
+						<Bundle-Version>${project.version}</Bundle-Version>
+						<Export-Package>
+							scray.common.serialization;version=${project.version},
+							scray.querying;version=${project.version},
+							scray.querying.planning;version=${project.version},
+							scray.querying.description;version=${project.version},
+							scray.querying.queries;version=${project.version}
+						</Export-Package>
+						<Import-Package>
+							*
+						</Import-Package>
+						<Embed-Dependency>scala-logging*,scray-common*,groupId=com.twitter*;scope=compile</Embed-Dependency>
+					</instructions>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
 
 	<licenses>
 		<license>
