@@ -34,11 +34,16 @@ public class ScrayCombinedTServiceManager {
 	private class CombinedServiceConnection {
 		private ScrayCombinedStatefulTService.FutureIface combinedServiceClient;
 		private ScrayURL scrayURL;
+		private boolean isFailed = false;
 
 		CombinedServiceConnection(ScrayURL scrayURL) {
 			this.scrayURL = scrayURL;
 		}
 
+		public boolean isFailed() {
+			return combinedServiceClient == null || isFailed;
+		}
+		
 		ScrayCombinedStatefulTService.FutureIface getCombinedClient() throws SQLException {
 			String[] seedEndpoints = scrayURL.getHostAndPort();
             log.debug("Connecting to endpoints for MetaService");
@@ -49,15 +54,17 @@ public class ScrayCombinedTServiceManager {
 							ScrayCombinedStatefulTService.FutureIface.class);
 				}
 				try {
-					if (Await.result(combinedServiceClient.ping()))
+					if (Await.result(combinedServiceClient.ping(), Duration.fromSeconds(TIMEOUT * 10)))
 						return combinedServiceClient;
 				} catch (Exception ex) {
 					log.warn("Could not connect to seedEndpoint "
 							+ seedEndpoints[i], ex);
 					combinedServiceClient = null;
+					isFailed = true;
 				}
 			}
 			log.error("No seedEndpoint found with valid meta service.");
+			isFailed = true;
 			throw new SQLException("Could not connect to scray meta service.");
 		}
 	}
@@ -70,16 +77,23 @@ public class ScrayCombinedTServiceManager {
 	private int TIMEOUT = 10; // secs
 	private long REFRESH = 3 * 60 * 1000; // milis
 
-	public void init(ScrayURL scrayURL) {
+	public void init(ScrayURL scrayURL) throws Exception {
 		// initialize if new, (re)initialize if different, else reuse
-		if (connection == null) {
+		if (connection == null || connection.isFailed()) {
 			connection = new CombinedServiceConnection(scrayURL);
 		} else if (! connection.scrayURL.equals(scrayURL)) {
 			connection = new CombinedServiceConnection(scrayURL);
 		}
 
 		// initially fill the endpoint cache
-		refreshEndpoints();
+		try {
+			refreshEndpointsWithError();
+		} catch(Exception e) {
+			if(connection != null) {
+				connection.isFailed = true;
+			}
+			throw e;
+		}
 
 		TimerTask tt = new java.util.TimerTask() {
 			@Override
@@ -93,22 +107,26 @@ public class ScrayCombinedTServiceManager {
 		t.scheduleAtFixedRate(tt, REFRESH, REFRESH);
 	}
 
+	private void refreshEndpointsWithError() throws Exception {
+		Future<List<ScrayTServiceEndpoint>> eplist = connection
+				.getCombinedClient().getServiceEndpoints();
+		endpointCache = Await.result(eplist, Duration.fromSeconds(TIMEOUT));
+		log.info("Refreshed scray service endpoints: "
+				+ Joiner.on(", ").join(endpointCache));
+	}
+	
 	void refreshEndpoints() {
 		try {
-			Future<List<ScrayTServiceEndpoint>> eplist = connection
-					.getCombinedClient().getServiceEndpoints();
-			endpointCache = Await.result(eplist, Duration.fromSeconds(TIMEOUT));
-			log.info("Refreshed scray service endpoints: "
-					+ Joiner.on(", ").join(endpointCache));
+			refreshEndpointsWithError();
 		} catch (Exception e) {
 			log.warn("Could not refresh scray service enpoint cache.", e);
-		}
+		}		
 	}
 
 	public String getRandomEndpoint() throws SQLException {
 		String msg = "Error connecting with BDQ Scray Service: no endpoint available.";
 
-		if (endpointCache == null) {
+		if (endpointCache == null || endpointCache.size() == 0) {
 			log.error(msg);
 			throw new SQLException(msg);
 		}

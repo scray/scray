@@ -5,9 +5,12 @@ import java.sql.Connection;
 import java.sql.DriverPropertyInfo;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
+import java.util.Date;
 import java.util.Properties;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Logger;
 
 import scray.client.finagle.ScrayCombinedTServiceManager;
@@ -23,8 +26,10 @@ public class ScrayDriverSingle implements java.sql.Driver {
 	
 	private static ScrayDriverSingle instance = null;
 	private ScrayConnection connection = null;
+	private Timer connectionTimeoutTimer = new Timer();
+
 	
-	private ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock();
+	private ReentrantLock rwLock = new ReentrantLock();
 	
 	private ScrayConnection getConnection() {
 		return instance.connection;
@@ -47,25 +52,31 @@ public class ScrayDriverSingle implements java.sql.Driver {
 		return instance;
 	}
 
+	private class ConnectionTimeoutTask extends TimerTask {
+
+		private Thread originalThread;
+		
+		private ConnectionTimeoutTask(Thread originalThread) {
+			this.originalThread = originalThread;
+		}
+		
+		@Override
+		public void run() {
+			originalThread.interrupt();
+		}
+	}
+	
 	@Override
 	public Connection connect(String url, Properties info) throws SQLException {
-		rwLock.readLock().lock();
+		rwLock.lock();
 		try {
-			if(getConnection() == null) {
-				rwLock.readLock().unlock();
-				rwLock.writeLock().lock();
-				try {
-					if(getConnection() == null) {
-						setConnection(generateNewConnection(url, info));
-					}
-				} finally {
-					rwLock.writeLock().unlock();
-					rwLock.readLock().lock();
-				}
+			connectionTimeoutTimer.schedule(new ConnectionTimeoutTask(Thread.currentThread()), new Date(System.currentTimeMillis() + 120000));
+			if(getConnection() == null || getConnection().getIsFailed().get() || getConnection().isClosed()) {
+				setConnection(generateNewConnection(url, info));
 			}
 			return getConnection();
 		} finally {
-			rwLock.readLock().unlock();
+			rwLock.unlock();
 		}
 	}
 	
@@ -83,7 +94,15 @@ public class ScrayDriverSingle implements java.sql.Driver {
 				ScrayURL scrayURL = new ScrayURL(url);
 				ScrayCombinedTServiceManager tManager = ScrayCombinedTServiceManager
 						.getInstance();
-				tManager.init(scrayURL);
+				try {
+					tManager.init(scrayURL);
+				} catch (Exception e) {
+					if(connection != null) {
+						connection.setIsFailed(new AtomicBoolean(true));
+					}
+					throw new SQLException(e); 
+				}
+				
 				ScrayTServiceAdapter tAdapter = null;
 				try {
 					if (tManager.isStatefulTService()) {
@@ -96,6 +115,9 @@ public class ScrayDriverSingle implements java.sql.Driver {
 				} catch (Exception e) {
 					String msg = "Error setting up scray connection.";
 					log.error(msg, e);
+					if(connection != null) {
+						connection.setIsFailed(new AtomicBoolean(true));
+					}
 					throw new SQLException(msg);
 				}
 				return new ScrayConnection(scrayURL, tAdapter);
@@ -103,6 +125,9 @@ public class ScrayDriverSingle implements java.sql.Driver {
 				return null;
 			}
 		} catch (URISyntaxException e) {
+			if(connection != null) {
+				connection.setIsFailed(new AtomicBoolean(true));
+			}
 			throw new SQLException(e);
 		}
 	}
