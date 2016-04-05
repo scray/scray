@@ -17,9 +17,9 @@ Options:\n\
 
 # find spark-submit
 if [ ! -z $SPARK_HOME ]; then
-  SPARK_SUBMIT = "$SPARK_HOME/bin/spark-submit"
+  SPARK_SUBMIT="$SPARK_HOME/bin/spark-submit"
 else
-  SPARK_SUBMIT = $(which spark-submit)
+  SPARK_SUBMIT=$(which spark-submit)
 fi
 
 if [ -z "$SPARK_SUBMIT" ]; then
@@ -50,6 +50,12 @@ if [ -z "$SPARK_MASTER" ]; then
   echo "ERROR: Need spark master URL to be specifies with --master <URL> . Exiting."
   usage
   exit 2
+fi
+
+if [ -z "$CORES" ]; then
+  echo "ERROR: Need number of cores to be specifies at cli with --total-executor-cores <NUMBER> . Exiting."
+  usage
+  exit 3
 fi
 
 exec $SPARK_SUBMIT --master $SPARK_MASTER --total-executor-cores $CORES --class ${package}.${job-name} target/${artifactId}-${version}-jar-with-dependencies.jar ${symbol_dollar}{ARGUMENTS[@]}

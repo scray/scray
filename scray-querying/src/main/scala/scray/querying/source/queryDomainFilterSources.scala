@@ -41,7 +41,7 @@ import scray.querying.description.WildcardChecker
  * Common code for domain checking
  */
 object DomainFilterSource extends LazyLogging {
-
+  
   /**
    * check if the provided value is compatible with the domains
    */
@@ -121,7 +121,7 @@ class LazyQueryDomainFilterSource[Q <: DomainQuery](source: LazySource[Q])
  */
 class EagerCollectingDomainFilterSource[Q <: DomainQuery, R](source: Source[Q, R])
   extends EagerCollectingQueryMappingSource[Q, R](source) {
-
+  
   override def transformSeq(element: Seq[Row], query: Q): Seq[Row] = {
     element.filter { row =>
       query.getWhereAST.find { domain =>

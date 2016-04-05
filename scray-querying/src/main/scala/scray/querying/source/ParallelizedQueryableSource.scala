@@ -56,6 +56,7 @@ class ParallelizedQueryableSource[K, V](override val store: QueryableStore[K, V]
   }
 
   override def request(query: DomainQuery): Future[Spool[Row]] = {
+    query.queryInfo.addNewCosts {(n: Long) => {n + 42}}
     parallelization.map { numberQueries => 
       logger.debug(s"Requesting data from store with ${query.getQueryID} using ${numberQueries} queries in parallel")
       val spools = executeQueries(query, numberQueries, Nil)

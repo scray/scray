@@ -14,14 +14,15 @@
 // limitations under the License.
 package scray.querying.queries
 
+import java.util.UUID
+import java.util.concurrent.atomic.AtomicInteger
+
 import scray.querying.description.Column
 import scray.querying.description.ColumnGrouping
 import scray.querying.description.ColumnOrdering
 import scray.querying.description.QueryRange
 import scray.querying.description.TableIdentifier
 import scray.querying.description.internal.Domain
-import java.util.UUID
-import java.util.concurrent.atomic.AtomicInteger
 import scray.querying.description.internal.QueryCostsAreTooHigh
 
 
@@ -38,6 +39,7 @@ case class DomainQuery(
 ) {
   
   val costs: AtomicInteger = new AtomicInteger()
+  val queryInfo = CostEstimationInfo
   
   def incementRowCounter() {
     costs.incrementAndGet()

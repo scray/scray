@@ -55,6 +55,7 @@ public class ScrayDriverSingle implements java.sql.Driver {
 	private class ConnectionTimeoutTask extends TimerTask {
 
 		private Thread originalThread;
+		private AtomicBoolean finished = new AtomicBoolean(false);
 		
 		private ConnectionTimeoutTask(Thread originalThread) {
 			this.originalThread = originalThread;
@@ -62,7 +63,13 @@ public class ScrayDriverSingle implements java.sql.Driver {
 		
 		@Override
 		public void run() {
-			originalThread.interrupt();
+			if(!finished.get()) {
+				originalThread.interrupt();
+			}
+		}
+		
+		public void finish() {
+			finished.set(true);
 		}
 	}
 	
@@ -70,9 +77,11 @@ public class ScrayDriverSingle implements java.sql.Driver {
 	public Connection connect(String url, Properties info) throws SQLException {
 		rwLock.lock();
 		try {
-			connectionTimeoutTimer.schedule(new ConnectionTimeoutTask(Thread.currentThread()), new Date(System.currentTimeMillis() + 120000));
 			if(getConnection() == null || getConnection().getIsFailed().get() || getConnection().isClosed()) {
+				ConnectionTimeoutTask tt = new ConnectionTimeoutTask(Thread.currentThread());
+				connectionTimeoutTimer.schedule(tt, new Date(System.currentTimeMillis() + 120000));
 				setConnection(generateNewConnection(url, info));
+				tt.finish();
 			}
 			return getConnection();
 		} finally {

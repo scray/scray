@@ -71,7 +71,9 @@ class EagerEmptyRowDispenserSource[Q <: DomainQuery, R](source: Source[Q, R], va
     qi.map(_.pollingTime.set(time))
   }
 
+
   override def request(query: Q): EagerDataFuture = {
+    query.queryInfo.addNewCosts {(n: Long) => {n + 42}}
     logger.debug(s"Filtering empty rows eagerly for ${query.getQueryID}")
     source.request(query).flatMap(_ match {
       case spool: Spool[_] =>

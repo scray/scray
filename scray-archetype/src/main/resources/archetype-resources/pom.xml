@@ -26,6 +26,7 @@
     <scala.compat.version>2.10</scala.compat.version>
     <scala.logging.version>2.1.2</scala.logging.version>
     <spark.version>1.6.0</spark.version>
+    <scray.version>0.0.1-SNAPSHOT</scray.version>
     <slf4j.version>1.7.7</slf4j.version>
   </properties>
 
@@ -106,6 +107,11 @@
           <groupId>org.apache.spark</groupId>
         </exclusion>
       </exclusions>
+    </dependency>
+    <dependency>
+    	<groupId>scray</groupId>
+    	<artifactId>scray-querying</artifactId>
+    	<version>${scray.version}</version>
     </dependency>
   </dependencies>
 

@@ -8,7 +8,11 @@
     </encoder>
   </appender>
 
-  <root level="debug">
+  <logger name="org.apache.cassandra" level="ERROR" />
+  <logger name="com.datastax.driver" level="INFO" />
+  <logger name="scray.querying.sync.cassandra" level="DEBUG" />
+
+  <root level="info">
     <appender-ref ref="STDOUT" />
   </root>
 </configuration>
