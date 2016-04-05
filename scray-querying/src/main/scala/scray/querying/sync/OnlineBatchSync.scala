@@ -61,6 +61,9 @@ object JobInfo {
  def apply(name: String) = {
     new JobInfo(name)
   }
+  def apply(name: String, numberOfBatcheVersions: Int, numberOfOnlineVersions: Int) = {
+    new JobInfo(name, numberOfBatcheVersions, numberOfOnlineVersions)
+  }
 }
 
 case class RunningJobExistsException(message: String) extends Exception(message)
