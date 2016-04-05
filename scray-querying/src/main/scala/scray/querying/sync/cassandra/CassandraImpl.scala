@@ -158,10 +158,10 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
         }
         case None => {
           this.lockOnlineTable(job).map { _ =>
-          val newVersion = getNewestOnlineVersion(job)
+          val newVersion = (getNewestOnlineVersion(job)
           .getOrElse({
             logger.debug("No completed version found use 0"); 
-            0}) + 1 % job.numberOfOnlineVersions 
+            0}) + 1) % job.numberOfOnlineVersions 
             logger.debug(s"Set next online version to ${newVersion}")
             executeQuorum(createStartStatement(newVersion, true))
           }
@@ -463,7 +463,7 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
     logger.debug(s"Unlock batch table for job: ${job.name} ")
 
     val rowsToUnlock = new BatchStatement()
-    0 to job.numberOfOnlineVersions - 1 foreach {
+    0 to job.numberOfBatcheVersions - 1 foreach {
       version => rowsToUnlock.add(geLockStatement(job, version, false, false))
     }
     executeQuorum(rowsToUnlock)
