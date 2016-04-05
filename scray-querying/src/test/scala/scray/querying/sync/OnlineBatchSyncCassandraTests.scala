@@ -259,7 +259,6 @@ class OnlineBatchSyncTests extends WordSpec with BeforeAndAfter with BeforeAndAf
     }
     " mark new online job version " in {
       val table = new OnlineBatchSyncCassandra(dbconnection)
-      val syncTable = SyncTable("SILIDX", "SyncTable")
       val jobInfo = JobInfo("JOB_100")
 
       val sum = new ColumnWithValue[Long]("sum", 100)
@@ -276,7 +275,6 @@ class OnlineBatchSyncTests extends WordSpec with BeforeAndAfter with BeforeAndAf
     }
     " start and stop jobs " in {
       val table = new OnlineBatchSyncCassandra(dbconnection)
-      val syncTable = SyncTable("SILIDX", "SyncTable")
       val job = JobInfo("JOB_100")
 
       val sum = new ColumnWithValue[Long]("sum", 100)
@@ -291,10 +289,7 @@ class OnlineBatchSyncTests extends WordSpec with BeforeAndAfter with BeforeAndAf
       assert(table.getBatchJobState(job, 1).get.equals(State.COMPLETED))
     }
     " get completed tables " in {
-      // val table = new OnlineBatchSyncCassandra(dbconnection)
       val table = new OnlineBatchSyncCassandra(dbconnection)
-
-      val job = JobInfo("JOB_100")
 
       val sum = new ColumnWithValue[Long]("sum", 100)
       val columns = sum :: Nil

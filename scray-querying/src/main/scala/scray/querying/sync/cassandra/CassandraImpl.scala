@@ -72,7 +72,7 @@ class CassandraSessionBasedDBSession(cassandraSession: Session) extends DbSessio
       if(result.wasApplied()) {
         Success(result)
       } else {
-        Failure(new StatementExecutionError(s"It was not possible to execute statement: ${statement}. Error: ${result.getExecutionInfo}"))
+        Failure(new StatementExecutionError(s"It was not possible to execute statement: ${printStatement(statement)}. Error: ${result.getExecutionInfo}"))
       }
     }
 
@@ -91,6 +91,13 @@ class CassandraSessionBasedDBSession(cassandraSession: Session) extends DbSessio
         Success(result)
       } else {
         Failure(new StatementExecutionError(s"It was not possible to execute statement: ${statement}. Error: ${result.getExecutionInfo}"))
+      }
+    }
+    
+    def printStatement(s: Statement): String = {
+      s match {
+         case bStatement: BatchStatement => "It is currently not possible to execute : " + bStatement.getStatements
+         case _                          => "It is currently not possible to execute : " + s
       }
     }
   }
