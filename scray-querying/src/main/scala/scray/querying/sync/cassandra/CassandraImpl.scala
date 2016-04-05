@@ -430,18 +430,6 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
      Try()
   }
 
-  /**
-   * Lock table if it is used by another spark job.
-   */
-  def lockOnlineTable(job: JobInfo): Try[Unit] = {
-    logger.debug(s"Lock online table for job: ${job.name} ")
-
-    val rowsToLock = new BatchStatement()
-    0 to job.numberOfOnlineVersions - 1 foreach {
-      version => rowsToLock.add(geLockStatement(job, version, true, true))
-    }
-    executeQuorum(rowsToLock)
-  }
 
   /**
    * Lock online table if it is used by another spark job.
@@ -450,7 +438,7 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
     logger.debug(s"Lock batch table for job: ${job.name}")
 
     val rowsToLock = new BatchStatement()
-    0 to job.numberOfOnlineVersions - 1 foreach {
+    0 to job.numberOfBatcheVersions - 1 foreach {
       version => rowsToLock.add(geLockStatement(job, version, false, true))
     }
     executeQuorum(rowsToLock)
@@ -469,6 +457,19 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
     executeQuorum(rowsToUnlock)
   }
 
+    /**
+   * Lock table if it is used by another spark job.
+   */
+  def lockOnlineTable(job: JobInfo): Try[Unit] = {
+    logger.debug(s"Lock online table for job: ${job.name} ")
+
+    val rowsToLock = new BatchStatement()
+    0 to job.numberOfOnlineVersions - 1 foreach {
+      version => rowsToLock.add(geLockStatement(job, version, true, true))
+    }
+    executeQuorum(rowsToLock)
+  }
+  
   /**
    * Unlock batch table to make it available for a new job.
    */
