@@ -62,7 +62,6 @@ class OnlineBatchSyncTests extends WordSpec with BeforeAndAfter with BeforeAndAf
     dbconnection = new DbSession[Statement, Insert, ResultSet]("127.0.0.1") {
       EmbeddedCassandraServerHelper.startEmbeddedCassandra(EmbeddedCassandraServerHelper.CASSANDRA_RNDPORT_YML_FILE)
       val cassandraSession = Cluster.builder().addContactPoint("127.0.0.1").withPort(EmbeddedCassandraServerHelper.getNativeTransportPort).build().connect()
-      EmbeddedCassandraServerHelper.cleanEmbeddedCassandra()
 
       override def execute(statement: String): Try[ResultSet] = {
         val result = cassandraSession.execute(statement)
@@ -259,7 +258,7 @@ class OnlineBatchSyncTests extends WordSpec with BeforeAndAfter with BeforeAndAf
     }
     " mark new online job version " in {
       val table = new OnlineBatchSyncCassandra(dbconnection)
-      val jobInfo = JobInfo("JOB_100")
+      val jobInfo = JobInfo("JOB_100", 3, 3)
 
       val sum = new ColumnWithValue[Long]("sum", 100)
       val columns = sum :: Nil
