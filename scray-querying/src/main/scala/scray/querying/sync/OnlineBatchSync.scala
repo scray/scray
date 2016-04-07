@@ -22,7 +22,7 @@ import scala.util.Try
 import scray.querying.description.TableIdentifier
 
 
-abstract class OnlineBatchSync extends LazyLogging {
+abstract class OnlineBatchSync extends LazyLogging with Serializable {
 
   /**
    * Generate and register tables for a new job.
@@ -32,21 +32,24 @@ abstract class OnlineBatchSync extends LazyLogging {
   def startNextBatchJob(job: JobInfo): Try[Unit]
   def startNextOnlineJob(job: JobInfo): Try[Unit]
   
+  def completeBatchJob(job: JobInfo): Try[Unit]
+  def completeOnlineJob(job: JobInfo): Try[Unit]
+  
+  def restartBatchJob(job: JobInfo): Try[Unit]
+  def restartOnlineJob(job: JobInfo): Try[Unit]
+  
   def getRunningBatchJobVersion(job: JobInfo): Option[Int]
   def getRunningOnlineJobVersion(job: JobInfo): Option[Int]
   
   def insertInBatchTable(jobName: JobInfo, nr: Int, data: RowWithValue): Try[Unit]
   def insertInOnlineTable(jobName: JobInfo, nr: Int, data: RowWithValue): Try[Unit]
   
-  def completeBatchJob(job: JobInfo): Try[Unit]
-  def completeOnlineJob(job: JobInfo): Try[Unit]
-  
   def getOnlineJobState(job: JobInfo, version: Int): Option[State]
   def getBatchJobState(job: JobInfo, version: Int): Option[State]
   
   def getOnlineJobData[T <: RowWithValue](jobname: String, nr: Int, result: T): Option[List[RowWithValue]]
   def getBatchJobData[T <: RowWithValue](jobname: String, nr: Int, result: T): Option[List[RowWithValue]]
-  
+    
   def getQueryableTableIdentifiers: List[(String, TableIdentifier, Int)]
 }
 
@@ -55,7 +58,7 @@ class JobInfo(
   val name: String,
   val numberOfBatcheVersions: Int = 3,
   val numberOfOnlineVersions: Int = 2
-  ) {}
+  ) extends Serializable {}
 
 object JobInfo {
  def apply(name: String) = {

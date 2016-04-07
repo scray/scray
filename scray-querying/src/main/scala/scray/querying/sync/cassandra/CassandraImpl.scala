@@ -36,14 +36,14 @@ import scala.util.Success
 import scray.querying.description.TableIdentifier
 import scala.collection.mutable.HashSet
 
-object CassandraImplementation {
+object CassandraImplementation extends Serializable {
   implicit def genericCassandraColumnImplicit[T](implicit cassImplicit: CassandraPrimitive[T]): DBColumnImplementation[T] = new DBColumnImplementation[T] {
     override def getDBType: String = cassImplicit.cassandraType
     override def fromDBType(value: AnyRef): T = cassImplicit.fromCType(value)
     override def toDBType(value: T): AnyRef = cassImplicit.toCType(value)
   }
 
-  implicit class RichBoolean(val b: Boolean) extends AnyVal {
+  implicit class RichBoolean(val b: Boolean) extends AnyVal with Serializable {
     final def toOption[A](a: => A): Option[A] = if (b) Some(a) else None
     final def toTry[A, E <: Throwable](a: => A, c: => E): Try[A] = Try { if (b) a else throw c }
     final def ?[A](a: => A, c: => A): A = if (b) a else c
@@ -51,7 +51,7 @@ object CassandraImplementation {
     final def ![A](a: => A) = if (!b) a
   }
 
-  implicit class RichOption[T](val b: Option[T]) extends AnyVal {
+  implicit class RichOption[T](val b: Option[T]) extends AnyVal with Serializable {
     final def toTry[E <: Throwable](c: => E): Try[T] = Try { b.getOrElse(throw c) }
   }
 }
@@ -109,10 +109,14 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
     this(new CassandraSessionBasedDBSession(Cluster.builder().addContactPoint(dbHostname).build().connect()))
   }
   
+  def this(dbHostname: String, port: Int) = {
+    this(new CassandraSessionBasedDBSession(Cluster.builder().addContactPoint(dbHostname).withPort(port).build().connect()))
+  }
+  
   import CassandraImplementation.{RichBoolean, RichOption}
   
   // Create or use a given DB session.
-  val session = dbSession
+  @transient val session = dbSession
 
   val syncTable = SyncTable("SILIDX", "SyncTable")
 
@@ -213,6 +217,36 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
     }
   }
   
+  def restartBatchJob(job: JobInfo): Try[Unit] = Try {
+    
+    val runningBatchVersion = this.getRunningBatchJobVersion(job).getOrElse(0)
+    this.unlockBatchTable(job)
+    this.renewJob(job, runningBatchVersion, false)
+    this.lockBatchTable(job)
+  }
+  
+  def restartOnlineJob(job: JobInfo): Try[Unit] = Try {
+    
+    val runningOnlineVersion = this.getRunningOnlineJobVersion(job).getOrElse(0)
+    this.unlockOnlineTable(job)
+    this.renewJob(job, runningOnlineVersion, true)
+    this.lockOnlineTable(job)
+  }
+  
+  /**
+   * Set running job to state new
+   */
+  private def renewJob(job: JobInfo, version: Int, online: Boolean): Try[Unit] = {
+    val query = QueryBuilder.update(syncTable.keySpace, syncTable.tableName)
+      .`with`(QueryBuilder.set(syncTable.columns.state.name, State.NEW.toString()))
+      .and(QueryBuilder.set(syncTable.columns.creationTime.name, System.currentTimeMillis()))
+      .where(QueryBuilder.eq(syncTable.columns.jobname.name, job.name))
+      .and(QueryBuilder.eq(syncTable.columns.online.name, online))
+      .and(QueryBuilder.eq(syncTable.columns.versionNr.name, version))
+      .onlyIf(QueryBuilder.eq(syncTable.columns.locked.name, false))
+    executeQuorum(query)
+  }
+    
   private def completeJob(job: JobInfo, version: Int, online: Boolean): Try[Unit] = {
     val query = QueryBuilder.update(syncTable.keySpace, syncTable.tableName)
       .`with`(QueryBuilder.set(syncTable.columns.state.name, State.COMPLETED.toString()))
