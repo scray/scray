@@ -317,7 +317,76 @@ class OnlineBatchSyncTests extends WordSpec with BeforeAndAfter with BeforeAndAf
       val expectedResults = List("JOB_100_batch1", "JOB_300_batch1", "JOB_200_batch1", "JOB_400_batch2")
       table.getQueryableTableIdentifiers.map{tableIdentifier => assert(expectedResults.contains(tableIdentifier._2.tableId))}
     }
+    " reset batch job " in {
+      val table = new OnlineBatchSyncCassandra(dbconnection)
+      val job = JobInfo("JOB_100", 3, 3)
 
+      val sum = new ColumnWithValue[Long]("sum", 100)
+      val columns = sum :: Nil
+      val primaryKey = s"(${sum.name})"
+      val indexes: Option[List[String]] = None
+
+      assert(table.initJob(job, new RowWithValue(columns, primaryKey, indexes)).isSuccess)
+      assert(table.startNextBatchJob(job).isSuccess)
+      
+      assert(table.getBatchJobState(job, 0).get.equals(State.NEW))
+      assert(table.getBatchJobState(job, 1).get.equals(State.RUNNING))
+      assert(table.getBatchJobState(job, 2).get.equals(State.NEW))
+      
+      assert(table.resetBatchJob(job).isSuccess)
+
+      assert(table.getBatchJobState(job, 0).get.equals(State.NEW))
+      assert(table.getBatchJobState(job, 1).get.equals(State.NEW))
+      assert(table.getBatchJobState(job, 2).get.equals(State.NEW))
+    }
+    " reset online job " in {
+      val table = new OnlineBatchSyncCassandra(dbconnection)
+      val job = JobInfo("JOB_100", 3, 3)
+
+      val sum = new ColumnWithValue[Long]("sum", 100)
+      val columns = sum :: Nil
+      val primaryKey = s"(${sum.name})"
+      val indexes: Option[List[String]] = None
+
+      assert(table.initJob(job, new RowWithValue(columns, primaryKey, indexes)).isSuccess)
+      assert(table.startNextOnlineJob(job).isSuccess)
+      
+      assert(table.getOnlineJobState(job, 0).get.equals(State.NEW))
+      assert(table.getOnlineJobState(job, 1).get.equals(State.RUNNING))
+      assert(table.getOnlineJobState(job, 2).get.equals(State.NEW))
+      
+      assert(table.resetOnlineJob(job).isSuccess)
+      assert(table.getOnlineJobState(job, 0).get.equals(State.NEW))
+      assert(table.getOnlineJobState(job, 1).get.equals(State.NEW))
+      assert(table.getOnlineJobState(job, 2).get.equals(State.NEW))
+    }
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     
 //    "use hlist" in {
 //      

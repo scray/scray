@@ -217,7 +217,7 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
     }
   }
   
-  def restartBatchJob(job: JobInfo): Try[Unit] = Try {
+  def resetBatchJob(job: JobInfo): Try[Unit] = Try {
     
     val runningBatchVersion = this.getRunningBatchJobVersion(job).getOrElse(0)
     this.unlockBatchTable(job)
@@ -225,7 +225,7 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
     this.lockBatchTable(job)
   }
   
-  def restartOnlineJob(job: JobInfo): Try[Unit] = Try {
+  def resetOnlineJob(job: JobInfo): Try[Unit] = Try {
     
     val runningOnlineVersion = this.getRunningOnlineJobVersion(job).getOrElse(0)
     this.unlockOnlineTable(job)

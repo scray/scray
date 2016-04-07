@@ -35,8 +35,8 @@ abstract class OnlineBatchSync extends LazyLogging with Serializable {
   def completeBatchJob(job: JobInfo): Try[Unit]
   def completeOnlineJob(job: JobInfo): Try[Unit]
   
-  def restartBatchJob(job: JobInfo): Try[Unit]
-  def restartOnlineJob(job: JobInfo): Try[Unit]
+  def resetBatchJob(job: JobInfo): Try[Unit]
+  def resetOnlineJob(job: JobInfo): Try[Unit]
   
   def getRunningBatchJobVersion(job: JobInfo): Option[Int]
   def getRunningOnlineJobVersion(job: JobInfo): Option[Int]
