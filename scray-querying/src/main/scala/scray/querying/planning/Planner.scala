@@ -99,6 +99,7 @@ object Planner extends LazyLogging {
    */
   def planAndExecute(query: Query): Spool[Row] = {
     val (plans, queryInfo) = Planner.plan(query)
+    queryInfo.finishedPlanningTime.set(System.currentTimeMillis())
     
     // do we need to order?
     val ordering = plans.find((execution) => execution._1.isInstanceOf[OrderedComposablePlan[_, _]]).
