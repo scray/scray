@@ -15,7 +15,6 @@
 package scray.querying.source.indexing
 
 import com.twitter.util.Time
-import com.typesafe.scalalogging.slf4j.LazyLogging
 
 import java.util.{Calendar, GregorianCalendar, TimeZone}
 
@@ -29,6 +28,7 @@ import scray.querying.description.internal.CombinedIndexColumnMissingException
 import scray.querying.description.internal.ComposedMultivalueDomain
 import scray.querying.queries.DomainQuery
 import scray.querying.source.{AbstractHashJoinSource, KeyValueSource, LazySource}
+import com.typesafe.scalalogging.slf4j.LazyLogging
 
 /**
  * creates an indexed-source with a hashed-join reference on a time column.

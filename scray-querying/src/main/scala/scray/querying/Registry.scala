@@ -33,7 +33,6 @@ import org.mapdb.HTreeMap
 import scray.querying.caching.Cache
 import scray.querying.caching.serialization.RegisterRowCachingSerializers
 import scray.querying.monitoring.Monitor
-import com.typesafe.scalalogging.slf4j.LazyLogging
 import scray.querying.caching.MonitoringInfos
 import java.util.concurrent.atomic.AtomicBoolean
 import scray.querying.queries.QueryInformation
@@ -45,6 +44,7 @@ import com.twitter.util.Time
 import scala.collection.mutable.ArrayBuffer
 import scray.querying.monitoring.MonitorQuery
 import com.twitter.util.Try
+import com.typesafe.scalalogging.slf4j.LazyLogging
 
 /**
  * default trait to represent get operations on the registry

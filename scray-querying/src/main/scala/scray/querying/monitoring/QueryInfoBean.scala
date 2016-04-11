@@ -4,7 +4,6 @@ import java.lang.{ Long => JLong }
 import java.lang.{ String => JString }
 import scala.collection.convert.WrapAsScala._
 import scala.collection.mutable.HashMap
-import com.typesafe.scalalogging.slf4j.LazyLogging
 import javax.management.Attribute
 import javax.management.AttributeList
 import javax.management.DynamicMBean
@@ -25,6 +24,7 @@ import scray.querying.description.Unequal
 import scray.querying.description.Wildcard
 import scray.querying.queries.QueryInformation
 import javax.management.ObjectName
+import com.typesafe.scalalogging.slf4j.LazyLogging
 
 class QueryInfoBean(qinfo: QueryInformation, beans: HashMap[String, QueryInfoBean]) extends DynamicMBean with LazyLogging {
 

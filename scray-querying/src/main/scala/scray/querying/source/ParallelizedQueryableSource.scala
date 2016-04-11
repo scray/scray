@@ -17,7 +17,6 @@ package scray.querying.source
 import com.twitter.concurrent.Spool
 import com.twitter.storehaus.QueryableStore
 import com.twitter.util.{Future, Throw, Return}
-import com.typesafe.scalalogging.slf4j.LazyLogging
 import scalax.collection.GraphEdge._
 import scalax.collection.GraphEdge.DiEdge
 import scalax.collection.GraphPredef._
@@ -27,6 +26,7 @@ import scray.querying.description.internal.SingleValueDomain
 import scray.querying.queries.DomainQuery
 import scray.querying.planning.MergingResultSpool
 import scala.annotation.tailrec
+import com.typesafe.scalalogging.slf4j.LazyLogging
 
 /**
  * queries a Storehaus-store with a number of parallel queries. 

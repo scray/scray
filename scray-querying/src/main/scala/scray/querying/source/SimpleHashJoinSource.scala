@@ -27,11 +27,11 @@ import scalax.collection.GraphEdge._
 import scray.querying.queries.SimpleKeyBasedQuery
 import scray.querying.caching.Cache
 import scray.querying.caching.NullCache
-import com.typesafe.scalalogging.slf4j.LazyLogging
 import scray.querying.description.EmptyRow
 import scray.querying.source.costs.QueryCosts
 import scray.querying.source.costs.QueryCostFunctionFactory
 import scray.querying.source.costs.LinearQueryCostFuntionFactory.defaultFactory
+import com.typesafe.scalalogging.slf4j.LazyLogging
 
 
 /**

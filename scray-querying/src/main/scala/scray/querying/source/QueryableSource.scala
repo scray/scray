@@ -26,8 +26,8 @@ import scalax.collection.GraphEdge.DiEdge
 import scalax.collection.GraphPredef._
 import scalax.collection.GraphEdge._
 import scray.querying.caching.Cache
-import com.typesafe.scalalogging.slf4j.LazyLogging
 import scray.querying.caching.NullCache
+import com.typesafe.scalalogging.slf4j.LazyLogging
 
 /**
  * queries a Storehaus-store. Assumes that the Seq returnes by QueryableStore is a lazy sequence (i.e. view)

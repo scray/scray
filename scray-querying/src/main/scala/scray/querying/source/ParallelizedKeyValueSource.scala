@@ -29,7 +29,6 @@ import scray.querying.queries.DomainQuery
 import scray.querying.caching.KeyValueCache
 import scray.querying.caching.Cache
 import org.slf4j.LoggerFactory
-import com.typesafe.scalalogging.slf4j.LazyLogging
 import scray.querying.caching.serialization.KeyValueCacheSerializer
 import scray.querying.caching.serialization.RegisterRowCachingSerializers
 import scray.querying.queries.{KeyBasedQuery, KeySetBasedQuery}
@@ -37,6 +36,7 @@ import scala.collection.mutable.ArrayBuffer
 import com.twitter.util.Return
 import com.twitter.util.Await
 import com.twitter.util.Try
+import com.typesafe.scalalogging.slf4j.LazyLogging
 
 /**
  * A source that queries a Storehaus-store for a set of values.

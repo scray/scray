@@ -2,7 +2,6 @@ package scray.querying.source
 
 import scray.querying.description.Row
 import scray.querying.queries.DomainQuery
-import com.typesafe.scalalogging.slf4j.LazyLogging
 import scray.querying.description.TableIdentifier
 import scray.querying.description.Column
 import scala.reflect.ClassTag
@@ -10,6 +9,7 @@ import scray.querying.description.ColumnOrdering
 import scray.querying.description.QueryRange
 import scray.querying.description.internal.Domain
 import scray.querying.description.ColumnGrouping
+import com.typesafe.scalalogging.slf4j.LazyLogging
 
 /**
  * a hash join source for indexes that use ranges and sets of references

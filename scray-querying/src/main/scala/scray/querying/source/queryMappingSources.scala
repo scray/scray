@@ -15,7 +15,6 @@
 package scray.querying.source
 import com.twitter.concurrent.Spool
 import com.twitter.util.Future
-import com.typesafe.scalalogging.slf4j.LazyLogging
 import scalax.collection.GraphEdge._
 import scalax.collection.GraphEdge.DiEdge
 import scalax.collection.GraphPredef._
@@ -27,6 +26,7 @@ import scray.querying.queries.DomainQuery
 import scala.collection.mutable.ArrayBuffer
 import scray.querying.source.costs.QueryCosts
 import scray.querying.source.costs.QueryCostFunctionFactory
+import com.typesafe.scalalogging.slf4j.LazyLogging
 
 /**
  * A source to lazily post-process data from a provided lazy source.

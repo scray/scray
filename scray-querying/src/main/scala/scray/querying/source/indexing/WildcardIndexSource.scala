@@ -23,12 +23,12 @@ import scray.querying.description.{Column, ColumnGrouping, ColumnOrdering, Query
 import scray.querying.description.internal.{Bound, Domain, QueryDomainRangeException, RangeValueDomain, SingleValueDomain}
 import scray.querying.queries.DomainQuery
 import scray.querying.source.{AbstractRangeSetHashJoinSource, KeyValueSource, LazySource}
-import com.typesafe.scalalogging.slf4j.LazyLogging
 import scray.querying.description.internal.WildcardIndexRangeException
 import scala.collection.mutable.HashSet
 import com.twitter.concurrent.Spool
 import com.twitter.util.Await
 import scray.querying.description.internal.ComposedMultivalueDomain
+import com.typesafe.scalalogging.slf4j.LazyLogging
 
 /**
  * creates an indexed-source with a wildcard-join reference on a UTF8-column.

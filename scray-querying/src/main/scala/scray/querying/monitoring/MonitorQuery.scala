@@ -7,13 +7,13 @@ import org.mapdb.DBMaker
 import org.mapdb.Store
 import com.twitter.util.Duration
 import com.twitter.util.JavaTimer
-import com.typesafe.scalalogging.slf4j.LazyLogging
 import javax.management.ObjectName
 import scray.querying.Registry
 import scray.querying.description.TableConfiguration
 import scray.querying.description.TableIdentifier
 import java.util.concurrent.locks.ReentrantLock
 import scray.querying.queries.QueryInformation
+import com.typesafe.scalalogging.slf4j.LazyLogging
 
 
 class MonitorQuery extends LazyLogging {

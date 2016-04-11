@@ -13,13 +13,13 @@ import com.datastax.driver.core.SimpleStatement
 import com.datastax.driver.core.Statement
 import com.datastax.driver.core.querybuilder.Insert
 import com.datastax.driver.core.querybuilder.QueryBuilder
-import com.typesafe.scalalogging.slf4j.LazyLogging
 import scray.querying.sync.types._
 import scray.querying.sync.types._
 import java.util.ArrayList
 import scala.collection.mutable.ArrayBuffer
 import scala.util.Try
 import scray.querying.description.TableIdentifier
+import com.typesafe.scalalogging.slf4j.LazyLogging
 
 
 abstract class OnlineBatchSync extends LazyLogging with Serializable {
