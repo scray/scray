@@ -128,7 +128,7 @@ case class TableConfiguration[Q, K, V] (
  * we generally assume versions to be Longs, see Summingbird for more information
  */
 case class VersioningConfiguration[Q, K, V] (
-  latestCompleteVersion: () => Option[Long], // latest complete version of the table 
+//  latestCompleteVersion: () => Option[Long], // latest complete version of the table 
   runtimeVersion: () => Option[Long], // current real-time version, which is updated continuously
   nameVersionMapping: Option[(String, Long) => String], // if needed, a mapping for the table name for the version
   queryableStore: StorePool[QueryableStore[Q, V]], // the versioned queryable store representation, allowing to query the store
