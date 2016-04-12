@@ -9,7 +9,6 @@ import scalax.collection.immutable.Graph
 import scray.querying.description.ColumnOrdering
 import scray.querying.caching.Cache
 import scray.querying.caching.NullCache
-import com.typesafe.scalalogging.slf4j.LazyLogging
 import com.twitter.concurrent.Spool
 import scray.querying.description.IndexConfiguration
 import scalax.collection.GraphEdge.DiEdge
@@ -17,6 +16,8 @@ import scalax.collection.GraphPredef._
 import com.twitter.util.Await
 import scala.collection.mutable.HashSet
 import com.twitter.util.Future
+import com.typesafe.scalalogging.slf4j.LazyLogging
+
 //import com.twitter.concurrent.Spool.{seqToSpool, ToSpool}
 
 case class MergeReferenceColumns[Q <: DomainQuery, R, T <: Source[Q, R]](referenceSource: T, referenceSourceColumn: Column, indexConfig: IndexConfiguration, 

@@ -16,8 +16,6 @@ package scray.querying.source
 
 import com.twitter.concurrent.Spool
 import com.twitter.util.Future
-import com.typesafe.scalalogging.slf4j.LazyLogging
-
 import scalax.collection.GraphEdge._
 import scalax.collection.GraphEdge.DiEdge
 import scalax.collection.GraphPredef._
@@ -25,6 +23,7 @@ import scalax.collection.immutable.Graph
 import scray.querying.caching.{Cache, NullCache}
 import scray.querying.description.{Column, EmptyRow, Row}
 import scray.querying.queries.{DomainQuery, QueryInformation}
+import com.typesafe.scalalogging.slf4j.LazyLogging
 
 /**
  * dispenses empty rows, such that the results only contains rows which contain data

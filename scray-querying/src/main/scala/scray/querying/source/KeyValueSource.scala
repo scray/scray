@@ -30,9 +30,9 @@ import scray.querying.queries.DomainQuery
 import scray.querying.caching.KeyValueCache
 import scray.querying.caching.Cache
 import org.slf4j.LoggerFactory
-import com.typesafe.scalalogging.slf4j.LazyLogging
 import scray.querying.caching.serialization.KeyValueCacheSerializer
 import scray.querying.caching.serialization.RegisterRowCachingSerializers
+import com.typesafe.scalalogging.slf4j.LazyLogging
 
 /**
  * A source that queries a Storehaus-store for a given value.

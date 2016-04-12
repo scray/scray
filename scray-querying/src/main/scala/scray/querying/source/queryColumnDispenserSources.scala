@@ -18,10 +18,10 @@ import scray.querying.queries.DomainQuery
 import scray.querying.description.{Column, Row, RowColumn, SimpleRow}
 import scray.querying.caching.Cache
 import scray.querying.caching.NullCache
-import com.typesafe.scalalogging.slf4j.LazyLogging
 import scala.collection.mutable.HashSet
 import scala.collection.mutable.ArrayBuffer
 import scala.util.Try
+import com.typesafe.scalalogging.slf4j.LazyLogging
 
 object ColumnDispenserTransformer {
   def transformElement[Q <: DomainQuery](element: Row, query: Q, columns: HashSet[Column]): Row = {

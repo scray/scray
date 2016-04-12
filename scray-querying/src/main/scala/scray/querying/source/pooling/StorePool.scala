@@ -10,8 +10,8 @@ import java.util.concurrent.locks.ReentrantLock
 import scala.collection.mutable.HashMap
 import com.twitter.util.Time
 import com.twitter.util.Duration
-import com.typesafe.scalalogging.slf4j.LazyLogging
 import com.twitter.util.JavaTimer
+import com.typesafe.scalalogging.slf4j.LazyLogging
 
 /**
  * A simple pooling mechanism for Storehaus stores

@@ -13,5 +13,7 @@ case class Config(
   checkpointPath: String = "hdfs://localhost:8020/user/hadoop/aggmsgs", //
   checkpointDuration: Int = 10000,           // Duration between to checkpoints
   cassandraHost: Option[String] = None,
-  cassandraKeyspace: Option[String] = None
+  cassandraKeyspace: Option[String] = None,
+  numberOfBatchVersions: Int = 3,
+  numberOfOnlineVersions: Int = 1
 )

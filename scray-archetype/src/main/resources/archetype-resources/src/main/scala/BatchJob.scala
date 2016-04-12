@@ -10,11 +10,14 @@ import org.apache.spark.rdd.RDD
 import scray.querying.sync.cassandra.CassandraImplementation._
 import scray.querying.sync.OnlineBatchSync
 import scray.querying.sync.cassandra.OnlineBatchSyncCassandra
+import scray.querying.sync.JobInfo
+import scala.util.Failure
+import scala.util.Success
 
 /**
  * Class containing all the batch stuff
  */
-class BatchJob(@transient val sc: SparkContext) extends LazyLogging with Serializable {
+class BatchJob(@transient val sc: SparkContext, jobInfo: JobInfo) extends LazyLogging with Serializable {
   println(sc.getConf.get("spark.cassandra.connection.host"))
   val syncTable: OnlineBatchSync = new OnlineBatchSyncCassandra(sc.getConf.get("spark.cassandra.connection.host"))
 
@@ -40,6 +43,10 @@ class BatchJob(@transient val sc: SparkContext) extends LazyLogging with Seriali
       map(x => StreamingJob.saveDataMap(x)).
       // example howto save into Cassandra: saveToCassandra(StreamingJob.keyspace, StreamingJob.tablebatch)
       foreach(x => println(x))
+    syncTable.completeBatchJob(jobInfo) match {
+      case Success(u) => logger.info("Job marked as completed")
+      case Failure(ex) => logger.error(s"Error while completing job ${ex.getMessage}")
+    }
   }
 
   /**

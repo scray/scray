@@ -23,7 +23,6 @@ import com.twitter.storehaus.QueryableStore
 import com.twitter.storehaus.ReadableStore
 import com.twitter.util.Await
 import com.twitter.util.Future
-import com.typesafe.scalalogging.slf4j.LazyLogging
 import scray.querying.Query
 import scray.querying.Registry
 import scray.querying.description.And
@@ -84,6 +83,7 @@ import scray.querying.source.indexing.SimpleHashJoinConfig
 import scray.querying.source.indexing.TimeIndexConfig
 import scray.querying.source.indexing.TimeIndexSource
 import scray.querying.source.MergeReferenceColumns
+import com.typesafe.scalalogging.slf4j.LazyLogging
 
 /**
  * Simple planner to execute queries.
@@ -99,6 +99,7 @@ object Planner extends LazyLogging {
    */
   def planAndExecute(query: Query): Spool[Row] = {
     val (plans, queryInfo) = Planner.plan(query)
+    queryInfo.finishedPlanningTime.set(System.currentTimeMillis())
     
     // do we need to order?
     val ordering = plans.find((execution) => execution._1.isInstanceOf[OrderedComposablePlan[_, _]]).

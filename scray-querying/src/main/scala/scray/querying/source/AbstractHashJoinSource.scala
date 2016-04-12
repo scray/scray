@@ -30,7 +30,6 @@ import scray.querying.description.ColumnOrdering
 import scray.querying.caching.Cache
 import scray.querying.caching.NullCache
 import org.slf4j.LoggerFactory
-import com.typesafe.scalalogging.slf4j.LazyLogging
 import scala.collection.parallel.ForkJoinTaskSupport
 import scala.concurrent.forkjoin.ForkJoinPool
 import com.twitter.concurrent.Spool.LazyCons
@@ -53,6 +52,7 @@ import scray.querying.description.internal.CombinedIndexColumnMissingException
 import scray.querying.description.internal.SingleValueDomain
 import scray.querying.description.internal.RangeValueDomain
 import scray.querying.description.internal.ComposedMultivalueDomain
+import com.typesafe.scalalogging.slf4j.LazyLogging
 
 /**
  * This hash joined source provides a template for implementing hashed-joins. This is a relational lookup.

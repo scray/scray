@@ -1,7 +1,6 @@
 package scray.querying.source
 
 import scray.querying.queries.DomainQuery
-import com.typesafe.scalalogging.slf4j.LazyLogging
 import com.twitter.concurrent.Spool
 import scray.querying.description.Row
 import com.twitter.util.Future
@@ -13,6 +12,7 @@ import scalax.collection.GraphEdge._
 import scray.querying.description.Column
 import scray.querying.caching.NullCache
 import sun.reflect.generics.reflectiveObjects.NotImplementedException
+import com.typesafe.scalalogging.slf4j.LazyLogging
 
 class LazyTestSource(spool: Spool[Row], ordered: Boolean = true) extends LazySource[DomainQuery] with LazyLogging {
   override def request(query: DomainQuery): LazyDataFuture = Future.value(spool)

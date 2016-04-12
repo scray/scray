@@ -11,7 +11,7 @@ import scala.util.Try
 
 import scray.querying.sync.cassandra.CassandraImplementation._
 
-class Table[T <: AbstractRow](val keySpace: String, val tableName: String, val columns: T) {
+class Table[T <: AbstractRow](val keySpace: String, val tableName: String, val columns: T) extends Serializable {
   val rows: ListBuffer[RowWithValue]= ListBuffer[RowWithValue]()
   
   def addRow(row: RowWithValue) {
@@ -29,14 +29,14 @@ trait DBColumnImplementation[T] {
   def toDBType(value: T): AnyRef
 }
 
-class Column[T: DBColumnImplementation](val name: String) { self =>
+class Column[T: DBColumnImplementation](val name: String) extends Serializable { self =>
   val dbimpl = implicitly[DBColumnImplementation[T]]
 
   // type DB_TYPE
   def getDBType: String = dbimpl.getDBType
 }
 
-abstract class AbstractRow {
+abstract class AbstractRow extends Serializable {
   type ColumnType <: Column[_]
   val columns: List[ColumnType]
   val primaryKey = ""
@@ -102,7 +102,7 @@ object DataTable {
   }
 }
 
-object SyncTableBasicClasses {
+object SyncTableBasicClasses extends Serializable {
 
   class SyncTableRowEmpty() extends ArbitrarylyTypedRows {
 
@@ -119,7 +119,7 @@ object SyncTableBasicClasses {
     override val primaryKey = s"(${jobname.name}, ${online.name}, ${versionNr.name})"
     override val indexes: Option[List[String]] = Option(List(locked.name, state.name))
   }
-}
+} 
 object State extends Enumeration {
   type State = Value
   val NEW, NEXT_JOB, RUNNING, COMPLETED = Value
