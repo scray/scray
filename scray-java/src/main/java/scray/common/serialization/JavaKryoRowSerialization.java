@@ -38,7 +38,7 @@ public class JavaKryoRowSerialization {
 		kryo.register(JavaRowColumn.class, new RowColumnSerializer(), KryoSerializerNumber.rowcolumn.getNumber());
 		kryo.register(JavaSimpleRow.class, new JavaSimpleRowSerializer(), KryoSerializerNumber.simplerow.getNumber());
 		kryo.register(JavaCompositeRow.class, new JavaCompositeRowSerializer(), KryoSerializerNumber.compositerow.getNumber());
-		kryo.register(JavaBatchID.class, new JavaBatchIDSerializer(), KryoSerializerNumber.BatchId.getNumber());
+		kryo.register(JavaBatchID.class, new BatchIDSerializer(), KryoSerializerNumber.BatchId.getNumber());
 		kryo.register(Set.class, new JavaSetSerializer<>(), KryoSerializerNumber.Set1.getNumber());
 		kryo.register(Set.class, new JavaSetSerializer<>(), KryoSerializerNumber.Set2.getNumber());
 		kryo.register(Set.class, new JavaSetSerializer<>(), KryoSerializerNumber.Set3.getNumber());
@@ -151,21 +151,6 @@ public class JavaKryoRowSerialization {
 		}
 	}
 	
-	/**
-	 * kryo serializer for JavaBatchID
-	 */
-	public static class JavaBatchIDSerializer extends Serializer<JavaBatchID> {
-		@Override
-		public void write(Kryo k, Output o, JavaBatchID id) {
-			o.writeLong(id.getId());
-		}
-
-		@Override
-		public JavaBatchID read(Kryo k, Input i, Class<JavaBatchID> type) {
-			return new JavaBatchID(i.readLong());
-		}
-	}
-
 	/**
 	 * kryo serializer for BigIntegers
 	 */

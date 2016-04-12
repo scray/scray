@@ -20,9 +20,10 @@ import scala.collection.mutable.ArrayBuffer
 import scala.util.Try
 import scray.querying.description.TableIdentifier
 import com.typesafe.scalalogging.slf4j.LazyLogging
+import scray.common.serialization.BatchID
 
 
-abstract class OnlineBatchSync extends LazyLogging with Serializable {
+abstract class OnlineBatchSync extends LazyLogging {
 
   /**
    * Generate and register tables for a new job.
@@ -51,21 +52,27 @@ abstract class OnlineBatchSync extends LazyLogging with Serializable {
   def getBatchJobData[T <: RowWithValue](jobname: String, nr: Int, result: T): Option[List[RowWithValue]]
     
   def getQueryableTableIdentifiers: List[(String, TableIdentifier, Int)]
+  
+  def getNewestOnlineVersion(job: JobInfo): Option[Int]
+  def getNewestBatchVersion(job: JobInfo): Option[Int]  
+  
+  def getLatestBatchVersion(job: JobInfo): Option[Int] 
 }
 
 
 class JobInfo(
   val name: String,
-  val numberOfBatcheVersions: Int = 3,
+  val batchID: BatchID,
+  val numberOfBatchVersions: Int = 3,
   val numberOfOnlineVersions: Int = 2
   ) extends Serializable {}
 
 object JobInfo {
- def apply(name: String) = {
-    new JobInfo(name)
+ def apply(name: String, batchID: BatchID) = {
+    new JobInfo(name, batchID)
   }
-  def apply(name: String, numberOfBatcheVersions: Int, numberOfOnlineVersions: Int) = {
-    new JobInfo(name, numberOfBatcheVersions, numberOfOnlineVersions)
+  def apply(name: String, batchID: BatchID, numberOfBatchVersions: Int, numberOfOnlineVersions: Int) = {
+    new JobInfo(name, batchID, numberOfBatchVersions, numberOfOnlineVersions)
   }
 }
 

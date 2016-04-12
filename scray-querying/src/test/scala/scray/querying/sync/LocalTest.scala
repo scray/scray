@@ -1,39 +1,29 @@
 //package scray.querying.sync
+//
+//import java.util.logging.LogManager
+//
 //import scala.annotation.tailrec
+//
 //import org.junit.runner.RunWith
+//import org.scalatest.BeforeAndAfter
+//import org.scalatest.BeforeAndAfterAll
 //import org.scalatest.WordSpec
 //import org.scalatest.junit.JUnitRunner
-//import com.datastax.driver.core.ResultSet
-//import com.datastax.driver.core.SimpleStatement
+//
+//import scray.common.serialization.BatchID
 //import scray.querying.description.Row
-//import scray.querying.sync.types.DbSession
-//import org.cassandraunit.utils.EmbeddedCassandraServerHelper
-//import com.datastax.driver.core.Cluster
-//import org.scalatest.BeforeAndAfter
-//import scray.querying.sync.types.DataTable
-//import scray.querying.sync.types.Column
-//import com.datastax.driver.core.querybuilder.QueryBuilder
-//import com.datastax.driver.core.querybuilder.Insert
-//import com.datastax.driver.core.Statement
-//import scray.querying.sync.cassandra.OnlineBatchSyncCassandra
-//import scray.querying.sync.types.ArbitrarylyTypedRows
-//import scray.querying.sync.types.ColumnWithValue
+//import scray.querying.sync._
 //import scray.querying.sync.cassandra.CassandraImplementation._
 //import scray.querying.sync.cassandra.OnlineBatchSyncCassandra
-//import scray.querying.sync.types.RowWithValue
-//import shapeless._
-//import syntax.singleton._
+//import scray.querying.sync.cassandra.OnlineBatchSyncCassandra
+//import scray.querying.sync.types.ArbitrarylyTypedRows
+//import scray.querying.sync.types.Column
 //import scray.querying.sync.types.ColumnWithValue
+//import scray.querying.sync.types.ColumnWithValue
+//import scray.querying.sync.types.DbSession
+//import scray.querying.sync.types.RowWithValue
 //import shapeless.ops.hlist._
-//import scray.querying.sync._
-//import org.scalatest.BeforeAndAfterAll
-//import java.util.logging.LogManager
-//import ch.qos.logback.classic.Level
-//import ch.qos.logback.classic.Logger
-//import org.slf4j.bridge.SLF4JBridgeHandler
-//import scray.querying.sync.types.SyncTable
-//import scray.querying.sync.types.State
-//import scala.util.Try
+//import shapeless.syntax.singleton._
 //
 //
 //  @RunWith(classOf[JUnitRunner])
@@ -60,7 +50,7 @@
 //            // val table = new OnlineBatchSyncCassandra(dbconnection)
 //      val table = new OnlineBatchSyncCassandra("andreas")
 //
-//      val job = JobInfo("JOB_100")
+//      val job = JobInfo("JOB_100", new BatchID(1L,1L))
 //
 //      val sum = new ColumnWithValue[Long]("sum", 100)
 //      val columns = sum :: Nil
@@ -79,16 +69,14 @@
 ////      table.startNextBatchJob(JobInfo("JOB_300"))
 ////      table.completeBatchJob(JobInfo("JOB_300"))
 //      
-//      table.initJob(JobInfo("JOB_400"), new RowWithValue(columns, primaryKey, indexes))
-//      table.startNextBatchJob(JobInfo("JOB_400"))
-//      table.completeBatchJob(JobInfo("JOB_400"))
+//      val batchId = new BatchID(System.currentTimeMillis(), System.currentTimeMillis())
+//      table.initJob(JobInfo("JOB_400", batchId), new RowWithValue(columns, primaryKey, indexes))
+//      table.startNextBatchJob(JobInfo("JOB_400", batchId))
+//      table.completeBatchJob(JobInfo("JOB_400", batchId))
 //
-//      println("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
-//      table.startNextBatchJob(JobInfo("JOB_400"))
+//      table.startNextBatchJob(JobInfo("JOB_400", batchId))
 //
-//      println("zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz")
-//      table.completeBatchJob(JobInfo("JOB_400"))
-//      println("lllllllllllllllllllllllllllllllllllllllllllllllllllllllll")
+//      table.completeBatchJob(JobInfo("JOB_400", batchId))
 ////     
 ////      val results = List("JOB_100_batch1", "JOB_300_batch1", "JOB_200_batch1", "JOB_400_batch2")
 ////      table.getQueryableTableIdentifiers.contains()

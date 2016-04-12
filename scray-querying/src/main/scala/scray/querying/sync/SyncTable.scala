@@ -108,21 +108,23 @@ object SyncTableBasicClasses extends Serializable {
 
     val jobname = new Column[String]("jobname")
     val versionNr = new Column[Int]("versionNr")
-    val creationTime = new Column[Long]("creationTime")
+    val latestUpdate = new Column[Long]("latestUpdate")
     val versions = new Column[Int]("versions")
     val tableidentifier = new Column[String]("tableidentifier")
+    val batchStartTime = new Column[Long]("batchStartTime")
+    val batchEndTime = new Column[Long]("batchEndTime")
     val locked = new Column[Boolean]("locked")
     val online = new Column[Boolean]("online")
     val state = new Column[String]("state")
 
-    override val columns = jobname :: creationTime :: versionNr :: versions :: tableidentifier :: locked :: online :: state :: Nil
+    override val columns = jobname :: latestUpdate :: versionNr :: versions :: tableidentifier :: locked :: online :: state :: batchStartTime :: batchEndTime ::Nil
     override val primaryKey = s"(${jobname.name}, ${online.name}, ${versionNr.name})"
     override val indexes: Option[List[String]] = Option(List(locked.name, state.name))
   }
 } 
 object State extends Enumeration {
   type State = Value
-  val NEW, NEXT_JOB, RUNNING, COMPLETED = Value
+  val NEW, RUNNING, COMPLETED, OBSOLETE, TRANSFER = Value
 }
 
 //object SyncTableInitFunction {

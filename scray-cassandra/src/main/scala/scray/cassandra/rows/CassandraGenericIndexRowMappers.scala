@@ -25,7 +25,7 @@ import scray.querying.description.Column
 import shapeless._
 import com.websudos.phantom.CassandraPrimitive
 import com.twitter.storehaus.cassandra.cql.CassandraTupleStore
-import com.twitter.summingbird.batch.BatchID
+import scray.common.serialization.BatchID
 
 
 object CassandraGenericIndexRowMappers {
