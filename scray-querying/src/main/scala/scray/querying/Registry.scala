@@ -105,6 +105,8 @@ object Registry extends LazyLogging with Registry {
   private val queryMonitor = new HashMap[UUID, QueryInformation]
   private val queryMonitorRwLock = new ReentrantReadWriteLock
 
+  @inline def getQuerySpaceNames(): List[String] = querySpaces.map(_._1).toList
+  
   /**
    * returns the latest version of a given query space
    */
@@ -139,6 +141,15 @@ object Registry extends LazyLogging with Registry {
   // shortcut to find table-configurations
   private val querySpaceTables = new HashMap[String, HashMap[TableIdentifier, TableConfiguration[_, _, _]]]
 
+  @inline def getQuerySpaceTables(space: String, version: Int): Map[TableIdentifier, TableConfiguration[_, _, _]] = {
+    rwlock.readLock.lock
+    try {
+      querySpaceTables.get(space + version).map(_.toMap).getOrElse(Map())
+    } finally {
+      rwlock.readLock.unlock
+    }    
+  }
+  
   /**
    * returns a table configuration
    */
