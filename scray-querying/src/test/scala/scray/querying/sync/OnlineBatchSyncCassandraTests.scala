@@ -149,8 +149,8 @@ class OnlineBatchSyncTests extends WordSpec with BeforeAndAfter with BeforeAndAf
       table.startNextBatchJob(jobInfo)
       table.startNextOnlineJob(jobInfo)
  
-      assert(table.getRunningBatchJobVersion(jobInfo).get == 1)
-      assert(table.getRunningOnlineJobVersion(jobInfo).get == 1)
+      assert(table.getRunningBatchJobSlot(jobInfo).get == 1)
+      assert(table.getRunningOnlineJobSlot(jobInfo).get == 1)
     }
     "switch to next job " in {
       val table = new OnlineBatchSyncCassandra(dbconnection)
@@ -168,8 +168,8 @@ class OnlineBatchSyncTests extends WordSpec with BeforeAndAfter with BeforeAndAf
       // Switching is not possible. Because an other job is running.
       assert(table.startNextBatchJob(jobInfo).isSuccess === false)
  
-      assert(table.getRunningBatchJobVersion(jobInfo).get === 1)
-      assert(table.getRunningOnlineJobVersion(jobInfo).get === 1)
+      assert(table.getRunningBatchJobSlot(jobInfo).get === 1)
+      assert(table.getRunningOnlineJobSlot(jobInfo).get === 1)
     }
     "insert and read batch data " in {
       val table = new OnlineBatchSyncCassandra(dbconnection)
@@ -217,11 +217,11 @@ class OnlineBatchSyncTests extends WordSpec with BeforeAndAfter with BeforeAndAf
 
       table.initJob(jobInfo, new RowWithValue(columns, primaryKey, indexes))
       table.startNextOnlineJob(jobInfo)
-      val oVersion = table.getRunningOnlineJobVersion(jobInfo).get
+      val oVersion = table.getRunningOnlineJobSlot(jobInfo).get
       table.insertInOnlineTable(jobInfo, oVersion, new RowWithValue(columns, primaryKey, indexes)) 
       table.completeOnlineJob(jobInfo)
       
-      val version = table.getNewestOnlineVersion(jobInfo).get
+      val version = table.getNewestOnlineSlot(jobInfo).get
       
       assert(table.getOnlineJobData(jobInfo.name, version, new RowWithValue(columns, primaryKey, indexes)).get.head.columns.head.value === sum.value)
     }
@@ -237,7 +237,7 @@ class OnlineBatchSyncTests extends WordSpec with BeforeAndAfter with BeforeAndAf
       assert(table.initJob(jobInfo, new RowWithValue(columns, primaryKey, indexes)).isSuccess)
       assert(table.startNextBatchJob(jobInfo).isSuccess)
       
-      val version = table.getRunningBatchJobVersion(jobInfo).get
+      val version = table.getRunningBatchJobSlot(jobInfo).get
       table.insertInBatchTable(jobInfo, version, new RowWithValue(columns, primaryKey, indexes))
       table.completeBatchJob(jobInfo)
       
@@ -363,7 +363,28 @@ class OnlineBatchSyncTests extends WordSpec with BeforeAndAfter with BeforeAndAf
       assert(table.getOnlineJobState(job, 1).get.equals(State.NEW))
       assert(table.getOnlineJobState(job, 2).get.equals(State.NEW))
     }
+    " reset online job " in {
+      val table = new OnlineBatchSyncCassandra(dbconnection)
 
+      val jobA = JobInfo("JOB_100", new BatchID(1460465100L, 1460465200L), 3, 3)
+      val jobB = JobInfo("JOB_100", new BatchID(1460465100L, 1460465200L), 3, 3)
+
+
+      val sum = new ColumnWithValue[Long]("sum", 100)
+      val columns = sum :: Nil
+      val primaryKey = s"(${sum.name})"
+      val indexes: Option[List[String]] = None
+
+      assert(table.initJob(jobA, new RowWithValue(columns, primaryKey, indexes)).isSuccess)
+      
+      assert(table.startNextBatchJob(jobA).isSuccess)
+      assert(table.startNextBatchJob(jobA).isSuccess)
+      
+      assert(table.completeBatchJob(jobA).isSuccess)
+      table.getLatestBatchSlot(jobA)
+    }
+
+    
 //    "use hlist" in {
 //      
 //      class A {
