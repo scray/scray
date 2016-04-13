@@ -39,32 +39,32 @@ abstract class OnlineBatchSync extends LazyLogging {
   def resetBatchJob(job: JobInfo): Try[Unit]
   def resetOnlineJob(job: JobInfo): Try[Unit]
   
-  def getRunningBatchJobVersion(job: JobInfo): Option[Int]
-  def getRunningOnlineJobVersion(job: JobInfo): Option[Int]
+  def getRunningBatchJobSlot(job: JobInfo): Option[Int]
+  def getRunningOnlineJobSlot(job: JobInfo): Option[Int]
   
-  def insertInBatchTable(jobName: JobInfo, nr: Int, data: RowWithValue): Try[Unit]
-  def insertInOnlineTable(jobName: JobInfo, nr: Int, data: RowWithValue): Try[Unit]
+  def insertInBatchTable(jobName: JobInfo, slot: Int, data: RowWithValue): Try[Unit]
+  def insertInOnlineTable(jobName: JobInfo, slot: Int, data: RowWithValue): Try[Unit]
   
-  def getOnlineJobState(job: JobInfo, version: Int): Option[State]
-  def getBatchJobState(job: JobInfo, version: Int): Option[State]
+  def getOnlineJobState(job: JobInfo, slot: Int): Option[State]
+  def getBatchJobState(job: JobInfo, slot: Int): Option[State]
   
-  def getOnlineJobData[T <: RowWithValue](jobname: String, nr: Int, result: T): Option[List[RowWithValue]]
-  def getBatchJobData[T <: RowWithValue](jobname: String, nr: Int, result: T): Option[List[RowWithValue]]
+  def getOnlineJobData[T <: RowWithValue](jobname: String, slot: Int, result: T): Option[List[RowWithValue]]
+  def getBatchJobData[T <: RowWithValue](jobname: String, slot: Int, result: T): Option[List[RowWithValue]]
     
   def getQueryableTableIdentifiers: List[(String, TableIdentifier, Int)]
   
-  def getNewestOnlineVersion(job: JobInfo): Option[Int]
-  def getNewestBatchVersion(job: JobInfo): Option[Int]  
+  def getNewestOnlineSlot(job: JobInfo): Option[Int]
+  def getNewestBatchSlot(job: JobInfo): Option[Int]  
   
-  def getLatestBatchVersion(job: JobInfo): Option[Int] 
+  def getLatestBatchSlot(job: JobInfo): Option[Int] 
 }
 
 
 class JobInfo(
   val name: String,
   val batchID: BatchID,
-  val numberOfBatchVersions: Int = 3,
-  val numberOfOnlineVersions: Int = 2
+  val numberOfBatchSlots: Int = 3,
+  val numberOfOnlineSlots: Int = 2
   ) extends Serializable {}
 
 object JobInfo {
