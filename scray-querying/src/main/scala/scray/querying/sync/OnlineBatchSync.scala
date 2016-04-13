@@ -56,7 +56,7 @@ abstract class OnlineBatchSync extends LazyLogging {
   def getNewestOnlineSlot(job: JobInfo): Option[Int]
   def getNewestBatchSlot(job: JobInfo): Option[Int]  
   
-  def getLatestBatchSlot(job: JobInfo): Option[Int] 
+  def getLatestBatch(job: JobInfo): Option[Int] 
 }
 
 
