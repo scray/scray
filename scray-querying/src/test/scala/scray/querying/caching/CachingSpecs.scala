@@ -34,7 +34,7 @@ import java.nio.ByteBuffer
 import sun.security.provider.MD5
 import scala.util.hashing.MurmurHash3
 import com.esotericsoftware.minlog.Log
-
+import scray.common.serialization.numbers.KryoSerializerNumber
 
 /**
  * Scray querying specification.
@@ -46,7 +46,7 @@ class CachingSpecs extends WordSpec {
   val t2 = TableIdentifier("cassandra", "mytestsdfspace", "mysdfcf")
   val si = SimpleRow(ArrayBuffer(RowColumn(Column(bla + "1", ti), 1), RowColumn(Column(bla + "1", ti), "blubb")))
   val s2 = SimpleRow(ArrayBuffer(RowColumn(Column(bla + "sd1", ti), 1), RowColumn(Column(bla + "sd2", t2), UUID.randomUUID()),
-      RowColumn(Column(bla + "sd3", t2), 2.3d)))
+    RowColumn(Column(bla + "sd3", t2), 2.3d)))
   "Scray's caches" should {
     "(de)serialize SimpleRows using kryo" in {
       // useful to look at the output afterwards
@@ -78,7 +78,7 @@ class CachingSpecs extends WordSpec {
       assert(si == result.rows(1))
     }
     "create smaller kryo hand-made (de)serialize for SimpleRows using fieldserializer alone" in {
-      // compare serilaization sizes - make sure we use the smallest possible footprint
+      // compare serialization sizes - make sure we use the smallest possible footprint
       val filename1 = System.getProperty("java.io.tmpdir") + System.getProperty("file.separator") + "scraytest1.txt"
       val filename2 = System.getProperty("java.io.tmpdir") + System.getProperty("file.separator") + "scraytest2.txt"
       checkAndDeleteIfExisting(filename1)
@@ -89,10 +89,10 @@ class CachingSpecs extends WordSpec {
       k.writeObject(output, new CompositeRow(List(si, si)))
       output.close()
       str.close
-      k.register(classOf[Column], new ColumnSerialization)
-      k.register(classOf[RowColumn[_]], new RowColumnSerialization)
-      k.register(classOf[SimpleRow], new SimpleRowSerialization)
-      k.register(classOf[CompositeRow], new CompositeRowSerialization)
+      k.register(classOf[Column], new ColumnSerialization, KryoSerializerNumber.column.getNumber)
+      k.register(classOf[RowColumn[_]], new RowColumnSerialization, KryoSerializerNumber.rowcolumn.getNumber)
+      k.register(classOf[SimpleRow], new SimpleRowSerialization, KryoSerializerNumber.simplerow.getNumber)
+      k.register(classOf[CompositeRow], new CompositeRowSerialization, KryoSerializerNumber.compositerow.getNumber)
       val str2 = new FileOutputStream(filename2)
       val output2 = new Output(str2)
       k.writeObject(output2, new CompositeRow(List(si, si)))
@@ -108,11 +108,11 @@ class CachingSpecs extends WordSpec {
       checkAndDeleteIfExisting(filename1)
       checkAndDeleteIfExisting(filename2)
       val k = new Kryo
-      k.register(classOf[UUID], new UUIDSerializer)
-      k.register(classOf[Column], new ColumnSerialization)
-      k.register(classOf[RowColumn[_]], new RowColumnSerialization)
-      k.register(classOf[SimpleRow], new SimpleRowSerialization)
-      k.register(classOf[CompositeRow], new CompositeRowSerialization)
+      k.register(classOf[UUID], new UUIDSerializer, 81)
+      k.register(classOf[Column], new ColumnSerialization, KryoSerializerNumber.column.getNumber)
+      k.register(classOf[RowColumn[_]], new RowColumnSerialization, KryoSerializerNumber.rowcolumn.getNumber)
+      k.register(classOf[SimpleRow], new SimpleRowSerialization, KryoSerializerNumber.simplerow.getNumber)
+      k.register(classOf[CompositeRow], new CompositeRowSerialization, KryoSerializerNumber.compositerow.getNumber)
       val str = new FileOutputStream(filename1)
       val output = new Output(str)
       k.writeObject(output, si)
@@ -125,25 +125,25 @@ class CachingSpecs extends WordSpec {
       str2.close
       // now read that stuff out from the files using a different registration
       val k2 = new Kryo
-      k2.register(classOf[UUID], new UUIDSerializer)
+      k2.register(classOf[UUID], new UUIDSerializer, 81)
       JavaKryoRowSerialization.registerSerializers(k2)
       val istr = new Input(new FileInputStream(filename1))
       val result = k2.readObject(istr, classOf[JavaSimpleRow])
       assert(result.isInstanceOf[JavaSimpleRow])
-	  assert(result.getColumns().size() == 2)
-	  assert(result.getColumns().get(0).getValue() == 1)
-	  assert(result.getColumns().get(1).getValue() == "blubb")
+      assert(result.getColumns().size() == 2)
+      assert(result.getColumns().get(0).getValue() == 1)
+      assert(result.getColumns().get(1).getValue() == "blubb")
       val istr2 = new Input(new FileInputStream(filename2))
       val result2 = k2.readObject(istr2, classOf[JavaCompositeRow])
       assert(result2.isInstanceOf[JavaCompositeRow])
-	  assert(result2.getRows().size() == 2)
-	  val row1 = result2.getRows().get(0).asInstanceOf[JavaSimpleRow]
-	  val row2 = result2.getRows().get(1).asInstanceOf[JavaSimpleRow]
-	  assert(row1.getColumns().size() == 2)
-	  assert(row2.getColumns().size() == 3)
-	  assert(row1.getColumns().get(0).getValue() == 1)
-	  assert(row2.getColumns().get(1).getValue().isInstanceOf[UUID])
-	  assert(row2.getColumns().get(2).getValue() == 2.3d)
+      assert(result2.getRows().size() == 2)
+      val row1 = result2.getRows().get(0).asInstanceOf[JavaSimpleRow]
+      val row2 = result2.getRows().get(1).asInstanceOf[JavaSimpleRow]
+      assert(row1.getColumns().size() == 2)
+      assert(row2.getColumns().size() == 3)
+      assert(row1.getColumns().get(0).getValue() == 1)
+      assert(row2.getColumns().get(1).getValue().isInstanceOf[UUID])
+      assert(row2.getColumns().get(2).getValue() == 2.3d)
     }
     "allow off-heap cache storage for Simple- and CompositeRows" in {
       val db = DBMaker.newMemoryDirectDB().transactionDisable().asyncWriteEnable().make
@@ -161,10 +161,10 @@ class CachingSpecs extends WordSpec {
       }
     }
   }
-  
+
   private def checkAndDeleteIfExisting(pathName: String): Unit = {
     val f = new File(pathName)
-    if(f.exists() && !f.isDirectory()) {
+    if (f.exists() && !f.isDirectory()) {
       f.delete()
     }
   }
