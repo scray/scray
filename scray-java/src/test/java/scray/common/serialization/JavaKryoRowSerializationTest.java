@@ -51,7 +51,7 @@ public class JavaKryoRowSerializationTest {
 		// this is a scala-generated binary file with a serialized row.
 		// It should contain 2 columns and respective values
 		Kryo k = new Kryo();
-		k.register(UUID.class, new UUIDSerializer());
+		k.register(UUID.class, new UUIDSerializer(), 81);
 		JavaKryoRowSerialization.registerSerializers(k);
 		InputStream file1 = this.getClass().getResourceAsStream("/serializations/scraytest4.txt");
 	    Input input = new Input(file1);
