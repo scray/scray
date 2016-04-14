@@ -21,6 +21,7 @@ import scray.querying.sync.types.ArbitrarylyTypedRows
 import scray.querying.sync.types.ColumnWithValue
 import scray.querying.sync.cassandra.CassandraImplementation._
 import scray.querying.sync.cassandra.OnlineBatchSyncCassandra
+import scray.querying.sync.cassandra.CassandraSyncTableLock
 import scray.querying.sync.types.RowWithValue
 import shapeless._
 import syntax.singleton._
@@ -39,6 +40,7 @@ import scray.querying.sync.cassandra.CassandraImplementation.RichBoolean
 import scala.util.Failure
 import scala.util.Success
 import scray.common.serialization.BatchID
+import scray.querying.sync.types.JobLockTable
 
 
 @RunWith(classOf[JUnitRunner])
@@ -72,7 +74,7 @@ class OnlineBatchSyncTests extends WordSpec with BeforeAndAfter with BeforeAndAf
         if(result.wasApplied()) {
           Success(result)
         } else {
-          Failure(new StatementExecutionError(s"It was not possible to execute statement: ${statement}. Error: ${result.getExecutionInfo}"))
+          Failure(new StatementExecutionError(s"It was not possible to execute statement: ${statement}"))
         }      
       }
 
@@ -81,7 +83,7 @@ class OnlineBatchSyncTests extends WordSpec with BeforeAndAfter with BeforeAndAf
         if(result.wasApplied()) {
           Success(result)
         } else {
-          Failure(new StatementExecutionError(s"It was not possible to execute statement: ${statement}. Error: ${result.getExecutionInfo}"))
+          Failure(new StatementExecutionError(s"It was not possible to execute statement: ${statement}"))
         }      
       }
 
@@ -100,9 +102,19 @@ class OnlineBatchSyncTests extends WordSpec with BeforeAndAfter with BeforeAndAf
     EmbeddedCassandraServerHelper.cleanEmbeddedCassandra()  
   }
   "OnlineBatchSync " should {
-    " init client" in {
-      val table = new OnlineBatchSyncCassandra("andreas")
-      assert(table.initJob[SumTestColumns](JobInfo("job55", batchId), new SumTestColumns).isSuccess)
+//    " init client" in {
+//      val table = new OnlineBatchSyncCassandra("andreas")
+//      assert(table.initJob[SumTestColumns](JobInfo("job55", batchId), new SumTestColumns).isSuccess)
+//    }
+    "lock job" in {
+      val job1 = JobInfo("job55", batchId)
+      val table = new OnlineBatchSyncCassandra(dbconnection)
+      table.initJob(job1, new SumTestColumns())
+      val lock = new CassandraSyncTableLock(JobLockTable("SILIDX", "JobLockTable"), dbconnection)
+      
+     
+      assert(lock.lockJob(job1).isSuccess)
+      assert(lock.lockJob(job1).isFailure)
     }
 //    "lock table" in {
 //      val table = new OnlineBatchSyncCassandra(dbconnection)

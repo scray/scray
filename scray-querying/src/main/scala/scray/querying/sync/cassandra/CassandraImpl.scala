@@ -36,6 +36,7 @@ import scray.querying.description.TableIdentifier
 import scala.collection.mutable.HashSet
 import com.datastax.driver.core.querybuilder.Select
 
+
 object CassandraImplementation extends Serializable {
   implicit def genericCassandraColumnImplicit[T](implicit cassImplicit: CassandraPrimitive[T]): DBColumnImplementation[T] = new DBColumnImplementation[T] {
     override def getDBType: String = cassImplicit.cassandraType
@@ -120,6 +121,7 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
 
   val syncTable = SyncTable("SILIDX", "SyncTable")
   val jobLockTable = JobLockTable("SILIDX", "JobLockTable")
+  val cassandraSyncTableLock = new CassandraSyncTableLock(jobLockTable, session)
 
   /**
    * Create and register tables for a new job.
@@ -128,20 +130,20 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
     this.crateTablesIfNotExists(job, dataTable)
 
 
-    // Check if table is not locked. 
-    // To ensure that tables are locked use lockBatchTable/lockOnlineTable.
-    val batchLocked = this.isBatchTableLocked(job)
-    val onlineLocked = this.isOnlineTableLocked(job)
-
-    if(batchLocked.isDefined && onlineLocked.isDefined) {
-      if(!(!batchLocked.get && !onlineLocked.get)) {
-        Failure(new IllegalStateException("One job with the same name is already running"))
-      } else {
-        Try()
-      }
-    } else {
-      Failure(new StatementExecutionError(""))
-    }
+//    // Check if table is not locked. 
+//    // To ensure that tables are locked use lockBatchTable/lockOnlineTable.
+//    val batchLocked = this.isBatchTableLocked(job)
+//    val onlineLocked = this.isOnlineTableLocked(job)
+//
+//    if(batchLocked.isDefined && onlineLocked.isDefined) {
+//      if(!(!batchLocked.get && !onlineLocked.get)) {
+//        Failure(new IllegalStateException("One job with the same name is already running"))
+//      } else {
+//        Try()
+//      }
+//    } else {
+//      Failure(new StatementExecutionError(""))
+//    }
   }
 
   def startNextBatchJob(job: JobInfo): Try[Unit] = {
@@ -149,8 +151,10 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
     this.startJob(job, false)
   }
 
-  def startNextOnlineJob(job: JobInfo): Try[Unit] = {
+  def startNextOnlineJob(job: JobInfo): Try[Unit] = Try {
+    cassandraSyncTableLock.lockJob(job)
     this.startJob(job, true)
+    cassandraSyncTableLock.unlockJob(job)
   }
 
   private def startJob(job: JobInfo, online: Boolean): Try[Unit] = {
@@ -200,6 +204,7 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
           }
       }
     }
+   
 
   def completeBatchJob(job: JobInfo): Try[Unit] = Try {
     getRunningBatchJobSlot(job) match {
@@ -635,7 +640,7 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
     session.execute(statement) match {
       case Success(result) => Try()
       case Failure(ex) => {
-          logger.error(s"Error while executing statement: ${statement}. ${ex.printStackTrace()}")
+          logger.warn(s"Error while executing statement: ${statement}. ${ex.printStackTrace()}")
           Failure(new StatementExecutionError(ex.getLocalizedMessage))
         } 
       }
@@ -648,7 +653,7 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
     session.execute(statement) match {
       case Success(result) => Try(result)
       case Failure(ex) => {
-          logger.error(s"Error while executing statement: ${statement}. ${ex.printStackTrace()}")
+          logger.warn(s"Error while executing statement: ${statement}. ${ex.printStackTrace()}")
           Try(throw new StatementExecutionError(ex.getLocalizedMessage))
         } 
     }
