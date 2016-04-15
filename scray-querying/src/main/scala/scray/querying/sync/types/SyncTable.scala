@@ -145,12 +145,12 @@ object State extends Enumeration {
   val NEW, RUNNING, COMPLETED, OBSOLETE, TRANSFER = Value
 }
 
-abstract class LockApi[Statement, Insert, ResultSet](
-      val job: JobInfo, 
+abstract class LockApi[Statement, Insert, Result](
+      val job: JobInfo[Statement, Insert, Result], 
       val jobLockTable: Table[SyncTableBasicClasses.JobLockTable], 
-      val dbSession: DbSession[Statement, Insert, ResultSet]) extends Lock {
+      val dbSession: DbSession[Statement, Insert, Result]) extends Lock {
   
-  def this(job: JobInfo, dbSession: DbSession[Statement, Insert, ResultSet]) {
+  def this(job: JobInfo[Statement, Insert, Result], dbSession: DbSession[Statement, Insert, Result]) {
     this(job, JobLockTable("SILIDX", "jobLock"), dbSession)
   }
   

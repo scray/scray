@@ -102,10 +102,10 @@ class OnlineBatchSyncTests extends WordSpec with BeforeAndAfter with BeforeAndAf
     EmbeddedCassandraServerHelper.cleanEmbeddedCassandra()  
   }
   "OnlineBatchSync " should {
-//    " init client" in {
-//      val table = new OnlineBatchSyncCassandra("andreas")
-//      assert(table.initJob[SumTestColumns](JobInfo("job55", batchId), new SumTestColumns).isSuccess)
-//    }
+    " init client" in {
+      val table = new OnlineBatchSyncCassandra("andreas")
+      assert(table.initJob[SumTestColumns](JobInfo("job55", batchId), new SumTestColumns).isSuccess)
+    }
     "lock job" in {
       val job1 = JobInfo("job55", batchId)
       val table = new OnlineBatchSyncCassandra(dbconnection)
@@ -115,6 +115,17 @@ class OnlineBatchSyncTests extends WordSpec with BeforeAndAfter with BeforeAndAf
      
       assert(lock.lockJob(job1).isSuccess)
       assert(lock.lockJob(job1).isFailure)
+    }
+    "lock and unlock " in {
+      val job1 = JobInfo("job55", batchId)
+      val table = new OnlineBatchSyncCassandra(dbconnection)
+      table.initJob(job1, new SumTestColumns())
+      val lock = new CassandraSyncTableLock(JobLockTable("SILIDX", "JobLockTable"), dbconnection)
+      
+     
+      assert(lock.lockJob(job1).isSuccess)
+      assert(lock.unlockJob(job1).isSuccess)
+      assert(lock.lockJob(job1).isSuccess)
     }
 //    "lock table" in {
 //      val table = new OnlineBatchSyncCassandra(dbconnection)

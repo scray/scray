@@ -1,79 +1,71 @@
 package scray.querying.sync
 
 import java.util.{ Iterator => JIterator }
-import scray.querying.sync.types.State.State
+
 import scala.annotation.tailrec
-import com.datastax.driver.core.Cluster
-import com.datastax.driver.core.ConsistencyLevel
-import com.datastax.driver.core.RegularStatement
-import com.datastax.driver.core.ResultSet
-import com.datastax.driver.core.Row
-import com.datastax.driver.core.Session
-import com.datastax.driver.core.SimpleStatement
-import com.datastax.driver.core.Statement
-import com.datastax.driver.core.querybuilder.Insert
-import com.datastax.driver.core.querybuilder.QueryBuilder
-import scray.querying.sync.types._
-import scray.querying.sync.types._
-import java.util.ArrayList
-import scala.collection.mutable.ArrayBuffer
 import scala.util.Try
-import scray.querying.description.TableIdentifier
+
+import com.datastax.driver.core.Statement
 import com.typesafe.scalalogging.slf4j.LazyLogging
+
 import scray.common.serialization.BatchID
+import scray.querying.description.TableIdentifier
+import scray.querying.sync.types._
+import scray.querying.sync.types._
+import scray.querying.sync.types.ArbitrarylyTypedRows
+import scray.querying.sync.types.RowWithValue
+import scray.querying.sync.types.State
+import scray.querying.sync.types.State.State
+import scray.querying.sync.types.LockApi
 
 
-abstract class OnlineBatchSync extends LazyLogging {
 
+abstract class OnlineBatchSync[Statement, InsertIn, Result] extends LazyLogging {
+
+  type JOB_INFO = JobInfo[Statement, InsertIn, Result]
+  
   /**
    * Generate and register tables for a new job.
    */
-  def initJob[T <: ArbitrarylyTypedRows](job: JobInfo, dataTable: T): Try[Unit]
+  def initJob[DataTableT <: ArbitrarylyTypedRows](job: JobInfo[Statement, InsertIn, Result], dataTable: DataTableT): Try[Unit]
   
-  def startNextBatchJob(job: JobInfo): Try[Unit]
-  def startNextOnlineJob(job: JobInfo): Try[Unit]
+  def startNextBatchJob(job: JobInfo[Statement, InsertIn, Result]): Try[Unit]
+  def startNextOnlineJob(job: JOB_INFO): Try[Unit]
   
-  def completeBatchJob(job: JobInfo): Try[Unit]
-  def completeOnlineJob(job: JobInfo): Try[Unit]
+  def completeBatchJob(job: JOB_INFO): Try[Unit]
+  def completeOnlineJob(job: JOB_INFO): Try[Unit]
   
-  def resetBatchJob(job: JobInfo): Try[Unit]
-  def resetOnlineJob(job: JobInfo): Try[Unit]
+  def resetBatchJob(job: JOB_INFO): Try[Unit]
+  def resetOnlineJob(job: JOB_INFO): Try[Unit]
   
-  def getRunningBatchJobSlot(job: JobInfo): Option[Int]
-  def getRunningOnlineJobSlot(job: JobInfo): Option[Int]
+  def getRunningBatchJobSlot(job: JOB_INFO): Option[Int]
+  def getRunningOnlineJobSlot(job: JOB_INFO): Option[Int]
   
-  def insertInBatchTable(jobName: JobInfo, slot: Int, data: RowWithValue): Try[Unit]
-  def insertInOnlineTable(jobName: JobInfo, slot: Int, data: RowWithValue): Try[Unit]
+  def insertInBatchTable(jobName: JOB_INFO, slot: Int, data: RowWithValue): Try[Unit]
+  def insertInOnlineTable(jobName: JOB_INFO, slot: Int, data: RowWithValue): Try[Unit]
   
-  def getOnlineJobState(job: JobInfo, slot: Int): Option[State]
-  def getBatchJobState(job: JobInfo, slot: Int): Option[State]
+  def getOnlineJobState(job: JOB_INFO, slot: Int): Option[State]
+  def getBatchJobState(job: JOB_INFO, slot: Int): Option[State]
   
   def getOnlineJobData[T <: RowWithValue](jobname: String, slot: Int, result: T): Option[List[RowWithValue]]
   def getBatchJobData[T <: RowWithValue](jobname: String, slot: Int, result: T): Option[List[RowWithValue]]
     
   def getQueryableTableIdentifiers: List[(String, TableIdentifier, Int)]
   
-  def getNewestOnlineSlot(job: JobInfo): Option[Int]
-  def getNewestBatchSlot(job: JobInfo): Option[Int]  
+  def getNewestOnlineSlot(job: JOB_INFO): Option[Int]
+  def getNewestBatchSlot(job: JOB_INFO): Option[Int]  
   
-  def getLatestBatch(job: JobInfo): Option[Int] 
+  def getLatestBatch(job: JOB_INFO): Option[Int] 
 }
 
-
-class JobInfo(
+abstract class JobInfo[Statement, InsertIn, Result](
   val name: String,
   val batchID: BatchID,
   val numberOfBatchSlots: Int = 3,
   val numberOfOnlineSlots: Int = 2
-  ) extends Serializable {}
-
-object JobInfo {
- def apply(name: String, batchID: BatchID) = {
-    new JobInfo(name, batchID)
-  }
-  def apply(name: String, batchID: BatchID, numberOfBatchVersions: Int, numberOfOnlineVersions: Int) = {
-    new JobInfo(name, batchID, numberOfBatchVersions, numberOfOnlineVersions)
-  }
+  ) extends Serializable {
+    private val lock = None
+    def getLock(dbSession: DbSession[Statement, InsertIn, Result]): LockApi[Statement, InsertIn, Result] 
 }
 
 case class RunningJobExistsException(message: String) extends Exception(message)
