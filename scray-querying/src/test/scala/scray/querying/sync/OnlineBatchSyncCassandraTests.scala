@@ -41,6 +41,8 @@ import scala.util.Failure
 import scala.util.Success
 import scray.common.serialization.BatchID
 import scray.querying.sync.types.JobLockTable
+import scray.querying.sync.cassandra.CasJobInfo
+import java.util.concurrent.TimeUnit
 
 
 @RunWith(classOf[JUnitRunner])
@@ -104,55 +106,54 @@ class OnlineBatchSyncTests extends WordSpec with BeforeAndAfter with BeforeAndAf
   "OnlineBatchSync " should {
     " init client" in {
       val table = new OnlineBatchSyncCassandra("andreas")
-      assert(table.initJob[SumTestColumns](JobInfo("job55", batchId), new SumTestColumns).isSuccess)
+      val jobInfo = CasJobInfo("job55", batchId)
+      assert(table.initJob[SumTestColumns](jobInfo, new SumTestColumns).isSuccess)
     }
     "lock job" in {
-      val job1 = JobInfo("job55", batchId)
+      val jobInfo = CasJobInfo("job55", batchId)
       val table = new OnlineBatchSyncCassandra(dbconnection)
-      table.initJob(job1, new SumTestColumns())
-      val lock = new CassandraSyncTableLock(JobLockTable("SILIDX", "JobLockTable"), dbconnection)
-      
+      table.initJob(jobInfo, new SumTestColumns())
      
-      assert(lock.lockJob(job1).isSuccess)
-      assert(lock.lockJob(job1).isFailure)
+     
+      jobInfo.getLock(dbconnection).lock
+      assert(true)
     }
     "lock and unlock " in {
-      val job1 = JobInfo("job55", batchId)
+      val job1 = CasJobInfo("job55", batchId)
       val table = new OnlineBatchSyncCassandra(dbconnection)
       table.initJob(job1, new SumTestColumns())
-      val lock = new CassandraSyncTableLock(JobLockTable("SILIDX", "JobLockTable"), dbconnection)
       
      
-      assert(lock.lockJob(job1).isSuccess)
-      assert(lock.unlockJob(job1).isSuccess)
-      assert(lock.lockJob(job1).isSuccess)
+      assert(job1.getLock(dbconnection).tryLock(100, TimeUnit.MILLISECONDS))
+      job1.getLock(dbconnection)
+      assert(job1.getLock(dbconnection).tryLock(100, TimeUnit.MILLISECONDS))
     }
 //    "lock table" in {
 //      val table = new OnlineBatchSyncCassandra(dbconnection)
-//      table.initJob(JobInfo("job57", batchId), new SumTestColumns())
+//      table.initJob(CasJobInfo("job57", batchId), new SumTestColumns())
 //
-//      table.lockOnlineTable(JobInfo("job57", batchId))
-//      println(table.isOnlineTableLocked(JobInfo("job57", batchId)).get)
-//      assert(table.isOnlineTableLocked(JobInfo("job57", batchId)).get === true)
+//      table.lockOnlineTable(CasJobInfo("job57", batchId))
+//      println(table.isOnlineTableLocked(CasJobInfo("job57", batchId)).get)
+//      assert(table.isOnlineTableLocked(CasJobInfo("job57", batchId)).get === true)
 //    }
 //    "lock table only once" in {
 //      val table = new OnlineBatchSyncCassandra(dbconnection)
-//      table.initJob(JobInfo("job57", batchId), new SumTestColumns())
+//      table.initJob(CasJobInfo("job57", batchId), new SumTestColumns())
 //
-//      table.lockOnlineTable(JobInfo("job57", batchId))
-//      println(table.isOnlineTableLocked(JobInfo("job57", batchId)).get)
-//      //assert(table.lockOnlineTable(JobInfo("job57")).get === false)
+//      table.lockOnlineTable(CasJobInfo("job57", batchId))
+//      println(table.isOnlineTableLocked(CasJobInfo("job57", batchId)).get)
+//      //assert(table.lockOnlineTable(CasJobInfo("job57")).get === false)
 //    }
 //    "insert and read data" in {
 //      val table = new OnlineBatchSyncCassandra(dbconnection)
-//      table.initJob(JobInfo("job58", batchId), new SumTestColumns())
+//      table.initJob(CasJobInfo("job58", batchId), new SumTestColumns())
 //
 //      val sum = new ColumnWithValue[Long]("sum", 100)
 //      val columns = sum :: Nil
 //      val primaryKey = s"(${sum.name})"
 //      val indexes: Option[List[String]] = None
 //
-//      table.insertInOnlineTable(JobInfo("job58", batchId), 1, new RowWithValue(columns, primaryKey, indexes))
+//      table.insertInOnlineTable(CasJobInfo("job58", batchId), 1, new RowWithValue(columns, primaryKey, indexes))
 //
 //      val columnsR = new ColumnWithValue[Long]("sum", 200) :: Nil
 //      val columValue = table.getOnlineJobData("job58", 1, new RowWithValue(columnsR, primaryKey, indexes)).get.head.columns.head.value.toString()
@@ -162,7 +163,7 @@ class OnlineBatchSyncTests extends WordSpec with BeforeAndAfter with BeforeAndAf
 //    "get running batch/online version " in {
 //      val table = new OnlineBatchSyncCassandra(dbconnection)
 //      
-//      val jobInfo = JobInfo("job59", batchId)
+//      val jobInfo = CasJobInfo("job59", batchId)
 //      val sum = new ColumnWithValue[Long]("sum", 100)
 //      val columns = sum :: Nil
 //      val primaryKey = s"(${sum.name})"
@@ -177,7 +178,7 @@ class OnlineBatchSyncTests extends WordSpec with BeforeAndAfter with BeforeAndAf
 //    }
 //    "switch to next job " in {
 //      val table = new OnlineBatchSyncCassandra(dbconnection)
-//      val jobInfo = JobInfo("job59", batchId)
+//      val jobInfo = CasJobInfo("job59", batchId)
 //
 //      val sum = new ColumnWithValue[Long]("sum", 100)
 //      val columns = sum :: Nil
@@ -196,7 +197,7 @@ class OnlineBatchSyncTests extends WordSpec with BeforeAndAfter with BeforeAndAf
 //    }
 //    "insert and read batch data " in {
 //      val table = new OnlineBatchSyncCassandra(dbconnection)
-//      val jobInfo = JobInfo("job59", batchId)
+//      val jobInfo = CasJobInfo("job59", batchId)
 //
 //      val sum = new ColumnWithValue[Long]("sum", 100)
 //      val columns = sum :: Nil
@@ -214,7 +215,7 @@ class OnlineBatchSyncTests extends WordSpec with BeforeAndAfter with BeforeAndAf
 //    }
 //    "insert and read online data " in {
 //      val table = new OnlineBatchSyncCassandra(dbconnection)
-//      val jobInfo = JobInfo("job59", batchId)
+//      val jobInfo = CasJobInfo("job59", batchId)
 //
 //      val sum = new ColumnWithValue[Long]("sum", 100)
 //      val columns = sum :: Nil
@@ -230,7 +231,7 @@ class OnlineBatchSyncTests extends WordSpec with BeforeAndAfter with BeforeAndAf
 //    }
 //    "write and retrieve online data" in {
 //      val table = new OnlineBatchSyncCassandra(dbconnection)
-//      val jobInfo = JobInfo("job59", batchId)
+//      val jobInfo = CasJobInfo("job59", batchId)
 //
 //
 //      val sum = new ColumnWithValue[Long]("sum", 100)
@@ -255,7 +256,7 @@ class OnlineBatchSyncTests extends WordSpec with BeforeAndAfter with BeforeAndAf
 //      val columns = sum :: Nil
 //      val primaryKey = s"(${sum.name})"
 //      val indexes: Option[List[String]] = None
-//      val jobInfo = JobInfo("job59", batchId)
+//      val jobInfo = CasJobInfo("job59", batchId)
 //
 //      assert(table.initJob(jobInfo, new RowWithValue(columns, primaryKey, indexes)).isSuccess)
 //      assert(table.startNextBatchJob(jobInfo).isSuccess)
@@ -268,7 +269,7 @@ class OnlineBatchSyncTests extends WordSpec with BeforeAndAfter with BeforeAndAf
 //    }
 //    " mark new batch job version " in {
 //      val table = new OnlineBatchSyncCassandra(dbconnection)
-//      val job = JobInfo("JOB_100", batchId)
+//      val job = CasJobInfo("JOB_100", batchId)
 //
 //      val sum = new ColumnWithValue[Long]("sum", 100)
 //      val columns = sum :: Nil
@@ -284,7 +285,7 @@ class OnlineBatchSyncTests extends WordSpec with BeforeAndAfter with BeforeAndAf
 //    }
 //    " mark new online job version " in {
 //      val table = new OnlineBatchSyncCassandra(dbconnection)
-//      val jobInfo = JobInfo("JOB_100", batchId, 3, 3)
+//      val jobInfo = CasJobInfo("JOB_100", batchId, 3, 3)
 //
 //      val sum = new ColumnWithValue[Long]("sum", 100)
 //      val columns = sum :: Nil
@@ -300,7 +301,7 @@ class OnlineBatchSyncTests extends WordSpec with BeforeAndAfter with BeforeAndAf
 //    }
 //    " start and stop jobs " in {
 //      val table = new OnlineBatchSyncCassandra(dbconnection)
-//      val job = JobInfo("JOB_100", batchId)
+//      val job = CasJobInfo("JOB_100", batchId)
 //
 //      val sum = new ColumnWithValue[Long]("sum", 100)
 //      val columns = sum :: Nil
@@ -321,31 +322,31 @@ class OnlineBatchSyncTests extends WordSpec with BeforeAndAfter with BeforeAndAf
 //      val primaryKey = s"(${sum.name})"
 //      val indexes: Option[List[String]] = None
 //
-//      table.initJob(JobInfo("JOB_100", batchId), new RowWithValue(columns, primaryKey, indexes))
-//      table.startNextBatchJob(JobInfo("JOB_100", batchId))
-//      table.completeBatchJob(JobInfo("JOB_100", batchId))
+//      table.initJob(CasJobInfo("JOB_100", batchId), new RowWithValue(columns, primaryKey, indexes))
+//      table.startNextBatchJob(CasJobInfo("JOB_100", batchId))
+//      table.completeBatchJob(CasJobInfo("JOB_100", batchId))
 //      
-//      table.initJob(JobInfo("JOB_200", batchId), new RowWithValue(columns, primaryKey, indexes))
-//      table.startNextBatchJob(JobInfo("JOB_200", batchId))
-//      table.completeBatchJob(JobInfo("JOB_200", batchId))
+//      table.initJob(CasJobInfo("JOB_200", batchId), new RowWithValue(columns, primaryKey, indexes))
+//      table.startNextBatchJob(CasJobInfo("JOB_200", batchId))
+//      table.completeBatchJob(CasJobInfo("JOB_200", batchId))
 //      
-//      table.initJob(JobInfo("JOB_300", batchId), new RowWithValue(columns, primaryKey, indexes))
-//      table.startNextBatchJob(JobInfo("JOB_300", batchId))
-//      table.completeBatchJob(JobInfo("JOB_300", batchId))
+//      table.initJob(CasJobInfo("JOB_300", batchId), new RowWithValue(columns, primaryKey, indexes))
+//      table.startNextBatchJob(CasJobInfo("JOB_300", batchId))
+//      table.completeBatchJob(CasJobInfo("JOB_300", batchId))
 //      
-//      table.initJob(JobInfo("JOB_400", batchId), new RowWithValue(columns, primaryKey, indexes))
-//      table.startNextBatchJob(JobInfo("JOB_400", batchId))
-//      table.completeBatchJob(JobInfo("JOB_400", batchId))
+//      table.initJob(CasJobInfo("JOB_400", batchId), new RowWithValue(columns, primaryKey, indexes))
+//      table.startNextBatchJob(CasJobInfo("JOB_400", batchId))
+//      table.completeBatchJob(CasJobInfo("JOB_400", batchId))
 //      
-//      table.startNextBatchJob(JobInfo("JOB_400", batchId))
-//      table.completeBatchJob(JobInfo("JOB_400", batchId))
+//      table.startNextBatchJob(CasJobInfo("JOB_400", batchId))
+//      table.completeBatchJob(CasJobInfo("JOB_400", batchId))
 //     
 //      val expectedResults = List("JOB_100_batch1", "JOB_300_batch1", "JOB_200_batch1", "JOB_400_batch2")
 //      table.getQueryableTableIdentifiers.map{tableIdentifier => assert(expectedResults.contains(tableIdentifier._2.tableId))}
 //    }
 //    " reset batch job " in {
 //      val table = new OnlineBatchSyncCassandra(dbconnection)
-//      val job = JobInfo("JOB_100", batchId, 3, 3)
+//      val job = CasJobInfo("JOB_100", batchId, 3, 3)
 //
 //      val sum = new ColumnWithValue[Long]("sum", 100)
 //      val columns = sum :: Nil
@@ -367,7 +368,7 @@ class OnlineBatchSyncTests extends WordSpec with BeforeAndAfter with BeforeAndAf
 //    }
 //    " reset online job " in {
 //      val table = new OnlineBatchSyncCassandra(dbconnection)
-//      val job = JobInfo("JOB_100", batchId, 3, 3)
+//      val job = CasJobInfo("JOB_100", batchId, 3, 3)
 //
 //      val sum = new ColumnWithValue[Long]("sum", 100)
 //      val columns = sum :: Nil
@@ -391,8 +392,8 @@ class OnlineBatchSyncTests extends WordSpec with BeforeAndAfter with BeforeAndAf
 //      val table = new OnlineBatchSyncCassandra("andreas")
 //
 //
-//      val jobA = JobInfo("JOB_100", new BatchID(1460465100L, 1460465200L), 3, 3)
-//      val jobB = JobInfo("JOB_100", new BatchID(1460465100L, 1460465200L), 3, 3)
+//      val jobA = CasJobInfo("JOB_100", new BatchID(1460465100L, 1460465200L), 3, 3)
+//      val jobB = CasJobInfo("JOB_100", new BatchID(1460465100L, 1460465200L), 3, 3)
 //
 //
 //      val sum = new ColumnWithValue[Long]("sum", 100)

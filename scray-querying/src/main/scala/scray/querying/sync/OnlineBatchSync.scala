@@ -64,7 +64,7 @@ abstract class JobInfo[Statement, InsertIn, Result](
   val numberOfBatchSlots: Int = 3,
   val numberOfOnlineSlots: Int = 2
   ) extends Serializable {
-    private val lock = None
+    var lock: LockApi[Statement, InsertIn, Result] = null
     def getLock(dbSession: DbSession[Statement, InsertIn, Result]): LockApi[Statement, InsertIn, Result] 
 }
 

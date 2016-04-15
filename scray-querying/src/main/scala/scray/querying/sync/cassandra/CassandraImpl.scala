@@ -47,6 +47,8 @@ import scray.common.serialization.BatchID
 import scray.querying.sync.types.SyncTableBasicClasses.JobLockTable
 import scray.querying.sync.JobInfo
 import java.util.concurrent.TimeUnit
+import scala.None
+import com.typesafe.scalalogging.slf4j.LazyLogging
 
 
 object CassandraImplementation extends Serializable {
@@ -75,9 +77,19 @@ class CasJobInfo(
   batchID: BatchID,
   numberOfBatchSlots: Int = 3,
   numberOfOnlineSlots: Int = 2) extends JobInfo[Statement, Insert, ResultSet](name, batchID, numberOfBatchSlots, numberOfOnlineSlots)  {
+  
+  val statementGenerator = new CassandraStatementGenerator
 
   def getLock(dbSession: DbSession[Statement, Insert, ResultSet]): LockApi[Statement, Insert, ResultSet] = {
-    new CassandraSyncTableLock(this, JobLockTable("SILIDX", "JobSync"), dbSession)
+    if(this.lock ==  null) {
+      val table =  JobLockTable("SILIDX", "JobSync")
+      
+      dbSession.execute(statementGenerator.createKeyspaceCreationString(table)).flatMap { _ => 
+        dbSession.execute(statementGenerator.createSingleTableString(table))
+      }
+      lock = new CassandraSyncTableLock(this, JobLockTable("SILIDX", "JobSync"), dbSession)
+    }
+    lock
   }
 }
 
@@ -156,6 +168,7 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
 
   val syncTable = SyncTable("SILIDX", "SyncTable")
   val jobLockTable = JobLockTable("SILIDX", "JobLockTable")
+  val statementGenerator = new CassandraStatementGenerator
 
   /**
    * Create and register tables for a new job.
@@ -395,8 +408,9 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
    * Check if tables exists and tables are locked
    */
   private def crateTablesIfNotExists[T <: AbstractRow](job: JOB_INFO, dataColumns: T): Try[Unit] = Try {
-    createKeyspaceAndTable(jobLockTable)
-    createKeyspaceAndTable(syncTable)
+    
+    statementGenerator.createKeyspaceCreationString(syncTable)
+    statementGenerator.createSingleTableString(syncTable)
     
     syncTable.columns.indexes match {
       case _: Some[List[String]] => createIndexStrings(syncTable).map { session.execute(_) }
@@ -451,6 +465,10 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
     }
   }
 
+  def createKeyspaceAndTable[T <: AbstractRow](table: Table[T]) = {
+    
+  }
+  
   def getOnlineJobState(job: JOB_INFO, slot: Int): Option[State] = {
     this.getJobState(job, slot, true)
   }
@@ -514,14 +532,6 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
       case Success(_) => Try()
       case Failure(message) => Failure(this.throwInsertStatementError(job.name, slot, statement, message.toString()))
     }
-  }
-
-  /**
-   * Create base keyspace and table
-   */
-  def createKeyspaceAndTable[T <: AbstractRow](table: Table[T]): Try[Unit] = Try {
-    session.execute(s"CREATE KEYSPACE IF NOT EXISTS ${table.keySpace} WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor' : 1};")
-    session.execute(createSingleTableString(table))
   }
 
 
@@ -689,13 +699,7 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
     }
   }
 
-  def createSingleTableString[T <: AbstractRow](table: Table[T]): String = {
-    val createStatement = s"CREATE TABLE IF NOT EXISTS ${table.keySpace + "." + table.tableName} (" +
-      s"${table.columns.foldLeft("")((acc, next) => { acc + next.name + " " + next.getDBType + ", " })} " +
-      s"PRIMARY KEY ${table.columns.primaryKey})"
-    logger.debug(s"Create table String: ${createStatement} ")
-    createStatement
-  }
+
 
   private def createIndexStrings[T <: AbstractRow](table: Table[T]): List[String] = {
 
@@ -745,4 +749,24 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
       None
     }
   }
+}
+
+class CassandraStatementGenerator extends LazyLogging {
+  
+  def createSingleTableString[T <: AbstractRow](table: Table[T]): String = {
+    val createStatement = s"CREATE TABLE IF NOT EXISTS ${table.keySpace + "." + table.tableName} (" +
+      s"${table.columns.foldLeft("")((acc, next) => { acc + next.name + " " + next.getDBType + ", " })} " +
+      s"PRIMARY KEY ${table.columns.primaryKey})"
+    logger.debug(s"Create table String: ${createStatement} ")
+    createStatement
+  }
+  
+  def createKeyspaceCreationString[T <: AbstractRow](table: Table[T]): String = {
+      s"CREATE KEYSPACE IF NOT EXISTS ${table.keySpace} WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor' : 3};"
+  }
+  
+  def map[B](f: String => B): B = {
+    f
+  }
+  
 }
