@@ -76,7 +76,7 @@ class CasJobInfo(
   name: String,
   batchID: BatchID,
   numberOfBatchSlots: Int = 3,
-  numberOfOnlineSlots: Int = 2) extends JobInfo[Statement, Insert, ResultSet](name, batchID, numberOfBatchSlots, numberOfOnlineSlots)  {
+  numberOfOnlineSlots: Int = 2) extends JobInfo[Statement, Insert, ResultSet](name, batchID, numberOfBatchSlots, numberOfOnlineSlots) with LazyLogging  {
   
   val statementGenerator = new CassandraStatementGenerator
 
@@ -84,7 +84,10 @@ class CasJobInfo(
     if(this.lock ==  null) {
       val table =  JobLockTable("SILIDX", "JobSync")
       
-      dbSession.execute(statementGenerator.createKeyspaceCreationString(table).get).flatMap { _ => 
+      dbSession.execute(statementGenerator.createKeyspaceCreationString(table).get).
+      recover{
+        case e => {logger.error(s"Synctable is unable to create keyspace ${table.keySpace} Message: ${e.getMessage}"); throw e}
+      }.flatMap { _ => 
         dbSession.execute(statementGenerator.createSingleTableString(table).get)
       }
       lock = new CassandraSyncTableLock(this, JobLockTable("SILIDX", "JobSync"), dbSession)
@@ -166,8 +169,8 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
   // Create or use a given DB session.
   @transient val session = dbSession
 
-  val syncTable = SyncTable("SILIDX", "SyncTable")
-  val jobLockTable = JobLockTable("SILIDX", "JobLockTable")
+  val syncTable = SyncTable("silidx", "SyncTable")
+  val jobLockTable = JobLockTable("silidx", "JobLockTable")
   val statementGenerator = new CassandraStatementGenerator
 
   /**
@@ -409,8 +412,8 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
    */
   private def crateTablesIfNotExists[T <: AbstractRow](job: JOB_INFO, dataColumns: T): Try[Unit] = Try {
     
-    statementGenerator.createKeyspaceCreationString(syncTable)
-    statementGenerator.createSingleTableString(syncTable)
+    statementGenerator.createKeyspaceCreationString(syncTable).map { statement => dbSession.execute(statement) }
+    statementGenerator.createSingleTableString(syncTable).map { statement => dbSession.execute(statement) }
     
     syncTable.columns.indexes match {
       case _: Some[List[String]] => createIndexStrings(syncTable).map { session.execute(_) }
@@ -762,7 +765,6 @@ class CassandraStatementGenerator extends LazyLogging {
   }
   
   def createKeyspaceCreationString[T <: AbstractRow](table: Table[T]): Option[String] = {
-      Some(s"CREATE KEYSPACE IF NOT EXISTS ${table.keySpace} WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor' : 3};")
+      Some(s"CREATE KEYSPACE IF NOT EXISTS ${table.keySpace} WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor' : 1};")
   }
-  
 }

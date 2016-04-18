@@ -104,29 +104,28 @@ class OnlineBatchSyncTests extends WordSpec with BeforeAndAfter with BeforeAndAf
     EmbeddedCassandraServerHelper.cleanEmbeddedCassandra()  
   }
   "OnlineBatchSync " should {
-    " init client" in {
-      val table = new OnlineBatchSyncCassandra("andreas")
-      val jobInfo = CasJobInfo("job55", batchId)
-      assert(table.initJob[SumTestColumns](jobInfo, new SumTestColumns).isSuccess)
-    }
-    "lock job" in {
-      val jobInfo = CasJobInfo("job55", batchId)
-      val table = new OnlineBatchSyncCassandra(dbconnection)
-      table.initJob(jobInfo, new SumTestColumns())
-     
-     
-      jobInfo.getLock(dbconnection).lock
-      assert(true)
-    }
+//    " init client" in {
+//      val table = new OnlineBatchSyncCassandra("andreas")
+//      val jobInfo = CasJobInfo("job55", batchId)
+//      assert(table.initJob[SumTestColumns](jobInfo, new SumTestColumns).isSuccess)
+//    }
+//    "lock job" in {
+//      val jobInfo = CasJobInfo("job55", batchId)
+//      val table = new OnlineBatchSyncCassandra(dbconnection)
+//      table.initJob(jobInfo, new SumTestColumns())
+//     
+//     
+//      jobInfo.getLock(dbconnection).lock
+//      assert(true)
+//    }
     "lock and unlock " in {
       val job1 = CasJobInfo("job55", batchId)
-      val table = new OnlineBatchSyncCassandra(dbconnection)
+      val table = new OnlineBatchSyncCassandra("andreas")
       table.initJob(job1, new SumTestColumns())
       
      
-      assert(job1.getLock(dbconnection).tryLock(100, TimeUnit.MILLISECONDS))
-      job1.getLock(dbconnection)
-      assert(job1.getLock(dbconnection).tryLock(100, TimeUnit.MILLISECONDS))
+      //assert(job1.getLock(dbconnection).tryLock(100, TimeUnit.MILLISECONDS))
+      //assert(job1.getLock(dbconnection).tryLock(100, TimeUnit.MILLISECONDS) == false)
     }
 //    "lock table" in {
 //      val table = new OnlineBatchSyncCassandra(dbconnection)
