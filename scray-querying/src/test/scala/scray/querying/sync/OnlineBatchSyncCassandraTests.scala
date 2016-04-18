@@ -124,8 +124,8 @@ class OnlineBatchSyncTests extends WordSpec with BeforeAndAfter with BeforeAndAf
       table.initJob(job1, new SumTestColumns())
       
      
-      //assert(job1.getLock(dbconnection).tryLock(100, TimeUnit.MILLISECONDS))
-      //assert(job1.getLock(dbconnection).tryLock(100, TimeUnit.MILLISECONDS) == false)
+      assert(job1.getLock("andreas").tryLock(100, TimeUnit.MILLISECONDS))
+      assert(job1.getLock("andreas").tryLock(100, TimeUnit.MILLISECONDS) == false)
     }
 //    "lock table" in {
 //      val table = new OnlineBatchSyncCassandra(dbconnection)

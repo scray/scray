@@ -90,10 +90,20 @@ class CasJobInfo(
       }.flatMap { _ => 
         dbSession.execute(statementGenerator.createSingleTableString(table).get)
       }
+      
+      // Register new job in lock table
+      dbSession.execute(QueryBuilder.insertInto(table.keySpace, table.tableName)
+      .value(table.columns.jobname.name, this.name)
+      .value(table.columns.locked.name, false))
+      
       lock = new CassandraSyncTableLock(this, JobLockTable("SILIDX", "JobSync"), dbSession)
     }
     lock
   }
+  
+   def getLock(dbHostname: String): LockApi[Statement, Insert, ResultSet] = {
+     this.getLock(new CassandraSessionBasedDBSession(Cluster.builder().addContactPoint(dbHostname).build().connect()))
+   }
 }
 
 object CasJobInfo {
@@ -420,10 +430,6 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
       case _                     =>
     }
     
-    // Register new job in lock table
-    session.execute(QueryBuilder.insertInto(jobLockTable.keySpace, jobLockTable.tableName)
-      .value(jobLockTable.columns.jobname.name, job.name)
-      .value(jobLockTable.columns.locked.name, false))
 
     // Create data tables and register them in sync table
     0 to job.numberOfBatchSlots - 1 foreach { i =>
