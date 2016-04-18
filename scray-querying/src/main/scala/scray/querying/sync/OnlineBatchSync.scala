@@ -71,3 +71,4 @@ abstract class JobInfo[Statement, InsertIn, Result](
 case class RunningJobExistsException(message: String) extends Exception(message)
 case class NoRunningJobExistsException(message: String) extends Exception(message)
 case class StatementExecutionError(message: String) extends Exception(message)
+case class UnableToLockJobError(message: String) extends Exception(message)

@@ -154,4 +154,6 @@ abstract class LockApi[Statement, Insert, Result](
     this(job, JobLockTable("SILIDX", "jobLock"), dbSession)
   }
   
+   def transaction(f: () => Try[Unit]): Try[Unit]
+  
 }

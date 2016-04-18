@@ -24,12 +24,12 @@ import scray.querying.sync.types.DbSession
 import scray.querying.sync.types.LockApi
 import scray.querying.sync.types.SyncTableBasicClasses
 import scray.querying.sync.types.Table
+import scray.querying.sync.UnableToLockJobError
 
 class CassandraSyncTableLock (job: JobInfo[Statement, Insert, ResultSet], jobLockTable: Table[SyncTableBasicClasses.JobLockTable], 
-  dbSession: DbSession[Statement, Insert, ResultSet]) extends LockApi[Statement, Insert, ResultSet](job, jobLockTable, dbSession) with LazyLogging {
+  dbSession: DbSession[Statement, Insert, ResultSet], val timeOut: Int) extends LockApi[Statement, Insert, ResultSet](job, jobLockTable, dbSession) with LazyLogging {
   
   val timeBetweenRetries = 100 // ms
-  val numberOfRetries = 10
    
   class CassandraSessionBasedDBSession(cassandraSession: Session) extends DbSession[Statement, Insert, ResultSet](cassandraSession.getCluster.getMetadata.getAllHosts().iterator().next.getAddress.toString) {
 
@@ -152,6 +152,20 @@ class CassandraSyncTableLock (job: JobInfo[Statement, Insert, ResultSet], jobLoc
   def unlockJob(): Try[Unit] = {
     Try(unlock())
   }
+  
+  def transaction(f: () => Try[Unit]): Try[Unit] = {
+    if(this.tryLock(timeOut, TimeUnit.MICROSECONDS)) {
+      f() match {
+        case Success(_) => this.unlock(); Try()
+        case Failure(ex) => {
+          logger.error(s"Unable to execute Query. Release lock for job ${job.name}")
+          this.unlock()
+          Failure(ex)}
+      } 
+    } else {
+     Failure(new UnableToLockJobError(s"Unable to lock job ${job.name}")) 
+    }
+  }
 
   
   private def executeQuorum(statement: Statement): Try[Unit] = {
@@ -176,7 +190,8 @@ object CassandraSyncTableLock {
   def apply(
       job: JobInfo[Statement, Insert, ResultSet], 
       jobLockTable: Table[SyncTableBasicClasses.JobLockTable], 
-      dbSession: DbSession[Statement, Insert, ResultSet]) = {
-    new CassandraSyncTableLock(job, jobLockTable, dbSession)
+      dbSession: DbSession[Statement, Insert, ResultSet],
+      timeOut: Int) = {
+    new CassandraSyncTableLock(job, jobLockTable, dbSession, timeOut)
   }
 }

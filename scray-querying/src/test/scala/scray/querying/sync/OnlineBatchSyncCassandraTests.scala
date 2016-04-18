@@ -103,46 +103,70 @@ class OnlineBatchSyncTests extends WordSpec with BeforeAndAfter with BeforeAndAf
   after {
     EmbeddedCassandraServerHelper.cleanEmbeddedCassandra()  
   }
-  "OnlineBatchSync " should {
-//    " init client" in {
-//      val table = new OnlineBatchSyncCassandra("andreas")
-//      val jobInfo = CasJobInfo("job55", batchId)
-//      assert(table.initJob[SumTestColumns](jobInfo, new SumTestColumns).isSuccess)
-//    }
-//    "lock job" in {
-//      val jobInfo = CasJobInfo("job55", batchId)
-//      val table = new OnlineBatchSyncCassandra(dbconnection)
-//      table.initJob(jobInfo, new SumTestColumns())
-//     
-//     
-//      jobInfo.getLock(dbconnection).lock
-//      assert(true)
-//    }
-    "lock and unlock " in {
+    "OnlineBatchSync " should {
+      " init client" in {
+        val table = new OnlineBatchSyncCassandra("andreas")
+        val jobInfo = CasJobInfo("job55", batchId)
+        assert(table.initJob[SumTestColumns](jobInfo, new SumTestColumns).isSuccess)
+      }
+      "lock job" in {
+        val jobInfo = CasJobInfo("job55", batchId)
+        val table = new OnlineBatchSyncCassandra(dbconnection)
+        table.initJob(jobInfo, new SumTestColumns())
+  
+        jobInfo.getLock(dbconnection).lock
+        assert(true)
+      }
+      "lock and unlock " in {
+        val job1 = CasJobInfo("job55", batchId)
+        val table = new OnlineBatchSyncCassandra(dbconnection)
+        table.initJob(job1, new SumTestColumns())
+        
+       
+        assert(job1.getLock(dbconnection).tryLock(100, TimeUnit.MILLISECONDS))
+        assert(job1.getLock(dbconnection).tryLock(100, TimeUnit.MILLISECONDS) == false)
+      }
+      "lock table" in {
+        val table = new OnlineBatchSyncCassandra(dbconnection)
+        table.initJob(CasJobInfo("job57", batchId), new SumTestColumns())
+  
+        table.lockOnlineTable(CasJobInfo("job57", batchId))
+        println(table.isOnlineTableLocked(CasJobInfo("job57", batchId)).get)
+        assert(table.isOnlineTableLocked(CasJobInfo("job57", batchId)).get === true)
+      }
+      "lock table only once" in {
+        val table = new OnlineBatchSyncCassandra(dbconnection)
+        table.initJob(CasJobInfo("job57", batchId), new SumTestColumns())
+  
+        table.lockOnlineTable(CasJobInfo("job57", batchId))
+        println(table.isOnlineTableLocked(CasJobInfo("job57", batchId)).get)
+      }
+    "transaction method test" in {
       val job1 = CasJobInfo("job55", batchId)
-      val table = new OnlineBatchSyncCassandra("andreas")
+      val table = new OnlineBatchSyncCassandra(dbconnection)
       table.initJob(job1, new SumTestColumns())
       
-     
-      assert(job1.getLock("andreas").tryLock(100, TimeUnit.MILLISECONDS))
-      assert(job1.getLock("andreas").tryLock(100, TimeUnit.MILLISECONDS) == false)
+      val funcOK = () => {Try()}
+      val funcFail = () => {Failure(new UnableToLockJobError("..."))}
+  
+      assert(job1.getLock(dbconnection).transaction(funcOK).isSuccess)
+      assert(job1.getLock(dbconnection).transaction(funcFail).isFailure)
     }
-//    "lock table" in {
-//      val table = new OnlineBatchSyncCassandra(dbconnection)
-//      table.initJob(CasJobInfo("job57", batchId), new SumTestColumns())
-//
-//      table.lockOnlineTable(CasJobInfo("job57", batchId))
-//      println(table.isOnlineTableLocked(CasJobInfo("job57", batchId)).get)
-//      assert(table.isOnlineTableLocked(CasJobInfo("job57", batchId)).get === true)
-//    }
-//    "lock table only once" in {
-//      val table = new OnlineBatchSyncCassandra(dbconnection)
-//      table.initJob(CasJobInfo("job57", batchId), new SumTestColumns())
-//
-//      table.lockOnlineTable(CasJobInfo("job57", batchId))
-//      println(table.isOnlineTableLocked(CasJobInfo("job57", batchId)).get)
-//      //assert(table.lockOnlineTable(CasJobInfo("job57")).get === false)
-//    }
+  "multiple transactions test" in {
+    val job1 = CasJobInfo("job55", batchId)
+    val table = new OnlineBatchSyncCassandra(dbconnection)
+    table.initJob(job1, new SumTestColumns())
+    
+    val funcOK = () => {Try()}
+    val funcFail = () => {Failure(new UnableToLockJobError("..."))}
+
+    assert(job1.getLock(dbconnection).transaction(funcOK).isSuccess)
+    assert(job1.getLock(dbconnection).transaction(funcOK).isSuccess)
+    assert(job1.getLock(dbconnection).transaction(funcOK).isSuccess)
+    assert(job1.getLock(dbconnection).transaction(funcOK).isSuccess)
+    assert(job1.getLock(dbconnection).transaction(funcOK).isSuccess)
+    assert(job1.getLock(dbconnection).transaction(funcFail).isFailure)
+  }
 //    "insert and read data" in {
 //      val table = new OnlineBatchSyncCassandra(dbconnection)
 //      table.initJob(CasJobInfo("job58", batchId), new SumTestColumns())
@@ -406,69 +430,7 @@ class OnlineBatchSyncTests extends WordSpec with BeforeAndAfter with BeforeAndAf
 //      // assert(table.startNextBatchJob(jobB).isSuccess)
 //      
 //      assert(table.completeBatchJob(jobA).isSuccess)
-//      println(table.getLatestBatch(jobA))
 //      // println(table.getLatestBatch(jobB))
 //    }
-
-    
-//    "use hlist" in {
-//      
-//      class A {
-//        type TextField <: {
-//          val nr : Long
-//          val r: Int
-//          val chicken: Long
-//        }
-//      }
-//      
-//      
-//      trait B {
-//        object printlnMapper extends Poly1 {
-//          implicit def default[T] = at[T](a => a.toString)
-//        }
-//        type C[R] <: Column[R]
-//        type F012 = C[String]:: C[Long] :: C[Int] :: HNil 
-//        type F1 = Column[String]:: Column[Long] :: Column[Int] :: HNil 
-//        def bla(a: F012){}
-//        def addRow(a: F012)(implicit ev0: Mapper[printlnMapper.type, F012])
-//      }
-//      
-//      class R extends B {
-//        type C[Int] = Column[Int]
-//        
-//        override def addRow(a: F012)(implicit ev0: Mapper[printlnMapper.type, F012]) {
-//          a.map(printlnMapper)
-//        }
-//      }
-//      
-//      val a = new R
-//      
-//      val f1 = new ColumnWithValue[String]("abc", "abc") :: new ColumnWithValue[Long]("abc", 1L) :: new ColumnWithValue[Int]("abc", 1) :: HNil
-//      
-//      object printlnMapper extends Poly1 {
-//        implicit def default[T] = at[T](a => a.toString)
-//      }
-//      
-//      // a.addRow(f1)(implicit ev0: Mapper[a.printlnMapper.type, a.F012])
-//
-//      
-//     
-//      
-//      object cyz extends ~>> {
-//        def at[Int ∨ String] = 
-//      }
-//      
-//      val b = new B(implicit ev0: Mapper[F2, ColumnWithValue, F1]) {
-//        type C[R] = Column[R]
-//        val p: F0 = new Column[String]("abc") :: new Column[Long]("ff") :: new Column[Int]("a") :: HNil
-//        val s: F1 = new ColumnWithValue[String]("abc", "abc") :: new ColumnWithValue[Long]("abc", 1L) :: new ColumnWithValue[Int]("abc", 1) :: HNil
-//        type F2 = String :: Long :: Int :: HNil 
-//        def addRow(row: F2)  
-//      }
-//      p.m
-//      
-//      b.blub(p)
-//      
-//    }
-  }
+    }
 }

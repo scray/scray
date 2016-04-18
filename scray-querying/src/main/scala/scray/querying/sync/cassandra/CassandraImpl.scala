@@ -76,7 +76,8 @@ class CasJobInfo(
   name: String,
   batchID: BatchID,
   numberOfBatchSlots: Int = 3,
-  numberOfOnlineSlots: Int = 2) extends JobInfo[Statement, Insert, ResultSet](name, batchID, numberOfBatchSlots, numberOfOnlineSlots) with LazyLogging  {
+  numberOfOnlineSlots: Int = 2,
+  lockTimeOut: Int = 500) extends JobInfo[Statement, Insert, ResultSet](name, batchID, numberOfBatchSlots, numberOfOnlineSlots) with LazyLogging  {
   
   val statementGenerator = new CassandraStatementGenerator
 
@@ -96,7 +97,7 @@ class CasJobInfo(
       .value(table.columns.jobname.name, this.name)
       .value(table.columns.locked.name, false))
       
-      lock = new CassandraSyncTableLock(this, JobLockTable("SILIDX", "JobSync"), dbSession)
+      lock = new CassandraSyncTableLock(this, JobLockTable("SILIDX", "JobSync"), dbSession, lockTimeOut)
     }
     lock
   }
@@ -182,6 +183,7 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
   val syncTable = SyncTable("silidx", "SyncTable")
   val jobLockTable = JobLockTable("silidx", "JobLockTable")
   val statementGenerator = new CassandraStatementGenerator
+  val lockTimeOut = 500 //ms
 
   /**
    * Create and register tables for a new job.
@@ -575,12 +577,20 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
    */
   def lockOnlineTable(job: JOB_INFO): Try[Unit] = {
     logger.debug(s"Lock online table for job: ${job.name} ")
-
-    val rowsToLock = new BatchStatement()
-    0 to job.numberOfOnlineSlots - 1 foreach {
-      slot => rowsToLock.add(geLockStatement(job, slot, true, true))
+    
+    if(job.getLock(dbSession).tryLock(lockTimeOut, TimeUnit.MILLISECONDS)) {
+      val rowsToLock = new BatchStatement()
+      0 to job.numberOfOnlineSlots - 1 foreach {
+        slot => rowsToLock.add(geLockStatement(job, slot, true, true))
+      }
+      val result = executeQuorum(rowsToLock).recover {
+        case e => {logger.error(s"Unable to lock online table"); throw e}
+      } 
+      job.getLock(dbSession).tryLock(lockTimeOut, TimeUnit.MICROSECONDS)
+      result
+    } else {
+      Failure(new RuntimeException(s"Unable to lock job ${job.name}"))
     }
-    executeQuorum(rowsToLock)
   }
   
   /**
@@ -589,11 +599,17 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
   def unlockOnlineTable(job: JOB_INFO): Try[Unit] = {
     logger.debug(s"Unlock online table for job: ${job.name}")
 
-    val rowsToUnlock = new BatchStatement()
-    0 to job.numberOfOnlineSlots - 1 foreach {
-      slot => rowsToUnlock.add(geLockStatement(job, slot, true, false))
+    if(job.getLock(dbSession).tryLock(lockTimeOut, TimeUnit.MILLISECONDS)) {
+      val rowsToUnlock = new BatchStatement()
+      0 to job.numberOfOnlineSlots - 1 foreach {
+        slot => rowsToUnlock.add(geLockStatement(job, slot, true, false))
+      }
+      executeQuorum(rowsToUnlock).recover {
+        case e => {logger.error(s"Unable to unlock online table"); throw e}
+      } 
+    } else {
+      Failure(new RuntimeException(s"Unable to unlock job ${job.name}"))
     }
-    executeQuorum(rowsToUnlock)
   }
 
   /**
