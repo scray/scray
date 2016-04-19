@@ -196,15 +196,7 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
   @Override
   def startNextBatchJob(job: JOB_INFO): Try[Unit] = {
     logger.debug(s"Start next batch job ${job.name}")
-      if(job.getLock(session).tryLock(100, TimeUnit.MILLISECONDS)) {
-        try {
-          this.startJob(job, false)
-        } finally {
-          job.getLock(session).unlock()
-        }
-      } else {
-        Failure(new RuntimeException("Unable to start next batch job"))
-      }
+    job.getLock(session).transaction(this.startJob, job, false)
   }
 
   def startNextOnlineJob(job: JOB_INFO): Try[Unit] = {
