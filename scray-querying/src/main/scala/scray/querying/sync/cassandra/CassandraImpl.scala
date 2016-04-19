@@ -415,7 +415,7 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
    * Check if tables exists and tables are locked
    */
   private def crateTablesIfNotExists[T <: AbstractRow](job: JOB_INFO, dataColumns: T): Try[Unit] = Try {
-    
+   println("......................................... \n\n\n\n") 
     statementGenerator.createKeyspaceCreationString(syncTable).map { statement => dbSession.execute(statement) }
     statementGenerator.createSingleTableString(syncTable).map { statement => dbSession.execute(statement) }
     
@@ -423,13 +423,15 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
       case _: Some[List[String]] => createIndexStrings(syncTable).map { session.execute(_) }
       case _                     =>
     }
-    
+     println("2......................................... \n\n\n\n") 
+  
 
     // Create data tables and register them in sync table
     0 to job.numberOfBatchSlots - 1 foreach { i =>
 
       // Create batch data tables
       statementGenerator.createSingleTableString(VoidTable(syncTable.keySpace, getBatchJobName(job.name, i), dataColumns)).map { x => session.execute(x)}
+   println("3......................................... \n\n\n\n") 
 
       // Register batch table
       session.execute(QueryBuilder.insertInto(syncTable.keySpace, syncTable.tableName)
@@ -445,13 +447,17 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
         .value(syncTable.columns.tableidentifier.name, getBatchJobName(syncTable.keySpace + "." + job.name, i))
         .ifNotExists)
     }
+        println("4......................................... \n\n\n\n") 
 
+println(job.numberOfOnlineSlots)
     // Create and register online tables
     0 to job.numberOfOnlineSlots - 1 foreach { i =>
       // Create online data tables
       // Columns[Column[_]]
       session.execute(statementGenerator.createSingleTableString(VoidTable(syncTable.keySpace, getOnlineJobName(job.name, i), dataColumns)).get)
+         println("5......................................... \n\n\n\n") 
 
+println("rrrrrrrrrrrrrrrrrrrr")
       // Register online tables
       session.execute(QueryBuilder.insertInto(syncTable.keySpace, syncTable.tableName)
         .value(syncTable.columns.online.name, true)
@@ -548,7 +554,7 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
     0 to job.numberOfBatchSlots - 1 foreach {
       slot => rowsToLock.add(geLockStatement(job, slot, false, true))
     }
-    executeQuorum(rowsToLock)
+     job.getLock(dbSession).transaction(this.executeQuorum, rowsToLock)
   }
 
   /**
@@ -561,7 +567,7 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
     0 to job.numberOfBatchSlots - 1 foreach {
       slot => rowsToUnlock.add(geLockStatement(job, slot, false, false))
     }
-    executeQuorum(rowsToUnlock)
+     job.getLock(dbSession).transaction(executeQuorum, rowsToUnlock)
   }
 
     /**
@@ -569,20 +575,11 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
    */
   def lockOnlineTable(job: JOB_INFO): Try[Unit] = {
     logger.debug(s"Lock online table for job: ${job.name} ")
-    
-    if(job.getLock(dbSession).tryLock(lockTimeOut, TimeUnit.MILLISECONDS)) {
       val rowsToLock = new BatchStatement()
       0 to job.numberOfOnlineSlots - 1 foreach {
         slot => rowsToLock.add(geLockStatement(job, slot, true, true))
       }
-      val result = executeQuorum(rowsToLock).recover {
-        case e => {logger.error(s"Unable to lock online table"); throw e}
-      } 
-      job.getLock(dbSession).tryLock(lockTimeOut, TimeUnit.MICROSECONDS)
-      result
-    } else {
-      Failure(new RuntimeException(s"Unable to lock job ${job.name}"))
-    }
+      job.getLock(dbSession).transaction(executeQuorum, rowsToLock)
   }
   
   /**
@@ -591,36 +588,12 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
   def unlockOnlineTable(job: JOB_INFO): Try[Unit] = {
     logger.debug(s"Unlock online table for job: ${job.name}")
 
-    if(job.getLock(dbSession).tryLock(lockTimeOut, TimeUnit.MILLISECONDS)) {
       val rowsToUnlock = new BatchStatement()
       0 to job.numberOfOnlineSlots - 1 foreach {
         slot => rowsToUnlock.add(geLockStatement(job, slot, true, false))
       }
-      executeQuorum(rowsToUnlock).recover {
-        case e => {logger.error(s"Unable to unlock online table"); throw e}
-      } 
-    } else {
-      Failure(new RuntimeException(s"Unable to unlock job ${job.name}"))
-    }
+      job.getLock(dbSession).transaction(executeQuorum, rowsToUnlock)
   }
-
-  /**
-     * Check if online table is locked.
-     * To ensure that online table is locked use lockOnlineTable.
-     */
-    def isOnlineTableLocked(job: JOB_INFO): Option[Boolean] = {
-       logger.debug(s"Check if online table is locked for job: ${job.name}")
-       isTableLocked(job, true)
-    }
-  
-      /**
-     * Check if batch table is locked.
-     * To ensure that batch table is locked use lockBatchTable.
-     */
-    def isBatchTableLocked(job: JOB_INFO): Option[Boolean] = {
-       logger.debug(s"Check if batch table is locked for job: ${job.name}")
-       isTableLocked(job, false)
-    }
     
     private def isTableLocked(job: JOB_INFO, online: Boolean): Option[Boolean] = {
       val res = execute(QueryBuilder.select.all().from(syncTable.keySpace, syncTable.tableName).allowFiltering().where(
