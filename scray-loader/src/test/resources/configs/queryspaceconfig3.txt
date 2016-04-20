@@ -1,0 +1,11 @@
+name WhateverYouLike
+
+sync table { test1, "IDX", "SyncTable" }
+
+table { test1, "BLA1", "SCHWAETZ1" }
+manualindex { type time, table { test1, "BLA1", "SCHWAETZ1" } indexedcolumn "indexedcol", index "myjobid" }
+table { test1, "BLUBB2", "SCHWAETZ1" }
+table { test2, "BRUMM", "SCHWAETZ2" }
+manualindex { type time, table { test1, "BLUBB2", "SCHWAETZ1" } indexedcolumn "indexedcol2", index "myfobid", mapping UUID->TEXT }
+ 
+  

@@ -1,0 +1,4 @@
+name WhateverYouLike
+
+table { test, "BLA", "SCHWAETZ" }
+

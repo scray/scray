@@ -1,0 +1,8 @@
+connection test jdbc {
+	credentials "test" : "closed"
+}
+
+queryspacelocations {
+	url "file://tmp/test1.queryspace.scray",
+	url "file://tmp/test2.queryspace.scray"
+}

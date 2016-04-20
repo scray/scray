@@ -1,0 +1,7 @@
+connection test cassandra {
+	hosts ( "phobos", "venus" ,"mars")
+}
+
+queryspacelocations {
+	url "file://tmp/test.queryspace.scray1"
+}

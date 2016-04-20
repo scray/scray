@@ -1,0 +1,16 @@
+connection test1 cassandra {
+	datacenter "DC1001",
+	credentials "test" : "closed",
+	hosts ( "phobos", "venus" ,"mars"),
+	clustername "Test Cluster"
+}
+
+connection test2 jdbc {
+	url "jdbc:oracle:thin:blaschwaetz",
+	credentials "test" : "closed"
+}
+
+queryspacelocations {
+	url "file://tmp/test1.queryspace.scray",
+	url "file://tmp/test2.queryspace.scray"
+}
