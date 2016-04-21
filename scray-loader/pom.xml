@@ -2,6 +2,8 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<artifactId>scray-loader</artifactId>
+	<name>Scray - Loader</name>
+	<description>Loads and starts a scray query service</description>
 	<parent>
 		<groupId>scray</groupId>
 		<artifactId>scray</artifactId>
@@ -26,17 +28,17 @@
 			<artifactId>shapeless_2.10</artifactId>
 			<version>2.3.0</version>
 		</dependency>
-<!-- 		<dependency> -->
-<!-- 			<groupId>scray</groupId> -->
-<!-- 			<artifactId>scray-querying</artifactId> -->
-<!-- 			<version>0.0.1-SNAPSHOT</version> -->
-<!-- 			<exclusions> -->
-<!-- 				<exclusion> -->
-<!-- 					<artifactId>shapeless_2.10.4</artifactId> -->
-<!-- 					<groupId>com.chuusai</groupId> -->
-<!-- 				</exclusion> -->
-<!-- 			</exclusions> -->
-<!-- 		</dependency> -->
+		<dependency>
+			<groupId>scray</groupId>
+			<artifactId>scray-querying</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
+			<exclusions>
+				<exclusion>
+					<artifactId>shapeless_2.10.4</artifactId>
+					<groupId>com.chuusai</groupId>
+				</exclusion>
+			</exclusions>
+		</dependency>
 		<dependency>
 			<groupId>scray</groupId>
 			<artifactId>scray-cassandra</artifactId>

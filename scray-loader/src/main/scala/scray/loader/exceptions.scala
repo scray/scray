@@ -39,3 +39,8 @@ class UnsupportedMappingTypeException(mapping: String, queryspace: String)
     extends ScrayException(ExceptionIDs.mappingUnsupportedExceptionID,
         UUID.nameUUIDFromBytes(Array[Byte](0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)),
         s"In queryspace $queryspace mapping $mapping has been requested, but it is not supported") with Serializable
+
+class UnknownTimeUnitException(supposedunit: String)
+    extends ScrayException(ExceptionIDs.unknownTimeUnitExceptionID,
+        UUID.nameUUIDFromBytes(Array[Byte](0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)),
+        s"Supposed time unit $supposedunit is not parsable.") with Serializable

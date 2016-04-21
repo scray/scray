@@ -10,5 +10,6 @@ package object loader {
     val urlMissingExceptionID = "Scray-Config-URL-Missing-603"
     val dbmsUndefinedExceptionID = "Scray-Config-DBMS-Missing-604"
     val mappingUnsupportedExceptionID = "Scray-Config-Mapping-Missing-605"
+    val unknownTimeUnitExceptionID = "Scray-Config-Timeunit-Unknown-606"
   }
 }

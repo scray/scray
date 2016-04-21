@@ -16,6 +16,7 @@ import scray.loader.configparser.ReadableConfig
 import scray.cassandra.extractors.CassandraExtractor
 import scala.collection.convert.decorateAsScala.asScalaSetConverter
 import scray.loader.configparser.ScrayConfiguration
+import com.datastax.driver.core.ConsistencyLevel
 
 /**
  * Cassandra properties, needed to setup a Cassandra cluster object
@@ -35,6 +36,8 @@ case class CassandraClusterNameProperty(name: String) extends CassandraClusterPr
 case class CassandraClusterCredentials(credentials: ScrayCredentials) extends CassandraClusterProperty
 case class CassandraClusterHosts(hosts: Set[StoreHost]) extends CassandraClusterProperty
 case class CassandraClusterDatacenter(dc: String) extends CassandraClusterProperty
+case class CassandraClusterConsistency(read: ConsistencyLevel = ConsistencyLevel.LOCAL_QUORUM, 
+    write: ConsistencyLevel = ConsistencyLevel.LOCAL_QUORUM) extends CassandraClusterProperty
 
 /**
  * sets up and manages a Cassandra Cluster

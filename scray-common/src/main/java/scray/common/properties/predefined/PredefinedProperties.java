@@ -1,12 +1,19 @@
 package scray.common.properties.predefined;
 
+import java.util.Arrays;
+
 import scray.common.properties.ConsistencyLevelProperty;
+import scray.common.properties.CredentialsProperty;
 import scray.common.properties.IntProperty;
 import scray.common.properties.SocketListProperty;
+import scray.common.properties.StringListProperty;
 import scray.common.properties.StringProperty;
+import scray.common.tools.ScrayCredentials;
 
 public class PredefinedProperties {
 
+	public final static StringListProperty CONFIGURED_STORES = new StringListProperty(
+			"CONFIGURED_STORES", Arrays.asList(new String[] { "cassandra" }));
 	public final static IntProperty RESULT_COMPRESSION_MIN_SIZE = new IntProperty(
 			"RESULT_COMPRESSION_MIN_SIZE", 1024);
 	public final static SocketListProperty CASSANDRA_QUERY_SEED_IPS = new SocketListProperty(
@@ -24,6 +31,8 @@ public class PredefinedProperties {
 			"CASSANDRA_QUERY_CLUSTER_NAME", "Query Cluster");
 	public final static StringProperty CASSANDRA_QUERY_CLUSTER_DC = new StringProperty(
 			"CASSANDRA_QUERY_CLUSTER_DC", "DC1");
+	public final static CredentialsProperty CASSANDRA_QUERY_CLUSTER_CREDENTIALS = new CredentialsProperty(
+			"CASSANDRA_QUERY_CLUSTER_CREDENTIALS", new ScrayCredentials(null, null));
 	public final static StringProperty CASSANDRA_INDEX_CLUSTER_NAME = new StringProperty(
 			"CASSANDRA_INDEX_CLUSTER_NAME", "Index Cluster");
 	public final static StringProperty CASSANDRA_INDEX_CLUSTER_DC = new StringProperty(

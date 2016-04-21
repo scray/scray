@@ -1,3 +1,8 @@
+service {
+	advertise host "192.168.0.1",
+	service port 18181
+}
+
 connection test jdbc {
 	credentials "test" : "closed"
 }
