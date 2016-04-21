@@ -88,7 +88,7 @@ abstract class DbSession[Statement, InsertIn, Result](val dbHostname: String) {
 
 object SyncTable {
   def apply(keySpace: String, tableName: String) = {
-    new Table(keySpace, tableName, new SyncTableBasicClasses.SyncTableRowEmpty)
+    new Table(keySpace, tableName, SyncTableBasicClasses.SyncTableRowEmpty)
   }
 }
 
@@ -111,7 +111,7 @@ object DataTable {
 
 object SyncTableBasicClasses extends Serializable {
 
-  class SyncTableRowEmpty() extends ArbitrarylyTypedRows {
+  object SyncTableRowEmpty extends ArbitrarylyTypedRows {
 
     val jobname = new Column[String]("jobname")
     val slot = new Column[Int]("slot")
@@ -120,16 +120,15 @@ object SyncTableBasicClasses extends Serializable {
     val tableidentifier = new Column[String]("tableidentifier")
     val batchStartTime = new Column[Long]("batchStartTime")
     val batchEndTime = new Column[Long]("batchEndTime")
-    val locked = new Column[Boolean]("locked")
     val online = new Column[Boolean]("online")
     val state = new Column[String]("state")
 
-    override val columns = jobname :: latestUpdate :: slot :: versions :: tableidentifier :: locked :: online :: state :: batchStartTime :: batchEndTime ::Nil
+    override val columns = jobname :: latestUpdate :: slot :: versions :: tableidentifier :: online :: state :: batchStartTime :: batchEndTime ::Nil
     override val primaryKey = s"((${jobname.name}, ${online.name}), ${slot.name})"
-    override val indexes: Option[List[String]] = Option(List(locked.name, state.name, batchEndTime.name, batchStartTime.name))
+    override val indexes: Option[List[String]] = Option(List(state.name, batchEndTime.name, batchStartTime.name))
   }
   
-  class JobLockTable() extends ArbitrarylyTypedRows {
+  class JobLockTable extends ArbitrarylyTypedRows {
 
     val jobname = new Column[String]("jobname")
     val locked = new Column[Boolean]("locked")

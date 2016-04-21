@@ -119,24 +119,25 @@ class CassandraSyncTableLock (job: JobInfo[Statement, Insert, ResultSet], jobLoc
     val endTime = System.currentTimeMillis() + TimeUnit.MILLISECONDS.convert(time, unit)
 
     @tailrec 
-    def tryToLock(): Boolean = {
+    def tryToLockR(): Boolean = {
       if(tryLock()) {
         true
       } else {
         if(System.currentTimeMillis() >= endTime) {
           logger.debug(s"Retry to get lock for job ${job.name} in ${timeBetweenRetries}ms. Give up in ${TimeUnit.SECONDS.convert((endTime - System.currentTimeMillis()), TimeUnit.MICROSECONDS)}")
           Thread.sleep(timeBetweenRetries)
-          tryToLock()
+          tryToLockR()
         } else {
           false
         }
       }
     }
     
-    tryToLock
+    tryToLockR
   }
   def tryLock(): Boolean = {
-    executeQuorum(lockQuery).isSuccess
+    // executeQuorum(lockQuery).isSuccess
+    true
   }
   
   def unlock(): Unit = {
