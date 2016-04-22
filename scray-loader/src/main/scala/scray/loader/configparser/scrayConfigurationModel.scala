@@ -68,6 +68,7 @@ object ScrayQueryspaceConfigurationURLReload {
  */
 case class ScrayQueryspaceConfiguration(
     name: String,
+    version: Long,
     syncTable: Option[TableIdentifier],
     rowStores: Seq[TableIdentifier],
     indexStores: Seq[QueryspaceIndexstore]/*,
@@ -80,3 +81,6 @@ case class ScrayQueryspaceConfiguration(
 case class ScrayVersionedStore()
 
 case class ScrayMaterializedView()
+
+case class ScannedQueryspaceConfigfiles(path: String, name: String, version: Long, queryspaceConfig: ScrayQueryspaceConfiguration)
+

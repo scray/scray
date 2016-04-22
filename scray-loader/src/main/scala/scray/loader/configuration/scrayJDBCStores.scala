@@ -1,6 +1,7 @@
 package scray.loader.configuration
 
 import com.twitter.util.Try
+import scala.util.{Try => STry}
 import scray.common.properties.predefined.PredefinedProperties
 import scray.common.properties.ScrayProperties
 import com.datastax.driver.core.policies.Policies
@@ -10,6 +11,7 @@ import scray.common.tools.ScrayCredentials
 import scray.loader.configparser.ReadableConfig
 import scala.collection.convert.decorateAsScala.asScalaSetConverter
 import scray.loader.configparser.ScrayConfiguration
+import scray.querying.sync.types.DbSession
 
 /**
  * JDBC properties, needed to setup a JDBC connection
@@ -36,7 +38,16 @@ class JDBCConfiguration(override protected val startconfig: JDBCProperties)
   override def performUpdateTasks(): Unit = {
     // TODO: examine what tasks need to be done for JDBC...
   }
-  
+
+  override def getSession: DbSession[_, _, _] = {
+    // TODO: next line is bullshit
+    new DbSession[Int, String, String]("") {
+      override def execute(statement: Int): STry[String] = STry("") 
+      override def execute(statement: String): STry[String] = STry("")
+      override def insert(statement: String): STry[String] = STry("")
+    }
+  } 
+
   override def readConfig(config: ScrayConfiguration, old: JDBCProperties): Option[JDBCProperties] = 
     JDBCConfiguration.readConfig(config, old)
 }

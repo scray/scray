@@ -17,6 +17,10 @@ import scray.cassandra.extractors.CassandraExtractor
 import scala.collection.convert.decorateAsScala.asScalaSetConverter
 import scray.loader.configparser.ScrayConfiguration
 import com.datastax.driver.core.ConsistencyLevel
+import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.twitter.util.Throw
+import scray.querying.sync.types.DbSession
+import scray.querying.sync.cassandra.CassandraSessionBasedDBSession
 
 /**
  * Cassandra properties, needed to setup a Cassandra cluster object
@@ -43,7 +47,7 @@ case class CassandraClusterConsistency(read: ConsistencyLevel = ConsistencyLevel
  * sets up and manages a Cassandra Cluster
  */
 class CassandraClusterConfiguration(override protected val startconfig: CassandraClusterProperties) 
-    extends DBMSConfiguration[CassandraClusterProperties](startconfig) {
+    extends DBMSConfiguration[CassandraClusterProperties](startconfig) with LazyLogging {
 
   var currentCluster: Option[StoreCluster] = None
   
@@ -57,8 +61,7 @@ class CassandraClusterConfiguration(override protected val startconfig: Cassandr
     StoreCluster(name = clusterName, hosts = cassandraHost,
       credentials = if (clusterCredentials.isEmpty()) None
       else Some(StoreCredentials(clusterCredentials.getUsername, new String(clusterCredentials.getPassword))),
-      loadBalancing = new TokenAwarePolicy(new DCAwareRoundRobinPolicy(ScrayProperties.getPropertyValue(
-        PredefinedProperties.CASSANDRA_QUERY_CLUSTER_DC))),
+      loadBalancing = new TokenAwarePolicy(new DCAwareRoundRobinPolicy(config.get.datacenter)),
       reconnectPolicy = Policies.defaultReconnectionPolicy,
       retryPolicy = Policies.defaultRetryPolicy,
       shutdownTimeout = DEFAULT_SHUTDOWN_TIMEOUT)
@@ -68,7 +71,16 @@ class CassandraClusterConfiguration(override protected val startconfig: Cassandr
     // shutdown cluster
     currentCluster.map(_.close)
     // create new cluster
-    currentCluster = getCassandraCluster.toOption
+    currentCluster = getCassandraCluster.rescue {  
+      case e: Exception =>
+        logger.error("Could not initialize Cassandra cluster.", e)
+        Throw(e)
+    }.toOption
+  }
+  
+  override def getSession: DbSession[_, _, _] = {
+    val session = getCassandraCluster.map { _.getCluster.connect() }.get
+    new CassandraSessionBasedDBSession(session)
   }
   
   override def readConfig(config: ScrayConfiguration, old: CassandraClusterProperties): Option[CassandraClusterProperties] = {

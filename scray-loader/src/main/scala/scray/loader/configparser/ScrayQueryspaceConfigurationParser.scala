@@ -37,22 +37,22 @@ class ScrayQueryspaceConfigurationParser (override val input: ParserInput, val c
   def InputLine = rule { QueryspaceConfigModel ~ EOI }
 
   def QueryspaceConfigModel: Rule1[ScrayQueryspaceConfiguration] = rule { QueryspaceName ~ optional(SyncTable) ~ zeroOrMore(ConfigurationOptions) ~> {
-    (name: String, syncTable: Option[TableIdentifier], options : Seq[QueryspaceOption]) =>
+    (name: (String, Long), syncTable: Option[TableIdentifier], options : Seq[QueryspaceOption]) =>
       val rowstores = options.collect {
         case row: QueryspaceRowstore => row.table
       }
       val indexstores = options.collect {
         case index: QueryspaceIndexstore => index
       }
-      ScrayQueryspaceConfiguration(name, syncTable, rowstores, indexstores)
+      ScrayQueryspaceConfiguration(name._1, name._2, syncTable, rowstores, indexstores)
   }}
 
   /**
    * set the queryspaces name attribute
    */
-  def QueryspaceName: Rule1[String] = rule { "name" ~ Identifier ~> { (id: String) => 
+  def QueryspaceName: Rule1[(String, Long)] = rule { "name" ~ Identifier ~ "version" ~ LongNumber ~> { (id: String, version: Long) => 
     name = Some(id)
-    id
+    (id, version)
   }}
   
   def SyncTable: Rule1[TableIdentifier] = rule { "sync" ~ RowStore ~> { (table: QueryspaceRowstore) => table.table }}

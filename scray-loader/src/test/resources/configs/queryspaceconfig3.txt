@@ -1,4 +1,4 @@
-name WhateverYouLike
+name WhateverYouLike version 1
 
 sync table { test1, "IDX", "SyncTable" }
 
