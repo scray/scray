@@ -11,5 +11,6 @@ package object loader {
     val dbmsUndefinedExceptionID = "Scray-Config-DBMS-Missing-604"
     val mappingUnsupportedExceptionID = "Scray-Config-Mapping-Missing-605"
     val unknownTimeUnitExceptionID = "Scray-Config-Timeunit-Unknown-606"
+    val unknownBooleanValueExceptionID = "Scray-Config-Boolean-Unknown-607"
   }
 }

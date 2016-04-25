@@ -1,40 +1,21 @@
 package scray.loader.configparser
 
-import java.net.InetAddress
-import java.net.InetSocketAddress
-import scala.util.Failure
-import scala.util.Try
-import org.apache.commons.io.IOUtils
-import org.parboiled2._
 import com.datastax.driver.core.ConsistencyLevel
+import com.twitter.storehaus.cassandra.cql.CQLCassandraConfiguration.StoreHost
 import com.twitter.util.Duration
 import com.typesafe.scalalogging.slf4j.LazyLogging
-import scray.common.tools.ScrayCredentials
-import scray.loader.CassandraHostsUndefinedException
-import scray.loader.JDBCURLUndefinedException
-import scray.loader.configuration.CassandraClusterConsistency
-import scray.loader.configuration.CassandraClusterCredentials
-import scray.loader.configuration.CassandraClusterDatacenter
-import scray.loader.configuration.CassandraClusterHosts
-import scray.loader.configuration.CassandraClusterNameProperty
-import scray.loader.configuration.CassandraClusterProperties
-import scray.loader.configuration.CassandraClusterProperty
-import scray.loader.configuration.DBMSConfigProperties
-import scray.loader.configuration.JDBCCredentialsProperty
-import scray.loader.configuration.JDBCProperties
-import scray.loader.configuration.JDBCProperty
-import scray.loader.configuration.JDBCURLProperty
-import scray.loader.configuration.MemcacheIps
-import scray.loader.configuration.ScrayCompressionSize
-import scray.loader.configuration.ScrayEndpointLifetime
-import scray.loader.configuration.ScrayMetaPort
-import scray.loader.configuration.ScraySeedIps
-import scray.loader.configuration.ScrayServiceAdvertiseIP
-import scray.loader.configuration.ScrayServiceIp
-import scray.loader.configuration.ScrayServiceOption
-import scray.loader.configuration.ScrayServicePort
-import com.twitter.storehaus.cassandra.cql.CQLCassandraConfiguration.StoreHost
+import java.net.{ InetAddress, InetSocketAddress }
+import org.apache.commons.io.IOUtils
+import org.parboiled2._
+import scala.util.{ Failure, Try }
 import scray.common.properties.predefined.PredefinedProperties
+import scray.common.tools.ScrayCredentials
+import scray.loader.{ CassandraHostsUndefinedException, JDBCURLUndefinedException }
+import scray.loader.configuration.{ CassandraClusterConsistency, CassandraClusterCredentials, CassandraClusterDatacenter, 
+  CassandraClusterHosts, CassandraClusterNameProperty, CassandraClusterProperties, CassandraClusterProperty, 
+  DBMSConfigProperties, JDBCCredentialsProperty, JDBCProperties, JDBCProperty, JDBCURLProperty, MemcacheIps, 
+  ScrayCompressionSize, ScrayEndpointLifetime, ScrayMetaPort, ScraySeedIps, ScrayServiceAdvertiseIP, ScrayServiceIp, 
+  ScrayServiceOption, ScrayServicePort, ScrayServiceWriteDot }
 
 /**
  * A syntax parser for scray configuration files.
@@ -46,7 +27,7 @@ import scray.common.properties.predefined.PredefinedProperties
  *   ScrayConfiguration ::= Service Datastores+ QueryspaceURLs
  *   Service ::= "service" "{" ServiceSetting ("," ServiceSetting)* "}"
  *   ServiceSetting ::= "compressionsize" INT | "service" Host | "seed" Hosts | "memcache" Hosts | 
- *   		"service" Port | "meta" Port | "advertise" Host | "lifetime" LONG TIMEUNIT
+ *   		"service" Port | "meta" Port | "advertise" Host | "lifetime" LONG TIMEUNIT | "writeDot" ("Y" | "N")
  *   Port ::= "port" INT
  *   Host ::= "host" STRING
  *   Hosts ::= "hosts" "(" STRING ("," STRING)* ")"
@@ -165,6 +146,9 @@ class ScrayConfigurationParser(override val input: ParserInput) extends ScrayGen
       val serviceip = options.collect {
         case sip: ScrayServiceIp => sip.ip
       }.toOption.getOrElse(InetAddress.getByName(PredefinedProperties.SCRAY_SERVICE_LISTENING_ADDRESS.getDefault()))
+      val writeDot = options.collect {
+        case dot: ScrayServiceWriteDot => dot.bool
+      }.toOption.getOrElse(false)
       val scraySeedIps = options.collect {
         case sip: ScraySeedIps => sip.ips
       }.flatten
@@ -187,7 +171,7 @@ class ScrayConfigurationParser(override val input: ParserInput) extends ScrayGen
       ScrayServiceOptions(scraySeedIps.toSet, advertiseip, serviceip, compressionsize, memcacheIps.toSet, serviceport, metaport)
   }}
   def ServiceOption: Rule1[ScrayServiceOption] = rule { ServiceCompressionSize | ServiceIP | ServiceSeedIPs | 
-    ServiceMemcacheIPs | ServicePort | ServiceMetaPort | ServiceAdvertiseIP | ServiceLifetime }
+    ServiceMemcacheIPs | ServicePort | ServiceMetaPort | ServiceAdvertiseIP | ServiceLifetime | ServiceWriteDot }
   
   def ServiceCompressionSize: Rule1[ScrayCompressionSize] = rule { "compressionsize" ~ IntNumber ~> { (size: Int) => ScrayCompressionSize(size) }}
   def ServiceIP: Rule1[ScrayServiceIp] = rule { "listening" ~ "host" ~ QuotedString ~> { (address: String) => ScrayServiceIp(InetAddress.getByName(address)) }}
@@ -197,6 +181,7 @@ class ScrayConfigurationParser(override val input: ParserInput) extends ScrayGen
   def ServiceMetaPort: Rule1[ScrayMetaPort] = rule { "meta" ~ HostPort ~> {(port: Int) => ScrayMetaPort(port)}}
   def ServiceAdvertiseIP: Rule1[ScrayServiceAdvertiseIP] = rule { "advertise" ~ "host" ~ QuotedString ~> { (address: String) => ScrayServiceAdvertiseIP(InetAddress.getByName(address)) }}
   def ServiceLifetime: Rule1[ScrayEndpointLifetime] = rule { "lifetime" ~ DurationRule ~> { (duration: Duration) => ScrayEndpointLifetime(duration) }}
+  def ServiceWriteDot: Rule1[ScrayServiceWriteDot] = rule { "writeDot" ~ BooleanRule ~> { (bool: Boolean) => ScrayServiceWriteDot(bool) }}
 
   def HostList: Rule1[Seq[String]] = rule { "hosts" ~ "(" ~ oneOrMore(QuotedString).separatedBy(",") ~ ")" }
   def HostPort: Rule1[Int] = rule { "port" ~ IntNumber }

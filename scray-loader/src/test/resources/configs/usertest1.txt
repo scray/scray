@@ -1,0 +1,9 @@
+
+"Barack":PLAIN:"Obama":test1,test2,test3,test4
+"Angela":LDAP:"Merkel":test1,test2
+
+"Francois":LDAP:"Mitterand":
+"Tony":LDAP:"Blair":sddgsdgfsd
+
+  
+

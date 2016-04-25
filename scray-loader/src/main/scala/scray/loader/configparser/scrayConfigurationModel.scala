@@ -1,23 +1,21 @@
 package scray.loader.configparser
 
-import java.net.InetAddress
-import java.net.InetSocketAddress
 import com.twitter.util.Duration
-import scray.common.properties.ScrayProperties
-import scray.common.properties.predefined.PredefinedProperties
-import scray.loader.configuration.DBMSConfigProperties
-import scray.loader.configuration.QueryspaceIndexstore
-import scray.querying.description.TableIdentifier
+import java.net.{InetAddress, InetSocketAddress} 
 import java.util.{Set => JSet}
-import scray.common.properties.Property
-import scray.common.properties.SocketListProperty
+import scray.common.properties.{Property, ScrayProperties, SocketListProperty}
+import scray.common.properties.predefined.PredefinedProperties
+import scray.loader.configuration.{DBMSConfigProperties, QueryspaceIndexstore} 
+import scray.querying.description.TableIdentifier
+import scray.querying.Registry
+import scray.querying.planning.PostPlanningActions
 
 /**
  * the whole configuration is ScrayConfiguration
  */
 case class ScrayConfiguration(
     service: ScrayServiceOptions,
-    stores: Seq[DBMSConfigProperties],
+    stores: Seq[_ <: DBMSConfigProperties],
     urls: Seq[ScrayQueryspaceConfigurationURL])
 
 /**
@@ -29,7 +27,8 @@ case class ScrayServiceOptions(seeds: Set[InetAddress] = Set(),
     compressionsize: Int = 1024,
     memcacheips: Set[InetSocketAddress] = Set(), 
     serviceport: Int = PredefinedProperties.SCRAY_QUERY_PORT.getDefault,
-    metaport: Int = PredefinedProperties.SCRAY_META_PORT.getDefault) {
+    metaport: Int = PredefinedProperties.SCRAY_META_PORT.getDefault,
+    writeDot: Boolean = false) {
   def propagate: Unit = {
     import scala.collection.convert.decorateAsJava._
     ScrayProperties.setPropertyValue(PredefinedProperties.SCRAY_QUERY_PORT, new Integer(serviceport), true)
@@ -40,6 +39,7 @@ case class ScrayServiceOptions(seeds: Set[InetAddress] = Set(),
     ScrayProperties.setPropertyValue(PredefinedProperties.SCRAY_SERVICE_HOST_ADDRESS.getName, advertiseip, true)
     ScrayProperties.setPropertyValue(PredefinedProperties.SCRAY_SEED_IPS.getName, 
         seeds.map(host => new InetSocketAddress(host, metaport)).asJava, true)
+    Registry.queryPostProcessor = if(writeDot) PostPlanningActions.writeDot else PostPlanningActions.doNothing
   }
 }
 
@@ -64,7 +64,7 @@ object ScrayQueryspaceConfigurationURLReload {
 }
 
 /**
- * 
+ * Configuration object representing a single queryspace
  */
 case class ScrayQueryspaceConfiguration(
     name: String,
@@ -83,4 +83,21 @@ case class ScrayVersionedStore()
 case class ScrayMaterializedView()
 
 case class ScannedQueryspaceConfigfiles(path: String, name: String, version: Long, queryspaceConfig: ScrayQueryspaceConfiguration)
+
+/**
+ * represents a list of configured users, authentications and queryspaces
+ */
+case class ScrayUsersConfiguration(users: Seq[ScrayAuthConfiguration])
+
+/**
+ * represents a single configured user, authentication and queryspaces
+ */
+case class ScrayAuthConfiguration(user: String, pwd: String, method: ScrayAuthMethod.Value, queryspaces: Set[String])
+
+/** 
+ * supported authentication directories
+ */
+object ScrayAuthMethod extends Enumeration {
+  val Plain, LDAP = Value
+}
 
