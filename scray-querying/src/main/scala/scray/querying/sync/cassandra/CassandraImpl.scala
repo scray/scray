@@ -41,6 +41,7 @@ import scray.querying.sync.types.State.State
 import scray.querying.sync.types.SyncTable
 import scray.querying.sync.types.Table
 import scray.querying.sync.types.VoidTable
+import scray.querying.sync.RunningJobExistsException
 
 object CassandraImplementation extends Serializable {
   implicit def genericCassandraColumnImplicit[T](implicit cassImplicit: CassandraPrimitive[T]): DBColumnImplementation[T] = new DBColumnImplementation[T] {
@@ -116,41 +117,41 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
 
   def startNextBatchJob(job: JOB_INFO, dataTable: TableIdentifier): Try[Unit] = ???
   private def startJob(job: JOB_INFO, online: Boolean): Try[Unit] = {
-    //    def createStartStatement(slot: Int, online: Boolean): Statement = {
-    //      QueryBuilder.update(syncTable.keySpace, syncTable.tableName)
-    //        .`with`(QueryBuilder.set(syncTable.columns.state.name, State.RUNNING.toString()))
-    //        .where(QueryBuilder.eq(syncTable.columns.jobname.name, job.name))
-    //        .and(QueryBuilder.eq(syncTable.columns.online.name, online))
-    //        .and(QueryBuilder.eq(syncTable.columns.slot.name, slot))
-    //    }
-    //    
-    //    if (online) {
-    //      // Abort if a job is already running
-    //      this.getRunningOnlineJobSlot(job) match {
-    //        case Some(slot) => {
-    //          logger.error(s"Job ${job.name} is currently running on slot ${slot}")
-    //          Failure(new RunningJobExistsException(s"Online job ${job.name} slot ${slot} is currently running"))
-    //        }
-    //        case None => {
-    //          val slot = (getNewestOnlineSlot(job).getOrElse( {logger.debug("No completed slot found use 0");  0 + 1}) % job.numberOfOnlineSlots) 
-    //            logger.debug(s"Set next online slot to ${slot}")
-    //            executeQuorum(createStartStatement(slot, true))
-    //        }
-    //      }
-    //    } else {
-    //      // Abort if a job is already running
-    //      if(!this.getBatchJobState(job).equals(State.RUNNING)) {
-    //            val newSlot = getNewestBatchSlot(job).getOrElse( {logger.debug("No completed slot found use default slot 0"); 0}) + 1 % job.numberOfBatchSlots 
-    //          } else {
-    //              logger.error(s"Job ${job.name} is currently running on slot ${slot}")
-    //            Failure(new RunningJobExistsException(s"Batch job ${job.name} with slot ${job.batchID} is currently running"))
-    //          }
-    //          logger.debug(s"Set next batch slot to ${newSlot}")
-    //          executeQuorum(createStartStatement(newSlot, false)) 
-    //      }
-    //    }
-
-    Try()
+        def createStartStatement(slot: Int, online: Boolean): Statement = {
+          QueryBuilder.update(syncTable.keySpace, syncTable.tableName)
+            .`with`(QueryBuilder.set(syncTable.columns.state.name, State.RUNNING.toString()))
+            .where(QueryBuilder.eq(syncTable.columns.jobname.name, job.name))
+            .and(QueryBuilder.eq(syncTable.columns.online.name, online))
+            .and(QueryBuilder.eq(syncTable.columns.slot.name, slot))
+        }
+        
+        if (online) {
+          // Abort if a job is already running
+          this.getRunningOnlineJobSlot(job) match {
+            case Some(slot) => {
+              logger.error(s"Job ${job.name} is currently running on slot ${slot}")
+              Failure(new RunningJobExistsException(s"Online job ${job.name} slot ${slot} is currently running"))
+            }
+            case None => {
+              val slot = (getNewestOnlineSlot(job).getOrElse( {logger.debug("No completed slot found use 0");  0 + 1}) % job.numberOfOnlineSlots) 
+                logger.debug(s"Set next online slot to ${slot}")
+                executeQuorum(createStartStatement(slot, true))
+            }
+          }
+        } else {
+          // Abort if a job is already running
+          this.getRunningBatchJobSlot(job) match {
+            case Some(slot) => {
+               logger.error(s"Job ${job.name} is currently running on slot ${slot}")
+               Failure(new RunningJobExistsException(s"Batch job ${job.name} with slot ${job.batchID} is currently running"))
+            }
+            case None => {
+              val newSlot = getNewestBatchSlot(job).getOrElse( {logger.debug("No completed slot found use default slot 0"); 0}) + 1 % job.numberOfBatchSlots 
+              logger.debug(s"Set next batch slot to ${newSlot}")
+              executeQuorum(createStartStatement(newSlot, false)) 
+            }
+          }
+        }
   }
 
   def completeBatchJob(job: JOB_INFO): Try[Unit] = Try {
@@ -184,21 +185,16 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
 
   def getTableIdentifier(job: JobInfo[Statement, Insert, ResultSet]): TableIdentifier = ???
 
-  //  def resetBatchJob(job: JOB_INFO): Try[Unit] = Try {
-  //    
-  //    val runningBatchSlot = this.getRunningBatchJobSlot(job).getOrElse(0)
-  //    this.unlockBatchTable(job)
-  //    this.renewJob(job, runningBatchSlot, false)
-  //    this.lockBatchTable(job)
-  //  }
-  //  
-  //  def resetOnlineJob(job: JOB_INFO): Try[Unit] = Try {
-  //    
-  //    val runningOnlineSlot = this.getRunningOnlineJobSlot(job).getOrElse(0)
-  //    this.unlockOnlineTable(job)
-  //    this.renewJob(job, runningOnlineSlot, true)
-  //    this.lockOnlineTable(job)
-  //  }
+    def resetBatchJob(job: JOB_INFO): Try[Unit] = Try {
+      val runningBatchSlot = this.getRunningBatchJobSlot(job).getOrElse(0)
+      this.renewJob(job, runningBatchSlot, false)
+    }
+    
+    def resetOnlineJob(job: JOB_INFO): Try[Unit] = Try {
+      
+      val runningOnlineSlot = this.getRunningOnlineJobSlot(job).getOrElse(0)
+      this.renewJob(job, runningOnlineSlot, true)
+    }
 
   /**
    * Set running job to state new
@@ -266,10 +262,10 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
     }.getOrElse(List())
   }
 
-  //  def getRunningBatchJobSlot(job: JOB_INFO): Option[Int] = {
-  //    this.getRunningSlot(job, false)
-  //  }
-  //  
+    def getRunningBatchJobSlot(job: JOB_INFO): Option[Int] = {
+      this.getRunningSlot(job, false)
+    }
+    
   def getLatestBatch(job: JOB_INFO): Option[Int] = {
     val slotQuery = QueryBuilder.select(syncTable.columns.batchEndTime.name).from(syncTable.keySpace, syncTable.tableName).where(
       QueryBuilder.eq(syncTable.columns.jobname.name, job.name)).
@@ -361,22 +357,22 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
     }
   }
 
-  def getOnlineJobState(job: JOB_INFO): Option[State] = {
-    this.getJobState(job, true)
-  }
+//  def getOnlineJobState(job: JOB_INFO): Option[State] = {
+//    this.getJobState(job, true)
+//  }
+//
+//  def getBatchJobState(job: JOB_INFO): Option[State] = {
+//    this.getJobState(job, false)
+//  }
 
-  def getBatchJobState(job: JOB_INFO): Option[State] = {
-    this.getJobState(job, false)
-  }
-
-  private def getJobState(job: JOB_INFO, online: Boolean): Option[State] = {
-    execute(QueryBuilder.select(syncTable.columns.state.name).from(syncTable.keySpace, syncTable.tableName).allowFiltering().where(
-      QueryBuilder.eq(syncTable.columns.jobname.name, job.name)).
-      and(QueryBuilder.eq(syncTable.columns.online.name, online)))
-      .map { resultset => resultset.all().get(0).getString(0) }
-      .map { state => State.values.find(_.toString() == state).get }
-      .toOption
-  }
+//  private def getJobState(job: JOB_INFO, online: Boolean): Option[State] = {
+//    execute(QueryBuilder.select(syncTable.columns.state.name).from(syncTable.keySpace, syncTable.tableName).allowFiltering().where(
+//      QueryBuilder.eq(syncTable.columns.jobname.name, job.name)).
+//      and(QueryBuilder.eq(syncTable.columns.online.name, online)))
+//      .map { resultset => resultset.all().get(0).getString(0) }
+//      .map { state => State.values.find(_.toString() == state).get }
+//      .toOption
+//  }
 
   def getNewestOnlineSlot(job: JOB_INFO): Option[Int] = getNewestSlotAndTable(job.name, true).map(_._1)
   def getNewestBatchSlot(job: JOB_INFO): Option[Int] = getNewestSlotAndTable(job.name, false).map(_._1)
@@ -538,7 +534,7 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
   private def executeQuorum(statement: Statement): Try[Unit] = {
 
     statement match {
-      case bStatement: BatchStatement => logger.debug("Execute batch statement//////////: " + bStatement.getStatements)
+      case bStatement: BatchStatement => logger.debug("Execute batch statement: " + bStatement.getStatements)
       case _                          => logger.debug("Execute query: " + statement)
     }
     

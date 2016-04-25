@@ -54,8 +54,8 @@ trait OnlineBatchSyncB[Statement, InsertIn, Result] extends LazyLogging {
   def insertInBatchTable(jobName: JobInfo[Statement, InsertIn, Result], slot: Int, data: RowWithValue): Try[Unit]
   def insertInOnlineTable(jobName: JobInfo[Statement, InsertIn, Result], slot: Int, data: RowWithValue): Try[Unit]
   
-  def getOnlineJobState(job: JobInfo[Statement, InsertIn, Result]): Option[State]
-  def getBatchJobState(job: JobInfo[Statement, InsertIn, Result]): Option[State]
+  //def getOnlineJobState(job: JobInfo[Statement, InsertIn, Result]): Option[State]
+  //def getBatchJobState(job: JobInfo[Statement, InsertIn, Result]): Option[State]
   
   def getOnlineJobData[T <: RowWithValue](jobname: String, slot: Int, result: T): Option[List[RowWithValue]]
   def getBatchJobData[T <: RowWithValue](jobname: String, slot: Int, result: T): Option[List[RowWithValue]]

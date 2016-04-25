@@ -188,7 +188,7 @@ class CassandraSyncTableLock (job: JobInfo[Statement, Insert, ResultSet], jobLoc
   def transaction[P1](f: (P1) => Try[Unit], p1: P1): Try[Unit] = {
     if(this.tryLock(timeOut, TimeUnit.MILLISECONDS)) {
       f(p1) match {
-        case Success(_) => this.unlock(); println("................"); Try()
+        case Success(_) => this.unlock(); Try()
         case Failure(ex) => {
           logger.error(s"Unable to execute Query. Release lock for job ${job.name} p1")
           this.unlock()
