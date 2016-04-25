@@ -18,7 +18,6 @@ import scray.querying.sync.types._
 import scray.querying.sync.types._
 import java.util.ArrayList
 import scala.collection.mutable.ArrayBuffer
-import scray.querying.sync.OnlineBatchSync
 import scray.querying.sync.types.SyncTableBasicClasses.SyncTableRowEmpty
 import scala.collection.mutable.ListBuffer
 import com.datastax.driver.core.BatchStatement
