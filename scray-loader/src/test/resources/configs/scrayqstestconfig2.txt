@@ -1,0 +1,13 @@
+service {
+	advertise host "192.168.0.1",
+	service port 18181
+}
+
+connection test cassandra {
+	hosts ( "phobos", "venus" ,"mars")
+}
+
+queryspacelocations {
+	url "file://tmp/test.queryspace.scray1",
+	url "file://tmp/test.queryspace.scray2"
+}

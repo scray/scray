@@ -30,7 +30,7 @@ class TQueryParser(tQuery: ScrayTQuery) extends Parser with LazyLogging {
 
   implicit def wspStr(s: String): Rule0 = rule { str(s) ~ zeroOrMore(' ') }
 
-  def InputLine: Rule1[_Query] = rule { _queryStatement.named("AndyStatement") ~ EOI }
+  def InputLine: Rule1[_Query] = rule { _queryStatement.named("QueryParser") ~ EOI }
 
   // Currently unused: Rule for constructing simple queries from parsing results
   // this can be used to create engine queries (Query) directly instead of service queries (_Query)

@@ -1,0 +1,14 @@
+service {
+	advertise host "192.168.0.1",
+	service port 18181
+}
+
+connection test jdbc {
+	url "jdbc:oracle:thin:blaschwaetz",
+	credentials "test" : "closed"
+}
+
+queryspacelocations {
+	url "file://tmp/test1.queryspace.scray",
+	url "file://tmp/test2.queryspace.scray"
+}
