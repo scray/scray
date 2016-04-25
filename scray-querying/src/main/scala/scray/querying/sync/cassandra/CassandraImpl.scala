@@ -313,8 +313,6 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
 
 
   private def crateAndRegisterTablesIfNotExists[T <: AbstractRow](job: JOB_INFO): Try[Unit] = Try {
-    statementGenerator.createKeyspaceCreationString(syncTable).map { statement => dbSession.execute(statement) }
-    statementGenerator.createSingleTableString(syncTable).map { statement => dbSession.execute(statement) }
 
     syncTable.columns.indexes match {
       case _: Some[List[String]] => createIndexStrings(syncTable).map { session.execute(_) }
@@ -322,7 +320,6 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
     }
 
     // Register online and batch tables
-    
     val statements = new BatchStatement()
     0 to job.numberOfBatchSlots - 1 foreach { i =>
       // Register batch tables
@@ -332,8 +329,7 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
       .value(syncTable.columns.jobname.name, job.name)
       .value(syncTable.columns.state.name, State.NEW.toString())
       .value(syncTable.columns.versions.name, job.numberOfBatchSlots)
-      .value(syncTable.columns.tableidentifier.name, getBatchJobName(syncTable.keySpace + "." + job.name, i))
-      .ifNotExists)  
+      .value(syncTable.columns.tableidentifier.name, getBatchJobName(syncTable.keySpace + "." + job.name, i)))  
     }
 
     // Create and register online tables
@@ -346,8 +342,7 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
         .value(syncTable.columns.versions.name, job.numberOfOnlineSlots)
         .value(syncTable.columns.state.name, State.NEW.toString())
         .value(syncTable.columns.batchEndTime.name, -1L)
-        .value(syncTable.columns.tableidentifier.name, getOnlineJobName(syncTable.keySpace + "." + job.name, i))
-        .ifNotExists)
+        .value(syncTable.columns.tableidentifier.name, getOnlineJobName(syncTable.keySpace + "." + job.name, i)))
     }
     
     job.getLock(dbSession).transaction(this.executeQuorum, statements)
@@ -543,25 +538,25 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
   private def executeQuorum(statement: Statement): Try[Unit] = {
 
     statement match {
-      case bStatement: BatchStatement => logger.debug("Execute batch statement: " + bStatement.getStatements)
+      case bStatement: BatchStatement => logger.debug("Execute batch statement//////////: " + bStatement.getStatements)
       case _                          => logger.debug("Execute query: " + statement)
     }
+    
     statement.setConsistencyLevel(ConsistencyLevel.QUORUM)
-
-    session.execute(statement) match {
-      case Success(result) => Try()
-      case Failure(ex) => {
-        logger.warn(s"Error while executing statement: ${statement}. ${ex.printStackTrace()}")
-        Failure(new StatementExecutionError(ex.getLocalizedMessage))
+      dbSession.execute(statement) match {
+        case Success(result) =>  Try()
+        case Failure(ex) => {
+          logger.warn(s"Error while executing statement: ${statement}. ${ex.getMessage}")
+          Failure(new StatementExecutionError(ex.getLocalizedMessage))
+        }
       }
-    }
   }
 
   private def execute(statement: RegularStatement): Try[ResultSet] = {
     logger.debug("Execute: " + statement)
-    statement.setConsistencyLevel(ConsistencyLevel.QUORUM)
+    // statement.setConsistencyLevel(ConsistencyLevel.QUORUM)
 
-    session.execute(statement) match {
+    dbSession.execute(statement) match {
       case Success(result) => Try(result)
       case Failure(ex) => {
         logger.warn(s"Error while executing statement: ${statement}. ${ex.printStackTrace()}")
@@ -594,6 +589,9 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
     getComptRow(rows, comp.lt, columnName)
   }
 
+  def selectAll() = {
+    
+  }
   def getComptRow(rows: JIterator[Row], comp: (Long, Long) => Boolean, columnName: String): Option[Row] = {  
     @tailrec def accNewestRow(prevRow: Row, nextRows: JIterator[Row]): Row = {
       if (nextRows.hasNext) {

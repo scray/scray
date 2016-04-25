@@ -47,7 +47,6 @@ class SyncTableTests extends WordSpec {
     " test db type detection in tables " in {
 
       val s = SyncTableRowEmpty
-      assert(s.indexes.get.head === "locked")
       assert(s.columns.head.getDBType === "text")
     }
     " clone rows " in {

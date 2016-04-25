@@ -18,7 +18,6 @@ import scray.querying.sync.types._
 import scray.querying.sync.types._
 import java.util.ArrayList
 import scala.collection.mutable.ArrayBuffer
-import scray.querying.sync.OnlineBatchSync
 import scray.querying.sync.types.SyncTableBasicClasses.SyncTableRowEmpty
 import scala.collection.mutable.ListBuffer
 import com.datastax.driver.core.BatchStatement
@@ -51,48 +50,65 @@ import java.util.concurrent.TimeUnit
 import scala.None
 import com.typesafe.scalalogging.slf4j.LazyLogging
 
-class CassandraDbSession(cassandraSession: Session) extends DbSession[Statement, Insert, ResultSet](cassandraSession.getCluster.getMetadata.getAllHosts().iterator().next.getAddress.toString) {
-
-  override def execute(statement: String): Try[ResultSet] = {
-    val result = cassandraSession.execute(statement)
-    if (result.wasApplied()) {
-      Success(result)
-    } else {
-      Failure(new StatementExecutionError(s"It was not possible to execute statement: ${statement}. Error: ${result.getExecutionInfo}"))
+class CassandraDbSession(cassandraSession: Session) extends DbSession[Statement, Insert, ResultSet](cassandraSession.getCluster.getMetadata.getAllHosts().iterator().next.getAddress.toString) with LazyLogging{
+      override def execute(statement: String): Try[ResultSet] = {
+      try {
+        val result = cassandraSession.execute(statement)
+        if(result.wasApplied()) {
+         Success(result)
+       } else {
+         Failure(new StatementExecutionError(s"It was not possible to execute statement: ${statement}. Error: ${result.getExecutionInfo}"))
+       }
+      } catch {
+        case e: Exception => logger.error(s"Error while executing statement ${statement}" + e); Failure(e)
+      }
     }
-  }
 
-  def execute(statement: Statement): Try[ResultSet] = {
-    val result = cassandraSession.execute(statement)
-    if (result.wasApplied()) {
-      Success(result)
-    } else {
-      Failure(new StatementExecutionError(s"It was not possible to execute statement: ${printStatement(statement)}. Error: ${result.getExecutionInfo}"))
+    def execute(statement: Statement): Try[ResultSet] = {
+      try {
+        val result = cassandraSession.execute(statement)
+        if(result.wasApplied()) {
+         Success(result)
+       } else {
+         Failure(new StatementExecutionError(s"It was not possible to execute statement: ${statement}. Error: ${result.getExecutionInfo}"))
+       }
+      } catch {
+        case e: Exception => logger.error(s"Error while executing statement ${statement}" + e); Failure(e)
+      }
     }
-  }
 
-  def insert(statement: Insert): Try[ResultSet] = {
-    val result = cassandraSession.execute(statement)
-    if (result.wasApplied()) {
-      Success(result)
-    } else {
-      Failure(new StatementExecutionError(s"It was not possible to execute statement: ${statement}. Error: ${result.getExecutionInfo}"))
+    def insert(statement: Insert): Try[ResultSet] = {
+      try {
+        val result = cassandraSession.execute(statement)
+        if(result.wasApplied()) {
+         Success(result)
+       } else {
+         Failure(new StatementExecutionError(s"It was not possible to execute statement: ${statement}. Error: ${result.getExecutionInfo}"))
+       }
+      } catch {
+        case e: Exception => logger.error(s"Error while executing statement ${statement}" + e); Failure(e)
+      }
     }
-  }
 
-  def execute(statement: SimpleStatement): Try[ResultSet] = {
-    val result = cassandraSession.execute(statement)
-    if (result.wasApplied()) {
-      Success(result)
-    } else {
-      Failure(new StatementExecutionError(s"It was not possible to execute statement: ${statement}. Error: ${result.getExecutionInfo}"))
+    def execute(statement: SimpleStatement): Try[ResultSet] = {
+       try {
+        val result = cassandraSession.execute(statement)
+        if(result.wasApplied()) {
+         Success(result)
+       } else {
+         Failure(new StatementExecutionError(s"It was not possible to execute statement: ${statement}. Error: ${result.getExecutionInfo}"))
+       }
+      } catch {
+        case e: Exception => logger.error(s"Error while executing statement ${statement}" + e); Failure(e)
+      }
     }
-  }
-
-  def printStatement(s: Statement): String = {
-    s match {
-      case bStatement: BatchStatement => "It is currently not possible to execute : " + bStatement.getStatements
-      case _                          => "It is currently not possible to execute : " + s
+    
+    def printStatement(s: Statement): String = {
+      s match {
+         case bStatement: BatchStatement => "It is currently not possible to execute : " + bStatement.getStatements
+         case _                          => "It is currently not possible to execute : " + s
+      }
     }
-  }
+ 
+ 
 }
