@@ -34,38 +34,54 @@ class CassandraSyncTableLock (job: JobInfo[Statement, Insert, ResultSet], jobLoc
   class CassandraSessionBasedDBSession(cassandraSession: Session) extends DbSession[Statement, Insert, ResultSet](cassandraSession.getCluster.getMetadata.getAllHosts().iterator().next.getAddress.toString) {
 
     override def execute(statement: String): Try[ResultSet] = {
-      val result = cassandraSession.execute(statement)
-      if(result.wasApplied()) {
-        Success(result)
-      } else {
-        Failure(new StatementExecutionError(s"It was not possible to execute statement: ${statement}. Error: ${result.getExecutionInfo}"))
+      try {
+        val result = cassandraSession.execute(statement)
+        if(result.wasApplied()) {
+         Success(result)
+       } else {
+         Failure(new StatementExecutionError(s"It was not possible to execute statement: ${statement}. Error: ${result.getExecutionInfo}"))
+       }
+      } catch {
+        case e: Exception => logger.error(s"Error while executing statement ${statement}" + e); Failure(e)
       }
     }
 
     def execute(statement: Statement): Try[ResultSet] = {
-      val result = cassandraSession.execute(statement)
-      if(result.wasApplied()) {
-        Success(result)
-      } else {
-        Failure(new StatementExecutionError(s"It was not possible to execute statement: ${printStatement(statement)}. Error: ${result.getExecutionInfo}"))
+      try {
+        val result = cassandraSession.execute(statement)
+        if(result.wasApplied()) {
+         Success(result)
+       } else {
+         Failure(new StatementExecutionError(s"It was not possible to execute statement: ${statement}. Error: ${result.getExecutionInfo}"))
+       }
+      } catch {
+        case e: Exception => logger.error(s"Error while executing statement ${statement}" + e); Failure(e)
       }
     }
 
     def insert(statement: Insert): Try[ResultSet] = {
-      val result = cassandraSession.execute(statement)
-      if(result.wasApplied()) {
-        Success(result)
-      } else {
-        Failure(new StatementExecutionError(s"It was not possible to execute statement: ${statement}. Error: ${result.getExecutionInfo}"))
+      try {
+        val result = cassandraSession.execute(statement)
+        if(result.wasApplied()) {
+         Success(result)
+       } else {
+         Failure(new StatementExecutionError(s"It was not possible to execute statement: ${statement}. Error: ${result.getExecutionInfo}"))
+       }
+      } catch {
+        case e: Exception => logger.error(s"Error while executing statement ${statement}" + e); Failure(e)
       }
     }
 
     def execute(statement: SimpleStatement): Try[ResultSet] = {
-      val result = cassandraSession.execute(statement)
-      if(result.wasApplied()) {
-        Success(result)
-      } else {
-        Failure(new StatementExecutionError(s"It was not possible to execute statement: ${statement}. Error: ${result.getExecutionInfo}"))
+       try {
+        val result = cassandraSession.execute(statement)
+        if(result.wasApplied()) {
+         Success(result)
+       } else {
+         Failure(new StatementExecutionError(s"It was not possible to execute statement: ${statement}. Error: ${result.getExecutionInfo}"))
+       }
+      } catch {
+        case e: Exception => logger.error(s"Error while executing statement ${statement}" + e); Failure(e)
       }
     }
     
@@ -119,21 +135,21 @@ class CassandraSyncTableLock (job: JobInfo[Statement, Insert, ResultSet], jobLoc
     val endTime = System.currentTimeMillis() + TimeUnit.MILLISECONDS.convert(time, unit)
 
     @tailrec 
-    def tryToLock(): Boolean = {
+    def tryToLockR(): Boolean = {
       if(tryLock()) {
         true
       } else {
         if(System.currentTimeMillis() >= endTime) {
           logger.debug(s"Retry to get lock for job ${job.name} in ${timeBetweenRetries}ms. Give up in ${TimeUnit.SECONDS.convert((endTime - System.currentTimeMillis()), TimeUnit.MICROSECONDS)}")
           Thread.sleep(timeBetweenRetries)
-          tryToLock()
+          tryToLockR()
         } else {
           false
         }
       }
     }
     
-    tryToLock
+    tryToLockR
   }
   def tryLock(): Boolean = {
     executeQuorum(lockQuery).isSuccess
@@ -154,6 +170,7 @@ class CassandraSyncTableLock (job: JobInfo[Statement, Insert, ResultSet], jobLoc
   }
   
   def transaction(f: () => Try[Unit]): Try[Unit] = {
+    logger.debug(s"Start transaction for job ${this.job.name}")
     if(this.tryLock(timeOut, TimeUnit.MILLISECONDS)) {
       f() match {
         case Success(_) => this.unlock(); Try()
@@ -163,6 +180,7 @@ class CassandraSyncTableLock (job: JobInfo[Statement, Insert, ResultSet], jobLoc
           Failure(ex)}
       } 
     } else {
+     logger.warn(s"Unable to lock job ${job.name}")
      Failure(new UnableToLockJobError(s"Unable to lock job ${job.name}")) 
     }
   }
@@ -172,7 +190,7 @@ class CassandraSyncTableLock (job: JobInfo[Statement, Insert, ResultSet], jobLoc
       f(p1) match {
         case Success(_) => this.unlock(); Try()
         case Failure(ex) => {
-          logger.error(s"Unable to execute Query. Release lock for job ${job.name}")
+          logger.error(s"Unable to execute Query. Release lock for job ${job.name} p1")
           this.unlock()
           Failure(ex)}
       } 

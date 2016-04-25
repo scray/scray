@@ -19,53 +19,71 @@ import scray.querying.sync.types.State.State
 import scray.querying.sync.types.LockApi
 
 
+trait OnlineBatchSyncA[Statement, InsertIn, Result] extends LazyLogging {
 
-abstract class OnlineBatchSync[Statement, InsertIn, Result] extends LazyLogging {
+  def initJob[DataTableT <: ArbitrarylyTypedRows](job: JobInfo[Statement, InsertIn, Result]): Try[Unit]
+
+  def startNextBatchJob(job: JobInfo[Statement, InsertIn, Result], dataTable: TableIdentifier): Try[Unit]
+  def startNextOnlineJob(job: JobInfo[Statement, InsertIn, Result]): Try[Unit]
+  
+  def completeBatchJob(job: JobInfo[Statement, InsertIn, Result]): Try[Unit]
+  def completeOnlineJob(job: JobInfo[Statement, InsertIn, Result]): Try[Unit]
+    
+  def getQueryableTableIdentifiers: List[(String, TableIdentifier, Int)]
+  def getTableIdentifier(job: JobInfo[Statement, InsertIn, Result]): TableIdentifier 
+}
+
+trait OnlineBatchSyncB[Statement, InsertIn, Result] extends LazyLogging {
 
   type JOB_INFO = JobInfo[Statement, InsertIn, Result]
   
-  /**
-   * Generate and register tables for a new job.
-   */
   def initJob[DataTableT <: ArbitrarylyTypedRows](job: JobInfo[Statement, InsertIn, Result], dataTable: DataTableT): Try[Unit]
   
   def startNextBatchJob(job: JobInfo[Statement, InsertIn, Result]): Try[Unit]
-  def startNextOnlineJob(job: JOB_INFO): Try[Unit]
+  def startNextOnlineJob(job: JobInfo[Statement, InsertIn, Result]): Try[Unit]
   
-  def completeBatchJob(job: JOB_INFO): Try[Unit]
-  def completeOnlineJob(job: JOB_INFO): Try[Unit]
+  def completeBatchJob(job: JobInfo[Statement, InsertIn, Result]): Try[Unit]
+  def completeOnlineJob(job: JobInfo[Statement, InsertIn, Result]): Try[Unit]
   
-  def resetBatchJob(job: JOB_INFO): Try[Unit]
-  def resetOnlineJob(job: JOB_INFO): Try[Unit]
+  //def resetBatchJob(job: JOB_INFO): Try[Unit]
+  //def resetOnlineJob(job: JOB_INFO): Try[Unit]
   
-  def getRunningBatchJobSlot(job: JOB_INFO): Option[Int]
-  def getRunningOnlineJobSlot(job: JOB_INFO): Option[Int]
+  //def getRunningBatchJobSlot(job: JOB_INFO): Option[Int]
+  //def getRunningOnlineJobSlot(job: JOB_INFO): Option[Int]
   
-  def insertInBatchTable(jobName: JOB_INFO, slot: Int, data: RowWithValue): Try[Unit]
-  def insertInOnlineTable(jobName: JOB_INFO, slot: Int, data: RowWithValue): Try[Unit]
+  def insertInBatchTable(jobName: JobInfo[Statement, InsertIn, Result], slot: Int, data: RowWithValue): Try[Unit]
+  def insertInOnlineTable(jobName: JobInfo[Statement, InsertIn, Result], slot: Int, data: RowWithValue): Try[Unit]
   
-  def getOnlineJobState(job: JOB_INFO, slot: Int): Option[State]
-  def getBatchJobState(job: JOB_INFO, slot: Int): Option[State]
+  //def getOnlineJobState(job: JobInfo[Statement, InsertIn, Result]): Option[State]
+  //def getBatchJobState(job: JobInfo[Statement, InsertIn, Result]): Option[State]
   
   def getOnlineJobData[T <: RowWithValue](jobname: String, slot: Int, result: T): Option[List[RowWithValue]]
   def getBatchJobData[T <: RowWithValue](jobname: String, slot: Int, result: T): Option[List[RowWithValue]]
     
-  def getQueryableTableIdentifiers: List[(String, TableIdentifier, Int)]
-  
-  def getNewestOnlineSlot(job: JOB_INFO): Option[Int]
-  def getNewestBatchSlot(job: JOB_INFO): Option[Int]  
-  
+  //def getQueryableTableIdentifiers: List[(String, TableIdentifier, Int)]
+  // def getTableIdentifier(job: JOB_INFO): TableIdentifier
+    
   def getLatestBatch(job: JOB_INFO): Option[Int] 
 }
 
 abstract class JobInfo[Statement, InsertIn, Result](
   val name: String,
-  val batchID: BatchID,
   val numberOfBatchSlots: Int = 3,
   val numberOfOnlineSlots: Int = 2
   ) extends Serializable {
-    var lock: LockApi[Statement, InsertIn, Result] = null
-    def getLock(dbSession: DbSession[Statement, InsertIn, Result]): LockApi[Statement, InsertIn, Result] 
+  
+  var batchID: Option[BatchID] = None
+  var lock: LockApi[Statement, InsertIn, Result] = null
+  def getLock(dbSession: DbSession[Statement, InsertIn, Result]): LockApi[Statement, InsertIn, Result]
+      
+  def this(name: String, batchID: BatchID) {
+    this(name)
+    this.batchID = Some(batchID)
+  }
+  
+  def getBatchID(dbSession: DbSession[Statement, InsertIn, Result]): BatchID = {
+    batchID.get
+  }    
 }
 
 case class RunningJobExistsException(message: String) extends Exception(message)

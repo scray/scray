@@ -1,21 +1,16 @@
 package scray.querying.sync
 
-import scala.annotation.tailrec
 import org.junit.runner.RunWith
-import org.scalatest.BeforeAndAfter
-import org.scalatest.WordSpec
 import org.scalatest.WordSpec
 import org.scalatest.junit.JUnitRunner
-import scray.querying.description.Row
+
+import scray.querying.sync.cassandra.CassandraImplementation.genericCassandraColumnImplicit
 import scray.querying.sync.types.Column
 import scray.querying.sync.types.ColumnWithValue
-import scray.querying.sync.types.DbSession
+import scray.querying.sync.types.Columns
 import scray.querying.sync.types.RowWithValue
 import scray.querying.sync.types.SyncTableBasicClasses.SyncTableRowEmpty
 import scray.querying.sync.types.Table
-import scray.querying.sync.cassandra.CassandraImplementation._
-import com.twitter.algebird.SetValue
-import scray.querying.sync.types.Columns
 
 
 @RunWith(classOf[JUnitRunner])
@@ -51,8 +46,7 @@ class SyncTableTests extends WordSpec {
     }
     " test db type detection in tables " in {
 
-      val s = new SyncTableRowEmpty()
-      assert(s.indexes.get.head === "locked")
+      val s = SyncTableRowEmpty
       assert(s.columns.head.getDBType === "text")
     }
     " clone rows " in {
