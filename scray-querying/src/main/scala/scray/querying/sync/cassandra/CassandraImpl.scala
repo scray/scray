@@ -207,7 +207,6 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
   private def renewJob(job: JOB_INFO, slot: Int, online: Boolean): Try[Unit] = {
     val query = QueryBuilder.update(syncTable.keySpace, syncTable.tableName)
       .`with`(QueryBuilder.set(syncTable.columns.state.name, State.NEW.toString()))
-      .and(QueryBuilder.set(syncTable.columns.latestUpdate.name, System.currentTimeMillis()))
       .where(QueryBuilder.eq(syncTable.columns.jobname.name, job.name))
       .and(QueryBuilder.eq(syncTable.columns.online.name, online))
       .and(QueryBuilder.eq(syncTable.columns.slot.name, slot))
@@ -393,7 +392,7 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
       .map { _.iterator() }.recover {
         case e => { logger.error(s"DB error while fetching Newest Version ${e.getMessage}"); throw e }
       }.toOption
-      .flatMap { iter => this.getNewestRow(iter, syncTable.columns.latestUpdate.name) }
+      .flatMap { iter => this.getNewestRow(iter, syncTable.columns.batchEndTime.name) }
       .map { row => (row.getInt(syncTable.columns.slot.name), row.getString(syncTable.columns.tableidentifier.name)) }
   }
 
@@ -581,20 +580,21 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
   def getNewestRow(rows: java.util.Iterator[Row], columnName: String): Option[Row] = {
     import scala.math.Ordering._
     val comp = implicitly[Ordering[Long]]
-    getComptRow(rows, comp.lt, columnName)
+    getComptRow(rows, comp.gt, columnName)
   }
 
   def getOldestRow(rows: java.util.Iterator[Row], columnName: String): Option[Row] = {
     import scala.math.Ordering._
     val comp = implicitly[Ordering[Long]]
-    getComptRow(rows, comp.gt, columnName)
+    getComptRow(rows, comp.lt, columnName)
   }
 
   def getComptRow(rows: JIterator[Row], comp: (Long, Long) => Boolean, columnName: String): Option[Row] = {  
     @tailrec def accNewestRow(prevRow: Row, nextRows: JIterator[Row]): Row = {
       if (nextRows.hasNext) {
         val localRow = nextRows.next()
-        logger.debug(s"Work with row ${localRow}")
+        println(columnName)
+        logger.debug(s"Work with row ${prevRow} and ${localRow}")
         val max = if (comp(prevRow.getLong(columnName), localRow.getLong(columnName))) {
           prevRow
         } else {

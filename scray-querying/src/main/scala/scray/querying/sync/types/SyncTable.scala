@@ -112,7 +112,6 @@ object SyncTableBasicClasses extends Serializable {
 
     val jobname = new Column[String]("jobname")
     val slot = new Column[Int]("slot")
-    val latestUpdate = new Column[Long]("latestUpdate")
     val versions = new Column[Int]("versions")
     val tableidentifier = new Column[String]("tableidentifier")
     val batchStartTime = new Column[Long]("batchStartTime")
@@ -120,7 +119,7 @@ object SyncTableBasicClasses extends Serializable {
     val online = new Column[Boolean]("online")
     val state = new Column[String]("state")
 
-    override val columns = jobname :: latestUpdate :: slot :: versions :: tableidentifier :: online :: state :: batchStartTime :: batchEndTime ::Nil
+    override val columns = jobname :: slot :: versions :: tableidentifier :: online :: state :: batchStartTime :: batchEndTime ::Nil
     override val primaryKey = s"((${jobname.name}, ${online.name}), ${slot.name})"
     override val indexes: Option[List[String]] = Option(List(state.name, batchEndTime.name, batchStartTime.name))
   }
