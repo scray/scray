@@ -248,7 +248,7 @@ public class ScrayProperties {
 					getPropertyValue(property);
 				} catch (RuntimeException e) {
 					log.error(
-							"Not all properties have values in the configuration or a reasonable default! Check your config for typos!",
+							"Not all properties have values in the configuration or a reasonable default! Found missing property value for property " + property.getName() + ". Check your config for typos!",
 							e);
 					throw e;
 				}

@@ -16,6 +16,7 @@ public class HostListProperty extends Property<String, Set<InetAddress>> {
 		this.name = name;
 		super.addConstraint(new PropertyConstraint<String>() {
 			public boolean checkConstraint(String value) {
+				System.out.println("//////////////////" + value);
 				if(!(value instanceof String)) {
 					return false;
 				} else {
@@ -83,5 +84,19 @@ public class HostListProperty extends Property<String, Set<InetAddress>> {
 			first = false;
 		}
 		return sb.toString();
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public boolean checkConstraintsOnValue(Object value) {
+		if(value instanceof Set<?>) {
+			for(Object obj: (Set<Object>)value) {
+				if(!(obj instanceof InetAddress)) {
+					return false;
+				}
+			}
+			return true;
+		}
+		return false;
 	}
 }

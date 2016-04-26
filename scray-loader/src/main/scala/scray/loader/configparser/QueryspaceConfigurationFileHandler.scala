@@ -93,7 +93,12 @@ object QueryspaceConfigurationFileHandler extends LazyLogging {
       } else {
         // if the URL contains :// we expect this to be a URL to a file containing scray queryspace information
         if(url.url.contains("://")) {
-          Seq(Try {
+          // we could install an URL-Stream-handler, but this might require command line parameters, so we handle this hard-wired
+          if(url.url.startsWith("resource://")) Seq(Try {
+            val parsedFile = ScrayQueryspaceConfigurationParser.parseResource(url.url.stripPrefix("resource://"), config, true)
+            logger.info(s"Read queryspace configuration from classpath ${url.url} with queryspace ${parsedFile.get.name}") 
+            ScannedQueryspaceConfigfiles(url.url, parsedFile.get.name, parsedFile.get.version, parsedFile.get)            
+          }) else Seq(Try {
             val fileURL = new URL(url.url)
             val parsedFile = ScrayQueryspaceConfigurationParser.parse(IOUtils.toString(fileURL.openStream()), config, true)
             logger.info(s"Read queryspace configuration file ${url.url} with queryspace ${parsedFile.get.name}") 

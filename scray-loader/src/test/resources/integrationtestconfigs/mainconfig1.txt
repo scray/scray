@@ -1,0 +1,13 @@
+service {
+	advertise host "192.168.0.1"
+}
+
+connection test cassandra {
+	datacenter "datacenter1",
+	hosts ( "johannes", "andreas"),
+	clustername "Test Cluster"
+}
+
+queryspacelocations {
+	url "resource:///configs/queryspaceconfig1.txt"
+}

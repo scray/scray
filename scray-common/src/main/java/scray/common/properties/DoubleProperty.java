@@ -38,4 +38,9 @@ public class DoubleProperty extends Property<Double, Double> {
 	public Double fromString(String string) {
 		return new Double(string);
 	}
+
+	@Override
+	public boolean checkConstraintsOnValue(Object value) {
+		return value instanceof Double;
+	}
 }

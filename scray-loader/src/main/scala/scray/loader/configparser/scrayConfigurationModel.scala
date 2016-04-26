@@ -1,14 +1,16 @@
 package scray.loader.configparser
 
 import com.twitter.util.Duration
-import java.net.{InetAddress, InetSocketAddress} 
-import java.util.{Set => JSet}
-import scray.common.properties.{Property, ScrayProperties, SocketListProperty}
+import java.net.{ InetAddress, InetSocketAddress }
+import java.util.{ Set => JSet }
+import scray.common.properties.{ ScrayProperties, SocketListProperty }
 import scray.common.properties.predefined.PredefinedProperties
-import scray.loader.configuration.{DBMSConfigProperties, QueryspaceIndexstore} 
-import scray.querying.description.TableIdentifier
+import scray.core.service.properties.ScrayServicePropertiesRegistrar
+import scray.loader.configuration.DBMSConfigProperties
 import scray.querying.Registry
 import scray.querying.planning.PostPlanningActions
+import scray.querying.description.TableIdentifier
+import scray.loader.configuration.QueryspaceIndexstore
 
 /**
  * the whole configuration is ScrayConfiguration
@@ -28,6 +30,7 @@ case class ScrayServiceOptions(seeds: Set[InetAddress] = Set(),
     memcacheips: Set[InetSocketAddress] = Set(), 
     serviceport: Int = PredefinedProperties.SCRAY_QUERY_PORT.getDefault,
     metaport: Int = PredefinedProperties.SCRAY_META_PORT.getDefault,
+    lifetime: Duration = ScrayServicePropertiesRegistrar.SCRAY_ENDPOINT_LIFETIME.getDefault(),
     writeDot: Boolean = false) {
   def propagate: Unit = {
     import scala.collection.convert.decorateAsJava._
@@ -37,9 +40,22 @@ case class ScrayServiceOptions(seeds: Set[InetAddress] = Set(),
     ScrayProperties.setPropertyValue(PredefinedProperties.SCRAY_SERVICE_LISTENING_ADDRESS, serviceIp.getHostAddress, true)
     ScrayProperties.setPropertyValue(PredefinedProperties.RESULT_COMPRESSION_MIN_SIZE.getName, compressionsize, true)
     ScrayProperties.setPropertyValue(PredefinedProperties.SCRAY_SERVICE_HOST_ADDRESS.getName, advertiseip, true)
+    ScrayProperties.setPropertyValue(ScrayServicePropertiesRegistrar.SCRAY_ENDPOINT_LIFETIME.getName, lifetime, true)
     ScrayProperties.setPropertyValue(PredefinedProperties.SCRAY_SEED_IPS.getName, 
         seeds.map(host => new InetSocketAddress(host, metaport)).asJava, true)
     Registry.queryPostProcessor = if(writeDot) PostPlanningActions.writeDot else PostPlanningActions.doNothing
+  }
+  def memoryMap: Map[String, _] = {
+    import scala.collection.convert.decorateAsJava._
+    Registry.queryPostProcessor = if(writeDot) PostPlanningActions.writeDot else PostPlanningActions.doNothing    
+    Map((PredefinedProperties.SCRAY_QUERY_PORT.getName, new Integer(serviceport)),
+        (PredefinedProperties.SCRAY_META_PORT.getName, new Integer(metaport)),
+        (PredefinedProperties.SCRAY_MEMCACHED_IPS.getName, memcacheips.asJava),
+        (PredefinedProperties.SCRAY_SERVICE_LISTENING_ADDRESS.getName, serviceIp.getHostAddress),
+        (PredefinedProperties.RESULT_COMPRESSION_MIN_SIZE.getName, compressionsize),
+        (PredefinedProperties.SCRAY_SERVICE_HOST_ADDRESS.getName, advertiseip.getHostAddress),
+        (ScrayServicePropertiesRegistrar.SCRAY_ENDPOINT_LIFETIME.getName, lifetime),
+        (PredefinedProperties.SCRAY_SEED_IPS.getName, seeds.map(host => new InetSocketAddress(host, metaport)).asJava))
   }
 }
 

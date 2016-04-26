@@ -17,6 +17,7 @@ import scray.loader.CassandraHostsUndefinedException
 import scray.loader.configuration.JDBCProperties
 import scray.loader.JDBCURLUndefinedException
 import scray.querying.description.TableIdentifier
+import scray.loader.configparser.ScrayUserConfigurationParser
 
 /**
  * Scray loader parser specification.
@@ -134,12 +135,6 @@ class ScrayConfigurationParserSpecs extends WordSpec with LazyLogging {
     "load test user config 1" in {
       val config = ScrayConfigurationParser.parseResource("/configs/scrayjdbcconfig1.txt")
       val result = ScrayUserConfigurationParser.parseResource("/configs/usertest1.txt", config.get, false)
-      try {
-        result.get
-      } catch {
-        case e: ParseError => 
-          println(e.principalPosition + ":::" + e.effectiveTraces + "::::" + e.traces + ":::" + Option(e.getCause).map(_.toString).getOrElse(""))
-      }
       assert(result.get.users.size == 4)
       assert(result.get.users.find { x => x.user == "Angela" }.isDefined)
       assert(result.get.users.find { x => x.user == "Angela" }.get.pwd === "Merkel")

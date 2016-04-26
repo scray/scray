@@ -40,4 +40,12 @@ public class StringProperty extends Property<String, String> {
 			}
 		});
 	}
+	
+	@Override
+	public boolean checkConstraintsOnValue(Object value) {
+		if(value instanceof String) {
+			return checkConstraints((String)value);
+		}
+		return false;
+	}
 }

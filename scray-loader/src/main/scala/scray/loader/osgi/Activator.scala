@@ -23,6 +23,9 @@ import scray.core.service.ScrayCombinedStatefulTServiceImpl
 import scray.core.service.KryoPoolRegistration
 import scray.loader.service.RefreshServing
 import scray.core.service.SCRAY_QUERY_LISTENING_ENDPOINT
+import scray.loader.configparser.MainConfigurationFileHandler
+import scray.common.properties.PropertyMemoryStorage
+import scala.collection.convert.decorateAsJava._
 
 /**
  * Bundle activator in order to run scray service.
@@ -31,8 +34,6 @@ import scray.core.service.SCRAY_QUERY_LISTENING_ENDPOINT
 class Activator extends KryoPoolRegistration with BundleActivator with LazyLogging {
   
   def getVersion: String = "0.9.5"
-  
-  val OSGI_FILENAME_PROPERTY = "scray.config.location"
   
   /**
    * starts the scray service
@@ -43,35 +44,23 @@ class Activator extends KryoPoolRegistration with BundleActivator with LazyLoggi
     registerSerializers
     
     // start Properties registration phase
-    ScrayProperties.setPhase(Phase.register)
     ScrayServicePropertiesRegistrar.register()    
     
     // read config-file property
-    val filename = Option(context.getProperty(OSGI_FILENAME_PROPERTY)).getOrElse {
-      val msg = s"Scray: You must provide property '$OSGI_FILENAME_PROPERTY' to load the configuration file and run Scray!"
+    val filename = Option(context.getProperty(Activator.OSGI_FILENAME_PROPERTY)).getOrElse {
+      val msg = s"Scray: You must provide property '${Activator.OSGI_FILENAME_PROPERTY}' to load the configuration file and run Scray!"
       logger.error(msg)
       throw new NullPointerException(msg)
     }
     
-    // check main config file is available
-    val file = new File(filename)
-    if(!file.exists() || !file.isFile()) {
-      val msg = s"Scray: The main configuration file $filename is not available, but is needed to start Scray."
-      logger.error(msg)
-      throw new IOException(msg)
-    }
-    
     logger.info(s"Reading main configuration file $filename")
-    val configString = Try(IOUtils.toString(new FileInputStream(file), "UTF-8")).getOrElse {
-      val msg = s"Scray: The main configuration file $filename is not available, but is needed to start Scray."
-      logger.error(msg)
-      throw new IOException(msg)
-    }
  
     // switch to config phase and load config file
     ScrayProperties.setPhase(Phase.config)
-    val scrayConfiguration = ScrayConfigurationParser.parse(configString, true).get
-    scrayConfiguration.service.propagate
+    val scrayConfiguration = MainConfigurationFileHandler.readMainConfig(filename).get
+    ScrayProperties.addPropertiesStore(
+        new PropertyMemoryStorage(scrayConfiguration.service.memoryMap.asJava.asInstanceOf[java.util.Map[String, Object]]))
+    ScrayProperties.setPhase(Phase.use)
     
     // setup connections
     Activator.scrayStores = Some(new ScrayStores(scrayConfiguration))
@@ -102,6 +91,8 @@ class Activator extends KryoPoolRegistration with BundleActivator with LazyLoggi
 }
 
 object Activator {
+  val OSGI_FILENAME_PROPERTY = "scray.config.location"
+  
   var scrayStores: Option[ScrayStores] = None
   val queryspaces: HashMap[String, (Long, ScrayQueryspaceConfiguration)] = new HashMap[String, (Long, ScrayQueryspaceConfiguration)]
 }
