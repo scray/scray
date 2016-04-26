@@ -133,7 +133,7 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
               Failure(new RunningJobExistsException(s"Online job ${job.name} slot ${slot} is currently running"))
             }
             case None => {
-              val slot = (getNewestOnlineSlot(job).getOrElse( {logger.debug("No completed slot found use 0");  0 + 1}) % job.numberOfOnlineSlots) 
+              val slot = (getNewestOnlineSlot(job).getOrElse( {logger.debug("No completed slot found use 0");  0 }) + 1) % job.numberOfOnlineSlots
                 logger.debug(s"Set next online slot to ${slot}")
                 executeQuorum(createStartStatement(slot, true))
             }
@@ -146,7 +146,7 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
                Failure(new RunningJobExistsException(s"Batch job ${job.name} with slot ${job.batchID} is currently running"))
             }
             case None => {
-              val newSlot = getNewestBatchSlot(job).getOrElse( {logger.debug("No completed slot found use default slot 0"); 0}) + 1 % job.numberOfBatchSlots 
+              val newSlot = (getNewestBatchSlot(job).getOrElse( {logger.debug("No completed slot found use default slot 0"); 0}) + 1) % job.numberOfBatchSlots 
               logger.debug(s"Set next batch slot to ${newSlot}")
               executeQuorum(createStartStatement(newSlot, false)) 
             }
@@ -155,11 +155,13 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
   }
 
   def completeBatchJob(job: JOB_INFO): Try[Unit] = Try {
-//    getRunningBatchJobSlot(job) match {
-//      case slot: Some[Int] =>
-//        this.completeJob(job, slot.get, false)
-//      case None => throw new NoRunningJobExistsException(s"No running job with name: ${job.name} exists.")
-//    }
+    logger.debug(s"Complete batch job ${job}")
+    
+    getRunningBatchJobSlot(job) match {
+      case slot: Some[Int] =>
+        this.completeJob(job, slot.get, false)
+      case None => throw new NoRunningJobExistsException(s"No running job with name: ${job.name} exists.")
+    }
   }
 
   def completeOnlineJob(job: JOB_INFO): Try[Unit] = Try {
