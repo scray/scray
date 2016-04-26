@@ -93,144 +93,117 @@ class OnlineBatchSyncTests extends WordSpec {
   }
 
   "OnlineBatchSync " should {
-          " init client" in {
-            val table = new OnlineBatchSyncCassandra(dbconnection)
-            val jobInfo = new CassandraJobInfo(getNextJobName)
-            assert(table.initJob[SumTestColumns](jobInfo, new SumTestColumns).isSuccess)
-          }
-          "lock job" in {
-            val jobInfo = CassandraJobInfo(getNextJobName)
-            val table = new OnlineBatchSyncCassandra(dbconnection)
-            table.initJob(jobInfo, new SumTestColumns())
-      
-            jobInfo.getLock(dbconnection).lock
-            assert(true)
-          }
-          "lock and unlock " in {
-            val job1 = new CassandraJobInfo(getNextJobName)
-            val table = new OnlineBatchSyncCassandra(dbconnection)
-            table.initJob(job1, new SumTestColumns())
-            
-           
-            assert(job1.getLock(dbconnection).tryLock(100, TimeUnit.MILLISECONDS))
-            assert(job1.getLock(dbconnection).tryLock(100, TimeUnit.MILLISECONDS) == false)
-          }
-        "transaction method test" in {
-          val job1 = new CassandraJobInfo(getNextJobName)
+//          " init client" in {
+//            val table = new OnlineBatchSyncCassandra(dbconnection)
+//            val jobInfo = new CassandraJobInfo(getNextJobName)
+//            assert(table.initJob[SumTestColumns](jobInfo, new SumTestColumns).isSuccess)
+//          }
+//          "lock job" in {
+//            val jobInfo = CassandraJobInfo(getNextJobName)
+//            val table = new OnlineBatchSyncCassandra(dbconnection)
+//            table.initJob(jobInfo, new SumTestColumns())
+//      
+//            jobInfo.getLock(dbconnection).lock
+//            assert(true)
+//          }
+//          "lock and unlock " in {
+//            val job1 = new CassandraJobInfo(getNextJobName)
+//            val table = new OnlineBatchSyncCassandra(dbconnection)
+//            table.initJob(job1, new SumTestColumns())
+//            
+//           
+//            assert(job1.getLock(dbconnection).tryLock(100, TimeUnit.MILLISECONDS))
+//            assert(job1.getLock(dbconnection).tryLock(100, TimeUnit.MILLISECONDS) == false)
+//          }
+//        "transaction method test" in {
+//          val job1 = new CassandraJobInfo(getNextJobName)
+//          val table = new OnlineBatchSyncCassandra(dbconnection)
+//          table.initJob(job1, new SumTestColumns())
+//          
+//          val funcOK = () => {Try()}
+//          val funcFail = () => {Failure(new UnableToLockJobError("..."))}
+//      
+//          assert(job1.getLock(dbconnection).transaction(funcOK).isSuccess)
+//          assert(job1.getLock(dbconnection).transaction(funcFail).isFailure)
+//        }
+//      "multiple transactions test" in {
+//        val job1 = new CassandraJobInfo(getNextJobName)
+//        val table = new OnlineBatchSyncCassandra(dbconnection)
+//        table.initJob(job1, new SumTestColumns())
+//        
+//        val funcOK = () => {Try()}
+//        val funcFail = () => {Failure(new UnableToLockJobError("..."))}
+//    
+//        assert(job1.getLock(dbconnection).transaction(funcOK).isSuccess)
+//        assert(job1.getLock(dbconnection).transaction(funcOK).isSuccess)
+//        assert(job1.getLock(dbconnection).transaction(funcOK).isSuccess)
+//        assert(job1.getLock(dbconnection).transaction(funcOK).isSuccess)
+//        assert(job1.getLock(dbconnection).transaction(funcOK).isSuccess)
+//        assert(job1.getLock(dbconnection).transaction(funcFail).isFailure)
+//      }
+//        "insert and read data" in {
+//          val table = new OnlineBatchSyncCassandra(dbconnection)
+//          val jobInfo = new CassandraJobInfo(getNextJobName)
+//          table.initJob(jobInfo, new SumTestColumns())
+//    
+//          val sum = new ColumnWithValue[Long]("sum", 100)
+//          val columns = sum :: Nil
+//          val primaryKey = s"(${sum.name})"
+//          val indexes: Option[List[String]] = None
+//          
+//          table.insertInOnlineTable(jobInfo, 1, new RowWithValue(columns, primaryKey, indexes))
+//    
+//          val columnsR = new ColumnWithValue[Long]("sum", 200) :: Nil
+//          val columValue = table.getOnlineJobData(jobInfo.name, 1, new RowWithValue(columnsR, primaryKey, indexes)).get.head.columns.head.value.toString()
+//    
+//          assert(columValue === "100")
+//        }
+//        "get running batch/online version " in {
+//          val table = new OnlineBatchSyncCassandra("andreas")
+//          
+//          val jobInfo = new CassandraJobInfo(getNextJobName)
+//          val sum = new ColumnWithValue[Long]("sum", 100)
+//          val columns = sum :: Nil
+//          val primaryKey = s"(${sum.name})"
+//          val indexes: Option[List[String]] = None
+//    
+//          table.initJob(jobInfo, new RowWithValue(columns, primaryKey, indexes))     
+//          table.startNextBatchJob(jobInfo)
+//          table.startNextOnlineJob(jobInfo)
+//     
+//          assert(table.getRunningBatchJobSlot(jobInfo).get == 1)
+//          assert(table.getRunningOnlineJobSlot(jobInfo).get == 1)
+//        }
+        "switch to next batch job " in {
           val table = new OnlineBatchSyncCassandra(dbconnection)
-          table.initJob(job1, new SumTestColumns())
-          
-          val funcOK = () => {Try()}
-          val funcFail = () => {Failure(new UnableToLockJobError("..."))}
-      
-          assert(job1.getLock(dbconnection).transaction(funcOK).isSuccess)
-          assert(job1.getLock(dbconnection).transaction(funcFail).isFailure)
-        }
-      "multiple transactions test" in {
-        val job1 = new CassandraJobInfo(getNextJobName)
-        val table = new OnlineBatchSyncCassandra(dbconnection)
-        table.initJob(job1, new SumTestColumns())
-        
-        val funcOK = () => {Try()}
-        val funcFail = () => {Failure(new UnableToLockJobError("..."))}
-    
-        assert(job1.getLock(dbconnection).transaction(funcOK).isSuccess)
-        assert(job1.getLock(dbconnection).transaction(funcOK).isSuccess)
-        assert(job1.getLock(dbconnection).transaction(funcOK).isSuccess)
-        assert(job1.getLock(dbconnection).transaction(funcOK).isSuccess)
-        assert(job1.getLock(dbconnection).transaction(funcOK).isSuccess)
-        assert(job1.getLock(dbconnection).transaction(funcFail).isFailure)
-      }
-        "insert and read data" in {
-          val table = new OnlineBatchSyncCassandra(dbconnection)
-          val jobInfo = new CassandraJobInfo(getNextJobName)
-          table.initJob(jobInfo, new SumTestColumns())
+          val jobInfo = new CassandraJobInfo(getNextJobName, 3, 3)
     
           val sum = new ColumnWithValue[Long]("sum", 100)
           val columns = sum :: Nil
           val primaryKey = s"(${sum.name})"
           val indexes: Option[List[String]] = None
+    
+          table.initJob(jobInfo, new RowWithValue(columns, primaryKey, indexes))
           
-          table.insertInOnlineTable(jobInfo, 1, new RowWithValue(columns, primaryKey, indexes))
-    
-          val columnsR = new ColumnWithValue[Long]("sum", 200) :: Nil
-          val columValue = table.getOnlineJobData(jobInfo.name, 1, new RowWithValue(columnsR, primaryKey, indexes)).get.head.columns.head.value.toString()
-    
-          assert(columValue === "100")
-        }
-        "get running batch/online version " in {
-          val table = new OnlineBatchSyncCassandra("andreas")
-          
-          val jobInfo = new CassandraJobInfo(getNextJobName)
-          val sum = new ColumnWithValue[Long]("sum", 100)
-          val columns = sum :: Nil
-          val primaryKey = s"(${sum.name})"
-          val indexes: Option[List[String]] = None
-    
-          table.initJob(jobInfo, new RowWithValue(columns, primaryKey, indexes))     
           table.startNextBatchJob(jobInfo)
-          table.startNextOnlineJob(jobInfo)
-     
-          assert(table.getRunningBatchJobSlot(jobInfo).get == 1)
-          assert(table.getRunningOnlineJobSlot(jobInfo).get == 1)
-        }
-        "switch to next job " in {
-          val table = new OnlineBatchSyncCassandra(dbconnection)
-          val jobInfo = new CassandraJobInfo(getNextJobName)
-    
-          val sum = new ColumnWithValue[Long]("sum", 100)
-          val columns = sum :: Nil
-          val primaryKey = s"(${sum.name})"
-          val indexes: Option[List[String]] = None
-    
-          table.initJob(jobInfo, new RowWithValue(columns, primaryKey, indexes))     
-          table.startNextBatchJob(jobInfo)
-          table.startNextOnlineJob(jobInfo)
-          
-          // Switching is not possible. Because an other job is running.
-          assert(table.startNextBatchJob(jobInfo).isSuccess === false)
-     
           assert(table.getRunningBatchJobSlot(jobInfo).get === 1)
-          assert(table.getRunningOnlineJobSlot(jobInfo).get === 1)
-        }
-        "insert and read batch data " in {
-          val table = new OnlineBatchSyncCassandra(dbconnection)
-          val jobInfo = new CassandraJobInfo(getNextJobName)
-    
-          val sum = new ColumnWithValue[Long]("sum", 100)
-          val columns = sum :: Nil
-          val primaryKey = s"(${sum.name})"
-          val indexes: Option[List[String]] = None
-    
-          table.initJob(jobInfo, new RowWithValue(columns, primaryKey, indexes))
-          table.startNextBatchJob(jobInfo)
-         
-          
-          table.insertInBatchTable(jobInfo, 0, new RowWithValue(columns, primaryKey, indexes)) 
           table.completeBatchJob(jobInfo)
-    
-          assert(table.getBatchJobData(jobInfo.name, 0, new RowWithValue(columns, primaryKey, indexes)).get.head.columns.head.value === 100L)
+          
+          table.startNextBatchJob(jobInfo)
+          assert(table.getRunningBatchJobSlot(jobInfo).get === 2)
+          table.completeBatchJob(jobInfo)
+          
+          table.startNextBatchJob(jobInfo)
+          assert(table.getRunningBatchJobSlot(jobInfo).get === 0)
+          table.completeBatchJob(jobInfo)
+          
+          table.startNextBatchJob(jobInfo)
+          assert(table.getRunningBatchJobSlot(jobInfo).get === 1)
+          table.completeBatchJob(jobInfo)
         }
-        "insert and read online data " in {
+        "switch to next online job " in {
           val table = new OnlineBatchSyncCassandra(dbconnection)
-          val jobInfo = new CassandraJobInfo(getNextJobName)
-    
-          val sum = new ColumnWithValue[Long]("sum", 100)
-          val columns = sum :: Nil
-          val primaryKey = s"(${sum.name})"
-          val indexes: Option[List[String]] = None
-    
-          assert(table.initJob(jobInfo, new RowWithValue(columns, primaryKey, indexes)).isSuccess)
-          assert(table.startNextOnlineJob(jobInfo).isSuccess)
-          assert(table.insertInOnlineTable(jobInfo, 0, new RowWithValue(columns, primaryKey, indexes)).isSuccess) 
-          assert(table.completeOnlineJob(jobInfo).isSuccess)
-    
-          assert(table.getOnlineJobData(jobInfo.name, 0, new RowWithValue(columns, primaryKey, indexes)).get.head.columns.head.value === 100L)
-        }
-        "write and retrieve online data" in {
-          val table = new OnlineBatchSyncCassandra(dbconnection)
-          val jobInfo = new CassandraJobInfo("job59")
-    
+          val jobInfo = new CassandraJobInfo(getNextJobName, 3, 3)
     
           val sum = new ColumnWithValue[Long]("sum", 100)
           val columns = sum :: Nil
@@ -238,33 +211,114 @@ class OnlineBatchSyncTests extends WordSpec {
           val indexes: Option[List[String]] = None
     
           table.initJob(jobInfo, new RowWithValue(columns, primaryKey, indexes))
+          
           table.startNextOnlineJob(jobInfo)
-          val oVersion = table.getRunningOnlineJobSlot(jobInfo).get
-          table.insertInOnlineTable(jobInfo, oVersion, new RowWithValue(columns, primaryKey, indexes)) 
+          assert(table.getRunningOnlineJobSlot(jobInfo).get === 1)
           table.completeOnlineJob(jobInfo)
           
-          val version = table.getNewestOnlineSlot(jobInfo).get
+          table.startNextOnlineJob(jobInfo)
+          assert(table.getRunningOnlineJobSlot(jobInfo).get === 2)
+          table.completeOnlineJob(jobInfo)
           
-          assert(table.getOnlineJobData(jobInfo.name, version, new RowWithValue(columns, primaryKey, indexes)).get.head.columns.head.value === sum.value)
+          table.startNextOnlineJob(jobInfo)
+          assert(table.getRunningOnlineJobSlot(jobInfo).get === 0)
+          table.completeOnlineJob(jobInfo)
+          
+          table.startNextOnlineJob(jobInfo)
+          assert(table.getRunningOnlineJobSlot(jobInfo).get === 1)
+          table.completeOnlineJob(jobInfo)
         }
-        "write and retrieve batch data" in {
-          val table = new OnlineBatchSyncCassandra(dbconnection)
-    
-          val sum = new ColumnWithValue[Long]("sum", 200)
-          val columns = sum :: Nil
-          val primaryKey = s"(${sum.name})"
-          val indexes: Option[List[String]] = None
-          val jobInfo = new CassandraJobInfo(getNextJobName)
-    
-          assert(table.initJob(jobInfo, new RowWithValue(columns, primaryKey, indexes)).isSuccess)
-          assert(table.startNextBatchJob(jobInfo).isSuccess)
-          
-          val version = table.getRunningBatchJobSlot(jobInfo).get
-          table.insertInBatchTable(jobInfo, version, new RowWithValue(columns, primaryKey, indexes))
-          table.completeBatchJob(jobInfo)
-          
-          assert(table.getBatchJobData(jobInfo.name, version, new RowWithValue(columns, primaryKey, indexes)).get.head.columns.head.value === sum.value)
-        }
+//        "switch to next job while one job is running" in {
+//          val table = new OnlineBatchSyncCassandra(dbconnection)
+//          val jobInfo = new CassandraJobInfo(getNextJobName)
+//    
+//          val sum = new ColumnWithValue[Long]("sum", 100)
+//          val columns = sum :: Nil
+//          val primaryKey = s"(${sum.name})"
+//          val indexes: Option[List[String]] = None
+//    
+//          table.initJob(jobInfo, new RowWithValue(columns, primaryKey, indexes))     
+//          table.startNextBatchJob(jobInfo)
+//          table.startNextOnlineJob(jobInfo)
+//          
+//          // Switching is not possible. Because an other job is running.
+//          assert(table.startNextBatchJob(jobInfo).isSuccess === false)
+//     
+//          assert(table.getRunningBatchJobSlot(jobInfo).get === 1)
+//          assert(table.getRunningOnlineJobSlot(jobInfo).get === 1)
+//        }
+//        "insert and read batch data " in {
+//          val table = new OnlineBatchSyncCassandra(dbconnection)
+//          val jobInfo = new CassandraJobInfo(getNextJobName)
+//    
+//          val sum = new ColumnWithValue[Long]("sum", 100)
+//          val columns = sum :: Nil
+//          val primaryKey = s"(${sum.name})"
+//          val indexes: Option[List[String]] = None
+//    
+//          table.initJob(jobInfo, new RowWithValue(columns, primaryKey, indexes))
+//          table.startNextBatchJob(jobInfo)
+//         
+//          
+//          table.insertInBatchTable(jobInfo, 0, new RowWithValue(columns, primaryKey, indexes)) 
+//          table.completeBatchJob(jobInfo)
+//    
+//          assert(table.getBatchJobData(jobInfo.name, 0, new RowWithValue(columns, primaryKey, indexes)).get.head.columns.head.value === 100L)
+//        }
+//        "insert and read online data " in {
+//          val table = new OnlineBatchSyncCassandra(dbconnection)
+//          val jobInfo = new CassandraJobInfo(getNextJobName)
+//    
+//          val sum = new ColumnWithValue[Long]("sum", 100)
+//          val columns = sum :: Nil
+//          val primaryKey = s"(${sum.name})"
+//          val indexes: Option[List[String]] = None
+//    
+//          assert(table.initJob(jobInfo, new RowWithValue(columns, primaryKey, indexes)).isSuccess)
+//          assert(table.startNextOnlineJob(jobInfo).isSuccess)
+//          assert(table.insertInOnlineTable(jobInfo, 0, new RowWithValue(columns, primaryKey, indexes)).isSuccess) 
+//          assert(table.completeOnlineJob(jobInfo).isSuccess)
+//    
+//          assert(table.getOnlineJobData(jobInfo.name, 0, new RowWithValue(columns, primaryKey, indexes)).get.head.columns.head.value === 100L)
+//        }
+//        "write and retrieve online data" in {
+//          val table = new OnlineBatchSyncCassandra(dbconnection)
+//          val jobInfo = new CassandraJobInfo("job59")
+//    
+//    
+//          val sum = new ColumnWithValue[Long]("sum", 100)
+//          val columns = sum :: Nil
+//          val primaryKey = s"(${sum.name})"
+//          val indexes: Option[List[String]] = None
+//    
+//          table.initJob(jobInfo, new RowWithValue(columns, primaryKey, indexes))
+//          table.startNextOnlineJob(jobInfo)
+//          val oVersion = table.getRunningOnlineJobSlot(jobInfo).get
+//          table.insertInOnlineTable(jobInfo, oVersion, new RowWithValue(columns, primaryKey, indexes)) 
+//          table.completeOnlineJob(jobInfo)
+//          
+//          val version = table.getNewestOnlineSlot(jobInfo).get
+//          
+//          assert(table.getOnlineJobData(jobInfo.name, version, new RowWithValue(columns, primaryKey, indexes)).get.head.columns.head.value === sum.value)
+//        }
+//        "write and retrieve batch data" in {
+//          val table = new OnlineBatchSyncCassandra(dbconnection)
+//    
+//          val sum = new ColumnWithValue[Long]("sum", 200)
+//          val columns = sum :: Nil
+//          val primaryKey = s"(${sum.name})"
+//          val indexes: Option[List[String]] = None
+//          val jobInfo = new CassandraJobInfo(getNextJobName)
+//    
+//          assert(table.initJob(jobInfo, new RowWithValue(columns, primaryKey, indexes)).isSuccess)
+//          assert(table.startNextBatchJob(jobInfo).isSuccess)
+//          
+//          val version = table.getRunningBatchJobSlot(jobInfo).get
+//          table.insertInBatchTable(jobInfo, version, new RowWithValue(columns, primaryKey, indexes))
+//          table.completeBatchJob(jobInfo)
+//          
+//          assert(table.getBatchJobData(jobInfo.name, version, new RowWithValue(columns, primaryKey, indexes)).get.head.columns.head.value === sum.value)
+//        }
 //        " mark new batch job version " in {
 //          val table = new OnlineBatchSyncCassandra(dbconnection)
 //          val job = new CassandraJobInfo(getNextJobName)
