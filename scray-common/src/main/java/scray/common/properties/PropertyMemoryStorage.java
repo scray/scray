@@ -1,26 +1,30 @@
 package scray.common.properties;
 
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
-import java.util.Properties;
+import java.util.Map.Entry;
 
 /**
  * stores properties in memory
+ * 
  * @author andreas
  *
  */
 public class PropertyMemoryStorage implements PropertyStoragePuttable {
 
-	private Properties props = new Properties();
-	
-	public PropertyMemoryStorage(Map<String, String> initialProperties) {
+	private Map<String, Object> props = new HashMap<String, Object>();
+
+	public PropertyMemoryStorage(Map<String, Object> initialProperties) {
 		props.putAll(initialProperties);
 	}
 
-	public PropertyMemoryStorage() {}
-	
+	public PropertyMemoryStorage() {
+	}
+
 	@Override
 	public <T, U> T get(Property<T, U> name) {
-		return name.fromString((String)props.get(name.getName()));
+		return name.transformToStorageFormat((U) props.get(name.getName()));
 	}
 
 	@Override
@@ -31,10 +35,25 @@ public class PropertyMemoryStorage implements PropertyStoragePuttable {
 	@Override
 	public void init() {
 		// check initial properties
-		PropertyFileStorage.checkProperties(props);
+		checkProperties(this);
 	}
-	
+
 	public String toString() {
 		return "PropertyMemoryStorage, size=" + props.size();
+	}
+
+	@SuppressWarnings("unchecked")
+	public static void checkProperties(PropertyMemoryStorage propStore) {
+		for (Entry<String, Object> entry : propStore.props.entrySet()) {
+			for (Property<?, ?> prop : (Collection<Property<?, ?>>) (Object) ScrayProperties
+					.getRegisteredProperties()) {
+				if (prop.getName().equals(entry.getKey())) {					
+					if (!prop.checkConstraintsOnValue(entry.getValue())) {
+						throw new RuntimeException(
+								new PropertyConstraintViolatedException(entry.getKey()));
+					}
+				}
+			}
+		}
 	}
 }

@@ -82,4 +82,9 @@ public class CredentialsProperty extends Property<String, ScrayCredentials> {
 		sb.append('"');
 		return sb.toString();
 	}
+
+	@Override
+	public boolean checkConstraintsOnValue(Object value) {
+		return value instanceof ScrayCredentials;
+	}
 }

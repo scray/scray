@@ -16,6 +16,7 @@ import scray.loader.configuration.{ CassandraClusterConsistency, CassandraCluste
   DBMSConfigProperties, JDBCCredentialsProperty, JDBCProperties, JDBCProperty, JDBCURLProperty, MemcacheIps, 
   ScrayCompressionSize, ScrayEndpointLifetime, ScrayMetaPort, ScraySeedIps, ScrayServiceAdvertiseIP, ScrayServiceIp, 
   ScrayServiceOption, ScrayServicePort, ScrayServiceWriteDot }
+import scray.core.service.properties.ScrayServicePropertiesRegistrar
 
 /**
  * A syntax parser for scray configuration files.
@@ -158,6 +159,9 @@ class ScrayConfigurationParser(override val input: ParserInput) extends ScrayGen
       val serviceport = options.collect {
         case sip: ScrayServicePort => sip.port
       }.toOption.getOrElse(PredefinedProperties.SCRAY_QUERY_PORT.getDefault().toInt)
+      val lifetime = options.collect {
+        case time: ScrayEndpointLifetime => time.lifetime
+      }.toOption.getOrElse(ScrayServicePropertiesRegistrar.SCRAY_ENDPOINT_LIFETIME.getDefault())
       val metaport = options.collect {
         case sip: ScrayMetaPort => sip.port
       }.toOption.getOrElse(PredefinedProperties.SCRAY_META_PORT.getDefault().toInt)

@@ -24,4 +24,6 @@ class DurationProperty(name: String, defaultValue: Duration)
     Duration(arr(0).toInt, TimeUnit.valueOf(arr(1))).inUnit(DEFAULT_TIME_UNIT).toLong
   }
 
+  override def checkConstraintsOnValue(input: Any): Boolean = input.isInstanceOf[Duration]
+
 }

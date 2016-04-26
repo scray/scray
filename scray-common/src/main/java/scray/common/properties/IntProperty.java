@@ -38,4 +38,9 @@ public class IntProperty extends Property<Integer, Integer> {
 	public Integer fromString(String string) {
 		return new Integer(string);
 	}
+
+	@Override
+	public boolean checkConstraintsOnValue(Object value) {
+		return value instanceof Integer;
+	}
 }

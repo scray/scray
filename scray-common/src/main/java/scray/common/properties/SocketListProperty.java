@@ -24,6 +24,7 @@ public class SocketListProperty extends Property<String, Set<InetSocketAddress>>
 				if(!(value instanceof String)) {
 					return false;
 				} else {
+					
 					try {
 						String[] strs = value.split(hostSeperator);
 						for(String str : strs) {
@@ -112,4 +113,24 @@ public class SocketListProperty extends Property<String, Set<InetSocketAddress>>
 		this.hostSeperator = hostSeperator;
 		this.portSeperator = portSeperator;
 	}
+	
+	@SuppressWarnings("unchecked")
+	@Override
+	public boolean checkConstraintsOnValue(Object value) {
+		if(value instanceof Set<?>) {
+			for(Object obj: (Set<Object>)value) {
+				if(!(obj instanceof InetSocketAddress)) {
+					return false;
+				} else {
+					InetSocketAddress inetsocket = (InetSocketAddress)obj;
+					if(inetsocket.getPort() < 1 || inetsocket.getPort() > 65535) {
+						return false;
+					}
+				}
+			}
+			return true;
+		}
+		return false;
+	}
+
 }

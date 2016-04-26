@@ -1,7 +1,9 @@
 package scray.common.properties;
 
+import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Represents a property list of strings. Requires quoting of strings either with " or '.
@@ -118,5 +120,19 @@ public class StringListProperty extends Property<String, List<String>> {
 			first = false;
 		}
 		return sb.toString();
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public boolean checkConstraintsOnValue(Object value) {
+		if(value instanceof List<?>) {
+			for(Object obj: (List<Object>)value) {
+				if(!(obj instanceof String)) {
+					return false;
+				} 
+			}
+			return true;
+		}
+		return false;
 	}
 }

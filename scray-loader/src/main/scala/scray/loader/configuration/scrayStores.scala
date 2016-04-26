@@ -11,8 +11,6 @@ class ScrayStores(startConfig: ScrayConfiguration) {
 
   type SessionChangeListener = (String, DbSession[_, _, _]) => Unit
   
-  updateConfiguration(startConfig)
-  
   private val storeConfigs: HashMap[String, DBMSConfiguration[_ <: DBMSConfigProperties]] = new HashMap[String, DBMSConfiguration[_ <: DBMSConfigProperties]]
   private val storeSessions: HashMap[String, DbSession[_, _, _]] = new HashMap[String, DbSession[_, _, _]]
   private val sessionChangeListeners: ArrayBuffer[SessionChangeListener] = new ArrayBuffer[SessionChangeListener]
@@ -48,6 +46,9 @@ class ScrayStores(startConfig: ScrayConfiguration) {
   }
   
   def updateConfiguration(configUpdate: ScrayConfiguration) = updateStoreConfigs(configUpdate)
+
+  // last thing after initializing vals is starting up...
+  updateConfiguration(startConfig)
 }
 
 /**

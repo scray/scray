@@ -43,4 +43,12 @@ public class EnumProperty<X extends java.lang.Enum<X>> extends
 	public X transformToResult(String value) {
 		return Enum.valueOf(clazz, value);
 	}
+
+	@Override
+	public boolean checkConstraintsOnValue(Object value) {
+		if(value instanceof Enum<?>) {
+			return true;
+		}
+		return false;
+	}
 }

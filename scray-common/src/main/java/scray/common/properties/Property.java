@@ -69,4 +69,7 @@ public abstract class Property<T, U> {
 	
 	public abstract String getName();
 	
+	public abstract boolean checkConstraintsOnValue(Object value);
+	
+
 }
