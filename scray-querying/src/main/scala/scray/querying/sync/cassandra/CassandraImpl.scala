@@ -116,10 +116,12 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
   }
 
   def startNextBatchJob(job: JOB_INFO, dataTable: TableIdentifier): Try[Unit] = ???
+  
   private def startJob(job: JOB_INFO, online: Boolean): Try[Unit] = {
         def createStartStatement(slot: Int, online: Boolean): Statement = {
           QueryBuilder.update(syncTable.keySpace, syncTable.tableName)
             .`with`(QueryBuilder.set(syncTable.columns.state.name, State.RUNNING.toString()))
+            .and(QueryBuilder.set(syncTable.columns.batchStartTime.name, System.currentTimeMillis()))
             .where(QueryBuilder.eq(syncTable.columns.jobname.name, job.name))
             .and(QueryBuilder.eq(syncTable.columns.online.name, online))
             .and(QueryBuilder.eq(syncTable.columns.slot.name, slot))
@@ -133,7 +135,7 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
               Failure(new RunningJobExistsException(s"Online job ${job.name} slot ${slot} is currently running"))
             }
             case None => {
-              val slot = (getNewestOnlineSlot(job).getOrElse( {logger.debug("No completed slot found use 0");  0 + 1}) % job.numberOfOnlineSlots) 
+              val slot = (getNewestOnlineSlot(job).getOrElse( {logger.debug("No completed slot found use 0");  0 }) + 1) % job.numberOfOnlineSlots
                 logger.debug(s"Set next online slot to ${slot}")
                 executeQuorum(createStartStatement(slot, true))
             }
@@ -146,7 +148,8 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
                Failure(new RunningJobExistsException(s"Batch job ${job.name} with slot ${job.batchID} is currently running"))
             }
             case None => {
-              val newSlot = getNewestBatchSlot(job).getOrElse( {logger.debug("No completed slot found use default slot 0"); 0}) + 1 % job.numberOfBatchSlots 
+              println("\n\n\n" + (getNewestBatchSlot(job).getOrElse( {logger.debug("No completed slot found use default slot 0"); 0}) + 1) % job.numberOfBatchSlots + "\n\n\n")
+              val newSlot = (getNewestBatchSlot(job).getOrElse( {logger.debug("No completed slot found use default slot 0"); 0}) + 1) % job.numberOfBatchSlots 
               logger.debug(s"Set next batch slot to ${newSlot}")
               executeQuorum(createStartStatement(newSlot, false)) 
             }
@@ -155,11 +158,13 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
   }
 
   def completeBatchJob(job: JOB_INFO): Try[Unit] = Try {
-//    getRunningBatchJobSlot(job) match {
-//      case slot: Some[Int] =>
-//        this.completeJob(job, slot.get, false)
-//      case None => throw new NoRunningJobExistsException(s"No running job with name: ${job.name} exists.")
-//    }
+    logger.debug(s"Complete batch job ${job}")
+    
+    getRunningBatchJobSlot(job) match {
+      case slot: Some[Int] =>
+        this.completeJob(job, slot.get, false)
+      case None => throw new NoRunningJobExistsException(s"No running job with name: ${job.name} exists.")
+    }
   }
 
   def completeOnlineJob(job: JOB_INFO): Try[Unit] = Try {
@@ -212,7 +217,7 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
   private def completeJob(job: JOB_INFO, slot: Int, online: Boolean): Try[Unit] = {
     val query = QueryBuilder.update(syncTable.keySpace, syncTable.tableName)
       .`with`(QueryBuilder.set(syncTable.columns.state.name, State.COMPLETED.toString()))
-      .and(QueryBuilder.set(syncTable.columns.latestUpdate.name, System.currentTimeMillis()))
+      .and(QueryBuilder.set(syncTable.columns.batchEndTime.name, System.currentTimeMillis()))
       .where(QueryBuilder.eq(syncTable.columns.jobname.name, job.name))
       .and(QueryBuilder.eq(syncTable.columns.online.name, online))
       .and(QueryBuilder.eq(syncTable.columns.slot.name, slot))
@@ -576,18 +581,15 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
   def getNewestRow(rows: java.util.Iterator[Row], columnName: String): Option[Row] = {
     import scala.math.Ordering._
     val comp = implicitly[Ordering[Long]]
-    getComptRow(rows, comp.gt, columnName)
+    getComptRow(rows, comp.lt, columnName)
   }
 
   def getOldestRow(rows: java.util.Iterator[Row], columnName: String): Option[Row] = {
     import scala.math.Ordering._
     val comp = implicitly[Ordering[Long]]
-    getComptRow(rows, comp.lt, columnName)
+    getComptRow(rows, comp.gt, columnName)
   }
 
-  def selectAll() = {
-    
-  }
   def getComptRow(rows: JIterator[Row], comp: (Long, Long) => Boolean, columnName: String): Option[Row] = {  
     @tailrec def accNewestRow(prevRow: Row, nextRows: JIterator[Row]): Row = {
       if (nextRows.hasNext) {
