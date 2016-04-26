@@ -1,17 +1,12 @@
 package scray.loader.configparser
 
-import org.parboiled2._
 import com.typesafe.scalalogging.slf4j.LazyLogging
-import scray.querying.description.TableIdentifier
-import scray.loader.configuration.QueryspaceOption
-import scray.loader.configuration.QueryspaceRowstore
-import scray.loader.DBMSUndefinedException
-import shapeless._
-import scray.loader.UnsupportedMappingTypeException
-import scray.loader.configuration.QueryspaceIndexstore
-import scala.util.Try
-import scala.util.Failure
 import org.apache.commons.io.IOUtils
+import org.parboiled2._
+import scala.util.{ Failure, Try }
+import scray.loader.{ DBMSUndefinedException, UnsupportedMappingTypeException }
+import scray.loader.configuration.{ QueryspaceIndexstore, QueryspaceOption, QueryspaceRowstore }
+import scray.querying.description.TableIdentifier
 
 /**
  * Parse properties for a queryspace and build a configuration object.

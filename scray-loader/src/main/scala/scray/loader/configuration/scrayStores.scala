@@ -1,15 +1,8 @@
 package scray.loader.configuration
 
-import scala.collection.convert.decorateAsScala.asScalaBufferConverter
-import scala.collection.mutable.HashMap
-import scray.common.properties.ScrayProperties
-import scray.common.properties.predefined.PredefinedProperties
-import scray.loader.configparser.ConfigProperties
-import scray.loader.configparser.UpdatetableConfiguration
-import scray.loader.configparser.ReadableConfig
-import scray.loader.configparser.ScrayConfiguration
+import scala.collection.mutable.{ ArrayBuffer, HashMap }
+import scray.loader.configparser.{ ConfigProperties, ReadableConfig, ScrayConfiguration, UpdatetableConfiguration }
 import scray.querying.sync.types.DbSession
-import scala.collection.mutable.ArrayBuffer
 
 /**
  * abstraction for the management of configuration of stores
@@ -20,7 +13,7 @@ class ScrayStores(startConfig: ScrayConfiguration) {
   
   updateConfiguration(startConfig)
   
-  private val storeConfigs: HashMap[String, DBMSConfiguration[_]] = new HashMap[String, DBMSConfiguration[_]]
+  private val storeConfigs: HashMap[String, DBMSConfiguration[_ <: DBMSConfigProperties]] = new HashMap[String, DBMSConfiguration[_ <: DBMSConfigProperties]]
   private val storeSessions: HashMap[String, DbSession[_, _, _]] = new HashMap[String, DbSession[_, _, _]]
   private val sessionChangeListeners: ArrayBuffer[SessionChangeListener] = new ArrayBuffer[SessionChangeListener]
   
@@ -31,10 +24,9 @@ class ScrayStores(startConfig: ScrayConfiguration) {
   def updateStoreConfigs(configUpdate: ScrayConfiguration): Unit = { 
     val newConf = configUpdate.stores.map { storeprops =>
       val current = storeConfigs.get(storeprops.getName)
-      val dbmsconfig = if(current.isEmpty) {
-        createDBMSConfigurationForProperties(storeprops)
-      } else {
-        current.get
+      val dbmsconfig = current match {
+        case Some(entry) => entry
+        case None => createDBMSConfigurationForProperties(storeprops)
       }
       dbmsconfig.updateConfiguration(configUpdate).map { session =>
         sessionChangeListeners.foreach { _(storeprops.getName, session) }
@@ -48,7 +40,7 @@ class ScrayStores(startConfig: ScrayConfiguration) {
   /**
    * factory-method for store configurations from resp. properties
    */
-  def createDBMSConfigurationForProperties(properties: DBMSConfigProperties): DBMSConfiguration[_] = {
+  def createDBMSConfigurationForProperties(properties: DBMSConfigProperties): DBMSConfiguration[_ <: DBMSConfigProperties] = {
     properties match {
       case cass: CassandraClusterProperties => new CassandraClusterConfiguration(cass)
       case jdbc: JDBCProperties => new JDBCConfiguration(jdbc)

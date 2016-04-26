@@ -117,4 +117,34 @@ class ScrayConfigurationParserSpecs extends WordSpec with LazyLogging {
       assert(result.get.indexStores(1).mapping.get === "UUID->TEXT")
     }
   }
+  "Scray's user configuration parser" should {
+    "throw on an empty config file" in {
+      intercept[ParseError] {
+        val config = ScrayConfigurationParser.parseResource("/configs/scrayjdbcconfig1.txt")
+        val file = ScrayUserConfigurationParser.parseResource("/configs/scrayemptyconfig1.txt", config.get, false)
+        file.get
+      }
+    }
+    "load test minimalistic user config 0" in {
+      val config = ScrayConfigurationParser.parseResource("/configs/scrayjdbcconfig1.txt")
+      val result = ScrayUserConfigurationParser.parseResource("/configs/usertest0.txt", config.get, false)
+      assert(result.get.users.size == 1)
+      assert(result.get.users.find { x => x.user == "Barack" }.isDefined)
+    }
+    "load test user config 1" in {
+      val config = ScrayConfigurationParser.parseResource("/configs/scrayjdbcconfig1.txt")
+      val result = ScrayUserConfigurationParser.parseResource("/configs/usertest1.txt", config.get, false)
+      try {
+        result.get
+      } catch {
+        case e: ParseError => 
+          println(e.principalPosition + ":::" + e.effectiveTraces + "::::" + e.traces + ":::" + Option(e.getCause).map(_.toString).getOrElse(""))
+      }
+      assert(result.get.users.size == 4)
+      assert(result.get.users.find { x => x.user == "Angela" }.isDefined)
+      assert(result.get.users.find { x => x.user == "Angela" }.get.pwd === "Merkel")
+      assert(result.get.users.find { x => x.user == "Angela" }.get.method === ScrayAuthMethod.LDAP)
+      assert(result.get.users.find { x => x.user == "Angela" }.get.queryspaces === Set("test1", "test2"))
+    }
+  }
 }

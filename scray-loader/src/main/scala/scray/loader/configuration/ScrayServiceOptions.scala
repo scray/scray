@@ -1,8 +1,7 @@
 package scray.loader.configuration
 
 import com.twitter.util.Duration
-import java.net.InetSocketAddress
-import java.net.InetAddress
+import java.net.{ InetAddress, InetSocketAddress }
 
 trait ScrayServiceOption
 case class ScrayCompressionSize(size: Int) extends ScrayServiceOption
@@ -13,3 +12,4 @@ case class ScrayServicePort(port: Int) extends ScrayServiceOption
 case class ScrayMetaPort(port: Int) extends ScrayServiceOption
 case class ScrayServiceAdvertiseIP(ip: InetAddress) extends ScrayServiceOption
 case class ScrayEndpointLifetime(lifetime: Duration) extends ScrayServiceOption
+case class ScrayServiceWriteDot(bool: Boolean) extends ScrayServiceOption

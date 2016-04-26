@@ -1,29 +1,36 @@
 package scray.loader.osgi
 
-import java.io.File
-import java.io.FileInputStream
-import java.io.IOException
-import scala.util.Try
-import org.apache.commons.io.IOUtils
-import org.osgi.framework.BundleActivator
-import org.osgi.framework.BundleContext
+import com.twitter.finagle.Thrift
+import com.twitter.util.{ Duration, JavaTimer, TimerTask }
 import com.typesafe.scalalogging.slf4j.LazyLogging
+import java.io.{ File, FileInputStream, IOException }
+import org.apache.commons.io.IOUtils
+import org.osgi.framework.{ BundleActivator, BundleContext }
+import scala.collection.mutable.HashMap
+import scala.collection.convert.decorateAsScala._
+import scala.util.Try
 import scray.common.properties.ScrayProperties
 import scray.common.properties.ScrayProperties.Phase
 import scray.core.service.properties.ScrayServicePropertiesRegistrar
-import scray.loader.configparser.ScrayConfigurationParser
-import scray.loader.configuration.ScrayStores
-import scray.loader.configuration.ScrayStores
-import scray.loader.configparser.QueryspaceConfigurationFileHandler
-import scala.collection.mutable.HashMap
-import scray.loader.configparser.ScrayQueryspaceConfiguration
 import scray.loader.ScrayLoaderQuerySpace
+import scray.loader.configparser.{ QueryspaceConfigurationFileHandler, ScrayConfigurationParser, ScrayQueryspaceConfiguration }
+import scray.loader.configuration.ScrayStores
+import scray.service.qmodel.thrifscala.ScrayUUID
+import scray.service.qservice.thrifscala.{ ScrayCombinedStatefulTService, ScrayTServiceEndpoint }
+import com.twitter.util.Await
+import java.util.concurrent.TimeUnit
+import scray.core.service.ScrayCombinedStatefulTServiceImpl
+import scray.core.service.KryoPoolRegistration
+import scray.loader.service.RefreshServing
+import scray.core.service.SCRAY_QUERY_LISTENING_ENDPOINT
 
 /**
  * Bundle activator in order to run scray service.
  * Can also be used without OSGI using FakeBundleContext
  */
-class Activator extends BundleActivator with LazyLogging {
+class Activator extends KryoPoolRegistration with BundleActivator with LazyLogging {
+  
+  def getVersion: String = "0.9.5"
   
   val OSGI_FILENAME_PROPERTY = "scray.config.location"
   
@@ -32,6 +39,8 @@ class Activator extends BundleActivator with LazyLogging {
    */
   override def start(context: BundleContext) = {
     logger.info("Starting Scray")
+    
+    registerSerializers
     
     // start Properties registration phase
     ScrayProperties.setPhase(Phase.register)
@@ -73,9 +82,13 @@ class Activator extends BundleActivator with LazyLogging {
       val qs = new ScrayLoaderQuerySpace(config._1, scrayConfiguration, config._2._2, Activator.scrayStores.get)
     }
     
-    
-    
     // start service
+    // *** launch combined service
+    val server = Thrift.serveIface(SCRAY_QUERY_LISTENING_ENDPOINT, ScrayCombinedStatefulTServiceImpl())
+    val refresher = new RefreshServing
+    
+    logger.info(s"Scray Combined Server (Version ${getVersion}) started on ${refresher.addrStr}. Waiting for client requests...")
+
     // start update service
   }
   
@@ -85,6 +98,7 @@ class Activator extends BundleActivator with LazyLogging {
     // unregister all queryspaces
     // shutdown connections
   }
+  
 }
 
 object Activator {

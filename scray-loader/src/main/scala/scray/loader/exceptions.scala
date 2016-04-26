@@ -44,3 +44,8 @@ class UnknownTimeUnitException(supposedunit: String)
     extends ScrayException(ExceptionIDs.unknownTimeUnitExceptionID,
         UUID.nameUUIDFromBytes(Array[Byte](0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)),
         s"Supposed time unit $supposedunit is not parsable.") with Serializable
+
+class UnknownBooleanValueException(supposedbool: String)
+    extends ScrayException(ExceptionIDs.unknownBooleanValueExceptionID,
+        UUID.nameUUIDFromBytes(Array[Byte](0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)),
+        s"Supposed boolean value $supposedbool is not parsable.") with Serializable
