@@ -227,6 +227,20 @@ class CassandraSyncTableLock (job: JobInfo[Statement, Insert, ResultSet], jobLoc
     }
   }
   
+  def transaction[P1, P2, P3, P4](f: (P1, P2, P3, P4) => Try[Unit], p1: P1, p2: P2, p3: P3, p4: P4): Try[Unit] = {
+    if(this.tryLock(timeOut, TimeUnit.MILLISECONDS)) {
+      f(p1, p2, p3, p4) match {
+        case Success(_) => this.unlock(); Try()
+        case Failure(ex) => {
+          logger.error(s"Unable to execute Query. Release lock for job ${job.name}")
+          this.unlock()
+          Failure(ex)}
+      } 
+    } else {
+     Failure(new UnableToLockJobError(s"Unable to lock job ${job.name}")) 
+    }
+  }
+  
   private def executeQuorum(statement: Statement): Try[Unit] = {
 
     statement match {

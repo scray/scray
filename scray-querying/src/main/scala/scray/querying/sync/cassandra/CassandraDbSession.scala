@@ -109,6 +109,4 @@ class CassandraDbSession(cassandraSession: Session) extends DbSession[Statement,
          case _                          => "It is currently not possible to execute : " + s
       }
     }
- 
- 
 }

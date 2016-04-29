@@ -259,24 +259,43 @@ class OnlineBatchSyncTests extends WordSpec {
 //          assert(table.getRunningBatchJobSlot(jobInfo).get === 1)
 //          assert(table.getRunningOnlineJobSlot(jobInfo).get === 1)
 //        }
-        "get latest batch after first run" in {
-          val table = new OnlineBatchSyncCassandra(dbconnection)
-          val jobInfo = new CassandraJobInfo(getNextJobName)
-    
-          val sum = new ColumnWithValue[Long]("sum", 100)
-          val columns = sum :: Nil
-          val primaryKey = s"(${sum.name})"
-          val indexes: Option[List[String]] = None
-    
-          table.initJob(jobInfo, new RowWithValue(columns, primaryKey, indexes))     
-          
-          table.startNextBatchJob(jobInfo)
-          table.completeBatchJob(jobInfo)
-          
-          assert(table.getLatestBatch(jobInfo).get === 1)
-        }
+//        "get latest batch after first run" in {
+//          val table = new OnlineBatchSyncCassandra(dbconnection)
+//          val jobInfo = new CassandraJobInfo(getNextJobName)
+//    
+//          val sum = new ColumnWithValue[Long]("sum", 100)
+//          val columns = sum :: Nil
+//          val primaryKey = s"(${sum.name})"
+//          val indexes: Option[List[String]] = None
+//    
+//          table.initJob(jobInfo, new RowWithValue(columns, primaryKey, indexes))     
+//          
+//          table.startNextBatchJob(jobInfo)
+//          table.completeBatchJob(jobInfo)
+//          
+//          assert(table.getLatestBatch(jobInfo).get === 1)
+//        }
+//        "get latest batch after second run" in {
+//          val table = new OnlineBatchSyncCassandra(dbconnection)
+//          val jobInfo = new CassandraJobInfo(getNextJobName)
+//    
+//          val sum = new ColumnWithValue[Long]("sum", 100)
+//          val columns = sum :: Nil
+//          val primaryKey = s"(${sum.name})"
+//          val indexes: Option[List[String]] = None
+//    
+//          table.initJob(jobInfo, new RowWithValue(columns, primaryKey, indexes))     
+//          
+//          table.startNextBatchJob(jobInfo)
+//          table.completeBatchJob(jobInfo)
+//          
+//          table.startNextBatchJob(jobInfo)
+//          table.completeBatchJob(jobInfo)
+//          
+//          assert(table.getLatestBatch(jobInfo).get === 2)
+//        }
         "get latest batch after second run" in {
-          val table = new OnlineBatchSyncCassandra(dbconnection)
+          val table = new OnlineBatchSyncCassandra("andreas")
           val jobInfo = new CassandraJobInfo(getNextJobName)
     
           val sum = new ColumnWithValue[Long]("sum", 100)
@@ -290,9 +309,10 @@ class OnlineBatchSyncTests extends WordSpec {
           table.completeBatchJob(jobInfo)
           
           table.startNextBatchJob(jobInfo)
+          println("fffff 22\t" + table.getBatchID(jobInfo))
           table.completeBatchJob(jobInfo)
           
-          assert(table.getLatestBatch(jobInfo).get === 2)
+          println(table.getBatchID(jobInfo).get)
         }
 //        "insert and read batch data " in {
 //          val table = new OnlineBatchSyncCassandra(dbconnection)
