@@ -17,7 +17,7 @@ import scray.querying.sync.types.RowWithValue
 import scray.querying.sync.types.State
 import scray.querying.sync.types.State.State
 import scray.querying.sync.types.LockApi
-import scalaz.monoid
+import scalaz.Monoid
 
 
 trait OnlineBatchSyncA[Statement, InsertIn, Result] extends LazyLogging {
@@ -69,8 +69,8 @@ trait OnlineBatchSyncB[Statement, InsertIn, Result] extends LazyLogging {
   def getLatestBatch(job: JOB_INFO): Option[Int] 
 }
 
-trait mergeApi extends LazyLogging {
-  def merge(): Try[Unit]
+trait MergeApi extends LazyLogging {
+  def merge(onlineData: RowWithValue, function: MonoidF[RowWithValue], batchData: RowWithValue): Try[Unit]
 }
 
 abstract class JobInfo[Statement, InsertIn, Result](
