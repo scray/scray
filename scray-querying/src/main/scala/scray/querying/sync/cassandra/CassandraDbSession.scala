@@ -109,6 +109,4 @@ class CassandraDbSession(val cassandraSession: Session) extends DbSession[Statem
          case _                          => "It is currently not possible to execute : " + s
       }
     }
- 
- 
 }

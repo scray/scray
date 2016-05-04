@@ -17,6 +17,7 @@ import scray.querying.sync.types.RowWithValue
 import scray.querying.sync.types.State
 import scray.querying.sync.types.State.State
 import scray.querying.sync.types.LockApi
+import scalaz.Monoid
 
 
 trait OnlineBatchSyncA[Statement, InsertIn, Result] extends LazyLogging {
@@ -38,6 +39,8 @@ trait OnlineBatchSyncB[Statement, InsertIn, Result] extends LazyLogging {
   type JOB_INFO = JobInfo[Statement, InsertIn, Result]
   
   def initJob[DataTableT <: ArbitrarylyTypedRows](job: JobInfo[Statement, InsertIn, Result], dataTable: DataTableT): Try[Unit]
+  
+  def startInicialBatch(job: JOB_INFO, batchID: BatchID): Try[Unit]
   
   def startNextBatchJob(job: JobInfo[Statement, InsertIn, Result]): Try[Unit]
   def startNextOnlineJob(job: JobInfo[Statement, InsertIn, Result]): Try[Unit]
@@ -66,6 +69,10 @@ trait OnlineBatchSyncB[Statement, InsertIn, Result] extends LazyLogging {
   def getLatestBatch(job: JOB_INFO): Option[Int] 
 }
 
+trait MergeApi extends LazyLogging {
+  def merge(onlineData: RowWithValue, function: MonoidF[RowWithValue], batchData: RowWithValue): Try[Unit]
+}
+
 abstract class JobInfo[Statement, InsertIn, Result](
   val name: String,
   val numberOfBatchSlots: Int = 3,
@@ -81,8 +88,8 @@ abstract class JobInfo[Statement, InsertIn, Result](
     this.batchID = Some(batchID)
   }
   
-  def getBatchID(dbSession: DbSession[Statement, InsertIn, Result]): BatchID = {
-    batchID.get
+  def getBatchID(dbSession: DbSession[Statement, InsertIn, Result]): Option[BatchID] = {
+    batchID
   }    
 }
 

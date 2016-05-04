@@ -102,6 +102,20 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
     
     this.crateAndRegisterTablesIfNotExists(job)
   }
+  
+  def startInicialBatch(job: JOB_INFO, batchID: BatchID): Try[Unit] = {
+    def createInicialBatchStatement(slot: Int, online: Boolean, startTime: Long, endTime: Long): Statement = {
+      QueryBuilder.update(syncTable.keySpace, syncTable.tableName)
+        .`with`(QueryBuilder.set(syncTable.columns.state.name, State.RUNNING.toString()))
+        .and(QueryBuilder.set(syncTable.columns.batchStartTime.name, startTime))
+        .and(QueryBuilder.set(syncTable.columns.batchEndTime.name, endTime))
+        .where(QueryBuilder.eq(syncTable.columns.jobname.name, job.name))
+        .and(QueryBuilder.eq(syncTable.columns.online.name, online))
+        .and(QueryBuilder.eq(syncTable.columns.slot.name, slot))
+    }
+    
+    this.executeQuorum((createInicialBatchStatement(0, false, batchID.getBatchStart, batchID.getBatchEnd)))
+  }
 
   @Override
   def startNextBatchJob(job: JOB_INFO): Try[Unit] = {
@@ -118,10 +132,10 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
   def startNextBatchJob(job: JOB_INFO, dataTable: TableIdentifier): Try[Unit] = ???
   
   private def startJob(job: JOB_INFO, online: Boolean): Try[Unit] = {
-        def createStartStatement(slot: Int, online: Boolean): Statement = {
+        def createStartStatement(slot: Int, online: Boolean, startTime: Long): Statement = {
           QueryBuilder.update(syncTable.keySpace, syncTable.tableName)
             .`with`(QueryBuilder.set(syncTable.columns.state.name, State.RUNNING.toString()))
-            .and(QueryBuilder.set(syncTable.columns.batchStartTime.name, System.currentTimeMillis()))
+            .and(QueryBuilder.set(syncTable.columns.batchStartTime.name, startTime))
             .where(QueryBuilder.eq(syncTable.columns.jobname.name, job.name))
             .and(QueryBuilder.eq(syncTable.columns.online.name, online))
             .and(QueryBuilder.eq(syncTable.columns.slot.name, slot))
@@ -136,8 +150,9 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
             }
             case None => {
               val slot = (getNewestOnlineSlot(job).getOrElse( {logger.debug("No completed slot found use 0");  0 }) + 1) % job.numberOfOnlineSlots
-                logger.debug(s"Set next online slot to ${slot}")
-                executeQuorum(createStartStatement(slot, true))
+              val prevBatchID = getBatchID(job)
+              logger.debug(s"Set next online slot to ${slot}")
+              executeQuorum(createStartStatement(slot, true, prevBatchID.get.getBatchEnd))
             }
           }
         } else {
@@ -145,13 +160,17 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
           this.getRunningBatchJobSlot(job) match {
             case Some(slot) => {
                logger.error(s"Job ${job.name} is currently running on slot ${slot}")
-               Failure(new RunningJobExistsException(s"Batch job ${job.name} with slot ${job.batchID} is currently running"))
+               Failure(new RunningJobExistsException(s"Batch job ${job.name} with slot ${slot} is currently running"))
             }
             case None => {
-              println("\n\n\n" + (getNewestBatchSlot(job).getOrElse( {logger.debug("No completed slot found use default slot 0"); 0}) + 1) % job.numberOfBatchSlots + "\n\n\n")
               val newSlot = (getNewestBatchSlot(job).getOrElse( {logger.debug("No completed slot found use default slot 0"); 0}) + 1) % job.numberOfBatchSlots 
+              val startTime = getBatchID(job) match {
+                case Some(id) => id.getBatchEnd
+                case None => System.currentTimeMillis()
+              }
+              
               logger.debug(s"Set next batch slot to ${newSlot}")
-              executeQuorum(createStartStatement(newSlot, false)) 
+              executeQuorum(createStartStatement(newSlot, false, startTime)) 
             }
           }
         }
@@ -175,19 +194,6 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
     }
   }
 
-  def getNextBatchID(job: JobInfo[Statement, Insert, ResultSet], online: Boolean): Try[BatchID] = {
-    val batchIDs = execute(QueryBuilder.select(syncTable.columns.batchEndTime.name, syncTable.columns.batchStartTime.name).
-      from(syncTable.keySpace, syncTable.tableName).allowFiltering().where(
-        QueryBuilder.eq(syncTable.columns.jobname.name, job.name)).
-        and(QueryBuilder.eq(syncTable.columns.online.name, online))).map { rows => rows.all() }
-
-    batchIDs.map { ids =>
-      getNewestRow(ids.iterator(), syncTable.columns.batchEndTime.name).
-        map(row => new BatchID(row.getLong(syncTable.columns.batchEndTime.name), System.currentTimeMillis())).
-        getOrElse(new BatchID(System.currentTimeMillis(), System.currentTimeMillis()))
-    }
-  }
-
   def getTableIdentifier(job: JobInfo[Statement, Insert, ResultSet]): TableIdentifier = ???
 
     def resetBatchJob(job: JOB_INFO): Try[Unit] = Try {
@@ -196,7 +202,6 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
     }
     
     def resetOnlineJob(job: JOB_INFO): Try[Unit] = Try {
-      
       val runningOnlineSlot = this.getRunningOnlineJobSlot(job).getOrElse(0)
       this.renewJob(job, runningOnlineSlot, true)
     }
@@ -207,7 +212,6 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
   private def renewJob(job: JOB_INFO, slot: Int, online: Boolean): Try[Unit] = {
     val query = QueryBuilder.update(syncTable.keySpace, syncTable.tableName)
       .`with`(QueryBuilder.set(syncTable.columns.state.name, State.NEW.toString()))
-      .and(QueryBuilder.set(syncTable.columns.latestUpdate.name, System.currentTimeMillis()))
       .where(QueryBuilder.eq(syncTable.columns.jobname.name, job.name))
       .and(QueryBuilder.eq(syncTable.columns.online.name, online))
       .and(QueryBuilder.eq(syncTable.columns.slot.name, slot))
@@ -272,7 +276,7 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
     }
     
   def getLatestBatch(job: JOB_INFO): Option[Int] = {
-    val slotQuery = QueryBuilder.select(syncTable.columns.batchEndTime.name).from(syncTable.keySpace, syncTable.tableName).where(
+    val slotQuery = QueryBuilder.select.all().from(syncTable.keySpace, syncTable.tableName).where(
       QueryBuilder.eq(syncTable.columns.jobname.name, job.name)).
       and(QueryBuilder.eq(syncTable.columns.online.name, false)).
       and(QueryBuilder.eq(syncTable.columns.state.name, State.COMPLETED.toString()))
@@ -311,6 +315,39 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
       None
     }
   }
+  
+    
+  def getBatchID(job: JOB_INFO): Option[BatchID] = {
+     val slotQuery = QueryBuilder.select.all().from(syncTable.keySpace, syncTable.tableName).where(
+      QueryBuilder.eq(syncTable.columns.jobname.name, job.name)).
+      and(QueryBuilder.eq(syncTable.columns.online.name, false)).
+      and(QueryBuilder.eq(syncTable.columns.state.name, State.COMPLETED.toString()))
+
+    val start = this.execute(slotQuery)
+      .map { _.iterator() }.recover {
+        case e => { logger.error(s"DB error while fetching newest slot ${e.getMessage}"); throw e }
+      }.toOption
+      .flatMap { iter => {
+          val comp = implicitly[Ordering[Long]]
+          this.getComptRow(iter, comp.lt, syncTable.columns.batchEndTime.name)
+        }  
+      }.map { row => (row.getLong(syncTable.columns.batchStartTime.name)) }
+      
+     val end = this.execute(slotQuery)
+      .map { _.iterator() }.recover {
+        case e => { logger.error(s"DB error while fetching newest slot ${e.getMessage}"); throw e }
+      }.toOption
+      .flatMap { iter => {
+          val comp = implicitly[Ordering[Long]]
+          this.getComptRow(iter, comp.lt, syncTable.columns.batchEndTime.name)
+        }  
+      }.map { row => (row.getLong(syncTable.columns.batchEndTime.name)) }
+      
+      start match {
+        case Some(value) => Some(new BatchID(start.get, end.get))
+        case None => None
+      }
+   }
 
 
   private def crateAndRegisterTablesIfNotExists[T <: AbstractRow](job: JOB_INFO): Try[Unit] = Try {
@@ -393,7 +430,7 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
       .map { _.iterator() }.recover {
         case e => { logger.error(s"DB error while fetching Newest Version ${e.getMessage}"); throw e }
       }.toOption
-      .flatMap { iter => this.getNewestRow(iter, syncTable.columns.latestUpdate.name) }
+      .flatMap { iter => this.getNewestRow(iter, syncTable.columns.batchEndTime.name) }
       .map { row => (row.getInt(syncTable.columns.slot.name), row.getString(syncTable.columns.tableidentifier.name)) }
   }
 
@@ -581,20 +618,20 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
   def getNewestRow(rows: java.util.Iterator[Row], columnName: String): Option[Row] = {
     import scala.math.Ordering._
     val comp = implicitly[Ordering[Long]]
-    getComptRow(rows, comp.lt, columnName)
+    getComptRow(rows, comp.gt, columnName)
   }
 
   def getOldestRow(rows: java.util.Iterator[Row], columnName: String): Option[Row] = {
     import scala.math.Ordering._
     val comp = implicitly[Ordering[Long]]
-    getComptRow(rows, comp.gt, columnName)
+    getComptRow(rows, comp.lt, columnName)
   }
 
   def getComptRow(rows: JIterator[Row], comp: (Long, Long) => Boolean, columnName: String): Option[Row] = {  
     @tailrec def accNewestRow(prevRow: Row, nextRows: JIterator[Row]): Row = {
       if (nextRows.hasNext) {
         val localRow = nextRows.next()
-        logger.debug(s"Work with row ${localRow}")
+        logger.debug(s"Work with row ${prevRow} and ${localRow}")
         val max = if (comp(prevRow.getLong(columnName), localRow.getLong(columnName))) {
           prevRow
         } else {

@@ -29,6 +29,6 @@ public class BatchID implements Serializable {
 
 	@Override
 	public String toString() {
-		return "BatchID" + batchStart + ":" + batchEnd;
+		return "BatchID " + batchStart + ":" + batchEnd;
 	}
 }
