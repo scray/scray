@@ -70,7 +70,7 @@ class Adapter extends WordSpec with BeforeAndAfter with BeforeAndAfterAll {
       
 
       
-      val add = "abc<def>ffa".map { x => findStart(x) }.flatten.map { x => println("////////////// \t" + x) }
+      val add = "abc<def>ffa".map { x => findStart(x) }.flatten
     }
   }
 }
