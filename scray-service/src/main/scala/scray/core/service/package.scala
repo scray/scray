@@ -53,7 +53,7 @@ package object service {
   // expiration time of enpoint registrations
   val EXPIRATION = ScrayProperties.getPropertyValue(ScrayServicePropertiesRegistrar.SCRAY_ENDPOINT_LIFETIME)
 
-  def inetAddr2EndpointString(iaddr: InetSocketAddress): String = s"${iaddr.getHostName}:${iaddr.getPort}"
+  def inetAddr2EndpointString(iaddr: InetSocketAddress): String = s"${iaddr.getAddress.getHostAddress}:${iaddr.getPort}"
 
   implicit def UUID2ScrayUUID(uuid: UUID): ScrayUUID =
     ScrayUUID(uuid.getMostSignificantBits(), uuid.getLeastSignificantBits())

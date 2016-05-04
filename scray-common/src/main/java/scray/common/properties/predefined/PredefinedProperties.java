@@ -50,9 +50,9 @@ public class PredefinedProperties {
 	public final static IntProperty SCRAY_QUERY_PORT = new IntProperty(
 			"SCRAY_QUERY_PORT", 18181);
 	public final static IntProperty SCRAY_META_PORT = new IntProperty(
-			"SCRAY_META_PORT", 18191);
+			"SCRAY_META_PORT", 18181);
 	public final static SocketListProperty SCRAY_SEED_IPS = new SocketListProperty(
-			"SCRAY_SEED_IPS", 18191);
+			"SCRAY_SEED_IPS", 18181);
 	public final static SocketListProperty SCRAY_MEMCACHED_IPS = new SocketListProperty(
 			"SCRAY_MEMCACHED_IPS", 11211);
 

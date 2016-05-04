@@ -1,9 +1,7 @@
 package scray.common.properties;
 
-import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 /**
  * Represents a property list of strings. Requires quoting of strings either with " or '.

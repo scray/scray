@@ -20,7 +20,7 @@ import com.datastax.driver.core.ConsistencyLevel
 import com.typesafe.scalalogging.slf4j.LazyLogging
 import com.twitter.util.Throw
 import scray.querying.sync.types.DbSession
-import scray.querying.sync.cassandra.CassandraSessionBasedDBSession
+import scray.querying.sync.cassandra.CassandraDbSession
 
 /**
  * Cassandra properties, needed to setup a Cassandra cluster object
@@ -80,7 +80,7 @@ class CassandraClusterConfiguration(override protected val startconfig: Cassandr
   
   override def getSession: DbSession[_, _, _] = {
     val session = getCassandraCluster.map { _.getCluster.connect() }.get
-    new CassandraSessionBasedDBSession(session)
+    new CassandraDbSession(session)
   }
   
   override def readConfig(config: ScrayConfiguration, old: CassandraClusterProperties): Option[CassandraClusterProperties] = {

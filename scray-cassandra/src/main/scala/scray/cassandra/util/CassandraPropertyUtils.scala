@@ -25,12 +25,17 @@ import scray.common.properties.ScrayPropertyRegistration
 import scray.common.properties.predefined.CommonCassandraRegistrar
 import scray.common.properties.predefined.CommonCassandraLoader
 import scray.common.properties.predefined.PredefinedProperties
+import scray.common.tools.ScrayCredentials
 
 /**
  * utility functions for configurable Cassandra properties
  */
 object CassandraPropertyUtils {
 
+  def getCassandraClusterProperty() : String = ScrayProperties.getPropertyValue(PredefinedProperties.CASSANDRA_QUERY_CLUSTER_NAME)
+  
+  def getCassandraClusterCredentials() : ScrayCredentials = ScrayProperties.getPropertyValue(PredefinedProperties.CASSANDRA_QUERY_CLUSTER_CREDENTIALS)
+  
   def getCassandraHostProperty() : Set[StoreHost] = ScrayProperties.getPropertyValue(PredefinedProperties.CASSANDRA_QUERY_SEED_IPS).
     asScala.toSet[InetSocketAddress].map(inetsocket => StoreHost(s"${inetsocket.getHostString}:${inetsocket.getPort}"))
 

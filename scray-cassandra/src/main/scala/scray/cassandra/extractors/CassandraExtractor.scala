@@ -38,11 +38,12 @@ import scray.querying.description.internal.SingleValueDomain
 import scray.querying.queries.DomainQuery
 import scray.querying.source.Splitter
 import scray.querying.source.indexing.IndexConfig
+import scray.querying.storeabstraction.StoreExtractor
 
 /**
  * Helper class to create a configuration for a Cassandra table
  */
-trait CassandraExtractor[S <: AbstractCQLCassandraStore[_, _]] extends LazyLogging {
+trait CassandraExtractor[S <: AbstractCQLCassandraStore[_, _]] extends StoreExtractor[S] with LazyLogging {
 
   /**
    * returns a list of columns for this specific store; implementors must override this

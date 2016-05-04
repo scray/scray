@@ -3,12 +3,22 @@ package scray.loader.configuration
 import scala.collection.mutable.{ ArrayBuffer, HashMap }
 import scray.loader.configparser.{ ConfigProperties, ReadableConfig, ScrayConfiguration, UpdatetableConfiguration }
 import scray.querying.sync.types.DbSession
+import scray.loader.DBMSUndefinedException
+import scray.cassandra.automation.CassandraSessionHandler
+import scray.cassandra.extractors.CassandraExtractor
+import scray.cassandra.automation.CassandraStoreGenerators
+import scray.cassandra.rows.GenericCassandraRowStoreMapper
+import scray.cassandra.automation.CassandraSessionHandler
+import scray.querying.storeabstraction.StoreGenerators
+import scray.cassandra.automation.CassandraStoreGenerators
+import scray.cassandra.rows.GenericCassandraRowStoreMapper
 
 /**
  * abstraction for the management of configuration of stores
  */
 class ScrayStores(startConfig: ScrayConfiguration) {
-
+  import GenericCassandraRowStoreMapper.cassandraPrimitiveTypeMap
+  
   type SessionChangeListener = (String, DbSession[_, _, _]) => Unit
   
   private val storeConfigs: HashMap[String, DBMSConfiguration[_ <: DBMSConfigProperties]] = new HashMap[String, DBMSConfiguration[_ <: DBMSConfigProperties]]
@@ -49,6 +59,16 @@ class ScrayStores(startConfig: ScrayConfiguration) {
 
   // last thing after initializing vals is starting up...
   updateConfiguration(startConfig)
+
+  val cassandraSessionHandler = new CassandraSessionHandler
+  
+  def getStoreGenerator(dbId: String, session: DbSession[_, _, _], queryspace: String): StoreGenerators = { 
+    storeConfigs.get(dbId).map { config => config match {
+      case cassConfig: CassandraClusterConfiguration =>
+        new CassandraStoreGenerators(dbId, session, cassandraSessionHandler)
+      case _ => throw new DBMSUndefinedException(dbId, queryspace)
+    }}.getOrElse(throw new DBMSUndefinedException(dbId, queryspace))
+  }
 }
 
 /**
