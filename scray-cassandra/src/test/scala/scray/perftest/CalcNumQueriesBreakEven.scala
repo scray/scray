@@ -77,7 +77,7 @@ object CalcNumQueriesBreakEven {
       (config) => {
         // Initialize session
         val cluster = StoreCluster("Cluster", Set(StoreHost(config.cassIP + ":" + config.cassPort)))
-        val session = StoreSession(config.keyspaceName, cluster)
+        val session = StoreSession(config.keyspaceName, Some(cluster), None)
         val query: QUERY = QueryBuilder.select().all().from(config.columnFamilyName).where(_)
         // issue single query to pull all data into memory, if possible (to be able to compare)        
         val results = recursiveQuery(query, config.numberOfRows, config, config.keyColumnName, rand)

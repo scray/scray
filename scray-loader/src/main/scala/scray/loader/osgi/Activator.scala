@@ -1,35 +1,28 @@
 package scray.loader.osgi
 
 import com.twitter.finagle.Thrift
-import com.twitter.util.{ Duration, JavaTimer, TimerTask }
 import com.typesafe.scalalogging.slf4j.LazyLogging
-import java.io.{ File, FileInputStream, IOException }
-import org.apache.commons.io.IOUtils
 import org.osgi.framework.{ BundleActivator, BundleContext }
+import scala.collection.convert.decorateAsJava.mapAsJavaMapConverter
 import scala.collection.mutable.HashMap
-import scala.collection.convert.decorateAsScala._
-import scala.util.Try
-import scray.common.properties.ScrayProperties
+import scray.common.properties.{ PropertyMemoryStorage, ScrayProperties }
 import scray.common.properties.ScrayProperties.Phase
+import scray.core.service.{ KryoPoolRegistration, SCRAY_QUERY_LISTENING_ENDPOINT, ScrayCombinedStatefulTServiceImpl }
 import scray.core.service.properties.ScrayServicePropertiesRegistrar
 import scray.loader.ScrayLoaderQuerySpace
-import scray.loader.configparser.{ QueryspaceConfigurationFileHandler, ScrayConfigurationParser, ScrayQueryspaceConfiguration }
+import scray.loader.configparser.{ MainConfigurationFileHandler, QueryspaceConfigurationFileHandler, ScrayQueryspaceConfiguration }
 import scray.loader.configuration.ScrayStores
-import scray.service.qmodel.thrifscala.ScrayUUID
-import scray.service.qservice.thrifscala.{ ScrayCombinedStatefulTService, ScrayTServiceEndpoint }
+import scray.loader.service.RefreshServing
+import scray.loader.tools.SerializationTooling
+import scray.querying.Registry
+import com.twitter.util.Time
+import com.twitter.util.Duration
 import com.twitter.util.Await
 import java.util.concurrent.TimeUnit
-import scray.core.service.ScrayCombinedStatefulTServiceImpl
-import scray.core.service.KryoPoolRegistration
-import scray.loader.service.RefreshServing
-import scray.core.service.SCRAY_QUERY_LISTENING_ENDPOINT
-import scray.loader.configparser.MainConfigurationFileHandler
-import scray.common.properties.PropertyMemoryStorage
-import scala.collection.convert.decorateAsJava._
 
 /**
  * Bundle activator in order to run scray service.
- * Can also be used without OSGI using FakeBundleContext
+ * Can also be used without OSGI using FakeBundleContext.
  */
 class Activator extends KryoPoolRegistration with BundleActivator with LazyLogging {
   
@@ -39,9 +32,11 @@ class Activator extends KryoPoolRegistration with BundleActivator with LazyLoggi
    * starts the scray service
    */
   override def start(context: BundleContext) = {
-    logger.info("Starting Scray")
+    logger.info("Starting Scray...")
     
+    // register serialization for Kryo to improve performance 
     registerSerializers
+    SerializationTooling.registerAdditionalKryoSerializers()
     
     // start Properties registration phase
     ScrayServicePropertiesRegistrar.register()    
@@ -53,9 +48,8 @@ class Activator extends KryoPoolRegistration with BundleActivator with LazyLoggi
       throw new NullPointerException(msg)
     }
     
-    logger.info(s"Reading main configuration file $filename")
- 
     // switch to config phase and load config file
+    logger.info(s"Reading main configuration file $filename") 
     ScrayProperties.setPhase(Phase.config)
     val scrayConfiguration = MainConfigurationFileHandler.readMainConfig(filename).get
     ScrayProperties.addPropertiesStore(
@@ -63,31 +57,65 @@ class Activator extends KryoPoolRegistration with BundleActivator with LazyLoggi
     ScrayProperties.setPhase(Phase.use)
     
     // setup connections
+    logger.info(s"Preparing store instances")
     Activator.scrayStores = Some(new ScrayStores(scrayConfiguration))
     
     // read configs and start queryspace registration
     QueryspaceConfigurationFileHandler.performQueryspaceUpdate(scrayConfiguration, Activator.queryspaces, Seq())
     Activator.queryspaces.map { config =>
+      logger.info(s"Registering queryspace ${config._1}")
       val qs = new ScrayLoaderQuerySpace(config._1, scrayConfiguration, config._2._2, Activator.scrayStores.get)
+      Registry.registerQuerySpace(qs, Some(0))
     }
     
     // start service
-    // *** launch combined service
-    val server = Thrift.serveIface(SCRAY_QUERY_LISTENING_ENDPOINT, ScrayCombinedStatefulTServiceImpl())
-    val refresher = new RefreshServing
+    // *** launch combined service, by accessing lazy var...
+    server
+    // register shutdown hook
+    Runtime.getRuntime().addShutdownHook(new Thread(
+      new Runnable {
+        def run() {
+          shutdownServer()
+        }
+      }
+    ))
+
+    // start fail-over refresh daemon thread
+    Activator.refresher = Some(new RefreshServing)
     
-    logger.info(s"Scray Combined Server (Version ${getVersion}) started on ${refresher.addrStr}. Waiting for client requests...")
+    logger.info(s"Scray Combined Server (Version ${getVersion}) started on ${Activator.refresher.get.addrStr}. Waiting for client requests...")
 
     // start update service
+  }
+
+  lazy val server = {
+    val srv = Thrift.serveIface(SCRAY_QUERY_LISTENING_ENDPOINT, ScrayCombinedStatefulTServiceImpl())
+    logger.info(s"Going to install listening combined Scray meta- and query-service on ${srv.boundAddress}...")
+    srv
   }
   
   override def stop(context: BundleContext) = {
     // shutdown update service
+    Activator.refresher.map { refresher =>
+      refresher.destroyResources
+      refresher.client.map(_.close())
+    }
+    
     // shutdown service
+    shutdownServer()
+    
     // unregister all queryspaces
+    Registry.getQuerySpaceNames().foreach { name =>
+      Registry.updateQuerySpace(name, Set())
+    }
+    
     // shutdown connections
+    
   }
   
+  private def shutdownServer() = {
+    Await.ready(server.close(Duration(15, TimeUnit.SECONDS)))
+  }
 }
 
 object Activator {
@@ -95,4 +123,5 @@ object Activator {
   
   var scrayStores: Option[ScrayStores] = None
   val queryspaces: HashMap[String, (Long, ScrayQueryspaceConfiguration)] = new HashMap[String, (Long, ScrayQueryspaceConfiguration)]
+  var refresher: Option[RefreshServing] = None 
 }

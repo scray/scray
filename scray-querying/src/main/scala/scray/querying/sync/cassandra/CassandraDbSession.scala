@@ -50,7 +50,7 @@ import java.util.concurrent.TimeUnit
 import scala.None
 import com.typesafe.scalalogging.slf4j.LazyLogging
 
-class CassandraDbSession(cassandraSession: Session) extends DbSession[Statement, Insert, ResultSet](cassandraSession.getCluster.getMetadata.getAllHosts().iterator().next.getAddress.toString) with LazyLogging{
+class CassandraDbSession(val cassandraSession: Session) extends DbSession[Statement, Insert, ResultSet](cassandraSession.getCluster.getMetadata.getAllHosts().iterator().next.getAddress.toString) with LazyLogging{
       override def execute(statement: String): Try[ResultSet] = {
       try {
         val result = cassandraSession.execute(statement)

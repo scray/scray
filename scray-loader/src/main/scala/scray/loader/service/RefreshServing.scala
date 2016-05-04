@@ -15,31 +15,7 @@ import scray.service.qservice.thrifscala.{ ScrayCombinedStatefulTService, ScrayT
  */
 class RefreshServing extends LazyLogging {
   
-  // register this endpoint with all seeds and schedule regular refresh
-  // the refresh loop keeps the server running
-  SCRAY_SEEDS.asScala.map(inetAddr2EndpointString(_)).foreach { seedAddr =>
-    try {
-      if (Await.result(getClient(seedAddr).ping(), Duration(20, TimeUnit.SECONDS))) {
-        logger.debug(s"$addrStr adding local service endpoint ($endpoint) to $seedAddr.")
-        val _ep = Await.result(getClient(seedAddr).addServiceEndpoint(endpoint), Duration(20, TimeUnit.SECONDS))
-        // refreshTask = Some(refreshTimer.schedule(refreshPeriod.fromNow, refreshPeriod)(refresh(_ep.endpointId.get)))
-        refreshTask = Some(refreshTimer.schedule(refreshPeriod.fromNow, refreshPeriod)(refresh(_ep.endpointId.get)))
-      }
-    } catch {
-      case ex: Exception => {
-
-      }
-    }
-  }
-
-  /**
-   *  endpoint registration refresh timer
-   */
-  private val refreshTimer = new JavaTimer(isDaemon = false) {
-    override def logError(t: Throwable) {
-      logger.error("Could not refresh.", t)
-    }
-  }
+  var shownSeedException = false
 
   /**
    * the client which talks to the seed nodes to ping
@@ -57,6 +33,37 @@ class RefreshServing extends LazyLogging {
   lazy val endpoint = ScrayTServiceEndpoint(SCRAY_QUERY_HOST_ENDPOINT.getHostString, SCRAY_QUERY_HOST_ENDPOINT.getPort)
 
   val refreshPeriod = EXPIRATION * 2 / 3
+
+  /**
+   *  endpoint registration refresh timer
+   */
+  private val refreshTimer = new JavaTimer(isDaemon = false) {
+    override def logError(t: Throwable) {
+      logger.error("Could not refresh.", t)
+    }
+  }
+  
+  // register this endpoint with all seeds and schedule regular refresh
+  // the refresh loop keeps the server running
+  SCRAY_SEEDS.asScala.map(inetAddr2EndpointString(_)).foreach { seedAddr =>
+    try {
+      if (Await.result(getClient(seedAddr).ping(), Duration(20, TimeUnit.SECONDS))) {
+        logger.debug(s"$addrStr adding local service endpoint ($endpoint) to $seedAddr.")
+        val _ep = Await.result(getClient(seedAddr).addServiceEndpoint(endpoint), Duration(20, TimeUnit.SECONDS))
+        // refreshTask = Some(refreshTimer.schedule(refreshPeriod.fromNow, refreshPeriod)(refresh(_ep.endpointId.get)))
+        refreshTask = Some(refreshTimer.schedule(refreshPeriod.fromNow, refreshPeriod)(refresh(_ep.endpointId.get)))
+      }
+    } catch {
+      case ex: Exception => {
+        shownSeedException match {
+          case true => shownSeedException
+          case false => 
+            logger.error(s"Error while intializing refresh service", ex)
+            shownSeedException = true 
+        }
+      }
+    }
+  }
 
   def addrStr(): String =
     s"${SCRAY_QUERY_HOST_ENDPOINT.getHostString}:${SCRAY_QUERY_HOST_ENDPOINT.getPort}"

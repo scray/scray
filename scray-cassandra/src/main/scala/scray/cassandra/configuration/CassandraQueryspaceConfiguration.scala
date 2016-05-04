@@ -86,7 +86,6 @@ class CassandraQueryspaceConfiguration(
   override def queryCanBeGrouped(query: DomainQuery): Option[ColumnConfiguration] = queryCanBeOrdered(query)
   
   override def getColumns(version: Int): List[ColumnConfiguration] = tables.toList.flatMap ( table => {
-    // TODO: fix this ugly stuff (for now we leave it, as fixing this will only increase type safety)
     val typeReducedTable = table._1.asInstanceOf[AbstractCQLCassandraStore[Any, Any]]
     val extractor = CassandraExtractor.getExtractor(typeReducedTable, table._2._2, table._2._3)
     val allColumns = extractor.getTableConfiguration(table._2._1).allColumns
@@ -97,7 +96,6 @@ class CassandraQueryspaceConfiguration(
   })
   
   override def getTables(version: Int): Set[TableConfiguration[_, _, _]] = tables.map ( table => {
-    // TODO: fix this ugly stuff (for now we leave it, as fixing this will only increase type safety)
     val typeReducedTable = table._1.asInstanceOf[AbstractCQLCassandraStore[Any, Any]]
     val extractor = CassandraExtractor.getExtractor(typeReducedTable, table._2._2, table._2._3)
     extractor.getTableConfiguration(table._2._1)
