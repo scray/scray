@@ -110,6 +110,11 @@ abstract class JobInfo[Statement, InsertIn, Result](
   }    
 }
 
+trait StateMonitoringApi[Statement, InsertIn, Result] extends LazyLogging {
+  def getBatchJobState(job: JobInfo[Statement, InsertIn, Result]): Option[State]
+  def getOnlineJobState(job: JobInfo[Statement, InsertIn, Result]): Option[State]
+}
+
 case class RunningJobExistsException(message: String) extends Exception(message)
 case class NoRunningJobExistsException(message: String) extends Exception(message)
 case class StatementExecutionError(message: String) extends Exception(message)
