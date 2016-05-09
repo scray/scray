@@ -22,12 +22,29 @@ import scalaz.Monoid
 
 trait OnlineBatchSyncA[Statement, InsertIn, Result] extends LazyLogging {
 
+  /**
+   * Prepare tables for this job.
+   */
   def initJob[DataTableT <: ArbitrarylyTypedRows](job: JobInfo[Statement, InsertIn, Result]): Try[Unit]
 
+  /**
+   * Start new batch job in next slot. If no job is running.
+   */
   def startNextBatchJob(job: JobInfo[Statement, InsertIn, Result], dataTable: TableIdentifier): Try[Unit]
+  
+   /**
+   * Start new batch job in next slot. If no job is running.
+   */
   def startNextOnlineJob(job: JobInfo[Statement, InsertIn, Result]): Try[Unit]
   
+  /**
+   * Mark the given batch job as completed.
+   */
   def completeBatchJob(job: JobInfo[Statement, InsertIn, Result]): Try[Unit]
+  
+   /**
+   * Mark the given online job as completed.
+   */
   def completeOnlineJob(job: JobInfo[Statement, InsertIn, Result]): Try[Unit]
     
   def getQueryableTableIdentifiers: List[(String, TableIdentifier, Int)]
