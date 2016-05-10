@@ -15,6 +15,7 @@ class ScrayIntegrationTests extends WordSpec with LazyLogging {
       val activator = new Activator
       val context = new FakeBundleContext(Map(Activator.OSGI_FILENAME_PROPERTY -> "resource:///integrationtestconfigs/mainconfig1.txt"))
       activator.start(context)
+      Activator.keepRunning = false
     }
   }
 }

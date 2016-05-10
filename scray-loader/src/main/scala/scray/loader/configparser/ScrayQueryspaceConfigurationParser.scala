@@ -1,8 +1,24 @@
+// See the LICENCE.txt file distributed with this work for additional
+// information regarding copyright ownership.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 package scray.loader.configparser
 
 import com.typesafe.scalalogging.slf4j.LazyLogging
 import org.apache.commons.io.IOUtils
+// scalastyle:off underscore.import
 import org.parboiled2._
+// scalastyle:on underscore.import
 import scala.util.{ Failure, Try }
 import scray.loader.{ DBMSUndefinedException, UnsupportedMappingTypeException }
 import scray.loader.configuration.{ QueryspaceIndexstore, QueryspaceOption, QueryspaceRowstore }
@@ -16,11 +32,12 @@ import scray.querying.description.TableIdentifier
  * Tables ::= Rowstore | Indexstore
  * Rowstore ::= Tableid
  * Indexstore ::= "manualindex" "{" "type" ("time" | "wildcard") "," Tableid 
- * 								"indexedcolumn" STRING "," "index" STRING ("," "mapping" ID "->" ID)? "}"
+ *                "indexedcolumn" STRING "," "index" STRING ("," "mapping" ID "->" ID)? "}"
  * Tableid ::= "table" "{" ID "," STRING "," STRING "}"
  * TODO: implement materialized view configuration
  * 
  */
+// scalastyle:off method.name
 class ScrayQueryspaceConfigurationParser (override val input: ParserInput, val config: ScrayConfiguration) 
     extends ScrayGenericParsingRules with LazyLogging {
   
@@ -29,7 +46,7 @@ class ScrayQueryspaceConfigurationParser (override val input: ParserInput, val c
   /**
    * read until all input has been consumed
    */
-  def InputLine = rule { QueryspaceConfigModel ~ EOI }
+  def InputLine: Rule1[ScrayQueryspaceConfiguration] = rule { QueryspaceConfigModel ~ EOI }
 
   def QueryspaceConfigModel: Rule1[ScrayQueryspaceConfiguration] = rule { QueryspaceName ~ optional(SyncTable) ~ zeroOrMore(ConfigurationOptions) ~> {
     (name: (String, Long), syncTable: Option[TableIdentifier], options : Seq[QueryspaceOption]) =>
@@ -54,14 +71,16 @@ class ScrayQueryspaceConfigurationParser (override val input: ParserInput, val c
   
   def ConfigurationOptions: Rule1[QueryspaceOption] = rule { RowStore | IndexStore }
   
-  def RowStore: Rule1[QueryspaceRowstore] = rule { "table" ~ "{" ~ Identifier ~ "," ~ QuotedString ~ "," ~ QuotedString ~ "}" ~> { (dbms: String, dbid: String, table: String) => 
-    // check that the given identifier has been defined previously
-    config.stores.find { _.getName == dbms }.orElse(throw new DBMSUndefinedException(dbms, name.get))
-    QueryspaceRowstore(TableIdentifier(dbms, dbid, table)) }}
+  def RowStore: Rule1[QueryspaceRowstore] = rule { "table" ~ "{" ~ Identifier ~ COMMA ~ QuotedString ~ COMMA ~ QuotedString ~ "}" ~> { 
+    (dbms: String, dbid: String, table: String) => 
+      // check that the given identifier has been defined previously
+      config.stores.find { _.getName == dbms }.orElse(throw new DBMSUndefinedException(dbms, name.get))
+      QueryspaceRowstore(TableIdentifier(dbms, dbid, table)) 
+  }}
   
   def IndexStore: Rule1[QueryspaceIndexstore] = rule { "manualindex" ~ "{" ~ 
-    "type" ~ IndexType ~ "," ~ 
-    RowStore ~ "indexedcolumn" ~ QuotedString ~ "," ~ 
+    "type" ~ IndexType ~ COMMA ~ 
+    RowStore ~ "indexedcolumn" ~ QuotedString ~ COMMA ~ 
     "index" ~ QuotedString ~ optional(MappingType) ~ "}" ~> { 
       (indextype: String, table: QueryspaceRowstore, columnname: String, indexjobid: String, mapping: Option[String]) =>
       QueryspaceIndexstore(indextype, table.table, columnname, indexjobid, mapping)
@@ -70,7 +89,7 @@ class ScrayQueryspaceConfigurationParser (override val input: ParserInput, val c
     
   def IndexType: Rule1[String] = rule { capture("time") | capture("wildcard") }
 
-  def MappingType: Rule1[String] = rule { "," ~ "mapping" ~ Identifier ~ "->" ~ Identifier ~> { (in: String, out: String) => 
+  def MappingType: Rule1[String] = rule { COMMA ~ "mapping" ~ Identifier ~ "->" ~ Identifier ~> { (in: String, out: String) => 
     def checkSupportedMappingType(typ: String, mapping: String): Unit = typ match {
       case "UUID" =>
       case "TEXT" =>
@@ -82,6 +101,7 @@ class ScrayQueryspaceConfigurationParser (override val input: ParserInput, val c
     result
   }}  
 }
+// scalastyle:on method.name
 
 object ScrayQueryspaceConfigurationParser extends LazyLogging {
   private def handleWithErrorLogging(input: String, config: ScrayConfiguration, logError: Boolean = true): Try[ScrayQueryspaceConfiguration] = {

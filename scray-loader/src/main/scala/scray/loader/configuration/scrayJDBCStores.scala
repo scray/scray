@@ -1,3 +1,17 @@
+// See the LICENCE.txt file distributed with this work for additional
+// information regarding copyright ownership.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 package scray.loader.configuration
 
 import com.twitter.util.Try
@@ -17,7 +31,7 @@ import scray.querying.sync.types.DbSession
  * JDBC properties, needed to setup a JDBC connection
  */
 case class JDBCProperties(url: String,
-      credentials: ScrayCredentials = new ScrayCredentials(null, null),
+      credentials: ScrayCredentials = new ScrayCredentials(),
       name: Option[String] = None) extends DBMSConfigProperties {
   override def getName: String = name.getOrElse("jdbc")
   override def setName(newName: Option[String]): DBMSConfigProperties = this.copy(name = newName)

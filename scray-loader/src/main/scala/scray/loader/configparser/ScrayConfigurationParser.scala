@@ -1,3 +1,17 @@
+// See the LICENCE.txt file distributed with this work for additional
+// information regarding copyright ownership.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 package scray.loader.configparser
 
 import com.datastax.driver.core.ConsistencyLevel
@@ -6,7 +20,9 @@ import com.twitter.util.Duration
 import com.typesafe.scalalogging.slf4j.LazyLogging
 import java.net.{ InetAddress, InetSocketAddress }
 import org.apache.commons.io.IOUtils
+// scalastyle:off underscore.import
 import org.parboiled2._
+// scalastyle:on underscore.import
 import scala.util.{ Failure, Try }
 import scray.common.properties.predefined.PredefinedProperties
 import scray.common.tools.ScrayCredentials
@@ -17,6 +33,7 @@ import scray.loader.configuration.{ CassandraClusterConsistency, CassandraCluste
   ScrayCompressionSize, ScrayEndpointLifetime, ScrayMetaPort, ScraySeedIps, ScrayServiceAdvertiseIP, ScrayServiceIp, 
   ScrayServiceOption, ScrayServicePort, ScrayServiceWriteDot }
 import scray.core.service.properties.ScrayServicePropertiesRegistrar
+import ScrayConfigurationParser.SeqToOption
 
 /**
  * A syntax parser for scray configuration files.
@@ -28,7 +45,7 @@ import scray.core.service.properties.ScrayServicePropertiesRegistrar
  *   ScrayConfiguration ::= Service Datastores+ QueryspaceURLs
  *   Service ::= "service" "{" ServiceSetting ("," ServiceSetting)* "}"
  *   ServiceSetting ::= "compressionsize" INT | "service" Host | "seed" Hosts | "memcache" Hosts | 
- *   		"service" Port | "meta" Port | "advertise" Host | "lifetime" LONG TIMEUNIT | "writeDot" ("Y" | "N")
+ *     "service" Port | "meta" Port | "advertise" Host | "lifetime" LONG TIMEUNIT | "writeDot" ("Y" | "N")
  *   Port ::= "port" INT
  *   Host ::= "host" STRING
  *   Hosts ::= "hosts" "(" STRING ("," STRING)* ")"
@@ -48,12 +65,14 @@ import scray.core.service.properties.ScrayServicePropertiesRegistrar
  * This grammar is intentionally not based on XML nor JSON, YAML or anything else which does not
  * have a clear and easy to use schema.
  */
+// scalastyle:off method.name
+// scalastyle:off number.of.methods
 class ScrayConfigurationParser(override val input: ParserInput) extends ScrayGenericParsingRules with LazyLogging {
-  
+
   /**
    * read until all input has been consumed
    */
-  def InputLine = rule { ConfigModel ~ EOI }
+  def InputLine: Rule1[ScrayConfiguration] = rule { ConfigModel ~ EOI }
 
   def ConfigModel: Rule1[ScrayConfiguration] = rule { ServiceOptions ~ oneOrMore(Datastores) ~ ConfigurationLocations ~> { 
     (serviceoptions: ScrayServiceOptions, stores: Seq[DBMSConfigProperties], urls: Seq[ScrayQueryspaceConfigurationURL]) => 
@@ -66,8 +85,8 @@ class ScrayConfigurationParser(override val input: ParserInput) extends ScrayGen
   
   /* -------------------------------- Cassandra connection rules ----------------------------------- */ 
   
-  def CassandraStoreConnection: Rule1[CassandraClusterProperties] = rule { "cassandra" ~ "{" ~ oneOrMore(CassandraSetting).separatedBy(",") ~ "}" ~> {
-    (properties: Seq[CassandraClusterProperty]) =>
+  def CassandraStoreConnection: Rule1[CassandraClusterProperties] = rule { "cassandra" ~ BRACE_OPEN ~ oneOrMore(CassandraSetting).separatedBy(COMMA) ~ 
+    BRACE_CLOSE ~> { (properties: Seq[CassandraClusterProperty]) =>
       properties.find(_.isInstanceOf[CassandraClusterHosts]).orElse(throw new CassandraHostsUndefinedException())
       properties.foldLeft(CassandraClusterProperties()) { (properties, entry) => entry match {
         case cname: CassandraClusterNameProperty => properties.copy(clusterName = cname.name)
@@ -80,12 +99,14 @@ class ScrayConfigurationParser(override val input: ParserInput) extends ScrayGen
   
   def CassandraSetting: Rule1[CassandraClusterProperty] = rule { CassandraClusterName | CassandraHostNames | CassandraDatacenter | CassandraCredentials }
   
-  def CassandraClusterName: Rule1[CassandraClusterNameProperty] = rule { "clustername" ~ QuotedString ~> { (name: String) => CassandraClusterNameProperty(name) }}
+  def CassandraClusterName: Rule1[CassandraClusterNameProperty] = rule { "clustername" ~ QuotedString ~> { 
+    (name: String) => CassandraClusterNameProperty(name) }}
   def CassandraHostNames: Rule1[CassandraClusterHosts] = rule { HostList ~> {
     (hosts: Seq[String]) => CassandraClusterHosts(hosts.map(host => StoreHost(host)).toSet) }}
   def CassandraCredentials: Rule1[CassandraClusterCredentials] = rule { Credentials ~> {(creds: ScrayCredentials) => CassandraClusterCredentials(creds)}}
   def CassandraDatacenter: Rule1[CassandraClusterDatacenter] = rule { "datacenter" ~ QuotedString ~> { (dc: String) => CassandraClusterDatacenter(dc) }}
-  def CassandraConsistency: Rule1[CassandraClusterConsistency] = rule { "consistency" ~ CassandraConsistencyLevel ~> { (cl: ConsistencyLevel) => CassandraClusterConsistency(read = cl)} } 
+  def CassandraConsistency: Rule1[CassandraClusterConsistency] = rule { "consistency" ~ CassandraConsistencyLevel ~> { 
+    (cl: ConsistencyLevel) => CassandraClusterConsistency(read = cl)} } 
   def CassandraConsistencyLevel: Rule1[ConsistencyLevel] = rule { Identifier ~> {(level: String) => level match {
       case "ANY" => ConsistencyLevel.ANY
       case "ONE" => ConsistencyLevel.ONE
@@ -105,7 +126,7 @@ class ScrayConfigurationParser(override val input: ParserInput) extends ScrayGen
     
   /* -------------------------------- JDBC connection rules ----------------------------------- */
   
-  def JDBCStoreConnection: Rule1[JDBCProperties] = rule { "jdbc" ~ "{" ~ oneOrMore(JDBCSetting).separatedBy(",") ~ "}" ~> {
+  def JDBCStoreConnection: Rule1[JDBCProperties] = rule { "jdbc" ~ BRACE_OPEN ~ oneOrMore(JDBCSetting).separatedBy(COMMA) ~ BRACE_CLOSE ~> {
     (properties: Seq[JDBCProperty]) =>
       val url = properties.find(_.isInstanceOf[JDBCURLProperty]).map(_.asInstanceOf[JDBCURLProperty]).getOrElse(throw new JDBCURLUndefinedException())
       properties.foldLeft(JDBCProperties(url.url)) { (properties, entry) => entry match {
@@ -121,11 +142,13 @@ class ScrayConfigurationParser(override val input: ParserInput) extends ScrayGen
   
   /* -------------------------------- Queryspaces configuration location rules ----------------------------------- */
   
-  def ConfigurationLocations: Rule1[Seq[ScrayQueryspaceConfigurationURL]] = rule { "queryspacelocations" ~ "{" ~ oneOrMore(ConfigurationLocationSetting).separatedBy(",") ~ "}"} 
+  def ConfigurationLocations: Rule1[Seq[ScrayQueryspaceConfigurationURL]] = rule { "queryspacelocations" ~ BRACE_OPEN ~ 
+    oneOrMore(ConfigurationLocationSetting).separatedBy(COMMA) ~ BRACE_CLOSE} 
 
   def ConfigurationLocationSetting: Rule1[ScrayQueryspaceConfigurationURL] =
-    rule { "url" ~ QuotedString ~ optional("reload" ~ ConfigurationLocationAutoreload) ~> { (url: String, autoreload: Option[ScrayQueryspaceConfigurationURLReload]) => 
-      ScrayQueryspaceConfigurationURL(url, autoreload.getOrElse(ScrayQueryspaceConfigurationURLReload())) }}
+    rule { "url" ~ QuotedString ~ optional("reload" ~ ConfigurationLocationAutoreload) ~> { 
+      (url: String, autoreload: Option[ScrayQueryspaceConfigurationURLReload]) => 
+          ScrayQueryspaceConfigurationURL(url, autoreload.getOrElse(ScrayQueryspaceConfigurationURLReload())) }}
   def ConfigurationLocationAutoreload: Rule1[ScrayQueryspaceConfigurationURLReload] = 
     rule { ConfigurationLocationAutoreloadNever | ConfigurationLocationAutoreloadSeconds } 
   def ConfigurationLocationAutoreloadNever: Rule1[ScrayQueryspaceConfigurationURLReload] = 
@@ -138,9 +161,8 @@ class ScrayConfigurationParser(override val input: ParserInput) extends ScrayGen
     (user: String, pwd: String) => new ScrayCredentials(user, pwd.toCharArray()) }}
 
   /* -------------------------------- Service option rules ----------------------------------- */
-  def ServiceOptions: Rule1[ScrayServiceOptions] = rule { "service" ~ "{" ~ oneOrMore(ServiceOption).separatedBy(",") ~ "}" ~> {
+  def ServiceOptions: Rule1[ScrayServiceOptions] = rule { "service" ~ BRACE_OPEN ~ oneOrMore(ServiceOption).separatedBy(COMMA) ~ BRACE_CLOSE ~> {
     (options: Seq[ScrayServiceOption]) =>
-      import ScrayConfigurationParser.SeqToOption
       val compressionsize = options.collect {
         case size: ScrayCompressionSize => size.size
       }.toOption.getOrElse(PredefinedProperties.RESULT_COMPRESSION_MIN_SIZE.getDefault().toInt)
@@ -183,11 +205,12 @@ class ScrayConfigurationParser(override val input: ParserInput) extends ScrayGen
   def ServiceMemcacheIPs: Rule1[MemcacheIps] = rule { "memcache" ~ HostPortList ~> {(hosts: Seq[InetSocketAddress]) => MemcacheIps(hosts)}}
   def ServicePort: Rule1[ScrayServicePort] = rule { "service" ~ HostPort ~> {(port: Int) => ScrayServicePort(port)}}
   def ServiceMetaPort: Rule1[ScrayMetaPort] = rule { "meta" ~ HostPort ~> {(port: Int) => ScrayMetaPort(port)}}
-  def ServiceAdvertiseIP: Rule1[ScrayServiceAdvertiseIP] = rule { "advertise" ~ "host" ~ QuotedString ~> { (address: String) => ScrayServiceAdvertiseIP(InetAddress.getByName(address)) }}
+  def ServiceAdvertiseIP: Rule1[ScrayServiceAdvertiseIP] = rule { "advertise" ~ "host" ~ QuotedString ~> { 
+    (address: String) => ScrayServiceAdvertiseIP(InetAddress.getByName(address)) }}
   def ServiceLifetime: Rule1[ScrayEndpointLifetime] = rule { "lifetime" ~ DurationRule ~> { (duration: Duration) => ScrayEndpointLifetime(duration) }}
   def ServiceWriteDot: Rule1[ScrayServiceWriteDot] = rule { "writeDot" ~ BooleanRule ~> { (bool: Boolean) => ScrayServiceWriteDot(bool) }}
 
-  def HostList: Rule1[Seq[String]] = rule { "hosts" ~ "(" ~ oneOrMore(QuotedString).separatedBy(",") ~ ")" }
+  def HostList: Rule1[Seq[String]] = rule { "hosts" ~ "(" ~ oneOrMore(QuotedString).separatedBy(COMMA) ~ ")" }
   def HostPort: Rule1[Int] = rule { "port" ~ IntNumber }
   def HostAddressList: Rule1[Seq[InetAddress]] = rule { HostList ~> { (hosts: Seq[String]) => 
     hosts.map(host => InetAddress.getByName(host)) }}
@@ -207,6 +230,8 @@ class ScrayConfigurationParser(override val input: ParserInput) extends ScrayGen
       new InetSocketAddress(ip, port)
     }}}
 }
+// scalastyle:on number.of.methods
+// scalastyle:on method.name
 
 /**
  * companion brings methods to conveniently call the parser
