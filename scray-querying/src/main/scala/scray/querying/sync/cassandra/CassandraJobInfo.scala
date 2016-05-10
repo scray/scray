@@ -25,9 +25,6 @@ import scray.querying.sync.types.State.State
 import com.datastax.driver.core.querybuilder.Update.Where
 import com.datastax.driver.core.querybuilder.Update.Conditions
 import scala.util.Try
-import scray.querying.sync.RunningJobExistsException
-import scray.querying.sync.NoRunningJobExistsException
-import scray.querying.sync.StatementExecutionError
 import scala.util.Failure
 import scala.util.Success
 import scala.collection.JavaConversions._
@@ -59,7 +56,7 @@ class CassandraJobInfo(
   val statementGenerator = new CassandraStatementGenerator
 
   def getLock(dbSession: DbSession[Statement, Insert, ResultSet]): LockApi[Statement, Insert, ResultSet] = {
-    if (this.lock == null) {
+     this.lock = this.lock.orElse {
       val table = JobLockTable("SILIDX", "JobSync")
 
       dbSession.execute(statementGenerator.createKeyspaceCreationString(table).get).
@@ -74,9 +71,10 @@ class CassandraJobInfo(
         .value(table.columns.jobname.name, this.name)
         .value(table.columns.locked.name, false))
 
-      lock = new CassandraSyncTableLock(this, JobLockTable("SILIDX", "JobSync"), dbSession, lockTimeOut)
+      Some(new CassandraSyncTableLock(this, JobLockTable("SILIDX", "JobSync"), dbSession, lockTimeOut))
     }
-    lock
+
+    this.lock.get
   }
 
   def getLock(dbHostname: String): LockApi[Statement, Insert, ResultSet] = {
@@ -88,6 +86,7 @@ object CassandraJobInfo {
   def apply(name: String) = {
     new CassandraJobInfo(name)
   }
+  
   def apply(name: String, batchID: BatchID, numberOfBatchVersions: Int, numberOfOnlineVersions: Int) = {
     new CassandraJobInfo(name, numberOfBatchVersions, numberOfOnlineVersions)
   }

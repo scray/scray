@@ -5,6 +5,10 @@ import org.scalatest.BeforeAndAfter
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.WordSpec
 import org.scalatest.junit.JUnitRunner
+import scala.util.matching.Regex
+import com.fasterxml.jackson.module.scala.experimental.ScalaObjectMapper
+import com.fasterxml.jackson.module.scala.DefaultScalaModule
+import com.fasterxml.jackson.databind.ObjectMapper
 
 
   @RunWith(classOf[JUnitRunner])
@@ -48,34 +52,59 @@ class Adapter extends WordSpec with BeforeAndAfter with BeforeAndAfterAll {
 //    }
     
     
-    " throw exception if job already exists" in {
-     val stream = new YahooStreamAdapter
-     val sb = new StringBuffer
-     val buffer = new Array[Char](10000);
-     
-     while(true) {
-
-       val sb = new StringBuffer
-       val len = stream.getStream.read(buffer);
-       println(len)
-       sb.append(buffer, 0, len);
-
-       //println(sb.toString().split("\\(\\{").foreach { x => x.split("\\}\\}")})
-       println(sb.toString().split("\\(\\{").foreach { x => println(x)})
-
-//       println(sb.toString().
-//           replace("<html><head><script type='text/javascript'> document.domain='finance.yahoo.com'; </script> </head><body></body><script>try{parent.yfs_mktmcb(", "").
-//           replace(");}catch(e){}</script><script>try{parent.yfs_u1f(", "").
-//           replace(";}catch(e){}</script><script>try{parent.yfs_u1f({\"USDUSD=X\":{l10:\"1.0000\",a00:\"1.0000\",b00:\"1.0000\",g00:\"1.0000\",h00:\"1.0000\"}});}catch(e){}</script>", "").
-//           replace(";}catch(e){}</script>", "").
-//           replace("}}", ""))
+//    " throw exception if job already exists" in {
+//     val stream = new YahooStreamAdapter
+//     val sb = new StringBuffer
+//     val buffer = new Array[Char](10000);
+//     
+////     while(true) {
+//
+//       val sb = new StringBuffer
+//       //val len = stream.getStream2
+//
+//       //println("\n\n" + sb.toString() + "\n\n")
+//       //println(sb.toString().split("\\(\\{").foreach { x => x.split("\\}\\}")})
+//       //println(sb.toString().split("\\(\\{").foreach { x => println(x)})
+//
+////       println(sb.toString().
+////           replace("<html><head><script type='text/javascript'> document.domain='finance.yahoo.com'; </script> </head><body></body><script>try{parent.yfs_mktmcb(", "").
+////           replace(");}catch(e){}</script><script>try{parent.yfs_u1f(", "").
+////           replace(";}catch(e){}</script><script>try{parent.yfs_u1f({\"USDUSD=X\":{l10:\"1.0000\",a00:\"1.0000\",b00:\"1.0000\",g00:\"1.0000\",h00:\"1.0000\"}});}catch(e){}</script>", "").
+////           replace(";}catch(e){}</script>", "").
+////           replace("}}", ""))
+//    
+//       
+//       //Thread.sleep(1000)
+// //    }
+//     //buffer.filter { x => ??? }foldLeft(0)((acc, n) => acc)
+//// 
+//     
+//    }
     
-       
-       //Thread.sleep(1000)
-     }
-     //buffer.filter { x => ??? }foldLeft(0)((acc, n) => acc)
-// 
-     
+
+    "extract json object" in {
+      val string = "<script>try{parent.yfs_u1f({\"EOAN.F\":{l10:\"8.45\",a00:\"8.50\",b00:\"8.50\",g00:\"8.41\",h00:\"8.51\"}});}catch(e){}</script>ipt>"
+      
+      val pattern = new Regex("""\(\{.*?\)""")
+      
+      for(stockString <- pattern.findAllIn(string)) {
+       assert(stockString.replaceAll("\\(", "").replace(")", "") == "{\"EOAN.F\":{l10:\"8.45\",a00:\"8.50\",b00:\"8.50\",g00:\"8.41\",h00:\"8.51\"}}")
+      }
+    }
+    "parse json string" in {
+      val jsonObject = "{\"EOAN.F\":{l10:\"8.45\",a00:\"8.50\",b00:\"8.50\",g00:\"8.41\",h00:\"8.51\"}}"
+      import scala.collection.JavaConversions._
+      
+      val mapper = new ObjectMapper()
+      mapper.registerModule(DefaultScalaModule)
+      
+      import scray.example.adapter.Share
+      val user = mapper.readValue(jsonObject, classOf[Share])
+      
+      val pattern = new Regex("""\(.*?\)""")
+      for(stockString <- pattern.findAllIn(jsonObject)) {  
+       println(stockString.replaceAll("\\(", "").replace(")", ""))
+      }
     }
   }
 }

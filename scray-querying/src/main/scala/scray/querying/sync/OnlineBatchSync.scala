@@ -96,10 +96,10 @@ abstract class JobInfo[Statement, InsertIn, Result](
   val numberOfOnlineSlots: Int = 2
   ) extends Serializable {
     
-  var lock: Option[LockApi[Statement, InsertIn, Result]] 
+  var lock: Option[LockApi[Statement, InsertIn, Result]] = None
   def getLock(dbSession: DbSession[Statement, InsertIn, Result]): LockApi[Statement, InsertIn, Result]
       
-  def getBatchID(dbSession: DbSession[Statement, InsertIn, Result]): Option[BatchID] 
+  //def getBatchID(dbSession: DbSession[Statement, InsertIn, Result]): Option[BatchID] 
 }
 
 trait StateMonitoringApi[Statement, InsertIn, Result] extends LazyLogging {
