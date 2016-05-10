@@ -22,12 +22,29 @@ import scalaz.Monoid
 
 trait OnlineBatchSyncA[Statement, InsertIn, Result] extends LazyLogging {
 
+  /**
+   * Prepare tables for this job.
+   */
   def initJob[DataTableT <: ArbitrarylyTypedRows](job: JobInfo[Statement, InsertIn, Result]): Try[Unit]
 
+  /**
+   * Start new batch job in next slot. If no job is running.
+   */
   def startNextBatchJob(job: JobInfo[Statement, InsertIn, Result], dataTable: TableIdentifier): Try[Unit]
+  
+   /**
+   * Start new batch job in next slot. If no job is running.
+   */
   def startNextOnlineJob(job: JobInfo[Statement, InsertIn, Result]): Try[Unit]
   
+  /**
+   * Mark the given batch job as completed.
+   */
   def completeBatchJob(job: JobInfo[Statement, InsertIn, Result]): Try[Unit]
+  
+   /**
+   * Mark the given online job as completed.
+   */
   def completeOnlineJob(job: JobInfo[Statement, InsertIn, Result]): Try[Unit]
     
   def getQueryableTableIdentifiers: List[(String, TableIdentifier, Int)]
@@ -78,19 +95,16 @@ abstract class JobInfo[Statement, InsertIn, Result](
   val numberOfBatchSlots: Int = 3,
   val numberOfOnlineSlots: Int = 2
   ) extends Serializable {
-  
-  var batchID: Option[BatchID] = None
-  var lock: LockApi[Statement, InsertIn, Result] = null
+    
+  var lock: Option[LockApi[Statement, InsertIn, Result]] 
   def getLock(dbSession: DbSession[Statement, InsertIn, Result]): LockApi[Statement, InsertIn, Result]
       
-  def this(name: String, batchID: BatchID) {
-    this(name)
-    this.batchID = Some(batchID)
-  }
-  
-  def getBatchID(dbSession: DbSession[Statement, InsertIn, Result]): Option[BatchID] = {
-    batchID
-  }    
+  def getBatchID(dbSession: DbSession[Statement, InsertIn, Result]): Option[BatchID] 
+}
+
+trait StateMonitoringApi[Statement, InsertIn, Result] extends LazyLogging {
+  def getBatchJobState(job: JobInfo[Statement, InsertIn, Result]): Option[State]
+  def getOnlineJobState(job: JobInfo[Statement, InsertIn, Result]): Option[State]
 }
 
 case class RunningJobExistsException(message: String) extends Exception(message)

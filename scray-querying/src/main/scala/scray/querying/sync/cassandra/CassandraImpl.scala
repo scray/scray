@@ -42,6 +42,7 @@ import scray.querying.sync.types.SyncTable
 import scray.querying.sync.types.Table
 import scray.querying.sync.types.VoidTable
 import scray.querying.sync.RunningJobExistsException
+import scray.querying.sync.StateMonitoringApi
 
 object CassandraImplementation extends Serializable {
   implicit def genericCassandraColumnImplicit[T](implicit cassImplicit: CassandraPrimitive[T]): DBColumnImplementation[T] = new DBColumnImplementation[T] {
@@ -63,7 +64,7 @@ object CassandraImplementation extends Serializable {
   }
 }
 
-class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet]) extends OnlineBatchSyncA[Statement, Insert, ResultSet] with OnlineBatchSyncB[Statement, Insert, ResultSet] {
+class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet]) extends OnlineBatchSyncA[Statement, Insert, ResultSet] with OnlineBatchSyncB[Statement, Insert, ResultSet] with StateMonitoringApi[Statement, Insert, ResultSet] {
 
   def this(dbHostname: String) = {
     this(new CassandraDbSession(Cluster.builder().addContactPoint(dbHostname).build().connect()))
@@ -399,22 +400,22 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
     }
   }
 
-//  def getOnlineJobState(job: JOB_INFO): Option[State] = {
-//    this.getJobState(job, true)
-//  }
-//
-//  def getBatchJobState(job: JOB_INFO): Option[State] = {
-//    this.getJobState(job, false)
-//  }
+  def getOnlineJobState(job: JOB_INFO): Option[State] = {
+    this.getJobState(job, true)
+  }
 
-//  private def getJobState(job: JOB_INFO, online: Boolean): Option[State] = {
-//    execute(QueryBuilder.select(syncTable.columns.state.name).from(syncTable.keySpace, syncTable.tableName).allowFiltering().where(
-//      QueryBuilder.eq(syncTable.columns.jobname.name, job.name)).
-//      and(QueryBuilder.eq(syncTable.columns.online.name, online)))
-//      .map { resultset => resultset.all().get(0).getString(0) }
-//      .map { state => State.values.find(_.toString() == state).get }
-//      .toOption
-//  }
+  def getBatchJobState(job: JOB_INFO): Option[State] = {
+    this.getJobState(job, false)
+  }
+
+  private def getJobState(job: JOB_INFO, online: Boolean): Option[State] = {
+    execute(QueryBuilder.select(syncTable.columns.state.name).from(syncTable.keySpace, syncTable.tableName).allowFiltering().where(
+      QueryBuilder.eq(syncTable.columns.jobname.name, job.name)).
+      and(QueryBuilder.eq(syncTable.columns.online.name, online)))
+      .map { resultset => resultset.all().get(0).getString(0) }
+      .map { state => State.values.find(_.toString() == state).get }
+      .toOption
+  }
 
   def getNewestOnlineSlot(job: JOB_INFO): Option[Int] = getNewestSlotAndTable(job.name, true).map(_._1)
   def getNewestBatchSlot(job: JOB_INFO): Option[Int] = getNewestSlotAndTable(job.name, false).map(_._1)
