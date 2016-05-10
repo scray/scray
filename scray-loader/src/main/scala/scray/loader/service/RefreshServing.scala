@@ -1,3 +1,17 @@
+// See the LICENCE.txt file distributed with this work for additional
+// information regarding copyright ownership.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 package scray.loader.service
 
 import com.twitter.finagle.Thrift
@@ -13,6 +27,7 @@ import scray.service.qservice.thrifscala.{ ScrayCombinedStatefulTService, ScrayT
 /**
  * handles refreshment of ip addresses for the scray service
  */
+// scalastyle:off no.finalize
 class RefreshServing extends LazyLogging {
   
   var shownSeedException = false
@@ -47,9 +62,9 @@ class RefreshServing extends LazyLogging {
   // the refresh loop keeps the server running
   SCRAY_SEEDS.asScala.map(inetAddr2EndpointString(_)).foreach { seedAddr =>
     try {
-      if (Await.result(getClient(seedAddr).ping(), Duration(20, TimeUnit.SECONDS))) {
+      if (Await.result(getClient(seedAddr).ping(), RefreshServing.RESULT_WAITING_TIME)) {
         logger.debug(s"$addrStr adding local service endpoint ($endpoint) to $seedAddr.")
-        val _ep = Await.result(getClient(seedAddr).addServiceEndpoint(endpoint), Duration(20, TimeUnit.SECONDS))
+        val _ep = Await.result(getClient(seedAddr).addServiceEndpoint(endpoint), RefreshServing.RESULT_WAITING_TIME)
         // refreshTask = Some(refreshTimer.schedule(refreshPeriod.fromNow, refreshPeriod)(refresh(_ep.endpointId.get)))
         refreshTask = Some(refreshTimer.schedule(refreshPeriod.fromNow, refreshPeriod)(refresh(_ep.endpointId.get)))
       }
@@ -87,10 +102,10 @@ class RefreshServing extends LazyLogging {
     SCRAY_SEEDS.asScala.map(inetAddr2EndpointString(_)).foreach { seedAddr =>
       try {
         logger.trace(s"$addrStr trying to refresh service endpoint ($id).")
-        if (Await.result(getClient(seedAddr).ping(), Duration(20, TimeUnit.SECONDS))) {
+        if (Await.result(getClient(seedAddr).ping(), RefreshServing.RESULT_WAITING_TIME)) {
           logger.debug(s"$addrStr refreshing service endpoint ($id).")
           // client.refreshServiceEndpoint(id)
-          Await.result(getClient(seedAddr).addServiceEndpoint(endpoint), Duration(20, TimeUnit.SECONDS))
+          Await.result(getClient(seedAddr).addServiceEndpoint(endpoint), RefreshServing.RESULT_WAITING_TIME)
         }
       } catch {
         case ex: Exception =>
@@ -98,7 +113,9 @@ class RefreshServing extends LazyLogging {
           getClient(seedAddr)
           if (time < 4) {
             logger.warn(s"Endpoint refresh failed, time $time: $ex", ex)
+            // scalastyle:off magic.number
             Thread.sleep(10000)
+            // scalastyle:on magic.number
             refresh(id, time + 1)
           } else {
             logger.warn("Endpoint refresh failed. Retry maximum exceeded. Exiting.")
@@ -112,9 +129,15 @@ class RefreshServing extends LazyLogging {
    */
   def destroyResources: Unit = {}
 
-  override def finalize = {
+  override def finalize: Unit = {
     client = None
     destroyResources
   }
+}
+// scalastyle:on no.finalize
 
+object RefreshServing {
+  // scalastyle:off magic.number
+  val RESULT_WAITING_TIME = Duration(20, TimeUnit.SECONDS)
+  // scalastyle:on magic.number
 }

@@ -10,6 +10,11 @@ public class ScrayCredentials {
 	private String username = null;
 	private char[] password = null;
 	
+	public ScrayCredentials() {
+		username = null;
+		this.password = null;
+	}
+	
 	public ScrayCredentials(String name, char[] password) {
 		username = name;
 		this.password = password;

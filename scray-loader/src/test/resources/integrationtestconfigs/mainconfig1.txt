@@ -10,5 +10,5 @@ connection test cassandra {
 }
 
 queryspacelocations {
-	url "resource:///configs/queryspaceconfig1.txt"
+	url "resource:///integrationtestconfigs/queryspaceconfigit1.txt"
 }

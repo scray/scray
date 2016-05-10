@@ -1,3 +1,17 @@
+// See the LICENCE.txt file distributed with this work for additional
+// information regarding copyright ownership.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 package scray.loader.configuration
 
 import com.twitter.storehaus.cassandra.cql.CQLCassandraConfiguration.StoreCluster
@@ -26,7 +40,7 @@ import scray.querying.sync.cassandra.CassandraDbSession
  * Cassandra properties, needed to setup a Cassandra cluster object
  */
 case class CassandraClusterProperties(clusterName: String = PredefinedProperties.CASSANDRA_QUERY_CLUSTER_NAME.getDefault,
-      credentials: ScrayCredentials = new ScrayCredentials(null, null),
+      credentials: ScrayCredentials = new ScrayCredentials(),
       hosts: Set[StoreHost] = Option(PredefinedProperties.CASSANDRA_QUERY_SEED_IPS.getDefault).
         map(_.asScala.map { addr => StoreHost(addr.toString) }.toSet).getOrElse(Set()),
       datacenter: String = PredefinedProperties.CASSANDRA_QUERY_CLUSTER_DC.getDefault,
@@ -59,8 +73,8 @@ class CassandraClusterConfiguration(override protected val startconfig: Cassandr
     val clusterCredentials = config.get.credentials
     val cassandraHost = config.get.hosts
     StoreCluster(name = clusterName, hosts = cassandraHost,
-      credentials = if (clusterCredentials.isEmpty()) None
-      else Some(StoreCredentials(clusterCredentials.getUsername, new String(clusterCredentials.getPassword))),
+      credentials = if (clusterCredentials.isEmpty()) { None } else {
+        Some(StoreCredentials(clusterCredentials.getUsername, new String(clusterCredentials.getPassword)))},
       loadBalancing = new TokenAwarePolicy(new DCAwareRoundRobinPolicy(config.get.datacenter)),
       reconnectPolicy = Policies.defaultReconnectionPolicy,
       retryPolicy = Policies.defaultRetryPolicy,

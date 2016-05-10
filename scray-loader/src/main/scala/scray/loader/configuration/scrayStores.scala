@@ -1,23 +1,33 @@
+// See the LICENCE.txt file distributed with this work for additional
+// information regarding copyright ownership.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 package scray.loader.configuration
 
 import scala.collection.mutable.{ ArrayBuffer, HashMap }
 import scray.loader.configparser.{ ConfigProperties, ReadableConfig, ScrayConfiguration, UpdatetableConfiguration }
+import scray.querying.storeabstraction.StoreGenerators
 import scray.querying.sync.types.DbSession
 import scray.loader.DBMSUndefinedException
-import scray.cassandra.automation.CassandraSessionHandler
+import scray.cassandra.automation.{ CassandraSessionHandler, CassandraStoreGenerators }
 import scray.cassandra.extractors.CassandraExtractor
-import scray.cassandra.automation.CassandraStoreGenerators
 import scray.cassandra.rows.GenericCassandraRowStoreMapper
-import scray.cassandra.automation.CassandraSessionHandler
-import scray.querying.storeabstraction.StoreGenerators
-import scray.cassandra.automation.CassandraStoreGenerators
-import scray.cassandra.rows.GenericCassandraRowStoreMapper
+import scray.cassandra.rows.GenericCassandraRowStoreMapper.cassandraPrimitiveTypeMap
 
 /**
  * abstraction for the management of configuration of stores
  */
 class ScrayStores(startConfig: ScrayConfiguration) {
-  import GenericCassandraRowStoreMapper.cassandraPrimitiveTypeMap
   
   type SessionChangeListener = (String, DbSession[_, _, _]) => Unit
   
@@ -55,7 +65,7 @@ class ScrayStores(startConfig: ScrayConfiguration) {
     }
   }
   
-  def updateConfiguration(configUpdate: ScrayConfiguration) = updateStoreConfigs(configUpdate)
+  def updateConfiguration(configUpdate: ScrayConfiguration): Unit = updateStoreConfigs(configUpdate)
 
   // last thing after initializing vals is starting up...
   updateConfiguration(startConfig)
@@ -69,6 +79,8 @@ class ScrayStores(startConfig: ScrayConfiguration) {
       case _ => throw new DBMSUndefinedException(dbId, queryspace)
     }}.getOrElse(throw new DBMSUndefinedException(dbId, queryspace))
   }
+  
+  
 }
 
 /**

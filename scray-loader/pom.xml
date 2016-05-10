@@ -123,9 +123,7 @@
 						</goals>
 						<configuration>
 							<descriptors>
-								<descriptor>transitive-dependencies.xml</descriptor>
-								<descriptor>scray-changing-dependencies.xml</descriptor>
-								<descriptor>sometimes-changing-dependencies.xml</descriptor>
+								<descriptor>scray-loader-dependencies.xml</descriptor>
 							</descriptors>
 						</configuration>
 					</execution>

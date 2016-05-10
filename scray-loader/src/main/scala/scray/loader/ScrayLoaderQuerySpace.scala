@@ -1,3 +1,17 @@
+// See the LICENCE.txt file distributed with this work for additional
+// information regarding copyright ownership.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 package scray.loader
 
 import scray.querying.description.QueryspaceConfiguration
@@ -73,7 +87,8 @@ class ScrayLoaderQuerySpace(name: String, config: ScrayConfiguration, qsConfig: 
   private def getRowstoreConfiguration(id: TableIdentifier): Option[TableConfiguration[_, _, _]] = {
     // Extractor
     def extractTable[S <: QueryableStore[_, _]](storeconfigs: (S, 
-        (Function1[_, Row], Option[String], Option[VersioningConfiguration[_, _, _]])), generator: StoreGenerators) = {
+        (Function1[_, Row], Option[String], Option[VersioningConfiguration[_, _, _]])), generator: StoreGenerators):
+        TableConfiguration[_, _, _] = {
       // TODO: read latest version from SyncTable, if it is declared there, generate a VersioningConfig; otherwise leave it by None
       val extractor = generator.getExtractor(storeconfigs._1, Some(id.tableId), None)
       val tid = extractor.getTableIdentifier(storeconfigs._1, storeconfigs._2._2)
@@ -115,7 +130,7 @@ class ScrayLoaderQuerySpace(name: String, config: ScrayConfiguration, qsConfig: 
    */
   override def getColumns(version: Int): List[ColumnConfiguration] = {
     def getColumnConfig[S <: TableConfiguration[_, _, _]](table: S): List[ColumnConfiguration] = {
-      def extractTableConfig[F <: QueryableStore[_, _]](column: Column, extractor: StoreExtractor[F]) = {
+      def extractTableConfig[F <: QueryableStore[_, _]](column: Column, extractor: StoreExtractor[F]): ColumnConfiguration = {
         // TODO: add indexing configuration (replace maps)
         val index = extractor.createManualIndexConfiguration(column, name, version, table.queryableStore.get().asInstanceOf[F], Map(), Map())
         // TODO: add splitter configuration

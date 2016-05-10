@@ -12,19 +12,20 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-package scray
+package scray.loader
 
-package object loader {
-
-  object ExceptionIDs {
-    // 600+ = query space registration errors
-    val indexConfigExceptionID = "Scray-Index-Config-600"
-    val propertySetExceptionID = "Scray-Set-Exception-601"
-    val hostMissingExceptionID = "Scray-Config-Host-Missing-602"
-    val urlMissingExceptionID = "Scray-Config-URL-Missing-603"
-    val dbmsUndefinedExceptionID = "Scray-Config-DBMS-Missing-604"
-    val mappingUnsupportedExceptionID = "Scray-Config-Mapping-Missing-605"
-    val unknownTimeUnitExceptionID = "Scray-Config-Timeunit-Unknown-606"
-    val unknownBooleanValueExceptionID = "Scray-Config-Boolean-Unknown-607"
-  }
+package object configparser {
+  
+  // file handler strings
+  val SCHEMA_SEPARATOR = "://"
+  val HDFS_SCHEMA = "hdfs" + SCHEMA_SEPARATOR
+  val RESOURCE_SCHEMA = "resource" + SCHEMA_SEPARATOR
+  val HDFS_SCHEMA_LENGTH = HDFS_SCHEMA.length()
+  val SCRAY_QUERYSPACE_CONFIG_ENDING = ".config.scray"
+  
+  // parser strings
+  val COMMA = ","
+  val COLON = ":"
+  val BRACE_OPEN = "{"
+  val BRACE_CLOSE = "}"
 }

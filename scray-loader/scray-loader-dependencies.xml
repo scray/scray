@@ -2,7 +2,7 @@
 	xmlns="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.0"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.0 http://maven.apache.org/xsd/assembly-1.1.0.xsd">
-	<id>transitive-dependencies</id>
+	<id>scray-loader-dependencies</id>
 	<formats>
 		<format>zip</format>
 	</formats>
@@ -12,16 +12,15 @@
 			<outputDirectory>./</outputDirectory>
 			<useTransitiveDependencies>true</useTransitiveDependencies>
 			<useTransitiveFiltering>false</useTransitiveFiltering>
-			<excludes>
-				<exclude>scray:*</exclude>
-				<exclude>com.twitter:summingbird-batch_2.10</exclude>
-				<exclude>com.twitter:summingbird-scalding_2.10</exclude>
-				<exclude>com.seeburger.bdq:bdq-indexing-*</exclude>
-				<exclude>com.seeburger.bdq:bdq-sil-stores</exclude>
-				<exclude>com.twitter:scalding-commons_2.10</exclude>
-				<exclude>com.twitter:storehaus-cassandra*</exclude>
-				<exclude>com.twitter:storehaus-cascading*</exclude>
-			</excludes>
+<!-- 			<includes> -->
+<!-- 				<include>scray:scray-common</include> -->
+<!-- 				<include>scray:scray-querying</include> -->
+<!-- 				<include>scray:scray-service</include> -->
+<!-- 				<include>scray:scray-cassandra</include> -->
+<!-- 				<include>com.seeburger.bdq:bdq-sil-stores</include> -->
+<!-- 				<include>com.seeburger.bdq:bdq-indexing-core</include> -->
+<!-- 				<include>com.seeburger.bdq:bdq-indexing-sil</include> -->
+<!-- 			</includes> -->
 		</dependencySet>
 	</dependencySets>
 </assembly>

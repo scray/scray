@@ -1,16 +1,34 @@
+// See the LICENCE.txt file distributed with this work for additional
+// information regarding copyright ownership.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 package scray.loader.configparser
 
 import com.twitter.util.Duration
+
 import java.net.{ InetAddress, InetSocketAddress }
-import java.util.{ Set => JSet }
-import scray.common.properties.{ ScrayProperties, SocketListProperty }
+
+import scala.collection.convert.decorateAsJava
+import scala.collection.convert.decorateAsJava.setAsJavaSetConverter
+
+import scray.common.properties.ScrayProperties
 import scray.common.properties.predefined.PredefinedProperties
 import scray.core.service.properties.ScrayServicePropertiesRegistrar
-import scray.loader.configuration.DBMSConfigProperties
-import scray.querying.Registry
-import scray.querying.planning.PostPlanningActions
-import scray.querying.description.TableIdentifier
 import scray.loader.configuration.QueryspaceIndexstore
+import scray.querying.Registry
+import scray.querying.description.TableIdentifier
+import scray.querying.planning.PostPlanningActions
+import scray.loader.configuration.DBMSConfigProperties
 
 /**
  * the whole configuration is ScrayConfiguration
@@ -26,14 +44,13 @@ case class ScrayConfiguration(
 case class ScrayServiceOptions(seeds: Set[InetAddress] = Set(),
     advertiseip: InetAddress, 
     serviceIp: InetAddress = InetAddress.getByName(PredefinedProperties.SCRAY_SERVICE_LISTENING_ADDRESS.getDefault),
-    compressionsize: Int = 1024,
+    compressionsize: Int = PredefinedProperties.RESULT_COMPRESSION_MIN_SIZE.getDefault,
     memcacheips: Set[InetSocketAddress] = Set(), 
     serviceport: Int = PredefinedProperties.SCRAY_QUERY_PORT.getDefault,
     metaport: Int = PredefinedProperties.SCRAY_META_PORT.getDefault,
-    lifetime: Duration = ScrayServicePropertiesRegistrar.SCRAY_ENDPOINT_LIFETIME.getDefault(),
+    lifetime: Duration = ScrayServicePropertiesRegistrar.SCRAY_ENDPOINT_LIFETIME.getDefault,
     writeDot: Boolean = false) {
   def propagate: Unit = {
-    import scala.collection.convert.decorateAsJava._
     ScrayProperties.setPropertyValue(PredefinedProperties.SCRAY_QUERY_PORT, new Integer(serviceport), true)
     ScrayProperties.setPropertyValue(PredefinedProperties.SCRAY_META_PORT, new Integer(metaport), true)
     ScrayProperties.setPropertyValue(PredefinedProperties.SCRAY_MEMCACHED_IPS.getName, memcacheips.asJava, true)
@@ -46,7 +63,6 @@ case class ScrayServiceOptions(seeds: Set[InetAddress] = Set(),
     Registry.queryPostProcessor = if(writeDot) PostPlanningActions.writeDot else PostPlanningActions.doNothing
   }
   def memoryMap: Map[String, _] = {
-    import scala.collection.convert.decorateAsJava._
     Registry.queryPostProcessor = if(writeDot) PostPlanningActions.writeDot else PostPlanningActions.doNothing    
     Map((PredefinedProperties.SCRAY_QUERY_PORT.getName, new Integer(serviceport)),
         (PredefinedProperties.SCRAY_META_PORT.getName, new Integer(metaport)),
@@ -71,12 +87,14 @@ case class ScrayQueryspaceConfigurationURL(url: String, reload: ScrayQueryspaceC
  * be performed.
  */
 case class ScrayQueryspaceConfigurationURLReload(duration: Option[Duration] = Some(ScrayQueryspaceConfigurationURLReload.DEFAULT_URL_RELOAD)) {
-  def isEmpty = duration.isEmpty
-  def isNever = isEmpty
+  def isEmpty: Boolean = duration.isEmpty
+  def isNever: Boolean = isEmpty
   def getDuration: Duration = duration.getOrElse(Duration.Top)
 }
 object ScrayQueryspaceConfigurationURLReload {
+  // scalastyle:off magic.number
   val DEFAULT_URL_RELOAD = Duration.fromSeconds(120)
+  // scalastyle:on magic.number
 }
 
 /**
