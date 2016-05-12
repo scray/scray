@@ -14,38 +14,6 @@ import com.fasterxml.jackson.core.JsonParser
 @RunWith(classOf[JUnitRunner])
 class Adapter extends WordSpec with BeforeAndAfter with BeforeAndAfterAll {
   "OnlineBatchSync " should {
-    //    " detect start " in {
-    //      val adapter = new YahooStreamAdapter
-    //      
-    //      // Detect start
-    //      assert(adapter.pars('a', TokenizerState.WAIT_FOR_OBJECT) === WAIT_FOR_OBJECT)
-    //      assert(adapter.pars('(', TokenizerState.WAIT_FOR_OBJECT) === OBJECT_START_1)
-    //      assert(adapter.pars('{', TokenizerState.OBJECT_START_1) === COLLECT_OBJECT_DATA)
-    //    }
-    //    " detect end " in {
-    //      val adapter = new YahooStreamAdapter
-    //      
-    //      // Collect end
-    //      assert(adapter.pars('}', TokenizerState.COLLECT_OBJECT_DATA) === OBJECT_END_1)
-    //      assert(adapter.pars('}', TokenizerState.OBJECT_END_1) === OBJECT_END_2)
-    //      assert(adapter.pars('}', TokenizerState.OBJECT_END_2) === WAIT_FOR_OBJECT)
-    //    }
-    //    " pars string " in {
-    //      val adapter = new YahooStreamAdapter
-    //      
-    //      val x: Stream[Character] = Array[Character]('a', 'b', 'c', '(', '{', 'a').seq.view.toStream
-    //      val y = x.scanLeft((WAIT_FOR_OBJECT, 'a'))((state, char) => adapter.pars(char, state._1)).filter { x => x._1 == TokenizerState.COLLECT_OBJECT_DATA}
-    //      
-    //      y.scanLeft("")((acc, char) => acc + char).f
-
-    //      val dddd = "abcdefg".foldLeft(WAIT_FOR_OBJECT)((state, char) => adapter.pars(char, state))
-    //      
-    //      var state = WAIT_FOR_OBJECT
-    //        adapter.getStream.map(WAIT_FOR_OBJECT)((state, char) => adapter.pars(char, state)).filter(dd).map
-    //      
-    //      println(dddd)
-    //    }
-
     " throw exception if job already exists" in {
       val stream = new YahooStreamAdapter
       val sb = new StringBuffer
@@ -110,5 +78,11 @@ class Adapter extends WordSpec with BeforeAndAfter with BeforeAndAfterAll {
 //      println(parser.parseAll(parser.start, header + line1 + line2))
 //
 //    }
+    "parse smal message" in {
+      val message = "<script>try{parent.yfs_u1f({\"EOAN.F\":{a00:\"8.13\",b00:\"8.12\"}});}catch(e){}</script>"
+      
+      val parser = new YahooStockStreamParser
+      println(parser.parseAll(parser.start, message))
+    }
   }
 }
