@@ -10,6 +10,7 @@ import java.util.Date
 import kafka.utils.VerifiableProperties
 import kafka.serializer.Encoder
 import kafka.utils.VerifiableProperties
+import com.seeburger.bdq.spark.serializers.GenericKafkaKryoSerializer
 
 
 class KafkaOutputAdapter(val inputQueue: BlockingQueue[Share]) extends Thread {
@@ -19,12 +20,11 @@ class KafkaOutputAdapter(val inputQueue: BlockingQueue[Share]) extends Thread {
  
         val props = new Properties();
         props.put("metadata.broker.list", "localhost:9092");
-        props.put("serializer.class", "com.seeburger.bdq.spark.GenericKafkaKryoSerializer");
+        props.put("serializer.class", "com.seeburger.bdq.spark.serializers.GenericKafkaKryoSerializer");
         props.put("partitioner.class", "scray.example.adapter.SimplePartitioner");
         props.put("request.required.acks", "1");
  
         val config = new ProducerConfig(props);
- 
         val producer = new Producer[String, Share](config)
  
         for(events <- 1 until 100) { 

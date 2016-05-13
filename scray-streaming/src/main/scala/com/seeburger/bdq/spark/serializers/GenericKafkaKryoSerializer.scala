@@ -7,6 +7,8 @@ import java.io.ByteArrayInputStream
 import com.esotericsoftware.kryo.Kryo
 import com.esotericsoftware.kryo.io.Output
 import java.io.ByteArrayOutputStream
+import com.twitter.chill.AllScalaRegistrar
+import kafka.utils.VerifiableProperties
 
 /**
  * A generic kryo serializer to be used with Kafka
@@ -14,8 +16,9 @@ import java.io.ByteArrayOutputStream
  * However, it is generic and can easily be used without writing special serializers.
  * @author: Andreas Petter <a.petter@seeburger.de>
  */
-class GenericKafkaKryoSerializer[T <: Any](registerScalaCollections: Boolean = true) extends Decoder[T] with Encoder[T] {
+class GenericKafkaKryoSerializer[T <: Any](properties: VerifiableProperties)extends Decoder[T] with Encoder[T] {
   
+  val registerScalaCollections: Boolean = true
   val kryo = new Kryo()
   if(registerScalaCollections) {
     new AllScalaRegistrar()(kryo)

@@ -11,6 +11,7 @@ import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.core.JsonParser
 import java.util.concurrent.LinkedBlockingQueue
+import com.seeburger.bdq.spark.serializers.GenericKafkaKryoSerializer
 
 @RunWith(classOf[JUnitRunner])
 class Adapter extends WordSpec with BeforeAndAfter with BeforeAndAfterAll {
@@ -18,16 +19,28 @@ class Adapter extends WordSpec with BeforeAndAfter with BeforeAndAfterAll {
   
   "OnlineBatchSync " should {
     " throw exception if job already exists" in {
-      val inputQueue = new LinkedBlockingQueue[Share]()
+//      val inputQueue = new LinkedBlockingQueue[Share]()
+////      
+////      new YahooStreamAdapter(inputQueue).start()
 //      
-//      new YahooStreamAdapter(inputQueue).start()
+//     for(value <- 1 until 1000) {
+//        inputQueue.add(new Share("Seeburger", Some(value), Some(value), Some(value), Some(value), Some(value)))
+//      }
+//      new KafkaOutputAdapter(inputQueue).start()
+//
+//      Thread.sleep(10000)
+    }
+    "serialize" in {
+      val value = 1.5f 
+      val share = new Share("Share42", Some(value), Some(value), Some(value), Some(value), Some(value))
       
-     for(value <- 1 until 1000) {
-        inputQueue.add(new Share("Seeburger", Some(value), Some(value), Some(value), Some(value), Some(value)))
-      }
-      new KafkaOutputAdapter(inputQueue).start()
-
-      Thread.sleep(10000)
+      val serializer = new GenericKafkaKryoSerializer[Share](null)
+      
+      val bytes = serializer.toBytes(share)
+      val deserializedShare = serializer.fromBytes(bytes)
+      
+      assert(deserializedShare.name == "Share42")
+      assert(deserializedShare.a00 == Some(1.5f))
     }
     "pars example" in {
       import util.parsing.combinator.RegexParsers
