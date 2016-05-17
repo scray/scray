@@ -8,11 +8,13 @@ import java.util.Properties;
 import org.apache.zookeeper.server.ServerConfig;
 import org.apache.zookeeper.server.ZooKeeperServerMain;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
+import java.nio.file.Paths
 
 class ZooKeeperServer() {
 
     val zkProperties: Properties = new Properties()
-    zkProperties.put("dataDir", "/tmp")
+    val path = Paths.get(".").toAbsolutePath().normalize().toString() + "/target"
+    zkProperties.put("dataDir", path)
     zkProperties.put("clientPort", "12345")
     
 		val quorumConfiguration = new QuorumPeerConfig()

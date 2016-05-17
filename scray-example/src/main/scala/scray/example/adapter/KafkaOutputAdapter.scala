@@ -11,15 +11,15 @@ import kafka.utils.VerifiableProperties
 import kafka.serializer.Encoder
 import kafka.utils.VerifiableProperties
 import com.seeburger.bdq.spark.serializers.GenericKafkaKryoSerializer
+import com.typesafe.scalalogging.slf4j.LazyLogging
 
 
-class KafkaOutputAdapter(val inputQueue: BlockingQueue[Share]) extends Thread {
+class KafkaOutputAdapter(val inputQueue: BlockingQueue[Share]) extends Thread with LazyLogging {
   
   override def run() {
-        val rnd = new Random();
  
         val props = new Properties();
-        props.put("metadata.broker.list", "localhost:9092");
+        props.put("metadata.broker.list", "localhost:4242");
         props.put("serializer.class", "com.seeburger.bdq.spark.serializers.GenericKafkaKryoSerializer");
         props.put("partitioner.class", "scray.example.adapter.SimplePartitioner");
         props.put("request.required.acks", "1");
@@ -27,15 +27,12 @@ class KafkaOutputAdapter(val inputQueue: BlockingQueue[Share]) extends Thread {
         val config = new ProducerConfig(props);
         val producer = new Producer[String, Share](config)
  
-        for(events <- 1 until 100) { 
-               val message = new KeyedMessage[String, Share]("test", events.toString(), inputQueue.take());
-               println(message)
-               producer.send(message);
+        while(true) {
+          val message = new KeyedMessage[String, Share]("test", "1", inputQueue.take());
+          logger.debug(s"Send message ${message}")
+          println(message)
+          producer.send(message)
         }
-        producer.close;
-    
-//    while(true) {
-//      println(inputQueue.take())
-//    }
+        producer.close
   }
 }
