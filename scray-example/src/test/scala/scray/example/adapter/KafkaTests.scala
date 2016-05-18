@@ -22,22 +22,9 @@ class KafkaTests extends WordSpec with BeforeAndAfter with BeforeAndAfterAll {
 
   "KafkaTest " should {
     "start Kafka" in {
-       val master = "local[2]"
-       val appName = "example-spark"
 
-      val batchDuration = Seconds(1)
-      val checkpointDir = Files.createTempDirectory(appName).toString
 
-        val conf = new SparkConf()
-        .setMaster(master)
-        .setAppName(appName)
-        val ssc = new StreamingContext(conf, batchDuration)
-        ssc.checkpoint(checkpointDir)
-        
-        
-
-       
-       Thread.sleep(100000)
+     
     }
   }
 }

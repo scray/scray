@@ -15,7 +15,7 @@ class ZooKeeperServer() {
     val zkProperties: Properties = new Properties()
     val path = Paths.get(".").toAbsolutePath().normalize().toString() + "/target"
     zkProperties.put("dataDir", path)
-    zkProperties.put("clientPort", "12345")
+    zkProperties.put("clientPort", "2181")
     
 		val quorumConfiguration = new QuorumPeerConfig()
     quorumConfiguration.parseProperties(zkProperties)

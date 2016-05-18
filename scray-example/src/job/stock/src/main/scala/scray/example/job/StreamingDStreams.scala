@@ -21,8 +21,7 @@ object StreamingDStreams {
   def getKafkaStreamSource[K, V, U <: Decoder[_], T <: Decoder[_]](ssc: StreamingContext, kafkaDStreamURL: Option[String], 
       kafkaTopic: Option[Map[String, Int]], storageLevel: StorageLevel = StorageLevel.MEMORY_AND_DISK_SER_2)(
       implicit k: ClassTag[K], v: ClassTag[V], u: ClassTag[U], t: ClassTag[T]): Option[DStream[(K, V)]] = {
-    val kafkaParams = Map[String, String]("zookeeper.connect" -> kafkaDStreamURL.get, 
-        "group.id" -> KAFKA_CONSUMER_GROUP)
+    val kafkaParams = Map[String, String]("zookeeper.connect" -> kafkaDStreamURL.get)
     Some(KafkaUtils.createStream[K, V, U, T](ssc, kafkaParams, kafkaTopic.get, storageLevel))
   }
 

@@ -83,10 +83,32 @@
 			<version>2.7.2</version>
 		</dependency>
 		<dependency>
+			<groupId>com.typesafe</groupId>
+			<artifactId>config</artifactId>
+			<version>1.2.1</version>
+		</dependency>
+		<dependency>
 			<groupId>scray</groupId>
 			<artifactId>scray-streaming</artifactId>
 			<version>0.0.1-SNAPSHOT</version>
 			<type>bundle</type>
+			<exclusions>
+				<exclusion>
+					<artifactId>config</artifactId>
+					<groupId>com.typesafe</groupId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>scray.example.job</groupId>
+			<artifactId>stock</artifactId>
+			<version>1.0</version>
+			<exclusions>
+				<exclusion>
+					<artifactId>config</artifactId>
+					<groupId>com.typesafe</groupId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 	</dependencies>
 </project>
