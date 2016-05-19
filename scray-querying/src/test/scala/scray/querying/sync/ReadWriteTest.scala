@@ -155,7 +155,7 @@ class ReadWriteTest extends WordSpec {
           table.startNextBatchJob(new CassandraJobInfo("JOB_400"))
           table.completeBatchJob(new CassandraJobInfo("JOB_400"))
          
-          val expectedResults = List("JOB_100_batch1", "JOB_300_batch1", "JOB_200_batch1", "JOB_400_batch2")
+          val expectedResults = List("JOB_100_batch1", "JOB_300_batch1", "JOB_200_batch1", "JOB_400_batch2", "job59_online1", "Job0_online1", "Job1_batch1")
           table.getQueryableTableIdentifiers.map{tableIdentifier => assert(expectedResults.contains(tableIdentifier._2.tableId))}
         }
   }
