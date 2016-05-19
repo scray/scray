@@ -46,6 +46,10 @@ import scray.querying.sync.StateMonitoringApi
 
 object CassandraImplementation extends Serializable {
   implicit def genericCassandraColumnImplicit[T](implicit cassImplicit: CassandraPrimitive[T]): DBColumnImplementation[T] = new DBColumnImplementation[T] {
+    type RowType = Row
+    override val rowConv = new DBRowImplementation[RowType] {
+      override def convertRow(name: String, row: RowType): Option[T] = cassImplicit.fromRow(row, name)
+    }
     override def getDBType: String = cassImplicit.cassandraType
     override def fromDBType(value: AnyRef): T = cassImplicit.fromCType(value)
     override def toDBType(value: T): AnyRef = cassImplicit.toCType(value)
@@ -64,7 +68,10 @@ object CassandraImplementation extends Serializable {
   }
 }
 
-class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet]) extends OnlineBatchSyncA[Statement, Insert, ResultSet] with OnlineBatchSyncB[Statement, Insert, ResultSet] with StateMonitoringApi[Statement, Insert, ResultSet] {
+class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet]) extends 
+    OnlineBatchSyncA[Statement, Insert, ResultSet] with 
+    OnlineBatchSyncB[Statement, Insert, ResultSet] with 
+    StateMonitoringApi[Statement, Insert, ResultSet] {
 
   def this(dbHostname: String) = {
     this(new CassandraDbSession(Cluster.builder().addContactPoint(dbHostname).build().connect()))
@@ -383,7 +390,6 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
         .value(syncTable.columns.batchEndTime.name, -1L)
         .value(syncTable.columns.tableidentifier.name, getOnlineJobName(syncTable.keySpace + "." + job.name, i)))
     }
-    
     job.getLock(dbSession).transaction(this.executeQuorum, statements)
   }
   
@@ -541,7 +547,8 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
   private def getJobData[T <: RowWithValue](jobname: String, slot: Int, online: Boolean, result: T): Option[List[RowWithValue]] = {
     def handleColumnWithValue[U](currentRow: Row, destinationColumn: ColumnWithValue[U]): U = {
       val dbimpl = destinationColumn.dbimpl
-      dbimpl.fromDBType(currentRow.get(destinationColumn.name, dbimpl.toDBType(destinationColumn.value).getClass()))
+      dbimpl.fromDBRow(destinationColumn.name, currentRow).get
+      // dbimpl.fromDBType(currentRow.get(destinationColumn.name, dbimpl.toDBType(destinationColumn.value).getClass()))
     }
 
     def fillValue[U](currentRow: Row, destinationColumn: ColumnWithValue[U]) = {

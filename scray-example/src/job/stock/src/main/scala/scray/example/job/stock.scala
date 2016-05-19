@@ -117,8 +117,11 @@ object stock extends LazyLogging {
   }
 
   def main(args : Array[String]) = {
+    println("......................................")
     Options.parse(args) match {
       case Some(config) =>
+              println("///////////////////////////////////////")
+
        val syncTable = new OnlineBatchSyncCassandra(config.cassandraHost.getOrElse("127.0.0.1"))
        val jobInfo = new CassandraJobInfo("Stock")
        syncTable.initJob(jobInfo, ExampleTable)
@@ -128,6 +131,8 @@ object stock extends LazyLogging {
           case false => stream(config)
         }
       case None =>
+              println("'''''''''''''''''''''''")
+
         // do nothing but displaying some help message
     }
   }

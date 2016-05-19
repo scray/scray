@@ -11,6 +11,7 @@ import kafka.server.KafkaConfig
 import kafka.server.KafkaConfig
 import kafka.server.KafkaServerStartable
 import scray.example.job.StreamingDStreams
+import scray.example.job.stock
 
 class StartSpark {
   val master = "local[2]"
@@ -29,8 +30,10 @@ class StartSpark {
       val conf = new SparkConf().setMaster("local[2]").setAppName("StockAnalyser")
       val ssc = new StreamingContext(conf, Seconds(1))
 
-      val source = StreamingDStreams.getKafkaKryoSource[String, Share](ssc, Some("localhost:2181"), Some(Map(("test", 1))), org.apache.spark.storage.StorageLevel.MEMORY_ONLY)
-      source.get.foreachRDD { f => f.foreach(println(_)) }
+      // val source = StreamingDStreams.getKafkaKryoSource[String, Share](ssc, Some("localhost:2181"), Some(Map(("test", 1))), org.apache.spark.storage.StorageLevel.MEMORY_ONLY)
+      // source.get.foreachRDD { f => f.foreach(println(_)) }
+      
+      stock.main(Array())
       
       ssc.start()
       ssc.awaitTermination()

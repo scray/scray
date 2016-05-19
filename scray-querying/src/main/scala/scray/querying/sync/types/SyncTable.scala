@@ -22,9 +22,15 @@ class Table[T <: AbstractRow](val keySpace: String, val tableName: String, val c
 }
 
 trait DBColumnImplementation[T] {
+  type RowType
+  trait DBRowImplementation[RowType] {
+    def convertRow(name: String, row: RowType): Option[T]
+  }
+  val rowConv: DBRowImplementation[RowType]
   def getDBType: String
   def fromDBType(value: AnyRef): T
   def toDBType(value: T): AnyRef
+  def fromDBRow[U](name: String, row: U): Option[T] = rowConv.convertRow(name, row.asInstanceOf[RowType])
 }
 
 class Column[T: DBColumnImplementation](val name: String) extends Serializable { self =>

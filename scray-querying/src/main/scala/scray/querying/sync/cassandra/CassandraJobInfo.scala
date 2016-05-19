@@ -48,7 +48,7 @@ import scala.None
 import com.typesafe.scalalogging.slf4j.LazyLogging
 
 class CassandraJobInfo(
-    name: String,
+    override val name: String,
     numberOfBatchSlots: Int = 3,
     numberOfOnlineSlots: Int = 2,
     lockTimeOut: Int = 500) extends JobInfo[Statement, Insert, ResultSet](name, numberOfBatchSlots, numberOfOnlineSlots) with LazyLogging {
@@ -67,11 +67,13 @@ class CassandraJobInfo(
         }
 
       // Register new job in lock table
-      dbSession.execute(QueryBuilder.insertInto(table.keySpace, table.tableName)
+      val insertQuery = QueryBuilder.insertInto(table.keySpace, table.tableName)
         .value(table.columns.jobname.name, this.name)
-        .value(table.columns.locked.name, false))
+        .value(table.columns.locked.name, false)
+        
+      dbSession.execute(insertQuery)
 
-      Some(new CassandraSyncTableLock(this, JobLockTable("SILIDX", "JobSync"), dbSession, lockTimeOut))
+      Some(new CassandraSyncTableLock(this, table, dbSession, lockTimeOut))
     }
 
     this.lock.get
