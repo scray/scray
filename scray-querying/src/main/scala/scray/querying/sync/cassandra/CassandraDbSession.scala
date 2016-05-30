@@ -14,8 +14,6 @@ import com.datastax.driver.core.SimpleStatement
 import com.datastax.driver.core.Statement
 import com.datastax.driver.core.querybuilder.Insert
 import com.datastax.driver.core.querybuilder.QueryBuilder
-import scray.querying.sync.types._
-import scray.querying.sync.types._
 import java.util.ArrayList
 import scala.collection.mutable.ArrayBuffer
 import scray.querying.sync.types.SyncTableBasicClasses.SyncTableRowEmpty
@@ -30,7 +28,7 @@ import scray.querying.sync.NoRunningJobExistsException
 import scray.querying.sync.StatementExecutionError
 import scala.util.Failure
 import scala.util.Success
-import scala.collection.JavaConversions._
+import scala.collection.JavaConversions
 import scray.querying.description.TableIdentifier
 import scala.collection.mutable.HashSet
 import com.datastax.driver.core.querybuilder.Select
