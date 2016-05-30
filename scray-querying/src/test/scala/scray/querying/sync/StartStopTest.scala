@@ -153,7 +153,7 @@ class StartStopTest extends WordSpec {
       assert(table.getRunningOnlineJobSlot(jobInfo).get === 1)
       table.completeOnlineJob(jobInfo)
     }
-    "switch to next job while one job is running" in {
+    "start online job and check slot" in {
       val table = new OnlineBatchSyncCassandra(dbconnection)
       val jobInfo = new CassandraJobInfo(getNextJobName)
 
@@ -169,9 +169,7 @@ class StartStopTest extends WordSpec {
       table.startNextOnlineJob(jobInfo)
 
       // Switching is not possible. Because an other job is running.
-      assert(table.startNextBatchJob(jobInfo).isSuccess === false)
-
-      assert(table.getRunningBatchJobSlot(jobInfo).get === 1)
+      assert(table.getRunningBatchJobSlot(jobInfo) == None)
       assert(table.getRunningOnlineJobSlot(jobInfo).get === 1)
     }
     "get latest batch after first run" in {
@@ -221,15 +219,10 @@ class StartStopTest extends WordSpec {
       assert(table.initJob(job, new RowWithValue(columns, primaryKey, indexes)).isSuccess)
       assert(table.startNextBatchJob(job).isSuccess)
 
-      assert(table.getBatchJobState(job).get.equals(State.NEW))
-      assert(table.getBatchJobState(job).get.equals(State.RUNNING))
-      assert(table.getBatchJobState(job).get.equals(State.NEW))
-
+      
+      assert(table.getBatchJobState(job, 1).get.equals(State.RUNNING))
       assert(table.resetBatchJob(job).isSuccess)
-
-      assert(table.getBatchJobState(job).get.equals(State.NEW))
-      assert(table.getBatchJobState(job).get.equals(State.NEW))
-      assert(table.getBatchJobState(job).get.equals(State.NEW))
+      assert(table.getBatchJobState(job, 1).get.equals(State.NEW))
     }
     " reset online job " in {
       val table = new OnlineBatchSyncCassandra(dbconnection)
@@ -241,16 +234,16 @@ class StartStopTest extends WordSpec {
       val indexes: Option[List[String]] = None
 
       assert(table.initJob(job, new RowWithValue(columns, primaryKey, indexes)).isSuccess)
+      table.startNextBatchJob(job)
+      table.completeBatchJob(job)
       assert(table.startNextOnlineJob(job).isSuccess)
 
-      assert(table.getOnlineJobState(job).get.equals(State.NEW))
-      assert(table.getOnlineJobState(job).get.equals(State.RUNNING))
-      assert(table.getOnlineJobState(job).get.equals(State.NEW))
+      assert(table.getOnlineJobState(job,1 ).get.equals(State.RUNNING))
 
       assert(table.resetOnlineJob(job).isSuccess)
-      assert(table.getOnlineJobState(job).get.equals(State.NEW))
-      assert(table.getOnlineJobState(job).get.equals(State.NEW))
-      assert(table.getOnlineJobState(job).get.equals(State.NEW))
+      assert(table.getOnlineJobState(job, 0).get.equals(State.NEW))
+      assert(table.getOnlineJobState(job, 1).get.equals(State.NEW))
+      assert(table.getOnlineJobState(job, 2).get.equals(State.NEW))
     }
   }
 }

@@ -1,35 +1,35 @@
-//package scray.example.adapter
-//
-//import org.junit.runner.RunWith
-//import org.scalatest.BeforeAndAfter
-//import org.scalatest.BeforeAndAfterAll
-//import org.scalatest.WordSpec
-//import org.scalatest.junit.JUnitRunner
-//import scala.util.matching.Regex
-//import com.fasterxml.jackson.module.scala.experimental.ScalaObjectMapper
-//import com.fasterxml.jackson.module.scala.DefaultScalaModule
-//import com.fasterxml.jackson.databind.ObjectMapper
-//import com.fasterxml.jackson.core.JsonParser
-//import java.util.concurrent.LinkedBlockingQueue
-//import com.seeburger.bdq.spark.serializers.GenericKafkaKryoSerializer
-//
-//@RunWith(classOf[JUnitRunner])
-//class Adapter extends WordSpec with BeforeAndAfter with BeforeAndAfterAll {
-//  
-//  
-//  "OnlineBatchSync " should {
-//    " throw exception if job already exists" in {
-//      val inputQueue = new LinkedBlockingQueue[Share]()
-//      
-//      new StartKafkaServer
-//      new StartSpark
-//      
-//      Thread.sleep(5000)
-//      new YahooStreamAdapter(inputQueue).start()
-//      new KafkaOutputAdapter(inputQueue).start()
-//
-//      Thread.sleep(1000000)
-//    }
+package scray.example.adapter
+
+import org.junit.runner.RunWith
+import org.scalatest.BeforeAndAfter
+import org.scalatest.BeforeAndAfterAll
+import org.scalatest.WordSpec
+import org.scalatest.junit.JUnitRunner
+import scala.util.matching.Regex
+import com.fasterxml.jackson.module.scala.experimental.ScalaObjectMapper
+import com.fasterxml.jackson.module.scala.DefaultScalaModule
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.core.JsonParser
+import java.util.concurrent.LinkedBlockingQueue
+import com.seeburger.bdq.spark.serializers.GenericKafkaKryoSerializer
+
+@RunWith(classOf[JUnitRunner])
+class Adapter extends WordSpec with BeforeAndAfter with BeforeAndAfterAll {
+  
+  
+  "OnlineBatchSync " should {
+    " throw exception if job already exists" in {
+      val inputQueue = new LinkedBlockingQueue[Share]()
+      
+      //new StartKafkaServer
+      // new StartSpark
+      
+      //Thread.sleep(5000)
+      //new YahooStreamAdapter(inputQueue).start()
+      new KafkaOutputAdapter(inputQueue).start()
+
+      Thread.sleep(1000000)
+    }
 //    "serialize and deserialize " in {
 //      val value = 1.5f 
 //      val share = new Share("Share42", None, Some(value), Some(value), Some(value), Some(value))
@@ -60,5 +60,5 @@
 //      val parser = new YahooStockStreamParser
 //      assert(parser.parseAll(parser.start, message).successful)
 //    }
-//  }
-//}
+  }
+}

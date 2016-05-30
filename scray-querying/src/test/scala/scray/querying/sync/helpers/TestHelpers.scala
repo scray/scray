@@ -30,7 +30,7 @@ import shapeless.syntax.singleton._
 
   class TestDbSession extends DbSession[Statement, Insert, ResultSet]("127.0.0.1") {
     EmbeddedCassandraServerHelper.startEmbeddedCassandra(EmbeddedCassandraServerHelper.CASSANDRA_RNDPORT_YML_FILE)
-    val cassandraSession = Cluster.builder().addContactPoint("127.0.0.1").withPort(EmbeddedCassandraServerHelper.getNativeTransportPort).build().connect()
+    var cassandraSession = Cluster.builder().addContactPoint("127.0.0.1").withPort(EmbeddedCassandraServerHelper.getNativeTransportPort).build().connect()
 
     override def execute(statement: String): Try[ResultSet] = {
       val result = cassandraSession.execute(statement)
@@ -58,4 +58,6 @@ import shapeless.syntax.singleton._
         Failure(new StatementExecutionError(s"It was not possible to execute statement: ${statement}. Error: ${result.getExecutionInfo}"))
       }
     }
+    
+    def cleanDb = ???
   }
