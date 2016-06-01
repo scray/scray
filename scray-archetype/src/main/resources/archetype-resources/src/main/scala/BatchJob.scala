@@ -13,13 +13,16 @@ import scray.querying.sync.cassandra.OnlineBatchSyncCassandra
 import scray.querying.sync.JobInfo
 import scala.util.Failure
 import scala.util.Success
+import com.datastax.driver.core.querybuilder.Insert
+import com.datastax.driver.core.ResultSet
+import com.datastax.driver.core.Statement
 
 /**
  * Class containing all the batch stuff
  */
-class BatchJob(@transient val sc: SparkContext, jobInfo: JobInfo) extends LazyLogging with Serializable {
+class BatchJob(@transient val sc: SparkContext, jobInfo: JobInfo[Statement, Insert, ResultSet]) extends LazyLogging with Serializable {
   println(sc.getConf.get("spark.cassandra.connection.host"))
-  val syncTable: OnlineBatchSync = new OnlineBatchSyncCassandra(sc.getConf.get("spark.cassandra.connection.host"))
+  val syncTable = new OnlineBatchSyncCassandra(sc.getConf.get("spark.cassandra.connection.host"))
 
   /**
    * get the intial rdd to load data from

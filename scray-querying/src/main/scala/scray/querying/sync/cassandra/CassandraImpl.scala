@@ -26,8 +26,6 @@ import scray.common.serialization.BatchID
 import scray.querying.description.TableIdentifier
 import scray.querying.sync.JobInfo
 import scray.querying.sync.NoRunningJobExistsException
-import scray.querying.sync.OnlineBatchSyncA
-import scray.querying.sync.OnlineBatchSyncB
 import scray.querying.sync.StatementExecutionError
 import scray.querying.sync.types.AbstractRow
 import scray.querying.sync.types.ArbitrarylyTypedRows
