@@ -15,6 +15,7 @@ import scray.querying.sync.OnlineBatchSync
 import scray.querying.sync.cassandra.OnlineBatchSyncCassandra
 import scray.querying.sync.JobInfo
 import scray.querying.sync.types.AbstractRow
+import scray.querying.sync.cassandra.CassandraJobInfo
 
 /**
  * @author <author@name.org>
@@ -69,8 +70,8 @@ object ${job-name} extends LazyLogging {
    */
   def batch(config: Config) = {
     logger.info(s"Using Batch mode.")
-    val syncTable: OnlineBatchSync = new OnlineBatchSyncCassandra(config.cassandraHost.getOrElse("127.0.0.1"))
-    val jobInfo = JobInfo("${job-name}", config.numberOfBatchVersions, config.numberOfOnlineVersions)
+    val syncTable = new OnlineBatchSyncCassandra(config.cassandraHost.getOrElse("127.0.0.1"))
+    val jobInfo = new CassandraJobInfo("${job-name}", config.numberOfBatchVersions, config.numberOfOnlineVersions)
     if(syncTable.startNextBatchJob(jobInfo).isSuccess) {
       val sc = setupSparkBatchConfig(config.master)()
       val batchJob = new BatchJob(sc, jobInfo)
@@ -85,8 +86,8 @@ object ${job-name} extends LazyLogging {
    */
   def stream(config: Config) = {
     logger.info(s"Using HDFS-URL=${config.hdfsDStreamURL} and Kafka-URL=${config.kafkaDStreamURL}")
-    val syncTable: OnlineBatchSync = new OnlineBatchSyncCassandra(config.cassandraHost.getOrElse("127.0.0.1"))
-    val jobInfo = JobInfo("${job-name}", config.numberOfBatchVersions, config.numberOfOnlineVersions)
+    val syncTable = new OnlineBatchSyncCassandra(config.cassandraHost.getOrElse("127.0.0.1"))
+    val jobInfo = new CassandraJobInfo("${job-name}", config.numberOfBatchVersions, config.numberOfOnlineVersions)
     if(syncTable.startNextOnlineJob(jobInfo).isSuccess) {
       val ssc = StreamingContext.getOrCreate(config.checkpointPath, setupSparkStreamingConfig(config.master, config.seconds))
       ssc.checkpoint(config.checkpointPath)
@@ -119,7 +120,7 @@ object ${job-name} extends LazyLogging {
     Options.parse(args) match {
       case Some(config) =>
        val syncTable: OnlineBatchSync = new OnlineBatchSyncCassandra(config.cassandraHost.getOrElse(config.cassandraHost.getOrElse("127.0.0.1")))
-       syncTable.initJob(JobInfo("${job-name}"), ExampleTable)
+       syncTable.initJob(new CassandraJobInfo("${job-name}"), ExampleTable)
 
         config.batch match {
           case true =>  batch(config)
