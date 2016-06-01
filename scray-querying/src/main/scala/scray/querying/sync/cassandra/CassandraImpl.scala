@@ -43,6 +43,8 @@ import scray.querying.sync.types.Table
 import scray.querying.sync.types.VoidTable
 import scray.querying.sync.RunningJobExistsException
 import scray.querying.sync.StateMonitoringApi
+import scray.querying.sync.OnlineBatchSync
+import scray.querying.sync.OnlineBatchSyncWithTableIdentifier
 
 object CassandraImplementation extends Serializable {
   implicit def genericCassandraColumnImplicit[T](implicit cassImplicit: CassandraPrimitive[T]): DBColumnImplementation[T] = new DBColumnImplementation[T] {
@@ -69,8 +71,8 @@ object CassandraImplementation extends Serializable {
 }
 
 class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet]) extends 
-    OnlineBatchSyncA[Statement, Insert, ResultSet] with 
-    OnlineBatchSyncB[Statement, Insert, ResultSet] with 
+    OnlineBatchSync[Statement, Insert, ResultSet] with 
+    OnlineBatchSyncWithTableIdentifier[Statement, Insert, ResultSet] with 
     StateMonitoringApi[Statement, Insert, ResultSet] {
 
   def this(dbHostname: String) = {

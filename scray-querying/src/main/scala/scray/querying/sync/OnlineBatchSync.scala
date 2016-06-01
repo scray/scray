@@ -20,7 +20,7 @@ import scray.querying.sync.types.LockApi
 import scalaz.Monoid
 
 
-trait OnlineBatchSyncA[Statement, InsertIn, Result] extends LazyLogging {
+trait OnlineBatchSyncWithTableIdentifier[Statement, InsertIn, Result] extends LazyLogging {
 
   /**
    * Prepare tables for this job.
@@ -51,7 +51,7 @@ trait OnlineBatchSyncA[Statement, InsertIn, Result] extends LazyLogging {
   def getTableIdentifier(job: JobInfo[Statement, InsertIn, Result]): TableIdentifier 
 }
 
-trait OnlineBatchSyncB[Statement, InsertIn, Result] extends LazyLogging {
+trait OnlineBatchSync[Statement, InsertIn, Result] extends LazyLogging {
 
   type JOB_INFO = JobInfo[Statement, InsertIn, Result]
   
