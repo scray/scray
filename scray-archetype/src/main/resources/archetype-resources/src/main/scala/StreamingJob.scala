@@ -25,12 +25,15 @@ import com.datastax.spark.connector.streaming.toStreamingContextFunctions
 import ${package}.data.AggregationKey
 import com.typesafe.scalalogging.slf4j.LazyLogging
 import scray.querying.sync.JobInfo
+import com.datastax.driver.core.querybuilder.Insert
+import com.datastax.driver.core.ResultSet
+import com.datastax.driver.core.Statement
 
 
 /**
  * job that transforms data :)
  */
-class StreamingJob(@transient val ssc: StreamingContext, jobInfo: JobInfo) extends LazyLogging with Serializable {
+class StreamingJob(@transient val ssc: StreamingContext, jobInfo: JobInfo[Statement, Insert, ResultSet]) extends LazyLogging with Serializable {
   
   /**
    * main job execution method: filter for wrong keys, perform aggregation with state changes, transform data into
