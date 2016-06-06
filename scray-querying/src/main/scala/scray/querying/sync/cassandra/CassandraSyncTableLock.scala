@@ -26,12 +26,12 @@ import scray.querying.sync.types.SyncTableBasicClasses
 import scray.querying.sync.types.Table
 import scray.querying.sync.UnableToLockJobError
 
-class CassandraSyncTableLock (job: JobInfo[Statement, Insert, ResultSet], jobLockTable: Table[SyncTableBasicClasses.JobLockTable], 
-  dbSession: DbSession[Statement, Insert, ResultSet], val timeOut: Int) extends LockApi[Statement, Insert, ResultSet](job, jobLockTable, dbSession) with LazyLogging {
+class CassandraSyncTableLock (job: JobInfo[Statement, Insert, ResultSet, CassandraMetadata], jobLockTable: Table[SyncTableBasicClasses.JobLockTable], 
+  dbSession: DbSession[Statement, Insert, ResultSet, CassandraMetadata], val timeOut: Int) extends LockApi[Statement, Insert, ResultSet](job, jobLockTable, dbSession) with LazyLogging {
   
   val timeBetweenRetries = 100 // ms
    
-  class CassandraSessionBasedDBSession(cassandraSession: Session) extends DbSession[Statement, Insert, ResultSet](cassandraSession.getCluster.getMetadata.getAllHosts().iterator().next.getAddress.toString) {
+  class CassandraSessionBasedDBSession(cassandraSession: Session) extends DbSession[Statement, Insert, ResultSet, CassandraMetadata](cassandraSession.getCluster.getMetadata.getAllHosts().iterator().next.getAddress.toString) {
 
     override def execute(statement: String): Try[ResultSet] = {
       try {
@@ -261,9 +261,9 @@ class CassandraSyncTableLock (job: JobInfo[Statement, Insert, ResultSet], jobLoc
 
 object CassandraSyncTableLock {
   def apply(
-      job: JobInfo[Statement, Insert, ResultSet], 
+      job: JobInfo[Statement, Insert, ResultSet, CassandraMetadata], 
       jobLockTable: Table[SyncTableBasicClasses.JobLockTable], 
-      dbSession: DbSession[Statement, Insert, ResultSet],
+      dbSession: DbSession[Statement, Insert, ResultSet, CassandraMetadata],
       timeOut: Int) = {
     new CassandraSyncTableLock(job, jobLockTable, dbSession, timeOut)
   }

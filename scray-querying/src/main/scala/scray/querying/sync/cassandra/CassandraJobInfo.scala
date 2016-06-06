@@ -51,11 +51,12 @@ class CassandraJobInfo(
     override val name: String,
     numberOfBatchSlots: Int = 3,
     numberOfOnlineSlots: Int = 2,
-    lockTimeOut: Int = 500) extends JobInfo[Statement, Insert, ResultSet](name, numberOfBatchSlots, numberOfOnlineSlots) with LazyLogging {
+    override val metadata: Option[CassandraMetadata] = None,
+    lockTimeOut: Int = 500) extends JobInfo[Statement, Insert, ResultSet, CassandraMetadata](name, numberOfBatchSlots, numberOfOnlineSlots) with LazyLogging {
 
   val statementGenerator = new CassandraStatementGenerator
 
-  def getLock(dbSession: DbSession[Statement, Insert, ResultSet]): LockApi[Statement, Insert, ResultSet] = {
+  def getLock(dbSession: DbSession[Statement, Insert, ResultSet, CassandraMetadata]): LockApi[Statement, Insert, ResultSet] = {
      this.lock = this.lock.orElse {
       val table = JobLockTable("SILIDX", "JobSync")
 
@@ -93,3 +94,7 @@ object CassandraJobInfo {
     new CassandraJobInfo(name, numberOfBatchVersions, numberOfOnlineVersions)
   }
 }
+
+class CassandraMetadata(
+    val keyspace: String,
+    val table: String) {}

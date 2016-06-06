@@ -68,10 +68,10 @@ object CassandraImplementation extends Serializable {
   }
 }
 
-class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet]) extends 
-    OnlineBatchSync[Statement, Insert, ResultSet] with 
-    OnlineBatchSyncWithTableIdentifier[Statement, Insert, ResultSet] with 
-    StateMonitoringApi[Statement, Insert, ResultSet] {
+class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet, CassandraMetadata]) extends 
+    OnlineBatchSync[Statement, Insert, ResultSet, CassandraMetadata] with 
+    OnlineBatchSyncWithTableIdentifier[Statement, Insert, ResultSet, CassandraMetadata] with 
+    StateMonitoringApi[Statement, Insert, ResultSet, CassandraMetadata] {
 
   def this(dbHostname: String) = {
     this(new CassandraDbSession(Cluster.builder().addContactPoint(dbHostname).build().connect()))
@@ -210,7 +210,9 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
     }
   }
 
-  def getTableIdentifier(job: JobInfo[Statement, Insert, ResultSet]): TableIdentifier = ???
+  def getTableIdentifier(job: JobInfo[Statement, Insert, ResultSet, CassandraDbSession]): TableIdentifier = {
+    
+  }
 
     def resetBatchJob(job: JOB_INFO): Try[Unit] = Try {
       val runningBatchSlot = this.getRunningBatchJobSlot(job).getOrElse(0)
@@ -476,6 +478,7 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
       case Failure(message) => Failure(this.throwInsertStatementError(job.name, slot, statement, message.toString()))
     }
   }
+  
 
   //  /**
   //   * Lock online table if it is used by another spark job.
