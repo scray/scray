@@ -7,9 +7,9 @@ import org.apache.spark.SparkContext._
 import org.apache.spark._
 import ${package}.data.AggregationKey
 import org.apache.spark.rdd.RDD
-import scray.querying.sync.cassandra.CassandraImplementation._
+import scray.cassandra.sync.CassandraImplementation._
 import scray.querying.sync.OnlineBatchSync
-import scray.querying.sync.cassandra.OnlineBatchSyncCassandra
+import scray.cassandra.sync.OnlineBatchSyncCassandra
 import scray.querying.sync.JobInfo
 import scala.util.Failure
 import scala.util.Success

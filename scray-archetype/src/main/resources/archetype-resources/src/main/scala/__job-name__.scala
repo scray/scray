@@ -10,12 +10,12 @@ import ${package}.cli.{Config, Options}
 import scala.collection.mutable.Queue
 import scray.querying.sync.types.ArbitrarylyTypedRows
 import scray.querying.sync.types.Column
-import scray.querying.sync.cassandra.CassandraImplementation._
+import scray.cassandra.sync.CassandraImplementation._
 import scray.querying.sync.OnlineBatchSync
-import scray.querying.sync.cassandra.OnlineBatchSyncCassandra
+import scray.cassandra.sync.OnlineBatchSyncCassandra
 import scray.querying.sync.JobInfo
 import scray.querying.sync.types.AbstractRow
-import scray.querying.sync.cassandra.CassandraJobInfo
+import scray.cassandra.sync.CassandraJobInfo
 
 /**
  * @author <author@name.org>
