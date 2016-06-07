@@ -239,9 +239,7 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
     executeQuorum(query)
   }
 
-  override def getQueryableTableIdentifiers: List[(String, TableIdentifier, Int)] = {
-
-    def splitIntoTableIdentifier(tableId: String): TableIdentifier = {
+  private def splitIntoTableIdentifier(tableId: String): TableIdentifier = {
       val parts = tableId.split("\\.").reverse
       val tablename = parts(0)
       val keyspace = if (parts.size > 1) {
@@ -255,7 +253,9 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
         "cassandra"
       }
       TableIdentifier(system, keyspace, tablename)
-    }
+  }
+  override def getQueryableTableIdentifiers: List[(String, TableIdentifier, Int)] = {
+
     val jobnames = new HashSet[String]()
     val query = QueryBuilder.select(syncTable.columns.jobname.name).from(syncTable.keySpace, syncTable.tableName)
     val results = execute(query)
@@ -296,8 +296,7 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
       .map { _.iterator() }.recover {
         case e => { logger.error(s"DB error while fetching TableIdentifier ${e.getMessage}"); throw e }
         // TODO use config file 
-      }
-        Some(new TableIdentifier("cassandra", "", ""))
+      }.toOption.flatMap { row => Some(splitIntoTableIdentifier(row.next().getString(syncTable.columns.tableidentifier.name)))}
   }
 
   def getLatestBatch(job: JOB_INFO): Option[Int] = {

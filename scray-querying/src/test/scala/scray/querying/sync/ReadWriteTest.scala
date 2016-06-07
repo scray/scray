@@ -117,13 +117,12 @@ class ReadWriteTest extends WordSpec {
           val columns = sum :: Nil
           val primaryKey = s"(${sum.name})"
           val indexes: Option[List[String]] = None
-          val jobInfo = new CassandraJobInfo(getNextJobName)
+          val jobInfo = new CassandraJobInfo("Job512")
     
           assert(table.initJob(jobInfo, new RowWithValue(columns, primaryKey, indexes)).isSuccess)
           assert(table.startNextBatchJob(jobInfo).isSuccess)
           
-          println("\n\n\n\n" + table.getTableIdentifierOfRunningJob(jobInfo))
-          
+          assert(table.getTableIdentifierOfRunningJob(jobInfo).get.tableId === "Job512_batch1")
         }
   }
 }
