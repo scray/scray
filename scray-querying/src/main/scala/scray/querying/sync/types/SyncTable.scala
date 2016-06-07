@@ -1,12 +1,16 @@
 package scray.querying.sync.types
 
 import com.websudos.phantom.CassandraPrimitive._
+
 import scala.collection.JavaConverters._
 import scala.collection.mutable.ListBuffer
 import scala.reflect.runtime.universe._
 import scala.util.Try
+
 import java.util.concurrent.locks.Lock
-import scray.querying.sync.cassandra.CassandraImplementation._
+
+import scray.cassandra.sync.CassandraImplementation._
+import scray.cassandra.sync.OnlineBatchSyncCassandra
 import scray.querying.sync.JobInfo
 
 class Table[T <: AbstractRow](val keySpace: String, val tableName: String, val columns: T) extends Serializable {
@@ -83,7 +87,7 @@ class Columns(
   override type ColumnType = Column[_]
 }
 
-abstract class DbSession[Statement, InsertIn, Result, _](val dbHostname: String) {
+abstract class DbSession[Statement, InsertIn, Result](val dbHostname: String) {
   def execute(statement: Statement): Try[Result]
   def execute(statement: String): Try[Result]
   def insert(statement: InsertIn): Try[Result]
@@ -147,11 +151,11 @@ object State extends Enumeration {
 }
 
 abstract class LockApi[Statement, Insert, Result](
-      val job: JobInfo[Statement, Insert, Result, _], 
+      val job: JobInfo[Statement, Insert, Result], 
       val jobLockTable: Table[SyncTableBasicClasses.JobLockTable], 
-      val dbSession: DbSession[Statement, Insert, Result, _]) extends Lock {
+      val dbSession: DbSession[Statement, Insert, Result]) extends Lock {
   
-  def this(job: JobInfo[Statement, Insert, Result, _], dbSession: DbSession[Statement, Insert, Result, _]) {
+  def this(job: JobInfo[Statement, Insert, Result], dbSession: DbSession[Statement, Insert, Result]) {
     this(job, JobLockTable("SILIDX", "jobLock"), dbSession)
   }
   

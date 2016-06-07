@@ -1,13 +1,4 @@
-package scray.querying.sync.cassandra
-
-import java.util.{ Iterator => JIterator }
-
-import scala.annotation.tailrec
-import scala.collection.mutable.HashSet
-import scala.collection.mutable.ListBuffer
-import scala.util.Failure
-import scala.util.Success
-import scala.util.Try
+package scray.cassandra.sync
 
 import com.datastax.driver.core.BatchStatement
 import com.datastax.driver.core.Cluster
@@ -20,12 +11,22 @@ import com.datastax.driver.core.querybuilder.Insert
 import com.datastax.driver.core.querybuilder.QueryBuilder
 import com.typesafe.scalalogging.slf4j.LazyLogging
 import com.websudos.phantom.CassandraPrimitive
+import java.util.{ Iterator => JIterator }
+import scala.annotation.tailrec
 import scala.collection.JavaConverters._
-
+import scala.collection.mutable.HashSet
+import scala.collection.mutable.ListBuffer
+import scala.util.Failure
+import scala.util.Success
+import scala.util.Try
 import scray.common.serialization.BatchID
 import scray.querying.description.TableIdentifier
 import scray.querying.sync.JobInfo
 import scray.querying.sync.NoRunningJobExistsException
+import scray.querying.sync.OnlineBatchSync
+import scray.querying.sync.OnlineBatchSyncWithTableIdentifier
+import scray.querying.sync.RunningJobExistsException
+import scray.querying.sync.StateMonitoringApi
 import scray.querying.sync.StatementExecutionError
 import scray.querying.sync.types.AbstractRow
 import scray.querying.sync.types.ArbitrarylyTypedRows
@@ -39,10 +40,7 @@ import scray.querying.sync.types.State.State
 import scray.querying.sync.types.SyncTable
 import scray.querying.sync.types.Table
 import scray.querying.sync.types.VoidTable
-import scray.querying.sync.RunningJobExistsException
-import scray.querying.sync.StateMonitoringApi
-import scray.querying.sync.OnlineBatchSync
-import scray.querying.sync.OnlineBatchSyncWithTableIdentifier
+import java.util.{Iterator => JIterator}
 
 object CassandraImplementation extends Serializable {
   implicit def genericCassandraColumnImplicit[T](implicit cassImplicit: CassandraPrimitive[T]): DBColumnImplementation[T] = new DBColumnImplementation[T] {
@@ -68,10 +66,10 @@ object CassandraImplementation extends Serializable {
   }
 }
 
-class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet, CassandraMetadata]) extends 
-    OnlineBatchSync[Statement, Insert, ResultSet, CassandraMetadata] with 
-    OnlineBatchSyncWithTableIdentifier[Statement, Insert, ResultSet, CassandraMetadata] with 
-    StateMonitoringApi[Statement, Insert, ResultSet, CassandraMetadata] {
+class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet]) extends 
+    OnlineBatchSync[Statement, Insert, ResultSet] with 
+    OnlineBatchSyncWithTableIdentifier[Statement, Insert, ResultSet] with 
+    StateMonitoringApi[Statement, Insert, ResultSet] {
 
   def this(dbHostname: String) = {
     this(new CassandraDbSession(Cluster.builder().addContactPoint(dbHostname).build().connect()))
@@ -81,7 +79,6 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
     this(new CassandraDbSession(Cluster.builder().addContactPoint(dbHostname).withPort(port).build().connect()))
   }
 
-  import CassandraImplementation.{ RichBoolean, RichOption }
 
   // Create or use a given DB session.
   @transient val session = dbSession
@@ -102,7 +99,7 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
     this.crateAndRegisterTablesIfNotExists(job)
     this.createDataTables(job, dataTable)
   }
-  
+
   @Override
   def initJob[DataTableT <: ArbitrarylyTypedRows](job: JOB_INFO): Try[Unit] = {
     statementGenerator.createKeyspaceCreationString(syncTable).map { statement => dbSession.execute(statement) }
@@ -210,10 +207,6 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
     }
   }
 
-  def getTableIdentifier(job: JobInfo[Statement, Insert, ResultSet, CassandraDbSession]): TableIdentifier = {
-    
-  }
-
     def resetBatchJob(job: JOB_INFO): Try[Unit] = Try {
       val runningBatchSlot = this.getRunningBatchJobSlot(job).getOrElse(0)
       this.renewJob(job, runningBatchSlot, false)
@@ -293,6 +286,20 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
       this.getRunningSlot(job, false)
     }
     
+  def getTableIdentifierOfRunningJob(job: JobInfo[Statement, Insert, ResultSet]): Option[TableIdentifier] = {
+    val tableIdentifierSelectStatement = QueryBuilder.select(syncTable.columns.tableidentifier.name).from(syncTable.keySpace, syncTable.tableName).where(  
+      QueryBuilder.eq(syncTable.columns.jobname.name, job.name)).
+      and(QueryBuilder.eq(syncTable.columns.online.name, false)).
+      and(QueryBuilder.eq(syncTable.columns.state.name, State.RUNNING.toString()))
+      
+     this.execute(tableIdentifierSelectStatement)
+      .map { _.iterator() }.recover {
+        case e => { logger.error(s"DB error while fetching TableIdentifier ${e.getMessage}"); throw e }
+        // TODO use config file 
+      }
+        Some(new TableIdentifier("cassandra", "", ""))
+  }
+
   def getLatestBatch(job: JOB_INFO): Option[Int] = {
     val slotQuery = QueryBuilder.select.all().from(syncTable.keySpace, syncTable.tableName).where(
       QueryBuilder.eq(syncTable.columns.jobname.name, job.name)).

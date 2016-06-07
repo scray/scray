@@ -1,25 +1,43 @@
 package scray.querying.sync
 
+
 import java.util.concurrent.atomic.AtomicInteger
 
 import scala.annotation.tailrec
+import scala.util.Failure
+import scala.util.Success
+import scala.util.Try
 
+import org.cassandraunit.utils.EmbeddedCassandraServerHelper
 import org.junit.runner.RunWith
 import org.scalatest.BeforeAndAfter
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.WordSpec
 import org.scalatest.junit.JUnitRunner
 
-import scray.cassandra.sync.CassandraJobInfo
-import scray.cassandra.sync.OnlineBatchSyncCassandra
+import com.datastax.driver.core.Cluster
+import com.datastax.driver.core.ResultSet
+import com.datastax.driver.core.Statement
+import com.datastax.driver.core.querybuilder.Insert
+
 import scray.common.serialization.BatchID
 import scray.querying.description.Row
-import scray.querying.sync.helpers.TestDbSession
-import scray.querying.sync.types.ColumnWithValue
+import scray.querying.sync._
+import scray.querying.sync.cassandra.CassandraImplementation._
+import scray.querying.sync.cassandra.CassandraImplementation.RichBoolean
+import scray.querying.sync.cassandra.OnlineBatchSyncCassandra
+import scray.querying.sync.cassandra.OnlineBatchSyncCassandra
+import scray.querying.sync.types.ArbitrarylyTypedRows
+import scray.querying.sync.types.Column
+import scray.querying.sync.types.DbSession
+import scray.querying.sync.types.RowWithValue
 import shapeless.ops.hlist._
 import shapeless.syntax.singleton._
-import scray.cassandra.sync.CassandraImplementation._
-import scray.querying.sync.types.RowWithValue
+import scray.cassandra.sync.CassandraJobInfo
+import java.util.concurrent.TimeUnit
+import scray.querying.sync.types.ColumnWithValue
+import scray.querying.sync.types.State
+import scray.querying.sync.helpers.TestDbSession
 
 
 @RunWith(classOf[JUnitRunner])

@@ -4,12 +4,12 @@ import org.junit.runner.RunWith
 import org.scalatest.WordSpec
 import org.scalatest.junit.JUnitRunner
 
-import scray.querying.sync.cassandra.CassandraImplementation.genericCassandraColumnImplicit
 import scray.querying.sync.types.Column
 import scray.querying.sync.types.ColumnWithValue
 import scray.querying.sync.types.Columns
 import scray.querying.sync.types.RowWithValue
 import scray.querying.sync.types.SyncTableBasicClasses.SyncTableRowEmpty
+import scray.cassandra.sync.CassandraImplementation._
 import scray.querying.sync.types.Table
 
 

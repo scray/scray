@@ -1,4 +1,4 @@
-package scray.querying.sync.cassandra
+package scray.cassandra.sync
 
 import java.util.concurrent.TimeUnit
 
@@ -19,19 +19,20 @@ import com.datastax.driver.core.querybuilder.QueryBuilder
 import com.typesafe.scalalogging.slf4j.LazyLogging
 
 import scray.querying.sync.JobInfo
-import scray.querying.sync.StatementExecutionError
 import scray.querying.sync.types.DbSession
 import scray.querying.sync.types.LockApi
 import scray.querying.sync.types.SyncTableBasicClasses
 import scray.querying.sync.types.Table
 import scray.querying.sync.UnableToLockJobError
+import scray.querying.sync.StatementExecutionError
 
-class CassandraSyncTableLock (job: JobInfo[Statement, Insert, ResultSet, CassandraMetadata], jobLockTable: Table[SyncTableBasicClasses.JobLockTable], 
-  dbSession: DbSession[Statement, Insert, ResultSet, CassandraMetadata], val timeOut: Int) extends LockApi[Statement, Insert, ResultSet](job, jobLockTable, dbSession) with LazyLogging {
+
+class CassandraSyncTableLock (job: JobInfo[Statement, Insert, ResultSet], jobLockTable: Table[SyncTableBasicClasses.JobLockTable], 
+  dbSession: DbSession[Statement, Insert, ResultSet], val timeOut: Int) extends LockApi[Statement, Insert, ResultSet](job, jobLockTable, dbSession) with LazyLogging {
   
   val timeBetweenRetries = 100 // ms
    
-  class CassandraSessionBasedDBSession(cassandraSession: Session) extends DbSession[Statement, Insert, ResultSet, CassandraMetadata](cassandraSession.getCluster.getMetadata.getAllHosts().iterator().next.getAddress.toString) {
+  class CassandraSessionBasedDBSession(cassandraSession: Session) extends DbSession[Statement, Insert, ResultSet](cassandraSession.getCluster.getMetadata.getAllHosts().iterator().next.getAddress.toString) {
 
     override def execute(statement: String): Try[ResultSet] = {
       try {
@@ -261,9 +262,9 @@ class CassandraSyncTableLock (job: JobInfo[Statement, Insert, ResultSet, Cassand
 
 object CassandraSyncTableLock {
   def apply(
-      job: JobInfo[Statement, Insert, ResultSet, CassandraMetadata], 
+      job: JobInfo[Statement, Insert, ResultSet], 
       jobLockTable: Table[SyncTableBasicClasses.JobLockTable], 
-      dbSession: DbSession[Statement, Insert, ResultSet, CassandraMetadata],
+      dbSession: DbSession[Statement, Insert, ResultSet],
       timeOut: Int) = {
     new CassandraSyncTableLock(job, jobLockTable, dbSession, timeOut)
   }

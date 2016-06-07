@@ -9,7 +9,7 @@ import com.datastax.driver.core.ResultSet
 import com.datastax.driver.core.Statement
 import com.datastax.driver.core.querybuilder.Insert
 import scray.querying.sync._
-import scray.querying.sync.cassandra.CassandraImplementation._
+import scray.cassandra.sync.CassandraImplementation._
 import scray.querying.sync.types.ArbitrarylyTypedRows
 import scray.querying.sync.types.Column
 import scray.querying.sync.types.DbSession
