@@ -170,78 +170,57 @@ class CassandraSyncTableLock (job: JobInfo[Statement, Insert, ResultSet], jobLoc
     Try(unlock())
   }
   
-  def transaction(f: () => Try[Unit]): Try[Unit] = {
+  def transaction[ResultT](f: () => Try[ResultT]): Try[ResultT] = {
     logger.debug(s"Start transaction for job ${this.job.name}")
     if(this.tryLock(timeOut, TimeUnit.MILLISECONDS)) {
-      f() match {
-        case Success(_) => this.unlock(); Try()
-        case Failure(ex) => {
-          logger.error(s"Unable to execute Query. Release lock for job ${job.name}")
-          this.unlock()
-          Failure(ex)}
-      } 
+      matchResult(f())
     } else {
      logger.warn(s"Unable to lock job ${job.name}")
      Failure(new UnableToLockJobError(s"Unable to lock job ${job.name}")) 
     }
   }
   
-  def transaction[P1](f: (P1) => Try[Unit], p1: P1): Try[Unit] = {
+  def transaction[P1, ResultT](f: (P1) => Try[ResultT], p1: P1): Try[ResultT] = {
     if(this.tryLock(timeOut, TimeUnit.MILLISECONDS)) {
-      f(p1) match {
-        case Success(_) => this.unlock(); Try()
-        case Failure(ex) => {
-          logger.error(s"Unable to execute Query. Release lock for job ${job.name} p1")
-          this.unlock()
-          Failure(ex)}
-      } 
+      matchResult(f(p1)) 
     } else {
      Failure(new UnableToLockJobError(s"Unable to lock job ${job.name}")) 
     }
   }
   
-  def transaction[P1, P2](f: (P1, P2) => Try[Unit], p1: P1, p2: P2): Try[Unit] = {
+  def transaction[P1, P2, ResultT](f: (P1, P2) => Try[ResultT], p1: P1, p2: P2): Try[ResultT] = {
     if(this.tryLock(timeOut, TimeUnit.MILLISECONDS)) {
-      f(p1, p2) match {
-        case Success(_) => this.unlock(); Try()
-        case Failure(ex) => {
-          logger.error(s"Unable to execute Query. Release lock for job ${job.name}")
-          this.unlock()
-          Failure(ex)}
-      } 
+      matchResult(f(p1, p2))
     } else {
      Failure(new UnableToLockJobError(s"Unable to lock job ${job.name}")) 
     }
   }
   
-  def transaction[P1, P2, P3](f: (P1, P2, P3) => Try[Unit], p1: P1, p2: P2, p3: P3): Try[Unit] = {
+  def transaction[P1, P2, P3, ResultT](f: (P1, P2, P3) => Try[ResultT], p1: P1, p2: P2, p3: P3): Try[ResultT] = {
     if(this.tryLock(timeOut, TimeUnit.MILLISECONDS)) {
-      f(p1, p2, p3) match {
-        case Success(_) => this.unlock(); Try()
-        case Failure(ex) => {
-          logger.error(s"Unable to execute Query. Release lock for job ${job.name}")
-          this.unlock()
-          Failure(ex)}
-      } 
+      matchResult(f(p1, p2, p3))
     } else {
      Failure(new UnableToLockJobError(s"Unable to lock job ${job.name}")) 
     }
   }
   
-  def transaction[P1, P2, P3, P4](f: (P1, P2, P3, P4) => Try[Unit], p1: P1, p2: P2, p3: P3, p4: P4): Try[Unit] = {
+  def transaction[P1, P2, P3, P4, ResultT](f: (P1, P2, P3, P4) => Try[ResultT], p1: P1, p2: P2, p3: P3, p4: P4): Try[ResultT] = {
     if(this.tryLock(timeOut, TimeUnit.MILLISECONDS)) {
-      f(p1, p2, p3, p4) match {
-        case Success(_) => this.unlock(); Try()
-        case Failure(ex) => {
-          logger.error(s"Unable to execute Query. Release lock for job ${job.name}")
-          this.unlock()
-          Failure(ex)}
-      } 
+      matchResult(f(p1, p2, p3, p4)) 
     } else {
      Failure(new UnableToLockJobError(s"Unable to lock job ${job.name}")) 
     }
   }
   
+  def matchResult[ResultT](result: Try[ResultT]) = {
+    result match {
+      case Success(result) => this.unlock(); Success(result) 
+      case Failure(ex) => {
+        logger.error(s"Unable to execute Query. Release lock for job ${job.name}")
+        this.unlock()
+        Failure(ex)}
+    } 
+  }
   private def executeQuorum(statement: Statement): Try[Unit] = {
 
     statement match {
@@ -251,7 +230,7 @@ class CassandraSyncTableLock (job: JobInfo[Statement, Insert, ResultSet], jobLoc
     statement.setConsistencyLevel(ConsistencyLevel.QUORUM)
 
     dbSession.execute(statement) match {
-      case Success(result) => Try()
+      case Success(result) => Success(result)
       case Failure(ex) => {
           logger.error(s"Error while executing statement: ${statement}.}")
           Failure(new StatementExecutionError(ex.getLocalizedMessage))

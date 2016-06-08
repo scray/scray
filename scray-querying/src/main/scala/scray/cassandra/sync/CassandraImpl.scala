@@ -381,6 +381,17 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
       case _                     =>
     }
 
+    // Check if tables already exists.
+//    val existsStatement = QueryBuilder.select(syncTable.columns.jobname.name)
+//      .from(syncTable.keySpace, syncTable.tableName)
+//      .where(
+//        QueryBuilder.eq(syncTable.columns.jobname.name, job.name)  
+//      )
+//    
+//    job.getLock(dbSession).transaction(this.executeQuorum, existsStatement)
+    
+    
+    
     // Register online and batch tables
     val statements = new BatchStatement()
     0 to job.numberOfBatchSlots - 1 foreach { i =>

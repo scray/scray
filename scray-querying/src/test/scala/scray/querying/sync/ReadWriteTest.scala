@@ -46,7 +46,6 @@ class ReadWriteTest extends WordSpec {
           table.initJob(jobInfo, new RowWithValue(columns, primaryKey, indexes))
           table.startNextBatchJob(jobInfo)
          
-          
           table.insertInBatchTable(jobInfo, 0, new RowWithValue(columns, primaryKey, indexes)) 
           table.completeBatchJob(jobInfo)
     
