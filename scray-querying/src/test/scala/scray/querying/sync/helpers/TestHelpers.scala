@@ -37,7 +37,7 @@ import shapeless.syntax.singleton._
       if (result.wasApplied()) {
         Success(result)
       } else {
-        Failure(new StatementExecutionError(s"It was not possible to execute statement: ${statement}"))
+        Failure(new StatementExecutionError(s"It was not possible to execute statement: ${statement}. Error: ${result.getExecutionInfo}"))
       }
     }
 
@@ -46,7 +46,7 @@ import shapeless.syntax.singleton._
       if (result.wasApplied()) {
         Success(result)
       } else {
-        Failure(new StatementExecutionError(s"It was not possible to execute statement: ${statement}"))
+        Failure(new StatementExecutionError(s"It was not possible to execute statement: ${statement}. Error: ${result.getExecutionInfo}"))
       }
     }
 

@@ -232,7 +232,7 @@ class CassandraSyncTableLock (job: JobInfo[Statement, Insert, ResultSet], jobLoc
     dbSession.execute(statement) match {
       case Success(result) => Success(result)
       case Failure(ex) => {
-          logger.error(s"Error while executing statement: ${statement}.}")
+          logger.error(s"Error while executing statement: ${statement}. ${ex.printStackTrace()} \t ${ex.getMessage}}")
           Failure(new StatementExecutionError(ex.getLocalizedMessage))
         } 
       }

@@ -381,44 +381,50 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
       case _                     =>
     }
 
-    // Check if tables already exists.
-//    val existsStatement = QueryBuilder.select(syncTable.columns.jobname.name)
-//      .from(syncTable.keySpace, syncTable.tableName)
-//      .where(
-//        QueryBuilder.eq(syncTable.columns.jobname.name, job.name)  
-//      )
-//    
-//    job.getLock(dbSession).transaction(this.executeQuorum, existsStatement)
-    
-    
-    
-    // Register online and batch tables
-    val statements = new BatchStatement()
-    0 to job.numberOfBatchSlots - 1 foreach { i =>
-      // Register batch tables
-      statements.add(QueryBuilder.insertInto(syncTable.keySpace, syncTable.tableName)
-      .value(syncTable.columns.slot.name, i)
-      .value(syncTable.columns.online.name, false)
-      .value(syncTable.columns.jobname.name, job.name)
-      .value(syncTable.columns.state.name, State.NEW.toString())
-      .value(syncTable.columns.versions.name, job.numberOfBatchSlots)
-      .value(syncTable.columns.tableidentifier.name, getBatchJobName(syncTable.keySpace + "." + job.name, i)))  
-    }
-
-    // Create and register online tables
-    0 to job.numberOfOnlineSlots - 1 foreach { i =>
-      // Register online tables
-      statements.add(QueryBuilder.insertInto(syncTable.keySpace, syncTable.tableName)
-        .value(syncTable.columns.online.name, true)
-        .value(syncTable.columns.jobname.name, job.name)
+    if(!checkIfJobExists(job).getOrElse(false)) {
+      // Register online and batch tables
+      val statements = new BatchStatement()
+      0 to job.numberOfBatchSlots - 1 foreach { i =>
+        // Register batch tables
+        statements.add(QueryBuilder.insertInto(syncTable.keySpace, syncTable.tableName)
         .value(syncTable.columns.slot.name, i)
-        .value(syncTable.columns.versions.name, job.numberOfOnlineSlots)
+        .value(syncTable.columns.online.name, false)
+        .value(syncTable.columns.jobname.name, job.name)
         .value(syncTable.columns.state.name, State.NEW.toString())
-        .value(syncTable.columns.batchEndTime.name, -1L)
-        .value(syncTable.columns.tableidentifier.name, getOnlineJobName(syncTable.keySpace + "." + job.name, i)))
+        .value(syncTable.columns.versions.name, job.numberOfBatchSlots)
+        .value(syncTable.columns.tableidentifier.name, getBatchJobName(syncTable.keySpace + "." + job.name, i)))  
+      }
+  
+      // Create and register online tables
+      0 to job.numberOfOnlineSlots - 1 foreach { i =>
+        // Register online tables
+        statements.add(QueryBuilder.insertInto(syncTable.keySpace, syncTable.tableName)
+          .value(syncTable.columns.online.name, true)
+          .value(syncTable.columns.jobname.name, job.name)
+          .value(syncTable.columns.slot.name, i)
+          .value(syncTable.columns.versions.name, job.numberOfOnlineSlots)
+          .value(syncTable.columns.state.name, State.NEW.toString())
+          .value(syncTable.columns.batchEndTime.name, -1L)
+          .value(syncTable.columns.tableidentifier.name, getOnlineJobName(syncTable.keySpace + "." + job.name, i)))
+      }
+      job.getLock(dbSession).transaction(this.executeQuorum, statements)
     }
-    job.getLock(dbSession).transaction(this.executeQuorum, statements)
   }
+  
+  def checkIfJobExists(job: JOB_INFO): Option[Boolean] = {
+      
+    // Check if tables already exists.
+    val existsStatement = QueryBuilder.select(syncTable.columns.jobname.name)
+      .from(syncTable.keySpace, syncTable.tableName)
+      .where( QueryBuilder.eq(syncTable.columns.jobname.name, job.name))
+      .and(QueryBuilder.eq(syncTable.columns.online.name, false))
+      .and(QueryBuilder.eq(syncTable.columns.slot.name, 0))
+      
+     job.getLock(dbSession).transaction(this.execute, existsStatement).map { _.iterator().hasNext()} match {
+      case Success(exists) => Some(exists)
+      case Failure(error) => {logger.error(s"Unable to check if job ${job.name} exits."); None}
+    }
+   }
   
   def createDataTables[T <: AbstractRow](job: JOB_INFO, dataColumns: T): Try[Unit] = Try {
         // Create and register online tables
@@ -621,7 +627,7 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
       dbSession.execute(statement) match {
         case Success(result) =>  Try()
         case Failure(ex) => {
-          logger.warn(s"Error while executing statement: ${statement}. ${ex.getMessage}")
+          logger.warn(s"Error while executing statement: ${statement}. ${ex.printStackTrace()}")
           Failure(new StatementExecutionError(ex.getLocalizedMessage))
         }
       }
