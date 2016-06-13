@@ -32,7 +32,7 @@ class TransactionTests extends WordSpec {
   var jobNr: AtomicInteger = new AtomicInteger(0)
 
   def getNextJobName: String = {
-    "Job" + jobNr.getAndIncrement
+    "TransactionTest_Job" + jobNr.getAndIncrement
   }
 
   "TransactionAPI " should {
@@ -44,39 +44,39 @@ class TransactionTests extends WordSpec {
       jobInfo.getLock(dbconnection).lock
       assert(true)
     }
-//    "lock and unlock " in {
-//      val job1 = new CassandraJobInfo(getNextJobName)
-//      val table = new OnlineBatchSyncCassandra(dbconnection)
-//      table.initJob(job1, new SumTestColumns())
-//
-//      assert(job1.getLock(dbconnection).tryLock(100, TimeUnit.MILLISECONDS))
-//      assert(job1.getLock(dbconnection).tryLock(100, TimeUnit.MILLISECONDS) == false)
-//    }
-//    "use transaction method" in {
-//      val job1 = new CassandraJobInfo(getNextJobName)
-//      val table = new OnlineBatchSyncCassandra(dbconnection)
-//      table.initJob(job1, new SumTestColumns())
-//
-//      val funcOK = () => { Try() }
-//      val funcFail = () => { Failure(new UnableToLockJobError("...")) }
-//
-//      assert(job1.getLock(dbconnection).transaction(funcOK).isSuccess)
-//      assert(job1.getLock(dbconnection).transaction(funcFail).isFailure)
-//    }
-//    "test multiple transactions" in {
-//      val job1 = new CassandraJobInfo(getNextJobName)
-//      val table = new OnlineBatchSyncCassandra(dbconnection)
-//      table.initJob(job1, new SumTestColumns())
-//
-//      val funcOK = () => { Try() }
-//      val funcFail = () => { Failure(new UnableToLockJobError("...")) }
-//
-//      assert(job1.getLock(dbconnection).transaction(funcOK).isSuccess)
-//      assert(job1.getLock(dbconnection).transaction(funcOK).isSuccess)
-//      assert(job1.getLock(dbconnection).transaction(funcOK).isSuccess)
-//      assert(job1.getLock(dbconnection).transaction(funcOK).isSuccess)
-//      assert(job1.getLock(dbconnection).transaction(funcOK).isSuccess)
-//      assert(job1.getLock(dbconnection).transaction(funcFail).isFailure)
-//    }
+    "lock and unlock " in {
+      val job1 = new CassandraJobInfo(getNextJobName)
+      val table = new OnlineBatchSyncCassandra(dbconnection)
+      table.initJob(job1, new SumTestColumns())
+
+      assert(job1.getLock(dbconnection).tryLock(100, TimeUnit.MILLISECONDS))
+      assert(job1.getLock(dbconnection).tryLock(100, TimeUnit.MILLISECONDS) == false)
+    }
+    "use transaction method" in {
+      val job1 = new CassandraJobInfo(getNextJobName)
+      val table = new OnlineBatchSyncCassandra(dbconnection)
+      table.initJob(job1, new SumTestColumns())
+
+      val funcOK = () => { Try() }
+      val funcFail = () => { Failure(new UnableToLockJobError("...")) }
+
+      assert(job1.getLock(dbconnection).transaction(funcOK).isSuccess)
+      assert(job1.getLock(dbconnection).transaction(funcFail).isFailure)
+    }
+    "test multiple transactions" in {
+      val job1 = new CassandraJobInfo(getNextJobName)
+      val table = new OnlineBatchSyncCassandra(dbconnection)
+      table.initJob(job1, new SumTestColumns())
+
+      val funcOK = () => { Try() }
+      val funcFail = () => { Failure(new UnableToLockJobError("...")) }
+
+      assert(job1.getLock(dbconnection).transaction(funcOK).isSuccess)
+      assert(job1.getLock(dbconnection).transaction(funcOK).isSuccess)
+      assert(job1.getLock(dbconnection).transaction(funcOK).isSuccess)
+      assert(job1.getLock(dbconnection).transaction(funcOK).isSuccess)
+      assert(job1.getLock(dbconnection).transaction(funcOK).isSuccess)
+      assert(job1.getLock(dbconnection).transaction(funcFail).isFailure)
+    }
   }
 }

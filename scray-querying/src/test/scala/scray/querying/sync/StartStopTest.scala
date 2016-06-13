@@ -39,7 +39,7 @@ class StartStopTest extends WordSpec {
   var jobNr: AtomicInteger = new AtomicInteger(0)
 
   def getNextJobName: String = {
-    "Job" + jobNr.getAndIncrement
+    "StartStopTest_Job" + jobNr.getAndIncrement
   }
 
   /**

@@ -28,14 +28,14 @@ class ReadWriteTest extends WordSpec {
   var jobNr: AtomicInteger = new AtomicInteger(0)
 
   def getNextJobName: String = {
-    "Job" + jobNr.getAndIncrement
+    "ReadWriteTest_Job" + jobNr.getAndIncrement
   }
 
   val batchId = new BatchID(1L, 1L)
 
   "OnlineBatchSync " should {
         "insert and read batch data " in {
-          val table = new OnlineBatchSyncCassandra(dbconnection)
+          val table = new OnlineBatchSyncCassandra("andreas")
           val jobInfo = new CassandraJobInfo(getNextJobName)
     
           val sum = new ColumnWithValue[Long]("sum", 100)
