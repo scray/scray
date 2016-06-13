@@ -627,7 +627,8 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
       dbSession.execute(statement) match {
         case Success(result) =>  Try()
         case Failure(ex) => {
-          logger.warn(s"Error while executing statement: ${statement}. ${ex.printStackTrace()}")
+          logger.warn(s"Error while executing statement: ${statement}.}")
+          logger.debug(s"Error while executing statement: ${statement}. ${ex.printStackTrace()}")
           Failure(new StatementExecutionError(ex.getLocalizedMessage))
         }
       }
@@ -640,7 +641,8 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
     dbSession.execute(statement) match {
       case Success(result) => Try(result)
       case Failure(ex) => {
-        logger.warn(s"Error while executing statement: ${statement}. ${ex.printStackTrace()}")
+        logger.warn(s"Error while executing statement: ${statement}.")
+        logger.debug(s"Error while executing statement: ${statement}. ${ex.printStackTrace()}")
         Try(throw new StatementExecutionError(ex.getLocalizedMessage))
       }
     }
