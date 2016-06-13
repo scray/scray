@@ -38,7 +38,7 @@ class TransactionTests extends WordSpec {
   "TransactionAPI " should {
     "lock job" in {
       val jobInfo = CassandraJobInfo(getNextJobName)
-      val table = new OnlineBatchSyncCassandra("andreas")
+      val table = new OnlineBatchSyncCassandra(dbconnection)
       table.initJob(jobInfo, new SumTestColumns())
 
       jobInfo.getLock(dbconnection).lock
@@ -46,7 +46,7 @@ class TransactionTests extends WordSpec {
     }
     "lock and unlock " in {
       val job1 = new CassandraJobInfo(getNextJobName)
-      val table = new OnlineBatchSyncCassandra("andreas")
+      val table = new OnlineBatchSyncCassandra(dbconnection)
       table.initJob(job1, new SumTestColumns())
 
       assert(job1.getLock(dbconnection).tryLock(100, TimeUnit.MILLISECONDS))
