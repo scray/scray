@@ -17,8 +17,8 @@ import scray.querying.sync.types.RowWithValue
 import scray.querying.sync.types.State
 import scray.querying.sync.types.State.State
 import scray.querying.sync.types.LockApi
-import scalaz.Monoid
-
+cd ..c
+d 
 trait OnlineBatchSyncWithTableIdentifier[Statement, InsertIn, Result] extends LazyLogging {
 
   /**
