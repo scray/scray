@@ -208,7 +208,7 @@ case class _Grouping(name: String) extends _PostPredicate {
   def generate()(implicit query: _Query): ColumnGrouping = ColumnGrouping(query.getColumn(name).get.generate)
 }
 
-case class _Range(skip: Option[String], limit: Option[String]) extends _QueryComponent {
+case class _Range(skip: Option[String], limit: Option[String], timeout: Option[String]) extends _QueryComponent {
   def generate() = QueryRange(skip = skip.map { _.toLong }, limit = limit.map { _.toLong })
 }
 

@@ -47,9 +47,11 @@ class TQueryParser(tQuery: ScrayTQuery) extends Parser with LazyLogging {
   def _rootStatement: Rule1[_Query] = rule { push(_Query(Map[Class[_ <: _QueryComponent], _QueryComponent]())(tQuery)) }
 
   // Rules matching ranges
-  def _range: Rule1[_Range] = rule { (_skip ~ _limit | push(None) ~ _limit | _skip ~ push(None)) ~> { (s: Option[String], l: Option[String]) => _Range(s, l) } }
-  def _limit: Rule1[Option[String]] = rule { "LIMIT" ~ _number ~> { (s: String) => Some(s) } }
-  def _skip: Rule1[Option[String]] = rule { "SKIP" ~ _number ~> { (s: String) => Some(s) } }
+  // def _range: Rule1[_Range] = rule { (_skip ~ _limit | push(None) ~ _limit | _skip ~ push(None)) ~> { (s: Option[String], l: Option[String]) => _Range(s, l) } }
+  def _range: Rule1[_Range] = rule { (optional(_skip) ~ optional(_limit) ~ optional(_timeout)) ~> {(s: Option[String], l: Option[String], r: Option[String]) => _Range(s, l, r) }}
+  def _limit: Rule1[String] = rule { "LIMIT" ~ _number ~> { (s: String) => s } }
+  def _skip: Rule1[String] = rule { "SKIP" ~ _number ~> { (s: String) => s} }
+  def _timeout: Rule1[String] = rule { "TIMEOUT" ~ _number ~ "s"  ~> { (s: String) => s } }
 
   // Rules matching 'post predicates'
   def _groupby: Rule1[_Grouping] = rule { "GROUP BY" ~ _identifier ~> { (nam: String) => _Grouping(nam) } }
