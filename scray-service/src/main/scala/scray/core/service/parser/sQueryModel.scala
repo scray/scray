@@ -209,7 +209,7 @@ case class _Grouping(name: String) extends _PostPredicate {
 }
 
 case class _Range(skip: Option[String], limit: Option[String], timeout: Option[String]) extends _QueryComponent {
-  def generate() = QueryRange(skip = skip.map { _.toLong }, limit = limit.map { _.toLong })
+  def generate() = QueryRange(skip = Some(skip.map { _.toLong }), limit = Some(limit.map { _.toLong }), timeout =  Some(timeout.map { x => x.replace(" ", "").dropRight(1).toLong }))
 }
 
 /**

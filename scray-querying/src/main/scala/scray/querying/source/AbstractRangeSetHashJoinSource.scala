@@ -55,7 +55,7 @@ abstract class AbstractRangeSetHashJoinSource[Q <: DomainQuery, M, R /* <: Produ
         getValueIndexColumn, getReferencesIndexColumn)
     val range = query.getQueryRange.map { qrange => 
       val skipLines = qrange.skip.getOrElse(0L)
-      QueryRange(None, qrange.limit.map(_ + skipLines).orElse(maxLimit.map(_ + skipLines)))
+      QueryRange(None, qrange.limit.map(_ + skipLines).orElse(maxLimit.map(_ + skipLines)), None)
     }
     DomainQuery(query.getQueryID, query.getQueryspace, query.querySpaceVersion, resultColumns, getPrefixIndexColumn.table,
         domains, Some(ColumnGrouping(getValueIndexColumn)),
