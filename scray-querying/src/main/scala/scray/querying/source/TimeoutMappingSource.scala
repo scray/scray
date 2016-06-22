@@ -7,6 +7,10 @@ import scray.querying.description.EmptyRow
 import scray.querying.description.internal.SingleValueDomain
 import scray.querying.description.internal.QueryTimeOutException
 
+
+/**
+ * Check if query timed out. Triggered by received data.
+ */
 class TimeoutMappingSource [Q <: DomainQuery](source: LazySource[Q]) extends LazyQueryMappingSource[Q](source) with LazyLogging {
   
   var startTime: Long = 0;
