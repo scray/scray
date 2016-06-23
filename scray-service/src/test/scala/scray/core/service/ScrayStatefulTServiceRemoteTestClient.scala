@@ -16,7 +16,7 @@ import scray.service.qmodel.thrifscala.ScrayTColumnInfo
 import scray.service.qmodel.thrifscala.ScrayTTableInfo
 import scala.collection.breakOut
 
-object ScrayTServiceTestClient extends TQuerySamples {
+object ScrayStatefulTServiceRemoteTestClient extends TQuerySamples {
 
   object TQuerySamples2 {
       val PAGESIZE = 10
