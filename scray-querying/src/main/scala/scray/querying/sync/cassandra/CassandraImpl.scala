@@ -15,7 +15,6 @@ import com.datastax.driver.core.Statement
 import com.datastax.driver.core.querybuilder.Insert
 import com.datastax.driver.core.querybuilder.QueryBuilder
 import scray.querying.sync.types._
-import scray.querying.sync.types._
 import java.util.ArrayList
 import scala.collection.mutable.ArrayBuffer
 import scray.querying.sync.OnlineBatchSync
@@ -573,7 +572,11 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
   private def getJobData[T <: RowWithValue](jobname: String, version: Int, online: Boolean, result: T): Option[List[RowWithValue]] = {
     def handleColumnWithValue[U](currentRow: Row, destinationColumn: ColumnWithValue[U]): U = {
       val dbimpl = destinationColumn.dbimpl
-      dbimpl.fromDBType(currentRow.get(destinationColumn.name, dbimpl.toDBType(destinationColumn.value).getClass()))
+      
+      val dbType = dbimpl.toDBType(destinationColumn.value).getClass() 
+      
+      // dbimpl.toDBType(destinationColumn.value).getClass() // TODO Fix type ??
+      dbimpl.fromDBType(currentRow.getString(destinationColumn.name))
     }
 
     def fillValue[U](currentRow: Row, destinationColumn: ColumnWithValue[U]) = {
