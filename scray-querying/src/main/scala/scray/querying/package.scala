@@ -19,6 +19,7 @@ package object querying {
     val wrongQueryTypeForCacheID = "SIL-Scray-Querying-700"
     // 800+ = errors for specific queries
     val keyBasedQueryExceptionID = "SIL-Scray-Querying-800"
+    val queryTimeOutExceptionID = "SIL-Scray-Querying-801"
     // 900+ = errors for specific indexes
     val queryDomainRangeException = "SIL-Scray-Querying-901"
     val queryWildcardRangeException = "SIL-Scray-Querying-902"

@@ -60,7 +60,7 @@ class SplittedAutoIndexQueryableSource[K, V, T: Ordering](override val store: Qu
    */
   def fetchNewData: ITERATOR_FUNCTION[V, T] = (query, limit, skip, split) => Await.result {
     val ast = transformWhereAST(query.getWhereAST, split)
-    val limitOpt = query.getQueryRange.map(_.copy(limit = limit)).orElse(limit.map(lim => QueryRange(None, limit)))
+    val limitOpt = query.getQueryRange.map(_.copy(limit = limit)).orElse(limit.map(lim => QueryRange(None, limit, None)))
     val splitQuery = query.copy(domains = ast, range = limitOpt)
     logger.debug(s"re-fetch query with different range $split to fetch more results : ${splitQuery}")
     store.queryable.get(queryMapping(splitQuery)).map { x =>

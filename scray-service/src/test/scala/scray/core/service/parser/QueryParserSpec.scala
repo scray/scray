@@ -264,6 +264,12 @@ class QueryParserSpec extends FlatSpec with Matchers with TQuerySamples {
     val query = generate(parsed)
     query.getQueryRange.get.limit.nonEmpty should be(true)
   }
+  
+  it should "handle 'LIMIT' and 'TIMEOUT' predicates" in {
+    val parsed = parse("SELECT col1, col2 FROM @myTableId LIMIT 100 TIMEOUT 1s")
+    val query = generate(parsed)
+    query.getQueryRange.get.limit.nonEmpty should be(true)
+  }
 
   it should "handle 'SKIP' predicates" in {
     val parsed = parse("SELECT col1, col2 FROM @myTableId SKIP 100")
