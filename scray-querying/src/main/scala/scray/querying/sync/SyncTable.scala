@@ -1,4 +1,4 @@
-package scray.querying.sync.types
+package scray.querying.sync
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable.ListBuffer
@@ -8,8 +8,6 @@ import com.datastax.driver.core.Statement
 import com.websudos.phantom.CassandraPrimitive._
 import com.websudos.phantom.CassandraPrimitive
 import scala.util.Try
-
-import scray.querying.sync.cassandra.CassandraImplementation._
 
 class Table[T <: AbstractRow](val keySpace: String, val tableName: String, val columns: T) extends Serializable {
   val rows: ListBuffer[RowWithValue]= ListBuffer[RowWithValue]()
@@ -86,7 +84,7 @@ abstract class DbSession[Statement, InsertIn, Result](val dbHostname: String) {
 }
 
 object SyncTable {
-  def apply(keySpace: String, tableName: String) = {
+  def apply(keySpace: String, tableName: String)(implicit a: AbstractTypeDetection) = {
     new Table(keySpace, tableName, new SyncTableBasicClasses.SyncTableRowEmpty)
   }
 }
@@ -102,18 +100,29 @@ object DataTable {
   }
 }
 
+trait DBTypeImplicit[T] {
+  def getImplicit: Any
+}
+
+abstract class AbstractTypeDetection {
+  def dbType[T: DBTypeImplicit]: DBColumnImplementation[T]
+  def strType: DBColumnImplementation[String]
+  def intType: DBColumnImplementation[Int]
+  def lngType: DBColumnImplementation[Long]
+  def boolType: DBColumnImplementation[Boolean]  
+}
+
 object SyncTableBasicClasses extends Serializable {
 
-  class SyncTableRowEmpty() extends ArbitrarylyTypedRows {
-
-    val jobname = new Column[String]("jobname")
-    val versionNr = new Column[Int]("versionNr")
-    val creationTime = new Column[Long]("creationTime")
-    val versions = new Column[Int]("versions")
-    val tableidentifier = new Column[String]("tableidentifier")
-    val locked = new Column[Boolean]("locked")
-    val online = new Column[Boolean]("online")
-    val state = new Column[String]("state")
+  class SyncTableRowEmpty(implicit typeDetector: AbstractTypeDetection) extends ArbitrarylyTypedRows {
+    val jobname = new Column[String]("jobname")(typeDetector.strType)
+    val versionNr = new Column[Int]("versionNr")(typeDetector.intType)
+    val creationTime = new Column[Long]("creationTime")(typeDetector.lngType)
+    val versions = new Column[Int]("versions")(typeDetector.intType)
+    val tableidentifier = new Column[String]("tableidentifier")(typeDetector.strType)
+    val locked = new Column[Boolean]("locked")(typeDetector.boolType)
+    val online = new Column[Boolean]("online")(typeDetector.boolType)
+    val state = new Column[String]("state")(typeDetector.strType)
 
     override val columns = jobname :: creationTime :: versionNr :: versions :: tableidentifier :: locked :: online :: state :: Nil
     override val primaryKey = s"(${jobname.name}, ${online.name}, ${versionNr.name})"

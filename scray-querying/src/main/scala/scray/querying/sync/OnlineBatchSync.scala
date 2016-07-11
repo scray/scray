@@ -1,7 +1,7 @@
 package scray.querying.sync
 
 import java.util.{ Iterator => JIterator }
-import scray.querying.sync.types.State.State
+import scray.querying.sync.State.State
 import scala.annotation.tailrec
 import com.datastax.driver.core.Cluster
 import com.datastax.driver.core.ConsistencyLevel
@@ -13,8 +13,6 @@ import com.datastax.driver.core.SimpleStatement
 import com.datastax.driver.core.Statement
 import com.datastax.driver.core.querybuilder.Insert
 import com.datastax.driver.core.querybuilder.QueryBuilder
-import scray.querying.sync.types._
-import scray.querying.sync.types._
 import java.util.ArrayList
 import scala.collection.mutable.ArrayBuffer
 import scala.util.Try

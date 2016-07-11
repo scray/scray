@@ -9,17 +9,12 @@ import org.scalatest.BeforeAndAfter
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.WordSpec
 import org.scalatest.junit.JUnitRunner
-
-import scray.cassandra.sync.CassandraJobInfo
-import scray.cassandra.sync.OnlineBatchSyncCassandra
-import scray.common.serialization.BatchID
 import scray.querying.description.Row
 import scray.querying.sync.helpers.TestDbSession
-import scray.querying.sync.types.ColumnWithValue
+import scray.querying.sync.ColumnWithValue
 import shapeless.ops.hlist._
 import shapeless.syntax.singleton._
-import scray.cassandra.sync.CassandraImplementation._
-import scray.querying.sync.types.RowWithValue
+import scray.querying.sync.cassandra.OnlineBatchSyncCassandra
 
 
 @RunWith(classOf[JUnitRunner])

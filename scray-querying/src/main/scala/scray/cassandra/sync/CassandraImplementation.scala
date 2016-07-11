@@ -1,7 +1,7 @@
-package scray.querying.sync.cassandra
+package scray.cassandra.sync
 
 import com.websudos.phantom.CassandraPrimitive
-import scray.querying.sync.types.DBColumnImplementation
+import scray.querying.sync.DBColumnImplementation
 import java.util.{ Iterator => JIterator }
 import scala.annotation.tailrec
 import com.datastax.driver.core.Cluster
@@ -14,17 +14,18 @@ import com.datastax.driver.core.SimpleStatement
 import com.datastax.driver.core.Statement
 import com.datastax.driver.core.querybuilder.Insert
 import com.datastax.driver.core.querybuilder.QueryBuilder
-import scray.querying.sync.types._
 import java.util.ArrayList
+import scray.querying.sync.DbSession
 import scala.collection.mutable.ArrayBuffer
 import scray.querying.sync.OnlineBatchSync
-import scray.querying.sync.types.SyncTableBasicClasses.SyncTableRowEmpty
+import scray.querying.sync.SyncTableBasicClasses.SyncTableRowEmpty
 import scala.collection.mutable.ListBuffer
 import scray.querying.sync.JobInfo
 import com.datastax.driver.core.BatchStatement
-import scray.querying.sync.types.State.State
+import scray.querying.sync.State.State
 import com.datastax.driver.core.querybuilder.Update.Where
 import com.datastax.driver.core.querybuilder.Update.Conditions
+import scray.querying.sync.SyncTable
 import scala.util.Try
 import scray.querying.sync.RunningJobExistsException
 import scray.querying.sync.NoRunningJobExistsException
@@ -33,8 +34,17 @@ import scala.util.Failure
 import scala.util.Success
 import scray.querying.description.TableIdentifier
 import scala.collection.mutable.HashSet
+import scray.querying.sync.AbstractRow
+import scray.querying.sync.ColumnWithValue
+import scray.querying.sync.VoidTable
+import scray.querying.sync.RowWithValue
+import scray.querying.sync.Table
+import scray.querying.sync.State
+import scray.querying.sync.AbstractTypeDetection
+import scray.querying.sync.DBTypeImplicit
 
-object CassandraImplementation extends Serializable {
+object CassandraImplementation extends AbstractTypeDetection with Serializable {
+  
   implicit def genericCassandraColumnImplicit[T](implicit cassImplicit: CassandraPrimitive[T]): DBColumnImplementation[T] = new DBColumnImplementation[T] {
     override def getDBType: String = cassImplicit.cassandraType
     override def fromDBType(value: AnyRef): T = cassImplicit.fromCType(value)
@@ -52,6 +62,17 @@ object CassandraImplementation extends Serializable {
   implicit class RichOption[T](val b: Option[T]) extends AnyVal with Serializable {
     final def toTry[E <: Throwable](c: => E): Try[T] = Try { b.getOrElse(throw c) }
   }
+  
+  def dbType[T: DBTypeImplicit]: DBColumnImplementation[T] = {  
+    val imp = implicitly[DBTypeImplicit[T]].asInstanceOf[CassandraPrimitive[T]]
+    this.genericCassandraColumnImplicit(imp)
+  }
+  
+  def strType: DBColumnImplementation[String] = genericCassandraColumnImplicit[String]
+  def intType: DBColumnImplementation[Int] = genericCassandraColumnImplicit[Int]
+  def lngType: DBColumnImplementation[Long] = genericCassandraColumnImplicit[Long]
+  def boolType: DBColumnImplementation[Boolean] = genericCassandraColumnImplicit[Boolean]
+
 }
 
 class CassandraSessionBasedDBSession(cassandraSession: Session) extends DbSession[Statement, Insert, ResultSet](cassandraSession.getCluster.getMetadata.getAllHosts().iterator().next.getAddress.toString) {
@@ -116,7 +137,7 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
   // Create or use a given DB session.
   @transient val session = dbSession
 
-  val syncTable = SyncTable("SILIDX", "SyncTable")
+  val syncTable = SyncTable("SILIDX", "SyncTable")(scray.cassandra.sync.CassandraImplementation)
 
   /**
    * Create and register tables for a new job.
