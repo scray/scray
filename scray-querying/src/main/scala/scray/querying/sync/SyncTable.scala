@@ -1,13 +1,17 @@
 package scray.querying.sync
 
+import com.websudos.phantom.CassandraPrimitive._
+
 import scala.collection.JavaConverters._
 import scala.collection.mutable.ListBuffer
 import scala.reflect.runtime.universe._
-
-import com.datastax.driver.core.Statement
-import com.websudos.phantom.CassandraPrimitive._
-import com.websudos.phantom.CassandraPrimitive
 import scala.util.Try
+
+import java.util.concurrent.locks.Lock
+
+import scray.cassandra.sync.CassandraImplementation._
+import scray.cassandra.sync.OnlineBatchSyncCassandra
+import scray.querying.sync.JobInfo
 
 class Table[T <: AbstractRow](val keySpace: String, val tableName: String, val columns: T) extends Serializable {
   val rows: ListBuffer[RowWithValue]= ListBuffer[RowWithValue]()
@@ -22,14 +26,20 @@ class Table[T <: AbstractRow](val keySpace: String, val tableName: String, val c
 }
 
 trait DBColumnImplementation[T] {
+  type RowType
+  trait DBRowImplementation[RowType] {
+    def convertRow(name: String, row: RowType): Option[T]
+  }
+  val rowConv: DBRowImplementation[RowType]
   def getDBType: String
   def fromDBType(value: AnyRef): T
   def toDBType(value: T): AnyRef
+  def fromDBRow[U](name: String, row: U): Option[T] = rowConv.convertRow(name, row.asInstanceOf[RowType])
 }
 
 class Column[T: DBColumnImplementation](val name: String) extends Serializable { self =>
   val dbimpl = implicitly[DBColumnImplementation[T]]
-
+ 
   // type DB_TYPE
   def getDBType: String = dbimpl.getDBType
 }
@@ -84,8 +94,27 @@ abstract class DbSession[Statement, InsertIn, Result](val dbHostname: String) {
 }
 
 object SyncTable {
-  def apply(keySpace: String, tableName: String)(implicit a: AbstractTypeDetection) = {
-    new Table(keySpace, tableName, new SyncTableBasicClasses.SyncTableRowEmpty)
+  def apply(keySpace: String, tableName: String) = {
+    new Table(keySpace, tableName, SyncTableBasicClasses.SyncTableRowEmpty)
+  }
+}
+
+trait DBTypeImplicit[T] {
+  def getImplicit: Any
+}
+
+abstract class AbstractTypeDetection {
+
+  def dbType[T: DBTypeImplicit]: DBColumnImplementation[T]
+  def strType: DBColumnImplementation[String]
+  def intType: DBColumnImplementation[Int]
+  def lngType: DBColumnImplementation[Long]
+  def boolType: DBColumnImplementation[Boolean]  
+}
+			
+object JobLockTable {
+  def apply(keySpace: String, tableName: String) = {
+    new Table(keySpace, tableName, new SyncTableBasicClasses.JobLockTable)
   }
 }
 
@@ -100,123 +129,52 @@ object DataTable {
   }
 }
 
-trait DBTypeImplicit[T] {
-  def getImplicit: Any
-}
-
-abstract class AbstractTypeDetection {
-  def dbType[T: DBTypeImplicit]: DBColumnImplementation[T]
-  def strType: DBColumnImplementation[String]
-  def intType: DBColumnImplementation[Int]
-  def lngType: DBColumnImplementation[Long]
-  def boolType: DBColumnImplementation[Boolean]  
-}
-
 object SyncTableBasicClasses extends Serializable {
 
-  class SyncTableRowEmpty(implicit typeDetector: AbstractTypeDetection) extends ArbitrarylyTypedRows {
-    val jobname = new Column[String]("jobname")(typeDetector.strType)
-    val versionNr = new Column[Int]("versionNr")(typeDetector.intType)
-    val creationTime = new Column[Long]("creationTime")(typeDetector.lngType)
-    val versions = new Column[Int]("versions")(typeDetector.intType)
-    val tableidentifier = new Column[String]("tableidentifier")(typeDetector.strType)
-    val locked = new Column[Boolean]("locked")(typeDetector.boolType)
-    val online = new Column[Boolean]("online")(typeDetector.boolType)
-    val state = new Column[String]("state")(typeDetector.strType)
+  object SyncTableRowEmpty extends ArbitrarylyTypedRows {
 
-    override val columns = jobname :: creationTime :: versionNr :: versions :: tableidentifier :: locked :: online :: state :: Nil
-    override val primaryKey = s"(${jobname.name}, ${online.name}, ${versionNr.name})"
-    override val indexes: Option[List[String]] = Option(List(locked.name, state.name))
+    val jobname = new Column[String]("jobname")
+    val slot = new Column[Int]("slot")
+    val versions = new Column[Int]("versions")
+    val tableidentifier = new Column[String]("tableidentifier")
+    val batchStartTime = new Column[Long]("batchStartTime")
+    val batchEndTime = new Column[Long]("batchEndTime")
+    val online = new Column[Boolean]("online")
+    val state = new Column[String]("state")
+
+    override val columns = jobname :: slot :: versions :: tableidentifier :: online :: state :: batchStartTime :: batchEndTime ::Nil
+    override val primaryKey = s"((${jobname.name}, ${online.name}), ${slot.name})"
+    override val indexes: Option[List[String]] = Option(List(state.name, batchEndTime.name, batchStartTime.name))
   }
-} 
-object State extends Enumeration {
-  type State = Value
-  val NEW, NEXT_JOB, RUNNING, COMPLETED = Value
+  
+  class JobLockTable extends ArbitrarylyTypedRows {
+
+    val jobname = new Column[String]("jobname")
+    val locked = new Column[Boolean]("locked")
+
+    override val columns = jobname :: locked ::Nil
+    override val primaryKey = s"(${jobname.name})"
+    override val indexes: Option[List[String]] = None
+  }
 }
 
-//object SyncTableInitFunction {
+object State extends Enumeration {
+  type State = Value
+  val NEW, RUNNING, COMPLETED, OBSOLETE, TRANSFER = Value
+}
 
-
-//class SyncTableColumnsE() extends SyncTableColumns[Column[_]] {
-//  override val jobname = new Column[String]("jobname", CassandraTypeName.getCassandraTypeName(_))
-//  override val time = new Column[Long]("time", CassandraTypeName.getCassandraTypeName(_))
-//  override val lock = new Column[Boolean]("lock", CassandraTypeName.getCassandraTypeName(_))
-//  override val online = new Column[Boolean]("online", CassandraTypeName.getCassandraTypeName(_))
-//  override val nr = new Column[Int]("nr", CassandraTypeName.getCassandraTypeName(_))
-//  override val batches = new Column[Int]("batches", CassandraTypeName.getCassandraTypeName(_))
-//  override val onlineVersions = new Column[Int]("onlineVersions", CassandraTypeName.getCassandraTypeName(_))
-//  override val tablename = new Column[String]("tablename", CassandraTypeName.getCassandraTypeName(_))
-//  override val completed = new Column[Boolean]("completed", CassandraTypeName.getCassandraTypeName(_))
-//  override val state =  new Column[String]("state", CassandraTypeName.getCassandraTypeName(_))
-//}
-//class SyncTableColumnsValuesS[ColumnValueT, ColumnT <: Column[_]](initFunction: (ColumnT)=> ColumnT, nrV: IndexedSeq[Int], jobnameV: IndexedSeq[String], timeV: IndexedSeq[Long], lockV: IndexedSeq[Boolean], onlineV: IndexedSeq[Boolean], completedV: IndexedSeq[Boolean], tablenameV: IndexedSeq[String], batchesV: IndexedSeq[Int], onlineVersionsV: IndexedSeq[Int], stateV: IndexedSeq[String]) extends SyncTableColumns[ColumnV[ColumnValueT]] {
-//
-//  override val jobname: ColumnT = initFunction.apply(jobname)
-//  override val time = new ColumnV[IndexedSeq[Long]]("time", CassandraTypeName.getCassandraTypeName, timeV)
-//  override val lock = new ColumnV[IndexedSeq[Boolean]]("lock", CassandraTypeName.getCassandraTypeName, lockV)
-//  override val online = new ColumnV[IndexedSeq[Boolean]]("online", CassandraTypeName.getCassandraTypeName, onlineV)
-//  override val nr = new ColumnV[IndexedSeq[Int]]("nr", CassandraTypeName.getCassandraTypeName, nrV)
-//  override val batches = new ColumnV[IndexedSeq[Int]]("batches", CassandraTypeName.getCassandraTypeName, batchesV)
-//  override val onlineVersions = new ColumnV[IndexedSeq[Int]]("onlineVersions", CassandraTypeName.getCassandraTypeName, onlineVersionsV)
-//  override val tablename = new ColumnV[IndexedSeq[String]]("tablename", CassandraTypeName.getCassandraTypeName, tablenameV)
-//  override val completed = new ColumnV[IndexedSeq[Boolean]]("completed", CassandraTypeName.getCassandraTypeName, completedV)
-//  override val state =  new ColumnV[IndexedSeq[String]]("state", CassandraTypeName.getCassandraTypeName(_), stateV)  
-//}
-//
-//class SyncTableColumnsValues[ColumnValueT](nrV: Int, jobnameV: String, timeV: Long, lockV: Boolean, onlineV: Boolean, completedV: Boolean, tablenameV: String, batchesV: Int, onlineVersionsV: Int, stateV: String) extends SyncTableColumns[ColumnV[ColumnValueT]] {
-//  override val jobname = new ColumnV[String]("jobname", CassandraTypeName.getCassandraTypeName, jobnameV)
-//  override val time = new ColumnV[Long]("time", CassandraTypeName.getCassandraTypeName, timeV)
-//  override val lock = new ColumnV[Boolean]("lock", CassandraTypeName.getCassandraTypeName, lockV)
-//  override val online = new ColumnV[Boolean]("online", CassandraTypeName.getCassandraTypeName, onlineV)
-//  override val nr = new ColumnV[Int]("nr", CassandraTypeName.getCassandraTypeName, nrV)
-//  override val batches = new ColumnV[Int]("batches", CassandraTypeName.getCassandraTypeName, batchesV)
-//  override val onlineVersions = new ColumnV[Int]("onlineVersions", CassandraTypeName.getCassandraTypeName, onlineVersionsV)
-//  override val tablename = new ColumnV[String]("tablename", CassandraTypeName.getCassandraTypeName, tablenameV)
-//  override val completed = new ColumnV[Boolean]("completed", CassandraTypeName.getCassandraTypeName, completedV)
-//  override val state =  new ColumnV[String]("state", CassandraTypeName.getCassandraTypeName(_), stateV)  
-//}
-
-//class SyncTableEmpty(keySpace: String) extends Table[SyncTableColumns[Column[_]]](keySpace: String, tableName = "\"SyncTable\"", columns = new SyncTableColumnsE()) {}                                                                                                                              
-//class SyncTableWithValues(keySpace: String, nrV: Int, jobnameV: String, timeV: Long, lockV: Boolean, onlineV: Boolean, completedV: Boolean, tablenameV: String, batchesV: Int, onlineVersionsV: Int, stateV: String) extends Table[SyncTableColumnsValues[_]](keySpace: String, tableName = "\"SyncTable\"", columns = new SyncTableColumnsValues(nrV, jobnameV, timeV, lockV, onlineV, completedV, tablenameV, batchesV, onlineVersionsV, stateV)){}
-//
-/**
- * Data tables
- */
-
-//class EmptyExampleDataColumns extends Columns[Column] {
-//  override val time = new TypedColumn[Long]("time", CassandraTypeName.getCassandraTypeName)
-//  val lock = new TypedColumn[Boolean]("lock", CassandraTypeName.getCassandraTypeName)
-//  val completed = new TypedColumn[Boolean]("completed", CassandraTypeName.getCassandraTypeName)
-//  val sum = new TypedColumn[Long]("sum", CassandraTypeName.getCassandraTypeName)
-//  override val allVals: List[Column] = time :: lock :: sum :: completed :: Nil
-//}
-//
-//class DataTable[T <: DataColumns](keySpace: String, tableName: String, columns: T) extends Table[DataColumns](keySpace, tableName, columns) {}
-//
-//abstract class DataColumns(timeV: Long) extends Columns[ColumnWithValue[]] {
-//  override val time = new ColumnV[Long]("time", CassandraTypeName.getCassandraTypeName, timeV)
-//  override val allVals: List[ColumnV[_]] = time :: Nil
-//  
-//  override def toString(): String = {
-//    val columnNames = allVals.foldLeft("")((acc, column) => "|" + acc + column.name + "|")
-//    val values = allVals.foldLeft("")((acc, column) => "|" + acc + column.value + "|")
-//    
-//    columnNames + "\n" + values
-//  }
-//}
-
-//class SumDataColumns(timeV: Long, sumV: Long) extends DataColumns(timeV) {
-//  override val time = new ColumnV[Long]("time", CassandraTypeName.getCassandraTypeName, timeV)
-//  val sum = new ColumnV[Long]("sum", CassandraTypeName.getCassandraTypeName, sumV)
-//  override val allVals: List[ColumnV[_]] = time :: sum :: Nil
-//}
-//
-//object SumDataColumns {
-//  def apply(timeV: Long, sumV: Long) = new SumDataColumns(timeV, sumV);
-//}
-//
-//
-//class CassandraSumDataTable(keySpace: String, tableName: String, columns: DataColumns) extends DataTable[DataColumns](keySpace, tableName, columns) {
-//  QueryBuilder.insertInto(keySpace, tableName)
-// 
-//}
+abstract class LockApi[Statement, Insert, Result](
+      val job: JobInfo[Statement, Insert, Result], 
+      val jobLockTable: Table[SyncTableBasicClasses.JobLockTable], 
+      val dbSession: DbSession[Statement, Insert, Result]) extends Lock {
+  
+  def this(job: JobInfo[Statement, Insert, Result], dbSession: DbSession[Statement, Insert, Result]) {
+    this(job, JobLockTable("SILIDX", "jobLock"), dbSession)
+  }
+  
+  def transaction[ResultT](f: () => Try[ResultT]): Try[ResultT]
+  def transaction[P1, ResultT](f: (P1) => Try[ResultT], p1: P1): Try[ResultT]
+  def transaction[P1, P2, ResultT](f: (P1, P2) => Try[ResultT], p1: P1, p2: P2): Try[ResultT]
+  def transaction[P1, P2, P3, ResultT](f: (P1, P2, P3) => Try[ResultT], p1: P1, p2: P2, p3: P3): Try[ResultT]
+  def transaction[P1, P2, P3, P4, ResultT](f: (P1, P2, P3, P4) => Try[ResultT], p1: P1, p2: P2, p3: P3, p4: P4): Try[ResultT]
+}

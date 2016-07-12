@@ -18,6 +18,11 @@ import com.twitter.chill.{KryoPool, ScalaKryoInstantiator}
 import com.twitter.chill.AllScalaRegistrar
 import com.esotericsoftware.kryo.Serializer
 import scala.collection.mutable.ArrayBuffer
+import com.esotericsoftware.kryo.Kryo
+import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.esotericsoftware.kryo.util.DefaultClassResolver
+import com.esotericsoftware.kryo.util.IntMap
+import com.esotericsoftware.kryo.Registration
 
 /**
  * Generic static thread-safe pool to serialize and de-serialize stuff using kryo
