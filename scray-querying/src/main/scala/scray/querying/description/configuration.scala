@@ -20,6 +20,7 @@ import scray.querying.queries.DomainQuery
 import scray.querying.source.indexing.IndexConfig
 import scray.querying.description.internal.MaterializedView
 import scray.querying.source.pooling.StorePool
+import scray.querying.source.store.QueryableStoreSource
 
 /**
  * parent class of queryspace-configuration, used to identify which tables
@@ -51,7 +52,7 @@ abstract class QueryspaceConfiguration(val name: String) {
    * returns configuration of tables which are included in this query space
    * Internal use! 
    */
-  def getTables(version: Int): Set[TableConfiguration[_, _, _]]
+  def getTables(version: Int): Set[TableConfiguration[_ <: DomainQuery, _ <: DomainQuery, _]]
   
   /**
    * returns columns which can be included in this query space
@@ -100,7 +101,7 @@ case class AutoIndexConfiguration[T] (
 /**
  * information we need about this manual index
  */
-case class ManuallyIndexConfiguration[K, R, M, V, Q] (
+case class ManuallyIndexConfiguration[K <: DomainQuery, R <: DomainQuery, M, V, Q <: DomainQuery] (
   mainTableConfig: () => TableConfiguration[Q, R, V], // the table that holds all data
   indexTableConfig: () => TableConfiguration[Q, K, M], // the table that holds the index into the data of single column of mainTableConfig
   keymapper: Option[M => R], // map the type of the references from one table to the type of the keys of the other
@@ -111,28 +112,28 @@ case class ManuallyIndexConfiguration[K, R, M, V, Q] (
 /**
  * properties of tables
  */
-case class TableConfiguration[Q, K, V] (
+case class TableConfiguration[Q <: DomainQuery, K <: DomainQuery, V] (
   table: TableIdentifier,
-  versioned: Option[VersioningConfiguration[Q, K, V]], // if the table is versioned and how
-  primarykeyColumns: List[Column], // the primary key columns of the table, i.e. a unique reference into a row with partitioning relevance  
-  clusteringKeyColumns: List[Column], // some more primary key columns which can be ordered
-  allColumns: List[Column], // a List of all columns in the table
+  versioned: Option[VersioningConfiguration[Q, K]], // if the table is versioned and how
+  primarykeyColumns: Set[Column], // the primary key columns of the table, i.e. a unique reference into a row with partitioning relevance  
+  clusteringKeyColumns: Set[Column], // some more primary key columns which can be ordered
+  allColumns: Set[Column], // a List of all columns in the table
   rowMapper: (V) => Row, // mapper from a result row returned by the store to a scray-row
   domainQueryMapping: DomainQuery => Q, // maps a scray-DomainQuery to a query of the store
-  queryableStore: Option[() => QueryableStore[Q, V]], // the queryable store representation, allowing to query the store, None if versioned
-  readableStore: Option[() => ReadableStore[K, V]], // the readablestore, used in case this is used by a HashJoinSource, None if versioned
+  queryableStore: Option[QueryableStoreSource[Q]], // the queryable store representation, allowing to query the store, None if versioned
+  readableStore: Option[QueryableStoreSource[K]], // the readablestore, used in case this is used by a HashJoinSource, None if versioned
   materializedViews: List[MaterializedView] // materialized views for this table
 )
 
 /**
  * we generally assume versions to be Longs, see Summingbird for more information
  */
-case class VersioningConfiguration[Q, K, V] (
+case class VersioningConfiguration[Q <: DomainQuery, K <: DomainQuery] (
 //  latestCompleteVersion: () => Option[Long], // latest complete version of the table 
   runtimeVersion: () => Option[Long], // current real-time version, which is updated continuously
   nameVersionMapping: Option[(String, Long) => String], // if needed, a mapping for the table name for the version
-  queryableStore: StorePool[QueryableStore[Q, V]], // the versioned queryable store representation, allowing to query the store
-  readableStore: StorePool[ReadableStore[K, V]] // the versioned readablestore, used in case this is used by a HashJoinSource
+  queryableStore: Option[QueryableStoreSource[Q]], // the versioned queryable store representation, allowing to query the store
+  readableStore: Option[QueryableStoreSource[K]] // the versioned readablestore, used in case this is used by a HashJoinSource
 //  queryableStore: Long => QueryableStore[Q, V], // the versioned queryable store representation, allowing to query the store
 //  readableStore: Long => ReadableStore[K, V] // the versioned readablestore, used in case this is used by a HashJoinSource
 //  dataVersionMapping: () // if needed, a mapping for the data to fit the version, not supported yet

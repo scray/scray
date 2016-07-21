@@ -106,6 +106,7 @@ object QueryspaceConfigurationFileHandler extends LazyLogging {
     if(url.url.startsWith(RESOURCE_SCHEMA)) {
       Seq(Try {
         val parsedFile = ScrayQueryspaceConfigurationParser.parseResource(url.url.stripPrefix(RESOURCE_SCHEMA), config, true)
+        logger.warn("###" + parsedFile)
         logger.info("Read queryspace configuration from classpath " + url.url + WITH_QS + parsedFile.get.name) 
         ScannedQueryspaceConfigfiles(url.url, parsedFile.get.name, parsedFile.get.version, parsedFile.get)            
       })

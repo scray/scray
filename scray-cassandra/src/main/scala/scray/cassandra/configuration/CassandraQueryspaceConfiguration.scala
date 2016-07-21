@@ -34,6 +34,7 @@ import scray.querying.description.internal.SingleValueDomain
 import scray.querying.description.internal.RangeValueDomain
 import scala.annotation.tailrec
 import scray.querying.source.Splitter
+import scray.querying.sync.cassandra.CassandraDbSession
 
 /**
  * configuration of a simple Cassandra-based query space.
@@ -87,17 +88,19 @@ class CassandraQueryspaceConfiguration(
   
   override def getColumns(version: Int): List[ColumnConfiguration] = tables.toList.flatMap ( table => {
     val typeReducedTable = table._1.asInstanceOf[AbstractCQLCassandraStore[Any, Any]]
-    val extractor = CassandraExtractor.getExtractor(typeReducedTable, table._2._2, table._2._3)
+    val extractor = CassandraExtractor.getExtractor(typeReducedTable, table._2._2, table._2._3, Some(CassandraExtractor.DB_ID))
     val allColumns = extractor.getTableConfiguration(table._2._1).allColumns
     allColumns.map { col =>
       val index = extractor.createManualIndexConfiguration(col, name, version, typeReducedTable, indexes, tableRowMapperMap)
-      extractor.getColumnConfiguration(typeReducedTable, col, this, index, splitters)
+      val cassSession = new CassandraDbSession(typeReducedTable.columnFamily.session.getSession)
+      extractor.getColumnConfiguration(cassSession, typeReducedTable.columnFamily.session.getKeyspacename, 
+          typeReducedTable.columnFamily.getPreparedNamed, col, this, index, splitters)
     }
   })
   
   override def getTables(version: Int): Set[TableConfiguration[_, _, _]] = tables.map ( table => {
     val typeReducedTable = table._1.asInstanceOf[AbstractCQLCassandraStore[Any, Any]]
-    val extractor = CassandraExtractor.getExtractor(typeReducedTable, table._2._2, table._2._3)
+    val extractor = CassandraExtractor.getExtractor(typeReducedTable, table._2._2, table._2._3, Some(CassandraExtractor.DB_ID))
     extractor.getTableConfiguration(table._2._1)
   })
   

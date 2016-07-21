@@ -26,26 +26,26 @@ import scray.querying.description.VersioningConfiguration
  * Extractor object for Storehaus'-CQLCassandraCollectionStores
  */
 class CQLRowStoreExtractor[S <: CQLCassandraRowStore[_]](store: S, tableName: Option[String], 
-        versions: Option[VersioningConfiguration[_, _, _]]) extends CassandraExtractor[S] {
+        dbSystem: Option[String], versions: Option[VersioningConfiguration[_, _]]) extends CassandraExtractor[S] {
 
   override def getColumns: List[Column] =
-    getInternalColumns(store, tableName, store.columns.map(_._1))
+    getInternalColumns(store, tableName, dbSystem, store.columns.map(_._1))
   
   override def getClusteringKeyColumns: List[Column] = List()
 
   override def getRowKeyColumn: Column =
-    getInternalColumns(store, tableName, List(store.keyColumnName)).head
+    getInternalColumns(store, tableName, dbSystem, List(store.keyColumnName)).head
   
   override def getRowKeyColumns: List[Column] =
-    getInternalColumns(store, tableName, List(store.keyColumnName))
+    getInternalColumns(store, tableName, dbSystem, List(store.keyColumnName))
   
   override def getValueColumns: List[Column] =
-    getInternalColumns(store, tableName, store.columns.map(_._1).filterNot(_ == store.keyColumnName))
+    getInternalColumns(store, tableName, dbSystem, store.columns.map(_._1).filterNot(_ == store.keyColumnName))
     
   override def getTableConfiguration(rowMapper: (_) => Row): TableConfiguration[_, _, _] = {
     TableConfiguration[Any, Any, Any] (
-      getTableIdentifier(store, tableName),
-      versions.asInstanceOf[Option[scray.querying.description.VersioningConfiguration[Any,Any,Any]]],
+      getTableIdentifier(store, tableName, dbSystem),
+      versions.asInstanceOf[Option[scray.querying.description.VersioningConfiguration[Any,Any]]],
       getRowKeyColumns,
       getClusteringKeyColumns,
       getColumns,
@@ -62,4 +62,6 @@ class CQLRowStoreExtractor[S <: CQLCassandraRowStore[_]](store: S, tableName: Op
       List()
     )
   }
+  
+  override def getDBSystem = dbSystem.getOrElse(getDefaultDBSystem)
 }

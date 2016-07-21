@@ -66,7 +66,7 @@ class IndexMergeSource[Q <: DomainQuery](main: MergeReferenceColumns[Q, Spool[Ro
 
   override def isLazy: Boolean = true
   // override def transformSeqElement(element: Row, query: Q): Row = element
-  override def getColumns: List[Column] = List(main.referenceSourceColumn)
+  override def getColumns: Set[Column] = Set(main.referenceSourceColumn)
   override def isOrdered(query: Q): Boolean = true
   override def getDiscriminant = "MergeReferenceColumns" + main.referenceSource.getDiscriminant + reference
   override def createCache: Cache[Nothing] = new NullCache

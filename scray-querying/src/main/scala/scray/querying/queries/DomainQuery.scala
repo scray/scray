@@ -30,7 +30,7 @@ case class DomainQuery(
     val id: UUID,
     val querySpace: String, 
     val querySpaceVersion: Int,
-    val columns: List[Column],
+    val columns: Set[Column],
     val table: TableIdentifier,
     val domains: List[Domain[_]],
     val grouping: Option[ColumnGrouping],
@@ -49,7 +49,7 @@ case class DomainQuery(
   
   def getQueryspace: String = querySpace
   
-  def getResultSetColumns: List[Column] = columns
+  def getResultSetColumns: Set[Column] = columns
   
   def getTableIdentifier: TableIdentifier = table
   

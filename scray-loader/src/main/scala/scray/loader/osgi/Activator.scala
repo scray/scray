@@ -18,6 +18,7 @@ import com.twitter.finagle.Thrift
 import com.twitter.util.{ Await, Duration }
 import com.typesafe.scalalogging.slf4j.LazyLogging
 
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
 import org.osgi.framework.{ BundleActivator, BundleContext }
@@ -35,6 +36,8 @@ import scray.loader.configuration.ScrayStores
 import scray.loader.service.RefreshServing
 import scray.loader.tools.SerializationTooling
 import scray.querying.Registry
+import scray.loader.VERSION
+import scray.core.service.ScrayStatelessTServiceImpl
 
 /**
  * Bundle activator in order to run scray thrift service.
@@ -45,7 +48,14 @@ class Activator extends KryoPoolRegistration with BundleActivator with LazyLoggi
   /**
    * must be increased with each new version
    */
-  def getVersion: String = "0.9.5"
+  def getVersion: String = VERSION
+
+  
+  // count-down-latch for synchronizing the shutdown process
+  val finalizationLatch = new CountDownLatch(1)
+  
+  // whether this is a stateless service
+  private var statelessService = false
   
   /**
    * read main config filename from BundleContext or throw 
@@ -59,6 +69,12 @@ class Activator extends KryoPoolRegistration with BundleActivator with LazyLoggi
     }
   
   /**
+   * whether the service should be installed stateless
+   */
+  private def getStateless(context: BundleContext): Boolean = Option(context.getProperty(Activator.OSGI_SCRAY_STATELESS)).
+    map(str => if(str.trim().toUpperCase() == "TRUE") true else false).getOrElse(false)
+  
+  /**
    * registers all query spaces
    */
   private def registerQuerySpaces(scrayConfiguration: ScrayConfiguration) = {
@@ -66,6 +82,7 @@ class Activator extends KryoPoolRegistration with BundleActivator with LazyLoggi
     Activator.queryspaces.map { config =>
       logger.info(s"Registering queryspace ${config._1}")
       val qs = new ScrayLoaderQuerySpace(config._1, scrayConfiguration, config._2._2, Activator.scrayStores.get)
+      logger.error(qs.toString)
       Registry.registerQuerySpace(qs, Some(0))
     }    
   }
@@ -108,6 +125,7 @@ class Activator extends KryoPoolRegistration with BundleActivator with LazyLoggi
    * starts the scray service
    */
   override def start(context: BundleContext): Unit = {
+    val latch = new CountDownLatch(1)
     new Thread("Scray Service Manager") {
       override def run(): Unit = {
         logger.info("Starting Scray...")
@@ -129,6 +147,7 @@ class Activator extends KryoPoolRegistration with BundleActivator with LazyLoggi
         registerQuerySpaces(scrayConfiguration)
         
         // start service
+        statelessService = getStateless(context)
         // *** launch combined service, by accessing lazy var...
         server
         // register shutdown hook
@@ -139,21 +158,29 @@ class Activator extends KryoPoolRegistration with BundleActivator with LazyLoggi
         
         logger.info(s"Scray Combined Server (Version ${getVersion}) started on ${Activator.refresher.get.addrStr}. Waiting for client requests...")
     
+        latch.countDown()
         // start update service
         while(Activator.keepRunning) {
+          logger.debug("Scray still keeps running for next 5s...")
           // scalastyle:off magic.number
           Thread.sleep(5000)
           // scalastyle:on magic.number
         }
         
+        finalizationLatch.countDown()
         initializeShutdown(context)
       }
     }.start()
+    latch.await(2, TimeUnit.MINUTES)
   }
 
   lazy val server = {
-    val srv = Thrift.serveIface(SCRAY_QUERY_LISTENING_ENDPOINT, ScrayCombinedStatefulTServiceImpl())
-    logger.info(s"Going to install listening combined Scray meta- and query-service on ${srv.boundAddress}...")
+    val srv = if(statelessService) {
+      Thrift.serveIface(SCRAY_QUERY_LISTENING_ENDPOINT, ScrayStatelessTServiceImpl())
+    } else {
+      Thrift.serveIface(SCRAY_QUERY_LISTENING_ENDPOINT, ScrayCombinedStatefulTServiceImpl())
+    }
+    logger.info(s"Going to install listening Scray meta- and query-service on ${srv.boundAddress}...")
     srv
   }
   
@@ -181,6 +208,8 @@ class Activator extends KryoPoolRegistration with BundleActivator with LazyLoggi
   }
   
   private def shutdownServer(): Unit = {
+    Activator.keepRunning = false
+    finalizationLatch.await(10, TimeUnit.SECONDS)
     // scalastyle:off magic.number
     Await.ready(server.close(Duration(15, TimeUnit.SECONDS)))
     // scalastyle:on magic.number
@@ -189,6 +218,7 @@ class Activator extends KryoPoolRegistration with BundleActivator with LazyLoggi
 
 object Activator {
   val OSGI_FILENAME_PROPERTY = "scray.config.location"
+  val OSGI_SCRAY_STATELESS = "scray.config.stateless"
   
   var scrayStores: Option[ScrayStores] = None
   val queryspaces: HashMap[String, (Long, ScrayQueryspaceConfiguration)] = new HashMap[String, (Long, ScrayQueryspaceConfiguration)]

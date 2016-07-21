@@ -50,7 +50,7 @@ class LazyQueryColumnDispenserSource[Q <: DomainQuery](source: LazySource[Q])
   /**
    * This is the maximum we can return, if a query will request them all
    */
-  override def getColumns: List[Column] = source.getColumns
+  override def getColumns: Set[Column] = source.getColumns
   
   override def getDiscriminant = "ColumnDispenser" + source.getDiscriminant
 }
@@ -72,7 +72,7 @@ class EagerCollectingColumnDispenserSource[Q <: DomainQuery, R](source: Source[Q
   override def transformSeqElement(element: Row, query: Q): Row = 
     ColumnDispenserTransformer.transformElement(element, query, queryColumns)
 
-  override def getColumns: List[Column] = source.getColumns
+  override def getColumns: Set[Column] = source.getColumns
   
   override def getDiscriminant = "ColumnDispenser" + source.getDiscriminant
 }

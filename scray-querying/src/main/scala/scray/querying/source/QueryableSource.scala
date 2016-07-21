@@ -52,7 +52,7 @@ class QueryableSource[K, V](val store: QueryableStore[K, V], val space: String, 
     }
   }
 
-  override def getColumns: List[Column] = queryspaceTable.get.allColumns
+  override def getColumns: Set[Column] = queryspaceTable.get.allColumns
   
   /**
    * looks up in the registry if we can fulfill the ordering

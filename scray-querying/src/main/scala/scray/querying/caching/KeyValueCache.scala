@@ -20,27 +20,37 @@ import org.mapdb._
 import scray.querying.queries.KeyBasedQuery
 import com.twitter.concurrent.Spool
 import scray.querying.description.internal.WrongQueryTypeForCacheException
+import scray.querying.queries.KeyedQuery
+import scray.querying.description.SimpleRow
+import scala.collection.mutable.ArrayBuffer
 
 class KeyValueCache[K, V](
     val sourceDiscriminant: String,
+    val keySerializer: Option[Serializer[K]] = None,
     val valueSerializer: Option[Serializer[V]] = None,
     val cachesizegb: Double = 1.0D,
     val numberentries: Option[Int] = None) extends Cache[V] {
 
   val db = DBMaker.newMemoryDirectDB().transactionDisable().asyncWriteEnable().make
   val cache = db.createHashMap("cache").counterEnable().expireStoreSize(cachesizegb).
-                  valueSerializer(valueSerializer.orNull).make[K, V]
+              keySerializer(keySerializer.orNull).valueSerializer(valueSerializer.orNull).make[K, V]
   val store = Store.forDB(db)
 
   /**
    * retrieve one row, ending is an implicit of existing contents (i.e. can only be one)
    */
   override def retrieve(query: DomainQuery): Option[V] = query match {
+    case keyedQuery: KeyedQuery => 
+      // in this case we use a SimpleRow to retrieve the keys
+      Option(cache.get(SimpleRow(new ArrayBuffer() ++= keyedQuery.keys).asInstanceOf[K]))
     case keyquery: KeyBasedQuery[K] => Option(cache.get(keyquery.key))
     case _ => throw new WrongQueryTypeForCacheException(query, sourceDiscriminant)
   }
 
   def put(query: DomainQuery, value: V) = query match {
+    case keyedQuery: KeyedQuery => 
+      // in this case we use a SimpleRow to store the keys
+      cache.put(SimpleRow(new ArrayBuffer() ++= keyedQuery.keys).asInstanceOf[K], value)
     case keyquery: KeyBasedQuery[K] => cache.put(keyquery.key, value)
     case _ => throw new WrongQueryTypeForCacheException(query, sourceDiscriminant)
   }

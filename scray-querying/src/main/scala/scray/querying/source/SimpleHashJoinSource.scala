@@ -32,6 +32,8 @@ import scray.querying.source.costs.QueryCosts
 import scray.querying.source.costs.QueryCostFunctionFactory
 import scray.querying.source.costs.LinearQueryCostFuntionFactory.defaultFactory
 import com.typesafe.scalalogging.slf4j.LazyLogging
+import scray.querying.description.RowColumn
+import scray.querying.queries.KeyedQuery
 
 
 /**
@@ -44,12 +46,11 @@ import com.typesafe.scalalogging.slf4j.LazyLogging
  * Default is a left outer join. 
  * To make this an inner join results must be filtered by setting isInner to true.
  */
-class SimpleHashJoinSource[Q <: DomainQuery, K, R, V](
+class SimpleHashJoinSource[Q <: DomainQuery, K <: DomainQuery, V](
     val source: LazySource[Q],
-    sourceJoinColumn: Column,
-    val lookupSource: KeyValueSource[R, V],
-    lookupSourceJoinColumns: List[Column],
-    typeMapper: K => R = (k: K) => k.asInstanceOf[R],
+    sourceJoinColumns: Set[Column],
+    val lookupSource: KeyedSource[K, V],
+    lookupSourceJoinColumns: Set[Column],
     isInner: Boolean = false)
   extends LazySource[Q] with LazyLogging {
 
@@ -58,26 +59,36 @@ class SimpleHashJoinSource[Q <: DomainQuery, K, R, V](
    */
   override def getCosts(query: Q)(implicit factory: QueryCostFunctionFactory): QueryCosts = {
 	  val sourceCosts = source.getCosts(query)(defaultFactory)
-	  val lookupCosts = lookupSource.getCosts(getSimpleKeyBasedQuery(query, None))
+	  // TODO: make this running without providing null
+	  val lookupCosts = lookupSource.getCosts(getKeyedQuery(query, lookupSourceJoinColumns.map(RowColumn(_, null))))
 	  val amount = sourceCosts.estimatedAmount + sourceCosts.estimatedCardinality * lookupCosts.estimatedAmount
 	  QueryCosts(amount, sourceCosts.estimatedCardinality)
   }
   
-  def getSimpleKeyBasedQuery(query: Q, inCol: Option[K]): SimpleKeyBasedQuery[R] = new SimpleKeyBasedQuery[R](
-        typeMapper(inCol.get),
-        lookupSourceJoinColumns,
+  def getKeyedQuery(query: Q, columns: Set[RowColumn[_]]) = new KeyedQuery(
+        columns,
+        lookupSourceJoinColumns.head.table,
         lookupSource.getColumns,
         query.querySpace,
         query.querySpaceVersion,
         query.getQueryID)
   
+//  def getSimpleKeyBasedQuery(query: Q, inCol: Option[K]): SimpleKeyBasedQuery[R] = new SimpleKeyBasedQuery[R](
+//        typeMapper(inCol.get),
+//        lookupSourceJoinColumns,
+//        lookupSource.getColumns,
+//        query.querySpace,
+//        query.querySpaceVersion,
+//        query.getQueryID)
+//  
   /**
    * transforms the spool. May not skip too many elements because it is not tail recursive.
    */
   private def spoolTransform(spool: Spool[Row], query: Q): Spool[Row] = spool.map(in => {
-    val inCol = in.getColumnValue[K](sourceJoinColumn)
-    if(inCol.isDefined) {
-      val keyValueSourceQuery = getSimpleKeyBasedQuery(query, inCol)
+    val inCols: Set[RowColumn[_]] = sourceJoinColumns.map(col => (col, in.getColumnValue[Any](col))).
+                    filter(_._2.isDefined).map(col => RowColumn(col._1, col._2.get))
+    if(inCols.size > 0) {
+      val keyValueSourceQuery = getKeyedQuery(query, inCols)
       val seq = Await.result(lookupSource.request(keyValueSourceQuery))
       if(seq.size > 0) {
         val head = seq.head
@@ -101,7 +112,7 @@ class SimpleHashJoinSource[Q <: DomainQuery, K, R, V](
     source.request(query).map(spoolTransform(_, query))
   }
    
-  override def getColumns: List[Column] = source.getColumns ++ lookupSource.getColumns
+  override def getColumns: Set[Column] = source.getColumns ++ lookupSource.getColumns
   
   // as lookupSource is always ordered, ordering depends only on the original source 
   override def isOrdered(query: Q): Boolean = source.isOrdered(query)

@@ -39,27 +39,27 @@ import scray.querying.description.VersioningConfiguration
  * Extractor object for Storehaus'-CQLCassandraCollectionStores
  */
 class CQLCollectionStoreExtractor[S <: CQLCassandraCollectionStore[_, _, _, _, _, _]](store: S, tableName: Option[String],
-        versions: Option[VersioningConfiguration[_, _, _]]) extends CassandraExtractor[S] {
+        dbSystem: Option[String], versions: Option[VersioningConfiguration[_, _]]) extends CassandraExtractor[S] {
 
-  override def getColumns: List[Column] = 
-    getInternalColumns(store, tableName, store.rowkeyColumnNames ++ store.colkeyColumnNames ++ List(store.valueColumnName))
+  override def getColumns: List[Column] =
+    getInternalColumns(store, tableName, dbSystem, store.rowkeyColumnNames ++ store.colkeyColumnNames ++ List(store.valueColumnName))
   
   override def getClusteringKeyColumns: List[Column] =
-    getInternalColumns(store, tableName, store.colkeyColumnNames)
+    getInternalColumns(store, tableName, dbSystem, store.colkeyColumnNames)
 
   override def getRowKeyColumn: Column =
-    getInternalColumns(store, tableName, List(store.rowkeyColumnNames.head)).head
+    getInternalColumns(store, tableName, dbSystem, List(store.rowkeyColumnNames.head)).head
   
   override def getRowKeyColumns: List[Column] =
-    getInternalColumns(store, tableName, store.rowkeyColumnNames)
+    getInternalColumns(store, tableName, dbSystem, store.rowkeyColumnNames)
   
   override def getValueColumns: List[Column] =
-    getInternalColumns(store, tableName, List(store.valueColumnName))
+    getInternalColumns(store, tableName, dbSystem, List(store.valueColumnName))
     
   override def getTableConfiguration(rowMapper: (_) => Row): TableConfiguration[_, _, _] = {
     TableConfiguration[Any, Any, Any] (
-      getTableIdentifier(store, tableName), 
-      versions.asInstanceOf[Option[scray.querying.description.VersioningConfiguration[Any,Any,Any]]],
+      getTableIdentifier(store, tableName, dbSystem), 
+      versions.asInstanceOf[Option[scray.querying.description.VersioningConfiguration[Any,Any]]],
       getRowKeyColumns,
       getClusteringKeyColumns,
       getColumns,
@@ -76,4 +76,6 @@ class CQLCollectionStoreExtractor[S <: CQLCassandraCollectionStore[_, _, _, _, _
       List()
     )
   }
+  
+  override def getDBSystem = dbSystem.getOrElse(getDefaultDBSystem)
 }

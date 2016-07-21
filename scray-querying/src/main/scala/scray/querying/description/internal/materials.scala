@@ -11,7 +11,7 @@ import scray.querying.queries.DomainQuery
 case class MaterializedView(
     fixedDomains: Array[(Column, Array[SingleValueDomain[_]])], // single value domains -> multiple possible values 
     rangeDomains: Array[(Column, Array[RangeValueDomain[_]])], // range value domains -> 
-    viewTable: TableConfiguration[_, _, _], // table implementing this materialized view
+    viewTable: TableConfiguration[_ <: DomainQuery, _ <: DomainQuery, _], // table implementing this materialized view
     checkMaterializedView: (MaterializedView, DomainQuery) => Option[(Boolean, Int)]
 )
 

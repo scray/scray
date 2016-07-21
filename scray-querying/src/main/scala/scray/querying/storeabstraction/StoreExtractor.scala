@@ -19,37 +19,34 @@ import scray.querying.source.Splitter
 import scray.querying.Registry
 import com.twitter.storehaus.ReadableStore
 import com.twitter.storehaus.QueryableStore
+import scray.querying.sync.types.DbSession
+import scray.querying.source.store.QueryableStoreSource
 
 
 /**
  * extracts meta-information from a given store
  */
-trait StoreExtractor[S <: QueryableStore[_, _]] {
+trait StoreExtractor[S <: QueryableStoreSource[_]] {
  
   /**
    * returns a list of columns for this specific store; implementors must override this
    */
-  def getColumns: List[Column]
+  def getColumns: Set[Column]
   
   /**
    * returns list of clustering key columns for this specific store; implementors must override this
    */
-  def getClusteringKeyColumns: List[Column]
+  def getClusteringKeyColumns: Set[Column]
   
-  /**
-   * if this store is used as a ha-join reference it returns the (only) significant row-key
-   */
-  def getRowKeyColumn: Column
-
   /**
    * returns list of row key columns for this specific store; implementors must override this
    */
-  def getRowKeyColumns: List[Column]
+  def getRowKeyColumns: Set[Column]
 
   /**
    * returns a list of value key columns for this specific store; implementors must override this
    */
-  def getValueColumns: List[Column]
+  def getValueColumns: Set[Column]
 
   /**
    * returns the table configuration for this specific store; implementors must override this
@@ -59,47 +56,57 @@ trait StoreExtractor[S <: QueryableStore[_, _]] {
   /**
    * returns a query mapping
    */
-  def getQueryMapping(store: S, tableName: Option[String]): DomainQuery
+  def getQueryMapping(store: S, tableName: Option[String]): DomainQuery => String
 
   /**
    * DB-System is fixed
    */
-  def getDBSystem: String
+  def getDefaultDBSystem: String
   
   /**
    * returns a table identifier for this store
    */
-  def getTableIdentifier(store: S, tableName: Option[String]): TableIdentifier
+  def getTableIdentifier(store: S, tableName: Option[String], dbSystem: Option[String]): TableIdentifier
     
   /**
    * returns the column configuration for a column
    */
-  def getColumnConfiguration(store: S, 
+//  def getColumnConfiguration(store: S, 
+//      column: Column,
+//      querySpace: QueryspaceConfiguration,
+//      index: Option[ManuallyIndexConfiguration[_, _, _, _, _]],
+//      splitters: Map[Column, Splitter[_]]): ColumnConfiguration
+  
+  def getColumnConfiguration(session: DbSession[_, _, _],
+      dbName: String,
+      table: String,
       column: Column,
       querySpace: QueryspaceConfiguration,
       index: Option[ManuallyIndexConfiguration[_, _, _, _, _]],
       splitters: Map[Column, Splitter[_]]): ColumnConfiguration
-  
+      
   /**
    * returns all column configurations
    */
-  def getColumnConfigurations(store: S,
+  def getColumnConfigurations(session: DbSession[_, _, _],
+      dbName: String,
+      table: String,
       querySpace: QueryspaceConfiguration, 
       indexes: Map[String, ManuallyIndexConfiguration[_, _, _, _, _]],
-      splitters: Map[Column, Splitter[_]]): List[ColumnConfiguration] = {
-    getColumns.map(col => getColumnConfiguration(store, col, querySpace, indexes.get(col.columnName), splitters))
+      splitters: Map[Column, Splitter[_]]): Set[ColumnConfiguration] = {
+    getColumns.map(col => getColumnConfiguration(session, dbName, table, col, querySpace, indexes.get(col.columnName), splitters))
   }
   
   /**
    * return a manual index configuration for a column
    */
   def createManualIndexConfiguration(column: Column, queryspaceName: String, version: Int, store: S,
-      indexes: Map[(QueryableStore[_, _], String), (QueryableStore[_, _], String, 
+      indexes: Map[_ <: (QueryableStoreSource[_], String), _ <: (QueryableStoreSource[_], String, 
               IndexConfig, Option[Function1[_,_]], Set[String])],
-      mappers: Map[QueryableStore[_, _], ((_) => Row, Option[String], Option[VersioningConfiguration[_, _, _]])]):
+      mappers: Map[_ <: QueryableStoreSource[_], ((_) => Row, Option[String], Option[VersioningConfiguration[_, _]])]):
         Option[ManuallyIndexConfiguration[_, _, _, _, _]]
   
-  private def getTableConfigurationFunction[Q, K, V](ti: TableIdentifier, space: String, version: Int): TableConfiguration[Q, K, V] = 
+  private def getTableConfigurationFunction[Q <: DomainQuery, K <: DomainQuery, V](ti: TableIdentifier, space: String, version: Int): TableConfiguration[Q, K, V] = 
     Registry.getQuerySpaceTable(space, version, ti).get.asInstanceOf[TableConfiguration[Q, K, V]]
 }
 

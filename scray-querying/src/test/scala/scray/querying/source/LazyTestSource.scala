@@ -17,7 +17,7 @@ import com.typesafe.scalalogging.slf4j.LazyLogging
 class LazyTestSource(spool: Spool[Row], ordered: Boolean = true) extends LazySource[DomainQuery] with LazyLogging {
   override def request(query: DomainQuery): LazyDataFuture = Future.value(spool)
   override def isLazy: Boolean = true
-  override def getColumns: List[Column] = spool.headOption.map { x => x.getColumns }.getOrElse( throw EmptySpoolException )
+  override def getColumns: Set[Column] = spool.headOption.map { x => x.getColumns.toSet }.getOrElse( throw EmptySpoolException )
   override def isOrdered(query: DomainQuery): Boolean = ordered
   override def getGraph: Graph[Source[DomainQuery, Spool[Row]], DiEdge] = Graph.from(List(this), List())
   override def getDiscriminant: String = this.getClass.getName + spool.headOption.map { x => x.toString }.getOrElse("Empty") 
@@ -29,7 +29,7 @@ class LazyTestSource(spool: Spool[Row], ordered: Boolean = true) extends LazySou
 class EagerTestSource(source: Seq[Row], ordered: Boolean = true) extends EagerSource[DomainQuery] with LazyLogging {
   override def request(query: DomainQuery): EagerDataFuture = Future.value(source)
   override def isLazy: Boolean = true
-  override def getColumns: List[Column] = source.headOption.map { x => x.getColumns }.getOrElse( throw EmptySpoolException )
+  override def getColumns: Set[Column] = source.headOption.map { x => x.getColumns.toSet }.getOrElse( throw EmptySpoolException )
   override def isOrdered(query: DomainQuery): Boolean = ordered
   override def getGraph: Graph[Source[DomainQuery, Seq[Row]], DiEdge] = source.asInstanceOf[Source[DomainQuery, Seq[Row]]].getGraph +
     DiEdge(source.asInstanceOf[Source[DomainQuery, Seq[Row]]],

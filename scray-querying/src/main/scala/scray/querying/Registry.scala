@@ -45,6 +45,7 @@ import scala.collection.mutable.ArrayBuffer
 import scray.querying.monitoring.MonitorQuery
 import com.twitter.util.Try
 import com.typesafe.scalalogging.slf4j.LazyLogging
+import scray.querying.queries.DomainQuery
 
 /**
  * default trait to represent get operations on the registry
@@ -64,7 +65,7 @@ trait Registry {
   /**
    * returns a table configuration
    */
-  @inline def getQuerySpaceTable(space: String, version: Int, ti: TableIdentifier): Option[TableConfiguration[_, _, _]]
+  @inline def getQuerySpaceTable(space: String, version: Int, ti: TableIdentifier): Option[TableConfiguration[_ <: DomainQuery, _ <: DomainQuery, _]]
   
   /**
    * returns the latest version of a given query space
@@ -105,7 +106,7 @@ object Registry extends LazyLogging with Registry {
   private val queryMonitor = new HashMap[UUID, QueryInformation]
   private val queryMonitorRwLock = new ReentrantReadWriteLock
 
-  @inline def getQuerySpaceNames(): List[String] = querySpaces.map(_._1).toList
+  @inline def getQuerySpaceNames(): List[String] = querySpaceVersions.map(_._1).toList
   
   /**
    * returns the latest version of a given query space
@@ -139,7 +140,7 @@ object Registry extends LazyLogging with Registry {
   }
 
   // shortcut to find table-configurations
-  private val querySpaceTables = new HashMap[String, HashMap[TableIdentifier, TableConfiguration[_, _, _]]]
+  private val querySpaceTables = new HashMap[String, HashMap[TableIdentifier, TableConfiguration[_ <: DomainQuery, _ <: DomainQuery, _]]]
 
   @inline def getQuerySpaceTables(space: String, version: Int): Map[TableIdentifier, TableConfiguration[_, _, _]] = {
     rwlock.readLock.lock
@@ -153,7 +154,7 @@ object Registry extends LazyLogging with Registry {
   /**
    * returns a table configuration
    */
-  @inline def getQuerySpaceTable(space: String, version: Int, ti: TableIdentifier): Option[TableConfiguration[_, _, _]] = {
+  @inline def getQuerySpaceTable(space: String, version: Int, ti: TableIdentifier): Option[TableConfiguration[_ <: DomainQuery, _ <: DomainQuery, _]] = {
     rwlock.readLock.lock
     try {
       querySpaceTables.get(space + version).flatMap(_.get(ti))
@@ -186,7 +187,7 @@ object Registry extends LazyLogging with Registry {
       val newVersion = version.orElse(getLatestVersion(querySpace.name).map(_ + 1)).getOrElse(1)
       querySpaces.put(querySpace.name + newVersion, querySpace)
       querySpaceColumns.put(querySpace.name + newVersion, new HashMap[Column, ColumnConfiguration])
-      querySpaceTables.put(querySpace.name + newVersion, new HashMap[TableIdentifier, TableConfiguration[_, _, _]])
+      querySpaceTables.put(querySpace.name + newVersion, new HashMap[TableIdentifier, TableConfiguration[_ <: DomainQuery, _ <: DomainQuery, _]])
       querySpace.getColumns(newVersion).foreach(col => querySpaceColumns.get(querySpace.name + newVersion).map(_.put(col.column, col)))
       querySpace.getTables(newVersion).foreach(table => querySpaceTables.get(querySpace.name + newVersion).map(_.put(table.table, table)))
       querySpaceVersions.put(querySpace.name, querySpaceVersions.get(querySpace.name).getOrElse(Set()) + newVersion)
@@ -203,7 +204,7 @@ object Registry extends LazyLogging with Registry {
    * that is really used by the planner is given a new version.
    * TODO: find a mechanism to throw out old versions
    */
-  def updateQuerySpace(querySpace: String, tables: Set[(TableIdentifier, TableConfiguration[_ , _, _], List[ColumnConfiguration])]): Unit = {
+  def updateQuerySpace(querySpace: String, tables: Set[(TableIdentifier, TableConfiguration[_ <: DomainQuery, _ <: DomainQuery, _], List[ColumnConfiguration])]): Unit = {
     if(tables.size > 0) {
       rwlock.writeLock.lock
       try {
@@ -213,7 +214,7 @@ object Registry extends LazyLogging with Registry {
         logger.debug(s"Creating new version for query-space $querySpace, updating $oldVersion to $newVersion by providing ${tables.size} new tables.")
         // copy the stuff over...
         querySpaceTables.get(querySpace + oldVersion).map { qtables =>
-          val newQuerySpaceTables = new HashMap[TableIdentifier, TableConfiguration[_, _, _]]
+          val newQuerySpaceTables = new HashMap[TableIdentifier, TableConfiguration[_ <: DomainQuery, _ <: DomainQuery, _]]
           newQuerySpaceTables ++= qtables
           querySpaceTables.put(querySpace + newVersion, newQuerySpaceTables)
         }
@@ -239,7 +240,7 @@ object Registry extends LazyLogging with Registry {
       querySpace: String,
       version: Int,
       tableid: TableIdentifier,
-      tableconfig: TableConfiguration[_ , _, _],
+      tableconfig: TableConfiguration[_ <: DomainQuery, _ <: DomainQuery, _],
       columConfigsToUpdate: List[ColumnConfiguration] = List()): Unit = {
     rwlock.writeLock.lock
     try {

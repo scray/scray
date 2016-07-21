@@ -143,6 +143,6 @@ abstract class EagerCollectingQueryMappingSource[Q <: DomainQuery, R](source: So
 class IdentityEagerCollectingQueryMappingSource[Q <: DomainQuery, R](source: Source[Q, R])
   extends EagerCollectingQueryMappingSource[Q, R](source) with LazyLogging {
   override def transformSeqElement(element: Row, query: Q): Row = element
-  override def getColumns: List[scray.querying.description.Column] = source.getColumns
+  override def getColumns: Set[scray.querying.description.Column] = source.getColumns
   override def getDiscriminant: String = source.getDiscriminant + ""
 }

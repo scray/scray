@@ -45,7 +45,7 @@ trait Source[Q <: DomainQuery, T] {
   /**
    * the result will be comprised of a set of columns
    */
-  def getColumns: List[Column]
+  def getColumns: Set[Column]
   
   /**
    * whether this source will return elements in the order
@@ -100,7 +100,7 @@ trait EagerSource[Q <: DomainQuery] extends Source[Q, Seq[Row]] {
  */
 class NullSource[Q <: DomainQuery] extends LazySource[Q] {
   override def request(query: Q): LazyDataFuture = Future(Spool.Empty)
-  override def getColumns: List[Column] = List()
+  override def getColumns: Set[Column] = Set()
   override def isOrdered(query: Q): Boolean = true
   override def getGraph: Graph[Source[DomainQuery, Spool[Row]], DiEdge] = Graph.empty[Source[DomainQuery, Spool[Row]], DiEdge]
   override def getDiscriminant: String = "-NullSource-"

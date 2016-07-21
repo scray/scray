@@ -20,6 +20,7 @@ import org.yaml.snakeyaml.Yaml
 import com.twitter.util.Try
 import java.util.{ Map => JMap, HashMap => JHashMap }
 import com.datastax.driver.core.ResultSet
+import com.datastax.driver.core.Session
 
 object CassandraUtils {
 
@@ -28,6 +29,19 @@ object CassandraUtils {
    */
   def getKeyspaceMetadata(cf: StoreColumnFamily): KeyspaceMetadata =
     cf.session.getSession.getCluster().getMetadata().getKeyspace(Metadata.quote(cf.session.getKeyspacename))
+
+  /**
+   * convenience method to retrieve KeyspaceMetadata from a StoreColumnFamily object
+   */
+  def getKeyspaceMetadata(session: Session, keyspace: String): KeyspaceMetadata =
+    session.getCluster().getMetadata().getKeyspace(Metadata.quote(keyspace))
+
+  /**
+   * convenience method to retrieve KeyspaceMetadata from a StoreColumnFamily object
+   */
+  def getTableMetadata(cf: String, km: KeyspaceMetadata): TableMetadata = {
+    km.getTable(cf)
+  }
 
   /**
    * convenience method to retrieve KeyspaceMetadata from a StoreColumnFamily object

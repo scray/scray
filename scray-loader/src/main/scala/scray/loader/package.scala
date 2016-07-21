@@ -16,6 +16,8 @@ package scray
 
 package object loader {
 
+  val VERSION = "0.9.9"
+  
   object ExceptionIDs {
     // 600+ = query space registration errors
     val indexConfigExceptionID = "Scray-Index-Config-600"
@@ -26,5 +28,5 @@ package object loader {
     val mappingUnsupportedExceptionID = "Scray-Config-Mapping-Missing-605"
     val unknownTimeUnitExceptionID = "Scray-Config-Timeunit-Unknown-606"
     val unknownBooleanValueExceptionID = "Scray-Config-Boolean-Unknown-607"
-  }
+  }  
 }

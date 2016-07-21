@@ -45,7 +45,7 @@ class LazyEmptyRowDispenserSource[Q <: DomainQuery](val source: LazySource[Q], v
     }}}
   }
 
-  override def getColumns: List[Column] = source.getColumns
+  override def getColumns: Set[Column] = source.getColumns
 
   override def isOrdered(query: Q): Boolean = source.isOrdered(query)
 
@@ -85,7 +85,7 @@ class EagerEmptyRowDispenserSource[Q <: DomainQuery, R](source: Source[Q, R], va
     }
   }
 
-  override def getColumns: List[Column] = source.getColumns
+  override def getColumns: Set[Column] = source.getColumns
 
   override def isOrdered(query: Q): Boolean = source.isOrdered(query)
 

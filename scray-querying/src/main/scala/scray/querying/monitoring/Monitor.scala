@@ -14,6 +14,7 @@ import scray.querying.description.TableConfiguration
 import scray.querying.description.TableIdentifier
 import java.util.concurrent.locks.ReentrantLock
 import com.typesafe.scalalogging.slf4j.LazyLogging
+import scray.querying.queries.DomainQuery
 
 /**
  * register a new MBean with JMX
@@ -52,7 +53,7 @@ class Monitor extends LazyLogging {
   /**
    * monitor caches and queries
    */
-  def monitor(tables: HashMap[String, HashMap[TableIdentifier, TableConfiguration[_, _, _]]]) {
+  def monitor(tables: HashMap[String, HashMap[TableIdentifier, TableConfiguration[_ <: DomainQuery, _ <: DomainQuery, _]]]) {
     logger.debug(s"Monitoring Queryspaces with ${tables.size} entries")
     val timer = new JavaTimer(true)
     timer.schedule(Duration.fromSeconds(3)) {
@@ -78,7 +79,7 @@ class Monitor extends LazyLogging {
       }
 
       // walk over all table identifiers to retrieve a key for the caches
-      def walkTables(tablesInSpace: HashMap[TableIdentifier, TableConfiguration[_, _, _]]): Unit =
+      def walkTables(tablesInSpace: HashMap[TableIdentifier, TableConfiguration[_ <: DomainQuery, _ <: DomainQuery, _]]): Unit =
         tablesInSpace.keys.foreach(pollCache(_))
 
       if (tables.size > 0) {

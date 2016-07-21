@@ -69,7 +69,7 @@ abstract class ComposablePlan[Q <: DomainQuery, T](source: Source[Q, T]) extends
 }
 
 object ComposablePlan {
-  def getComposablePlan[Q <: DomainQuery, T](source: Source[Q, T], query: DomainQuery): ComposablePlan[Q, T] = {
+  def getComposablePlan[Q <: DomainQuery, T](source: Source[Q, T], query: Q): ComposablePlan[Q, T] = {
     if(query.getOrdering.isDefined) { 
       new OrderedComposablePlan(source, query.getOrdering)
     } else { 

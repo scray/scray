@@ -27,7 +27,7 @@ case class Column(columnName: String, table: TableIdentifier)
 /**
  * represents either all columns in a table (i.e. Left(true)) or a set of columns (i.e. Right(List(...)))
  */
-case class Columns(columns: Either[Boolean, List[Column]])
+case class Columns(columns: Either[Boolean, Set[Column]])
 
 /**
  * represents ordering by a single column, e.g. order by in SQL terms with a single column

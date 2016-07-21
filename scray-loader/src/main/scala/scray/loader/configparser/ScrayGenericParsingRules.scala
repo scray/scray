@@ -39,7 +39,7 @@ abstract class ScrayGenericParsingRules extends Parser {
     case "NS" | "NANOSECONDS" | "NANOSECOND" | "NANOS" | "NANO" => TimeUnit.NANOSECONDS
     case "D" | "DAYS" | "DAY" => TimeUnit.DAYS
     case "H" | "HOURS" | "HOUR" => TimeUnit.HOURS
-    case "M" | "MINUTES" | "MINUTE" => TimeUnit.MINUTES
+    case "M" | "MIN" | "MINUTES" | "MINUTE" => TimeUnit.MINUTES
     case _ => throw new UnknownTimeUnitException(timeunit)
   }}}
   

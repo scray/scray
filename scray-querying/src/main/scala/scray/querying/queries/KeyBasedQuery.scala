@@ -20,11 +20,12 @@ import scray.querying.description.internal.SingleValueDomain
 import java.util.UUID
 import scray.querying.description.internal.SingleValueDomain
 import scray.querying.description.internal.KeyBasedQueryException
+import scray.querying.description.RowColumn
 
 /**
  * query to look up a primary key in a table
  */
-class KeyBasedQuery[K](val key: K, reftable: TableIdentifier, result: List[Column], space: String, version: Int, qid: UUID) 
+class KeyBasedQuery[K](val key: K, reftable: TableIdentifier, result: Set[Column], space: String, version: Int, qid: UUID) 
   extends DomainQuery(qid, space, version, result, reftable, List(), None, None, None) {
   
   override def transformedAstCopy(ast: List[Domain[_]]): KeyBasedQuery[K] = ast.headOption.map {
@@ -39,7 +40,7 @@ class KeyBasedQuery[K](val key: K, reftable: TableIdentifier, result: List[Colum
 /**
  * query to look up a set of primary keys in a table
  */
-class KeySetBasedQuery[K](override val key: Set[K], reftable: TableIdentifier, result: List[Column], space: String, version: Int, qid: UUID) 
+class KeySetBasedQuery[K](override val key: Set[K], reftable: TableIdentifier, result: Set[Column], space: String, version: Int, qid: UUID) 
   extends KeyBasedQuery[Set[K]](key, reftable, result, space, version, qid) {
 
   override def transformedAstCopy(ast: List[Domain[_]]): KeySetBasedQuery[K] = new KeySetBasedQuery[K](ast.collect {
@@ -47,4 +48,17 @@ class KeySetBasedQuery[K](override val key: Set[K], reftable: TableIdentifier, r
   }.toSet, reftable, result, space, version, qid)
   
   def getAsKeyBasedQueries(): Set[KeyBasedQuery[K]] = key.map { k => new KeyBasedQuery[K](k, reftable, result, space, version, qid) }
+}
+
+
+/**
+ * query to look up a set of primary keys in a table
+ */
+class KeyedQuery(val keys: Set[RowColumn[_]], reftable: TableIdentifier, result: Set[Column], space: String, version: Int, qid: UUID) 
+  extends DomainQuery(qid, space, version, result, reftable, List(), None, None, None) {
+
+  override def transformedAstCopy(ast: List[Domain[_]]): KeyedQuery = new KeyedQuery(ast.collect {
+    case svd: SingleValueDomain[_] => RowColumn(svd.column,svd.value)
+  }.toSet, reftable, result, space, version, qid)
+  
 }

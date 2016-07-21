@@ -39,7 +39,7 @@ class OrderingEagerMappingSource[Q <: DomainQuery, R](source: Source[Q, R])
 
   override def transformSeqElement(element: Row, query: Q): Row = element
 
-  override def getColumns: List[Column] = source.getColumns
+  override def getColumns: Set[Column] = source.getColumns
   
   override def isOrdered(query: Q): Boolean = true
   

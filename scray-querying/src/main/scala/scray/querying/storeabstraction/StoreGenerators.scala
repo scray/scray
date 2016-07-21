@@ -13,10 +13,10 @@ trait StoreGenerators {
    * creates a row store, i.e. a store that has a primary key column and maybe a bunch of other columns  
    */
   def createRowStore(table: TableIdentifier): 
-    Option[(QueryableStore[_, _], ((_) => Row, Option[String], Option[VersioningConfiguration[_, _, _]]))]
+    Option[(QueryableStore[_, _], ((_) => Row, Option[String], Option[VersioningConfiguration[_, _]]))]
 
   /**
    * gets the extractor, that helps to evaluate meta-data for this type of dbms
    */
-  def getExtractor[S <: QueryableStore[_, _]](store: S, tableName: Option[String], versions: Option[VersioningConfiguration[_, _, _]]): StoreExtractor[S]
+  def getExtractor[S <: QueryableStore[_, _]](store: S, tableName: Option[String], versions: Option[VersioningConfiguration[_, _]], dbSystem: Option[String]): StoreExtractor[S]
 }

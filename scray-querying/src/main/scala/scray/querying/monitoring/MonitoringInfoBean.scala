@@ -99,8 +99,9 @@ class MonitoringInfoBean(name: String) extends DynamicMBean with LazyLogging {
   override def invoke(actionName: String, params: Array[Object], signature: Array[String]): Object = {
     def handleCreateKeyValueCache[K, V](kvcache: KeyValueCache[K, V], newsize: Double): KeyValueCache[K, V] = {
       logger.info(s"Replacing Cache ${kvcache.sourceDiscriminant} with old size ${kvcache.cachesizegb}GB with new size ${newsize}")
-            new KeyValueCache(
+        new KeyValueCache(
                   kvcache.sourceDiscriminant,
+                  kvcache.keySerializer,
                   kvcache.valueSerializer,
                   newsize,
                   kvcache.numberentries)

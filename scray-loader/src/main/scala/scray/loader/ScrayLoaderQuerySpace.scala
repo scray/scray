@@ -90,8 +90,8 @@ class ScrayLoaderQuerySpace(name: String, config: ScrayConfiguration, qsConfig: 
         (Function1[_, Row], Option[String], Option[VersioningConfiguration[_, _, _]])), generator: StoreGenerators):
         TableConfiguration[_, _, _] = {
       // TODO: read latest version from SyncTable, if it is declared there, generate a VersioningConfig; otherwise leave it by None
-      val extractor = generator.getExtractor(storeconfigs._1, Some(id.tableId), None)
-      val tid = extractor.getTableIdentifier(storeconfigs._1, storeconfigs._2._2)
+      val extractor = generator.getExtractor(storeconfigs._1, Some(id.tableId), None, Some(id.dbSystem))
+      val tid = extractor.getTableIdentifier(storeconfigs._1, storeconfigs._2._2, Some(id.dbSystem))
       extractors.+=((tid, extractor))
       extractor.getTableConfiguration(storeconfigs._2._1)
     } 
@@ -100,7 +100,7 @@ class ScrayLoaderQuerySpace(name: String, config: ScrayConfiguration, qsConfig: 
     // TODO: add session change listener to change store in case of session change
     // storeConfig.addSessionChangeListener(listener)
     session.flatMap { sess =>
-      val generator = getGenerator(id.dbId, sess)
+      val generator = getGenerator(id.dbSystem, sess)
       val sStore = generator.createRowStore(id)
       sStore.map { storeconfigs =>
         extractTable(storeconfigs, generator)
@@ -130,18 +130,20 @@ class ScrayLoaderQuerySpace(name: String, config: ScrayConfiguration, qsConfig: 
    */
   override def getColumns(version: Int): List[ColumnConfiguration] = {
     def getColumnConfig[S <: TableConfiguration[_, _, _]](table: S): List[ColumnConfiguration] = {
-      def extractTableConfig[F <: QueryableStore[_, _]](column: Column, extractor: StoreExtractor[F]): ColumnConfiguration = {
-        // TODO: add indexing configuration (replace maps)
-        val index = extractor.createManualIndexConfiguration(column, name, version, table.queryableStore.get().asInstanceOf[F], Map(), Map())
-        // TODO: add splitter configuration
-        extractor.getColumnConfiguration(table.asInstanceOf[F], column, this, index, Map())        
-      }
       def throwError: Exception = {
         logger.error("Store must be registered before columns can be extracted!")
         new UnsupportedOperationException("Store must be registered before columns can be extracted!") 
       }
+      def extractTableConfig[F <: QueryableStore[_, _]](column: Column, extractor: StoreExtractor[F]): ColumnConfiguration = {
+        // TODO: add indexing configuration (replace maps)
+        val index = extractor.createManualIndexConfiguration(column, name, version, table.queryableStore.get().asInstanceOf[F], Map(), Map())
+        storeConfig.getSessionForStore(column.table.dbSystem).map { session =>
+          // TODO: add splitter configuration
+          extractor.getColumnConfiguration(session, column.table.dbId, column.table.tableId, column, this, index, Map())
+        }.getOrElse(throw new DBMSUndefinedException(column.table.dbSystem, name))
+      }
       table.allColumns.map { column =>
-        // fetch extractor 
+        // fetch extractor
         extractors.get(column.table).getOrElse {
           throw throwError
         } match {
@@ -158,4 +160,9 @@ class ScrayLoaderQuerySpace(name: String, config: ScrayConfiguration, qsConfig: 
    * re-initialize this queryspace, possibly re-reading the configuration from somewhere
    */
   def reInitialize(oldversion: Int): QueryspaceConfiguration = ???
+  
+  
+  override def toString: String = {
+    s"""$name { tables: [${getTables(0)}] }"""
+  }
 }

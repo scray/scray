@@ -63,7 +63,7 @@ class TimeIndexSource[Q <: DomainQuery, M, R, V](
    * the original query options
    */
   @inline private def createDomainQuery(query: Q, domains: List[Domain[_]]): Q = {
-    val resultColumns = List(timeIndexConfig.indexRowColumnYear,
+    val resultColumns = Set(timeIndexConfig.indexRowColumnYear,
         timeIndexConfig.indexColumnMs, timeIndexConfig.indexReferencesColumn)
     val range = if(useranges) {
         query.getQueryRange.map { qrange =>
@@ -159,5 +159,5 @@ class TimeIndexSource[Q <: DomainQuery, M, R, V](
   /**
    * since this is a true index only  
    */
-  override def getColumns: List[Column] = lookupSource.getColumns
+  override def getColumns: Set[Column] = lookupSource.getColumns
 }

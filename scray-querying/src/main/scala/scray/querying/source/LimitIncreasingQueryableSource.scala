@@ -15,7 +15,6 @@
 package scray.querying.source
 
 import com.twitter.concurrent.Spool
-import com.twitter.storehaus.{IterableStore, QueryableStore}
 import com.twitter.util.{Future, Throw, Return}
 import scray.querying.description.{Column, Row}
 import scray.querying.queries.DomainQuery
@@ -31,46 +30,56 @@ import com.twitter.util.Await
 import scala.annotation.tailrec
 import LimitIncreasingQueryableSource.{ITERATOR_EXTENDER_FUNCTION, WrappingIteratorExtender, skipIteratorEntries}
 import com.typesafe.scalalogging.slf4j.LazyLogging
+import scray.querying.source.store.QueryableStoreSource
+import scray.querying.description.TableConfiguration
+import scray.querying.queries.KeyedQuery
 
 /**
- * queries a Storehaus-store. Assumes that the Seq returnes by QueryableStore is a lazy sequence (i.e. view)
+ * queries a store. Assumes that the Seq returnes by QueryableStore is a lazy sequence (i.e. view)
  */
-class LimitIncreasingQueryableSource[K, V](override val store: QueryableStore[K, V], override val space: String, 
-        override val version: Int, table: TableIdentifier, override val isOrdered: Boolean = false) 
-    extends QueryableSource[K, V](store, space, version, table, isOrdered) with LazyLogging {
+class LimitIncreasingQueryableSource[Q <: DomainQuery](val store: QueryableStoreSource[Q], tableConf: TableConfiguration[Q, _ <: DomainQuery, _], 
+    table: TableIdentifier, val isOrdered: Boolean = false) 
+    extends QueryableStoreSource[Q](table, store.getRowKeyColumns, store.getClusteringKeyColumns, store.getColumns, isOrdered)
+    with LazySource[Q]
+    with LazyLogging {
+  
+  val queryMapping: DomainQuery => Q = tableConf.domainQueryMapping
   
   /**
    * create function to fetch new data with, which uses a given limit
    */
-  def fetchAndSkipDataIterator: ITERATOR_EXTENDER_FUNCTION[V] = (query, limit, skip) => Await.result {
+  def fetchAndSkipDataIterator: ITERATOR_EXTENDER_FUNCTION[Row] = (query, limit, skip) => Await.result {
     val increasedLimitQuery = query.copy(range = Some(query.getQueryRange.get.copy(limit = Some(limit))))
     logger.debug(s"re-fetch query with increased limit $limit to fetch more results : ${increasedLimitQuery}")
-    store.queryable.get(queryMapping(increasedLimitQuery)).map { x =>
-      val it = x.getOrElse(Seq[V]()).view.iterator
+    store.requestIterator(queryMapping(increasedLimitQuery)).map { it =>
       skipIteratorEntries(skip, it)
     }
   }
 
   
-  override def request(query: DomainQuery): Future[Spool[Row]] = {
+  override def request(query: Q): Future[Spool[Row]] = requestIterator(query).flatMap { it =>
+    QueryableSource.iteratorToSpool[Row](it, row => row)
+  }
+
+  override def keyedRequest(query: KeyedQuery): Future[Iterator[Row]] = requestIterator(query.asInstanceOf[Q])
+  
+  override def requestIterator(query: Q): Future[Iterator[Row]] = {
     query.queryInfo.addNewCosts {(n: Long) => {n + 42}}
     logger.debug(s"Requesting data from store with LimitIncreasingQueryableSource on query ${query}")
-    store.queryable.get(queryMapping(query)).transform {
-      case Throw(y) => Future.exception(y)
-      case Return(x) => 
+    store.requestIterator(queryMapping(query)).map { it =>
         // construct lazy spool
         query.getQueryRange.flatMap { range =>
           range.limit.map { limit =>
-            // QueryableSource.iteratorToSpool[V](x.getOrElse(Seq[V]()).view.iterator, valueToRow).flatMap(_.extend(query, fetchAndSkipData, limit, limit))
-            QueryableSource.iteratorToSpool[V](new WrappingIteratorExtender(query, x.getOrElse(Seq[V]()).view.iterator, fetchAndSkipDataIterator, limit), valueToRow)
+            new WrappingIteratorExtender(query, it, fetchAndSkipDataIterator, limit)
           }
         }.getOrElse {
-          super.request(query)
+          it
         }
     }
+    
   }
-
-  override def getGraph: Graph[Source[DomainQuery, Spool[Row]], DiEdge] = Graph.from(List(this), List())
+  
+  override def getGraph: Graph[Source[DomainQuery, Spool[Row]], DiEdge] = Graph.from(List(this.asInstanceOf[Source[DomainQuery, Spool[Row]]]), List())
   
 }
 

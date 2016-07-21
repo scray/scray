@@ -21,7 +21,7 @@ import scray.querying.queries.KeyBasedQuery
 import scray.querying.description.Row
 import scray.querying.Registry
 import scray.querying.description.Column
-import scray.querying.description.TableIdentifier
+import scray.querying.description.{ TableIdentifier, TableConfiguration }
 import scalax.collection.immutable.Graph
 import scalax.collection.GraphEdge.DiEdge
 import scalax.collection.GraphPredef._
@@ -33,6 +33,7 @@ import org.slf4j.LoggerFactory
 import scray.querying.caching.serialization.KeyValueCacheSerializer
 import scray.querying.caching.serialization.RegisterRowCachingSerializers
 import com.typesafe.scalalogging.slf4j.LazyLogging
+import scray.querying.queries.KeyedQuery
 
 /**
  * A source that queries a Storehaus-store for a given value.
@@ -69,7 +70,7 @@ class KeyValueSource[K, V](val store: ReadableStore[K, V], space: String, versio
     }
   }
   
-  override def getColumns: List[Column] = queryspaceTable.get.allColumns
+  override def getColumns: Set[Column] = queryspaceTable.get.allColumns
   
   // as there is only one element this method may return true
   override def isOrdered(query: KeyBasedQuery[K]): Boolean = true
@@ -81,6 +82,66 @@ class KeyValueSource[K, V](val store: ReadableStore[K, V], space: String, versio
   
   override def createCache: Cache[_] = {
     RegisterRowCachingSerializers()
-    new KeyValueCache[K, Row](getDiscriminant, Some(new KeyValueCacheSerializer))
+    new KeyValueCache[K, Row](getDiscriminant, None, Some(new KeyValueCacheSerializer))
   }
 }
+
+/**
+ * A source that queries a Storehaus-store for a given value.
+ * The query is comprised of a simple key in this case.
+ */
+class KeyedSource[K <: DomainQuery, V](
+    tableConfiguration: TableConfiguration[_ <: DomainQuery, K, V],
+    table: TableIdentifier,
+    enableCaching: Boolean = true) extends EagerSource[KeyedQuery] with LazyLogging {
+
+  // private val queryspaceTable = Registry.getQuerySpaceTable(space, version, table)
+  protected val cache = Registry.getCache[Row, KeyValueCache[K, Row]](this)
+  
+  val valueToRow: V => Row = tableConfiguration.rowMapper
+
+  val store = tableConfiguration.readableStore
+  
+  override def request(query: KeyedQuery): Future[Seq[Row]] = {
+    query.queryInfo.addNewCosts {(n: Long) => {n + 42}}
+    if(enableCaching) {
+      cache.retrieve(query).map { value =>
+        Future.value(Seq(value))
+      }.getOrElse {
+        store.get.keyedRequest(query).map { it =>
+          if(it.hasNext) {
+            val rowValue = it.next
+    	      cache.put(query, rowValue)
+    	      Seq[Row](rowValue)
+          } else {
+            Seq()
+          }
+        }
+      }
+    } else {
+      store.get.keyedRequest(query).map { it => 
+        if(it.hasNext) {
+          Seq(it.next())
+        } else {
+          Seq()
+        }
+      }
+    }
+  }
+  
+  override def getColumns: Set[Column] = tableConfiguration.allColumns
+  
+  // as there is only one element this method may return true
+  override def isOrdered(query: KeyedQuery): Boolean = true
+  
+  override def getGraph: Graph[Source[DomainQuery, Seq[Row]], DiEdge] = 
+    Graph.from(List(this.asInstanceOf[Source[DomainQuery, Seq[Row]]]), List())
+
+  override def getDiscriminant = table.toString()
+  
+  override def createCache: Cache[_] = {
+    RegisterRowCachingSerializers()
+    new KeyValueCache[Row, Row](getDiscriminant, Some(new KeyValueCacheSerializer), Some(new KeyValueCacheSerializer))
+  }
+}
+

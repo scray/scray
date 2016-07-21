@@ -25,15 +25,15 @@ import scray.querying.description.internal.KeyBasedQueryException
  * Query to look up a list of columns (usually a single one) primary key in a table.
  * In case columns has more than one entry K is a tuple.
  */
-class SimpleKeyBasedQuery[K](override val key: K, columns: List[Column], result: List[Column], space: String, version: Int, qid: UUID)
-  extends KeyBasedQuery[K](key, columns(0).table, result, space, version, qid) {
+class SimpleKeyBasedQuery[K](override val key: K, columns: Set[Column], result: Set[Column], space: String, version: Int, qid: UUID)
+  extends KeyBasedQuery[K](key, columns.head.table, result, space, version, qid) {
   
   override def transformedAstCopy(ast: List[Domain[_]]): SimpleKeyBasedQuery[K] = if(ast.size != columns.size) {
     throw new KeyBasedQueryException(this)
   } else {
     if(ast.size == 1) {
       ast(0) match {
-        case svd: SingleValueDomain[K] => new SimpleKeyBasedQuery[K](svd.value, List(svd.column), result, space, version, qid)
+        case svd: SingleValueDomain[K] => new SimpleKeyBasedQuery[K](svd.value, Set(svd.column), result, space, version, qid)
         case _ => throw new KeyBasedQueryException(this)
       }
     } else {
@@ -41,7 +41,7 @@ class SimpleKeyBasedQuery[K](override val key: K, columns: List[Column], result:
           case svd: SingleValueDomain[_] => svd.column
           case _ => throw new KeyBasedQueryException(this)
         }
-      }
+      }.toSet
       val key = createTuple(ast.map { _ match {
           case svd: SingleValueDomain[_] => svd.value.asInstanceOf[AnyRef]
           case _ => throw new KeyBasedQueryException(this)        

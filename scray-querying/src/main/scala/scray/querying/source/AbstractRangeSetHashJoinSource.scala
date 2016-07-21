@@ -51,7 +51,7 @@ abstract class AbstractRangeSetHashJoinSource[Q <: DomainQuery, M, R /* <: Produ
    * the original query options
    */
   @inline protected def createDomainQuery[T](query: Q, domains: List[Domain[_]])(implicit ord: Ordering[T]): Q = {
-    val resultColumns = List(getPrefixIndexColumn,
+    val resultColumns = Set(getPrefixIndexColumn,
         getValueIndexColumn, getReferencesIndexColumn)
     val range = query.getQueryRange.map { qrange => 
       val skipLines = qrange.skip.getOrElse(0L)
@@ -82,5 +82,5 @@ abstract class AbstractRangeSetHashJoinSource[Q <: DomainQuery, M, R /* <: Produ
   /**
    * since this is a true index only, we only return the referred columns  
    */
-  override def getColumns: List[Column] = lookupSource.getColumns
+  override def getColumns: Set[Column] = lookupSource.getColumns
 }

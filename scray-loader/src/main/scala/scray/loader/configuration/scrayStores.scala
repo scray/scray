@@ -23,11 +23,14 @@ import scray.cassandra.automation.{ CassandraSessionHandler, CassandraStoreGener
 import scray.cassandra.extractors.CassandraExtractor
 import scray.cassandra.rows.GenericCassandraRowStoreMapper
 import scray.cassandra.rows.GenericCassandraRowStoreMapper.cassandraPrimitiveTypeMap
+import com.typesafe.scalalogging.slf4j.LazyLogging
+import scray.cassandra.automation.CassandraSessionHandler
+import scray.cassandra.automation.CassandraStoreGenerators
 
 /**
  * abstraction for the management of configuration of stores
  */
-class ScrayStores(startConfig: ScrayConfiguration) {
+class ScrayStores(startConfig: ScrayConfiguration) extends LazyLogging {
   
   type SessionChangeListener = (String, DbSession[_, _, _]) => Unit
   
@@ -35,7 +38,13 @@ class ScrayStores(startConfig: ScrayConfiguration) {
   private val storeSessions: HashMap[String, DbSession[_, _, _]] = new HashMap[String, DbSession[_, _, _]]
   private val sessionChangeListeners: ArrayBuffer[SessionChangeListener] = new ArrayBuffer[SessionChangeListener]
   
-  def getSessionForStore(dbmsId: String): Option[DbSession[_, _, _]] = storeSessions.get(dbmsId)
+  def getSessionForStore(dbmsId: String): Option[DbSession[_, _, _]] = storeSessions.get(dbmsId).orElse {
+    storeConfigs.get(dbmsId).map { sc =>
+      val sess = sc.getSession
+      storeSessions += ((dbmsId, sess))
+      sess
+    }
+  }
   
   def addSessionChangeListener(listener: SessionChangeListener): Unit = sessionChangeListeners += listener
   

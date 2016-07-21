@@ -43,9 +43,9 @@ class CassandraStoreGenerators(dbID: String, session: DbSession[_, _, _],
 
 
   override def getExtractor[S <: QueryableStore[_, _]](store: S, tableName: Option[String], 
-      versions: Option[VersioningConfiguration[_, _, _]]): StoreExtractor[S] = {
+      versions: Option[VersioningConfiguration[_, _, _]], dbSystem: Option[String]): StoreExtractor[S] = {
     store match {
-      case cqlStore: AbstractCQLCassandraStore[k, v] => CassandraExtractor.getExtractor(cqlStore, tableName, versions).asInstanceOf[StoreExtractor[S]] 
+      case cqlStore: AbstractCQLCassandraStore[k, v] => CassandraExtractor.getExtractor(cqlStore, tableName, versions, dbSystem).asInstanceOf[StoreExtractor[S]] 
       case _ => throw new UnsupportedOperationException("CassandraStoreGenerators can only be used with Cassandra stores")
     }
     

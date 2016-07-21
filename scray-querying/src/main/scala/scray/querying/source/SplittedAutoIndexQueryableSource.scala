@@ -17,7 +17,6 @@ package scray.querying.source
 import com.google.common.collect.EvictingQueue
 import com.twitter.concurrent.Spool
 import com.twitter.concurrent.Spool.*::
-import com.twitter.storehaus.QueryableStore
 import com.twitter.util.{Await, Duration, Future, FuturePool, Throw, Return}
 import com.typesafe.scalalogging.slf4j.LazyLogging
 import java.util.concurrent.{Executors, TimeUnit}
@@ -32,15 +31,22 @@ import scray.querying.queries.DomainQuery
 import scray.querying.source.SplittedAutoIndexQueryableSource.{ITERATOR_FUNCTION, WrappingIteratorRequestor, EmptyIterator, limitIncreasingFactor, numberOfQueriesToPrefetch}
 import scray.querying.source.LimitIncreasingQueryableSource.{skipIteratorEntries}
 import java.util.concurrent.atomic.AtomicInteger
+import scray.querying.source.store.QueryableStoreSource
+import scray.querying.description.TableConfiguration
+import scray.querying.queries.KeyedQuery
 
 /**
  * queries a Storehaus-store using a splitting algorithm. Assumes that the Seq returned by QueryableStore is a lazy sequence (i.e. view)
  */
-class SplittedAutoIndexQueryableSource[K, V, T: Ordering](override val store: QueryableStore[K, V], override val space: String, 
-        override val version: Int, table: TableIdentifier, splitcolumn: Column, rangeSplitter: Option[((T, T), Boolean) => Iterator[(T, T)]], 
-        override val isOrdered: Boolean = false) 
-    extends QueryableSource[K, V](store, space, version, table, isOrdered) with LazyLogging {
+class SplittedAutoIndexQueryableSource[Q <: DomainQuery, T: Ordering](val store: QueryableStoreSource[Q], 
+    table: TableIdentifier, tableConf: TableConfiguration[Q, _ <: DomainQuery, _], splitcolumn: Column, 
+    rangeSplitter: Option[((T, T), Boolean) => Iterator[(T, T)]], val isOrdered: Boolean = false) 
+    extends QueryableStoreSource[Q](table, store.getRowKeyColumns, store.getClusteringKeyColumns, store.getColumns, isOrdered) 
+    with LazySource[Q] 
+    with LazyLogging {
 
+  val queryMapping: DomainQuery => Q = tableConf.domainQueryMapping
+  
   private def transformWhereAST(domains: List[Domain[_]], bounds: (T, T)): List[Domain[_]] = {
     domains.map { domain => 
       if(domain.column == splitcolumn) {
@@ -58,14 +64,13 @@ class SplittedAutoIndexQueryableSource[K, V, T: Ordering](override val store: Qu
   /**
    * fetches new data re-writing the query using a given split of the range
    */
-  def fetchNewData: ITERATOR_FUNCTION[V, T] = (query, limit, skip, split) => Await.result {
+  def fetchNewData: ITERATOR_FUNCTION[Row, T] = (query, limit, skip, split) => Await.result {
     val ast = transformWhereAST(query.getWhereAST, split)
     val limitOpt = query.getQueryRange.map(_.copy(limit = limit)).orElse(limit.map(lim => QueryRange(None, limit)))
     val splitQuery = query.copy(domains = ast, range = limitOpt)
     logger.debug(s"re-fetch query with different range $split to fetch more results : ${splitQuery}")
-    store.queryable.get(queryMapping(splitQuery)).map { x =>
-      val it = x.getOrElse(Seq[V]()).view.iterator
-      skip.map(count => skipIteratorEntries(count, it)).getOrElse(new EmptyIterator[V])
+    store.requestIterator(queryMapping(splitQuery)).map { it =>
+      skip.map(count => skipIteratorEntries(count, it)).getOrElse(new EmptyIterator[Row])
     }
   }
   
@@ -83,15 +88,21 @@ class SplittedAutoIndexQueryableSource[K, V, T: Ordering](override val store: Qu
   /**
    * delegates to an appropriate alternative source for the given query
    */
-  def delegateToOtherSource(query: DomainQuery): Future[Spool[Row]] = {
+  def delegateToOtherSource(query: Q): Future[Iterator[Row]] = {
     if(query.getQueryRange.isDefined && query.getQueryRange.get.limit.isDefined) {
-      new LimitIncreasingQueryableSource(store, space, query.querySpaceVersion, table, isOrdered).request(query)
+      new LimitIncreasingQueryableSource(store, tableConf, table, isOrdered).requestIterator(query)
     } else {
-      super.request(query)
+      store.requestIterator(query)
     }
   }
+
+  override def request(query: Q): Future[Spool[Row]] = {
+    requestIterator(query).flatMap { it => QueryableSource.iteratorToSpool[Row](it, row => row) }
+  }
   
-  override def request(query: DomainQuery): Future[Spool[Row]] = {
+  override def keyedRequest(query: KeyedQuery): Future[Iterator[Row]] = requestIterator(query.asInstanceOf[Q])
+  
+  override def requestIterator(query: Q): Future[Iterator[Row]] = {
     query.queryInfo.addNewCosts {(n: Long) => {n + 42}}
     val reversed = query.getOrdering.map(_.descending).getOrElse(false)
     rangeSplitter.flatMap(splitter => query.getWhereAST.find { x => x.column == splitcolumn }.map { _ match {
@@ -101,12 +112,12 @@ class SplittedAutoIndexQueryableSource[K, V, T: Ordering](override val store: Qu
           val splits = splitter((range.lowerBound.get.value, range.upperBound.get.value), reversed)
           val limitCount = query.getQueryRange.flatMap(_.limit)
           if(splits.hasNext) {
-            val prefetcher = new PrefetchingSplitIterator[V, T](query, fetchNewData, splits, limitCount, limitIncreasingFactor, numberOfQueriesToPrefetch.get)
+            val prefetcher = new PrefetchingSplitIterator[Row, T](query, fetchNewData, splits, limitCount, limitIncreasingFactor, numberOfQueriesToPrefetch.get)
             val it = prefetcher.next()
               // QueryableSource.iteratorToSpool[V](x.getOrElse(Seq[V]()).view.iterator, valueToRow).flatMap(_.append(query, fetchNewData, splits, limitCount))
-            QueryableSource.iteratorToSpool[V](new WrappingIteratorRequestor(query, it, splits, fetchNewData, limitCount), valueToRow)
+            Future.value(new WrappingIteratorRequestor(query, it, splits, fetchNewData, limitCount))
           } else {
-            Future.value(Spool.empty[Row])
+            Future.value(new EmptyIterator[Row]())
           }
         } else {
           delegateToOtherSource(query) 
@@ -116,10 +127,10 @@ class SplittedAutoIndexQueryableSource[K, V, T: Ordering](override val store: Qu
     }}).getOrElse {
       // no splitter?! --> use QueryableSource
       delegateToOtherSource(query)
-    }
+    }    
   }
-
-  override def getGraph: Graph[Source[DomainQuery, Spool[Row]], DiEdge] = Graph.from(List(this), List())
+  
+  override def getGraph: Graph[Source[DomainQuery, Spool[Row]], DiEdge] = Graph.from(List(this.asInstanceOf[Source[DomainQuery, Spool[Row]]]), List())
 }
 
 object SplittedAutoIndexQueryableSource extends LazyLogging {

@@ -24,6 +24,8 @@ import scray.querying.description.{Column, RowColumn, SimpleRow, TableIdentifier
 import scray.cassandra.extractors.CassandraExtractor
 import java.nio.ByteBuffer
 import scala.collection.JavaConverters._
+import scray.querying.queries.DomainQuery
+import scray.cassandra.CassandraQueryableSource
 
 /**
  * a generic mapper to map cassandra rows emitted by CQLCassandraRowStore to scray rows 
@@ -56,30 +58,39 @@ object GenericCassandraRowStoreMapper {
     Map[String, CassandraPrimitive[_]] = (cassPrimitives.map(prim => prim.cassandraType -> prim) ++ additionalMappings).toMap
   
   implicit val cassandraPrimitiveTypeMap = cassTypeMap(defaultCassPrimitives, additionalCassMappings)
-    
+
+  @tailrec private final def columnsTransform(in: List[ColumnDefinitions.Definition], 
+      buf: ListBuffer[RowColumn[_]],
+      ti: TableIdentifier): ListBuffer[RowColumn[_]] = 
+  if(in.isEmpty) {
+    buf
+  } else {
+    val tm = typeMap.get(in.head.getType.getName.toString).get.fromRow(cassrow, in.head.getName)
+    val buffer = tm match {
+      case Some(value) => value match {
+        case bytes: ByteBuffer =>
+          val byteArray = new Array[Byte](bytes.remaining())
+          bytes.get(byteArray)
+          buf += RowColumn(Column(in.head.getName, ti), byteArray)
+        case _ => buf += RowColumn(Column(in.head.getName, ti), value)
+      }
+      case None => buf
+    }
+    columnsTransform(in.tail, buffer)
+  }
+  
   def rowMapper[K: CassandraPrimitive](store: CQLCassandraRowStore[K], tableName: Option[String])(implicit typeMap: Map[String, CassandraPrimitive[_]]): 
     ((K, CassRow)) => Row = (kv) => {
     val (key, cassrow) = kv
     val ti = tableName.map(TableIdentifier(CassandraExtractor.DB_ID, store.columnFamily.session.getKeyspacename, _)).getOrElse {
         TableIdentifier(CassandraExtractor.DB_ID, store.columnFamily.session.getKeyspacename, store.columnFamily.getName)}
-    @tailrec def columnsTransform(in: List[ColumnDefinitions.Definition], buf: ListBuffer[RowColumn[_]]): ListBuffer[RowColumn[_]] = 
-      if(in.isEmpty) {
-        buf
-      } else {
-        val tm = typeMap.get(in.head.getType.getName.toString).get.fromRow(cassrow, in.head.getName)
-        val buffer = tm match {
-          case Some(value) => value match {
-            case bytes: ByteBuffer =>
-              val byteArray = new Array[Byte](bytes.remaining())
-              bytes.get(byteArray)
-              buf += RowColumn(Column(in.head.getName, ti), byteArray)
-            case _ => buf += RowColumn(Column(in.head.getName, ti), value)
-          }
-          case None => buf
-        }
-        columnsTransform(in.tail, buffer)
-      }
-    val lb = columnsTransform(cassrow.getColumnDefinitions().asList().asScala.toList, ListBuffer.empty[RowColumn[_]])
+    val lb = columnsTransform(cassrow.getColumnDefinitions().asList().asScala.toList, ListBuffer.empty[RowColumn[_]], ti)
+    SimpleRow(new ArrayBuffer[RowColumn[_]](lb.size).++=(lb))
+  }
+  
+  def cassandraRowToScrayRowMapper[Q <: DomainQuery](store: CassandraQueryableSource[Q])(implicit typeMap: Map[String, CassandraPrimitive[_]]): CassRow => Row = row => {
+    val definitionIterator = row.getColumnDefinitions().asList().asScala
+    val lb = columnsTransform(definitionIterator, ListBuffer.empty[RowColumn[_]], store.getScrayCoordinates)
     SimpleRow(new ArrayBuffer[RowColumn[_]](lb.size).++=(lb))
   }
 }
