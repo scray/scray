@@ -129,7 +129,7 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
 
   val syncTable = SyncTable("silidx", "SyncTable")
   val jobLockTable = JobLockTable("silidx", "JobLockTable")
-  val statementGenerator = new CassandraStatementGenerator
+  val statementGenerator = CassandraStatementGenerator
   val lockTimeOut = 500 //ms
 
   /**
@@ -180,7 +180,7 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
 
   def startNextBatchJob(job: JOB_INFO, dataTable: TableIdentifier): Try[Unit] = ???
   
-  private def startJob(job: JOB_INFO, online: Boolean): Try[Unit] = {
+      private def startJob(job: JOB_INFO, online: Boolean): Try[Unit] = {
         def createStartStatement(slot: Int, online: Boolean, startTime: Long): Statement = {
           QueryBuilder.update(syncTable.keySpace, syncTable.tableName)
             .`with`(QueryBuilder.set(syncTable.columns.state.name, State.RUNNING.toString()))
@@ -536,6 +536,8 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
   }
 
   def insertInBatchTable(job: JOB_INFO, slot: Int, data: RowWithValue): Try[Unit] = {
+    val table = new Table(syncTable.keySpace, getBatchJobName(job.name, slot), data)
+    CassandraStatementGenerator.createSingleTableString(table).map { session.execute(_) }
     val statement = data.foldLeft(QueryBuilder.insertInto(syncTable.keySpace, getBatchJobName(job.name, slot))) {
       (acc, column) => acc.value(column.name, column.value)
     }
@@ -741,7 +743,7 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
   }
 }
 
-class CassandraStatementGenerator extends LazyLogging {
+object CassandraStatementGenerator extends LazyLogging {
 
   def createSingleTableString[T <: AbstractRow](table: Table[T]): Option[String] = {
     val createStatement = s"CREATE TABLE IF NOT EXISTS ${table.keySpace + "." + table.tableName} (" +
