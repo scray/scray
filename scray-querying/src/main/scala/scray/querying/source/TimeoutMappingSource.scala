@@ -29,6 +29,6 @@ class TimeoutMappingSource [Q <: DomainQuery](source: LazySource[Q]) extends Laz
     startTime = System.currentTimeMillis();
   }
   
-  def getColumns: List[scray.querying.description.Column] = { source.getColumns }
+  def getColumns: Set[scray.querying.description.Column] = { source.getColumns }
   def getDiscriminant: String = {"Timeout" + source.getDiscriminant}
 }

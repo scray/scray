@@ -19,9 +19,9 @@ import com.datastax.driver.core.querybuilder.Insert
 
 import scray.common.serialization.BatchID
 import scray.cassandra.sync.CassandraJobInfo
-import scray.querying.sync.types.ArbitrarylyTypedRows
-import scray.querying.sync.types.Column
-import scray.querying.sync.types.DbSession
+import scray.querying.sync.ArbitrarylyTypedRows
+import scray.querying.sync.Column
+import scray.querying.sync.DbSession
 import scray.querying.sync.helpers.TestDbSession
 import scray.querying.sync.helpers.SumTestColumns
 import scray.cassandra.sync.OnlineBatchSyncCassandra

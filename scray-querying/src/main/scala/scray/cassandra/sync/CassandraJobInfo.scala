@@ -5,14 +5,13 @@ import com.datastax.driver.core.ResultSet
 import com.datastax.driver.core.Statement
 import com.datastax.driver.core.querybuilder.Insert
 import com.datastax.driver.core.querybuilder.QueryBuilder
-import scray.querying.sync.types._
-import scray.querying.sync.types._
 import scala.collection.JavaConversions._
-import scray.querying.sync.types.JobLockTable
-import scray.querying.sync.types.DbSession
+import scray.querying.sync.JobLockTable
+import scray.querying.sync.DbSession
 import scray.common.serialization.BatchID
 import scray.querying.sync.JobInfo
 import com.typesafe.scalalogging.slf4j.LazyLogging
+import scray.querying.sync.LockApi
 
 class CassandraJobInfo(
     override val name: String,
@@ -20,7 +19,7 @@ class CassandraJobInfo(
     numberOfOnlineSlots: Int = 2,
     lockTimeOut: Int = 500) extends JobInfo[Statement, Insert, ResultSet](name, numberOfBatchSlots, numberOfOnlineSlots) with LazyLogging {
 
-  val statementGenerator = new CassandraStatementGenerator
+  val statementGenerator = CassandraStatementGenerator
 
   def getLock(dbSession: DbSession[Statement, Insert, ResultSet]): LockApi[Statement, Insert, ResultSet] = {
      this.lock = this.lock.orElse {

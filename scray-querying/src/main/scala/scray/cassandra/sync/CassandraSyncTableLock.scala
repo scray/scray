@@ -19,13 +19,12 @@ import com.datastax.driver.core.querybuilder.QueryBuilder
 import com.typesafe.scalalogging.slf4j.LazyLogging
 
 import scray.querying.sync.JobInfo
-import scray.querying.sync.types.DbSession
-import scray.querying.sync.types.LockApi
-import scray.querying.sync.types.SyncTableBasicClasses
-import scray.querying.sync.types.Table
+import scray.querying.sync.DbSession
+import scray.querying.sync.LockApi
+import scray.querying.sync.SyncTableBasicClasses
+import scray.querying.sync.Table
 import scray.querying.sync.UnableToLockJobError
 import scray.querying.sync.StatementExecutionError
-
 
 class CassandraSyncTableLock (job: JobInfo[Statement, Insert, ResultSet], jobLockTable: Table[SyncTableBasicClasses.JobLockTable], 
   dbSession: DbSession[Statement, Insert, ResultSet], val timeOut: Int) extends LockApi[Statement, Insert, ResultSet](job, jobLockTable, dbSession) with LazyLogging {

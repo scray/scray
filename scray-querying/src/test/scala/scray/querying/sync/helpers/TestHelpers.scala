@@ -10,9 +10,9 @@ import com.datastax.driver.core.Statement
 import com.datastax.driver.core.querybuilder.Insert
 import scray.querying.sync._
 import scray.cassandra.sync.CassandraImplementation._
-import scray.querying.sync.types.ArbitrarylyTypedRows
-import scray.querying.sync.types.Column
-import scray.querying.sync.types.DbSession
+import scray.querying.sync.ArbitrarylyTypedRows
+import scray.querying.sync.Column
+import scray.querying.sync.DbSession
 import shapeless.ops.hlist._
 import shapeless.syntax.singleton._
 

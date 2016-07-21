@@ -9,7 +9,7 @@ import com.datastax.driver.core.BatchStatement
 import scala.util.Try
 import scala.util.Failure
 import scala.util.Success
-import scray.querying.sync.types.DbSession
+import scray.querying.sync.DbSession
 import com.typesafe.scalalogging.slf4j.LazyLogging
 import scray.querying.sync.StatementExecutionError
 

@@ -93,15 +93,16 @@
 		<dependency>
 			<groupId>com.datastax.cassandra</groupId>
 			<artifactId>cassandra-driver-core</artifactId>
-<<<<<<< HEAD
 			<classifier>shaded</classifier>
-=======
 			<version>2.1.7.1</version>
->>>>>>> feature/sparkResultMerge
 			<exclusions>
 				<exclusion>
 					<groupId>io.netty</groupId>
 					<artifactId>*</artifactId>
+				</exclusion>
+				<exclusion>
+					<artifactId>metrics-core</artifactId>
+					<groupId>com.codahale.metrics</groupId>
 				</exclusion>
 			</exclusions>
 		</dependency>

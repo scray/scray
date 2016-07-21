@@ -4,13 +4,13 @@ import org.junit.runner.RunWith
 import org.scalatest.WordSpec
 import org.scalatest.junit.JUnitRunner
 
-import scray.querying.sync.types.Column
-import scray.querying.sync.types.ColumnWithValue
-import scray.querying.sync.types.Columns
-import scray.querying.sync.types.RowWithValue
-import scray.querying.sync.types.SyncTableBasicClasses.SyncTableRowEmpty
+import scray.querying.sync.Column
+import scray.querying.sync.ColumnWithValue
+import scray.querying.sync.Columns
+import scray.querying.sync.RowWithValue
+import scray.querying.sync.SyncTableBasicClasses.SyncTableRowEmpty
 import scray.cassandra.sync.CassandraImplementation._
-import scray.querying.sync.types.Table
+import scray.querying.sync.Table
 
 
 @RunWith(classOf[JUnitRunner])
