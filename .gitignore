@@ -40,6 +40,8 @@ build.log
 # output not in target directory
 build.log
 .cache
+.cache-main
+.cache-tests
 
 # some generated output should not be gitted
 src-gen
