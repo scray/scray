@@ -9,10 +9,10 @@
   </appender>
 
   <logger name="org.apache.cassandra" level="ERROR" />
-  <logger name="com.datastax.driver" level="INFO" />
+  <logger name="com.datastax.driver" level="ERROR" />
   <logger name="scray.querying.sync.cassandra" level="DEBUG" />
 
-  <root level="info">
+  <root level="ERROR">
     <appender-ref ref="STDOUT" />
   </root>
 </configuration>

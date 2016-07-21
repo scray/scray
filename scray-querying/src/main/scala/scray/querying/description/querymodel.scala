@@ -42,4 +42,4 @@ case class ColumnGrouping(column: Column)
 /**
  * represents skipping and limitting query fetching
  */
-case class QueryRange(skip: Option[Long], limit: Option[Long])
+case class QueryRange(skip: Option[Long], limit: Option[Long], timeout: Option[Long])

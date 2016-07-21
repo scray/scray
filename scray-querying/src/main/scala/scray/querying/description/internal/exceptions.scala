@@ -85,3 +85,7 @@ class QueryCostsAreTooHigh(query: DomainQuery)
 class CombinedIndexColumnMissingException(query: DomainQuery)
     extends ScrayException(ExceptionIDs.combinedIndexColumnMissingException, query.getQueryID, s"""Querying combined indexes must contain all columns.""") 
     with Serializable
+    
+class QueryTimeOutException(query: DomainQuery)
+    extends ScrayException(ExceptionIDs.queryTimeOutExceptionID, query.getQueryID, s"""Query runtime exceeded""") 
+    with Serializable

@@ -29,11 +29,9 @@ import scray.querying.description.{ And, AtomicClause, Clause, Column, ColumnCon
 import scray.querying.description.internal.{ SingleValueDomain, RangeValueDomain, QueryspaceViolationTableUnavailableException, QueryspaceViolationException, QueryspaceColumnViolationException, QueryWithoutColumnsException, QueryDomainParserExceptionReasons, QueryDomainParserException, NonAtomicClauseException, NoPlanException, MaterializedView, IndexTypeException, Domain, Bound, _ }
 import scray.querying.queries.{ DomainQuery, QueryInformation }
 import scray.querying.source.{ EagerCollectingDomainFilterSource, EagerEmptyRowDispenserSource, EagerSource, IdentityEagerCollectingQueryMappingSource, IndexMergeSource, KeyValueSource, LazyEmptyRowDispenserSource, LazyQueryColumnDispenserSource, LazyQueryDomainFilterSource, LazySource, LimitIncreasingQueryableSource }
-import scray.querying.source.{ OrderingEagerMappingSource, ParallelizedQueryableSource, QueryableSource, SimpleHashJoinSource, Source, SplittedAutoIndexQueryableSource }
+import scray.querying.source.{ OrderingEagerMappingSource, ParallelizedQueryableSource, QueryableSource, SimpleHashJoinSource, Source, SplittedAutoIndexQueryableSource, TimeoutMappingSource, MergeReferenceColumns, KeyedSource }
 import scray.querying.source.indexing.{ SimpleHashJoinConfig, TimeIndexConfig, TimeIndexSource }
 import scray.querying.source.store.QueryableStoreSource
-import scray.querying.source.MergeReferenceColumns
-import scray.querying.source.KeyedSource
 
 /**
  * Simple planner to execute queries.
@@ -85,8 +83,11 @@ object Planner extends LazyLogging {
       // find the main plan
       val plan = findMainQueryPlan(cQuery, domainQuery)
 
+      // add timeout filter source
+      val planWithTimeoutCheck = addTimeoutSource(plan, domainQuery)
+      
       // add in-memory filtering for rows which are excluded by the domains
-      val filteredPlan = addRemainingFilters(plan, domainQuery)
+      val filteredPlan = addRemainingFilters(planWithTimeoutCheck, domainQuery)
 
       // add column removal for columns which are not needed any more
       val allColumns = cQuery.getResultSetColumns.columns.isLeft
@@ -629,6 +630,17 @@ object Planner extends LazyLogging {
           new LazyQueryDomainFilterSource(lazySource), domainQuery)
       case eagerSource: EagerSource[tmpT] => ComposablePlan.getComposablePlan(
           new EagerCollectingDomainFilterSource[tmpT, Seq[Row]](eagerSource), domainQuery)
+    }
+  }
+  
+    /**
+   * Add time out source
+   */
+  def addTimeoutSource(plan: ComposablePlan[DomainQuery, _], domainQuery: DomainQuery): ComposablePlan[DomainQuery, _] = {
+    plan.getSource match {
+      case lazySource: LazySource[_] => ComposablePlan.getComposablePlan(
+          new TimeoutMappingSource(lazySource), domainQuery)
+      case eagerSource: EagerSource[tmpT] => plan
     }
   }
 

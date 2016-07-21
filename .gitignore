@@ -6,6 +6,7 @@ syntax: glob
 *.bak
 #*.off
 *.old
+*.cache-*
 
 # eclipse conf file
 .settings
@@ -13,6 +14,7 @@ syntax: glob
 .project
 .manager
 .scala_dependencies
+
 
 # idea
 .idea
