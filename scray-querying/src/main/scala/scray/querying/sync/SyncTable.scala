@@ -1,16 +1,17 @@
 package scray.querying.sync
 
-import com.websudos.phantom.CassandraPrimitive._
+import java.util.concurrent.locks.Lock
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable.ListBuffer
 import scala.reflect.runtime.universe._
 import scala.util.Try
 
-import java.util.concurrent.locks.Lock
+import com.websudos.phantom.CassandraPrimitive._
 
 import scray.cassandra.sync.CassandraImplementation._
 import scray.cassandra.sync.OnlineBatchSyncCassandra
+import com.typesafe.scalalogging.slf4j.LazyLogging
 import scray.querying.description.TableIdentifier
 
 class Table[T <: AbstractRow](val keySpace: String, val tableName: String, val columns: T) extends Serializable {
@@ -129,7 +130,7 @@ object DataTable {
   }
 }
 
-object SyncTableBasicClasses extends Serializable {
+object SyncTableBasicClasses extends Serializable with LazyLogging {
 
   object SyncTableRowEmpty extends ArbitrarylyTypedRows {
 
@@ -148,12 +149,12 @@ object SyncTableBasicClasses extends Serializable {
   }
   
   def parsDbTableIdentifier(tableId: String) : Option[TableIdentifier] = {
-      val tableIdentifierComponents = tableId.split(".")
-      if(tableIdentifierComponents.size == 3) {
-        Some(new TableIdentifier(tableIdentifierComponents(0), tableIdentifierComponents(1), tableIdentifierComponents(2)))
-      } else {
-        None
-      }
+    val tableIdentifierComponents = tableId.split(".")
+    if(tableIdentifierComponents.size == 3) {
+      Some(new TableIdentifier(tableIdentifierComponents(0), tableIdentifierComponents(1), tableIdentifierComponents(2)))
+    } else {
+      logger.error(s"TableIdentifier ${tableId} has not the right syntax.")
+      None
     }
 }
   
