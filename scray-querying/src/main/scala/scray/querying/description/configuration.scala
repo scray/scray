@@ -72,7 +72,6 @@ abstract class QueryspaceConfiguration(val name: String) {
  */
 case class ColumnConfiguration (
   column: Column,
-  querySpace: QueryspaceConfiguration,
   index: Option[IndexConfiguration] // whether this column is indexed and how
 )
 
@@ -129,12 +128,10 @@ case class TableConfiguration[Q <: DomainQuery, K <: DomainQuery, V] (
  * we generally assume versions to be Longs, see Summingbird for more information
  */
 case class VersioningConfiguration[Q <: DomainQuery, K <: DomainQuery] (
-//  latestCompleteVersion: () => Option[Long], // latest complete version of the table 
-  runtimeVersion: () => Option[Long], // current real-time version, which is updated continuously
-  nameVersionMapping: Option[(String, Long) => String], // if needed, a mapping for the table name for the version
+  latestCompleteVersion: () => Option[TableIdentifier], // latest complete version of the table 
+  runtimeVersion: () => Option[TableIdentifier], // current real-time version, which is updated continuously
+//  nameVersionMapping: Option[(String, Long) => TableIdentifier], // if needed, a mapping for the table name for the version
   queryableStore: Option[QueryableStoreSource[Q]], // the versioned queryable store representation, allowing to query the store
   readableStore: Option[QueryableStoreSource[K]] // the versioned readablestore, used in case this is used by a HashJoinSource
-//  queryableStore: Long => QueryableStore[Q, V], // the versioned queryable store representation, allowing to query the store
-//  readableStore: Long => ReadableStore[K, V] // the versioned readablestore, used in case this is used by a HashJoinSource
 //  dataVersionMapping: () // if needed, a mapping for the data to fit the version, not supported yet
 )
