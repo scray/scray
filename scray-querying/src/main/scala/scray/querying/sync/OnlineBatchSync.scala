@@ -83,7 +83,8 @@ trait OnlineBatchSync[Statement, InsertIn, Result] extends LazyLogging {
 abstract class JobInfo[Statement, InsertIn, Result](
   val name: String,
   val numberOfBatchSlots: Int = 3,
-  val numberOfOnlineSlots: Int = 2
+  val numberOfOnlineSlots: Int = 2,
+  val dbSystem: String = "cassandra" // Defines the db system for the results of this job.
   ) extends Serializable {
     
   var lock: Option[LockApi[Statement, InsertIn, Result]] = None

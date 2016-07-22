@@ -450,7 +450,7 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
           .value(syncTable.columns.versions.name, job.numberOfOnlineSlots)
           .value(syncTable.columns.state.name, State.NEW.toString())
           .value(syncTable.columns.batchEndTime.name, -1L)
-          .value(syncTable.columns.tableidentifier.name, getOnlineJobName(syncTable.keySpace + "." + job.name, i)))
+          .value(syncTable.columns.tableidentifier.name, getOnlineJobName(job.dbSystem + "." + syncTable.keySpace + "." + job.name, i)))
       }
       job.getLock(dbSession).transaction(this.executeQuorum, statements)
     }
