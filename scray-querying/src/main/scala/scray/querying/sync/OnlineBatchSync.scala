@@ -38,6 +38,16 @@ trait OnlineBatchSyncWithTableIdentifier[Statement, InsertIn, Result] extends La
    * Mark the given online job as completed.
    */
   def completeOnlineJob(job: JobInfo[Statement, InsertIn, Result]): Try[Unit]
+  
+  /**
+   * Get latest version for a given batch job.
+   */
+  def getBatchVersion(job: JobInfo[Statement, InsertIn, Result]): Option[TableIdentifier]
+  
+  /**
+   * Get latest version for a given online job.
+   */
+  def getOnlineVersion(job: JobInfo[Statement, InsertIn, Result]): Option[TableIdentifier]
     
   def getQueryableTableIdentifiers: List[(String, TableIdentifier, Int)]
   def getTableIdentifierOfRunningJob(job: JobInfo[Statement, InsertIn, Result]): Option[TableIdentifier] 

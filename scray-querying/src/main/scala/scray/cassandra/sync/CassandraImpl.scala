@@ -73,6 +73,7 @@ import scray.querying.sync.StatementExecutionError
 import java.util.{Iterator => JIterator}
 import scray.querying.sync.JobLockTable
 import scray.querying.sync.ArbitrarylyTypedRows
+import scray.querying.sync.SyncTableBasicClasses
 
 object CassandraImplementation extends AbstractTypeDetection with Serializable {
   
@@ -499,6 +500,20 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
       .map { resultset => resultset.all().get(0).getString(0) }
       .map { state => State.values.find(_.toString() == state).get }
       .toOption
+  }
+  
+    /**
+   * Get latest version for a given batch job.
+   */
+  def getBatchVersion(job: JOB_INFO): Option[TableIdentifier] = {
+    getNewestSlotAndTable(job.name, false).flatMap(tableId =>  SyncTableBasicClasses.parsDbTableIdentifier(tableId._2))
+  }
+  
+  /**
+   * Get latest version for a given online job.
+   */
+  def getOnlineVersion(job: JOB_INFO): Option[TableIdentifier] = {
+      getNewestSlotAndTable(job.name, true).flatMap(tableId =>  SyncTableBasicClasses.parsDbTableIdentifier(tableId._2))
   }
 
   def getNewestOnlineSlot(job: JOB_INFO): Option[Int] = getNewestSlotAndTable(job.name, true).map(_._1)
