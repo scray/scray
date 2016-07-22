@@ -270,6 +270,9 @@ class CassandraExtractor[Q <: DomainQuery](session: Session, table: TableIdentif
     val tableMeta = getTableMetaData(tableToRead.dbId, tableToRead.tableId)
     
     val cassQuerySource = new CassandraQueryableSource(tableToRead,
+    rowKeyColumns: Set[Column], 
+    clusteringKeyColumns: Set[Column],
+    allColumns: Set[Column],
     columnConfigs: Set[ColumnConfiguration],
     val session: Session,
     queryMapper: DomainToCQLQueryMapping[Q, CassandraQueryableSource[Q]],
