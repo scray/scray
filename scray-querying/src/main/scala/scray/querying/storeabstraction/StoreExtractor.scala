@@ -19,7 +19,7 @@ import scray.querying.source.Splitter
 import scray.querying.Registry
 import com.twitter.storehaus.ReadableStore
 import com.twitter.storehaus.QueryableStore
-import scray.querying.sync.types.DbSession
+import scray.querying.sync.DbSession
 import scray.querying.source.store.QueryableStoreSource
 
 

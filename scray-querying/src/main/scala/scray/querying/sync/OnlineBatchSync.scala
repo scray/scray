@@ -10,11 +10,7 @@ import com.typesafe.scalalogging.slf4j.LazyLogging
 
 import scray.common.serialization.BatchID
 import scray.querying.description.TableIdentifier
-import scray.querying.sync.ArbitrarylyTypedRows
-import scray.querying.sync.RowWithValue
-import scray.querying.sync.State
 import scray.querying.sync.State.State
-import scray.querying.sync.LockApi
 
 trait OnlineBatchSyncWithTableIdentifier[Statement, InsertIn, Result] extends LazyLogging {
 

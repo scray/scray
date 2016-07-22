@@ -228,13 +228,12 @@ class CassandraSyncTableLock (job: JobInfo[Statement, Insert, ResultSet], jobLoc
     }
     statement.setConsistencyLevel(ConsistencyLevel.QUORUM)
 
-    dbSession.execute(statement) match {
-      case Success(result) => Success(result)
-      case Failure(ex) => {
+    dbSession.execute(statement).recoverWith {
+      case ex: Throwable => {
           logger.error(s"Error while executing statement: ${statement}. ${ex.printStackTrace()} \t ${ex.getMessage}}")
           Failure(new StatementExecutionError(ex.getLocalizedMessage))
-        } 
-      }
+      } 
+    }.map(_ => Unit)
   }
 }
 

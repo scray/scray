@@ -11,7 +11,6 @@ import java.util.concurrent.locks.Lock
 
 import scray.cassandra.sync.CassandraImplementation._
 import scray.cassandra.sync.OnlineBatchSyncCassandra
-import scray.querying.sync.JobInfo
 
 class Table[T <: AbstractRow](val keySpace: String, val tableName: String, val columns: T) extends Serializable {
   val rows: ListBuffer[RowWithValue]= ListBuffer[RowWithValue]()

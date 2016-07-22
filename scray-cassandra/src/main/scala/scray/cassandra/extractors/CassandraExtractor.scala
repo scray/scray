@@ -41,9 +41,12 @@ import scray.querying.source.indexing.IndexConfig
 import scray.querying.storeabstraction.StoreExtractor
 import com.twitter.storehaus.QueryableStore
 import com.datastax.driver.core.Session
-import scray.querying.sync.types.DbSession
-import scray.querying.sync.cassandra.CassandraDbSession
+import scray.querying.sync.DbSession
+import scray.cassandra.sync.CassandraDbSession
 import scray.cassandra.CassandraQueryableSource
+import scray.cassandra.sync.OnlineBatchSyncCassandra
+import com.twitter.storehaus.ReadableStore
+import scray.cassandra.sync.CassandraJobInfo
 
 /**
  * Helper class to create a configuration for a Cassandra table
@@ -52,27 +55,30 @@ class CassandraExtractor[Q <: DomainQuery](session: Session, table: TableIdentif
 
   import scala.collection.convert.decorateAsScala.asScalaBufferConverter
   
-  private def getTableMetaData() = {
-    session.getCluster.getMetadata.getKeyspace(table.dbId).getTable(table.tableId)
+  private def getTableMetaData(keyspace: String = table.dbId, tablename: String = table.tableId) = {
+    session.getCluster.getMetadata.getKeyspace(keyspace).getTable(tablename)
   }
 
+  private def getColumnsPrivate(tm: TableMetadata): Set[Column] = tm.getColumns.asScala.map(col => Column(col.getName, table)).toSet
+  private def getClusteringKeyColumnsPrivate(tm: TableMetadata): Set[Column] = 
+    tm.getClusteringColumns.asScala.map(col => Column(col.getName, table)).toSet
+  private def getRowKeyColumnsPrivate(tm: TableMetadata): Set[Column] =
+    tm.getPartitionKey.asScala.map(col => Column(col.getName, table)).toSet    
+  
   /**
    * returns a list of columns for this specific store; implementors must override this
    */
-  override def getColumns: Set[Column] =
-    getTableMetaData().getColumns.asScala.map(col => Column(col.getName, table)).toSet
+  override def getColumns: Set[Column] = getColumnsPrivate(getTableMetaData())
   
   /**
    * returns list of clustering key columns for this specific store; implementors must override this
    */
-  override def getClusteringKeyColumns: Set[Column] =
-    getTableMetaData().getClusteringColumns.asScala.map(col => Column(col.getName, table)).toSet
+  override def getClusteringKeyColumns: Set[Column] = getClusteringKeyColumnsPrivate(getTableMetaData())
 
   /**
    * returns list of row key columns for this specific store; implementors must override this
    */
-  override def getRowKeyColumns: Set[Column] =
-    getTableMetaData().getPartitionKey.asScala.map(col => Column(col.getName, table)).toSet    
+  override def getRowKeyColumns: Set[Column] = getRowKeyColumnsPrivate(getTableMetaData()) 
 
   /**
    * returns a list of value key columns for this specific store; implementors must override this
@@ -246,6 +252,43 @@ class CassandraExtractor[Q <: DomainQuery](session: Session, table: TableIdentif
   private def getTableConfigurationFunction[Q <: DomainQuery, K <: DomainQuery, V](ti: TableIdentifier, space: String, version: Int): TableConfiguration[Q, K, V] = 
     Registry.getQuerySpaceTable(space, version, ti).get.asInstanceOf[TableConfiguration[Q, K, V]]
   
+  private def getVersioningConfiguration[Q <: DomainQuery, K <: DomainQuery](jobName: String):VersioningConfiguration[Q, K]  = {
+    val cassSession = new CassandraDbSession(session)
+    val syncApiInstance = new OnlineBatchSyncCassandra(cassSession)
+    val jobInfo = new CassandraJobInfo(jobName)
+    val latestComplete = () => Some(syncApiInstance.getBatchVersion(jobInfo))
+    val runtimeVersion = () => Some(syncApiInstance.getOnlineVersion(jobInfo))
+    // if we have a runtime Version, this will be the table to read from, for now. We
+    // expect that all data is aggregated with the corresponding complete version.
+    // TODO: in the future we want this to be able to merge, such that it will be an
+    // option to have a runtime and a batch version at once and the merge is done at
+    // query time
+    val tableToRead: TableIdentifier = runtimeVersion().getOrElse(latestComplete())
+    // use our session to fetch relevent metadata
+    val tableMeta = getTableMetaData(tableToRead.dbId, tableToRead.tableId)
+    
+    val cassQuerySource = new CassandraQueryableSource(tableToRead,
+    rowKeyColumns: Set[Column], 
+    clusteringKeyColumns: Set[Column],
+    allColumns: Set[Column],
+    columnConfigs: Set[ColumnConfiguration],
+    val session: Session,
+    queryMapper: DomainToCQLQueryMapping[Q, CassandraQueryableSource[Q]],
+    futurePool: FuturePool,
+    rowMapper: CassRow => Row)
+          getRowKeyColumnsPrivate(tableMeta),
+          getClusteringKeyColumnsPrivate(tableMeta),
+          getColumnsPrivate(tableMeta)
+        )
+    VersioningConfiguration[Q, K] (
+      latestCompleteVersion = latestComplete,
+      runtimeVersion = runtimeVersion,
+      queryableStore = Some(cassQuerySource), // the versioned queryable store representation, allowing to query the store
+      readableStore = Some(cassQuerySource) // the versioned readablestore, used in case this is used by a HashJoinSource
+    )
+  }
+  
+  
   override def getTableConfiguration(rowMapper: (_) => Row): TableConfiguration[_  <: DomainQuery, _ <: DomainQuery, _] = {
     TableConfiguration (
       table,
@@ -276,20 +319,20 @@ object CassandraExtractor {
     new CassandraExtractor(store.session, TableIdentifier(dbSystem.getOrElse(store.ti.dbSystem), store.ti.dbId, tableName.getOrElse(store.ti.tableId)))
   }
   
-  /**
-   * returns a Cassandra information extractor for a given Cassandra-Storehaus wrapper
-   */
-  def getExtractor[S <: AbstractCQLCassandraStore[_, _]](store: S, tableName: Option[String],
-          versions: Option[VersioningConfiguration[_, _]], dbSystem: Option[String]): CassandraExtractor[S] = {
-    store match { 
-      case collStore: CQLCassandraCollectionStore[_, _, _, _, _, _] => 
-        new CQLCollectionStoreExtractor(collStore, tableName, dbSystem, versions).asInstanceOf[CassandraExtractor[S]]
-      case tupleStore: CQLCassandraStoreTupleValues[_, _, _, _] =>
-        new CQLStoreTupleValuesExtractor(tupleStore, tableName, dbSystem, versions).asInstanceOf[CassandraExtractor[S]]
-      case rowStore: CQLCassandraRowStore[_] =>
-        new CQLRowStoreExtractor(rowStore, tableName, dbSystem, versions).asInstanceOf[CassandraExtractor[S]]
-    }
-  }
+//  /**
+//   * returns a Cassandra information extractor for a given Cassandra-Storehaus wrapper
+//   */
+//  def getExtractor[S <: AbstractCQLCassandraStore[_, _]](store: S, tableName: Option[String],
+//          versions: Option[VersioningConfiguration[_, _]], dbSystem: Option[String]): CassandraExtractor[S] = {
+//    store match { 
+//      case collStore: CQLCassandraCollectionStore[_, _, _, _, _, _] => 
+//        new CQLCollectionStoreExtractor(collStore, tableName, dbSystem, versions).asInstanceOf[CassandraExtractor[S]]
+//      case tupleStore: CQLCassandraStoreTupleValues[_, _, _, _] =>
+//        new CQLStoreTupleValuesExtractor(tupleStore, tableName, dbSystem, versions).asInstanceOf[CassandraExtractor[S]]
+//      case rowStore: CQLCassandraRowStore[_] =>
+//        new CQLRowStoreExtractor(rowStore, tableName, dbSystem, versions).asInstanceOf[CassandraExtractor[S]]
+//    }
+//  }
   
   val DB_ID: String = "cassandra"
   val LUCENE_COLUMN_NAME: String = "lucene"
