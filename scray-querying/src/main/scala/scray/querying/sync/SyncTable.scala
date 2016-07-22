@@ -11,6 +11,7 @@ import java.util.concurrent.locks.Lock
 
 import scray.cassandra.sync.CassandraImplementation._
 import scray.cassandra.sync.OnlineBatchSyncCassandra
+import scray.querying.description.TableIdentifier
 
 class Table[T <: AbstractRow](val keySpace: String, val tableName: String, val columns: T) extends Serializable {
   val rows: ListBuffer[RowWithValue]= ListBuffer[RowWithValue]()
@@ -145,6 +146,18 @@ object SyncTableBasicClasses extends Serializable {
     override val primaryKey = s"((${jobname.name}, ${online.name}), ${slot.name})"
     override val indexes: Option[List[String]] = Option(List(state.name, batchEndTime.name, batchStartTime.name))
   }
+  
+  def parsDbTableIdentifier(tableId: String) : Option[TableIdentifier] = {
+      val tableIdentifierComponents = tableId.split(".")
+      if(tableIdentifierComponents.size == 3) {
+        Some(new TableIdentifier(tableIdentifierComponents(0), tableIdentifierComponents(1), tableIdentifierComponents(2)))
+      } else {
+        None
+      }
+    }
+}
+  
+  
   
   class JobLockTable extends ArbitrarylyTypedRows {
 
