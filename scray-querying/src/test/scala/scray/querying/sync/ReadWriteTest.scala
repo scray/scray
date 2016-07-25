@@ -32,7 +32,7 @@ class ReadWriteTest extends WordSpec {
 
   "OnlineBatchSync " should {
         "insert and read batch data " in {
-          val table = new OnlineBatchSyncCassandra(dbconnection)
+          val table = new OnlineBatchSyncCassandra("johannes")
           val jobInfo = new CassandraJobInfo(getNextJobName)
     
           val sum = new ColumnWithValue[Long]("sum", 100)
@@ -47,8 +47,7 @@ class ReadWriteTest extends WordSpec {
           table.completeBatchJob(jobInfo)
     
           assert(table.getBatchJobData(jobInfo.name, 0, new RowWithValue(columns, primaryKey, indexes)).get.head.columns.head.value === 100L)
-        }
-        
+        }       
         "insert and read online data " in {
           val table = new OnlineBatchSyncCassandra(dbconnection)
           val jobInfo = new CassandraJobInfo(getNextJobName)
