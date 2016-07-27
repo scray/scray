@@ -17,8 +17,6 @@ import scray.querying.description.Row
 import scray.querying.description.Column
 import scray.querying.source.Splitter
 import scray.querying.Registry
-import com.twitter.storehaus.ReadableStore
-import com.twitter.storehaus.QueryableStore
 import scray.querying.sync.DbSession
 import scray.querying.source.store.QueryableStoreSource
 
@@ -51,7 +49,7 @@ trait StoreExtractor[S <: QueryableStoreSource[_]] {
   /**
    * returns the table configuration for this specific store; implementors must override this
    */
-  def getTableConfiguration(rowMapper: (_) => Row): TableConfiguration[_, _, _]
+  def getTableConfiguration(rowMapper: (_) => Row): TableConfiguration[_ <: DomainQuery, _ <: DomainQuery, _]
 
   /**
    * returns a query mapping
@@ -81,7 +79,6 @@ trait StoreExtractor[S <: QueryableStoreSource[_]] {
       dbName: String,
       table: String,
       column: Column,
-      querySpace: QueryspaceConfiguration,
       index: Option[ManuallyIndexConfiguration[_, _, _, _, _]],
       splitters: Map[Column, Splitter[_]]): ColumnConfiguration
       
@@ -94,14 +91,14 @@ trait StoreExtractor[S <: QueryableStoreSource[_]] {
       querySpace: QueryspaceConfiguration, 
       indexes: Map[String, ManuallyIndexConfiguration[_, _, _, _, _]],
       splitters: Map[Column, Splitter[_]]): Set[ColumnConfiguration] = {
-    getColumns.map(col => getColumnConfiguration(session, dbName, table, col, querySpace, indexes.get(col.columnName), splitters))
+    getColumns.map(col => getColumnConfiguration(session, dbName, table, col, indexes.get(col.columnName), splitters))
   }
   
   /**
    * return a manual index configuration for a column
    */
   def createManualIndexConfiguration(column: Column, queryspaceName: String, version: Int, store: S,
-      indexes: Map[_ <: (QueryableStoreSource[_], String), _ <: (QueryableStoreSource[_], String, 
+      indexes: Map[_ <: (QueryableStoreSource[_ <: DomainQuery], String), _ <: (QueryableStoreSource[_ <: DomainQuery], String, 
               IndexConfig, Option[Function1[_,_]], Set[String])],
       mappers: Map[_ <: QueryableStoreSource[_], ((_) => Row, Option[String], Option[VersioningConfiguration[_, _]])]):
         Option[ManuallyIndexConfiguration[_, _, _, _, _]]

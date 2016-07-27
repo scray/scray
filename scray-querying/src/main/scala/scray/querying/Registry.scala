@@ -142,7 +142,7 @@ object Registry extends LazyLogging with Registry {
   // shortcut to find table-configurations
   private val querySpaceTables = new HashMap[String, HashMap[TableIdentifier, TableConfiguration[_ <: DomainQuery, _ <: DomainQuery, _]]]
 
-  @inline def getQuerySpaceTables(space: String, version: Int): Map[TableIdentifier, TableConfiguration[_, _, _]] = {
+  @inline def getQuerySpaceTables(space: String, version: Int): Map[TableIdentifier, TableConfiguration[_ <: DomainQuery, _ <: DomainQuery, _]] = {
     rwlock.readLock.lock
     try {
       querySpaceTables.get(space + version).map(_.toMap).getOrElse(Map())

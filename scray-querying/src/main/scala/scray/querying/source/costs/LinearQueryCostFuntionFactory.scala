@@ -3,7 +3,6 @@ package scray.querying.source.costs
 import scray.querying.queries.DomainQuery
 import scray.querying.source.Source
 import scray.querying.source.SimpleHashJoinSource
-import scray.querying.source.KeyValueSource
 
 object LinearQueryCostFuntionFactory {
 

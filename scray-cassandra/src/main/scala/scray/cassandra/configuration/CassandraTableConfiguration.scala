@@ -14,13 +14,12 @@
 // limitations under the License.
 package scray.cassandra.configuration
 
-import com.twitter.storehaus.QueryableStore
-import com.twitter.storehaus.cassandra.cql.CQLCassandraConfiguration.StoreColumnFamily
 import scray.cassandra.util.CassandraUtils
-import scray.querying.description.Column
-import scray.querying.description.Row
-import com.twitter.storehaus.cassandra.cql.AbstractCQLCassandraStore
+import scray.querying.description.{ Column, Row }
 import com.twitter.util.Try
+import scray.querying.description.TableIdentifier
+import com.datastax.driver.core.Session
+import scray.cassandra.CassandraQueryableSource
 
 object CassandraTableConfiguration {
   
@@ -32,17 +31,16 @@ object CassandraTableConfiguration {
   /**
    * return an Option with the function to get the degree of parallelization used for this index table
    */
-  def parallelizationFunction(): (QueryableStore[_, _]) => Option[Int] = (qstore) => {
-    val cf = qstore.asInstanceOf[AbstractCQLCassandraStore[_, _]].columnFamily
-    CassandraUtils.getTablePropertyFromCassandra(cf, PARALLELIZATION_TABLE_PROPERTY).flatMap(
+  def parallelizationFunction(): (CassandraQueryableSource[_]) => Option[Int] = (qstore) => {
+    CassandraUtils.getTablePropertyFromCassandra(qstore.ti, qstore.session, PARALLELIZATION_TABLE_PROPERTY).flatMap(
         prop => Try(prop.toInt).toOption)
   }  
   
   /**
    * write the degree of parallelization used for this index table
    */
-  def setParallelization(cf: StoreColumnFamily, parallelization: Int): Unit = 
-      CassandraUtils.writeTablePropertyToCassandra(cf, PARALLELIZATION_TABLE_PROPERTY, parallelization.toString())
+  def setParallelization(ti: TableIdentifier, session: Session, parallelization: Int): Unit = 
+      CassandraUtils.writeTablePropertyToCassandra(ti, session, PARALLELIZATION_TABLE_PROPERTY, parallelization.toString())
   
   /** 
    *  returns an ordering for time indexes

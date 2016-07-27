@@ -28,9 +28,9 @@ import scray.querying.{ Query, Registry }
 import scray.querying.description.{ And, AtomicClause, Clause, Column, ColumnConfiguration, ColumnOrdering, Columns, Equal, Greater, GreaterEqual, IsNull, Or, Row, Smaller, SmallerEqual, TableConfiguration, TableIdentifier, Unequal, Wildcard, WildcardChecker }
 import scray.querying.description.internal.{ SingleValueDomain, RangeValueDomain, QueryspaceViolationTableUnavailableException, QueryspaceViolationException, QueryspaceColumnViolationException, QueryWithoutColumnsException, QueryDomainParserExceptionReasons, QueryDomainParserException, NonAtomicClauseException, NoPlanException, MaterializedView, IndexTypeException, Domain, Bound, _ }
 import scray.querying.queries.{ DomainQuery, QueryInformation }
-import scray.querying.source.{ EagerCollectingDomainFilterSource, EagerEmptyRowDispenserSource, EagerSource, IdentityEagerCollectingQueryMappingSource, IndexMergeSource, KeyValueSource, LazyEmptyRowDispenserSource, LazyQueryColumnDispenserSource, LazyQueryDomainFilterSource, LazySource, LimitIncreasingQueryableSource }
+import scray.querying.source.{ EagerCollectingDomainFilterSource, EagerEmptyRowDispenserSource, EagerSource, IdentityEagerCollectingQueryMappingSource, IndexMergeSource, LazyEmptyRowDispenserSource, LazyQueryColumnDispenserSource, LazyQueryDomainFilterSource, LazySource, LimitIncreasingQueryableSource }
 import scray.querying.source.{ OrderingEagerMappingSource, ParallelizedQueryableSource, QueryableSource, SimpleHashJoinSource, Source, SplittedAutoIndexQueryableSource, TimeoutMappingSource, MergeReferenceColumns, KeyedSource }
-import scray.querying.source.indexing.{ SimpleHashJoinConfig, TimeIndexConfig, TimeIndexSource }
+//import scray.querying.source.indexing.{ SimpleHashJoinConfig, TimeIndexConfig, TimeIndexSource }
 import scray.querying.source.store.QueryableStoreSource
 
 /**

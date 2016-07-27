@@ -14,12 +14,10 @@
 // limitations under the License.
 package scray.querying.description
 
-import com.twitter.storehaus.{QueryableStore, ReadableStore}
 import scray.querying.Query
 import scray.querying.queries.DomainQuery
 import scray.querying.source.indexing.IndexConfig
 import scray.querying.description.internal.MaterializedView
-import scray.querying.source.pooling.StorePool
 import scray.querying.source.store.QueryableStoreSource
 
 /**

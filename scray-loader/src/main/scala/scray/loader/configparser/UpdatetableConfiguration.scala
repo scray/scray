@@ -14,7 +14,7 @@
 // limitations under the License.
 package scray.loader.configparser
 
-import scray.querying.sync.types.DbSession
+import scray.querying.sync.DbSession
 
 trait UpdatetableConfiguration {
   def updateConfiguration(config: ScrayConfiguration): Option[DbSession[_, _, _]]

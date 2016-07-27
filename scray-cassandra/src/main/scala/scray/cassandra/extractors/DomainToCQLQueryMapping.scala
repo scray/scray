@@ -15,12 +15,11 @@
 package scray.cassandra.extractors
 
 import scray.querying.queries.DomainQuery
-import com.twitter.storehaus.cassandra.cql.AbstractCQLCassandraStore
 import scray.querying.description.internal.{Domain, RangeValueDomain, SingleValueDomain}
 import scray.querying.description.Column
 import scray.querying.Registry
 import com.typesafe.scalalogging.slf4j.LazyLogging
-import DomainToCQLQueryMapper.{AND_LITERAL, EMPTY_LITERAL, ORDER_LITERAL, DESC_LITERAL, LIMIT_LITERAL}
+import DomainToCQLQueryMapping.{AND_LITERAL, EMPTY_LITERAL, ORDER_LITERAL, DESC_LITERAL, LIMIT_LITERAL}
 import scray.cassandra.CassandraQueryableSource
 import scray.querying.description.TableIdentifier
 

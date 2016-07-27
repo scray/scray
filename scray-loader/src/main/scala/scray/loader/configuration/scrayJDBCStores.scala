@@ -25,7 +25,7 @@ import scray.common.tools.ScrayCredentials
 import scray.loader.configparser.ReadableConfig
 import scala.collection.convert.decorateAsScala.asScalaSetConverter
 import scray.loader.configparser.ScrayConfiguration
-import scray.querying.sync.types.DbSession
+import scray.querying.sync.DbSession
 
 /**
  * JDBC properties, needed to setup a JDBC connection

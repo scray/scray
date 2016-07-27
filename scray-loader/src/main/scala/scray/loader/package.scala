@@ -16,17 +16,19 @@ package scray
 
 package object loader {
 
-  val VERSION = "0.9.9"
+  val VERSION: String = "0.9.9"
   
   object ExceptionIDs {
     // 600+ = query space registration errors
-    val indexConfigExceptionID = "Scray-Index-Config-600"
-    val propertySetExceptionID = "Scray-Set-Exception-601"
-    val hostMissingExceptionID = "Scray-Config-Host-Missing-602"
-    val urlMissingExceptionID = "Scray-Config-URL-Missing-603"
-    val dbmsUndefinedExceptionID = "Scray-Config-DBMS-Missing-604"
-    val mappingUnsupportedExceptionID = "Scray-Config-Mapping-Missing-605"
-    val unknownTimeUnitExceptionID = "Scray-Config-Timeunit-Unknown-606"
-    val unknownBooleanValueExceptionID = "Scray-Config-Boolean-Unknown-607"
-  }  
+    val indexConfigExceptionID: String = "Scray-Index-Config-600"
+    val propertySetExceptionID: String = "Scray-Set-Exception-601"
+    val hostMissingExceptionID: String = "Scray-Config-Host-Missing-602"
+    val urlMissingExceptionID: String = "Scray-Config-URL-Missing-603"
+    val dbmsUndefinedExceptionID: String = "Scray-Config-DBMS-Missing-604"
+    val mappingUnsupportedExceptionID: String = "Scray-Config-Mapping-Missing-605"
+    val unknownTimeUnitExceptionID: String = "Scray-Config-Timeunit-Unknown-606"
+    val unknownBooleanValueExceptionID: String = "Scray-Config-Boolean-Unknown-607"
+  }
+  
+  val DEFAULT_THREAD_POOL_SIZE: Int = 200
 }

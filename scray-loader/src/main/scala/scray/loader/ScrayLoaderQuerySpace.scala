@@ -23,17 +23,17 @@ import com.typesafe.scalalogging.slf4j.LazyLogging
 import scray.loader.configparser.ScrayQueryspaceConfiguration
 import scray.loader.configparser.ScrayConfiguration
 import scray.loader.configuration.ScrayStores
-import com.twitter.storehaus.cassandra.cql.AbstractCQLCassandraStore
 import scala.collection.mutable.HashMap
 import scray.querying.storeabstraction.StoreGenerators
-import scray.querying.sync.types.DbSession
+import scray.querying.sync.DbSession
 import scray.querying.description.ColumnConfiguration
 import scray.querying.description.TableIdentifier
 import scray.querying.storeabstraction.StoreExtractor
 import scray.querying.description.VersioningConfiguration
-import com.twitter.storehaus.QueryableStore
 import scray.querying.description.Row
 import scray.querying.description.Column
+import scray.querying.source.store.QueryableStoreSource
+import com.twitter.util.FuturePool
 
 
 /**
@@ -41,7 +41,7 @@ import scray.querying.description.Column
  * various different databases.
  */
 class ScrayLoaderQuerySpace(name: String, config: ScrayConfiguration, qsConfig: ScrayQueryspaceConfiguration,
-    storeConfig: ScrayStores) 
+    storeConfig: ScrayStores, futurePool: FuturePool) 
     extends QueryspaceConfiguration(name) with LazyLogging {
 
   val generators = new HashMap[String, StoreGenerators]
@@ -75,7 +75,7 @@ class ScrayLoaderQuerySpace(name: String, config: ScrayConfiguration, qsConfig: 
    */
   private def getGenerator(dbmsId: String, session: DbSession[_, _, _]) = {
     generators.get(dbmsId).getOrElse {
-      val generator = storeConfig.getStoreGenerator(dbmsId, session, name)
+      val generator = storeConfig.getStoreGenerator(dbmsId, session, name, futurePool)
       generators += ((dbmsId, generator))
       generator
     }
@@ -84,13 +84,13 @@ class ScrayLoaderQuerySpace(name: String, config: ScrayConfiguration, qsConfig: 
   /**
    * return configuration for a simple rowstore
    */
-  private def getRowstoreConfiguration(id: TableIdentifier): Option[TableConfiguration[_, _, _]] = {
+  private def getRowstoreConfiguration(id: TableIdentifier): Option[TableConfiguration[_ <: DomainQuery, _ <: DomainQuery, _]] = {
     // Extractor
-    def extractTable[S <: QueryableStore[_, _]](storeconfigs: (S, 
-        (Function1[_, Row], Option[String], Option[VersioningConfiguration[_, _, _]])), generator: StoreGenerators):
-        TableConfiguration[_, _, _] = {
+    def extractTable[Q <: DomainQuery, S <: QueryableStoreSource[Q]](storeconfigs: (S, 
+        (Function1[_, Row], Option[String], Option[VersioningConfiguration[_, _]])), generator: StoreGenerators):
+        TableConfiguration[_ <: DomainQuery, _ <: DomainQuery, _] = {
       // TODO: read latest version from SyncTable, if it is declared there, generate a VersioningConfig; otherwise leave it by None
-      val extractor = generator.getExtractor(storeconfigs._1, Some(id.tableId), None, Some(id.dbSystem))
+      val extractor = generator.getExtractor[Q, S](storeconfigs._1, Some(id.tableId), None, Some(id.dbSystem), futurePool)
       val tid = extractor.getTableIdentifier(storeconfigs._1, storeconfigs._2._2, Some(id.dbSystem))
       extractors.+=((tid, extractor))
       extractor.getTableConfiguration(storeconfigs._2._1)
@@ -112,7 +112,7 @@ class ScrayLoaderQuerySpace(name: String, config: ScrayConfiguration, qsConfig: 
    * returns configuration of tables which are included in this query space
    * Internal use! 
    */
-  def getTables(version: Int): Set[TableConfiguration[_, _, _]] = {
+  def getTables(version: Int): Set[TableConfiguration[_ <: DomainQuery, _ <: DomainQuery, _]] = {
     val generators = new HashMap[String, StoreGenerators]
     // TODO: read versioned tables from SyncTable and add to rowstores
     val rowstores = qsConfig.rowStores
@@ -129,28 +129,26 @@ class ScrayLoaderQuerySpace(name: String, config: ScrayConfiguration, qsConfig: 
    * Internal use! 
    */
   override def getColumns(version: Int): List[ColumnConfiguration] = {
-    def getColumnConfig[S <: TableConfiguration[_, _, _]](table: S): List[ColumnConfiguration] = {
+    def getColumnConfig[S <: TableConfiguration[_ <: DomainQuery, _ <: DomainQuery, _]](table: S): List[ColumnConfiguration] = {
       def throwError: Exception = {
         logger.error("Store must be registered before columns can be extracted!")
         new UnsupportedOperationException("Store must be registered before columns can be extracted!") 
       }
-      def extractTableConfig[F <: QueryableStore[_, _]](column: Column, extractor: StoreExtractor[F]): ColumnConfiguration = {
+      def extractTableConfig[Q <: DomainQuery, F <: QueryableStoreSource[Q]](column: Column, extractor: StoreExtractor[F]): ColumnConfiguration = {
         // TODO: add indexing configuration (replace maps)
-        val index = extractor.createManualIndexConfiguration(column, name, version, table.queryableStore.get().asInstanceOf[F], Map(), Map())
+        val index = extractor.createManualIndexConfiguration(column, name, version, table.queryableStore.get.asInstanceOf[F], Map(), Map())
         storeConfig.getSessionForStore(column.table.dbSystem).map { session =>
           // TODO: add splitter configuration
-          extractor.getColumnConfiguration(session, column.table.dbId, column.table.tableId, column, this, index, Map())
+          extractor.getColumnConfiguration(session, column.table.dbId, column.table.tableId, column, index, Map())
         }.getOrElse(throw new DBMSUndefinedException(column.table.dbSystem, name))
       }
       table.allColumns.map { column =>
         // fetch extractor
-        extractors.get(column.table).getOrElse {
-          throw throwError
-        } match {
-          case extractor: StoreExtractor[s] => extractTableConfig[s](column, extractor)
+        extractors.get(column.table).getOrElse(throw throwError) match {
+          case extractor: StoreExtractor[s] => extractTableConfig[DomainQuery, QueryableStoreSource[DomainQuery]](column, extractor.asInstanceOf[StoreExtractor[QueryableStoreSource[DomainQuery]]])
           case _ => throw throwError
         }
-      }
+      }.toList
     }
     val tables = getTables(version)
     tables.flatMap { table => getColumnConfig(table) }.toList 

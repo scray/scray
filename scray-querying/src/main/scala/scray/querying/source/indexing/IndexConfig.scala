@@ -2,7 +2,6 @@ package scray.querying.source.indexing
 
 import java.util.TimeZone
 import scray.querying.description.{Column, Row}
-import com.twitter.storehaus.QueryableStore
 
 /**
  * all indexes that are allowed must have a configuration
@@ -23,7 +22,7 @@ case class TimeIndexConfig(
     // column in the index-table that contains the references into the lookup-source
     override val indexReferencesColumn: Column,
     // if this index can be queried in parallel and how much parallelization is available
-    parallelization: Option[(QueryableStore[_ , _]) => Option[Int]] = None,
+//    parallelization: Option[(QueryableStore[_ , _]) => Option[Int]] = None,
     // which column is used for parallelization
     parallelizationColumn: Option[Column] = None,
     // if this index is ordered

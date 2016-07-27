@@ -9,6 +9,7 @@ import scala.collection.mutable.HashMap
 import scray.querying.description.TableIdentifier
 import scray.querying.description.TableConfiguration
 import scray.querying.description.ColumnConfiguration
+import scray.querying.queries.DomainQuery
 
 object CassandraConfigurationUpdater {
   
@@ -27,7 +28,7 @@ object CassandraConfigurationUpdater {
   /**
    * Since in this module we are only interested in Cassandra tables, we want only those...
    */
-  private def filterOutOtherThanCassandraTables(space: String, spaceVersion: Option[Int]): Map[TableIdentifier, TableConfiguration[_, _, _]] = {
+  private def filterOutOtherThanCassandraTables(space: String, spaceVersion: Option[Int]): Map[TableIdentifier, TableConfiguration[_ <: DomainQuery, _ <: DomainQuery, _]] = {
     spaceVersion.map { version => 
       Registry.getQuerySpaceTables(space, version).filter(_._1.dbSystem == CassandraExtractor.DB_ID)
     }.getOrElse(Map())
@@ -37,9 +38,9 @@ object CassandraConfigurationUpdater {
    * 
    */
   def updateVersionedAggregationTables(space: String, spaceVersion: Option[Int], 
-      updatedTables: Set[TableConfiguration[_, _, _]] = Set()): Set[TableConfiguration[_, _, _]] = {
+      updatedTables: Set[TableConfiguration[_ <: DomainQuery, _ <: DomainQuery, _]] = Set()): Set[TableConfiguration[_ <: DomainQuery, _ <: DomainQuery, _]] = {
     // internal method to allow Scala's type inference to work correctly
-    @inline def tableUpgradeVersion[Q, K, V](table: TableConfiguration[Q, K, V]): TableConfiguration[Q, K, V] = {
+    @inline def tableUpgradeVersion[Q <: DomainQuery, K <: DomainQuery, V](table: TableConfiguration[Q, K, V]): TableConfiguration[Q, K, V] = {
       table.copy(versioned = None)
     }
     val tables = filterOutOtherThanCassandraTables(space, spaceVersion)
@@ -55,7 +56,7 @@ object CassandraConfigurationUpdater {
    * here we do not care about changed versions during updates
    */
   def updateLuceneIndexes(space: String, spaceVersion: Option[Int], 
-      updatedTables: Set[TableConfiguration[_, _, _]] = Set()): Set[(TableIdentifier, TableConfiguration[_, _, _], List[ColumnConfiguration])] = {
+      updatedTables: Set[TableConfiguration[_ <: DomainQuery, _ <: DomainQuery, _]] = Set()): Set[(TableIdentifier, TableConfiguration[_ <: DomainQuery, _<: DomainQuery, _], List[ColumnConfiguration])] = {
     val tables = filterOutOtherThanCassandraTables(space, spaceVersion)
     // walk over all the tables and check that there is no new Lucene information available
     

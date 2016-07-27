@@ -14,7 +14,6 @@
 // limitations under the License.
 package scray.cassandra.extractors
 
-import com.twitter.storehaus.cassandra.cql.AbstractCQLCassandraStore
 import scray.querying.Registry
 import com.typesafe.scalalogging.slf4j.LazyLogging
 import scray.querying.description.{Column, ColumnOrdering, TableIdentifier}

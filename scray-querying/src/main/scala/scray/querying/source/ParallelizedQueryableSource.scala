@@ -15,7 +15,6 @@
 package scray.querying.source
 
 import com.twitter.concurrent.Spool
-import com.twitter.storehaus.QueryableStore
 import com.twitter.util.{Future, Throw, Return}
 import scalax.collection.GraphEdge._
 import scalax.collection.GraphEdge.DiEdge
@@ -27,24 +26,26 @@ import scray.querying.queries.DomainQuery
 import scray.querying.planning.MergingResultSpool
 import scala.annotation.tailrec
 import com.typesafe.scalalogging.slf4j.LazyLogging
+import scray.querying.source.store.QueryableStoreSource
+import scray.querying.description.TableIdentifier
+import scray.querying.caching.Cache
+import scray.querying.caching.NullCache
 
 /**
  * queries a Storehaus-store with a number of parallel queries. 
  * Assumes that the Seq returnes by QueryableStore is a lazy sequence (i.e. view)
  */
-class ParallelizedQueryableSource[K, V](override val store: QueryableStore[K, V], override val space: String, override val version: Int,
+class ParallelizedQueryableSource[Q <: DomainQuery](val store: QueryableStoreSource[Q], ti: TableIdentifier, queryMapping: DomainQuery => Q,
         parallelizationColumn: Column, parallelization: Option[Int], ordering: Option[(Row, Row) => Boolean], descending: Boolean) 
-        extends QueryableSource[K, V](store, space, version, parallelizationColumn.table, ordering.isDefined) with LazyLogging {
+        extends LazySource[Q] with LazyLogging {
   
-  @inline def getTransformedDomainQuery(query: DomainQuery, number: Int): K =
+  @inline def getTransformedDomainQuery(query: DomainQuery, number: Int): Q =
     queryMapping(query.transformedAstCopy(SingleValueDomain[Int](parallelizationColumn, number) :: query.getWhereAST))
   
   @inline def spool(query: DomainQuery, number: Int): Future[Spool[Row]] = {
-    store.queryable.get(getTransformedDomainQuery(query, number)).transform {
-      case Throw(y) => Future.exception(y)
-      case Return(x) => 
-        // construct lazy spool
-        QueryableSource.iteratorToSpool[V](x.getOrElse(Seq[V]()).view.iterator, valueToRow)
+    store.requestIterator(getTransformedDomainQuery(query, number)).flatMap { it =>
+      // construct lazy spool
+      QueryableSource.iteratorToSpool[Row](it, row => row)
     }
   }
 
@@ -55,19 +56,27 @@ class ParallelizedQueryableSource[K, V](override val store: QueryableStore[K, V]
     executeQueries(query, parallel - 1, spool(query, parallel) :: spools)
   }
 
-  override def request(query: DomainQuery): Future[Spool[Row]] = {
+  override def request(query: Q): Future[Spool[Row]] = {
     query.queryInfo.addNewCosts {(n: Long) => {n + 42}}
     parallelization.map { numberQueries => 
       logger.debug(s"Requesting data from store with ${query.getQueryID} using ${numberQueries} queries in parallel")
       val spools = executeQueries(query, numberQueries, Nil)
-      isOrdered match {
+      ordering.isDefined match {
         case true => MergingResultSpool.mergeOrderedSpools(Seq(), spools, ordering.get, descending, Seq())
         case false => MergingResultSpool.mergeUnorderedResults(Seq(), spools, Seq())
       }
     }.getOrElse {
-      super.request(query)
+      store.request(query)
     }
   }
 
-  override def getGraph: Graph[Source[DomainQuery, Spool[Row]], DiEdge] = Graph.from(List(this), List())
+  /** As seen from class ParallelizedQueryableSource, the missing signatures are as follows.
+ *  For convenience, these are usable as stub implementations.
+ */
+  def createCache: Cache[_] = new NullCache
+  def getColumns: Set[Column] = store.getColumns
+  def getDiscriminant: String = this.getClass.getCanonicalName + store.getDiscriminant
+  def isOrdered(query: Q): Boolean = store.isOrdered(query)
+  
+  override def getGraph: Graph[Source[DomainQuery, Spool[Row]], DiEdge] = Graph.from(List(this.asInstanceOf[Source[DomainQuery, Spool[Row]]]), List())
 }

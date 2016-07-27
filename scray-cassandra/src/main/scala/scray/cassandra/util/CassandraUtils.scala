@@ -14,21 +14,13 @@
 // limitations under the License.
 package scray.cassandra.util
 
-import com.datastax.driver.core.{ KeyspaceMetadata, Metadata, TableMetadata }
-import com.twitter.storehaus.cassandra.cql.CQLCassandraConfiguration.StoreColumnFamily
+import com.datastax.driver.core.{ KeyspaceMetadata, Metadata, TableMetadata, ResultSet, Session }
 import org.yaml.snakeyaml.Yaml
 import com.twitter.util.Try
 import java.util.{ Map => JMap, HashMap => JHashMap }
-import com.datastax.driver.core.ResultSet
-import com.datastax.driver.core.Session
+import scray.querying.description.TableIdentifier
 
 object CassandraUtils {
-
-  /**
-   * convenience method to retrieve KeyspaceMetadata from a StoreColumnFamily object
-   */
-  def getKeyspaceMetadata(cf: StoreColumnFamily): KeyspaceMetadata =
-    cf.session.getSession.getCluster().getMetadata().getKeyspace(Metadata.quote(cf.session.getKeyspacename))
 
   /**
    * convenience method to retrieve KeyspaceMetadata from a StoreColumnFamily object
@@ -40,18 +32,18 @@ object CassandraUtils {
    * convenience method to retrieve KeyspaceMetadata from a StoreColumnFamily object
    */
   def getTableMetadata(cf: String, km: KeyspaceMetadata): TableMetadata = {
-    km.getTable(cf)
+    km.getTable(Metadata.quote(cf))
   }
 
   /**
    * convenience method to retrieve KeyspaceMetadata from a StoreColumnFamily object
    */
-  def getTableMetadata(cf: StoreColumnFamily, km: Option[KeyspaceMetadata] = None): TableMetadata = {
+  def getTableMetadata(ti: TableIdentifier, session: Session, km: Option[KeyspaceMetadata] = None): TableMetadata = {
     val kspaceMeta = km match {
       case Some(ksm) => ksm
-      case None      => getKeyspaceMetadata(cf)
+      case None      => getKeyspaceMetadata(session, ti.dbId)
     }
-    kspaceMeta.getTable(cf.getPreparedNamed)
+    kspaceMeta.getTable(Metadata.quote(ti.tableId))
   }
 
   /**
@@ -60,10 +52,10 @@ object CassandraUtils {
    * Uses YAML to store properties in a string.
    * If you need synchronization please use external synchronization, e.g. Zookeeper.
    */
-  def writeTablePropertyToCassandra(cf: StoreColumnFamily, property: String, value: String): ResultSet = {
-    val yaml = createYaml(property, value, getTablePropertiesFromCassandra(cf))
-    val cql = s"ALTER TABLE ${cf.getPreparedNamed} WITH comment='$yaml'"
-    cf.session.getSession.execute(cql)
+  def writeTablePropertyToCassandra(ti: TableIdentifier, session: Session, property: String, value: String): ResultSet = {
+    val yaml = createYaml(property, value, getTablePropertiesFromCassandra(ti, session))
+    val cql = s"ALTER TABLE ${ti.dbId}.${ti.tableId} WITH comment='$yaml'"
+    session.execute(cql)
   }
 
   def createYaml(property: String, value: String, currentMap: Option[JMap[String, String]] = None): String = {
@@ -84,8 +76,8 @@ object CassandraUtils {
    * Uses YAML to store properties in a string.
    * If you need synchronization to sync with writers please use external synchronization, e.g. Zookeeper.
    */
-  def getTablePropertiesFromCassandra(cf: StoreColumnFamily): Option[JMap[String, String]] = {
-    val tableMeta = getTableMetadata(cf)
+  def getTablePropertiesFromCassandra(ti: TableIdentifier, session: Session): Option[JMap[String, String]] = {
+    val tableMeta = getTableMetadata(ti, session)
     val currentYaml = Option(tableMeta.getOptions.getComment)
     val yaml = new Yaml()
     currentYaml.flatMap { content =>
@@ -100,6 +92,6 @@ object CassandraUtils {
    * Uses YAML to store properties in a string.
    * If you need synchronization to sync with writers please use external synchronization, e.g. Zookeeper.
    */
-  def getTablePropertyFromCassandra(cf: StoreColumnFamily, property: String): Option[String] =
-    getTablePropertiesFromCassandra(cf).flatMap(map => Option(map.get(property)))
+  def getTablePropertyFromCassandra(ti: TableIdentifier, session: Session, property: String): Option[String] =
+    getTablePropertiesFromCassandra(ti, session).flatMap(map => Option(map.get(property)))
 }

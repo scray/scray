@@ -151,7 +151,7 @@ trait _Columns extends _QueryComponent {
 case class _ColumnSet(components: List[_Column]) extends _Columns {
   override def isContained(cName: String): Boolean = find(cName).nonEmpty
   override def find(cName: String): Option[_Column] = components.find(_.getName.equals(cName))
-  override def generate()(implicit _Query: _Query) = Columns(Right(components.map { _.generate } toList))
+  override def generate()(implicit _Query: _Query) = Columns(Right(components.map { _.generate } toSet))
 }
 case class _AsterixColumn() extends _Columns {
   override def isContained(cName: String): Boolean = true

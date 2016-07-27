@@ -9,6 +9,7 @@ import scray.cassandra.extractors.DomainToCQLQueryMapping
 import scray.querying.description.{ Column, ColumnConfiguration, Row, TableIdentifier }
 import scray.querying.queries.DomainQuery
 import scray.querying.source.store.QueryableStoreSource
+import scray.querying.queries.KeyedQuery
 
 class CassandraQueryableSource[Q <: DomainQuery](
     val ti: TableIdentifier,
@@ -17,7 +18,7 @@ class CassandraQueryableSource[Q <: DomainQuery](
     allColumns: Set[Column],
     columnConfigs: Set[ColumnConfiguration],
     val session: Session,
-    queryMapper: DomainToCQLQueryMapping[Q, CassandraQueryableSource[Q]],
+    val queryMapper: DomainToCQLQueryMapping[Q, CassandraQueryableSource[Q]],
     futurePool: FuturePool,
     rowMapper: CassRow => Row)
       extends QueryableStoreSource[Q](ti, rowKeyColumns, clusteringKeyColumns, allColumns, false) {
@@ -28,7 +29,7 @@ class CassandraQueryableSource[Q <: DomainQuery](
     (colConf.column, colConf.index.map(index => index.isAutoIndexed && index.isSorted))
   }
   
-  @inline private def requestIterator(query: Q): Future[Iterator[Row]] = {
+  @inline def requestIterator(query: Q): Future[Iterator[Row]] = {
     import scala.collection.convert.decorateAsScala.asScalaIteratorConverter
     futurePool {
       val queryString = mappingFunction(query)
@@ -43,7 +44,11 @@ class CassandraQueryableSource[Q <: DomainQuery](
     requestIterator(query).flatMap(it => CassandraQueryableSource.toRowSpool(it))
   }
 
-  def isOrdered(query: Q): Boolean = query.getOrdering.map { ordering =>
+  override def keyedRequest(query: KeyedQuery): Future[Iterator[Row]] = {
+    requestIterator(query.asInstanceOf[Q])
+  }
+  
+  override def isOrdered(query: Q): Boolean = query.getOrdering.map { ordering =>
     if(ordering.column.table == ti) { 
       // if we want to check whether the data is ordered according to query Q we need to make sure that...
       // 1. the first clustering key with the particular order given in the query is identical to the columns name

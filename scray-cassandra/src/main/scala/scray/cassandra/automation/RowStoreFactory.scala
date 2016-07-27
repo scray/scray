@@ -14,39 +14,67 @@
 // limitations under the License.
 package scray.cassandra.automation
 
-import com.twitter.storehaus.cassandra.cql.{CQLCassandraConfiguration, CQLCassandraRowStore}
 import com.websudos.phantom.CassandraPrimitive
-import com.twitter.storehaus.cassandra.cql.CQLCassandraConfiguration.StoreColumnFamily
 import scray.cassandra.util.CassandraUtils
-import com.datastax.driver.core.{BatchStatement, ConsistencyLevel}
+import com.datastax.driver.core.{BatchStatement, ConsistencyLevel, Row => CassRow}
 import com.twitter.util.Duration
 import scala.collection.JavaConverters._
+import scray.querying.description.TableIdentifier
+import scray.querying.queries.DomainQuery
+import scray.cassandra.CassandraQueryableSource
+import scray.querying.sync.DbSession
+import scray.cassandra.sync.CassandraDbSession
+import com.twitter.util.FuturePool
+import scray.cassandra.extractors.CassandraExtractor
+import scray.cassandra.extractors.DomainToCQLQueryMapping
+import scray.querying.description.Column
+import scray.querying.description.Row
+import scray.cassandra.rows.GenericCassandraRowStoreMapper
+import scray.cassandra.CassandraTableNonexistingException
+import com.typesafe.scalalogging.slf4j.LazyLogging
+
+
+
 
 /**
  * a factory for rows stores which reads table Metadata from Cassandra and builds CQLCassandraRowStores
  */
-object RowStoreFactory {
+object RowStoreFactory extends LazyLogging {
   
   /**
    * create a row store object using metadata extraction of the datastax java driver
    */
-  def getRowStore[K](cf: StoreColumnFamily,
-          consistency: ConsistencyLevel = CQLCassandraConfiguration.DEFAULT_CONSISTENCY_LEVEL,
-          poolSize: Int = CQLCassandraConfiguration.DEFAULT_FUTURE_POOL_SIZE,
-          batchType: BatchStatement.Type = CQLCassandraConfiguration.DEFAULT_BATCH_STATEMENT_TYPE,
-          ttl: Option[Duration] = CQLCassandraConfiguration.DEFAULT_TTL_DURATION)(
-                  implicit typeMap: Map[String, CassandraPrimitive[_]]): (Option[CQLCassandraRowStore[K]], List[(String, CassandraPrimitive[_])]) = {
+  def getRowStore[Q <: DomainQuery](ti: TableIdentifier, session: DbSession[_, _, _])(
+                  implicit typeMap: Map[String, CassandraPrimitive[_]], futurePool: FuturePool): 
+                    (Option[CassandraQueryableSource[Q]], List[(String, CassandraPrimitive[_])]) = {
     // retrieve table metadata
-    val tableMeta = CassandraUtils.getTableMetadata(cf)
-    val metaInfo = tableMeta.getColumns().asScala.map(colMeta => 
-      (colMeta.getName(), typeMap.get(colMeta.getType().getName().toString()).get)).toList
-    val keyColumnNames = tableMeta.getPartitionKey().asScala
-    keyColumnNames.size match {
-      case x: Int if x == 1 =>
-        // create store
-        val keySerializer = typeMap.get(keyColumnNames(0).getType().getName().toString()).get.asInstanceOf[CassandraPrimitive[K]]
-        (Some(new CQLCassandraRowStore[K](cf, metaInfo, keyColumnNames(0).getName(), consistency, poolSize, batchType, ttl)(keySerializer)), metaInfo) 
-      case _ => (None, metaInfo)
+    session match {
+      case cassSession: CassandraDbSession => 
+        val cassExtractor = new CassandraExtractor[Q](cassSession.cassandraSession, ti, futurePool)
+        val tableMetaOpt = Option(CassandraUtils.getTableMetadata(ti, cassSession.cassandraSession))
+        tableMetaOpt.map { tableMeta => 
+          logger.debug(s"Fetching column information for ${tableMeta.getName}")
+          val metaInfo = tableMeta.getColumns().asScala.map(colMeta => 
+            (colMeta.getName(), typeMap.get(colMeta.getType().getName().toString()).get)).toList
+          val allColumns = cassExtractor.getColumns
+          val rowKeys = cassExtractor.getRowKeyColumns
+          val clusterKeys = cassExtractor.getClusteringKeyColumns
+          (Some(new CassandraQueryableSource(ti,
+            rowKeys, 
+            clusterKeys,
+            allColumns,
+            allColumns.map(col => 
+              // TODO: ManualIndexConfiguration and Map of Splitter must be extracted from config
+              cassExtractor.getColumnConfiguration(cassSession, ti.dbId, ti.tableId, Column(col.columnName, ti), None, Map())),
+            cassSession.cassandraSession,
+            new DomainToCQLQueryMapping[Q, CassandraQueryableSource[Q]](),
+            futurePool,
+            GenericCassandraRowStoreMapper.cassandraRowToScrayRowMapper(ti))),
+          metaInfo)
+        }.getOrElse {
+          throw new CassandraTableNonexistingException(ti.toString())
+        }
+      case _ => throw new RuntimeException("Row-Store generator has been called without a Cassandra Session. This is a bug. Please report.")
     }
   }
 }

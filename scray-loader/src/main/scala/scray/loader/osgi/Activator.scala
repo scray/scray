@@ -38,6 +38,10 @@ import scray.loader.tools.SerializationTooling
 import scray.querying.Registry
 import scray.loader.VERSION
 import scray.core.service.ScrayStatelessTServiceImpl
+import com.twitter.util.FuturePool
+import java.util.concurrent.ThreadPoolExecutor
+import java.util.concurrent.LinkedBlockingQueue
+import com.twitter.util.ExecutorServiceFuturePool
 
 /**
  * Bundle activator in order to run scray thrift service.
@@ -56,6 +60,8 @@ class Activator extends KryoPoolRegistration with BundleActivator with LazyLoggi
   
   // whether this is a stateless service
   private var statelessService = false
+
+  private var futurePool: Option[FuturePool] = None 
   
   /**
    * read main config filename from BundleContext or throw 
@@ -81,11 +87,22 @@ class Activator extends KryoPoolRegistration with BundleActivator with LazyLoggi
     QueryspaceConfigurationFileHandler.performQueryspaceUpdate(scrayConfiguration, Activator.queryspaces, Seq())
     Activator.queryspaces.map { config =>
       logger.info(s"Registering queryspace ${config._1}")
-      val qs = new ScrayLoaderQuerySpace(config._1, scrayConfiguration, config._2._2, Activator.scrayStores.get)
+      val qs = new ScrayLoaderQuerySpace(config._1, scrayConfiguration, config._2._2, Activator.scrayStores.get, futurePool.get)
       logger.error(qs.toString)
       Registry.registerQuerySpace(qs, Some(0))
     }    
   }
+  
+  def getPoolSize(context: BundleContext) = {
+    Option(context.getProperty(Activator.POOLSIZE_PROPERTY)).map(str => str.toInt).getOrElse(scray.loader.DEFAULT_THREAD_POOL_SIZE)
+  }
+  
+  private def createFuturePool(context: BundleContext) = {
+    val poolSize = getPoolSize(context)
+    FuturePool(new ThreadPoolExecutor(poolSize, poolSize, 0L, TimeUnit.SECONDS, 
+        new LinkedBlockingQueue[Runnable](10 * poolSize), new ThreadPoolExecutor.CallerRunsPolicy()))
+  }
+    
   
   /**
    * registers shutdown hook for emergency shutdowns
@@ -131,6 +148,15 @@ class Activator extends KryoPoolRegistration with BundleActivator with LazyLoggi
         logger.info("Starting Scray...")
         
         registerAllSerializers
+        
+        futurePool = Some(createFuturePool(context))
+        futurePool.get match {
+          case esfp: ExecutorServiceFuturePool =>
+            logger.info(s"Set-up pool with ${getPoolSize(context)} threads for general use")
+          case _ => 
+            logger.info(s"Set-up thread-pool for general use")
+        }
+        
         
         // read config-file property
         val filename = getFilename(context)
@@ -209,16 +235,30 @@ class Activator extends KryoPoolRegistration with BundleActivator with LazyLoggi
   
   private def shutdownServer(): Unit = {
     Activator.keepRunning = false
+    futurePool.get match {
+      case esfp: ExecutorServiceFuturePool =>
+        logger.info(s"Shutting down generic thread-pool")
+        esfp.executor.shutdown()
+        if(!esfp.executor.awaitTermination(5, TimeUnit.SECONDS)) {
+          logger.info(s"Shutdown failed. Forcing shutdown of generic thread-pool")
+          esfp.executor.shutdownNow()
+        }
+      case _ => 
+        logger.warn(s"Could not shutdown worker pool. Leaving it running.")
+    }
+    
     finalizationLatch.await(10, TimeUnit.SECONDS)
     // scalastyle:off magic.number
     Await.ready(server.close(Duration(15, TimeUnit.SECONDS)))
     // scalastyle:on magic.number
+    
   }
 }
 
 object Activator {
   val OSGI_FILENAME_PROPERTY = "scray.config.location"
   val OSGI_SCRAY_STATELESS = "scray.config.stateless"
+  val POOLSIZE_PROPERTY = "scray.config.poolsize"
   
   var scrayStores: Option[ScrayStores] = None
   val queryspaces: HashMap[String, (Long, ScrayQueryspaceConfiguration)] = new HashMap[String, (Long, ScrayQueryspaceConfiguration)]

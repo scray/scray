@@ -55,10 +55,10 @@ class KeySetBasedQuery[K](override val key: Set[K], reftable: TableIdentifier, r
  * query to look up a set of primary keys in a table
  */
 class KeyedQuery(val keys: Set[RowColumn[_]], reftable: TableIdentifier, result: Set[Column], space: String, version: Int, qid: UUID) 
-  extends DomainQuery(qid, space, version, result, reftable, List(), None, None, None) {
+  extends DomainQuery(qid, space, version, result, reftable, 
+      keys.map(rowcol => SingleValueDomain(rowcol.column, rowcol.value)).toList, None, None, None) {
 
   override def transformedAstCopy(ast: List[Domain[_]]): KeyedQuery = new KeyedQuery(ast.collect {
     case svd: SingleValueDomain[_] => RowColumn(svd.column,svd.value)
   }.toSet, reftable, result, space, version, qid)
-  
 }

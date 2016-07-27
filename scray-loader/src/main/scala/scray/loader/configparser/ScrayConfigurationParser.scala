@@ -15,7 +15,6 @@
 package scray.loader.configparser
 
 import com.datastax.driver.core.ConsistencyLevel
-import com.twitter.storehaus.cassandra.cql.CQLCassandraConfiguration.StoreHost
 import com.twitter.util.Duration
 import com.typesafe.scalalogging.slf4j.LazyLogging
 import java.net.{ InetAddress, InetSocketAddress }
@@ -102,7 +101,7 @@ class ScrayConfigurationParser(override val input: ParserInput) extends ScrayGen
   def CassandraClusterName: Rule1[CassandraClusterNameProperty] = rule { "clustername" ~ QuotedString ~> { 
     (name: String) => CassandraClusterNameProperty(name) }}
   def CassandraHostNames: Rule1[CassandraClusterHosts] = rule { HostList ~> {
-    (hosts: Seq[String]) => CassandraClusterHosts(hosts.map(host => StoreHost(host)).toSet) }}
+    (hosts: Seq[String]) => CassandraClusterHosts(hosts.toSet) }}
   def CassandraCredentials: Rule1[CassandraClusterCredentials] = rule { Credentials ~> {(creds: ScrayCredentials) => CassandraClusterCredentials(creds)}}
   def CassandraDatacenter: Rule1[CassandraClusterDatacenter] = rule { "datacenter" ~ QuotedString ~> { (dc: String) => CassandraClusterDatacenter(dc) }}
   def CassandraConsistency: Rule1[CassandraClusterConsistency] = rule { "consistency" ~ CassandraConsistencyLevel ~> { 

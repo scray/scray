@@ -15,8 +15,6 @@
 package scray.cassandra.extractors
 
 import com.datastax.driver.core.{ KeyspaceMetadata, Metadata, TableMetadata }
-import com.twitter.storehaus.cassandra.cql.{ AbstractCQLCassandraStore, CQLCassandraCollectionStore, CQLCassandraRowStore, CQLCassandraStoreTupleValues }
-import com.twitter.storehaus.cassandra.cql.CQLCassandraConfiguration.StoreColumnFamily
 import com.typesafe.scalalogging.slf4j.LazyLogging
 import java.util.regex.Pattern
 import org.yaml.snakeyaml.Yaml
@@ -39,25 +37,25 @@ import scray.querying.queries.DomainQuery
 import scray.querying.source.Splitter
 import scray.querying.source.indexing.IndexConfig
 import scray.querying.storeabstraction.StoreExtractor
-import com.twitter.storehaus.QueryableStore
 import com.datastax.driver.core.Session
 import scray.querying.sync.DbSession
 import scray.cassandra.sync.CassandraDbSession
 import scray.cassandra.CassandraQueryableSource
 import scray.cassandra.sync.OnlineBatchSyncCassandra
-import com.twitter.storehaus.ReadableStore
 import scray.cassandra.sync.CassandraJobInfo
+import com.twitter.util.FuturePool
+import com.datastax.driver.core.{ Row => CassRow }
+import scray.querying.source.store.QueryableStoreSource
 
 /**
  * Helper class to create a configuration for a Cassandra table
  */
-class CassandraExtractor[Q <: DomainQuery](session: Session, table: TableIdentifier) extends StoreExtractor[CassandraQueryableSource[Q]] with LazyLogging {
+class CassandraExtractor[Q <: DomainQuery](session: Session, table: TableIdentifier, futurePool: FuturePool) extends StoreExtractor[CassandraQueryableSource[Q]] with LazyLogging {
 
   import scala.collection.convert.decorateAsScala.asScalaBufferConverter
   
-  private def getTableMetaData(keyspace: String = table.dbId, tablename: String = table.tableId) = {
-    session.getCluster.getMetadata.getKeyspace(keyspace).getTable(tablename)
-  }
+  private def getTableMetaData(keyspace: String = table.dbId, tablename: String = table.tableId) =
+    CassandraUtils.getTableMetadata(TableIdentifier("", table.dbId, table.tableId), session)
 
   private def getColumnsPrivate(tm: TableMetadata): Set[Column] = tm.getColumns.asScala.map(col => Column(col.getName, table)).toSet
   private def getClusteringKeyColumnsPrivate(tm: TableMetadata): Set[Column] = 
@@ -87,11 +85,6 @@ class CassandraExtractor[Q <: DomainQuery](session: Session, table: TableIdentif
     getColumns -- getClusteringKeyColumns -- getRowKeyColumns
 
   /**
-   * returns the table configuration for this specific store; implementors must override this
-   */
-  def getTableConfiguration(rowMapper: (_) => Row): TableConfiguration[_, _, _]
-
-  /**
    * returns a generic Cassandra-store query mapping
    */
   override def getQueryMapping(store: CassandraQueryableSource[Q], tableName: Option[String]): DomainQuery => String =
@@ -118,7 +111,7 @@ class CassandraExtractor[Q <: DomainQuery](session: Session, table: TableIdentif
   /**
    * returns metadata information from Cassandra
    */
-  def getMetadata(cf: StoreColumnFamily): KeyspaceMetadata = CassandraUtils.getKeyspaceMetadata(cf)
+  def getMetadata(): KeyspaceMetadata = CassandraUtils.getKeyspaceMetadata(session, table.dbId)
   
   /**
    * return whether and maybe how the given column is auto-indexed by Cassandra-Lucene-Plugin 
@@ -179,7 +172,6 @@ class CassandraExtractor[Q <: DomainQuery](session: Session, table: TableIdentif
       dbName: String,
       table: String,
       column: Column,
-      querySpace: QueryspaceConfiguration,
       index: Option[ManuallyIndexConfiguration[_, _, _, _, _]],
       splitters: Map[Column, Splitter[_]]): ColumnConfiguration = {
     val indexConfig = index match {
@@ -191,7 +183,7 @@ class CassandraExtractor[Q <: DomainQuery](session: Session, table: TableIdentif
         } else { None }
       case Some(idx) => Some(IndexConfiguration(true, Some(idx), true, true, true, None)) 
     }
-    ColumnConfiguration(column, querySpace, indexConfig)
+    ColumnConfiguration(column, indexConfig)
   }
 
   /**
@@ -217,33 +209,46 @@ class CassandraExtractor[Q <: DomainQuery](session: Session, table: TableIdentif
   /**
    * return a manual index configuration for a column
    */
+//    def createManualIndexConfiguration(column: Column, queryspaceName: String, version: Int, store: S,
+//      indexes: Map[_ <: (QueryableStoreSource[_], String), _ <: (QueryableStoreSource[_], String, 
+//              IndexConfig, Option[Function1[_,_]], Set[String])],
+//      mappers: Map[_ <: QueryableStoreSource[_], ((_) => Row, Option[String], Option[VersioningConfiguration[_, _]])]):
+//        Option[ManuallyIndexConfiguration[_, _, _, _, _]]
+
+  
   override def createManualIndexConfiguration(column: Column, queryspaceName: String, version: Int, store: CassandraQueryableSource[Q],
-      indexes: Map[_ <: (CassandraQueryableSource[_ <: DomainQuery], String), _ <: (CassandraQueryableSource[_ <: DomainQuery], String, 
+      indexes: Map[_ <: (QueryableStoreSource[_ <: DomainQuery], String), _ <: (QueryableStoreSource[_ <: DomainQuery], String, 
               IndexConfig, Option[Function1[_,_]], Set[String])],
-      mappers: Map[_ <: CassandraQueryableSource[_], ((_) => Row, Option[String], Option[VersioningConfiguration[_, _]])]):
+      mappers: Map[_ <: QueryableStoreSource[_], ((_) => Row, Option[String], Option[VersioningConfiguration[_, _]])]):
         Option[ManuallyIndexConfiguration[_, _, _, _, _]] = {
-    def internalStores[A <: CassandraQueryableSource[_]](intmappers: Map[A, 
+    def internalStores[A <: QueryableStoreSource[_]](intmappers: Map[A, 
         ((_) => Row, Option[String], Option[VersioningConfiguration[_, _]])], indexStore: CassandraQueryableSource[_]) = {
       (intmappers.get(indexStore.asInstanceOf[A]).get, intmappers.get(store.asInstanceOf[A]).get)
     }
-    def internalManualIndexConfig[D <: (CassandraQueryableSource[_ <: DomainQuery], String), F <: (CassandraQueryableSource[_ <: DomainQuery], String, 
+    def internalManualIndexConfig[D <: (QueryableStoreSource[_ <: DomainQuery], String), F <: (QueryableStoreSource[_ <: DomainQuery], String, 
               IndexConfig, Option[Function1[_,_]], Set[String])](indexes2: Map[D, F] ) = {
       indexes2.get((store, column.columnName).asInstanceOf[D]).map { (index) =>
         // TODO: fix this ugly stuff (for now we leave it, as fixing this will only increase type safety)
-        val indexStore = index._1
-        val (indexstoreinfo, storeinfo) = internalStores(mappers, indexStore)
-        val dbSystem = Some(column.table.dbSystem)
-        val indexExtractor = CassandraExtractor.getExtractor2(indexStore, indexstoreinfo._2, indexstoreinfo._3, dbSystem)
-        val mainDataTableTI = getTableIdentifier(store, None, dbSystem)
-        ManuallyIndexConfiguration[DomainQuery, DomainQuery, Any, Any, DomainQuery](
-          () => getTableConfigurationFunction[DomainQuery, DomainQuery, Any](mainDataTableTI, queryspaceName, version),
-          () => getTableConfigurationFunction[DomainQuery, DomainQuery, Any](
-              indexExtractor.getTableIdentifier(indexStore.asInstanceOf[CassandraQueryableSource[Nothing]], indexstoreinfo._2, dbSystem), 
-              queryspaceName, version),
-          index._4.asInstanceOf[Option[Any => DomainQuery]],
-          index._5.map(Column(_, mainDataTableTI)),
-          index._3
-        )
+        index._1 match {
+          case indexStore: CassandraQueryableSource[u] =>
+            val (indexstoreinfo, storeinfo) = internalStores(mappers, indexStore)
+            val dbSystem = Some(column.table.dbSystem)
+            val indexExtractor = CassandraExtractor.getExtractor(indexStore, indexstoreinfo._2, indexstoreinfo._3, dbSystem, futurePool)
+            val mainDataTableTI = getTableIdentifier(store, None, dbSystem)
+            def convertedSource[U <: DomainQuery](extractor: CassandraExtractor[U]): TableIdentifier = {
+              extractor.getTableIdentifier(indexStore.asInstanceOf[CassandraQueryableSource[U]], indexstoreinfo._2, dbSystem)
+            }
+            ManuallyIndexConfiguration[DomainQuery, DomainQuery, Any, Any, DomainQuery](
+              () => getTableConfigurationFunction[DomainQuery, DomainQuery, Any](mainDataTableTI, queryspaceName, version),
+              () => getTableConfigurationFunction[DomainQuery, DomainQuery, Any](
+                  convertedSource(indexExtractor), 
+                  queryspaceName, version),
+              index._4.asInstanceOf[Option[Any => DomainQuery]],
+              index._5.map(Column(_, mainDataTableTI)),
+              index._3
+            )
+          case _ => throw new RuntimeException("Using stores different from CassandraQueryableSource not supported")
+        }
       }
     }
     internalManualIndexConfig(indexes)
@@ -252,62 +257,78 @@ class CassandraExtractor[Q <: DomainQuery](session: Session, table: TableIdentif
   private def getTableConfigurationFunction[Q <: DomainQuery, K <: DomainQuery, V](ti: TableIdentifier, space: String, version: Int): TableConfiguration[Q, K, V] = 
     Registry.getQuerySpaceTable(space, version, ti).get.asInstanceOf[TableConfiguration[Q, K, V]]
   
-  private def getVersioningConfiguration[Q <: DomainQuery, K <: DomainQuery](jobName: String):VersioningConfiguration[Q, K]  = {
-    def createColumnConfigurations()
-    
+  private def getVersioningConfiguration[Q <: DomainQuery, K <: DomainQuery](jobName: String, rowMapper: (_) => Row): Option[VersioningConfiguration[Q, K]]  = {
     val cassSession = new CassandraDbSession(session)
     val syncApiInstance = new OnlineBatchSyncCassandra(cassSession)
     val jobInfo = new CassandraJobInfo(jobName)
-    val latestComplete = () => Some(syncApiInstance.getBatchVersion(jobInfo))
-    val runtimeVersion = () => Some(syncApiInstance.getOnlineVersion(jobInfo))
+    val latestComplete = () => syncApiInstance.getBatchVersion(jobInfo)
+    val runtimeVersion = () => syncApiInstance.getOnlineVersion(jobInfo)
     // if we have a runtime Version, this will be the table to read from, for now. We
     // expect that all data is aggregated with the corresponding complete version.
     // TODO: in the future we want this to be able to merge, such that it will be an
     // option to have a runtime and a batch version at once and the merge is done at
     // query time
-    val tableToRead: TableIdentifier = runtimeVersion().getOrElse(latestComplete())
-    // use our session to fetch relevent metadata
-    val tableMeta = getTableMetaData(tableToRead.dbId, tableToRead.tableId)
-    
-    val cassQuerySource = new CassandraQueryableSource(tableToRead,
-    rowKeyColumns: Set[Column], 
-    clusteringKeyColumns: Set[Column],
-    allColumns: Set[Column],
-    columnConfigs: Set[ColumnConfiguration],
-    val session: Session,
-    queryMapper: DomainToCQLQueryMapping[Q, CassandraQueryableSource[Q]],
-    futurePool: FuturePool,
-    rowMapper: CassRow => Row)
-          getRowKeyColumnsPrivate(tableMeta),
-          getClusteringKeyColumnsPrivate(tableMeta),
-          getColumnsPrivate(tableMeta)
-        )
-    VersioningConfiguration[Q, K] (
-      latestCompleteVersion = latestComplete,
-      runtimeVersion = runtimeVersion,
-      queryableStore = Some(cassQuerySource), // the versioned queryable store representation, allowing to query the store
-      readableStore = Some(cassQuerySource) // the versioned readablestore, used in case this is used by a HashJoinSource
-    )
+    val tableToReadOpt: Option[TableIdentifier] = runtimeVersion().orElse(latestComplete().orElse(None))
+    tableToReadOpt.map { tableToRead =>
+      // use our session to fetch relevent metadata
+      val tableMeta = getTableMetaData(tableToRead.dbId, tableToRead.tableId)
+      
+      val allColumns = getColumnsPrivate(tableMeta)    
+      val cassQuerySource = new CassandraQueryableSource(tableToRead,
+        getRowKeyColumnsPrivate(tableMeta), 
+        getClusteringKeyColumnsPrivate(tableMeta),
+        allColumns,
+        allColumns.map(col => 
+          // TODO: ManualIndexConfiguration and Map of Splitter must be extracted from config
+          getColumnConfiguration(cassSession, tableToRead.dbId, tableToRead.tableId, Column(col.columnName, tableToRead), None, Map())),
+        session,
+        new DomainToCQLQueryMapping[Q, CassandraQueryableSource[Q]](),
+        futurePool,
+        rowMapper.asInstanceOf[CassRow => Row])
+      VersioningConfiguration[Q, K] (
+        latestCompleteVersion = latestComplete,
+        runtimeVersion = runtimeVersion,
+        queryableStore = Some(cassQuerySource), // the versioned queryable store representation, allowing to query the store
+        readableStore = Some(cassQuerySource.asInstanceOf[CassandraQueryableSource[K]]) // the versioned readablestore, used in case this is used by a HashJoinSource
+      )
+    }
   }
-  
-  
-  override def getTableConfiguration(rowMapper: (_) => Row): TableConfiguration[_  <: DomainQuery, _ <: DomainQuery, _] = {
-    TableConfiguration (
+    
+  override def getTableConfiguration(rowMapper: (_) => Row): TableConfiguration[_ <: DomainQuery, _ <: DomainQuery, _] = {
+    val allColumns = getColumns
+    val rowKeys = getRowKeyColumns
+    val clusterKeys = getClusteringKeyColumns
+    val versioningConfig = getVersioningConfiguration[Q, Q](table.tableId , rowMapper)
+    val cassQuerySource = if(versioningConfig.isDefined) {
+      None 
+    } else {
+      val cassSession = new CassandraDbSession(session)
+      Some(new CassandraQueryableSource(table,
+        rowKeys, 
+        clusterKeys,
+        allColumns,
+        allColumns.map(col => 
+          // TODO: ManualIndexConfiguration and Map of Splitter must be extracted from config
+          getColumnConfiguration(cassSession, table.dbId, table.tableId, Column(col.columnName, table), None, Map())),
+        session,
+        new DomainToCQLQueryMapping[Q, CassandraQueryableSource[Q]](),
+        futurePool,
+        rowMapper.asInstanceOf[CassRow => Row])
+      )
+    }
+    TableConfiguration[Q, Q, CassRow] (
       table,
-      versions.asInstanceOf[Option[scray.querying.description.VersioningConfiguration[Any,Any]]],
-      getRowKeyColumns,
-      getClusteringKeyColumns,
-      getColumns,
-      rowMapper.asInstanceOf[(Any) => Row],
-      getQueryMapping(store, tableName),
-      versions match {
-        case Some(_) => None 
-        case None => Some(() => store.asInstanceOf[QueryableStore[Any, Any]])
+      versioningConfig,
+      rowKeys,
+      clusterKeys,
+      allColumns,
+      rowMapper.asInstanceOf[CassRow => Row],
+      cassQuerySource.map(_.mappingFunction.asInstanceOf[DomainQuery => Q]).getOrElse {
+        versioningConfig.map(_.queryableStore.get.asInstanceOf[CassandraQueryableSource[Q]].mappingFunction).orNull.asInstanceOf[DomainQuery => Q]
       },
-      versions match {
-        case Some(_) => None 
-        case None => Some(() => store.asInstanceOf[ReadableStore[Any, Any]])
-      },
+      cassQuerySource,
+      cassQuerySource,
+      // TODO: add materialized views
       List()
     )
   }
@@ -316,9 +337,13 @@ class CassandraExtractor[Q <: DomainQuery](session: Session, table: TableIdentif
 
 object CassandraExtractor {
   
-  def getExtractor2[Q <: DomainQuery](store: CassandraQueryableSource[Q], tableName: Option[String],
-          versions: Option[VersioningConfiguration[_, _]], dbSystem: Option[String]) = {
-    new CassandraExtractor(store.session, TableIdentifier(dbSystem.getOrElse(store.ti.dbSystem), store.ti.dbId, tableName.getOrElse(store.ti.tableId)))
+  def getExtractor[R <: DomainQuery](store: CassandraQueryableSource[R], tableName: Option[String],
+          versions: Option[VersioningConfiguration[_, _]], dbSystem: Option[String], futurePool: FuturePool):
+          CassandraExtractor[R] = {
+    new CassandraExtractor(store.session, 
+        TableIdentifier(dbSystem.getOrElse(store.ti.dbSystem),
+            store.ti.dbId, tableName.getOrElse(store.ti.tableId)),
+        futurePool)
   }
   
 //  /**

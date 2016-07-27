@@ -17,7 +17,7 @@ package scray.loader.configuration
 import scala.collection.mutable.{ ArrayBuffer, HashMap }
 import scray.loader.configparser.{ ConfigProperties, ReadableConfig, ScrayConfiguration, UpdatetableConfiguration }
 import scray.querying.storeabstraction.StoreGenerators
-import scray.querying.sync.types.DbSession
+import scray.querying.sync.DbSession
 import scray.loader.DBMSUndefinedException
 import scray.cassandra.automation.{ CassandraSessionHandler, CassandraStoreGenerators }
 import scray.cassandra.extractors.CassandraExtractor
@@ -26,6 +26,7 @@ import scray.cassandra.rows.GenericCassandraRowStoreMapper.cassandraPrimitiveTyp
 import com.typesafe.scalalogging.slf4j.LazyLogging
 import scray.cassandra.automation.CassandraSessionHandler
 import scray.cassandra.automation.CassandraStoreGenerators
+import com.twitter.util.FuturePool
 
 /**
  * abstraction for the management of configuration of stores
@@ -81,10 +82,10 @@ class ScrayStores(startConfig: ScrayConfiguration) extends LazyLogging {
 
   val cassandraSessionHandler = new CassandraSessionHandler
   
-  def getStoreGenerator(dbId: String, session: DbSession[_, _, _], queryspace: String): StoreGenerators = { 
+  def getStoreGenerator(dbId: String, session: DbSession[_, _, _], queryspace: String, futurePool: FuturePool): StoreGenerators = { 
     storeConfigs.get(dbId).map { config => config match {
       case cassConfig: CassandraClusterConfiguration =>
-        new CassandraStoreGenerators(dbId, session, cassandraSessionHandler)
+        new CassandraStoreGenerators(dbId, session, cassandraSessionHandler, futurePool)
       case _ => throw new DBMSUndefinedException(dbId, queryspace)
     }}.getOrElse(throw new DBMSUndefinedException(dbId, queryspace))
   }

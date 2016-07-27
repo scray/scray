@@ -14,7 +14,6 @@
 // limitations under the License.
 package scray.cassandra.util
 
-import com.twitter.storehaus.cassandra.cql.CQLCassandraConfiguration.StoreHost
 import scray.common.properties.ScrayProperties
 import scala.collection.JavaConverters.asScalaSetConverter
 import java.net.InetSocketAddress
@@ -36,8 +35,8 @@ object CassandraPropertyUtils {
   
   def getCassandraClusterCredentials() : ScrayCredentials = ScrayProperties.getPropertyValue(PredefinedProperties.CASSANDRA_QUERY_CLUSTER_CREDENTIALS)
   
-  def getCassandraHostProperty() : Set[StoreHost] = ScrayProperties.getPropertyValue(PredefinedProperties.CASSANDRA_QUERY_SEED_IPS).
-    asScala.toSet[InetSocketAddress].map(inetsocket => StoreHost(s"${inetsocket.getHostString}:${inetsocket.getPort}"))
+  def getCassandraHostProperty() : Set[String] = ScrayProperties.getPropertyValue(PredefinedProperties.CASSANDRA_QUERY_SEED_IPS).
+    asScala.toSet[InetSocketAddress].map(inetsocket => s"${inetsocket.getHostString}:${inetsocket.getPort}")
 
   def performDefaultPropertySystemInitialization(additionPropertiesToRegister : Set[Property[_, _]] = Set()) : Unit = {
     additionPropertiesToRegister.foreach(ScrayProperties.registerProperty(_))

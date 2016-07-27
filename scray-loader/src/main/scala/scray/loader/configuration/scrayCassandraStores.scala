@@ -14,17 +14,13 @@
 // limitations under the License.
 package scray.loader.configuration
 
-import com.twitter.storehaus.cassandra.cql.CQLCassandraConfiguration.StoreCluster
 import scray.cassandra.util.CassandraPropertyUtils
 import com.twitter.util.Try
 import scray.common.properties.predefined.PredefinedProperties
-import com.twitter.storehaus.cassandra.cql.CQLCassandraConfiguration.StoreCredentials
-import com.twitter.storehaus.cassandra.cql.CQLCassandraConfiguration.DEFAULT_SHUTDOWN_TIMEOUT
 import scray.common.properties.ScrayProperties
 import com.datastax.driver.core.policies.Policies
 import com.datastax.driver.core.policies.DCAwareRoundRobinPolicy
 import com.datastax.driver.core.policies.TokenAwarePolicy
-import com.twitter.storehaus.cassandra.cql.CQLCassandraConfiguration.StoreHost
 import scray.common.tools.ScrayCredentials
 import scray.loader.configparser.ReadableConfig
 import scray.cassandra.extractors.CassandraExtractor
@@ -33,16 +29,19 @@ import scray.loader.configparser.ScrayConfiguration
 import com.datastax.driver.core.ConsistencyLevel
 import com.typesafe.scalalogging.slf4j.LazyLogging
 import com.twitter.util.Throw
-import scray.querying.sync.types.DbSession
-import scray.querying.sync.cassandra.CassandraDbSession
+import scray.querying.sync.DbSession
+import scray.cassandra.sync.CassandraDbSession
+import com.datastax.driver.core.Cluster
+import java.net.InetAddress
+import scala.collection.convert.decorateAsJava._
 
 /**
  * Cassandra properties, needed to setup a Cassandra cluster object
  */
 case class CassandraClusterProperties(clusterName: String = PredefinedProperties.CASSANDRA_QUERY_CLUSTER_NAME.getDefault,
       credentials: ScrayCredentials = new ScrayCredentials(),
-      hosts: Set[StoreHost] = Option(PredefinedProperties.CASSANDRA_QUERY_SEED_IPS.getDefault).
-        map(_.asScala.map { addr => StoreHost(addr.toString) }.toSet).getOrElse(Set()),
+      hosts: Set[String] = Option(PredefinedProperties.CASSANDRA_QUERY_SEED_IPS.getDefault).
+        map(_.asScala.map { addr => addr.toString }.toSet).getOrElse(Set()),
       datacenter: String = PredefinedProperties.CASSANDRA_QUERY_CLUSTER_DC.getDefault,
       name: Option[String] = None) extends DBMSConfigProperties {
   override def getName: String = name.getOrElse(CassandraExtractor.DB_ID)
@@ -52,7 +51,7 @@ case class CassandraClusterProperties(clusterName: String = PredefinedProperties
 trait CassandraClusterProperty
 case class CassandraClusterNameProperty(name: String) extends CassandraClusterProperty
 case class CassandraClusterCredentials(credentials: ScrayCredentials) extends CassandraClusterProperty
-case class CassandraClusterHosts(hosts: Set[StoreHost]) extends CassandraClusterProperty
+case class CassandraClusterHosts(hosts: Set[String]) extends CassandraClusterProperty
 case class CassandraClusterDatacenter(dc: String) extends CassandraClusterProperty
 case class CassandraClusterConsistency(read: ConsistencyLevel = ConsistencyLevel.LOCAL_QUORUM, 
     write: ConsistencyLevel = ConsistencyLevel.LOCAL_QUORUM) extends CassandraClusterProperty
@@ -63,22 +62,22 @@ case class CassandraClusterConsistency(read: ConsistencyLevel = ConsistencyLevel
 class CassandraClusterConfiguration(override protected val startconfig: CassandraClusterProperties) 
     extends DBMSConfiguration[CassandraClusterProperties](startconfig) with LazyLogging {
 
-  var currentCluster: Option[StoreCluster] = None
+  var currentCluster: Option[Cluster] = None
   
   /**
    * initialize a Cassandra cluster, if it is selected as an available store
    */
-  def getCassandraCluster: Try[StoreCluster] = Try {
+  def getCassandraCluster: Try[Cluster] = Try {
     val clusterName = config.get.clusterName
     val clusterCredentials = config.get.credentials
-    val cassandraHost = config.get.hosts
-    StoreCluster(name = clusterName, hosts = cassandraHost,
-      credentials = if (clusterCredentials.isEmpty()) { None } else {
-        Some(StoreCredentials(clusterCredentials.getUsername, new String(clusterCredentials.getPassword)))},
-      loadBalancing = new TokenAwarePolicy(new DCAwareRoundRobinPolicy(config.get.datacenter)),
-      reconnectPolicy = Policies.defaultReconnectionPolicy,
-      retryPolicy = Policies.defaultRetryPolicy,
-      shutdownTimeout = DEFAULT_SHUTDOWN_TIMEOUT)
+    val cassandraHost = config.get.hosts.map(h => InetAddress.getByName(h)).asJava
+    val builder = Cluster.builder().addContactPoints(cassandraHost).
+      withLoadBalancingPolicy(new TokenAwarePolicy(new DCAwareRoundRobinPolicy(config.get.datacenter))).
+      withReconnectionPolicy(Policies.defaultReconnectionPolicy).
+      withRetryPolicy(Policies.defaultRetryPolicy)
+    Option(clusterCredentials.getUsername).map(creds =>
+      builder.withCredentials(clusterCredentials.getUsername, new String(clusterCredentials.getPassword)))
+    builder.build
   }
   
   override def performUpdateTasks(): Unit = {
@@ -93,7 +92,7 @@ class CassandraClusterConfiguration(override protected val startconfig: Cassandr
   }
   
   override def getSession: DbSession[_, _, _] = {
-    val session = getCassandraCluster.map { _.getCluster.connect() }.get
+    val session = getCassandraCluster.map { _.connect() }.get
     new CassandraDbSession(session)
   }
   
