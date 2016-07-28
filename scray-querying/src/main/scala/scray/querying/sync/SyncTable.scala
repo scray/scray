@@ -131,35 +131,48 @@ object DataTable {
 }
 
 object SyncTableBasicClasses extends Serializable with LazyLogging {
+  
+  class SyncTableRow (
+      jobnameV: String, 
+      slotV: Int,
+      versionsV: Int,
+      dbSystemV: String,
+      dbIdV: String,
+      tableIdV: String,
+      batchStartTimeV: Long,
+      batchEndTimeV: Long,
+      onlineV: Boolean,
+      stateV: String) {
+    val jobname = new ColumnWithValue[String]("jobname", jobnameV)
+    val slot = new ColumnWithValue[Int]("slot", slotV)
+    val versions = new ColumnWithValue[Int]("versions", versionsV)
+    val dbSystem = new ColumnWithValue[String]("dbSystem", dbSystemV) // Defines the name of the DBMS which is used to store the versionized data. E.g. cassandra, oracel...
+    val dbId = new ColumnWithValue[String]("dbId", dbIdV)
+    val tableId = new ColumnWithValue[String]("tableId", tableIdV)
+    val batchStartTime = new ColumnWithValue[Long]("batchStartTime", batchEndTimeV)
+    val batchEndTime = new ColumnWithValue[Long]("batchEndTime", batchEndTimeV)
+    val online = new ColumnWithValue[Boolean]("online", onlineV)
+    val state = new ColumnWithValue[String]("state", stateV)
+  }
 
   object SyncTableRowEmpty extends ArbitrarylyTypedRows {
 
     val jobname = new Column[String]("jobname")
     val slot = new Column[Int]("slot")
     val versions = new Column[Int]("versions")
-    val tableidentifier = new Column[String]("tableidentifier")
+    val dbSystem = new Column[String]("dbSystem") // Defines the name of the DBMS which is used to store the versionized data. E.g. cassandra, oracel...
+    val dbId = new Column[String]("dbId")
+    val tableId = new Column[String]("tableId")
     val batchStartTime = new Column[Long]("batchStartTime")
     val batchEndTime = new Column[Long]("batchEndTime")
     val online = new Column[Boolean]("online")
     val state = new Column[String]("state")
 
-    override val columns = jobname :: slot :: versions :: tableidentifier :: online :: state :: batchStartTime :: batchEndTime ::Nil
+    override val columns = jobname :: slot :: versions :: dbSystem :: dbId :: tableId :: online :: state :: batchStartTime :: batchEndTime ::Nil
     override val primaryKey = s"((${jobname.name}, ${online.name}), ${slot.name})"
     override val indexes: Option[List[String]] = Option(List(state.name, batchEndTime.name, batchStartTime.name))
   }
-  
-  def parsDbTableIdentifier(tableId: String) : Option[TableIdentifier] = {
-    val tableIdentifierComponents = tableId.split(".")
-    if(tableIdentifierComponents.size == 3) {
-      Some(new TableIdentifier(tableIdentifierComponents(0), tableIdentifierComponents(1), tableIdentifierComponents(2)))
-    } else {
-      logger.error(s"TableIdentifier ${tableId} has not the right syntax.")
-      None
-    }
-}
-  
-  
-  
+
   class JobLockTable extends ArbitrarylyTypedRows {
 
     val jobname = new Column[String]("jobname")
@@ -169,6 +182,7 @@ object SyncTableBasicClasses extends Serializable with LazyLogging {
     override val primaryKey = s"(${jobname.name})"
     override val indexes: Option[List[String]] = None
   }
+
 }
 
 object State extends Enumeration {
