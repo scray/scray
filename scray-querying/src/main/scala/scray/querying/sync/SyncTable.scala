@@ -7,10 +7,6 @@ import scala.collection.mutable.ListBuffer
 import scala.reflect.runtime.universe._
 import scala.util.Try
 
-import com.websudos.phantom.CassandraPrimitive._
-
-import scray.cassandra.sync.CassandraImplementation._
-import scray.cassandra.sync.OnlineBatchSyncCassandra
 import com.typesafe.scalalogging.slf4j.LazyLogging
 import scray.querying.description.TableIdentifier
 
@@ -95,8 +91,12 @@ abstract class DbSession[Statement, InsertIn, Result](val dbHostname: String) {
 }
 
 object SyncTable {
-  def apply(keySpace: String, tableName: String) = {
-    new Table(keySpace, tableName, SyncTableBasicClasses.SyncTableRowEmpty)
+  def apply(keySpace: String, tableName: String)(implicit 
+          colString: DBColumnImplementation[String],
+          colInt: DBColumnImplementation[Int],
+          colLong: DBColumnImplementation[Long],
+          colBool: DBColumnImplementation[Boolean]) = {
+    new Table(keySpace, tableName, new SyncTableBasicClasses.SyncTableRowEmpty)
   }
 }
 
@@ -114,7 +114,9 @@ abstract class AbstractTypeDetection {
 }
 			
 object JobLockTable {
-  def apply(keySpace: String, tableName: String) = {
+  def apply(keySpace: String, tableName: String)(implicit 
+          colString: DBColumnImplementation[String],
+          colBool: DBColumnImplementation[Boolean]) = {
     new Table(keySpace, tableName, new SyncTableBasicClasses.JobLockTable)
   }
 }
@@ -142,7 +144,11 @@ object SyncTableBasicClasses extends Serializable with LazyLogging {
       batchStartTimeV: Long,
       batchEndTimeV: Long,
       onlineV: Boolean,
-      stateV: String) {
+      stateV: String)(implicit 
+          colString: DBColumnImplementation[String],
+          colInt: DBColumnImplementation[Int],
+          colLong: DBColumnImplementation[Long],
+          colBool: DBColumnImplementation[Boolean]) {
     val jobname = new ColumnWithValue[String]("jobname", jobnameV)
     val slot = new ColumnWithValue[Int]("slot", slotV)
     val versions = new ColumnWithValue[Int]("versions", versionsV)
@@ -155,7 +161,11 @@ object SyncTableBasicClasses extends Serializable with LazyLogging {
     val state = new ColumnWithValue[String]("state", stateV)
   }
 
-  object SyncTableRowEmpty extends ArbitrarylyTypedRows {
+  class SyncTableRowEmpty(implicit 
+          colString: DBColumnImplementation[String],
+          colInt: DBColumnImplementation[Int],
+          colLong: DBColumnImplementation[Long],
+          colBool: DBColumnImplementation[Boolean]) extends ArbitrarylyTypedRows {
 
     val jobname = new Column[String]("jobname")
     val slot = new Column[Int]("slot")
@@ -173,7 +183,9 @@ object SyncTableBasicClasses extends Serializable with LazyLogging {
     override val indexes: Option[List[String]] = Option(List(state.name, batchEndTime.name, batchStartTime.name))
   }
 
-  class JobLockTable extends ArbitrarylyTypedRows {
+  class JobLockTable(implicit 
+          colString: DBColumnImplementation[String],
+          colBool: DBColumnImplementation[Boolean]) extends ArbitrarylyTypedRows {
 
     val jobname = new Column[String]("jobname")
     val locked = new Column[Boolean]("locked")
@@ -195,7 +207,9 @@ abstract class LockApi[Statement, Insert, Result](
       val jobLockTable: Table[SyncTableBasicClasses.JobLockTable], 
       val dbSession: DbSession[Statement, Insert, Result]) extends Lock {
   
-  def this(job: JobInfo[Statement, Insert, Result], dbSession: DbSession[Statement, Insert, Result]) {
+  def this(job: JobInfo[Statement, Insert, Result], dbSession: DbSession[Statement, Insert, Result])(implicit 
+          colString: DBColumnImplementation[String],
+          colBool: DBColumnImplementation[Boolean]) {
     this(job, JobLockTable("SILIDX", "jobLock"), dbSession)
   }
   

@@ -3,19 +3,22 @@ package scray.querying.sync
 import org.junit.runner.RunWith
 import org.scalatest.WordSpec
 import org.scalatest.junit.JUnitRunner
-
-import scray.querying.sync.Column
-import scray.querying.sync.ColumnWithValue
-import scray.querying.sync.Columns
-import scray.querying.sync.RowWithValue
 import scray.querying.sync.SyncTableBasicClasses.SyncTableRowEmpty
-import scray.cassandra.sync.CassandraImplementation._
-import scray.querying.sync.Table
 
 
 @RunWith(classOf[JUnitRunner])
 class SyncTableTests extends WordSpec {
 
+  implicit def testImplicit[T] = new DBColumnImplementation[T] {
+    type RowType = Nothing
+    val rowConv: DBRowImplementation[RowType] = new DBRowImplementation[RowType] {
+      def convertRow(name: String, row: RowType): Option[T] = None
+    }
+    def getDBType: String = "text"
+    def fromDBType(value: AnyRef): T = value.asInstanceOf[T]
+    def toDBType(value: T): AnyRef = value
+  }
+  
   "Tables " should {
     " return DB type" in {
       val c1 = new Column[String]("c1")
@@ -46,7 +49,7 @@ class SyncTableTests extends WordSpec {
     }
     " test db type detection in tables " in {
 
-      val s = SyncTableRowEmpty
+      val s = new SyncTableRowEmpty
       assert(s.columns.head.getDBType === "text")
     }
     " clone rows " in {

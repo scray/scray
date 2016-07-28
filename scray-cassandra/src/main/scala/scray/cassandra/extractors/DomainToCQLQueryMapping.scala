@@ -50,7 +50,9 @@ class DomainToCQLQueryMapping[Q <: DomainQuery, S <: CassandraQueryableSource[Q]
     }
   }.getOrElse(orgQuery)
 
-
+  @inline private def removeQuotes(query: String): String = query.filterNot(c => c == '"' || c == ';' || c == ''')
+  
+  @inline private def decideWhere(where: String): String = if(!where.isEmpty()) s"WHERE $where" else ""
   /**
    * returns a function mapping from Domains to CQL-Strings used in Where clauses
    */
@@ -69,8 +71,9 @@ class DomainToCQLQueryMapping[Q <: DomainQuery, S <: CassandraQueryableSource[Q]
         // we must make sure we have a single index for the col we select (only use one)
         enforceLimit(getValueKeyQueryMapping(store, query, storeTableNickName).getOrElse(""), query)
       }
-      logger.info(s"Query String for Cassandra is $r")
-      r
+      val result = s"""SELECT * FROM "${removeQuotes(store.ti.dbId)}"."${removeQuotes(store.ti.tableId)}" ${decideWhere(r)}"""
+      logger.debug(s"Query String for Cassandra is $result")
+      result
     }
   }
 

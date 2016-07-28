@@ -9,8 +9,6 @@ import scray.querying.description.TableIdentifier
 import scray.querying.description.IndexConfiguration
 import scray.querying.description.TableConfiguration
 import scray.querying.description.ManuallyIndexConfiguration
-import com.datastax.driver.core.KeyspaceMetadata
-import com.datastax.driver.core.TableMetadata
 import scray.querying.description.ColumnConfiguration
 import scray.querying.description.AutoIndexConfiguration
 import scray.querying.description.Row

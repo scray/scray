@@ -5,7 +5,6 @@ import java.util.{ Iterator => JIterator }
 import scala.annotation.tailrec
 import scala.util.Try
 
-import com.datastax.driver.core.Statement
 import com.typesafe.scalalogging.slf4j.LazyLogging
 
 import scray.common.serialization.BatchID
