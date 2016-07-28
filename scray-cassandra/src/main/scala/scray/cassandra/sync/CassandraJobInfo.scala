@@ -19,6 +19,8 @@ class CassandraJobInfo(
     numberOfOnlineSlots: Int = 2,
     lockTimeOut: Int = 500) extends JobInfo[Statement, Insert, ResultSet](name, numberOfBatchSlots, numberOfOnlineSlots) with LazyLogging {
 
+  import CassandraImplementation.genericCassandraColumnImplicit
+  
   val statementGenerator = CassandraStatementGenerator
 
   def getLock(dbSession: DbSession[Statement, Insert, ResultSet]): LockApi[Statement, Insert, ResultSet] = {

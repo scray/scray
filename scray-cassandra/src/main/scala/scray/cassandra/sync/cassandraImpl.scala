@@ -116,6 +116,8 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
     OnlineBatchSyncWithTableIdentifier[Statement, Insert, ResultSet] with 
     StateMonitoringApi[Statement, Insert, ResultSet] {
 
+  import CassandraImplementation.genericCassandraColumnImplicit
+  
   def this(dbHostname: String) = {
     this(new CassandraDbSession(Cluster.builder().addContactPoint(dbHostname).build().connect()))
   }
