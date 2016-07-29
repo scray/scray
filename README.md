@@ -21,3 +21,10 @@ Registry
 --------
 The registry is used to look up tables, query spaces and columns. Each query space must register itself as well as its columns and tables to make it available to the planner.
 
+Prerequisites
+-------------
+
+To build Scray Maven needs a lot of heap and loads a lot of classes. To provide more RAM Maven can be configured by an environment variable called `MAVEN_OPTS`, e.g. by `export MAVEN_OPTS='-Xmx1024m -XX:MaxPermSize=256m'`.
+
+
+

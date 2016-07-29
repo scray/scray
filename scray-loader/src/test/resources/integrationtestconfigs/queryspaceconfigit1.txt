@@ -1,3 +1,5 @@
 name HelloWorld version 1
 
+sync table { test, "silidx", "synctable" }
+
 table { test, "BLA", "SCHWAETZ" }

@@ -13,6 +13,10 @@ import scray.querying.source.store.QueryableStoreSource
 import scray.querying.queries.DomainQuery
 import com.twitter.util.FuturePool
 import scray.cassandra.CassandraQueryableSource
+import scray.querying.sync.OnlineBatchSyncWithTableIdentifier
+import scray.cassandra.sync.OnlineBatchSyncCassandra
+import scray.querying.sync.JobInfo
+import scray.cassandra.sync.CassandraJobInfo
 
 /**
  * Generators for Scray store abstractions for Cassandra
@@ -47,5 +51,13 @@ class CassandraStoreGenerators(dbID: String, session: DbSession[_, _, _],
         CassandraExtractor.getExtractor(cassStore, tableName, versions, dbSystem, futurePool).asInstanceOf[StoreExtractor[S]]
       case _ => throw new UnsupportedOperationException("CassandraStoreGenerators can only be used with Cassandra stores")
     }
-  }  
+  }
+    
+  override def createSyncApi(ti: TableIdentifier): OnlineBatchSyncWithTableIdentifier[_, _, _] = session match {
+    case cassandra: CassandraDbSession => new OnlineBatchSyncCassandra(cassandra) 
+    case _ => // this should never happen...
+        throw new RuntimeException("Store session is not a Cassandra Session. This is a bug. Please report.")      
+  }
+  
+  override def createJobInfo(jobName: String): JobInfo[_, _, _] = new CassandraJobInfo(jobName)
 }

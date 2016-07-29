@@ -34,6 +34,7 @@ import scray.querying.description.Row
 import scray.querying.description.Column
 import scray.querying.source.store.QueryableStoreSource
 import com.twitter.util.FuturePool
+import scray.querying.sync.JobInfo
 
 
 /**
@@ -115,12 +116,33 @@ class ScrayLoaderQuerySpace(name: String, config: ScrayConfiguration, qsConfig: 
   def getTables(version: Int): Set[TableConfiguration[_ <: DomainQuery, _ <: DomainQuery, _]] = {
     val generators = new HashMap[String, StoreGenerators]
     // TODO: read versioned tables from SyncTable and add to rowstores
+    // qsConfig.syncTable
+    // initialize sync-Api
+    
+    
+    val syncApiRowStores = qsConfig.syncTable.flatMap { syncTableTi =>
+      generators.get(syncTableTi.dbSystem).map { generator =>
+        val syncApi = generator.createSyncApi(syncTableTi)
+        syncApi.getQueryableTableIdentifiers.map(_._1).toSet.map { jobName: String =>
+          def getNewJobInfo[A, B, C](jobName: String) = {
+            generator.createJobInfo(jobName).asInstanceOf[JobInfo[A, B, C]]
+          }
+          (jobName, syncApi.getOnlineVersion(getNewJobInfo(jobName)).orElse {
+            syncApi.getBatchVersion(getNewJobInfo(jobName))
+          })
+        }
+      }.orElse { 
+        throw new DBMSUndefinedException(syncTableTi.dbSystem, qsConfig.name)
+      }
+    }.getOrElse(Set()).filter(_._2.isDefined).map { job =>
+      getRowstoreConfiguration(qsConfig.syncTable.get.copy(tableId = job._1))
+    }.filter(_.isDefined).map(_.get)
     val rowstores = qsConfig.rowStores
     rowstores.map { tableConfigTxt =>
       getRowstoreConfiguration(tableConfigTxt)
     }.collect { 
       case Some(tableConfiguration) => tableConfiguration
-    }.toSet
+    }.toSet ++ syncApiRowStores
     // TODO: add more tables (for the ones in the queryspace config, e.g. indexes) 
   }
   

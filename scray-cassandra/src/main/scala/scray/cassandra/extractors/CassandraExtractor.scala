@@ -259,6 +259,7 @@ class CassandraExtractor[Q <: DomainQuery](session: Session, table: TableIdentif
   
   private def getVersioningConfiguration[Q <: DomainQuery, K <: DomainQuery](jobName: String, rowMapper: (_) => Row): Option[VersioningConfiguration[Q, K]]  = {
     val cassSession = new CassandraDbSession(session)
+    // TODO: we need to include a way to define the coordinates/TableIdentifier where to search for SyncTable 
     val syncApiInstance = new OnlineBatchSyncCassandra(cassSession)
     val jobInfo = new CassandraJobInfo(jobName)
     val latestComplete = () => syncApiInstance.getBatchVersion(jobInfo)

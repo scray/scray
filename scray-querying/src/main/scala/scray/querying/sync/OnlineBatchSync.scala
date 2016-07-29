@@ -47,7 +47,10 @@ trait OnlineBatchSyncWithTableIdentifier[Statement, InsertIn, Result] extends La
    * Get latest version for a given online job.
    */
   def getOnlineVersion(job: JobInfo[Statement, InsertIn, Result]): Option[TableIdentifier]
-    
+  
+  /**
+   * returns jobname, tableidentifier, slot
+   */
   def getQueryableTableIdentifiers: List[(String, TableIdentifier, Int)]
   def getTableIdentifierOfRunningJob(job: JobInfo[Statement, InsertIn, Result]): Option[TableIdentifier] 
 }
