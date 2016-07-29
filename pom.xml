@@ -37,6 +37,7 @@
 		<module>scray-common</module>
 		<module>scray-java</module>
 		<module>scray-loader</module>
+		<module>scray-archetype</module>
 	</modules>
 
 	<dependencies>
