@@ -326,9 +326,10 @@ logger.info("########################" + tableToRead.dbId + "#" + tableToRead.ta
       clusterKeys,
       allColumns,
       rowMapper.asInstanceOf[CassRow => Row],
-      cassQuerySource.map(_.mappingFunction.asInstanceOf[DomainQuery => Q]).getOrElse {
-        versioningConfig.map(_._4.queryableStore.get.asInstanceOf[CassandraQueryableSource[Q]].mappingFunction).orNull.asInstanceOf[DomainQuery => Q]
-      },
+      q => q.asInstanceOf[Q],
+//      cassQuerySource.map(_.mappingFunction.asInstanceOf[DomainQuery => Q]).getOrElse {
+//        versioningConfig.map(_._4.queryableStore.get.asInstanceOf[CassandraQueryableSource[Q]].mappingFunction).orNull.asInstanceOf[DomainQuery => Q]
+//      },
       cassQuerySource,
       cassQuerySource,
       // TODO: add materialized views
