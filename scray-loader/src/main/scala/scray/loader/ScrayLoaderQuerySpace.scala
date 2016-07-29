@@ -114,25 +114,23 @@ class ScrayLoaderQuerySpace(name: String, config: ScrayConfiguration, qsConfig: 
    * Internal use! 
    */
   def getTables(version: Int): Set[TableConfiguration[_ <: DomainQuery, _ <: DomainQuery, _]] = {
-    val generators = new HashMap[String, StoreGenerators]
     // TODO: read versioned tables from SyncTable and add to rowstores
     // qsConfig.syncTable
     // initialize sync-Api
     
     
-    val syncApiRowStores = qsConfig.syncTable.flatMap { syncTableTi =>
-      generators.get(syncTableTi.dbSystem).map { generator =>
-        val syncApi = generator.createSyncApi(syncTableTi)
-        syncApi.getQueryableTableIdentifiers.map(_._1).toSet.map { jobName: String =>
-          def getNewJobInfo[A, B, C](jobName: String) = {
-            generator.createJobInfo(jobName).asInstanceOf[JobInfo[A, B, C]]
-          }
-          (jobName, syncApi.getOnlineVersion(getNewJobInfo(jobName)).orElse {
-            syncApi.getBatchVersion(getNewJobInfo(jobName))
-          })
-        }
-      }.orElse { 
-        throw new DBMSUndefinedException(syncTableTi.dbSystem, qsConfig.name)
+    val syncApiRowStores = qsConfig.syncTable.map { syncTableTi =>
+      val session = storeConfig.getSessionForStore(syncTableTi.dbSystem).getOrElse {
+          throw new DBMSUndefinedException(syncTableTi.dbSystem, qsConfig.name) }
+      val generator = getGenerator(syncTableTi.dbSystem, session)
+      def getNewJobInfo[A, B, C](jobName: String) = {
+        generator.createJobInfo(jobName).asInstanceOf[JobInfo[A, B, C]]
+      }
+      val syncApi = generator.createSyncApi(syncTableTi)
+      syncApi.getQueryableTableIdentifiers.map(_._1).toSet.map { jobName: String =>
+        (jobName, syncApi.getOnlineVersion(getNewJobInfo(jobName)).orElse {
+          syncApi.getBatchVersion(getNewJobInfo(jobName))
+        })
       }
     }.getOrElse(Set()).filter(_._2.isDefined).map { job =>
       getRowstoreConfiguration(qsConfig.syncTable.get.copy(tableId = job._1))
