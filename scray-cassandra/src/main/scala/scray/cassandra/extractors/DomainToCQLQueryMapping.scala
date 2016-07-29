@@ -53,7 +53,7 @@ class DomainToCQLQueryMapping[Q <: DomainQuery, S <: CassandraQueryableSource[Q]
   @inline private def removeQuotes(query: String): String = query.filterNot(c => c == '"' || c == ';' || c == ''')
   
   @inline private def decideWhere(where: (Boolean, String, String)): String = {
-    if(where._1 && !where._3.isEmpty()) s"WHERE $where" else ""
+    if(where._1 && !where._3.isEmpty()) s"WHERE ${where._2}" else ""
   }
   /**
    * returns a function mapping from Domains to CQL-Strings used in Where clauses
