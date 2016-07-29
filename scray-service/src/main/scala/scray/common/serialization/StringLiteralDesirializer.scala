@@ -59,7 +59,7 @@ object StringLiteralDeserializer {
     parser.InputLine.run() match {
       case Success(result) => Success(result)
       case Failure(e) => {
-        if (e.isInstanceOf[ParseError]) sys.error(parser.formatError(e.asInstanceOf[ParseError], showTraces = true))
+        if (e.isInstanceOf[ParseError]) sys.error(parser.formatError(e.asInstanceOf[ParseError], new ErrorFormatter(showTraces = true)))
         Failure(new ScrayException(ExceptionIDs.SERIALIZATION_FAULT.getName(), s"Unparsable value literal '$literal'.", e))
       }
     }

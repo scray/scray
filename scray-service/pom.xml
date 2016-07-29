@@ -12,10 +12,6 @@
 	<name>Scray - Service</name>
 	<description>scray remote query service interface</description>
 
-	<properties>
-		<parboiled.version>2.0.1</parboiled.version>
-	</properties>
-
 	<dependencies>
 		<dependency>
 			<groupId>scray</groupId>
@@ -36,7 +32,6 @@
 		<dependency>
 			<groupId>org.parboiled</groupId>
 			<artifactId>parboiled_${scala.suffix}</artifactId>
-			<version>${parboiled.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.thrift</groupId>

@@ -72,9 +72,9 @@ class ScrayIntegrationTests extends WordSpec with LazyLogging {
       val context = new FakeBundleContext(Map(Activator.OSGI_FILENAME_PROPERTY -> "resource:///integrationtestconfigs/mainconfig1.txt"))
       activator.start(context)
       printQuerySpace
-      val ti = TableIdentifier( "test", "BLA", "SCHWAETZ" )
+      val ti = TableIdentifier( "test", "silidx", "ReadWriteTest_Job0" )
       val tcol = Column("data", ti)
-      val query = SimpleQuery("HelloWorld", ti, where = Some(Equal(tcol, "2")))
+      val query = SimpleQuery("HelloWorld", ti)
       logger.info("query is:" + query)
       var result = Planner.planAndExecute(query)
       while(!result.isEmpty) {

@@ -159,7 +159,7 @@ class ScrayLoaderQuerySpace(name: String, config: ScrayConfiguration, qsConfig: 
       }
       def extractTableConfig[Q <: DomainQuery, F <: QueryableStoreSource[Q]](column: Column, extractor: StoreExtractor[F]): ColumnConfiguration = {
         // TODO: add indexing configuration (replace maps)
-        val index = extractor.createManualIndexConfiguration(column, name, version, table.queryableStore.get.asInstanceOf[F], Map(), Map())
+        val index = extractor.createManualIndexConfiguration(column, name, version, table.queryableStore.getOrElse(table.versioned.get.queryableStore.get).asInstanceOf[F], Map(), Map())
         storeConfig.getSessionForStore(column.table.dbSystem).map { session =>
           // TODO: add splitter configuration
           extractor.getColumnConfiguration(session, column.table.dbId, column.table.tableId, column, index, Map())

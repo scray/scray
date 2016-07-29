@@ -7,6 +7,7 @@ import scala.util._
 import org.parboiled2.ParseError
 import java.util.UUID
 import java.util.Date
+import org.parboiled2.ErrorFormatter
 
 @RunWith(classOf[JUnitRunner])
 class StringLiteralDeserializerSpec extends FlatSpec with Matchers {
@@ -16,7 +17,7 @@ class StringLiteralDeserializerSpec extends FlatSpec with Matchers {
     parser.InputLine.run() match {
       case Success(result) => Success(result)
       case Failure(e : ParseError) =>
-        sys.error(parser.formatError(e, showTraces = true)); Failure(e)
+        sys.error(parser.formatError(e, new ErrorFormatter(showTraces = true))); Failure(e)
       case Failure(e) => throw e
     }
   }

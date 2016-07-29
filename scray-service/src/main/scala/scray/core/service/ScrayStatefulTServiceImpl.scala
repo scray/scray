@@ -36,6 +36,7 @@ import scray.querying.description.Row
 import org.slf4j.LoggerFactory
 import scray.core.service.spools.TSpoolRack
 import com.typesafe.scalalogging.slf4j.LazyLogging
+import org.parboiled2.ErrorFormatter
 
 object ScrayStatefulTServiceImpl {
   def apply() = new ScrayStatefulTServiceImpl(TSpoolRack)
@@ -51,7 +52,7 @@ class ScrayStatefulTServiceImpl(val rack : SpoolRack) extends ScrayStatefulTServ
     val parsed = parser.InputLine.run() match {
       case Success(result) => Success(result)
       case Failure(e : ParseError) =>
-        logger.error(parser.formatError(e, showTraces = true)); Failure(e)
+        logger.error(parser.formatError(e, new ErrorFormatter(showTraces = true))); Failure(e)
       case Failure(e) => throw e
     }
     parsed.flatMap(_.createQuery) match {
