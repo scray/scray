@@ -73,12 +73,12 @@ class ScrayIntegrationTests extends WordSpec with LazyLogging {
       activator.start(context)
       printQuerySpace
       val ti = TableIdentifier( "test", "silidx", "ReadWriteTest_Job0" )
-      val tcol = Column("data", ti)
+      val tcol = Column("sum", ti)
       val query = SimpleQuery("HelloWorld", ti)
       logger.info("query is:" + query)
       var result = Planner.planAndExecute(query)
       while(!result.isEmpty) {
-        logger.info(s"Got result: ${result.head.getColumnValue(tcol)}")
+        logger.info(s"Got result: ${result.head}")
         result = Await.result(result.tail)
       }
       Activator.keepRunning = false

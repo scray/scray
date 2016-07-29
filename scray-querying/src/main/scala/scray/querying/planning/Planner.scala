@@ -128,7 +128,7 @@ object Planner extends LazyLogging {
       if(!(tableConf.queryableStore.isDefined || tableConf.readableStore.isDefined)) {
           // check that there is a version for the table
           tableConf.versioned.orElse(throw new QueryspaceViolationTableUnavailableException(query)).
-            map(_.runtimeVersion().orElse(throw new QueryspaceViolationTableUnavailableException(query)))
+            map(_.queryableStore.orElse(throw new QueryspaceViolationTableUnavailableException(query)))
       }
     }
 
@@ -293,7 +293,7 @@ object Planner extends LazyLogging {
   def getQueryableStore[Q <: DomainQuery, K <: DomainQuery, V](tableConfig: TableConfiguration[Q, K, V]): QueryableStoreSource[Q] = tableConfig.versioned match {
     case None => tableConfig.queryableStore.get
     case Some(versionInfo) =>
-      logger.info(s"requesting store with ${versionInfo.runtimeVersion().get}")
+      logger.info(s"requesting store with ${versionInfo.queryableStore.get.getScrayCoordinates}")
       versionInfo.queryableStore.get
       // versionInfo.queryableStore(versionInfo.runtimeVersion().get)
   }
