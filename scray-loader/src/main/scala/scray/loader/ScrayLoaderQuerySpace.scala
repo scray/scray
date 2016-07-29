@@ -85,16 +85,16 @@ class ScrayLoaderQuerySpace(name: String, config: ScrayConfiguration, qsConfig: 
   /**
    * return configuration for a simple rowstore
    */
-  private def getRowstoreConfiguration(id: TableIdentifier): Option[TableConfiguration[_ <: DomainQuery, _ <: DomainQuery, _]] = {
+  private def getRowstoreConfiguration(id: TableIdentifier, nickName: Option[String] = None): Option[TableConfiguration[_ <: DomainQuery, _ <: DomainQuery, _]] = {
     // Extractor
     def extractTable[Q <: DomainQuery, S <: QueryableStoreSource[Q]](storeconfigs: (S, 
         (Function1[_, Row], Option[String], Option[VersioningConfiguration[_, _]])), generator: StoreGenerators):
         TableConfiguration[_ <: DomainQuery, _ <: DomainQuery, _] = {
       // TODO: read latest version from SyncTable, if it is declared there, generate a VersioningConfig; otherwise leave it by None
-      val extractor = generator.getExtractor[Q, S](storeconfigs._1, Some(id.tableId), None, Some(id.dbSystem), futurePool)
-      val tid = extractor.getTableIdentifier(storeconfigs._1, storeconfigs._2._2, Some(id.dbSystem))
+      val extractor = generator.getExtractor[Q, S](storeconfigs._1, nickName.orElse(Some(id.tableId)), None, Some(id.dbSystem), futurePool)
+      val tid = extractor.getTableIdentifier(storeconfigs._1, nickName.orElse(storeconfigs._2._2), Some(id.dbSystem))
       extractors.+=((tid, extractor))
-      extractor.getTableConfiguration(storeconfigs._2._1)
+      extractor.getTableConfiguration(storeconfigs._2._1, qsConfig.syncTable.isDefined, nickName)
     } 
     // retrieve session...
     val session = storeConfig.getSessionForStore(id.dbSystem)
@@ -123,17 +123,20 @@ class ScrayLoaderQuerySpace(name: String, config: ScrayConfiguration, qsConfig: 
       val session = storeConfig.getSessionForStore(syncTableTi.dbSystem).getOrElse {
           throw new DBMSUndefinedException(syncTableTi.dbSystem, qsConfig.name) }
       val generator = getGenerator(syncTableTi.dbSystem, session)
+      logger.info("*****************************************************")
       def getNewJobInfo[A, B, C](jobName: String) = {
         generator.createJobInfo(jobName).asInstanceOf[JobInfo[A, B, C]]
       }
       val syncApi = generator.createSyncApi(syncTableTi)
+      logger.info(syncApi.getQueryableTableIdentifiers.toString)
       syncApi.getQueryableTableIdentifiers.map(_._1).toSet.map { jobName: String =>
         (jobName, syncApi.getOnlineVersion(getNewJobInfo(jobName)).orElse {
           syncApi.getBatchVersion(getNewJobInfo(jobName))
         })
       }
     }.getOrElse(Set()).filter(_._2.isDefined).map { job =>
-      getRowstoreConfiguration(qsConfig.syncTable.get.copy(tableId = job._1))
+      logger.info("*****************************" + job._2.get.tableId)
+      getRowstoreConfiguration(qsConfig.syncTable.get.copy(tableId = job._2.get.tableId), Some(job._1))
     }.filter(_.isDefined).map(_.get)
     val rowstores = qsConfig.rowStores
     rowstores.map { tableConfigTxt =>

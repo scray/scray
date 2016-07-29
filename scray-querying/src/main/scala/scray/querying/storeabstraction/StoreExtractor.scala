@@ -47,7 +47,7 @@ trait StoreExtractor[S <: QueryableStoreSource[_]] {
   /**
    * returns the table configuration for this specific store; implementors must override this
    */
-  def getTableConfiguration(rowMapper: (_) => Row): TableConfiguration[_ <: DomainQuery, _ <: DomainQuery, _]
+  def getTableConfiguration(rowMapper: (_) => Row, readSyncTable: Boolean, nickName: Option[String] = None): TableConfiguration[_ <: DomainQuery, _ <: DomainQuery, _]
 
   /**
    * returns a query mapping

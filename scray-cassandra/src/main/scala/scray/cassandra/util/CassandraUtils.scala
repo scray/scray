@@ -19,8 +19,9 @@ import org.yaml.snakeyaml.Yaml
 import com.twitter.util.Try
 import java.util.{ Map => JMap, HashMap => JHashMap }
 import scray.querying.description.TableIdentifier
+import com.typesafe.scalalogging.slf4j.LazyLogging
 
-object CassandraUtils {
+object CassandraUtils extends LazyLogging {
 
   /**
    * convenience method to retrieve KeyspaceMetadata from a StoreColumnFamily object
@@ -43,6 +44,7 @@ object CassandraUtils {
       case Some(ksm) => ksm
       case None      => getKeyspaceMetadata(session, ti.dbId)
     }
+    logger.info("####" + Option(kspaceMeta).map(_.toString).getOrElse("NULL") + "---" + ti.tableId)
     kspaceMeta.getTable(Metadata.quote(ti.tableId))
   }
 

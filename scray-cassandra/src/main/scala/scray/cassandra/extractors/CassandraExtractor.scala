@@ -55,7 +55,7 @@ class CassandraExtractor[Q <: DomainQuery](session: Session, table: TableIdentif
   import scala.collection.convert.decorateAsScala.asScalaBufferConverter
   
   private def getTableMetaData(keyspace: String = table.dbId, tablename: String = table.tableId) =
-    CassandraUtils.getTableMetadata(TableIdentifier("", table.dbId, table.tableId), session)
+    CassandraUtils.getTableMetadata(TableIdentifier("", keyspace, tablename), session)
 
   private def getColumnsPrivate(tm: TableMetadata): Set[Column] = tm.getColumns.asScala.map(col => Column(col.getName, table)).toSet
   private def getClusteringKeyColumnsPrivate(tm: TableMetadata): Set[Column] = 
@@ -257,7 +257,7 @@ class CassandraExtractor[Q <: DomainQuery](session: Session, table: TableIdentif
   private def getTableConfigurationFunction[Q <: DomainQuery, K <: DomainQuery, V](ti: TableIdentifier, space: String, version: Int): TableConfiguration[Q, K, V] = 
     Registry.getQuerySpaceTable(space, version, ti).get.asInstanceOf[TableConfiguration[Q, K, V]]
   
-  private def getVersioningConfiguration[Q <: DomainQuery, K <: DomainQuery](jobName: String, rowMapper: (_) => Row): Option[VersioningConfiguration[Q, K]]  = {
+  private def getVersioningConfiguration[Q <: DomainQuery, K <: DomainQuery](jobName: String, rowMapper: (_) => Row): Option[(Set[Column], Set[Column], Set[Column], VersioningConfiguration[Q, K])]  = {
     val cassSession = new CassandraDbSession(session)
     // TODO: we need to include a way to define the coordinates/TableIdentifier where to search for SyncTable 
     val syncApiInstance = new OnlineBatchSyncCassandra(cassSession)
@@ -273,11 +273,13 @@ class CassandraExtractor[Q <: DomainQuery](session: Session, table: TableIdentif
     tableToReadOpt.map { tableToRead =>
       // use our session to fetch relevent metadata
       val tableMeta = getTableMetaData(tableToRead.dbId, tableToRead.tableId)
-      
+logger.info("########################" + tableToRead.dbId + "#" + tableToRead.tableId + "#")
+      val rowKeys = getRowKeyColumnsPrivate(tableMeta)
+      val clusteringKeys = getClusteringKeyColumnsPrivate(tableMeta)
       val allColumns = getColumnsPrivate(tableMeta)    
       val cassQuerySource = new CassandraQueryableSource(tableToRead,
-        getRowKeyColumnsPrivate(tableMeta), 
-        getClusteringKeyColumnsPrivate(tableMeta),
+        rowKeys, 
+        clusteringKeys,
         allColumns,
         allColumns.map(col => 
           // TODO: ManualIndexConfiguration and Map of Splitter must be extracted from config
@@ -286,20 +288,20 @@ class CassandraExtractor[Q <: DomainQuery](session: Session, table: TableIdentif
         new DomainToCQLQueryMapping[Q, CassandraQueryableSource[Q]](),
         futurePool,
         rowMapper.asInstanceOf[CassRow => Row])
-      VersioningConfiguration[Q, K] (
+      (rowKeys, clusteringKeys, allColumns, VersioningConfiguration[Q, K] (
         latestCompleteVersion = latestComplete,
         runtimeVersion = runtimeVersion,
         queryableStore = Some(cassQuerySource), // the versioned queryable store representation, allowing to query the store
         readableStore = Some(cassQuerySource.asInstanceOf[CassandraQueryableSource[K]]) // the versioned readablestore, used in case this is used by a HashJoinSource
-      )
+      ))
     }
   }
     
-  override def getTableConfiguration(rowMapper: (_) => Row): TableConfiguration[_ <: DomainQuery, _ <: DomainQuery, _] = {
-    val allColumns = getColumns
-    val rowKeys = getRowKeyColumns
-    val clusterKeys = getClusteringKeyColumns
-    val versioningConfig = getVersioningConfiguration[Q, Q](table.tableId , rowMapper)
+  override def getTableConfiguration(rowMapper: (_) => Row, readSyncTable: Boolean, nickName: Option[String] = None): TableConfiguration[_ <: DomainQuery, _ <: DomainQuery, _] = {
+    val versioningConfig = if(readSyncTable) getVersioningConfiguration[Q, Q](table.tableId , rowMapper) else None
+    val rowKeys = versioningConfig.map(_._1).getOrElse(getRowKeyColumns)
+    val clusterKeys = versioningConfig.map(_._2).getOrElse(getClusteringKeyColumns)
+    val allColumns = versioningConfig.map(_._3).getOrElse(getColumns)
     val cassQuerySource = if(versioningConfig.isDefined) {
       None 
     } else {
@@ -318,14 +320,14 @@ class CassandraExtractor[Q <: DomainQuery](session: Session, table: TableIdentif
       )
     }
     TableConfiguration[Q, Q, CassRow] (
-      table,
-      versioningConfig,
+      nickName.map(newname => table.copy(tableId = newname)).getOrElse(table),
+      versioningConfig.map(_._4),
       rowKeys,
       clusterKeys,
       allColumns,
       rowMapper.asInstanceOf[CassRow => Row],
       cassQuerySource.map(_.mappingFunction.asInstanceOf[DomainQuery => Q]).getOrElse {
-        versioningConfig.map(_.queryableStore.get.asInstanceOf[CassandraQueryableSource[Q]].mappingFunction).orNull.asInstanceOf[DomainQuery => Q]
+        versioningConfig.map(_._4.queryableStore.get.asInstanceOf[CassandraQueryableSource[Q]].mappingFunction).orNull.asInstanceOf[DomainQuery => Q]
       },
       cassQuerySource,
       cassQuerySource,
