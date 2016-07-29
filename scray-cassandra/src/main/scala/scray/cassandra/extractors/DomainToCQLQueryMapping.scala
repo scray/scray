@@ -52,7 +52,9 @@ class DomainToCQLQueryMapping[Q <: DomainQuery, S <: CassandraQueryableSource[Q]
 
   @inline private def removeQuotes(query: String): String = query.filterNot(c => c == '"' || c == ';' || c == ''')
   
-  @inline private def decideWhere(where: String): String = if(!where.isEmpty()) s"WHERE $where" else ""
+  @inline private def decideWhere(where: (Boolean, String)): String = {
+    if(where._1 && !where._2.isEmpty()) s"WHERE $where" else ""
+  }
   /**
    * returns a function mapping from Domains to CQL-Strings used in Where clauses
    */
@@ -80,16 +82,16 @@ class DomainToCQLQueryMapping[Q <: DomainQuery, S <: CassandraQueryableSource[Q]
   /**
    * sets given limits at the provided query
    */
-  private def enforceLimit(queryString: String, query: DomainQuery): String = {
+  private def enforceLimit(queryString: String, query: DomainQuery): (Boolean, String) = {
     query.getQueryRange.map { range =>
       if(range.limit.isDefined) {
         val sbuf = new StringBuffer(queryString)
         val skip = range.skip.getOrElse(0L)
-        sbuf.append(LIMIT_LITERAL).append(skip + range.limit.get).toString
+        (true, sbuf.append(LIMIT_LITERAL).append(skip + range.limit.get).toString)
       } else {
-        queryString
+        (false, queryString)
       }
-    }.getOrElse(queryString)
+    }.getOrElse((false, queryString))
   }
 
   private def convertValue[T](value: T) = value match {
