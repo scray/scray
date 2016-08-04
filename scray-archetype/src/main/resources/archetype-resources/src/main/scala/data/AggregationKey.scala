@@ -1,6 +1,8 @@
-package ${package}
+package ${package}.data
 
-
+/**
+ * TODO: adapt to key class which is used to group aggregates for your job
+ */
 case class AggregationKey(access: String, typ: String, category: String, direction: String) extends Ordered[AggregationKey] {
   import scala.math.Ordering._
   override def compare(that: AggregationKey): Int =
