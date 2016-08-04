@@ -80,8 +80,6 @@ class QueryExecutor(poolSize: Int = QueryExecutor.threadPoolSize,
 
 object QueryExecutor {
   
-  // TODO: read config params and initialize QueryExecutor with those
-  
   /**
    * reference to the query runner pool
    */

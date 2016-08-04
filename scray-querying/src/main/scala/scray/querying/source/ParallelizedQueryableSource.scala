@@ -71,8 +71,8 @@ class ParallelizedQueryableSource[Q <: DomainQuery](val store: QueryableStoreSou
   }
 
   /** As seen from class ParallelizedQueryableSource, the missing signatures are as follows.
- *  For convenience, these are usable as stub implementations.
- */
+   *  For convenience, these are usable as stub implementations.
+   */
   def createCache: Cache[_] = new NullCache
   def getColumns: Set[Column] = store.getColumns
   def getDiscriminant: String = this.getClass.getCanonicalName + store.getDiscriminant

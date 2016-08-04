@@ -25,7 +25,8 @@ import scala.collection.mutable.HashMap
 import scala.collection.parallel.immutable.ParSeq
 
 import scray.querying.{ Query, Registry }
-import scray.querying.description.{ And, AtomicClause, Clause, Column, ColumnConfiguration, ColumnOrdering, Columns, Equal, Greater, GreaterEqual, IsNull, Or, Row, Smaller, SmallerEqual, TableConfiguration, TableIdentifier, Unequal, Wildcard, WildcardChecker }
+import scray.querying.description.{ And, AtomicClause, Clause, Column, ColumnConfiguration, ColumnOrdering, Columns, Equal, Greater, GreaterEqual, IsNull, Or }
+import scray.querying.description.{ Row, Smaller, SmallerEqual, TableConfiguration, TableIdentifier, Unequal, Wildcard, WildcardChecker }
 import scray.querying.description.internal.{ SingleValueDomain, RangeValueDomain, QueryspaceViolationTableUnavailableException, QueryspaceViolationException, QueryspaceColumnViolationException, QueryWithoutColumnsException, QueryDomainParserExceptionReasons, QueryDomainParserException, NonAtomicClauseException, NoPlanException, MaterializedView, IndexTypeException, Domain, Bound, _ }
 import scray.querying.queries.{ DomainQuery, QueryInformation }
 import scray.querying.source.{ EagerCollectingDomainFilterSource, EagerEmptyRowDispenserSource, EagerSource, IdentityEagerCollectingQueryMappingSource, IndexMergeSource, LazyEmptyRowDispenserSource, LazyQueryColumnDispenserSource, LazyQueryDomainFilterSource, LazySource, LimitIncreasingQueryableSource }

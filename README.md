@@ -26,5 +26,16 @@ Prerequisites
 
 To build Scray Maven needs a lot of heap and loads a lot of classes. To provide more RAM Maven can be configured by an environment variable called `MAVEN_OPTS`, e.g. by `export MAVEN_OPTS='-Xmx1024m -XX:MaxPermSize=256m'`.
 
+Development
+-----------
+
+* Download sources: `git clone https://github.com/scray-bdq/scray.git`
+* Build using maven: `mvn clean install -DskipTests`
+* Use Scala-Ide Import->Existing Maven Projects and point Eclipse to your scray folder
+* Make all Scala-Projects based on Scala 2.10: Project Preferences->Scala Compiler->Use Project Settings->Latest 2.10
+* Scray-Java: Import `scray-java/target/generated-sources/thrift/scrooge` as an additional source folder
+
+
+
 
 

@@ -67,12 +67,6 @@ trait StoreExtractor[S <: QueryableStoreSource[_]] {
   /**
    * returns the column configuration for a column
    */
-//  def getColumnConfiguration(store: S, 
-//      column: Column,
-//      querySpace: QueryspaceConfiguration,
-//      index: Option[ManuallyIndexConfiguration[_, _, _, _, _]],
-//      splitters: Map[Column, Splitter[_]]): ColumnConfiguration
-  
   def getColumnConfiguration(session: DbSession[_, _, _],
       dbName: String,
       table: String,

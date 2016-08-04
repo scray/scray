@@ -187,35 +187,8 @@ class CassandraExtractor[Q <: DomainQuery](session: Session, table: TableIdentif
   }
 
   /**
-   * returns the column configuration for a Cassandra column
-   */
-//  def getColumnConfiguration(store: S, 
-//      column: Column,
-//      querySpace: QueryspaceConfiguration,
-//      index: Option[ManuallyIndexConfiguration[_, _, _, _, _]],
-//      splitters: Map[Column, Splitter[_]]): ColumnConfiguration = {
-//    val indexConfig = index match {
-//      case None =>
-//        val autoIndex = checkColumnCassandraAutoIndexed(store, column, splitters)
-//        if(autoIndex._1) {
-//          Some(IndexConfiguration(true, None, autoIndex._2.map(_.isRangeIndex).getOrElse(false), 
-//                                  false, autoIndex._2.map(_.isRangeIndex).getOrElse(false), autoIndex._2)) 
-//        } else { None }
-//      case Some(idx) => Some(IndexConfiguration(true, Some(idx), true, true, true, None)) 
-//    }
-//    ColumnConfiguration(column, querySpace, indexConfig)
-//  }
-  
-  /**
    * return a manual index configuration for a column
    */
-//    def createManualIndexConfiguration(column: Column, queryspaceName: String, version: Int, store: S,
-//      indexes: Map[_ <: (QueryableStoreSource[_], String), _ <: (QueryableStoreSource[_], String, 
-//              IndexConfig, Option[Function1[_,_]], Set[String])],
-//      mappers: Map[_ <: QueryableStoreSource[_], ((_) => Row, Option[String], Option[VersioningConfiguration[_, _]])]):
-//        Option[ManuallyIndexConfiguration[_, _, _, _, _]]
-
-  
   override def createManualIndexConfiguration(column: Column, queryspaceName: String, version: Int, store: CassandraQueryableSource[Q],
       indexes: Map[_ <: (QueryableStoreSource[_ <: DomainQuery], String), _ <: (QueryableStoreSource[_ <: DomainQuery], String, 
               IndexConfig, Option[Function1[_,_]], Set[String])],
@@ -273,7 +246,6 @@ class CassandraExtractor[Q <: DomainQuery](session: Session, table: TableIdentif
     tableToReadOpt.map { tableToRead =>
       // use our session to fetch relevent metadata
       val tableMeta = getTableMetaData(tableToRead.dbId, tableToRead.tableId)
-logger.info("########################" + tableToRead.dbId + "#" + tableToRead.tableId + "#")
       val rowKeys = getRowKeyColumnsPrivate(tableMeta)
       val clusteringKeys = getClusteringKeyColumnsPrivate(tableMeta)
       val allColumns = getColumnsPrivate(tableMeta)    
@@ -349,21 +321,6 @@ object CassandraExtractor {
             store.ti.dbId, tableName.getOrElse(store.ti.tableId)),
         futurePool)
   }
-  
-//  /**
-//   * returns a Cassandra information extractor for a given Cassandra-Storehaus wrapper
-//   */
-//  def getExtractor[S <: AbstractCQLCassandraStore[_, _]](store: S, tableName: Option[String],
-//          versions: Option[VersioningConfiguration[_, _]], dbSystem: Option[String]): CassandraExtractor[S] = {
-//    store match { 
-//      case collStore: CQLCassandraCollectionStore[_, _, _, _, _, _] => 
-//        new CQLCollectionStoreExtractor(collStore, tableName, dbSystem, versions).asInstanceOf[CassandraExtractor[S]]
-//      case tupleStore: CQLCassandraStoreTupleValues[_, _, _, _] =>
-//        new CQLStoreTupleValuesExtractor(tupleStore, tableName, dbSystem, versions).asInstanceOf[CassandraExtractor[S]]
-//      case rowStore: CQLCassandraRowStore[_] =>
-//        new CQLRowStoreExtractor(rowStore, tableName, dbSystem, versions).asInstanceOf[CassandraExtractor[S]]
-//    }
-//  }
   
   val DB_ID: String = "cassandra"
   val LUCENE_COLUMN_NAME: String = "lucene"

@@ -42,13 +42,4 @@ class MonitorQuery extends LazyLogging {
 
   Registry.addCreateQueryInformationListener { x => queryInformationListener(x) }
 
-  //Map[UUID, QueryInformation]
-  /* private val qinfo = Registry.getQueryInformations()
-
-  for ((uuid,info) <- qinfo) {
-    val bname = s"Scray:00=Queries,name=${uuid.toString()}"
-    val bean = new QueryInfoBean(uuid.toString())
-    beans.put(uuid.toString, bean)
-    JMXHelpers.jmxRegister(bean, bname)} */
-
 }
