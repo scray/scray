@@ -22,7 +22,7 @@ import com.datastax.spark.connector.CassandraRow
 import com.datastax.spark.connector.rdd.CassandraTableScanRDD
 import com.datastax.spark.connector.streaming.toDStreamFunctions
 import com.datastax.spark.connector.streaming.toStreamingContextFunctions
-import ${package}AggregationKey
+import ${package}.data.AggregationKey
 import com.typesafe.scalalogging.slf4j.LazyLogging
 import scray.querying.sync.JobInfo
 import com.datastax.driver.core.querybuilder.Insert
