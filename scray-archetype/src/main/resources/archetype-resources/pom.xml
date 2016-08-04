@@ -82,6 +82,11 @@
       <artifactId>chill_${scala.compat.version}</artifactId>
       <version>0.8.0</version>
     </dependency>
+    <dependency>
+    	<groupId>scray</groupId>
+    	<artifactId>scray-cassandra</artifactId>
+    	<version>0.0.1-SNAPSHOT</version>
+    </dependency>
 
     <!-- Test -->
     <dependency>
