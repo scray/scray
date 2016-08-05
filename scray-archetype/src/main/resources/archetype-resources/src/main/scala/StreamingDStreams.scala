@@ -1,4 +1,4 @@
-package com.seeburger.bdq.spark
+package ${package}
 
 import org.apache.spark.streaming.dstream.InputDStream
 import org.apache.spark.streaming.StreamingContext
