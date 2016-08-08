@@ -11,9 +11,13 @@ import scala.collection.mutable.Queue
 import com.datastax.driver.core.Session
 import scray.querying.sync.DbSession
 import scray.cassandra.sync.CassandraDbSession
-import scray.cassandra.CassandraQueryableSource
 import scray.cassandra.sync.OnlineBatchSyncCassandra
 import scray.cassandra.sync.CassandraJobInfo
+import scray.querying.sync.ArbitrarylyTypedRows
+import scray.querying.sync.Column
+import scray.cassandra.sync.CassandraImplementation.{strType,lngType}
+
+
 
 /**
  * @author <author@name.org>
@@ -105,9 +109,9 @@ object stock extends LazyLogging {
   }
   
   object ExampleTable extends ArbitrarylyTypedRows {
-    val time = new Column[Long]("time")
-    val name = new Column[String]("name")
-    val sum = new Column[Int]("sum")
+    val time = new Column[Long]("time")(scray.cassandra.sync.CassandraImplementation.lngType)
+    val name = new Column[String]("name")(scray.cassandra.sync.CassandraImplementation.strType)
+    val sum = new Column[Int]("sum")(scray.cassandra.sync.CassandraImplementation.intType)
          
     override val columns = time :: name :: sum :: Nil
     override val primaryKey = s"(${time.name})"

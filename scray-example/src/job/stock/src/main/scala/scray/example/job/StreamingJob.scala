@@ -24,8 +24,11 @@ import com.datastax.spark.connector.streaming.toDStreamFunctions
 import com.datastax.spark.connector.streaming.toStreamingContextFunctions
 import scray.example.job.data.AggregationKey
 import com.typesafe.scalalogging.slf4j.LazyLogging
-import scray.querying.sync.JobInfo
-import scray.querying.sync.cassandra.CassandraJobInfo
+import scray.querying.sync.DbSession
+import scray.cassandra.sync.CassandraDbSession
+import scray.cassandra.sync.OnlineBatchSyncCassandra
+import scray.cassandra.sync.CassandraJobInfo
+import scray.querying.sync.ArbitrarylyTypedRows
 
 
 /**
