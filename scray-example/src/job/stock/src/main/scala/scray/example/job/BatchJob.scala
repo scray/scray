@@ -7,13 +7,14 @@ import org.apache.spark.SparkContext._
 import org.apache.spark._
 import scray.example.job.data.AggregationKey
 import org.apache.spark.rdd.RDD
-import scray.querying.sync.cassandra.CassandraImplementation._
-import scray.querying.sync.OnlineBatchSyncB
-import scray.querying.sync.cassandra.OnlineBatchSyncCassandra
-import scray.querying.sync.JobInfo
 import scala.util.Failure
 import scala.util.Success
-import scray.querying.sync.cassandra.CassandraJobInfo
+import com.datastax.driver.core.Session
+import scray.querying.sync.DbSession
+import scray.cassandra.sync.CassandraDbSession
+import scray.cassandra.CassandraQueryableSource
+import scray.cassandra.sync.OnlineBatchSyncCassandra
+import scray.cassandra.sync.CassandraJobInfo
 
 /**
  * Class containing all the batch stuff

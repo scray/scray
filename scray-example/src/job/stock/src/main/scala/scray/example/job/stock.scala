@@ -8,14 +8,12 @@ import org.apache.spark.streaming.dstream.InputDStream
 import com.typesafe.scalalogging.slf4j.LazyLogging
 import scray.example.job.cli.{Config, Options}
 import scala.collection.mutable.Queue
-import scray.querying.sync.types.ArbitrarylyTypedRows
-import scray.querying.sync.types.Column
-import scray.querying.sync.cassandra.CassandraImplementation._
-import scray.querying.sync.OnlineBatchSyncB
-import scray.querying.sync.cassandra.OnlineBatchSyncCassandra
-import scray.querying.sync.JobInfo
-import scray.querying.sync.types.AbstractRow
-import scray.querying.sync.cassandra.CassandraJobInfo
+import com.datastax.driver.core.Session
+import scray.querying.sync.DbSession
+import scray.cassandra.sync.CassandraDbSession
+import scray.cassandra.CassandraQueryableSource
+import scray.cassandra.sync.OnlineBatchSyncCassandra
+import scray.cassandra.sync.CassandraJobInfo
 
 /**
  * @author <author@name.org>

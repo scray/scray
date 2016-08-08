@@ -113,6 +113,11 @@
     	<artifactId>scray-querying</artifactId>
     	<version>${scray.version}</version>
     </dependency>
+    <dependency>
+    	<groupId>scray</groupId>
+    	<artifactId>scray-cassandra</artifactId>
+    	<version>0.0.1-SNAPSHOT</version>
+    </dependency>
   </dependencies>
 
 	<build>
