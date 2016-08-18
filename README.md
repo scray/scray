@@ -1,4 +1,3 @@
-[![Stories in Ready](https://badge.waffle.io/scray-bdq/scray.png?label=ready&title=Ready)](https://waffle.io/scray-bdq/scray)
 Scray - A Serving-Layer Framework for "BigData"
 ===============================================
 
