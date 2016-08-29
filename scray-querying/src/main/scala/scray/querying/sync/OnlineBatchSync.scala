@@ -96,6 +96,12 @@ trait StateMonitoringApi[Statement, InsertIn, Result] extends LazyLogging {
   def getOnlineJobState(job: JobInfo[Statement, InsertIn, Result], slot: Int): Option[State]
 }
 
+object Merge {
+  def merge[KeyT, ElementT](element1: (KeyT, ElementT), operator: (ElementT, ElementT) => (KeyT, ElementT), element2: (KeyT) => ElementT): (KeyT, ElementT) = {
+    operator(element1._2, element2(element1._1))
+  }
+}
+
 case class RunningJobExistsException(message: String) extends Exception(message)
 case class NoRunningJobExistsException(message: String) extends Exception(message)
 case class StatementExecutionError(message: String) extends Exception(message)
