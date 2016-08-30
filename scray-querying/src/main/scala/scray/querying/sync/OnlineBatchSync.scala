@@ -10,6 +10,7 @@ import com.typesafe.scalalogging.slf4j.LazyLogging
 import scray.common.serialization.BatchID
 import scray.querying.description.TableIdentifier
 import scray.querying.sync.State.State
+import scalaz.Monoid
 
 trait OnlineBatchSyncWithTableIdentifier[Statement, InsertIn, Result] extends LazyLogging {
 
@@ -96,9 +97,15 @@ trait StateMonitoringApi[Statement, InsertIn, Result] extends LazyLogging {
   def getOnlineJobState(job: JobInfo[Statement, InsertIn, Result], slot: Int): Option[State]
 }
 
+/**
+ * Merge two elements.
+ * @param element1 Key value pair of first operand.
+ * @param element2 Function witch returns the second operand depending on the key of the first operand.
+ * @param operator Operation to merge element1 and element2.
+ */
 object Merge {
-  def merge[KeyT, ElementT](element1: (KeyT, ElementT), operator: (ElementT, ElementT) => (KeyT, ElementT), element2: (KeyT) => ElementT): (KeyT, ElementT) = {
-    operator(element1._2, element2(element1._1))
+  def merge[K, V](element1: (K, V), operator: Monoid[V], element2: (K) => V): (K, V) = {
+    (element1._1, operator.append(element1._2, element2(element1._1)))
   }
 }
 
