@@ -104,8 +104,8 @@ trait StateMonitoringApi[Statement, InsertIn, Result] extends LazyLogging {
  * @param operator Operation to merge element1 and element2.
  */
 object Merge {
-  def merge[K, V](element1: (K, V), operator: Monoid[V], element2: (K) => V): (K, V) = {
-    (element1._1, operator.append(element1._2, element2(element1._1)))
+  def merge[K, V](element1: (K, V), operator: (V, V) => V, element2: (K) => V): V = {
+    operator(element1._2, element2(element1._1))
   }
 }
 
