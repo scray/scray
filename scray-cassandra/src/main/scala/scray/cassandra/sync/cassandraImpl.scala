@@ -636,14 +636,23 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
   //      onlyIf(QueryBuilder.eq(syncTable.columns.locked.name, !newState))
   //  }
 
+  
+  def getBatchJobData[T <: RowWithValue, K](jobname: String, slot: Int, key: K, result: T): Option[RowWithValue] = {
+    getJobData(jobname, slot, false, Some(key), result).map { row => row.head } // One key is referred to one key
+  }
+  
+  def getOnlineJobData[T <: RowWithValue, K](jobname: String, slot: Int, key: K, result: T): Option[List[RowWithValue]] = {
+    getJobData(jobname, slot, true, Some(key), result)  
+  }
+  
   def getBatchJobData[T <: RowWithValue](jobname: String, slot: Int, result: T): Option[List[RowWithValue]] = {
-    getJobData(jobname, slot, false, result)
+    getJobData(jobname, slot, false, None, result)
   }
   def getOnlineJobData[T <: RowWithValue](jobname: String, slot: Int, result: T): Option[List[RowWithValue]] = {
-    getJobData(jobname, slot, true, result)
+    getJobData(jobname, slot, true, None, result)  
   }
 
-  private def getJobData[T <: RowWithValue](jobname: String, slot: Int, online: Boolean, result: T): Option[List[RowWithValue]] = {
+  private def getJobData[T <: RowWithValue, K](jobname: String, slot: Int, online: Boolean, key: Option[K], result: T): Option[List[RowWithValue]] = {
     def handleColumnWithValue[U](currentRow: Row, destinationColumn: ColumnWithValue[U]): U = {
       val dbimpl = destinationColumn.dbimpl
       dbimpl.fromDBRow(destinationColumn.name, currentRow).get
@@ -654,10 +663,28 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
       destinationColumn.value = handleColumnWithValue(currentRow, destinationColumn)
     }
 
-    val statementResult = online match {
-      case true => execute(QueryBuilder.select().all().from(syncTable.keySpace, getOnlineJobName(jobname, slot))).map { x => x.iterator() }
-      case _    => execute(QueryBuilder.select().all().from(syncTable.keySpace, getBatchJobName(jobname, slot))).map { x => x.iterator() }
+    def getbatchResults(online: Boolean) = {
+      online match {
+        case true => execute(QueryBuilder.select().all().from(syncTable.keySpace, getOnlineJobName(jobname, slot))).map { x => x.iterator() }
+        case _    => execute(QueryBuilder.select().all().from(syncTable.keySpace, getBatchJobName(jobname, slot))).map { x => x.iterator() }
+      }
     }
+    
+    def getKeyBasedBatchResults[K](online: Boolean, key: K) = {
+      online match {
+        case true => execute(QueryBuilder.select().all().from(syncTable.keySpace, getOnlineJobName(jobname, slot))
+                      .where(QueryBuilder.eq(result.primaryKey.replace("(", "").replace(")", ""), key))).map { x => x.iterator() }
+        case _    => execute(QueryBuilder.select().all().from(syncTable.keySpace, getBatchJobName(jobname, slot))
+                      .where(QueryBuilder.eq(result.primaryKey.replace("(", "").replace(")", ""), key))).map { x => x.iterator() }
+      }
+    }
+    
+    val statementResult = key match {
+      case Some(key) => getKeyBasedBatchResults(online, key)
+      case None => getbatchResults(online)
+    }
+       
+    
     var columns = new ListBuffer[RowWithValue]()
 
     if (statementResult.isFailure) {

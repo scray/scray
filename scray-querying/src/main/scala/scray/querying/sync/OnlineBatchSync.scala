@@ -82,7 +82,7 @@ trait OnlineBatchSync[Statement, InsertIn, Result] extends LazyLogging {
   /**
    * Get batch view data for a special key
    */
-  def getBatchJobData[T <: RowWithValue, K](jobname: String, slot: Int, key: K, result: T): Option[List[RowWithValue]]
+  def getBatchJobData[T <: RowWithValue, K](jobname: String, slot: Int, key: K, result: T): Option[RowWithValue]
     
   def getLatestBatch(job: JOB_INFO): Option[Int] 
 }
@@ -94,7 +94,7 @@ abstract class JobInfo[Statement, InsertIn, Result](
   val numberOfOnlineSlots: Int = 2,
   val dbSystem: String = "cassandra" // Defines the db system for the results of this job.
   ) extends Serializable {
-    
+
   var lock: Option[LockApi[Statement, InsertIn, Result]] = None
   def getLock(dbSession: DbSession[Statement, InsertIn, Result]): LockApi[Statement, InsertIn, Result]
       

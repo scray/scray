@@ -66,6 +66,23 @@ class ReadWriteTest extends WordSpec {
     
           assert(table.getOnlineJobData(jobInfo.name, 0, new RowWithValue(columns, primaryKey, indexes)).get.head.columns.head.value === 100L)
         }
+        "red key based " in {
+          val table = new OnlineBatchSyncCassandra(dbconnection)
+          val jobInfo = new CassandraJobInfo(getNextJobName)
+    
+          val sum = new ColumnWithValue[Long]("sum", 100)
+          val columns = sum :: Nil
+          val primaryKey = s"(${sum.name})"
+          val indexes: Option[List[String]] = None
+    
+          assert(table.initJob(jobInfo, new RowWithValue(columns, primaryKey, indexes)).isSuccess)
+          table.startNextBatchJob(jobInfo)
+          assert(table.insertInBatchTable(jobInfo, 0, new RowWithValue(columns, primaryKey, indexes)).isSuccess) 
+          table.completeBatchJob(jobInfo)
+    
+          assert(table.getBatchJobData(jobInfo.name, 0, 100, new RowWithValue(columns, primaryKey, indexes)).get.columns.head.value === 100)
+          assert(table.getBatchJobData(jobInfo.name, 0, 101, new RowWithValue(columns, primaryKey, indexes)) === None)
+        }
 //        "write and retrieve online data" in {
 //          val table = new OnlineBatchSyncCassandra(dbconnection)
 //          val jobInfo = new CassandraJobInfo("job59")
