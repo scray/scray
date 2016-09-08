@@ -24,13 +24,8 @@ import shapeless.ops.hlist._
 import shapeless.syntax.singleton._
 import scray.cassandra.sync.CassandraJobInfo
 import java.util.concurrent.TimeUnit
-import scray.querying.sync.ColumnWithValue
-import scray.querying.sync.State
 import scray.querying.sync.helpers.TestDbSession
 import scray.cassandra.sync.OnlineBatchSyncCassandra
-import scray.querying.sync.ArbitrarylyTypedRows
-import scray.querying.sync.Column
-import scray.querying.sync.RowWithValue
 import scray.cassandra.sync.CassandraImplementation._
 
 @RunWith(classOf[JUnitRunner])
