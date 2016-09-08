@@ -92,7 +92,9 @@ abstract class JobInfo[Statement, InsertIn, Result](
   val name: String,
   val numberOfBatchSlots: Int = 3,
   val numberOfOnlineSlots: Int = 2,
-  val dbSystem: String = "cassandra" // Defines the db system for the results of this job.
+  val dbSystem: String = "cassandra", // Defines the db system for the results of this job.
+  val startTime: Option[Long] = None, // This job is defined for a given time range. Default is the start time is end time of last batch job or current time.
+  val endTime: Option[Long] = None //Default is the current time when this job finished.
   ) extends Serializable {
 
   var lock: Option[LockApi[Statement, InsertIn, Result]] = None

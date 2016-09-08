@@ -14,6 +14,20 @@
 
 	<properties>
 		<maven-bundle-plugin.version>3.0.1</maven-bundle-plugin.version>
+		<scala-version>2.10.4</scala-version>
+		<joda-version>1.2</joda-version>
+		<joda-time-version>2.2</joda-time-version>
+		<jersey-version>1.19</jersey-version>
+		<swagger-core-version>1.5.9</swagger-core-version>
+		<jersey-async-version>1.0.5</jersey-async-version>
+		<maven-plugin.version>1.0.0</maven-plugin.version>
+		<jackson-version>2.4.2</jackson-version>
+
+		<junit-version>4.8.1</junit-version>
+		<scala-maven-plugin-version>3.1.5</scala-maven-plugin-version>
+		<scala-test-version>2.2.4</scala-test-version>
+
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
 
 	<build>
@@ -92,6 +106,59 @@
 			<groupId>com.typesafe</groupId>
 			<artifactId>config</artifactId>
 			<version>1.2.1</version>
+		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.module</groupId>
+			<artifactId>jackson-module-scala_2.10</artifactId>
+			<version>${jackson-version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.sun.jersey</groupId>
+			<artifactId>jersey-client</artifactId>
+			<version>${jersey-version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.sun.jersey.contribs</groupId>
+			<artifactId>jersey-multipart</artifactId>
+			<version>${jersey-version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.jfarcand</groupId>
+			<artifactId>jersey-ahc-client</artifactId>
+			<version>${jersey-async-version}</version>
+			<scope>compile</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.scala-lang</groupId>
+			<artifactId>scala-library</artifactId>
+			<version>${scala-version}</version>
+		</dependency>
+		<dependency>
+			<groupId>io.swagger</groupId>
+			<artifactId>swagger-core</artifactId>
+			<version>${swagger-core-version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.scalatest</groupId>
+			<artifactId>scalatest_2.10</artifactId>
+			<version>${scala-test-version}</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>${junit-version}</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>joda-time</groupId>
+			<artifactId>joda-time</artifactId>
+			<version>${joda-time-version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.joda</groupId>
+			<artifactId>joda-convert</artifactId>
+			<version>${joda-version}</version>
 		</dependency>
 		<dependency>
 			<groupId>scray</groupId>

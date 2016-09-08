@@ -56,7 +56,7 @@ class StartStopTest extends WordSpec {
 
   "StartStopTest " should {
     " init client" in {
-      val table = new OnlineBatchSyncCassandra(dbconnection)
+      val table = new OnlineBatchSyncCassandra("johannes")
       val jobInfo = new CassandraJobInfo(getNextJobName)
       assert(table.initJob[SumTestColumns](jobInfo, new SumTestColumns).isSuccess)
     }

@@ -12,6 +12,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.core.JsonParser
 import java.util.concurrent.LinkedBlockingQueue
 import com.seeburger.bdq.spark.serializers.GenericKafkaKryoSerializer
+import scray.example.adapter.input.ApiInvoker
 
 @RunWith(classOf[JUnitRunner])
 class Adapter extends WordSpec with BeforeAndAfter with BeforeAndAfterAll {
@@ -21,14 +22,16 @@ class Adapter extends WordSpec with BeforeAndAfter with BeforeAndAfterAll {
     " throw exception if job already exists" in {
       val inputQueue = new LinkedBlockingQueue[Share]()
       
+      val ff: ApiInvoker = new ApiInvoker()
+      
       //new StartKafkaServer
       // new StartSpark
       
       //Thread.sleep(5000)
       //new YahooStreamAdapter(inputQueue).start()
-      new KafkaOutputAdapter(inputQueue).start()
+      //new KafkaOutputAdapter(inputQueue).start()
 
-      Thread.sleep(1000000)
+      //Thread.sleep(1000000)
     }
 //    "serialize and deserialize " in {
 //      val value = 1.5f 
