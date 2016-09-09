@@ -126,7 +126,9 @@ case object BATCH_ONLINE extends JobOrder // Start online job after batch job
 case object BATCH extends JobOrder        // Use batch jobs only
   
 sealed trait MergeMode
-case object ELEMENT_TIME_BASED extends MergeMode // Use time of arriving elements to set start end end time of a job.
+abstract class ELEMENT_TIME_BASED extends MergeMode  { // Use time of arriving elements to set start end end time of a job.
+  def setFirstElementTime(time: Long): Try[Unit]
+}
 case object START_TIME_BASED extends MergeMode // Use time of process start
 
 case class RunningJobExistsException(message: String) extends Exception(message)
