@@ -11,6 +11,7 @@ import scray.common.serialization.BatchID
 import scray.querying.description.TableIdentifier
 import scray.querying.sync.State.State
 import scalaz.Monoid
+import scray.querying.sync.MergeMode
 
 trait OnlineBatchSyncWithTableIdentifier[Statement, InsertIn, Result] extends LazyLogging {
 
@@ -94,12 +95,12 @@ abstract class JobInfo[Statement, InsertIn, Result](
   val numberOfOnlineSlots: Int = 2,
   val dbSystem: String = "cassandra", // Defines the db system for the results of this job.
   val startTime: Option[Long] = None, // This job is defined for a given time range. Default is the start time is end time of last batch job or current time.
-  val endTime: Option[Long] = None //Default is the current time when this job finished.
+  val endTime: Option[Long] = None, //Default is the current time when this job finished.
+  val mergeMode: MergeMode =  START_TIME_BASED
   ) extends Serializable {
 
   var lock: Option[LockApi[Statement, InsertIn, Result]] = None
-  def getLock(dbSession: DbSession[Statement, InsertIn, Result]): LockApi[Statement, InsertIn, Result]
-      
+  def getLock(dbSession: DbSession[Statement, InsertIn, Result]): LockApi[Statement, InsertIn, Result]   
 }
 
 trait StateMonitoringApi[Statement, InsertIn, Result] extends LazyLogging {
@@ -118,6 +119,15 @@ object Merge {
     operator(element1._2, element2(element1._1))
   }
 }
+
+sealed trait JobOrder
+case object ONLINE_BATCH extends JobOrder // Start batch job after online job
+case object BATCH_ONLINE extends JobOrder // Start online job after batch job
+case object BATCH extends JobOrder        // Use batch jobs only
+  
+sealed trait MergeMode
+case object ELEMENT_TIME_BASED extends MergeMode // Use time of arriving elements to set start end end time of a job.
+case object START_TIME_BASED extends MergeMode // Use time of process start
 
 case class RunningJobExistsException(message: String) extends Exception(message)
 case class NoRunningJobExistsException(message: String) extends Exception(message)
