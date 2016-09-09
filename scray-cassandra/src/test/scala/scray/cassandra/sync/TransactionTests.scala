@@ -1,4 +1,4 @@
-package scray.querying.sync
+package scray.cassandra.sync
 
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
@@ -22,9 +22,11 @@ import scray.cassandra.sync.CassandraJobInfo
 import scray.querying.sync.ArbitrarylyTypedRows
 import scray.querying.sync.Column
 import scray.querying.sync.DbSession
-import scray.querying.sync.helpers.TestDbSession
-import scray.querying.sync.helpers.SumTestColumns
+import scray.querying.sync.UnableToLockJobError;
+import scray.cassandra.sync.helpers.TestDbSession
+import scray.cassandra.sync.helpers.SumTestColumns
 import scray.cassandra.sync.OnlineBatchSyncCassandra
+import scray.cassandra.sync.helpers.TestDbSession
 
 @RunWith(classOf[JUnitRunner])
 class TransactionTests extends WordSpec {

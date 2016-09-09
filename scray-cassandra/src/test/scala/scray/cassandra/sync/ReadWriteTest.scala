@@ -1,4 +1,4 @@
-package scray.querying.sync
+package scray.cassandra.sync
 
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -11,11 +11,11 @@ import org.scalatest.BeforeAndAfterAll
 import org.scalatest.WordSpec
 import org.scalatest.junit.JUnitRunner
 
-import scray.cassandra.sync.CassandraJobInfo
-import scray.cassandra.sync.OnlineBatchSyncCassandra
 import scray.common.serialization.BatchID
 import scray.querying.description.Row
-import scray.querying.sync.helpers.TestDbSession
+import scray.querying.sync.RowWithValue;
+import scray.cassandra.sync.helpers.TestDbSession
+import scray.querying.sync.ColumnWithValue
 import scray.cassandra.sync.CassandraImplementation._
 import shapeless.ops.hlist._
 import shapeless.syntax.singleton._

@@ -1,4 +1,4 @@
-package scray.querying.sync.helpers
+package scray.cassandra.sync.helpers
 
 import scala.util.Failure
 import scala.util.Success

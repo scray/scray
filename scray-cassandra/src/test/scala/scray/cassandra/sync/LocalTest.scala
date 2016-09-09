@@ -1,3 +1,4 @@
+package scray.cassandra.sync;
 //package scray.querying.sync
 //
 //import java.util.logging.LogManager
