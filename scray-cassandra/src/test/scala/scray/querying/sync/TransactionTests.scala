@@ -41,7 +41,7 @@ class TransactionTests extends WordSpec {
       val table = new OnlineBatchSyncCassandra(dbconnection)
       table.initJob(jobInfo, new SumTestColumns())
 
-      jobInfo.getLock(dbconnection).lock
+      jobInfo.getLock(dbconnection)
       assert(true)
     }
     "lock and unlock " in {
