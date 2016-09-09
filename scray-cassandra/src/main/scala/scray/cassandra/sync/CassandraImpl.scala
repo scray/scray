@@ -198,17 +198,8 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
         }
         case None => {
           val slot = (getNewestOnlineSlot(job).getOrElse({ logger.debug("No completed slot found use 0"); 0 }) + 1) % job.numberOfOnlineSlots
-          getBatchID(job) match {
-            case None => {
-              logger.error("Online process can only be started up when  at least one batch job finished.")
-              throw new RuntimeException("Online process can only be started up when  at least one batch job finished.")
-            }
-            case Some(prevBatchID) => {
-              logger.debug(s"Set next online slot to ${slot}")
-              executeQuorum(createStartStatement(slot, true, job.startTime.getOrElse(prevBatchID.getBatchEnd)))
-            }
-          }
-
+          logger.debug(s"Set next online slot to ${slot}")
+          executeQuorum(createStartStatement(slot, true, job.startTime.getOrElse(System.currentTimeMillis())))
         }
       }
     } else {
