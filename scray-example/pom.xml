@@ -160,36 +160,5 @@
 			<artifactId>joda-convert</artifactId>
 			<version>${joda-version}</version>
 		</dependency>
-		<dependency>
-			<groupId>scray</groupId>
-			<artifactId>scray-streaming</artifactId>
-			<version>0.0.1-SNAPSHOT</version>
-			<type>bundle</type>
-			<exclusions>
-				<exclusion>
-					<artifactId>config</artifactId>
-					<groupId>com.typesafe</groupId>
-				</exclusion>
-				<exclusion>
-					<artifactId>slf4j-log4j12</artifactId>
-					<groupId>org.slf4j</groupId>
-				</exclusion>
-			</exclusions>
-		</dependency>
-		<dependency>
-			<groupId>scray.example.job</groupId>
-			<artifactId>stock</artifactId>
-			<version>1.0</version>
-			<exclusions>
-				<exclusion>
-					<artifactId>config</artifactId>
-					<groupId>com.typesafe</groupId>
-				</exclusion>
-				<exclusion>
-					<artifactId>slf4j-log4j12</artifactId>
-					<groupId>org.slf4j</groupId>
-				</exclusion>
-			</exclusions>
-		</dependency>
 	</dependencies>
 </project>
