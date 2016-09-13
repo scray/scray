@@ -1,16 +1,24 @@
 Synchronization-API
 
-Some definitions...
+# Sync-API
+Api to synchronize online and batch processes.
+Online and batch processes are synchronized by an attribut which exists in both processes e.g. time.
 
-Timed Data: A dataset which can be associated with a point in time.
+## Assumptions
+- Batch jobs work with a finite number of elements
+- Elements in streaming jobs are ordered by sync attribut
 
-Batch-Job: A "Batch-Job" is a function on timed data. Starting time and end time are parameters which restrict the domain of the function. Only timed data which associates a point in time inbetween starting time and end time is being processed.
+## Some definitions...
 
-Batch-View: Precomputed data, called "Batch-View", is the result of a Batch-Job (c.f. [1]). Therefore, it has a defined starting and end-point in time for timed data which has been processed by the Batch-Job to produce this Batch-View. 
+- Timed Data: A dataset which can be associated with a point in time.
 
-Batch-Layer: A Batch-Layer is a facility to process timed data by executing Batch-Jobs and to store the results of the Batch-Jobs as Batch-Views.
+- Batch-Job: A "Batch-Job" is a function on timed data. Starting time and end time are parameters which restrict the domain of the function. Only timed data which associates a point in time inbetween starting time and end time is being processed.
 
-Eventually ordered sequence: A sequence with an ordering that can be established at an undefined but fixed point in time.
+- Batch-View: Precomputed data, called "Batch-View", is the result of a Batch-Job (c.f. [1]). Therefore, it has a defined starting and end-point in time for timed data which has been processed by the Batch-Job to produce this Batch-View. 
+
+- Batch-Layer: A Batch-Layer is a facility to process timed data by executing Batch-Jobs and to store the results of the Batch-Jobs as Batch-Views.
+
+- Eventually ordered sequence: A sequence with an ordering that can be established at an undefined but fixed point in time.
 
 Stream: A stream is an eventually ordered sequence of timed data, ordered by the time associated with the timed data.
 
