@@ -248,7 +248,7 @@ class StartStopTest extends WordSpec {
       }
       
       val table = new OnlineBatchSyncCassandra(dbconnection)
-      val job = new CassandraJobInfo(getNextJobName, 3, 3, mergeMode = mergeMode)
+      val job = new CassandraJobInfo(getNextJobName, 3, 3)
 
       val sum = new ColumnWithValue[Long]("sum", 100)
       val columns = sum :: Nil

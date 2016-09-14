@@ -19,8 +19,8 @@ class CassandraJobInfo(
     override val name: String,
     numberOfBatchSlots: Int = 3,
     numberOfOnlineSlots: Int = 2,
-    mergeMode: MergeMode =  START_TIME_BASED,
-    lockTimeOut: Int = 500) extends JobInfo[Statement, Insert, ResultSet](name, numberOfBatchSlots, numberOfOnlineSlots, mergeMode = mergeMode) with LazyLogging {
+    mergeModeV: MergeMode =  START_TIME_BASED,
+    lockTimeOut: Int = 500) extends JobInfo[Statement, Insert, ResultSet](name, numberOfBatchSlots, numberOfOnlineSlots) with LazyLogging {
 
   import CassandraImplementation.genericCassandraColumnImplicit
   

@@ -136,5 +136,12 @@ class ReadWriteTest extends WordSpec {
             assert(table.initJob(jobInfo, new RowWithValue(columns, primaryKey, indexes)).isSuccess)
             assert(table.startNextBatchJob(jobInfo).isSuccess)         
           }
+          "get online start time " in {
+            val table = new OnlineBatchSyncCassandra(dbconnection)
+            
+            val jobInfo = new CassandraJobInfo(getNextJobName)
+            val startTime = table.getOnlineStartTime(jobInfo)
+            assert(startTime == None)
+          }
   }
 }

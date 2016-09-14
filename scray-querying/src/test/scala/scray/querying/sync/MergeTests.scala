@@ -47,7 +47,7 @@ class MergeTests extends WordSpec {
       val results = imputStream.map(values => timeFilter.filter(values._1, values)).flatten
       
       assert(results.size == 1)
-      assert(results.contains((past, "a")))
+      assert(results.contains((past, "dataA")))
     }
    }
 }

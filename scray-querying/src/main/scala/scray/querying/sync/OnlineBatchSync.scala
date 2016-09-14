@@ -86,6 +86,7 @@ trait OnlineBatchSync[Statement, InsertIn, Result] extends LazyLogging {
   def getBatchJobData[T <: RowWithValue, K](jobname: String, slot: Int, key: K, result: T): Option[RowWithValue]
     
   def getLatestBatch(job: JOB_INFO): Option[Int] 
+  def getOnlineStartTime(job: JOB_INFO): Option[Int]
 }
 
 
@@ -124,9 +125,9 @@ object Merge {
 /**
  * Filter all data from the future. Compared to the start time.
  */
-class TimeFilter(val startTime: Long) {
+class TimeFilter[Statement, InsertIn, Result](val startTime: Long) {
   def this(startTime: Date) = this(startTime.getTime)
-  def this() = this(0L)
+  def this() = this(0)
 
   def filter[T](date: Long, data: T): Option[T] = {
     if (date >= startTime) {

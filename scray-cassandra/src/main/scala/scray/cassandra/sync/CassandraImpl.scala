@@ -526,7 +526,9 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
           row.getLong(syncTable.columns.batchStartTime.name),
           row.getLong(syncTable.columns.batchEndTime.name),
           row.getBool(syncTable.columns.online.name),
-          row.getString(syncTable.columns.state.name))
+          row.getString(syncTable.columns.state.name),
+          row.getString(syncTable.columns.mergeMode.name),
+          row.getString(syncTable.columns.firstElementTime.name))
       }
 
   }
@@ -629,6 +631,28 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
   //      onlyIf(QueryBuilder.eq(syncTable.columns.locked.name, !newState))
   //  }
 
+  def getOnlineStartTime(job: JOB_INFO): Option[Int] = {
+    val slots = execute(QueryBuilder.select().all().from(syncTable.keySpace, syncTable.tableName).allowFiltering().where(
+      QueryBuilder.eq(syncTable.columns.jobname.name, job.name)).
+      and(QueryBuilder.eq(syncTable.columns.online.name, true)).
+      and(QueryBuilder.eq(syncTable.columns.state.name, State.RUNNING.toString()))).map { _.all() }
+
+    if (slots.isSuccess) {
+      if (slots.get.size() > 1) {
+        logger.error(s"Inconsistant state. More than one version of job ${job.name} are running")
+        None
+      } else {
+        if (slots.get.size() == 0) {
+          None
+        } else {
+          Some(slots.get.get(0).getInt(syncTable.columns.firstElementTime.name))
+        }
+      }
+    } else {
+      None
+    }
+  }
+  
   def getBatchJobData[T <: RowWithValue, K](jobname: String, slot: Int, key: K, result: T): Option[RowWithValue] = {
     getJobData(jobname, slot, false, Some(key), result).map { row => row.head } // One key is referred to one key
   }
