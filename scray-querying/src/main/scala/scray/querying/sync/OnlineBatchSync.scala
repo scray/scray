@@ -1,5 +1,6 @@
 package scray.querying.sync
 
+import java.util.Date
 import java.util.{ Iterator => JIterator }
 
 import scala.annotation.tailrec
@@ -10,8 +11,7 @@ import com.typesafe.scalalogging.slf4j.LazyLogging
 import scray.common.serialization.BatchID
 import scray.querying.description.TableIdentifier
 import scray.querying.sync.State.State
-import scalaz.Monoid
-import scray.querying.sync.MergeMode
+import java.util.Calendar
 
 trait OnlineBatchSyncWithTableIdentifier[Statement, InsertIn, Result] extends LazyLogging {
 
@@ -96,11 +96,12 @@ abstract class JobInfo[Statement, InsertIn, Result](
   val dbSystem: String = "cassandra", // Defines the db system for the results of this job.
   val startTime: Option[Long] = None, // This job is defined for a given time range. Default is the start time is end time of last batch job or current time.
   val endTime: Option[Long] = None, //Default is the current time when this job finished.
-  val mergeMode: MergeMode =  START_TIME_BASED
+  val onlineStartTime: Long = 0
   ) extends Serializable {
 
   var lock: Option[LockApi[Statement, InsertIn, Result]] = None
-  def getLock(dbSession: DbSession[Statement, InsertIn, Result]): LockApi[Statement, InsertIn, Result]   
+  def getLock(dbSession: DbSession[Statement, InsertIn, Result]): LockApi[Statement, InsertIn, Result]
+      
 }
 
 trait StateMonitoringApi[Statement, InsertIn, Result] extends LazyLogging {
@@ -120,16 +121,37 @@ object Merge {
   }
 }
 
-sealed trait JobOrder
-case object ONLINE_BATCH extends JobOrder // Start batch job after online job
-case object BATCH_ONLINE extends JobOrder // Start online job after batch job
-case object BATCH extends JobOrder        // Use batch jobs only
+/**
+ * Filter all data from the future. Compared to the start time.
+ */
+class TimeFilter(val startTime: Long) {
+  def this(startTime: Date) = this(startTime.getTime)
+  def this() = this(0L)
+
+  def filter[T](date: Long, data: T): Option[T] = {
+    if (date >= startTime) {
+      None
+    } else {
+      Some(data)
+    }
+  }
   
-sealed trait MergeMode
-abstract class ELEMENT_TIME_BASED extends MergeMode  { // Use time of arriving elements to set start end end time of a job.
-  def setFirstElementTime(time: Long): Try[Unit]
+  def filter[T](date: Calendar, data: T): Option[T] = {
+    if (date.getTimeInMillis >= startTime) {
+      None
+    } else {
+      Some(data)
+    }
+  }
+  
+  def filter[T](date: Date, data: T): Option[T] = {
+    if (date.getTime >= startTime) {
+      None
+    } else {
+      Some(data)
+    }
+  }
 }
-case object START_TIME_BASED extends MergeMode // Use time of process start
 
 case class RunningJobExistsException(message: String) extends Exception(message)
 case class NoRunningJobExistsException(message: String) extends Exception(message)
