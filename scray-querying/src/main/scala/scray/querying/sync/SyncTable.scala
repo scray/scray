@@ -146,7 +146,7 @@ object SyncTableBasicClasses extends Serializable with LazyLogging {
       onlineV: Boolean,
       stateV: String,
       mergeModeV: String,
-      elementTimeV: String)(implicit 
+      elementTimeV: Long)(implicit 
           colString: DBColumnImplementation[String],
           colInt: DBColumnImplementation[Int],
           colLong: DBColumnImplementation[Long],
@@ -162,7 +162,7 @@ object SyncTableBasicClasses extends Serializable with LazyLogging {
     val online = new ColumnWithValue[Boolean]("online", onlineV)
     val state = new ColumnWithValue[String]("state", stateV)
     val mergeMode = new ColumnWithValue[String]("mergeMode", mergeModeV)
-    val firstElementTime = new ColumnWithValue[String]("firstElementTime", elementTimeV)
+    val firstElementTime = new ColumnWithValue[Long]("firstElementTime", elementTimeV)
   }
 
   class SyncTableRowEmpty(implicit 
@@ -182,7 +182,7 @@ object SyncTableBasicClasses extends Serializable with LazyLogging {
     val online = new Column[Boolean]("online")
     val state = new Column[String]("state")
     val mergeMode = new Column[String]("mergeMode")
-    val firstElementTime = new Column[String]("firstElementTime")
+    val firstElementTime = new Column[Long]("firstElementTime")
 
     override val columns = jobname :: slot :: versions :: dbSystem :: dbId :: tableId :: online :: state :: batchStartTime :: batchEndTime :: mergeMode :: firstElementTime ::Nil
     override val primaryKey = s"((${jobname.name}, ${online.name}), ${slot.name})"
