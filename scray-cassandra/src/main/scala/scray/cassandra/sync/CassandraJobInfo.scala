@@ -12,14 +12,12 @@ import scray.common.serialization.BatchID
 import scray.querying.sync.JobInfo
 import com.typesafe.scalalogging.slf4j.LazyLogging
 import scray.querying.sync.LockApi
-import scray.querying.sync.START_TIME_BASED
-import scray.querying.sync.MergeMode
+
 
 class CassandraJobInfo(
     override val name: String,
     numberOfBatchSlots: Int = 3,
     numberOfOnlineSlots: Int = 2,
-    mergeModeV: MergeMode =  START_TIME_BASED,
     lockTimeOut: Int = 500) extends JobInfo[Statement, Insert, ResultSet](name, numberOfBatchSlots, numberOfOnlineSlots) with LazyLogging {
 
   import CassandraImplementation.genericCassandraColumnImplicit

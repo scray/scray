@@ -86,7 +86,8 @@ trait OnlineBatchSync[Statement, InsertIn, Result] extends LazyLogging {
   def getBatchJobData[T <: RowWithValue, K](jobname: String, slot: Int, key: K, result: T): Option[RowWithValue]
     
   def getLatestBatch(job: JOB_INFO): Option[Int] 
-  def getOnlineStartTime(job: JOB_INFO): Option[Int]
+  def getOnlineStartTime(job: JOB_INFO): Option[Long]
+  def setOnlineStartTime(job: JOB_INFO, time: Long): Try[Unit]
 }
 
 

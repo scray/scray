@@ -17,20 +17,12 @@ import scray.cassandra.sync.helpers.TestDbSession
 import scray.common.serialization.BatchID
 import scray.querying.sync.ArbitrarylyTypedRows
 import scray.querying.sync.Column
-import scray.querying.sync.MergeMode
-import scray.querying.sync.MergeMode
-import scray.querying.sync.MergeMode
 import scray.querying.sync.RowWithValue
 import shapeless.ops.hlist._
 import shapeless.syntax.singleton._
-import scray.querying.sync.ELEMENT_TIME_BASED
 import scray.querying.sync.ColumnWithValue
-import scray.querying.sync.ELEMENT_TIME_BASED
-import scray.querying.sync.ELEMENT_TIME_BASED
 import scala.util.Try
-import scray.querying.sync.ELEMENT_TIME_BASED
 import scray.querying.sync.State
-import scray.querying.sync.START_TIME_BASED
 
 @RunWith(classOf[JUnitRunner])
 class StartStopTest extends WordSpec {
@@ -239,14 +231,7 @@ class StartStopTest extends WordSpec {
       assert(table.getOnlineJobState(job, 1).get.equals(State.NEW))
       assert(table.getOnlineJobState(job, 2).get.equals(State.NEW))
     }
-    " sync stream and batch " in {
-      
-      val  mergeMode = new ELEMENT_TIME_BASED {
-        override  def setFirstElementTime(time: Long): Try[Unit] = {
-          Try()
-        }
-      }
-      
+    " sync stream and batch " in {     
       val table = new OnlineBatchSyncCassandra(dbconnection)
       val job = new CassandraJobInfo(getNextJobName, 3, 3)
 

@@ -75,6 +75,7 @@ import scray.querying.sync.JobLockTable
 import scray.querying.sync.ArbitrarylyTypedRows
 import scray.querying.sync.SyncTableBasicClasses
 
+
 object CassandraImplementation extends AbstractTypeDetection with Serializable {
 
   implicit def genericCassandraColumnImplicit[T](implicit cassImplicit: CassandraPrimitive[T]): DBColumnImplementation[T] = new DBColumnImplementation[T] {
@@ -528,7 +529,7 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
           row.getBool(syncTable.columns.online.name),
           row.getString(syncTable.columns.state.name),
           row.getString(syncTable.columns.mergeMode.name),
-          row.getString(syncTable.columns.firstElementTime.name))
+          row.getLong(syncTable.columns.firstElementTime.name))
       }
 
   }
@@ -631,7 +632,7 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
   //      onlyIf(QueryBuilder.eq(syncTable.columns.locked.name, !newState))
   //  }
 
-  def getOnlineStartTime(job: JOB_INFO): Option[Int] = {
+  def getOnlineStartTime(job: JOB_INFO): Option[Long] = {
     val slots = execute(QueryBuilder.select().all().from(syncTable.keySpace, syncTable.tableName).allowFiltering().where(
       QueryBuilder.eq(syncTable.columns.jobname.name, job.name)).
       and(QueryBuilder.eq(syncTable.columns.online.name, true)).
@@ -645,11 +646,31 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
         if (slots.get.size() == 0) {
           None
         } else {
-          Some(slots.get.get(0).getInt(syncTable.columns.firstElementTime.name))
+          Some(slots.get.get(0).getLong(syncTable.columns.firstElementTime.name))
         }
       }
     } else {
       None
+    }
+  }
+  
+  def setOnlineStartTime(job: JOB_INFO, time: Long): Try[Unit] = {
+    this.getRunningOnlineJobSlot(job).map { slot => 
+      val insertTime = QueryBuilder.insertInto(syncTable.keySpace, syncTable.tableName)
+            .value(syncTable.columns.slot.name, slot)
+            .value(syncTable.columns.online.name, true)
+            .value(syncTable.columns.jobname.name, job.name)
+            .value(syncTable.columns.state.name, State.RUNNING.toString())
+            .value(syncTable.columns.versions.name, job.numberOfOnlineSlots)
+            .value(syncTable.columns.dbSystem.name, "cassandra")
+            .value(syncTable.columns.dbId.name, syncTable.keySpace)
+            .value(syncTable.columns.firstElementTime.name, time)
+            .value(syncTable.columns.tableId.name, getBatchJobName(job.name, slot))
+            
+            dbSession.execute(insertTime)
+    } match {
+      case Some(_) => Try()
+      case None => Failure(new RuntimeException("Error while setting start time. See previous logs")) 
     }
   }
   
