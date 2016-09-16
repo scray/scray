@@ -74,6 +74,7 @@ import java.util.{ Iterator => JIterator }
 import scray.querying.sync.JobLockTable
 import scray.querying.sync.ArbitrarylyTypedRows
 import scray.querying.sync.SyncTableBasicClasses
+import scray.cassandra.util.CassandraUtils
 
 
 object CassandraImplementation extends AbstractTypeDetection with Serializable {
@@ -336,7 +337,7 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
       .map { _.iterator() }.recover {
         case e => { logger.error(s"DB error while fetching newest slot ${e.getMessage}"); throw e }
       }.toOption
-      .flatMap { iter => this.getNewestRow(iter, syncTable.columns.batchEndTime.name) }
+      .flatMap { iter => CassandraUtils.getNewestRow(iter, syncTable.columns.batchEndTime.name) }
       .map { row => (row.getInt(syncTable.columns.slot.name)) }
   }
 
@@ -515,7 +516,7 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
       .map { _.iterator() }.recover {
         case e => { logger.error(s"DB error while fetching Newest Version ${e.getMessage}"); throw e }
       }.toOption
-      .flatMap { iter => this.getNewestRow(iter, syncTable.columns.batchEndTime.name) }
+      .flatMap { iter => CassandraUtils.getNewestRow(iter, syncTable.columns.batchEndTime.name) }
       .map { row =>
         new scray.querying.sync.SyncTableBasicClasses.SyncTableRow(
           row.getString(syncTable.columns.jobname.name),
@@ -787,19 +788,7 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
   private def getBatchJobName(jobname: String, nr: Int): String = { jobname + "_batch" + nr }
   private def getOnlineJobName(jobname: String, nr: Int): String = { jobname + "_online" + nr }
 
-  def getNewestRow(rows: java.util.Iterator[Row], columnName: String): Option[Row] = {
-    import scala.math.Ordering._
-    val comp = implicitly[Ordering[Long]]
-    getComptRow(rows, comp.gt, columnName)
-  }
-
-  def getOldestRow(rows: java.util.Iterator[Row], columnName: String): Option[Row] = {
-    import scala.math.Ordering._
-    val comp = implicitly[Ordering[Long]]
-    getComptRow(rows, comp.lt, columnName)
-  }
-
-  def getComptRow(rows: JIterator[Row], comp: (Long, Long) => Boolean, columnName: String): Option[Row] = {
+    def getComptRow(rows: JIterator[Row], comp: (Long, Long) => Boolean, columnName: String): Option[Row] = {
     @tailrec def accNewestRow(prevRow: Row, nextRows: JIterator[Row]): Row = {
       if (nextRows.hasNext) {
         val localRow = nextRows.next()

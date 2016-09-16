@@ -200,7 +200,6 @@ object SyncTableBasicClasses extends Serializable with LazyLogging {
     override val primaryKey = s"(${jobname.name})"
     override val indexes: Option[List[String]] = None
   }
-
 }
 
 object State extends Enumeration {
