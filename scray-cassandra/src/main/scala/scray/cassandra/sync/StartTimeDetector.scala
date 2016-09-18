@@ -1,21 +1,23 @@
 package scray.cassandra.sync
 
+import scala.collection.JavaConverters._
+
+import com.datastax.driver.core.ResultSet
+import com.datastax.driver.core.Row
+import com.datastax.driver.core.Statement
+import com.datastax.driver.core.querybuilder.Insert
+import com.datastax.driver.core.querybuilder.QueryBuilder
+import com.typesafe.scalalogging.slf4j.LazyLogging
+
+import scray.cassandra.sync.CassandraImplementation.genericCassandraColumnImplicit
 import scray.querying.sync.ArbitrarylyTypedRows
 import scray.querying.sync.Column
 import scray.querying.sync.DBColumnImplementation
-import scray.querying.sync.JobInfo
-import com.datastax.driver.core.querybuilder.Insert
-import com.datastax.driver.core.ResultSet
-import com.datastax.driver.core.Statement
-import scray.cassandra.util.CassandraUtils
 import scray.querying.sync.DbSession
-import com.datastax.driver.core.querybuilder.QueryBuilder
-import scray.querying.sync.State
-import scray.cassandra.sync.CassandraImplementation.genericCassandraColumnImplicit
+import scray.querying.sync.JobInfo
 import scray.querying.sync.Table
-import com.typesafe.scalalogging.slf4j.LazyLogging
-import com.datastax.driver.core.Row
-import scala.collection.JavaConverters._
+import scala.util.Try
+import scala.util.Failure
 
 /**
  * Find a consensus about the start time of a job.
@@ -54,6 +56,21 @@ object StartTimeDetector extends LazyLogging {
     return allWorkerVoted.flatten
   }
 
+
+  def publishLocalStartTime(job: JobInfo[Statement, Insert, ResultSet], dbSession: DbSession[Statement, Insert, ResultSet], time: Long): Try[Boolean] = {
+    val statement = job.numberOfWorkers.map { numWorkers => 
+     QueryBuilder.insertInto(startConsensusTable.keySpace, startConsensusTable.tableName)
+          .value(startConsensusTable.columns.jobname.name, job.name)
+          .value(startConsensusTable.columns.time.name, time)  
+          .value(startConsensusTable.columns.numberOfWorkers.name, numWorkers)      
+    }
+    
+    statement match {
+      case Some(statement) => Try(dbSession.insert(statement).isSuccess)
+      case None => logger.warn("No numberOfWorkers configured! No time update"); throw new RuntimeException("No numberOfWorkers configured! No time update")
+    }
+  }
+  
   /**
    * Get the time of the first element.
    */
@@ -67,7 +84,7 @@ object StartTimeDetector extends LazyLogging {
       }
     })
   }
-
+  
 
   class StartConsensusRow(implicit colString: DBColumnImplementation[String],
                           colLong: DBColumnImplementation[Long],

@@ -18,7 +18,8 @@ class CassandraJobInfo(
     override val name: String,
     numberOfBatchSlots: Int = 3,
     numberOfOnlineSlots: Int = 2,
-    lockTimeOut: Int = 500) extends JobInfo[Statement, Insert, ResultSet](name, numberOfBatchSlots, numberOfOnlineSlots) with LazyLogging {
+    numberOfWorkersV: Option[Long] = None,
+    lockTimeOut: Int = 500) extends JobInfo[Statement, Insert, ResultSet](name, numberOfBatchSlots, numberOfOnlineSlots, numberOfWorkers = numberOfWorkersV) with LazyLogging {
 
   import CassandraImplementation.genericCassandraColumnImplicit
   

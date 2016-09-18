@@ -99,7 +99,8 @@ abstract class JobInfo[Statement, InsertIn, Result](
   val dbSystem: String = "cassandra", // Defines the db system for the results of this job.
   val startTime: Option[Long] = None, // This job is defined for a given time range. Default is the start time is end time of last batch job or current time.
   val endTime: Option[Long] = None, //Default is the current time when this job finished.
-  val onlineStartTime: Long = 0
+  val onlineStartTime: Long = 0,
+  val numberOfWorkers: Option[Long] = None
   ) extends Serializable {
 
   var lock: Option[LockApi[Statement, InsertIn, Result]] = None

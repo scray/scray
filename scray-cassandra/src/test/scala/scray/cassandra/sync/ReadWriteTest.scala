@@ -2,6 +2,7 @@ package scray.cassandra.sync
 
 import java.util.concurrent.atomic.AtomicInteger
 
+
 import scala.annotation.tailrec
 import scala.util.Try
 
@@ -11,12 +12,12 @@ import org.scalatest.BeforeAndAfterAll
 import org.scalatest.WordSpec
 import org.scalatest.junit.JUnitRunner
 
+import scray.cassandra.sync.CassandraImplementation._
+import scray.cassandra.sync.helpers.TestDbSession
 import scray.common.serialization.BatchID
 import scray.querying.description.Row
-import scray.querying.sync.RowWithValue;
-import scray.cassandra.sync.helpers.TestDbSession
 import scray.querying.sync.ColumnWithValue
-import scray.cassandra.sync.CassandraImplementation._
+import scray.querying.sync.RowWithValue
 import shapeless.ops.hlist._
 import shapeless.syntax.singleton._
 
@@ -173,6 +174,19 @@ class ReadWriteTest extends WordSpec {
             val startTime = table.getOnlineStartTime(jobInfo).getOrElse(0L)
             
             assert(startTime > 0)
+          }  
+          "find first element if all nodes sended a time " in {
+            
+            val jobInfo = new CassandraJobInfo(getNextJobName, numberOfWorkersV = Some(3))
+            
+            StartTimeDetector.publishLocalStartTime(jobInfo, dbconnection, 100)
+            assert(StartTimeDetector.allNodesVoted(jobInfo, dbconnection) == None)
+            
+            StartTimeDetector.publishLocalStartTime(jobInfo, dbconnection, 101)
+            assert(StartTimeDetector.allNodesVoted(jobInfo, dbconnection) == None)
+            
+            StartTimeDetector.publishLocalStartTime(jobInfo, dbconnection, 102)
+            assert(StartTimeDetector.allNodesVoted(jobInfo, dbconnection) == Some(100))
           }
   }
 }

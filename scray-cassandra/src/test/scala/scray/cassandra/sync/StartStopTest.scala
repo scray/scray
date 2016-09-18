@@ -242,8 +242,6 @@ class StartStopTest extends WordSpec {
 
       assert(table.initJob(job, new RowWithValue(columns, primaryKey, indexes)).isSuccess)
       assert(table.startNextOnlineJob(job).isSuccess) // Start online job and set current start time
-//      table.startNextBatchJob(job)
-
     }
   }
 }
