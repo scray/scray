@@ -18,6 +18,7 @@ import scray.querying.sync.JobInfo
 import scray.querying.sync.Table
 import scala.util.Try
 import scala.util.Failure
+import scray.cassandra.util.CassandraUtils
 
 /**
  * Find a consensus about the start time of a job.
@@ -28,6 +29,14 @@ import scala.util.Failure
 object StartTimeDetector extends LazyLogging {
 
   val startConsensusTable = new Table("silidx", "startconsensus", new StartConsensusRow)
+  
+  /**
+   * Create keyspaces and tables if needed.
+   */
+  def init(job: JobInfo[Statement, Insert, ResultSet], dbSession: DbSession[Statement, Insert, ResultSet]) = {
+    CassandraUtils.createKeyspaceCreationStatement(startConsensusTable).map { statement => dbSession.execute(statement) }
+    CassandraUtils.createTableStatement(startConsensusTable).map { statement => dbSession.execute(statement) }
+  }
 
   def allNodesVoted(job: JobInfo[Statement, Insert, ResultSet], dbSession: DbSession[Statement, Insert, ResultSet]): Option[Long] = {
     val votes = QueryBuilder.select.all().from(startConsensusTable.keySpace, startConsensusTable.tableName).where(
@@ -39,7 +48,7 @@ object StartTimeDetector extends LazyLogging {
         case e => { logger.error(s"DB error while fetching all element of the vote for ${job.name}. Error: ${e.getMessage}"); throw e }
       }.toOption.map { rows =>
         if (rows.size() > 0) {
-          ((rows.get(0).getLong(startConsensusTable.columns.numberOfWorkers.name) <= rows.size()), rows)
+          ((rows.get(0).getInt(startConsensusTable.columns.numberOfWorkers.name) <= rows.size()), rows)
         } else {
           (false, rows)
         }
@@ -77,8 +86,8 @@ object StartTimeDetector extends LazyLogging {
   def getMinTime(times: java.util.List[Row]): Long = {
 
     times.asScala.foldLeft(Long.MaxValue)((min, row) => {
-      if (row.getLong(startConsensusTable.columns.numberOfWorkers.name) < min) {
-        row.getLong(startConsensusTable.columns.numberOfWorkers.name)
+      if (row.getLong(startConsensusTable.columns.time.name) < min) {
+        row.getLong(startConsensusTable.columns.time.name)
       } else {
         min
       }

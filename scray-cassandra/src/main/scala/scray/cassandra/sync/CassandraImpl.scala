@@ -130,7 +130,7 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
 
   val syncTable = SyncTable("silidx", "SyncTable")
   val jobLockTable = JobLockTable("silidx", "JobLockTable")
-  val statementGenerator = CassandraStatementGenerator
+  val statementGenerator = CassandraUtils
   val lockTimeOut = 500 //ms
 
   /**
@@ -138,8 +138,8 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
    */
   @Override
   def initJob[T <: AbstractRow](job: JOB_INFO, dataTable: T): Try[Unit] = Try {
-    statementGenerator.createKeyspaceCreationString(syncTable).map { statement => dbSession.execute(statement) }
-    statementGenerator.createSingleTableString(syncTable).map { statement => dbSession.execute(statement) }
+    statementGenerator.createKeyspaceCreationStatement(syncTable).map { statement => dbSession.execute(statement) }
+    statementGenerator.createTableStatement(syncTable).map { statement => dbSession.execute(statement) }
 
     this.crateAndRegisterTablesIfNotExists(job)
     this.createDataTables(job, dataTable)
@@ -147,8 +147,8 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
 
   @Override
   def initJob[DataTableT <: ArbitrarylyTypedRows](job: JOB_INFO): Try[Unit] = {
-    statementGenerator.createKeyspaceCreationString(syncTable).map { statement => dbSession.execute(statement) }
-    statementGenerator.createSingleTableString(syncTable).map { statement => dbSession.execute(statement) }
+    statementGenerator.createKeyspaceCreationStatement(syncTable).map { statement => dbSession.execute(statement) }
+    statementGenerator.createTableStatement(syncTable).map { statement => dbSession.execute(statement) }
 
     this.crateAndRegisterTablesIfNotExists(job)
   }
@@ -461,12 +461,12 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
     // Create and register online tables
     0 to job.numberOfOnlineSlots - 1 foreach { i =>
       // Create online data tables
-      statementGenerator.createSingleTableString(VoidTable(syncTable.keySpace, getOnlineJobName(job.name, i), dataColumns)).map { statement => session.execute(statement) }
+      statementGenerator.createTableStatement(VoidTable(syncTable.keySpace, getOnlineJobName(job.name, i), dataColumns)).map { statement => session.execute(statement) }
     }
 
     0 to job.numberOfBatchSlots - 1 foreach { i =>
       // Create batch data tables
-      statementGenerator.createSingleTableString(VoidTable(syncTable.keySpace, getBatchJobName(job.name, i), dataColumns)).map { statement => session.execute(statement) }
+      statementGenerator.createTableStatement(VoidTable(syncTable.keySpace, getBatchJobName(job.name, i), dataColumns)).map { statement => session.execute(statement) }
     }
   }
 
@@ -553,7 +553,7 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
 
   def insertInBatchTable(job: JOB_INFO, slot: Int, data: RowWithValue): Try[Unit] = {
     val table = new Table(syncTable.keySpace, getBatchJobName(job.name, slot), data)
-    CassandraStatementGenerator.createSingleTableString(table).map { session.execute(_) }
+    CassandraUtils.createTableStatement(table).map { session.execute(_) }
     val statement = data.foldLeft(QueryBuilder.insertInto(syncTable.keySpace, getBatchJobName(job.name, slot))) {
       (acc, column) => acc.value(column.name, column.value)
     }
@@ -810,20 +810,5 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
     } else {
       None
     }
-  }
-}
-
-object CassandraStatementGenerator extends LazyLogging {
-
-  def createSingleTableString[T <: AbstractRow](table: Table[T]): Option[String] = {
-    val createStatement = s"CREATE TABLE IF NOT EXISTS ${table.keySpace + "." + table.tableName} (" +
-      s"${table.columns.foldLeft("")((acc, next) => { acc + next.name + " " + next.getDBType + ", " })} " +
-      s"PRIMARY KEY ${table.columns.primaryKey})"
-    logger.debug(s"Create table String: ${createStatement} ")
-    Some(createStatement)
-  }
-
-  def createKeyspaceCreationString[T <: AbstractRow](table: Table[T]): Option[String] = {
-    Some(s"CREATE KEYSPACE IF NOT EXISTS ${table.keySpace} WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor' : 1};")
   }
 }

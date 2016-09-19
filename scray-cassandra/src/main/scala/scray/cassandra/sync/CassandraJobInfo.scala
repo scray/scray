@@ -12,6 +12,7 @@ import scray.common.serialization.BatchID
 import scray.querying.sync.JobInfo
 import com.typesafe.scalalogging.slf4j.LazyLogging
 import scray.querying.sync.LockApi
+import scray.cassandra.util.CassandraUtils
 
 
 class CassandraJobInfo(
@@ -23,17 +24,17 @@ class CassandraJobInfo(
 
   import CassandraImplementation.genericCassandraColumnImplicit
   
-  val statementGenerator = CassandraStatementGenerator
+  val statementGenerator = CassandraUtils
 
   def getLock(dbSession: DbSession[Statement, Insert, ResultSet]): LockApi[Statement, Insert, ResultSet] = {
      this.lock = this.lock.orElse {
       val table = JobLockTable("SILIDX", "JobSync")
 
-      dbSession.execute(statementGenerator.createKeyspaceCreationString(table).get).
+      dbSession.execute(statementGenerator.createKeyspaceCreationStatement(table).get).
         recover {
           case e => { logger.error(s"Synctable is unable to create keyspace ${table.keySpace} Message: ${e.getMessage}"); throw e }
         }.flatMap { _ =>
-          dbSession.execute(statementGenerator.createSingleTableString(table).get)
+          dbSession.execute(statementGenerator.createTableStatement(table).get)
         }
 
       // Register new job in lock table

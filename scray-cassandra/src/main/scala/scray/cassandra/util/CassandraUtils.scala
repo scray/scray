@@ -201,4 +201,17 @@ object CassandraUtils extends LazyLogging {
       None
     }
   }
+  
+
+  def createTableStatement[T <: AbstractRow](table: Table[T]): Option[String] = {
+    val createStatement = s"CREATE TABLE IF NOT EXISTS ${table.keySpace + "." + table.tableName} (" +
+      s"${table.columns.foldLeft("")((acc, next) => { acc + next.name + " " + next.getDBType + ", " })} " +
+      s"PRIMARY KEY ${table.columns.primaryKey})"
+    logger.debug(s"Create table String: ${createStatement} ")
+    Some(createStatement)
+  }
+
+  def createKeyspaceCreationStatement[T <: AbstractRow](table: Table[T]): Option[String] = {
+    Some(s"CREATE KEYSPACE IF NOT EXISTS ${table.keySpace} WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor' : 1};")
+  }
 }
