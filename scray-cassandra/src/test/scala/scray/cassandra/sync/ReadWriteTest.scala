@@ -179,6 +179,8 @@ class ReadWriteTest extends WordSpec {
             
             val jobInfo = new CassandraJobInfo(getNextJobName, numberOfWorkersV = Some(3))
             
+            StartTimeDetector.init(jobInfo, dbconnection)
+            
             StartTimeDetector.publishLocalStartTime(jobInfo, dbconnection, 100)
             assert(StartTimeDetector.allNodesVoted(jobInfo, dbconnection) == None)
             
