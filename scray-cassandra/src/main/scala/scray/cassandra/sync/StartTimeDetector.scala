@@ -19,6 +19,18 @@ import scray.querying.sync.Table
 import scala.util.Try
 import scala.util.Failure
 import scray.cassandra.util.CassandraUtils
+import shapeless.syntax.singleton._
+import scala.concurrent.duration._
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
+import scala.util.Failure
+import scala.util.Success
+import java.util.concurrent.Callable
+import scala.concurrent.Await
+import com.typesafe.scalalogging.slf4j.LazyLogging
+import org.slf4j.LoggerFactory
+import com.typesafe.scalalogging.slf4j.Logger
+import java.util.concurrent.TimeoutException
 
 /**
  * Find a consensus about the start time of a job.
@@ -27,11 +39,10 @@ import scray.cassandra.util.CassandraUtils
  * Also other ordinal attributes can be use.
  */
 class StartTimeDetector(job: JobInfo[Statement, Insert, ResultSet],
-    val dbSession: DbSession[Statement, Insert, ResultSet]
-    ) extends LazyLogging {
+                        val dbSession: DbSession[Statement, Insert, ResultSet]) extends LazyLogging {
 
   val startConsensusTable = new Table("silidx", "startconsensus", new StartConsensusRow)
-  
+
   /**
    * Create keyspaces and tables if needed.
    */
@@ -63,25 +74,24 @@ class StartTimeDetector(job: JobInfo[Statement, Insert, ResultSet],
           None
         }
       }
-      
+
     return allWorkerVoted.flatten
   }
 
-
   def publishLocalStartTime(time: Long): Try[Boolean] = {
-    val statement = job.numberOfWorkers.map { numWorkers => 
-     QueryBuilder.insertInto(startConsensusTable.keySpace, startConsensusTable.tableName)
-          .value(startConsensusTable.columns.jobname.name, job.name)
-          .value(startConsensusTable.columns.time.name, time)  
-          .value(startConsensusTable.columns.numberOfWorkers.name, numWorkers)      
+    val statement = job.numberOfWorkers.map { numWorkers =>
+      QueryBuilder.insertInto(startConsensusTable.keySpace, startConsensusTable.tableName)
+        .value(startConsensusTable.columns.jobname.name, job.name)
+        .value(startConsensusTable.columns.time.name, time)
+        .value(startConsensusTable.columns.numberOfWorkers.name, numWorkers)
     }
-    
+
     statement match {
       case Some(statement) => Try(dbSession.insert(statement).isSuccess)
-      case None => logger.warn("No numberOfWorkers configured! No time update"); throw new RuntimeException("No numberOfWorkers configured! No time update")
+      case None            => logger.warn("No numberOfWorkers configured! No time update"); throw new RuntimeException("No numberOfWorkers configured! No time update")
     }
   }
-  
+
   /**
    * Get the time of the first element.
    */
@@ -95,7 +105,50 @@ class StartTimeDetector(job: JobInfo[Statement, Insert, ResultSet],
       }
     })
   }
+
+  /**
+   * Poll the database until all nodes sent their first element date.
+   * 
+   * @param timeout timeout value in seconds to wait for first element time
+   */
+  def waitForFirstElementTime(timeout: Int): Option[Long] = {
+    val pollingTask: Future[Long] = Future[Long] {
+      val logger = Logger(LoggerFactory.getLogger(this.getClass))
+      val sleepTimeBetweenPolling = 5000 // ms
+
+      def poll = {
+        this.allNodesVoted match {
+          case Some(time) => time
+          case None       => 0
+        }
+      }
+
+      // poll db
+      while (poll < 1) {
+        logger.debug(s"No first element time found. Poll again in ${sleepTimeBetweenPolling}ms")
+        Thread.sleep(sleepTimeBetweenPolling)
+      }
+
+      val time = poll
+      logger.info(s"Found first element time ${time}")
+
+      time
+    }
+
+    // Wait for result
+    val firstElementTime = try {
+      val time = Await.result(pollingTask, timeout seconds)
+      Some(time)
+    } catch {
+      case e: TimeoutException => { logger.error(s"Timeout while waiting for time of first element"); None }
+    }
+
+    firstElementTime
+  }
   
+  def waitForFirstElementTime: Option[Long] = {
+    waitForFirstElementTime(480)
+  }
 
   class StartConsensusRow(implicit colString: DBColumnImplementation[String],
                           colLong: DBColumnImplementation[Long],

@@ -20,6 +20,17 @@ import scray.querying.sync.ColumnWithValue
 import scray.querying.sync.RowWithValue
 import shapeless.ops.hlist._
 import shapeless.syntax.singleton._
+import scala.concurrent.duration._
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
+import scala.util.Failure
+import scala.util.Success
+import java.util.concurrent.Callable
+import scala.concurrent.Await
+import com.typesafe.scalalogging.slf4j.LazyLogging
+import org.slf4j.LoggerFactory
+import com.typesafe.scalalogging.slf4j.Logger
+import java.util.concurrent.TimeoutException
 
 @RunWith(classOf[JUnitRunner])
 class ReadWriteTest extends WordSpec {
@@ -190,5 +201,24 @@ class ReadWriteTest extends WordSpec {
             startTimeDetector.publishLocalStartTime(102)
             assert(startTimeDetector.allNodesVoted == Some(100))
           }
+          
+          " wait for first element time" in {
+            
+            val jobInfo = new CassandraJobInfo(getNextJobName, numberOfWorkersV = Some(3))
+            val startTimeDetector = new StartTimeDetector(jobInfo, dbconnection)
+            startTimeDetector.init
+            
+            startTimeDetector.publishLocalStartTime(100)
+          
+            // Wait one second for results
+            assert(startTimeDetector.waitForFirstElementTime(1) == None)         
+            startTimeDetector.publishLocalStartTime(101)
+            startTimeDetector.publishLocalStartTime(102)
+            
+            // Wait for five seconds and expect a positive result
+            assert(startTimeDetector.waitForFirstElementTime(5) == Some(100))
+
+          }
+            
   }
 }
