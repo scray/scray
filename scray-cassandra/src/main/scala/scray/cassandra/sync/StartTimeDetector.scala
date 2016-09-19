@@ -26,19 +26,21 @@ import scray.cassandra.util.CassandraUtils
  * It is assumed that all elements, consumed by one instance are ordered in an increasing order. (The first element is the oldest element)
  * Also other ordinal attributes can be use.
  */
-object StartTimeDetector extends LazyLogging {
+class StartTimeDetector(job: JobInfo[Statement, Insert, ResultSet],
+    val dbSession: DbSession[Statement, Insert, ResultSet]
+    ) extends LazyLogging {
 
   val startConsensusTable = new Table("silidx", "startconsensus", new StartConsensusRow)
   
   /**
    * Create keyspaces and tables if needed.
    */
-  def init(job: JobInfo[Statement, Insert, ResultSet], dbSession: DbSession[Statement, Insert, ResultSet]) = {
+  def init = {
     CassandraUtils.createKeyspaceCreationStatement(startConsensusTable).map { statement => dbSession.execute(statement) }
     CassandraUtils.createTableStatement(startConsensusTable).map { statement => dbSession.execute(statement) }
   }
 
-  def allNodesVoted(job: JobInfo[Statement, Insert, ResultSet], dbSession: DbSession[Statement, Insert, ResultSet]): Option[Long] = {
+  def allNodesVoted: Option[Long] = {
     val votes = QueryBuilder.select.all().from(startConsensusTable.keySpace, startConsensusTable.tableName).where(
       QueryBuilder.eq(startConsensusTable.columns.jobname.name, job.name))
 
@@ -66,7 +68,7 @@ object StartTimeDetector extends LazyLogging {
   }
 
 
-  def publishLocalStartTime(job: JobInfo[Statement, Insert, ResultSet], dbSession: DbSession[Statement, Insert, ResultSet], time: Long): Try[Boolean] = {
+  def publishLocalStartTime(time: Long): Try[Boolean] = {
     val statement = job.numberOfWorkers.map { numWorkers => 
      QueryBuilder.insertInto(startConsensusTable.keySpace, startConsensusTable.tableName)
           .value(startConsensusTable.columns.jobname.name, job.name)

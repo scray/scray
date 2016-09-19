@@ -178,17 +178,17 @@ class ReadWriteTest extends WordSpec {
           "find first element if all nodes sended a time " in {
             
             val jobInfo = new CassandraJobInfo(getNextJobName, numberOfWorkersV = Some(3))
+            val startTimeDetector = new StartTimeDetector(jobInfo, dbconnection)
+            startTimeDetector.init
             
-            StartTimeDetector.init(jobInfo, dbconnection)
+            startTimeDetector.publishLocalStartTime(100)
+            assert(startTimeDetector.allNodesVoted == None)
             
-            StartTimeDetector.publishLocalStartTime(jobInfo, dbconnection, 100)
-            assert(StartTimeDetector.allNodesVoted(jobInfo, dbconnection) == None)
+            startTimeDetector.publishLocalStartTime(101)
+            assert(startTimeDetector.allNodesVoted == None)
             
-            StartTimeDetector.publishLocalStartTime(jobInfo, dbconnection, 101)
-            assert(StartTimeDetector.allNodesVoted(jobInfo, dbconnection) == None)
-            
-            StartTimeDetector.publishLocalStartTime(jobInfo, dbconnection, 102)
-            assert(StartTimeDetector.allNodesVoted(jobInfo, dbconnection) == Some(100))
+            startTimeDetector.publishLocalStartTime(102)
+            assert(startTimeDetector.allNodesVoted == Some(100))
           }
   }
 }
