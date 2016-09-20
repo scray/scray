@@ -39,7 +39,7 @@ import java.util.concurrent.TimeoutException
  * Also other ordinal attributes can be use.
  */
 class StartTimeDetector(job: JobInfo[Statement, Insert, ResultSet],
-                        val dbSession: DbSession[Statement, Insert, ResultSet]) extends LazyLogging {
+                        val dbSession: DbSession[Statement, Insert, ResultSet]) extends LazyLogging with Serializable {
 
   val startConsensusTable = new Table("silidx", "startconsensus", new StartConsensusRow)
 
