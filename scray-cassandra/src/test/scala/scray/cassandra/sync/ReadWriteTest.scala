@@ -2,9 +2,8 @@ package scray.cassandra.sync
 
 import java.util.concurrent.atomic.AtomicInteger
 
-
 import scala.annotation.tailrec
-import scala.util.Try
+import scala.concurrent.ExecutionContext.Implicits.global
 
 import org.junit.runner.RunWith
 import org.scalatest.BeforeAndAfter
@@ -12,25 +11,18 @@ import org.scalatest.BeforeAndAfterAll
 import org.scalatest.WordSpec
 import org.scalatest.junit.JUnitRunner
 
+import com.typesafe.scalalogging.slf4j.LazyLogging
+
 import scray.cassandra.sync.CassandraImplementation._
 import scray.cassandra.sync.helpers.TestDbSession
 import scray.common.serialization.BatchID
 import scray.querying.description.Row
-import scray.querying.sync.ColumnWithValue
 import scray.querying.sync.RowWithValue
 import shapeless.ops.hlist._
 import shapeless.syntax.singleton._
-import scala.concurrent.duration._
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
-import scala.util.Failure
-import scala.util.Success
-import java.util.concurrent.Callable
-import scala.concurrent.Await
-import com.typesafe.scalalogging.slf4j.LazyLogging
-import org.slf4j.LoggerFactory
-import com.typesafe.scalalogging.slf4j.Logger
-import java.util.concurrent.TimeoutException
+import scala.collection.mutable.HashMap
+import scray.querying.sync.Merge
+import scray.querying.sync.ColumnWithValue
 
 @RunWith(classOf[JUnitRunner])
 class ReadWriteTest extends WordSpec {
@@ -219,6 +211,122 @@ class ReadWriteTest extends WordSpec {
             assert(startTimeDetector.waitForFirstElementTime(5) == Some(100))
 
           }
+          
+          " run stream and batch content based start sync example" in {
+            // Unordered batch data
+            val batchData = (1474333200L, 2) :: (1474333205L, 4) :: (1474333202L, 8) :: (1474333203L, 16) :: (1474333300L, 32) :: Nil
             
+            // Streaming data are ordered by date
+            val streamData = (1474333300L, 64) :: (1474333301L, 128) :: (1474333302L, 256) :: (1474333303L, 512) :: Nil 
+            
+            val jobInfo = new CassandraJobInfo(getNextJobName, numberOfWorkersV = Some(1))
+            val batchView = new AtomicInteger
+            val streamView = new AtomicInteger
+            
+            val streamingJob = new Thread(new Runnable {
+              
+              val startTimeDetector = new StartTimeDetector(jobInfo, dbconnection)
+              startTimeDetector.init
+              
+              
+              def run() {
+                 
+                streamData.map(streamElement => {
+                  startTimeDetector.publishLocalStartTimeOnlyOnce(streamElement._1)
+                   streamView.getAndAdd(streamElement._2)
+                  })
+                  
+                  streamView
+              }
+            })
+            
+            val batchJob = new Thread(new Runnable {
+               
+              val startTimeDetector = new StartTimeDetector(jobInfo, dbconnection)
+              startTimeDetector.init
+              
+              def run() {
+                // Filter all elements which are newer than 1474333300
+                val batchResult = batchData.filter(startTimeDetector.waitForFirstElementTime(5).get > _._1)
+                .foldLeft(0)((acc, element) => acc + element._2)
+                batchView.set(batchResult)
+              }
+            })
+            
+            // Batch job waits for a start time
+            batchJob.start
+            assert(batchView.get == 0)
+            
+            // Streaming job triggers the batch job
+            streamingJob.start
+
+            Thread.sleep(10000)
+
+            // Check if batch job aggregated four values only
+            assert(batchView.get == 30)
+            assert(streamView.get == 960)
+
+          }
+          " run content based trigger merge example" in {
+            // Unordered batch data (Key,Time, Value)
+            val batchData = ("K1", 1474333200L, 2) :: ("K1",1474333205L, 4) :: ("K1",1474333202L, 8) :: ("K1", 1474333203L, 16) :: ("K1", 1474333300L, 32) :: Nil
+            
+            // Streaming data are ordered by date
+            val streamData = ("K1", 1474333300L, 64) :: ("K1", 1474333301L, 128) :: ("K1", 1474333302L, 256) :: ("K1", 1474333303L, 512) :: Nil 
+            
+            val jobInfo = new CassandraJobInfo(getNextJobName, numberOfWorkersV = Some(1))
+            val batchView = new HashMap[String, Int]()
+            val streamView = new HashMap[String, Int]()
+            
+            val mergeOperator = (a: Int, b: Int) => a + b  
+            
+            
+            val streamingJob = new Thread(new Runnable {
+              
+              val startTimeDetector = new StartTimeDetector(jobInfo, dbconnection)
+              startTimeDetector.init
+              var streamSum = 0 // Sum of processed stream values
+              
+              def run() {
+                streamData.map(streamElement => {
+                  startTimeDetector.publishLocalStartTimeOnlyOnce(streamElement._2)
+                  Thread.sleep(2000) // Sleep to get new batch results
+                  streamSum += streamElement._3
+                  streamView.put("K1",
+                      Merge.merge(
+                        (streamElement._1, streamSum), 
+                        mergeOperator, 
+                        (key: String) => {batchView.get(key).get})
+                      )
+                })
+              }
+            })
+            
+            val batchJob = new Thread(new Runnable {
+               
+              val startTimeDetector = new StartTimeDetector(jobInfo, dbconnection)
+              startTimeDetector.init
+              
+              def run() {
+                // Filter all elements which are newer than 1474333300
+                val batchResult = batchData.filter(startTimeDetector.waitForFirstElementTime(20).get > _._2)
+                .foldLeft(0)((acc, element) => acc + element._3)
+                batchView.put("K1", batchResult)
+              }
+            })
+            
+            // Batch job waits for a start time
+            batchJob.start
+            assert(batchView.get("K1") == None)
+            
+            // Streaming job triggers the batch job
+            streamingJob.start
+
+            Thread.sleep(10000)
+val rrr = batchView.get("K1")
+            // Check if batch job aggregated four values only
+            assert(batchView.get("K1") == Some(30))
+            assert(streamView.get("K1") == Some(990))
+          }     
   }
 }

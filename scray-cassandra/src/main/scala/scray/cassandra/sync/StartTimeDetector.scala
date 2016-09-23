@@ -43,6 +43,7 @@ class StartTimeDetector(job: JobInfo[Statement, Insert, ResultSet],
                         dbSession: DbSession[Statement, Insert, ResultSet]) extends LazyLogging {
 
   val startConsensusTable = new Table("silidx", "startconsensus", new StartConsensusRow)
+  var valueAlreadySet = false
 
   def this(job: JobInfo[Statement, Insert, ResultSet], dbHostname: String) {
     this(job, new CassandraDbSession(Cluster.builder().addContactPoint(dbHostname).build().connect()))
@@ -72,7 +73,7 @@ class StartTimeDetector(job: JobInfo[Statement, Insert, ResultSet],
         }
       }.map { voteResult =>
         if (voteResult._1) {
-          logger.debug("All nodes sended first element time")
+          logger.debug("All nodes sent first element time")
           Some(getMinTime(voteResult._2))
         } else {
           logger.debug("Not all workes pulished the first element time. Try it again later")
@@ -94,6 +95,12 @@ class StartTimeDetector(job: JobInfo[Statement, Insert, ResultSet],
     statement match {
       case Some(statement) => Try(dbSession.insert(statement).isSuccess)
       case None            => logger.warn("No numberOfWorkers configured! No time update"); throw new RuntimeException("No numberOfWorkers configured! No time update")
+    }
+  }
+  
+  def publishLocalStartTimeOnlyOnce(time: Long) = {
+    if(valueAlreadySet == false) {
+      val wasSuccesfull = publishLocalStartTime(time)
     }
   }
 
