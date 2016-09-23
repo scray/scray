@@ -91,7 +91,7 @@ import scray.querying.sync.JobLockTable
 import scray.querying.sync.ArbitrarylyTypedRows
 import scray.querying.sync.SyncTableBasicClasses
 
-object CassandraUtils extends LazyLogging {
+object CassandraUtils extends LazyLogging with Serializable {
 
   /**
    * convenience method to retrieve KeyspaceMetadata from a StoreColumnFamily object

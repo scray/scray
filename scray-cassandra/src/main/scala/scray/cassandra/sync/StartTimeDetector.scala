@@ -31,6 +31,7 @@ import com.typesafe.scalalogging.slf4j.LazyLogging
 import org.slf4j.LoggerFactory
 import com.typesafe.scalalogging.slf4j.Logger
 import java.util.concurrent.TimeoutException
+import com.datastax.driver.core.Cluster
 
 /**
  * Find a consensus about the start time of a job.
@@ -39,10 +40,14 @@ import java.util.concurrent.TimeoutException
  * Also other ordinal attributes can be use.
  */
 class StartTimeDetector(job: JobInfo[Statement, Insert, ResultSet],
-                        val dbSession: DbSession[Statement, Insert, ResultSet]) extends LazyLogging with Serializable {
+                        dbSession: DbSession[Statement, Insert, ResultSet]) extends LazyLogging {
 
   val startConsensusTable = new Table("silidx", "startconsensus", new StartConsensusRow)
 
+  def this(job: JobInfo[Statement, Insert, ResultSet], dbHostname: String) {
+    this(job, new CassandraDbSession(Cluster.builder().addContactPoint(dbHostname).build().connect()))
+  }
+  
   /**
    * Create keyspaces and tables if needed.
    */
