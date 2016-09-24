@@ -15,6 +15,7 @@ import scray.querying.sync.Column
 import scray.querying.sync.DbSession
 import shapeless.ops.hlist._
 import shapeless.syntax.singleton._
+import com.typesafe.scalalogging.slf4j.LazyLogging
 
 
   /**
@@ -28,7 +29,7 @@ import shapeless.syntax.singleton._
     override val indexes: Option[List[String]] = None
   }
 
-  class TestDbSession extends DbSession[Statement, Insert, ResultSet]("127.0.0.1") {
+  class TestDbSession extends DbSession[Statement, Insert, ResultSet]("127.0.0.1") with LazyLogging {
     EmbeddedCassandraServerHelper.startEmbeddedCassandra(EmbeddedCassandraServerHelper.CASSANDRA_RNDPORT_YML_FILE)
     
     var cassandraSession = Cluster.builder().addContactPoint("127.0.0.1").withPort(EmbeddedCassandraServerHelper.getNativeTransportPort).build().connect()
@@ -43,6 +44,8 @@ import shapeless.syntax.singleton._
     }
 
     def execute(statement: Statement): Try[ResultSet] = {
+      logger.debug("Execute: " +  statement)
+
       val result = cassandraSession.execute(statement)
       if (result.wasApplied()) {
         Success(result)
@@ -52,6 +55,7 @@ import shapeless.syntax.singleton._
     }
 
     def insert(statement: Insert): Try[ResultSet] = {
+      logger.debug("Execute: " +  statement)
       val result = cassandraSession.execute(statement)
       if (result.wasApplied()) {
         Success(result)
