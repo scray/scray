@@ -32,6 +32,8 @@ import org.slf4j.LoggerFactory
 import com.typesafe.scalalogging.slf4j.Logger
 import java.util.concurrent.TimeoutException
 import com.datastax.driver.core.Cluster
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 
 /**
  * Find a consensus about the start time of a job.
@@ -53,6 +55,7 @@ class StartTimeDetector(job: JobInfo[Statement, Insert, ResultSet],
    * Create keyspaces and tables if needed.
    */
   def init = {
+    logger.debug("Init StartTimeDetector")
     CassandraUtils.createKeyspaceCreationStatement(startConsensusTable).map { statement => dbSession.execute(statement) }
     CassandraUtils.createTableStatement(startConsensusTable).map { statement => dbSession.execute(statement) }
   }
@@ -67,8 +70,10 @@ class StartTimeDetector(job: JobInfo[Statement, Insert, ResultSet],
         case e => { logger.error(s"DB error while fetching all element of the vote for ${job.name}. Error: ${e.getMessage}"); throw e }
       }.toOption.map { rows =>
         if (rows.size() > 0) {
+          logger.debug(rows.size() + "Notes sent start time")
           ((rows.get(0).getInt(startConsensusTable.columns.numberOfWorkers.name) <= rows.size()), rows)
         } else {
+          logger.debug("No node sent start time")
           (false, rows)
         }
       }.map { voteResult =>
@@ -88,6 +93,7 @@ class StartTimeDetector(job: JobInfo[Statement, Insert, ResultSet],
     val statement = job.numberOfWorkers.map { numWorkers =>
       QueryBuilder.insertInto(startConsensusTable.keySpace, startConsensusTable.tableName)
         .value(startConsensusTable.columns.jobname.name, job.name)
+        .value(startConsensusTable.columns.id.name, java.util.UUID.randomUUID.toString)
         .value(startConsensusTable.columns.time.name, time)
         .value(startConsensusTable.columns.numberOfWorkers.name, numWorkers)
     }
@@ -124,54 +130,59 @@ class StartTimeDetector(job: JobInfo[Statement, Insert, ResultSet],
    * @param timeout timeout value in seconds to wait for first element time
    */
   def waitForFirstElementTime(timeout: Int): Option[Long] = {
-    val pollingTask: Future[Long] = Future[Long] {
+
+    val pollingTask: Callable[Long]  = new Callable[Long] {
+      
       val logger = Logger(LoggerFactory.getLogger(this.getClass))
       val sleepTimeBetweenPolling = 5000 // ms
 
       def poll = {
-        this.allNodesVoted match {
+        allNodesVoted match {
           case Some(time) => time
           case None       => 0
         }
       }
-
-      // poll db
-      while (poll < 1) {
-        logger.debug(s"No first element time found. Poll again in ${sleepTimeBetweenPolling}ms")
-        Thread.sleep(sleepTimeBetweenPolling)
+      
+      def call(): Long =  {
+        // poll db
+        while (poll < 1) {
+          logger.debug(s"No first element time found. Poll again in ${sleepTimeBetweenPolling}ms")
+          Thread.sleep(sleepTimeBetweenPolling)
+        }
+      
+        val time = poll
+        logger.info(s"Found first element time ${time}")
+        time
       }
-
-      val time = poll
-      logger.info(s"Found first element time ${time}")
-
-      time
     }
-
-    // Wait for result
+          // Wait for result
     val firstElementTime = try {
-      val time = Await.result(pollingTask, timeout seconds)
-      Some(time)
+      val thread = Executors.newSingleThreadExecutor;   
+      Some(thread.submit(pollingTask).get(timeout, TimeUnit.SECONDS))
     } catch {
       case e: TimeoutException => { logger.error(s"Timeout while waiting for time of first element"); None }
+      case e: Throwable => {logger.error(s"Error while waiting for start time. ${e.getMessage} ${e.printStackTrace}"); None}
     }
 
-    firstElementTime
-  }
+     return firstElementTime
+    }
+    
+    
   
   def waitForFirstElementTime: Option[Long] = {
     waitForFirstElementTime(480)
   }
 
   class StartConsensusRow(implicit colString: DBColumnImplementation[String],
-                          colLong: DBColumnImplementation[Long],
                           colInt: DBColumnImplementation[Int]) extends ArbitrarylyTypedRows {
 
     val jobname = new Column[String]("jobname")
+    val id = new Column[String]("id")
     val time = new Column[Long]("time")
     val numberOfWorkers = new Column[Int]("numWorkers")
 
-    override val columns = jobname :: time :: numberOfWorkers :: Nil
-    override val primaryKey = s"(${jobname.name}, ${time.name})"
+    override val columns = jobname :: id :: time :: numberOfWorkers :: Nil
+    override val primaryKey = s"(${jobname.name}, ${id.name})"
     override val indexes: Option[List[String]] = None
   }
 

@@ -25,7 +25,7 @@ import scray.querying.sync.Merge
 import scray.querying.sync.ColumnWithValue
 
 @RunWith(classOf[JUnitRunner])
-class ReadWriteTest extends WordSpec {
+class ReadWriteTest extends WordSpec with LazyLogging {
   var dbconnection: TestDbSession = new TestDbSession
   var jobNr: AtomicInteger = new AtomicInteger(0)
 
@@ -183,7 +183,7 @@ class ReadWriteTest extends WordSpec {
             val jobInfo = new CassandraJobInfo(getNextJobName, numberOfWorkersV = Some(3))
             val startTimeDetector = new StartTimeDetector(jobInfo, dbconnection)
             startTimeDetector.init
-            
+                       
             startTimeDetector.publishLocalStartTime(100)
             assert(startTimeDetector.allNodesVoted == None)
             
@@ -247,7 +247,7 @@ class ReadWriteTest extends WordSpec {
               
               def run() {
                 // Filter all elements which are newer than 1474333300
-                val batchResult = batchData.filter(startTimeDetector.waitForFirstElementTime(5).get > _._1)
+                val batchResult = batchData.filter(startTimeDetector.waitForFirstElementTime(8).get > _._1)
                 .foldLeft(0)((acc, element) => acc + element._2)
                 batchView.set(batchResult)
               }
@@ -290,13 +290,13 @@ class ReadWriteTest extends WordSpec {
               def run() {
                 streamData.map(streamElement => {
                   startTimeDetector.publishLocalStartTimeOnlyOnce(streamElement._2)
-                  Thread.sleep(2000) // Sleep to get new batch results
+                  Thread.sleep(8000) // Sleep to get new batch results
                   streamSum += streamElement._3
                   streamView.put("K1",
                       Merge.merge(
                         (streamElement._1, streamSum), 
                         mergeOperator, 
-                        (key: String) => {batchView.get(key).get})
+                        (key: String) => batchView.get(key).get)
                       )
                 })
               }
@@ -318,12 +318,12 @@ class ReadWriteTest extends WordSpec {
             // Batch job waits for a start time
             batchJob.start
             assert(batchView.get("K1") == None)
-            
+                           
             // Streaming job triggers the batch job
             streamingJob.start
 
-            Thread.sleep(10000)
-val rrr = batchView.get("K1")
+            Thread.sleep(40000)
+
             // Check if batch job aggregated four values only
             assert(batchView.get("K1") == Some(30))
             assert(streamView.get("K1") == Some(990))
