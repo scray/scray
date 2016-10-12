@@ -127,9 +127,7 @@
 							<goal>single</goal>
 						</goals>
 						<configuration>
-							<descriptors>
-								<descriptor>scray-loader-dependencies.xml</descriptor>
-							</descriptors>
+							<descriptor>scray-loader-dependencies.xml</descriptor>
 						</configuration>
 					</execution>
 				</executions>
