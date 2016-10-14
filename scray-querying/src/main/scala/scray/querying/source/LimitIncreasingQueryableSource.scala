@@ -65,8 +65,8 @@ class LimitIncreasingQueryableSource[Q <: DomainQuery](val store: QueryableStore
   
   override def requestIterator(query: Q): Future[Iterator[Row]] = {
     query.queryInfo.addNewCosts {(n: Long) => {n + 42}}
-    logger.debug(s"Requesting data from store with LimitIncreasingQueryableSource on query ${query}")
-    store.requestIterator(queryMapping(query)).map { it =>
+
+    store.requestIterator(query).map { it =>
         // construct lazy spool
         query.getQueryRange.flatMap { range =>
           range.limit.map { limit =>
