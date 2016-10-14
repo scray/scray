@@ -215,8 +215,6 @@ class Activator extends KryoPoolRegistration with BundleActivator with LazyLoggi
   
   override def stop(context: BundleContext): Unit = {
     
-    println("STOP called")
-    
     // shutdown update service
     Activator.refresher.map { refresher =>
       refresher.destroyResources

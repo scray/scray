@@ -186,7 +186,6 @@ object Registry extends LazyLogging with Registry {
   def registerQuerySpace(querySpace: QueryspaceConfiguration, version: Option[Int] = None): Int = {
     rwlock.writeLock.lock
     try {
-      logger.error(s"Registerer query space ${querySpace}")
       val newVersion = version.orElse(getLatestVersion(querySpace.name).map(_ + 1)).getOrElse(0)
       querySpaces.put(querySpace.name + newVersion, querySpace)
       querySpaceColumns.put(querySpace.name + newVersion, new HashMap[Column, ColumnConfiguration])
