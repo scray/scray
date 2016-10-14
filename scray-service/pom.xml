@@ -11,11 +11,6 @@
 	<artifactId>scray-service</artifactId>
 	<name>Scray - Service</name>
 	<description>scray remote query service interface</description>
-
-	<properties>
-		<parboiled.version>2.0.1</parboiled.version>
-	</properties>
-
 	<dependencies>
 		<dependency>
 			<groupId>scray</groupId>
