@@ -1,4 +1,4 @@
-package de.s_node
+package scray.example.inputadapter
 
 import org.junit.runner.RunWith
 import org.scalatest.WordSpec
@@ -11,10 +11,10 @@ import com.twitter.util.Await
 
 
 @RunWith(classOf[JUnitRunner])
-class AsyncStreamTests extends WordSpec {
+class TestAsyncStreamTests extends WordSpec {
   
   "AssyncStream " should {
-    " create stream" in {
+    " create a stream" in {
       
       // Simulate database select result
       val dataIter = (1 :: 2 :: 3 :: 4 :: 5 :: Nil).iterator      

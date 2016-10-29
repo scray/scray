@@ -1,16 +1,10 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-	<parent>
-		<groupId>scray</groupId>
-		<artifactId>scray</artifactId>
-		<version>0.0.1-SNAPSHOT</version>
-	</parent>
 
 	<modelVersion>4.0.0</modelVersion>
 	<artifactId>scray-example</artifactId>
 	<name>Scray - Querying</name>
 	<description>query engine core source code</description>
-	<packaging>bundle</packaging>
 
 	<properties>
 		<maven-bundle-plugin.version>3.0.1</maven-bundle-plugin.version>
@@ -98,11 +92,6 @@
 			<version>4.5.2</version>
 		</dependency>
 		<dependency>
-			<groupId>com.fasterxml.jackson.module</groupId>
-			<artifactId>jackson-module-scala_2.10</artifactId>
-			<version>2.7.2</version>
-		</dependency>
-		<dependency>
 			<groupId>com.typesafe</groupId>
 			<artifactId>config</artifactId>
 			<version>1.2.1</version>
@@ -160,5 +149,13 @@
 			<artifactId>joda-convert</artifactId>
 			<version>${joda-version}</version>
 		</dependency>
+		<dependency>
+			<groupId>com.twitter</groupId>
+			<artifactId>util-core_2.10</artifactId>
+			 <version>6.34.0</version>
+		</dependency>
+
 	</dependencies>
+	<groupId>scray</groupId>
+	<version>0.0.1-SNAPSHOT</version>
 </project>
