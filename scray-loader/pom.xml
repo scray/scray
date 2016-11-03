@@ -11,16 +11,16 @@
 	</parent>
 
 	<dependencies>
-        <dependency>
-            <groupId>org.osgi</groupId>
-            <artifactId>org.osgi.core</artifactId>
-            <version>4.1.0</version>
-        </dependency>
-        <dependency>
-            <groupId>org.osgi</groupId>
-            <artifactId>org.osgi.compendium</artifactId>
-            <version>4.1.0</version>
-        </dependency>
+		<dependency>
+			<groupId>org.osgi</groupId>
+			<artifactId>org.osgi.core</artifactId>
+			<version>4.1.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.osgi</groupId>
+			<artifactId>org.osgi.compendium</artifactId>
+			<version>4.1.0</version>
+		</dependency>
 		<dependency>
 			<groupId>com.github.scopt</groupId>
 			<artifactId>scopt_2.10</artifactId>
@@ -147,6 +147,19 @@
 						<goals>
 							<goal>test</goal>
 						</goals>
+						<configuration>
+							<suffixes>(?&lt;!ScrayIntegration)(Tests|Specs)</suffixes>
+						</configuration>
+					</execution>
+					<execution>
+						<id>integration-test</id>
+						<phase>integration-test</phase>
+						<goals>
+							<goal>test</goal>
+						</goals>
+						<configuration>
+							<suffixes>(?&lt;=Integration)(Tests|Specs)</suffixes>
+						</configuration>
 					</execution>
 				</executions>
 			</plugin>
