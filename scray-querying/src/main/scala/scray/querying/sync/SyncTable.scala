@@ -52,6 +52,15 @@ abstract class AbstractRow extends Serializable {
   }
 }
 
+object ColumnHelpers {
+  def getColum[T: DBColumnImplementation](name: String, value: Option[T]): Column[T] = {
+    value match {
+      case Some(value) => new ColumnWithValue(name, value)
+      case None =>  new Column(name)
+    }
+  }
+}
+
 abstract class ArbitrarylyTypedRows extends AbstractRow {
   override type ColumnType = Column[_]
 }
