@@ -94,13 +94,20 @@ class DomainToCQLQueryMapping[Q <: DomainQuery, S <: CassandraQueryableSource[Q]
 
   private def convertValue[T](value: T) = value match {
     case v: String => s"'$v' "
-    case _ => s"${value.toString} "
+    case _ => {
+        s"${value.toString} "
+    }
   }
 
   // private def convertDomainToTargetDomain(domain: Domain[_]):
 
-  private def convertSingleValueDomain(vdomain: SingleValueDomain[_]): String =
-    s""" "${vdomain.column.columnName}"=${convertValue(vdomain.value)}"""
+  private def convertSingleValueDomain(vdomain: SingleValueDomain[_]): String = {
+    if(vdomain.isNull) {
+      ""
+    } else {
+      s""" "${vdomain.column.columnName}"=${convertValue(vdomain.value)}"""
+    }
+  }
 
   private def convertRangeValueDomain(vdomain: RangeValueDomain[_]): String = {
     vdomain.lowerBound.map { bound =>
