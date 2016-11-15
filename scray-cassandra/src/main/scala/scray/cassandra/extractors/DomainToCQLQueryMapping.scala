@@ -59,19 +59,22 @@ class DomainToCQLQueryMapping[Q <: DomainQuery, S <: CassandraQueryableSource[Q]
   def getQueryMapping(store: S, storeTableNickName: Option[String]): DomainQuery => String = {
     (query) => {
       // first check that we have fixed all partition keys
-      val r = getRowKeyQueryMapping(store, query, storeTableNickName).map { queryStringBegin =>
+      val baseQuery = getRowKeyQueryMapping(store, query, storeTableNickName).map { queryStringBegin =>
         // if this is the case the query can fix clustering keys and the last one may be a rangedomain
         val baseQuery = getClusterKeyQueryMapping(store, query, storeTableNickName) match {
           case None => queryStringBegin
           case Some(queryPart) => s"$queryStringBegin$AND_LITERAL$queryPart"
         }
-        enforceLimit(baseQuery, query)
-      }.getOrElse {
-        // if there is not a partition and maybe a clustering column
-        // we must make sure we have a single index for the col we select (only use one)
-        enforceLimit(getValueKeyQueryMapping(store, query, storeTableNickName).getOrElse(""), query)
+        baseQuery
+      }.getOrElse{
+    	  // if there is not a partition and maybe a clustering column
+          // we must make sure we have a single index for the col we select (only use one)
+          //enforceLimit(getValueKeyQueryMapping(store, query, storeTableNickName).getOrElse(""))
+    	  getValueKeyQueryMapping(store, query, storeTableNickName).getOrElse("")
       }
-      val result = s"""SELECT * FROM "${removeQuotes(store.ti.dbId)}"."${removeQuotes(store.ti.tableId)}" ${decideWhere(r)}"""
+
+      val limit = enforceLimit(query)
+      val result = s"""SELECT * FROM "${removeQuotes(store.ti.dbId)}"."${removeQuotes(store.ti.tableId)}" ${decideWhere(baseQuery)} ${limit}"""
       logger.debug(s"Query String for Cassandra is $result")
       result
     }
@@ -80,16 +83,16 @@ class DomainToCQLQueryMapping[Q <: DomainQuery, S <: CassandraQueryableSource[Q]
   /**
    * sets given limits at the provided query
    */
-  private def enforceLimit(queryString: String, query: DomainQuery): String = {
+  private def enforceLimit(query: DomainQuery): String = {
     query.getQueryRange.map { range =>
       if(range.limit.isDefined) {
-        val sbuf = new StringBuffer(queryString)
+        val sbuf = new StringBuffer
         val skip = range.skip.getOrElse(0L)
         sbuf.append(LIMIT_LITERAL).append(skip + range.limit.get).toString
       } else {
-        queryString
+        ""
       }
-    }.getOrElse(queryString)
+    }.getOrElse("")
   }
 
   private def convertValue[T](value: T) = value match {
