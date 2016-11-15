@@ -36,7 +36,7 @@
 		<module>scray-cassandra</module>
 		<module>scray-service</module>
 		<module>scray-common</module>
-		<module>scray-java</module>
+		<module>scray-client-jdbc</module>
 		<module>scray-loader</module>
 	</modules>
 
