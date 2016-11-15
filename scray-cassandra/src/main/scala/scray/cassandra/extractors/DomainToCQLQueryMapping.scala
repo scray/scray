@@ -73,8 +73,23 @@ class DomainToCQLQueryMapping[Q <: DomainQuery, S <: CassandraQueryableSource[Q]
     	  getValueKeyQueryMapping(store, query, storeTableNickName).getOrElse("")
       }
 
-      val limit = enforceLimit(query)
-      val result = s"""SELECT * FROM "${removeQuotes(store.ti.dbId)}"."${removeQuotes(store.ti.tableId)}" ${decideWhere(baseQuery)} ${limit}"""
+      val limit = query.domains.map { _ match {
+          case domain: SingleValueDomain[_] => if(query.domains.size > 1 && domain.isNull) {
+            logger.debug("Domaine: " +  domain + query.domains.size)
+            throw new RuntimeException("A query with a SingleValueDomain and Null expression should not have more than one domains.")
+            ""
+          } else {
+            if(domain.isNull) {
+             "" // No LIMIT for isNull queries 
+            } else {
+              enforceLimit(query)
+            }
+          }
+          case _ => enforceLimit(query)
+        }
+      }
+       
+      val result = s"""SELECT * FROM "${removeQuotes(store.ti.dbId)}"."${removeQuotes(store.ti.tableId)}" ${decideWhere(baseQuery)} ${limit.head}"""
       logger.debug(s"Query String for Cassandra is $result")
       result
     }

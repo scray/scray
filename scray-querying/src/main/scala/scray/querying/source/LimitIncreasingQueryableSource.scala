@@ -49,7 +49,7 @@ class LimitIncreasingQueryableSource[Q <: DomainQuery](val store: QueryableStore
    * create function to fetch new data with, which uses a given limit
    */
   def fetchAndSkipDataIterator: ITERATOR_EXTENDER_FUNCTION[Row] = (query, limit, skip) => Await.result {
-    val increasedLimitQuery = query.copy(range = Some(query.getQueryRange.get.copy(limit = Some(limit))))
+    val increasedLimitQuery: DomainQuery = query.copy(range = Some(query.getQueryRange.get.copy(limit = Some(limit))))
     logger.debug(s"re-fetch query with increased limit $limit to fetch more results : ${increasedLimitQuery}")
     store.requestIterator(queryMapping(increasedLimitQuery)).map { it =>
       skipIteratorEntries(skip, it)
