@@ -3,7 +3,7 @@
 
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>scray</groupId>
-	<artifactId>scray-java</artifactId>
+	<artifactId>scray-client-jdbc</artifactId>
 	<packaging>bundle</packaging>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>Scray - JAVA exclusive</name>

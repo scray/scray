@@ -25,7 +25,7 @@
 		</dependency>
 		<dependency>
 			<groupId>scray</groupId>
-			<artifactId>scray-java</artifactId>
+			<artifactId>scray-client-jdbc</artifactId>
 			<version>${scray.version}</version>
 			<exclusions>
 				<exclusion>
