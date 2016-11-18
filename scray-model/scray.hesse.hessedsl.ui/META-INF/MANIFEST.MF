@@ -1,0 +1,30 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: scray.hesse.hessedsl.ui
+Bundle-Vendor: Open Source
+Bundle-Version: 0.0.1.qualifier
+Bundle-SymbolicName: scray.hesse.hessedsl.ui; singleton:=true
+Bundle-ActivationPolicy: lazy
+Require-Bundle: scray.hesse.hessedsl;visibility:=reexport,
+ org.eclipse.xtext.ui,
+ org.eclipse.ui.editors;bundle-version="3.5.0",
+ org.eclipse.ui.ide;bundle-version="3.5.0",
+ org.eclipse.xtext.ui.shared,
+ org.eclipse.ui,
+ org.eclipse.xtext.builder,
+ org.antlr.runtime,
+ org.eclipse.xtext.common.types.ui,
+ org.eclipse.xtext.ui.codetemplates.ui,
+ org.eclipse.compare,
+ org.eclipse.xtext.xbase.ui,
+ org.eclipse.xtext.xbase.lib,
+ org.eclipse.jdt.debug.ui
+Import-Package: org.apache.log4j,
+ org.eclipse.xtext.xbase.lib
+Bundle-RequiredExecutionEnvironment: JavaSE-1.7
+Export-Package: scray.hesse.ui.quickfix,
+ scray.hesse.ui.contentassist,
+ scray.hesse.ui.contentassist.antlr,
+ scray.hesse.ui.internal,
+ scray.hesse.ui.quickfix
+Bundle-Activator: scray.hesse.ui.internal.HesseDSLActivator

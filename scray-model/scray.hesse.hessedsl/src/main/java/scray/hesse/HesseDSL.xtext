@@ -1,0 +1,171 @@
+grammar scray.hesse.HesseDSL with org.eclipse.xtext.common.Terminals
+
+generate hesseDSL "http://www.hesse.scray/HesseDSL"
+
+import "http://www.eclipse.org/emf/2002/Ecore" as ecore
+
+Model:
+	header=Header (bodyStatements+=BodyStatement)+;
+
+// ----------- HEADER ---------------
+	
+Header:
+	name=ModelNameDefinition
+	(platform=PlatformDefinition)?
+	(queryspace=QueryspaceDefinition)?
+	(headerElements += AbstractHeaderElement)*;
+
+AbstractHeaderElement:
+	DefaultDBMSHeaderElement | DefaultDBIDElement;
+
+ModelNameDefinition:
+	'NAME' name=ID ';'?;
+
+PlatformDefinition:
+	'PLATFORM' name=SupportedPlatforms ';'?;
+
+enum SupportedPlatforms:
+	HADOOP='Hadoop' | SCALDING='Scalding' | SUMMINGBIRD='Summingbird' | SPARK='Spark' | FLINK='Flink';
+
+QueryspaceDefinition:
+	'USE' 'QUERYSPACE' name=ID ';'?;
+	
+DefaultDBMSHeaderElement:
+	'USE' 'DEFAULT' 'DBMS' name=SupportedDBMSSystems ';'?;
+	
+enum SupportedDBMSSystems:
+	CASSANDRA='cassandra' | MYSQL='mysql' | ORACLE='oracle';
+
+DefaultDBIDElement:
+	'USE' 'DEFAULT' 'DB' name=ID ';'?;
+
+// ------------- BODY ----------------
+
+BodyStatement:
+	ViewStatement | MaterializedViewStatement;
+	
+ViewStatement:
+	'CREATE' 'VIEW' name=ID 'AS' select=SelectStatement;
+
+MaterializedViewStatement:
+	'CREATE' 'MATERIALIZED' 'VIEW' name=ID ('ON' dbms=SupportedDBMSSystems 'DB' dbid=ID)? 'AS' select=SelectStatement;
+
+SelectStatement:
+	'SELECT' columns=ResultColumnDefinitions 'FROM' tables=TableDefinitions (filters=FilterDefinitions)? (groupings=GroupingDefinitions)? (havings=HavingDefinitions)? (orderings=OrderingDefinitions)?;
+	
+ResultColumnDefinitions:
+	allColumns?='*' | columns+=RenamableColumnDefinition (',' columns+=RenamableColumnDefinition)*;
+
+RenamableColumnDefinition:
+	column=AbstractResultColumnDefinition ('AS' alternateName=ID)?;
+
+AbstractResultColumnDefinition:
+	AbstractTerminalColumnDefinition | FunctionColumn;
+
+AbstractTerminalColumnDefinition:
+	SelectColumn | ConstantColumn;
+	
+SelectColumn: // TODO make tableName a reference to a table-declaration
+	(tableName=ID'.')?name=ID;
+
+ConstantColumn:
+	ConstantIntColumn | ConstantStringColumn | ConstantDoubleColumnvalue | ConstantLongValue;
+
+FunctionColumn: 
+	function=AbstractFunctionName '(' parameters+=AbstractResultColumnDefinition (',' parameters+=AbstractResultColumnDefinition)* ')';	
+
+AbstractFunctionName:
+	BuiltinAggFunction | BuiltinColumnFunction | UserDefinedFunction;
+
+UserDefinedFunction:
+	// TODO references to created functions within the same Hesse-document 
+	name=ID;
+
+BuiltinAggFunction:
+	name=BuiltinAggregationFunctions;
+
+BuiltinColumnFunction:
+	name=BuiltinColumnFunctions;
+
+enum BuiltinColumnFunctions:
+	CASTDATE='CASTDATE' | MAKEDATE='MAKEDATE' | MAKETIME='MAKETIME' | MINUTE='MINUTE' | SECOND='SECOND' | HOUR='HOUR' | TIMESTAMP='TIMESTAMP' |
+	MILLISECOND='MILLISECOND' | DAY='DAY' | MONTH='MONTH' | YEAR='YEAR' | MD5='MD5' | CRC32='CRC32' | ABS='ABS' | MID='MID' | CASTTIME="CASTTIME" |
+	CASTINT='CASTINT' | CASTLONG='CASTLONG' | CASTDOUBLE='CASTDOUBLE' | CASTFLOAT='CASTFLOAT' | CASTSTRING='CASTSTRING' | LENGTH='LENGTH';
+
+enum BuiltinAggregationFunctions:
+	SUM='SUM' | PROD='PROD' | MAX='MAX' | MIN='MIN' | AVG='AVG' | STDDEV='STDDEV_POP' | LAST='LAST' | FIRST='FIRST' | 
+	COUNT='COUNT' | VARPOP='VAR_POP';
+
+GroupingDefinitions:
+	'GROUP' 'BY' (columns+=SelectColumn)+;
+
+OrderingDefinitions:
+	'ORDER' 'BY' (columns+=SelectColumn)+;
+
+HavingDefinitions:
+	'HAVING' predicates=OrPredicates;
+
+FilterDefinitions: // we need to specify predicates
+	'WHERE' predicates=OrPredicates;
+
+OrPredicates:
+	predicates+=AndPredicates ('OR' predicates+=AndPredicates)*;
+
+AndPredicates:
+	predicates+=BasicPredicates ('AND' predicates+=BasicPredicates)*;
+
+BasicPredicates:
+	BracketPredicate | ComparatorPredicate | NegationPredicate;
+
+NegationPredicate:
+	'NOT' '(' predicate=OrPredicates ')';
+
+BracketPredicate:
+	'(' predicate=OrPredicates ')';
+
+ComparatorPredicate:
+	left=AbstractResultColumnDefinition name=PredicateComparator (right=AbstractResultColumnDefinition)?;
+
+PredicateComparator:
+	UnaryPredicateComparator | BinaryPredicateComparator;
+
+BinaryPredicateComparator:
+	name=BinaryPredicateComparatorEnum;
+
+enum BinaryPredicateComparatorEnum:
+	EQUAL='=' | SMALLER='<' | GREATER='>' | SMALLEREQUAL='<=' | GREATEREQUAL='>=' | UNEQUAL='<>' | LIKE='LIKE';
+
+UnaryPredicateComparator: name=ISNULL | name=ISNOTNULL;
+
+TableDefinitions:
+	tables+=RenamableTableDefinition (',' tables+=RenamableTableDefinition)*;
+		
+RenamableTableDefinition:
+	name=AbstractTableDefinition ('AS' alternateName=ID)?;
+
+AbstractTableDefinition:
+	/* ViewReferencingTable | */ SubSelectingTable | PrimitiveTable | DBMSRefTable;
+
+//ViewReferencingTable:
+//	reference=[ViewStatement];
+
+SubSelectingTable:
+	'(' select=SelectStatement ')';
+
+DBMSRefTable:
+	'{' dbms=SupportedDBMSSystems ',' dbid=ID ',' name=ID '}';
+	
+PrimitiveTable:
+	name=ID;
+
+// ------------- additional Data Types and resp. Columns ----------------
+DECIMAL returns ecore::EDouble: '-'?INT'.'INT('E'('+'|'-')?INT)?;
+LONG returns ecore::ELong: '-'?INT'L';
+//DATE returns ecore::EDate: INT'-'INT'-'INT;
+ISNULL: 'IS' 'NULL';
+ISNOTNULL: 'IS' 'NOT' 'NULL';
+
+ConstantIntColumn: value=INT;
+ConstantStringColumn: value=STRING;
+ConstantDoubleColumnvalue: value=DECIMAL;
+ConstantLongValue: value=LONG;
