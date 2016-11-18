@@ -55,7 +55,6 @@ public class ScrayStatement implements java.sql.Statement {
 					fetchDirection, this);
 		} catch (Exception e) {
 			String msg = "Error fetching result page.";
-			log.error(msg, e);
 			throw new SQLException(msg);
 		}
 	}
