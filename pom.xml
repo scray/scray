@@ -21,12 +21,24 @@
 
 
 	<developers>
+                <developer>
+			<name>Andreas Petter</name>
+                        <organization>Scray</organization>
+                        <organizationUrl>https://github.com/scray</organizationUrl>
+                </developer>
     		<developer>
 			<name>Johannes Strassner</name>
       			<email>j.strassner@seeburger.de</email>
       			<organization>Scray</organization>
      			<organizationUrl>https://github.com/scray</organizationUrl>
     		</developer>
+		<developer>
+                        <name>Stefan Obermeier</name>
+                        <email>git@stefan-obermeier.de</email>
+                        <organization>Scray</organization>
+                        <organizationUrl>https://github.com/scray</organizationUrl>
+                </developer>
+
   	</developers>
 	
 	<scm>
