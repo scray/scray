@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>scray</groupId>
 	<artifactId>scray</artifactId>
-	<version>0.9.3</version>
+	<version>${scray.version}</version>
 	<inceptionYear>2014</inceptionYear>
 	<packaging>pom</packaging>
 	<name>Scray</name>
@@ -48,6 +48,7 @@
 	</scm>
 
 	<properties>
+		<scray.version>0.9.3</scray.version>
 		<maven.compiler.source>1.6</maven.compiler.source>
 		<maven.compiler.target>1.6</maven.compiler.target>
 		<encoding>UTF-8</encoding>

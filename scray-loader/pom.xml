@@ -7,7 +7,7 @@
 	<parent>
 		<groupId>scray</groupId>
 		<artifactId>scray</artifactId>
-		<version>0.9.3</version>
+		<version>${scray.version}</version>
 	</parent>
 
 	<dependencies>
@@ -46,7 +46,7 @@
 		<dependency>
 			<groupId>scray</groupId>
 			<artifactId>scray-querying</artifactId>
-			<version>0.0.1-SNAPSHOT</version>
+			<version>${scray.version}</version>
 			<exclusions>
 				<exclusion>
 					<artifactId>shapeless_2.10.4</artifactId>
@@ -57,7 +57,7 @@
 		<dependency>
 			<groupId>scray</groupId>
 			<artifactId>scray-cassandra</artifactId>
-			<version>0.0.1-SNAPSHOT</version>
+			<version>${scray.version}</version>
 			<exclusions>
 				<exclusion>
 					<artifactId>shapeless_2.10.3</artifactId>
@@ -68,7 +68,7 @@
 		<dependency>
 			<groupId>scray</groupId>
 			<artifactId>scray-service</artifactId>
-			<version>0.0.1-SNAPSHOT</version>
+			<version>${scray.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.parboiled</groupId>

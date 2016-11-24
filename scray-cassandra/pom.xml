@@ -3,7 +3,7 @@
 	<parent>
 		<groupId>scray</groupId>
 		<artifactId>scray</artifactId>
-		<version>0.9.3</version>
+		<version>${scray.version}</version>
 	</parent>
 
 	<modelVersion>4.0.0</modelVersion>
@@ -26,7 +26,7 @@
 		<dependency>
 			<groupId>scray</groupId>
 			<artifactId>scray-querying</artifactId>
-			<version>0.0.1-SNAPSHOT</version>
+			<version>${scray.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.github.scopt</groupId>
