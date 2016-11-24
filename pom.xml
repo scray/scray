@@ -3,11 +3,37 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>scray</groupId>
 	<artifactId>scray</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>0.9.3</version>
 	<inceptionYear>2014</inceptionYear>
 	<packaging>pom</packaging>
-	<name>Scray - Parent</name>
-	<description>Lightweight Query Framework for Serving Layers in Lambda Architectures</description>
+	<name>Scray</name>
+	<description>Lambda Architecture Framework for Big Data, NoSQL and SQL-Stores</description>
+	<url>https://github.com/scray/scray</url>
+
+	<licenses>
+                <license>
+                        <name>Apache License, Version 2.0</name>
+                        <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+                        <distribution>repo</distribution>
+                        <comments>A business-friendly OSS license</comments>
+                </license>
+        </licenses>
+
+
+	<developers>
+    		<developer>
+			<name>Johannes Strassner</name>
+      			<email>j.strassner@seeburger.de</email>
+      			<organization>Scray</organization>
+     			<organizationUrl>https://github.com/scray</organizationUrl>
+    		</developer>
+  	</developers>
+	
+	<scm>
+		<url>https://github.com/scray</url>
+		<connection>scm:git:git://github.com/scray/scray.git</connection>
+		<developerConnection>scm:git:https://github.com/scray/scray.git</developerConnection>
+	</scm>
 
 	<properties>
 		<maven.compiler.source>1.6</maven.compiler.source>
@@ -301,12 +327,4 @@
 		</pluginRepository>
 	</pluginRepositories>
 
-	<licenses>
-		<license>
-			<name>Apache License, Version 2.0</name>
-			<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-			<distribution>repo</distribution>
-			<comments>A business-friendly OSS license</comments>
-		</license>
-	</licenses>
 </project>
