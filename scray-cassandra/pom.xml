@@ -3,8 +3,8 @@
 	<parent>
 		<groupId>scray</groupId>
 		<artifactId>scray</artifactId>
-		<version>${scray.version}</version>
-		<relativePath></relativePath>
+		<version>0.9.3</version>
+		<relativePath>../pom.xml</relativePath>
 	</parent>
 
 	<modelVersion>4.0.0</modelVersion>
