@@ -4,6 +4,7 @@
 		<groupId>scray</groupId>
 		<artifactId>scray</artifactId>
 		<version>${scray.version}</version>
+		<relativePath></relativePath>
 	</parent>
 
 	<modelVersion>4.0.0</modelVersion>
