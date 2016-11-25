@@ -5,7 +5,7 @@
 	<groupId>scray</groupId>
 	<artifactId>scray-client-jdbc</artifactId>
 	<packaging>bundle</packaging>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>${scray.version}</version>
 	<name>Scray - JAVA exclusive</name>
 	<description>scray java code, which can be used from java and scala</description>
 
@@ -17,7 +17,6 @@
 		<finagle.version>6.15.0</finagle.version>
 		<libthrift.version>0.9.1</libthrift.version>
 		<scrooge.version>3.4.0</scrooge.version>
-		<scray.version>0.0.1-SNAPSHOT</scray.version>
 		<snappy-java.version>1.1.1.6</snappy-java.version>
 	</properties>
 
@@ -33,7 +32,7 @@
 		<dependency>
 			<groupId>scray</groupId>
 			<artifactId>scray-common</artifactId>
-			<version>${scray.version}</version>
+			<version>0.0.1</version>
 		</dependency>
 		<dependency>
 			<groupId>com.twitter</groupId>
