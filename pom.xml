@@ -48,7 +48,6 @@
 	</scm>
 
 	<properties>
-		<scray.version>0.9.3</scray.version>
 		<maven.compiler.source>1.6</maven.compiler.source>
 		<maven.compiler.target>1.6</maven.compiler.target>
 		<encoding>UTF-8</encoding>
@@ -83,6 +82,11 @@
 	</modules>
 
 	<dependencies>
+		 <dependency>
+                        <groupId>scray</groupId>
+                        <artifactId>scray-common</artifactId>
+			<version>${scray.version}</version>
+                </dependency>
 		<dependency>
 			<groupId>org.scala-lang</groupId>
 			<artifactId>scala-library</artifactId>
