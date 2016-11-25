@@ -67,11 +67,6 @@
 			</exclusions>
 		</dependency>
 		<dependency>
-			<groupId>scray</groupId>
-			<artifactId>scray-service</artifactId>
-			<version>${scray.version}</version>
-		</dependency>
-		<dependency>
 			<groupId>org.parboiled</groupId>
 			<artifactId>parboiled_2.10</artifactId>
 			<version>${parboiled.version}</version>
@@ -83,7 +78,7 @@
 		<dependency>
 			<groupId>scray</groupId>
 			<artifactId>scray-service</artifactId>
-			<version>0.0.1-SNAPSHOT</version>
+                        <version>${scray.version}</version>
 			<exclusions>
 				<exclusion>
 					<artifactId>slf4j-jdk14</artifactId>
