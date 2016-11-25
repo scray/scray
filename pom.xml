@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>scray</groupId>
 	<artifactId>scray</artifactId>
-	<version>${scray.version}</version>
+	<version>0.9.3</version>
 	<inceptionYear>2014</inceptionYear>
 	<packaging>pom</packaging>
 	<name>Scray</name>
@@ -271,6 +271,7 @@
 			<plugin>
       				<groupId>org.apache.maven.plugins</groupId>
       				<artifactId>maven-source-plugin</artifactId>
+				<version>3.0.1</version>
       				<executions>
         				<execution>
           					<id>attach-sources</id>
@@ -283,6 +284,7 @@
 	    		<plugin>
       				<groupId>org.apache.maven.plugins</groupId>
       				<artifactId>maven-javadoc-plugin</artifactId>
+				<version>2.10.4</version>
       				<executions>
         				<execution>
           					<id>attach-javadocs</id>

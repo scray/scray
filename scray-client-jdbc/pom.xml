@@ -5,7 +5,7 @@
 	<groupId>scray</groupId>
 	<artifactId>scray-client-jdbc</artifactId>
 	<packaging>bundle</packaging>
-	<version>${scray.version}</version>
+	<version>0.9.3</version>
 	<name>Scray - JAVA exclusive</name>
 	<description>scray java code, which can be used from java and scala</description>
 
@@ -32,7 +32,7 @@
 		<dependency>
 			<groupId>scray</groupId>
 			<artifactId>scray-common</artifactId>
-			<version>${scray.version}</version>
+			<version>0.9.3</version>
 		</dependency>
 		<dependency>
 			<groupId>com.twitter</groupId>
