@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>scray</groupId>
 	<artifactId>scray</artifactId>
-	<version>0.9.3</version>
+	<version>0.9.4-SNAPSHOT</version>
 	<inceptionYear>2014</inceptionYear>
 	<packaging>pom</packaging>
 	<name>Scray</name>
@@ -365,3 +365,4 @@
 	</pluginRepositories>
 
 </project>
+

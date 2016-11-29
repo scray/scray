@@ -3,7 +3,7 @@
 	<parent>
 		<groupId>scray</groupId>
 		<artifactId>scray</artifactId>
-		<version>0.9.3</version>
+		<version>0.9.4-SNAPSHOT</version>
 		<relativePath>../pom.xml</relativePath>
 	</parent>
 
@@ -15,7 +15,7 @@
 		<dependency>
 			<groupId>scray</groupId>
 			<artifactId>scray-common</artifactId>
-			<version>0.9.3</version>
+			<version>0.9.4-SNAPSHOT</version>
 			<exclusions>
 				<exclusion>
 					<artifactId>slf4j-jdk14</artifactId>
