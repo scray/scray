@@ -14,9 +14,9 @@
 		<maven.compiler.target>1.6</maven.compiler.target>
 		<encoding>UTF-8</encoding>
 		<scala.suffix>2.10</scala.suffix>
-		<finagle.version>6.15.0</finagle.version>
+		<finagle.version>6.33.0</finagle.version>
 		<libthrift.version>0.9.1</libthrift.version>
-		<scrooge.version>3.4.0</scrooge.version>
+		<scrooge.version>4.5.0</scrooge.version>
 		<snappy-java.version>1.1.1.6</snappy-java.version>
 	</properties>
 
@@ -43,21 +43,6 @@
 			<groupId>com.twitter</groupId>
 			<artifactId>scrooge-runtime_${scala.suffix}</artifactId>
 			<version>${scrooge.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>com.twitter</groupId>
-			<artifactId>finagle-thrift_${scala.suffix}</artifactId>
-			<version>${finagle.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>com.twitter</groupId>
-			<artifactId>util-core_2.10</artifactId>
-			<version>6.15.0</version>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.thrift</groupId>
-			<artifactId>libthrift</artifactId>
-			<version>${libthrift.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>junit</groupId>

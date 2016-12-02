@@ -48,6 +48,7 @@ import scray.service.qmodel.thriftjava.ScrayTRow;
 import scray.service.qmodel.thriftjava.ScrayTTableInfo;
 import scray.service.qmodel.thriftjava.ScrayUUID;
 import scray.service.qservice.thriftjava.ScrayStatelessTService;
+import scray.service.qservice.thriftjava.ScrayTException;
 import scray.service.qservice.thriftjava.ScrayTResultFrame;
 
 import com.esotericsoftware.minlog.Log;
@@ -91,7 +92,7 @@ public class ScrayJdbcTest {
 		}
 	}
 
-	void mockStubbing() {
+	void mockStubbing() throws ScrayTException {
 		// stub calls to query
 		when(_MADP.getClient().query(any(ScrayTQuery.class))).thenReturn(
 				Future.value(_SUUID));
@@ -185,7 +186,7 @@ public class ScrayJdbcTest {
 	}
 
 	@Before
-	public void init() {
+	public void init() throws ScrayTException {
 		try {
 			ScrayProperties
 					.registerProperty(PredefinedProperties.RESULT_COMPRESSION_MIN_SIZE);
