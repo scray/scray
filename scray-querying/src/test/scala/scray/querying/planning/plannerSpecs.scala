@@ -284,4 +284,14 @@ class ScrayQueryingPlannerTest extends WordSpec {
       }
     }
   }
+  "Scray materialized view planner" should {
+    "transform WHERE Clause to conjunctively linked " in {
+      val sq = SimpleQuery("", ti,
+        where = Some(And(Equal(Column("a", ti), 1), Equal(Column("b", ti), 2)))
+      )
+      val result = planner.plan(sq)
+      
+      println(result)
+    }
+  }
 }
