@@ -30,7 +30,7 @@
 
 	<dependencies>
 		<dependency>
-			<groupId>scray</groupId>
+			<groupId>org.scray</groupId>
 			<artifactId>scray-common</artifactId>
 			<version>0.9.4-SNAPSHOT</version>
 		</dependency>

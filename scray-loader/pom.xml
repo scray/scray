@@ -5,7 +5,7 @@
 	<name>Scray - Loader</name>
 	<description>Loads and starts a scray query service</description>
 	<parent>
-		<groupId>scray</groupId>
+		<groupId>org.scray</groupId>
 		<artifactId>scray</artifactId>
 		<version>0.9.4-SNAPSHOT</version>
 		<relativePath>../pom.xml</relativePath>
@@ -45,7 +45,7 @@
 			<version>2.3.0</version>
 		</dependency>
 		<dependency>
-			<groupId>scray</groupId>
+			<groupId>org.scray</groupId>
 			<artifactId>scray-querying</artifactId>
 			<version>${scray.version}</version>
 			<exclusions>
@@ -56,7 +56,7 @@
 			</exclusions>
 		</dependency>
 		<dependency>
-			<groupId>scray</groupId>
+			<groupId>org.scray</groupId>
 			<artifactId>scray-cassandra</artifactId>
 			<version>${scray.version}</version>
 			<exclusions>
@@ -76,7 +76,7 @@
 			<artifactId>util-core_2.10</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>scray</groupId>
+			<groupId>org.scray</groupId>
 			<artifactId>scray-service</artifactId>
                         <version>${scray.version}</version>
 			<exclusions>
