@@ -9,7 +9,8 @@
 	<version>${scray.version}</version>
 
 	<description>scray artefacts shared between scala and java components</description>
-
+	<url>http://scray.org</url>
+	
 	<developers>
 		<developer>
 			<name>Christian Zirpins</name>
