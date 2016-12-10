@@ -111,7 +111,7 @@ public class ScrayCombinedTServiceManager {
 		Future<List<ScrayTServiceEndpoint>> eplist = connection
 				.getCombinedClient().getServiceEndpoints();
 		endpointCache = Await.result(eplist, Duration.fromSeconds(TIMEOUT));
-		log.info("Refreshed scray service endpoints: "
+		log.debug("Refreshed scray service endpoints: "
 				+ Joiner.on(", ").join(endpointCache));
 	}
 	

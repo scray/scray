@@ -111,7 +111,7 @@ public class ScrayTServiceManager {
 						.getMetaClient().getServiceEndpoints();
 				List<ScrayTServiceEndpoint> endpoints = Await.result(eplist, Duration.fromSeconds(TIMEOUT));
 				endpointCache.put(url, endpoints);
-				log.info("Refreshed scray service endpoints: "
+				log.debug("Refreshed scray service endpoints: "
 						+ Joiner.on(", ").join(endpoints));
 			} catch (Exception e) {
 				log.warn("Could not refresh scray service enpoint cache.", e);
