@@ -8,7 +8,7 @@
 	<packaging>pom</packaging>
 	<name>Scray</name>
 	<description>Lambda Architecture Framework for Big Data, NoSQL and SQL-Stores</description>
-	<url>https://github.com/scray/scray</url>
+	<url>http://scray.org</url>
 
 	<licenses>
 		<license>
