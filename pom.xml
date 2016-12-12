@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.scray</groupId>
 	<artifactId>scray</artifactId>
-	<version>0.9.4-SNAPSHOT</version>
+	<version>0.9.4</version>
 	<inceptionYear>2014</inceptionYear>
 	<packaging>pom</packaging>
 	<name>Scray</name>
@@ -19,28 +19,26 @@
                 </license>
         </licenses>
 
-
 	<developers>
-                <developer>
-			<name>Andreas Petter</name>
-                        <organization>Scray</organization>
-                        <organizationUrl>https://github.com/scray</organizationUrl>
-                </developer>
-    		<developer>
-			<name>Johannes Strassner</name>
-      			<email>j.strassner@seeburger.de</email>
-      			<organization>Scray</organization>
-     			<organizationUrl>https://github.com/scray</organizationUrl>
-    		</developer>
 		<developer>
-                        <name>Stefan Obermeier</name>
-                        <email>git@stefan-obermeier.de</email>
-                        <organization>Scray</organization>
-                        <organizationUrl>https://github.com/scray</organizationUrl>
-                </developer>
+			<name>Andreas Petter</name>
+			<organization>Scray</organization>
+			<organizationUrl>https://github.com/scray</organizationUrl>
+		</developer>
+		<developer>
+			<name>Johannes Strassner</name>
+			<email>j.strassner@seeburger.de</email>
+			<organization>Scray</organization>
+			<organizationUrl>https://github.com/scray</organizationUrl>
+		</developer>
+		<developer>
+			<name>Stefan Obermeier</name>
+			<email>git@stefan-obermeier.de</email>
+			<organization>Scray</organization>
+			<organizationUrl>https://github.com/scray</organizationUrl>
+		</developer>
+	</developers>
 
-  	</developers>
-	
 	<scm>
 		<url>https://github.com/scray</url>
 		<connection>scm:git:git://github.com/scray/scray.git</connection>
@@ -80,6 +78,17 @@
 		<module>scray-client-jdbc</module>
 		<module>scray-loader</module>
 	</modules>
+
+	<distributionManagement>
+		<snapshotRepository>
+			<id>ossrh</id>
+			<url>https://oss.sonatype.org/content/repositories/snapshots</url>
+		</snapshotRepository>
+		<repository>
+			<id>ossrh</id>
+			<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+		</repository>
+	</distributionManagement>
 
 	<dependencies>
 		<dependency>
@@ -177,12 +186,14 @@
 			<plugin>
 				<groupId>net.alchim31.maven</groupId>
 				<artifactId>scala-maven-plugin</artifactId>
-				<version>3.2.0</version>
+				<version>3.2.1</version>
 				<executions>
 					<execution>
+					<id>attach-javadocs</id>
 						<goals>
 							<goal>compile</goal>
 							<goal>testCompile</goal>
+							<goal>doc-jar</goal>
 						</goals>
 					</execution>
 				</executions>
@@ -269,34 +280,21 @@
 				</executions>
 			</plugin>
 			<plugin>
-      				<groupId>org.apache.maven.plugins</groupId>
-      				<artifactId>maven-source-plugin</artifactId>
-				<version>3.0.1</version>
-      				<executions>
-        				<execution>
-          					<id>attach-sources</id>
-          					<goals>
-            						<goal>jar</goal>
-          					</goals>
-        				</execution>
-      				</executions>
-    			</plugin>
-	    		<plugin>
-      				<groupId>org.apache.maven.plugins</groupId>
-      				<artifactId>maven-javadoc-plugin</artifactId>
-				<version>2.10.4</version>
-      				<executions>
-        				<execution>
-          					<id>attach-javadocs</id>
-          					<goals>
-            						<goal>jar</goal>
-          					</goals>
-        				</execution>
-      				</executions>
-    			</plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-gpg-plugin</artifactId>
+				<version>1.5</version>
+				<executions>
+					<execution>
+						<id>sign-artifacts</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>sign</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
 		</plugins>
-	</build>
-
+</build>
 	<reporting>
 		<plugins>
 			<plugin>
@@ -307,20 +305,20 @@
 					<scalaVersion>${scala.version}</scalaVersion>
 				</configuration>
 			</plugin>
-                        <plugin>
-                                <groupId>org.scoverage</groupId>
-                                <artifactId>scoverage-maven-plugin</artifactId>
-                                <version>${scoverage.plugin.version}</version>
-                                <configuration>
-                                        <aggregate>true</aggregate>
-                                </configuration>
+			<plugin>
+				<groupId>org.scoverage</groupId>
+				<artifactId>scoverage-maven-plugin</artifactId>
+				<version>${scoverage.plugin.version}</version>
+				<configuration>
+					<aggregate>true</aggregate>
+				</configuration>
 				<reportSets>
-                    			<reportSet>
-                        			<reports>
-                            				<report>report</report>
-                        			</reports>
-                    			</reportSet>
-                		</reportSets>
+					<reportSet>
+						<reports>
+							<report>report</report>
+						</reports>
+					</reportSet>
+				</reportSets>
 			</plugin>
 
 		</plugins>
