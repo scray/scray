@@ -263,6 +263,7 @@ public class ScrayJdbcAccess {
 	private void close(QueryExecutionState state) {
 		close(state.resultSet);
 		close(state.statement);
+		close(state.connect);
 	}
 
 	private void close(AutoCloseable c) {
