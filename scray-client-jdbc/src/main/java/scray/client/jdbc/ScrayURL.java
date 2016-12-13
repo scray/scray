@@ -2,6 +2,7 @@ package scray.client.jdbc;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Arrays;
 import java.util.StringTokenizer;
 
 import org.slf4j.Logger;
@@ -239,6 +240,65 @@ public class ScrayURL {
 		return pattern.getQuerySpace();
 	}
 
+	
+	private URI[] absoluteUri;
+	private String fullScheme;
+	private String mainScheme;
+	private String schemeExtension;
+	private String subScheme;
+	private String hierPart;
+	private String protocolMode;
+	private String[] host;
+	private int port = -1;
+	private String[] hostAndPort;
+	private String path = null;
+	private String dbSystem;
+	private String dbId;
+	private String querySpace;
+	
+	@Override
+	public boolean equals(Object obj) {
+		
+		 if (obj == null) {
+			 return false;
+		 }
+		 
+		 if (obj == this) {
+			 return true;
+		 }
+		 
+		 if (!(obj instanceof ScrayURL)) {
+			 return false;
+		 }
+
+		 ScrayURL thatScrayURL = (ScrayURL) obj;
+		 
+		 if(!Arrays.equals(this.absoluteUri, thatScrayURL.absoluteUri)) {
+			 return false;
+		 }
+		 
+		 if(!Arrays.equals(this.host, thatScrayURL.host)) {
+			 return false;
+		 }
+
+		 
+		 if(!Arrays.equals(this.hostAndPort, thatScrayURL.hostAndPort)) {
+			 return false;
+	     }
+		
+		return (this.fullScheme == (thatScrayURL.fullScheme) || (this.fullScheme != null && this.fullScheme.equals(thatScrayURL.fullScheme))) && 
+				(this.mainScheme == (thatScrayURL.mainScheme) || (this.mainScheme != null && this.mainScheme.equals(thatScrayURL.mainScheme))) &&
+				(this.schemeExtension == (thatScrayURL.schemeExtension) || (this.schemeExtension != null && this.schemeExtension.equals(thatScrayURL.schemeExtension))) &&
+				(this.subScheme == (thatScrayURL.subScheme) || (this.subScheme != null && this.subScheme.equals(thatScrayURL.subScheme))) &&
+				(this.hierPart == (thatScrayURL.hierPart) || (this.hierPart != null && this.hierPart.equals(thatScrayURL.hierPart))) &&
+				(this.protocolMode == (thatScrayURL.protocolMode) || (this.protocolMode != null && this.protocolMode.equals(thatScrayURL.protocolMode))) &&
+				 this.port == thatScrayURL.port &&
+				(this.path == (thatScrayURL.path) || (this.path != null && this.path.equals(thatScrayURL.path))) && 
+				(this.dbSystem == (thatScrayURL.dbSystem) || (this.dbSystem != null && this.dbSystem.equals(thatScrayURL.dbSystem))) &&
+				(this.dbId == (thatScrayURL.dbId) || (this.dbId != null && this.dbId.equals(thatScrayURL.dbId))) &&
+				(this.querySpace == (thatScrayURL.querySpace) || (this.querySpace != null && this.querySpace.equals(thatScrayURL.querySpace)));
+	}
+	
 	@Override
 	public String toString() {
 		return "ScrayURL [getMainScheme()=" + getMainScheme()
