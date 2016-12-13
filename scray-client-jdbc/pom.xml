@@ -5,9 +5,8 @@
 	<groupId>scray</groupId>
 	<artifactId>scray-client-jdbc</artifactId>
 	<packaging>bundle</packaging>
-	<version>0.9.3</version>
-	<name>Scray - JAVA exclusive</name>
-	<description>scray java code, which can be used from java and scala</description>
+	<version>0.9.4-SNAPSHOT</version>
+	<name>Scray - JDBC Driver</name>
 
 	<properties>
 		<maven.compiler.source>1.6</maven.compiler.source>
@@ -32,7 +31,7 @@
 		<dependency>
 			<groupId>scray</groupId>
 			<artifactId>scray-common</artifactId>
-			<version>0.9.3</version>
+			<version>0.9.4-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>com.twitter</groupId>

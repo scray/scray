@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>scray</groupId>
 	<artifactId>scray</artifactId>
-	<version>0.9.3</version>
+	<version>0.9.4-SNAPSHOT</version>
 	<inceptionYear>2014</inceptionYear>
 	<packaging>pom</packaging>
 	<name>Scray</name>
@@ -55,7 +55,7 @@
 		<scala.version>2.10.6</scala.version>
 		<scala.suffix>2.10</scala.suffix>
 
-		<scray.version>0.9.3</scray.version>
+		<scray.version>0.9.4-SNAPSHOT</scray.version>
 		<!-- finagle 6.12 might be needed for scray stateless services because 
 			storehaus-memcached depends on it - need to test -->
 		<!-- <finagle.version>6.12.2</finagle.version> -->
@@ -365,3 +365,4 @@
 	</pluginRepositories>
 
 </project>
+

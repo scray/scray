@@ -28,8 +28,8 @@ public class ScrayJdbcAccess {
 		String url = "jdbc:scray:stateful://s030l0331,s030l0334:18181/cassandra/SILNP/SIL";
 		String query = "SELECT * FROM BISMTOlsWorkflowElement WHERE (creationTime > 1L) AND (creationTime < 4000000000000L) LIMIT 10000";
 		boolean dots = true;
-		boolean stress = false;
-		int stressCount = 1000;
+		boolean stress = true;
+		int stressCount = 200;
 	}
 
 	/* query state */
@@ -272,6 +272,7 @@ public class ScrayJdbcAccess {
 				c.close();
 			}
 		} catch (Exception e) {
+			System.out.println(e);
 			// don't throw now as it might leave following closables in
 			// undefined state
 		}
