@@ -7,6 +7,7 @@
 	<packaging>bundle</packaging>
 	<version>0.9.4-SNAPSHOT</version>
 	<name>Scray - JDBC Driver</name>
+	<description>scray java code, which can be used from java and scala</description>
 
 	<properties>
 		<maven.compiler.source>1.6</maven.compiler.source>
