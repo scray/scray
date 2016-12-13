@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.scray</groupId>
 	<artifactId>scray</artifactId>
-	<version>0.9.4</version>
+	<version>0.9.4-SNAPSHOT</version>
 	<inceptionYear>2014</inceptionYear>
 	<packaging>pom</packaging>
 	<name>Scray</name>
@@ -33,7 +33,7 @@
 		</developer>
 		<developer>
 			<name>Stefan Obermeier</name>
-			<email>git@stefan-obermeier.de</email>
+			<email>st.obermeier@seeburger.de</email>
 			<organization>Scray</organization>
 			<organizationUrl>https://github.com/scray</organizationUrl>
 		</developer>
@@ -206,6 +206,7 @@
 					</args>
 				</configuration>
 			</plugin>
+
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-eclipse-plugin</artifactId>
@@ -292,6 +293,11 @@
 						</goals>
 					</execution>
 				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-release-plugin</artifactId>
+				<version>2.5.3</version>
 			</plugin>
 		</plugins>
 	</build>
