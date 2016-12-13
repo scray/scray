@@ -6,8 +6,7 @@
 	<artifactId>scray-client-jdbc</artifactId>
 	<packaging>bundle</packaging>
 	<version>0.9.4-SNAPSHOT</version>
-	<name>Scray - JAVA exclusive</name>
-	<description>scray java code, which can be used from java and scala</description>
+	<name>Scray - JDBC Driver</name>
 
 	<properties>
 		<maven.compiler.source>1.6</maven.compiler.source>
