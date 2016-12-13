@@ -5,17 +5,17 @@
 	<name>Scray - Loader</name>
 	<description>Loads and starts a scray query service</description>
 
-	
+
 	<distributionManagement>
-  <snapshotRepository>
-    <id>ossrh</id>
-    <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-  </snapshotRepository>
-  <repository>
-    <id>ossrh</id>
-    <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-  </repository>
-</distributionManagement>
+		<snapshotRepository>
+			<id>ossrh</id>
+			<url>https://oss.sonatype.org/content/repositories/snapshots</url>
+		</snapshotRepository>
+		<repository>
+			<id>ossrh</id>
+			<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+		</repository>
+	</distributionManagement>
 
 	<dependencies>
 		<dependency>
@@ -84,7 +84,7 @@
 		<dependency>
 			<groupId>org.scray</groupId>
 			<artifactId>scray-service</artifactId>
-                        <version>${scray.version}</version>
+			<version>${scray.version}</version>
 			<exclusions>
 				<exclusion>
 					<artifactId>slf4j-jdk14</artifactId>
@@ -171,33 +171,6 @@
 					</execution>
 				</executions>
 			</plugin>
-							<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-source-plugin</artifactId>
-				<version>2.2.1</version>
-				<executions>
-					<execution>
-						<id>attach-sources</id>
-						<goals>
-							<goal>jar-no-fork</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-gpg-plugin</artifactId>
-				<version>1.5</version>
-				<executions>
-					<execution>
-						<id>sign-artifacts</id>
-						<phase>verify</phase>
-						<goals>
-							<goal>sign</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
 		</plugins>
 		<pluginManagement>
 			<plugins>
@@ -250,7 +223,7 @@
 	<parent>
 		<groupId>org.scray</groupId>
 		<artifactId>scray</artifactId>
-		<version>0.9.4</version>
+		<version>0.9.4-SNAPSHOT</version>
 		<relativePath>../pom.xml</relativePath>
 	</parent>
 </project>
