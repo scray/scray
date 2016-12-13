@@ -53,7 +53,7 @@
 		<dependency>
 			<groupId>org.scray</groupId>
 			<artifactId>scray-querying</artifactId>
-			<version>${scray.version}</version>
+			<version>0.9.4-SNAPSHOT</version>
 			<exclusions>
 				<exclusion>
 					<artifactId>shapeless_2.10.4</artifactId>
@@ -64,7 +64,7 @@
 		<dependency>
 			<groupId>org.scray</groupId>
 			<artifactId>scray-cassandra</artifactId>
-			<version>${scray.version}</version>
+			<version>0.9.4-SNAPSHOT</version>
 			<exclusions>
 				<exclusion>
 					<artifactId>shapeless_2.10.3</artifactId>
@@ -84,7 +84,7 @@
 		<dependency>
 			<groupId>org.scray</groupId>
 			<artifactId>scray-service</artifactId>
-			<version>${scray.version}</version>
+			<version>0.9.4-SNAPSHOT</version>
 			<exclusions>
 				<exclusion>
 					<artifactId>slf4j-jdk14</artifactId>

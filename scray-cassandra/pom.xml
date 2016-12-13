@@ -39,7 +39,7 @@
 		<dependency>
 			<groupId>org.scray</groupId>
 			<artifactId>scray-querying</artifactId>
-			<version>${scray.version}</version>
+			<version>0.9.4-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>com.github.scopt</groupId>
