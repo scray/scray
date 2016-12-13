@@ -4,7 +4,7 @@
 	<groupId>org.scray</groupId>
 	<artifactId>scray-client-jdbc</artifactId>
 	<packaging>bundle</packaging>
-	<version>0.9.5-SNAPSHOT</version>
+	<version>0.9.4</version>
 	<name>Scray - JDBC Driver</name>
 
 	<description>scray java code, which can be used from java and scala</description>
@@ -34,7 +34,7 @@
 		<url>https://github.com/scray</url>
 		<connection>scm:git:git://github.com/scray/scray.git</connection>
 		<developerConnection>scm:git:https://github.com/scray/scray.git</developerConnection>
-	  <tag>HEAD</tag>
+	  <tag>scray-0.9.4</tag>
   </scm>
 
 	<properties>
@@ -70,7 +70,7 @@
 		<dependency>
 			<groupId>org.scray</groupId>
 			<artifactId>scray-common</artifactId>
-			<version>0.9.5-SNAPSHOT</version>
+			<version>0.9.4</version>
 		</dependency>
 		<dependency>
 			<groupId>com.twitter</groupId>
