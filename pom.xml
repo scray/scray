@@ -11,13 +11,13 @@
 	<url>http://scray.org</url>
 
 	<licenses>
-                <license>
-                        <name>Apache License, Version 2.0</name>
-                        <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-                        <distribution>repo</distribution>
-                        <comments>A business-friendly OSS license</comments>
-                </license>
-        </licenses>
+		<license>
+			<name>Apache License, Version 2.0</name>
+			<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+			<distribution>repo</distribution>
+			<comments>A business-friendly OSS license</comments>
+		</license>
+	</licenses>
 
 	<developers>
 		<developer>
@@ -189,7 +189,7 @@
 				<version>3.2.1</version>
 				<executions>
 					<execution>
-					<id>attach-javadocs</id>
+						<id>attach-javadocs</id>
 						<goals>
 							<goal>compile</goal>
 							<goal>testCompile</goal>
@@ -294,7 +294,7 @@
 				</executions>
 			</plugin>
 		</plugins>
-</build>
+	</build>
 	<reporting>
 		<plugins>
 			<plugin>
@@ -320,7 +320,6 @@
 					</reportSet>
 				</reportSets>
 			</plugin>
-
 		</plugins>
 	</reporting>
 
