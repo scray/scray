@@ -5,14 +5,9 @@
 	<groupId>org.scray</groupId>
 	<artifactId>scray-client-jdbc</artifactId>
 	<packaging>bundle</packaging>
-<<<<<<< HEAD
 	<version>0.9.4</version>
-
-	<name>Scray - JAVA exclusive</name>
-=======
-	<version>0.9.4-SNAPSHOT</version>
 	<name>Scray - JDBC Driver</name>
->>>>>>> develop
+
 	<description>scray java code, which can be used from java and scala</description>
 	<url>http://scray.org</url>
 	
