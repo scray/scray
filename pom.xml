@@ -1,4 +1,5 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.scray</groupId>
 	<artifactId>scray</artifactId>
@@ -42,8 +43,8 @@
 		<url>https://github.com/scray</url>
 		<connection>scm:git:git://github.com/scray/scray.git</connection>
 		<developerConnection>scm:git:https://github.com/scray/scray.git</developerConnection>
-	  <tag>org.scray-0.9.5</tag>
-  </scm>
+		<tag>org.scray-0.9.5</tag>
+	</scm>
 
 	<properties>
 		<maven.compiler.source>1.6</maven.compiler.source>
@@ -354,11 +355,25 @@
 						<configuration>
 							<scalaVersion>${scala.version}</scalaVersion>
 							<args>
-								<arg>-unchecked</arg> <arg>-deprecation</arg>
+								<arg>-unchecked</arg>
+								<arg>-deprecation</arg>
 								<arg>-explaintypes</arg>
 								<arg>-Xlog-implicits</arg>
 							</args>
 						</configuration>
+					</plugin>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-source-plugin</artifactId>
+						<version>2.2.1</version>
+						<executions>
+							<execution>
+								<id>attach-sources</id>
+								<goals>
+									<goal>jar-no-fork</goal>
+								</goals>
+							</execution>
+						</executions>
 					</plugin>
 					<plugin>
 						<groupId>org.apache.maven.plugins</groupId>
