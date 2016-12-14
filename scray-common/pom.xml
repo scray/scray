@@ -1,12 +1,11 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>org.scray</groupId>
 	<artifactId>scray-common</artifactId>
 	<name>Scray - Common</name>
-	<version>0.9.4-SNAPSHOT</version>
+	<version>0.9.5</version>
 
 	<description>scray artefacts shared between scala and java components</description>
 	<url>http://scray.org</url>
@@ -40,7 +39,8 @@
 		<url>https://github.com/scray</url>
 		<connection>scm:git:git://github.com/scray/scray.git</connection>
 		<developerConnection>scm:git:https://github.com/scray/scray.git</developerConnection>
-	</scm>
+	  <tag>org.scray-0.9.5</tag>
+  </scm>
 
 	<properties>
 		<scray.version>0.9.3</scray.version>

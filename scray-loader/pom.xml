@@ -1,5 +1,4 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<artifactId>scray-loader</artifactId>
 	<name>Scray - Loader</name>
@@ -53,7 +52,7 @@
 		<dependency>
 			<groupId>org.scray</groupId>
 			<artifactId>scray-querying</artifactId>
-			<version>0.9.4-SNAPSHOT</version>
+			<version>0.9.5</version>
 			<exclusions>
 				<exclusion>
 					<artifactId>shapeless_2.10.4</artifactId>
@@ -64,7 +63,7 @@
 		<dependency>
 			<groupId>org.scray</groupId>
 			<artifactId>scray-cassandra</artifactId>
-			<version>0.9.4-SNAPSHOT</version>
+			<version>0.9.5</version>
 			<exclusions>
 				<exclusion>
 					<artifactId>shapeless_2.10.3</artifactId>
@@ -84,7 +83,7 @@
 		<dependency>
 			<groupId>org.scray</groupId>
 			<artifactId>scray-service</artifactId>
-			<version>0.9.4-SNAPSHOT</version>
+			<version>0.9.5</version>
 			<exclusions>
 				<exclusion>
 					<artifactId>slf4j-jdk14</artifactId>
@@ -201,7 +200,7 @@
 										</goals>
 									</pluginExecutionFilter>
 									<action>
-										<ignore></ignore>
+										<ignore />
 									</action>
 								</pluginExecution>
 							</pluginExecutions>
@@ -223,7 +222,7 @@
 	<parent>
 		<groupId>org.scray</groupId>
 		<artifactId>scray</artifactId>
-		<version>0.9.4-SNAPSHOT</version>
+		<version>0.9.5</version>
 		<relativePath>../pom.xml</relativePath>
 	</parent>
 </project>
