@@ -8,7 +8,7 @@
 	<parent>
 		<groupId>org.scray</groupId>
 		<artifactId>scray</artifactId>
-		<version>0.9.4</version>
+		<version>0.9.5</version>
 		<relativePath>../pom.xml</relativePath>
 	</parent>
 
@@ -35,12 +35,12 @@
 		<dependency>
 			<groupId>org.scray</groupId>
 			<artifactId>scray-common</artifactId>
-			<version>0.9.4</version>
+			<version>0.9.5</version>
 		</dependency>
 		<dependency>
 			<groupId>org.scray</groupId>
 			<artifactId>scray-client-jdbc</artifactId>
-			<version>0.9.4</version>
+			<version>0.9.5</version>
 			<exclusions>
 				<exclusion>
 					<artifactId>guava</artifactId>
