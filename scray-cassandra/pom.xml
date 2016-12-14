@@ -2,7 +2,7 @@
 	<parent>
 		<groupId>org.scray</groupId>
 		<artifactId>scray</artifactId>
-		<version>0.9.5</version>
+		<version>0.9.6-SNAPSHOT</version>
 		<relativePath>../pom.xml</relativePath>
 	</parent>
 
@@ -38,7 +38,7 @@
 		<dependency>
 			<groupId>org.scray</groupId>
 			<artifactId>scray-querying</artifactId>
-			<version>0.9.5</version>
+			<version>0.9.6-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>com.github.scopt</groupId>
