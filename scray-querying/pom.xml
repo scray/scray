@@ -7,7 +7,7 @@
 
 	<parent>
 		<groupId>org.scray</groupId>
-		<artifactId>scray</artifactId>
+		<artifactId>scray-parent</artifactId>
 		<version>0.9.6-SNAPSHOT</version>
 		<relativePath>../pom.xml</relativePath>
 	</parent>

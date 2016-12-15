@@ -2,7 +2,7 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.scray</groupId>
-	<artifactId>scray</artifactId>
+	<artifactId>scray-parent</artifactId>
 	<version>0.9.6-SNAPSHOT</version>
 	<inceptionYear>2014</inceptionYear>
 	<packaging>pom</packaging>
