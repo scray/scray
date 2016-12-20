@@ -34,6 +34,8 @@ import scray.querying.description.Row
 import scray.querying.description.Column
 import scray.querying.source.store.QueryableStoreSource
 import com.twitter.util.FuturePool
+import scray.querying.description.IndexConfiguration
+import scray.querying.Registry
 
 
 /**
@@ -55,13 +57,25 @@ class ScrayLoaderQuerySpace(name: String, config: ScrayConfiguration, qsConfig: 
    * without an extra in-memory step introduced by scray-querying the
    * results will be ordered if the queryspace can choose the main table
    */
-  def queryCanBeOrdered(query: DomainQuery): Option[ColumnConfiguration] = ???
+  def queryCanBeOrdered(query: DomainQuery): Option[ColumnConfiguration] = {
+    val orderingColumn = query.ordering match {
+      case Some(columnOrdering) => Some(columnOrdering.column)
+      case _ => None
+    }
+    orderingColumn.map {Registry.getQuerySpaceColumn(query.getQueryspace, query.querySpaceVersion, _) }.flatten
+  }
   
   /**
    * if this queryspace can group accoring to query all by itself, i.e. 
    * without an extra in-memory step introduced by scray-querying
    */
-  def queryCanBeGrouped(query: DomainQuery): Option[ColumnConfiguration] = ???
+  def queryCanBeGrouped(query: DomainQuery): Option[ColumnConfiguration] = {
+    val groupingColumn = query.grouping match {
+      case Some(grouping) => Some(grouping.column)
+      case _ => None
+    }
+    groupingColumn.map {Registry.getQuerySpaceColumn(query.getQueryspace, query.querySpaceVersion, _) }.flatten
+  }
   
   /**
    * If this queryspace can handle the query using the materialized view provided.
