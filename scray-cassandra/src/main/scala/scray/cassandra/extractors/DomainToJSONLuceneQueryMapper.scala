@@ -66,13 +66,14 @@ object DomainToJSONLuceneQueryMapper extends LazyLogging {
     case range: RangeValueDomain[_] => convertRangeValueDomain(range)
   }
 
-  private def sortIndex(optOrdering: Option[ColumnOrdering[_]], domains: List[Domain[_]]): String = optOrdering.map { ordering =>
-      domains.find { x => x.column == ordering.column } .map { _ =>
-        s""", sort : { fields : [ { field : "${ordering.column.columnName}" , reverse : ${ordering.descending} } ] } """
-      }.getOrElse("")
+  private def sortIndex(optOrdering: Option[ColumnOrdering[_]]): String = {
+    optOrdering.map { ordering =>
+          s""", sort : { fields : [ { field : "${ordering.column.columnName}" , reverse : ${ordering.descending} } ] } """
     }.getOrElse("")
+  }
 
   def getLuceneColumnsQueryMapping(query: DomainQuery, domains: List[Domain[_]], ti: TableIdentifier): Option[String] = {
+    logger.debug("Create lucene code for " + query)
     val result = new StringBuilder
     // check for those domains only containing garbage
     val validDomains = domains.filter { dom =>
@@ -89,7 +90,7 @@ object DomainToJSONLuceneQueryMapper extends LazyLogging {
       } else {
         result ++= validDomains.head
       }
-      result ++= sortIndex(query.getOrdering, domains)
+      result ++= sortIndex(query.getOrdering)
       result ++= " }' "
       Some(result.toString)
     } else {
