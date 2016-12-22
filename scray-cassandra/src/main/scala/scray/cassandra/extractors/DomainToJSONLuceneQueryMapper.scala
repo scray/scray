@@ -97,7 +97,7 @@ object DomainToJSONLuceneQueryMapper extends LazyLogging {
       
       if(query.getOrdering.isDefined) {
         // Sperate JSON objects by comma
-        if(result.startsWith(START_LUCENE_EXPRESSION)) {
+        if(result.endsWith(START_LUCENE_EXPRESSION)) {
           result ++= sortIndex(query.getOrdering)
         } else {
           result ++= ", " + sortIndex(query.getOrdering)
