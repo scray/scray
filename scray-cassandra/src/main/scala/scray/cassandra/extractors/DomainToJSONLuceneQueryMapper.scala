@@ -81,16 +81,22 @@ object DomainToJSONLuceneQueryMapper extends LazyLogging {
         dom.column.table.tableId == ti.tableId &&
         dom.column.table.dbSystem == ti.dbSystem
       }.map(domainToQueryString(_)).filter(_ != "")
-    if(validDomains.size > 0) {
+    if(validDomains.size > 0 | query.getOrdering.isDefined) {
       result ++= " lucene='{ filter : "
-      if(validDomains.size > 1) {
-        result ++= """{ type: "boolean", must :["""
-        result ++= validDomains.mkString(" , ")
-        result ++= """]}"""
-      } else {
-        result ++= validDomains.head
+      
+      if(validDomains.size > 0) {
+        if(validDomains.size > 1) {
+          result ++= """{ type: "boolean", must :["""
+          result ++= validDomains.mkString(" , ")
+          result ++= """]}"""
+        } else {
+          result ++= validDomains.head
+        }
       }
-      result ++= sortIndex(query.getOrdering)
+      
+      if(query.getOrdering.isDefined) {
+        result ++= sortIndex(query.getOrdering)
+      }
       result ++= " }' "
       Some(result.toString)
     } else {
