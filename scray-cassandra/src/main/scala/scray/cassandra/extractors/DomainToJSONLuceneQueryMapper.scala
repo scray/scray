@@ -68,12 +68,13 @@ object DomainToJSONLuceneQueryMapper extends LazyLogging {
 
   private def sortIndex(optOrdering: Option[ColumnOrdering[_]]): String = {
     optOrdering.map { ordering =>
-          s""", sort : { fields : [ { field : "${ordering.column.columnName}" , reverse : ${ordering.descending} } ] } """
+          s""" sort : { fields : [ { field : "${ordering.column.columnName}" , reverse : ${ordering.descending} } ] } """
     }.getOrElse("")
   }
 
   def getLuceneColumnsQueryMapping(query: DomainQuery, domains: List[Domain[_]], ti: TableIdentifier): Option[String] = {
     logger.debug("Create lucene code for " + query)
+    val START_LUCENE_EXPRESSION = " lucene='{ ";
     val result = new StringBuilder
     // check for those domains only containing garbage
     val validDomains = domains.filter { dom =>
@@ -82,11 +83,11 @@ object DomainToJSONLuceneQueryMapper extends LazyLogging {
         dom.column.table.dbSystem == ti.dbSystem
       }.map(domainToQueryString(_)).filter(_ != "")
     if(validDomains.size > 0 | query.getOrdering.isDefined) {
-      result ++= " lucene='{ filter : "
+      result ++= START_LUCENE_EXPRESSION
       
       if(validDomains.size > 0) {
         if(validDomains.size > 1) {
-          result ++= """{ type: "boolean", must :["""
+          result ++= """filter : { type: "boolean", must :["""
           result ++= validDomains.mkString(" , ")
           result ++= """]}"""
         } else {
@@ -95,7 +96,12 @@ object DomainToJSONLuceneQueryMapper extends LazyLogging {
       }
       
       if(query.getOrdering.isDefined) {
-        result ++= sortIndex(query.getOrdering)
+        // Sperate JSON objects by comma
+        if(result.startsWith(START_LUCENE_EXPRESSION)) {
+          result ++= sortIndex(query.getOrdering)
+        } else {
+          result ++= ", " + sortIndex(query.getOrdering)
+        }
       }
       result ++= " }' "
       Some(result.toString)
