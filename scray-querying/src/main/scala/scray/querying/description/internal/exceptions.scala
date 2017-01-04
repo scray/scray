@@ -56,7 +56,7 @@ class KeyBasedQueryException(query: DomainQuery)
     extends ScrayException(ExceptionIDs.keyBasedQueryExceptionID, query.getQueryID, s"""query trys to access queryspace
     ${query.getQueryspace} which has not been registered""") with Serializable
     
-class MaterializedViewQueryException(query: DomainQuery) 
+class MaterializedViewQueryException(query: Query) 
     extends ScrayException(ExceptionIDs.unsupportedMaterializedViewID, query.getQueryID, s"""query trys to use range queries which is not suported""") with Serializable
 
 class NonAtomicClauseException(query: Query)

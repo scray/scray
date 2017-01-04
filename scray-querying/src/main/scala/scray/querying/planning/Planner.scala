@@ -310,6 +310,29 @@ object Planner extends LazyLogging {
     case Some(versionInfo) => versionInfo.readableStore.get
       // versionInfo.readableStore(versionInfo.runtimeVersion().get)
   }
+  
+ def getMvQuery(domains: List[Domain[_]], query: Query, ti: TableIdentifier): SingleValueDomain[String] = {
+        val pKey = new StringBuilder
+        val orderedColumnName = domains.sortBy { x => (x.column.columnName) }
+
+        orderedColumnName.map { domaine =>
+          {
+            domaine match {
+              // compose primary key
+              case sDomaine: SingleValueDomain[_] => {
+                  if(pKey.size > 0) {
+                    pKey.append("_" + sDomaine.value)
+                  } else {
+                    pKey.append(sDomaine.value)
+                  }
+                }
+              case _ => throw new MaterializedViewQueryException(query)
+            }
+          }
+        }
+
+      new SingleValueDomain(Column("key", ti), pKey.toString(), false, false)
+    }
 
   /**
    * Finds the main query
@@ -379,7 +402,6 @@ object Planner extends LazyLogging {
     def createHashJoinSource[A <: DomainQuery, K <: DomainQuery, V](indexSource: QueryableStoreSource[A], colConf: ColumnConfiguration, 
         lookupSource: KeyedSource[K, V], lookupTableConfig: TableConfiguration[A, K, V]) = new SimpleHashJoinSource(indexSource, Set(colConf.column), lookupSource, lookupTableConfig.primarykeyColumns)//(defaultFactory)
     
-        
     // construct a simple plan
 //    mainColumns.headOption.map { colConf =>
 //      colConf.index.flatMap(index => index.isManuallyIndexed.map { tableConf =>
