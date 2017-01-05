@@ -117,6 +117,13 @@ class ScrayConfigurationParserSpecs extends WordSpec with LazyLogging {
       assert(result.get.indexStores(1).indexjobid === "myfobid")
       assert(result.get.indexStores(1).mapping.get === "UUID->TEXT")
     }
+    "load materialized view queryspace config" in {
+      val config = ScrayConfigurationParser.parseResource("/configs/scrayjdbcconfig1.txt")
+      val result = ScrayQueryspaceConfigurationParser.parseResource("/configs/queryspaceconfigMv.txt", config.get, false)
+      assert(result.get.name === "WhateverYouLike")
+      assert(result.get.materializedViews.size == 1)
+      assert(result.get.materializedViews.head.table === TableIdentifier("cassandra", "KS1", "MV1"))
+    }
   }
   "Scray's user configuration parser" should {
     "throw on an empty config file" in {
