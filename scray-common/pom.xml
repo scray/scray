@@ -6,7 +6,7 @@
 	<groupId>scray</groupId>
 	<artifactId>scray-common</artifactId>
 	<name>Scray - Common</name>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>0.9.4-SNAPSHOT</version>
 
 	<description>scray artefacts shared between scala and java components</description>
 

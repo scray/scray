@@ -3,7 +3,7 @@
 	<parent>
 		<groupId>scray</groupId>
 		<artifactId>scray</artifactId>
-		<version>0.0.1-SNAPSHOT</version>
+		<version>0.9.4-SNAPSHOT</version>
 		<relativePath>../pom.xml</relativePath>
 	</parent>
 
@@ -11,16 +11,11 @@
 	<artifactId>scray-service</artifactId>
 	<name>Scray - Service</name>
 	<description>scray remote query service interface</description>
-
-	<properties>
-		<parboiled.version>2.0.1</parboiled.version>
-	</properties>
-
 	<dependencies>
 		<dependency>
 			<groupId>scray</groupId>
 			<artifactId>scray-common</artifactId>
-			<version>0.0.1-SNAPSHOT</version>
+			<version>0.9.4-SNAPSHOT</version>
 			<exclusions>
 				<exclusion>
 					<artifactId>slf4j-jdk14</artifactId>
@@ -31,7 +26,7 @@
 		<dependency>
 			<groupId>scray</groupId>
 			<artifactId>scray-querying</artifactId>
-			<version>0.0.1-SNAPSHOT</version>
+			<version>${scray.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.parboiled</groupId>

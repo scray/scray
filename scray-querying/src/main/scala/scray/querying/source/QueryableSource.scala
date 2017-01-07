@@ -14,12 +14,12 @@
 // limitations under the License.
 package scray.querying.source
 
+import scray.querying.description.Row
+import com.typesafe.scalalogging.slf4j.LazyLogging
 import com.twitter.concurrent.Spool
-import com.twitter.util.{Future, Throw, Return}
-import scray.querying.description.{Column, Row}
-import scray.querying.queries.DomainQuery
+import com.twitter.util.Future
 
-object QueryableSource {
+object QueryableSource extends LazyLogging {
   
   /**
    * copied from com.twitter.storehaus.IterableStore, but removed tuple dependency
@@ -27,7 +27,8 @@ object QueryableSource {
   def iteratorToSpool[V](it: Iterator[V], transformer: (V) => Row): Future[Spool[Row]] = Future.value {
     if (it.hasNext) {
       // *:: for lazy/deferred tail
-      transformer(it.next) *:: iteratorToSpool(it, transformer)
+      val next = it.next
+      transformer(next) *:: iteratorToSpool(it, transformer)
     } else {
       Spool.empty
     }

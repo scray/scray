@@ -74,6 +74,8 @@ import java.util.{ Iterator => JIterator }
 import scray.querying.sync.JobLockTable
 import scray.querying.sync.ArbitrarylyTypedRows
 import scray.querying.sync.SyncTableBasicClasses
+import scray.cassandra.util.CassandraUtils
+
 
 object CassandraImplementation extends AbstractTypeDetection with Serializable {
 
@@ -128,7 +130,7 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
 
   val syncTable = SyncTable("silidx", "SyncTable")
   val jobLockTable = JobLockTable("silidx", "JobLockTable")
-  val statementGenerator = CassandraStatementGenerator
+  val statementGenerator = CassandraUtils
   val lockTimeOut = 500 //ms
 
   /**
@@ -136,8 +138,8 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
    */
   @Override
   def initJob[T <: AbstractRow](job: JOB_INFO, dataTable: T): Try[Unit] = Try {
-    statementGenerator.createKeyspaceCreationString(syncTable).map { statement => dbSession.execute(statement) }
-    statementGenerator.createSingleTableString(syncTable).map { statement => dbSession.execute(statement) }
+    statementGenerator.createKeyspaceCreationStatement(syncTable).map { statement => dbSession.execute(statement) }
+    statementGenerator.createTableStatement(syncTable).map { statement => dbSession.execute(statement) }
 
     this.crateAndRegisterTablesIfNotExists(job)
     this.createDataTables(job, dataTable)
@@ -145,8 +147,8 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
 
   @Override
   def initJob[DataTableT <: ArbitrarylyTypedRows](job: JOB_INFO): Try[Unit] = {
-    statementGenerator.createKeyspaceCreationString(syncTable).map { statement => dbSession.execute(statement) }
-    statementGenerator.createSingleTableString(syncTable).map { statement => dbSession.execute(statement) }
+    statementGenerator.createKeyspaceCreationStatement(syncTable).map { statement => dbSession.execute(statement) }
+    statementGenerator.createTableStatement(syncTable).map { statement => dbSession.execute(statement) }
 
     this.crateAndRegisterTablesIfNotExists(job)
   }
@@ -198,17 +200,8 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
         }
         case None => {
           val slot = (getNewestOnlineSlot(job).getOrElse({ logger.debug("No completed slot found use 0"); 0 }) + 1) % job.numberOfOnlineSlots
-          getBatchID(job) match {
-            case None => {
-              logger.error("Online process can only be started up when  at least one batch job finished.")
-              throw new RuntimeException("Online process can only be started up when  at least one batch job finished.")
-            }
-            case Some(prevBatchID) => {
-              logger.debug(s"Set next online slot to ${slot}")
-              executeQuorum(createStartStatement(slot, true, job.startTime.getOrElse(prevBatchID.getBatchEnd)))
-            }
-          }
-
+          logger.debug(s"Set next online slot to ${slot}")
+          executeQuorum(createStartStatement(slot, true, job.startTime.getOrElse(System.currentTimeMillis())))
         }
       }
     } else {
@@ -344,7 +337,7 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
       .map { _.iterator() }.recover {
         case e => { logger.error(s"DB error while fetching newest slot ${e.getMessage}"); throw e }
       }.toOption
-      .flatMap { iter => this.getNewestRow(iter, syncTable.columns.batchEndTime.name) }
+      .flatMap { iter => CassandraUtils.getNewestRow(iter, syncTable.columns.batchEndTime.name) }
       .map { row => (row.getInt(syncTable.columns.slot.name)) }
   }
 
@@ -468,12 +461,12 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
     // Create and register online tables
     0 to job.numberOfOnlineSlots - 1 foreach { i =>
       // Create online data tables
-      statementGenerator.createSingleTableString(VoidTable(syncTable.keySpace, getOnlineJobName(job.name, i), dataColumns)).map { statement => session.execute(statement) }
+      statementGenerator.createTableStatement(VoidTable(syncTable.keySpace, getOnlineJobName(job.name, i), dataColumns)).map { statement => session.execute(statement) }
     }
 
     0 to job.numberOfBatchSlots - 1 foreach { i =>
       // Create batch data tables
-      statementGenerator.createSingleTableString(VoidTable(syncTable.keySpace, getBatchJobName(job.name, i), dataColumns)).map { statement => session.execute(statement) }
+      statementGenerator.createTableStatement(VoidTable(syncTable.keySpace, getBatchJobName(job.name, i), dataColumns)).map { statement => session.execute(statement) }
     }
   }
 
@@ -523,7 +516,7 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
       .map { _.iterator() }.recover {
         case e => { logger.error(s"DB error while fetching Newest Version ${e.getMessage}"); throw e }
       }.toOption
-      .flatMap { iter => this.getNewestRow(iter, syncTable.columns.batchEndTime.name) }
+      .flatMap { iter => CassandraUtils.getNewestRow(iter, syncTable.columns.batchEndTime.name) }
       .map { row =>
         new scray.querying.sync.SyncTableBasicClasses.SyncTableRow(
           row.getString(syncTable.columns.jobname.name),
@@ -535,7 +528,9 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
           row.getLong(syncTable.columns.batchStartTime.name),
           row.getLong(syncTable.columns.batchEndTime.name),
           row.getBool(syncTable.columns.online.name),
-          row.getString(syncTable.columns.state.name))
+          row.getString(syncTable.columns.state.name),
+          row.getString(syncTable.columns.mergeMode.name),
+          row.getLong(syncTable.columns.firstElementTime.name))
       }
 
   }
@@ -558,7 +553,7 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
 
   def insertInBatchTable(job: JOB_INFO, slot: Int, data: RowWithValue): Try[Unit] = {
     val table = new Table(syncTable.keySpace, getBatchJobName(job.name, slot), data)
-    CassandraStatementGenerator.createSingleTableString(table).map { session.execute(_) }
+    CassandraUtils.createTableStatement(table).map { session.execute(_) }
     val statement = data.foldLeft(QueryBuilder.insertInto(syncTable.keySpace, getBatchJobName(job.name, slot))) {
       (acc, column) => acc.value(column.name, column.value)
     }
@@ -638,6 +633,48 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
   //      onlyIf(QueryBuilder.eq(syncTable.columns.locked.name, !newState))
   //  }
 
+  def getOnlineStartTime(job: JOB_INFO): Option[Long] = {
+    val slots = execute(QueryBuilder.select().all().from(syncTable.keySpace, syncTable.tableName).allowFiltering().where(
+      QueryBuilder.eq(syncTable.columns.jobname.name, job.name)).
+      and(QueryBuilder.eq(syncTable.columns.online.name, true)).
+      and(QueryBuilder.eq(syncTable.columns.state.name, State.RUNNING.toString()))).map { _.all() }
+
+    if (slots.isSuccess) {
+      if (slots.get.size() > 1) {
+        logger.error(s"Inconsistant state. More than one version of job ${job.name} are running")
+        None
+      } else {
+        if (slots.get.size() == 0) {
+          None
+        } else {
+          Some(slots.get.get(0).getLong(syncTable.columns.firstElementTime.name))
+        }
+      }
+    } else {
+      None
+    }
+  }
+  
+  def setOnlineStartTime(job: JOB_INFO, time: Long): Try[Unit] = {
+    this.getRunningOnlineJobSlot(job).map { slot => 
+      val insertTime = QueryBuilder.insertInto(syncTable.keySpace, syncTable.tableName)
+            .value(syncTable.columns.slot.name, slot)
+            .value(syncTable.columns.online.name, true)
+            .value(syncTable.columns.jobname.name, job.name)
+            .value(syncTable.columns.state.name, State.RUNNING.toString())
+            .value(syncTable.columns.versions.name, job.numberOfOnlineSlots)
+            .value(syncTable.columns.dbSystem.name, "cassandra")
+            .value(syncTable.columns.dbId.name, syncTable.keySpace)
+            .value(syncTable.columns.firstElementTime.name, time)
+            .value(syncTable.columns.tableId.name, getBatchJobName(job.name, slot))
+            
+            dbSession.execute(insertTime)
+    } match {
+      case Some(_) => Try()
+      case None => Failure(new RuntimeException("Error while setting start time. See previous logs")) 
+    }
+  }
+  
   def getBatchJobData[T <: RowWithValue, K](jobname: String, slot: Int, key: K, result: T): Option[RowWithValue] = {
     getJobData(jobname, slot, false, Some(key), result).map { row => row.head } // One key is referred to one key
   }
@@ -751,19 +788,7 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
   private def getBatchJobName(jobname: String, nr: Int): String = { jobname + "_batch" + nr }
   private def getOnlineJobName(jobname: String, nr: Int): String = { jobname + "_online" + nr }
 
-  def getNewestRow(rows: java.util.Iterator[Row], columnName: String): Option[Row] = {
-    import scala.math.Ordering._
-    val comp = implicitly[Ordering[Long]]
-    getComptRow(rows, comp.gt, columnName)
-  }
-
-  def getOldestRow(rows: java.util.Iterator[Row], columnName: String): Option[Row] = {
-    import scala.math.Ordering._
-    val comp = implicitly[Ordering[Long]]
-    getComptRow(rows, comp.lt, columnName)
-  }
-
-  def getComptRow(rows: JIterator[Row], comp: (Long, Long) => Boolean, columnName: String): Option[Row] = {
+    def getComptRow(rows: JIterator[Row], comp: (Long, Long) => Boolean, columnName: String): Option[Row] = {
     @tailrec def accNewestRow(prevRow: Row, nextRows: JIterator[Row]): Row = {
       if (nextRows.hasNext) {
         val localRow = nextRows.next()
@@ -785,20 +810,5 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
     } else {
       None
     }
-  }
-}
-
-object CassandraStatementGenerator extends LazyLogging {
-
-  def createSingleTableString[T <: AbstractRow](table: Table[T]): Option[String] = {
-    val createStatement = s"CREATE TABLE IF NOT EXISTS ${table.keySpace + "." + table.tableName} (" +
-      s"${table.columns.foldLeft("")((acc, next) => { acc + next.name + " " + next.getDBType + ", " })} " +
-      s"PRIMARY KEY ${table.columns.primaryKey})"
-    logger.debug(s"Create table String: ${createStatement} ")
-    Some(createStatement)
-  }
-
-  def createKeyspaceCreationString[T <: AbstractRow](table: Table[T]): Option[String] = {
-    Some(s"CREATE KEYSPACE IF NOT EXISTS ${table.keySpace} WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor' : 1};")
   }
 }

@@ -9,10 +9,10 @@
 //import scray.querying.description.ColumnConfiguration
 //import scray.querying.description.TableConfiguration
 //import scray.querying.description.TableIdentifier
-//import scray.querying.description.Row
 //import com.twitter.storehaus.MapStore
 //import com.twitter.storehaus.QueryableStore
 //import com.twitter.storehaus.ReadableStore
+//import scray.querying.description.Row
 //import com.twitter.util.Future
 //import scray.querying.description.SimpleRow
 //import scray.querying.source.DomainFilterSource

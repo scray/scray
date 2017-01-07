@@ -51,7 +51,7 @@ class LimitIncreasingQueryableSource[Q <: DomainQuery](val store: QueryableStore
   def fetchAndSkipDataIterator: ITERATOR_EXTENDER_FUNCTION[Row] = (query, limit, skip) => Await.result {
     val increasedLimitQuery = query.copy(range = Some(query.getQueryRange.get.copy(limit = Some(limit))))
     logger.debug(s"re-fetch query with increased limit $limit to fetch more results : ${increasedLimitQuery}")
-    store.requestIterator(queryMapping(increasedLimitQuery)).map { it =>
+    store.requestIterator(increasedLimitQuery.asInstanceOf[Q]).map { it =>
       skipIteratorEntries(skip, it)
     }
   }
@@ -66,7 +66,7 @@ class LimitIncreasingQueryableSource[Q <: DomainQuery](val store: QueryableStore
   override def requestIterator(query: Q): Future[Iterator[Row]] = {
     query.queryInfo.addNewCosts {(n: Long) => {n + 42}}
     logger.debug(s"Requesting data from store with LimitIncreasingQueryableSource on query ${query}")
-    store.requestIterator(queryMapping(query)).map { it =>
+    store.requestIterator(query).map { it =>
         // construct lazy spool
         query.getQueryRange.flatMap { range =>
           range.limit.map { limit =>

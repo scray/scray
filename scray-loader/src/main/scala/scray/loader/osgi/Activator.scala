@@ -86,9 +86,8 @@ class Activator extends KryoPoolRegistration with BundleActivator with LazyLoggi
   private def registerQuerySpaces(scrayConfiguration: ScrayConfiguration) = {
     QueryspaceConfigurationFileHandler.performQueryspaceUpdate(scrayConfiguration, Activator.queryspaces, Seq())
     Activator.queryspaces.map { config =>
-      logger.info(s"Registering queryspace ${config._1}")
+      logger.error(s"Registering queryspace ${config._1}")
       val qs = new ScrayLoaderQuerySpace(config._1, scrayConfiguration, config._2._2, Activator.scrayStores.get, futurePool.get)
-      logger.error(qs.toString)
       Registry.registerQuerySpace(qs, Some(0))
     }    
   }
@@ -215,6 +214,7 @@ class Activator extends KryoPoolRegistration with BundleActivator with LazyLoggi
   }
   
   override def stop(context: BundleContext): Unit = {
+    
     // shutdown update service
     Activator.refresher.map { refresher =>
       refresher.destroyResources

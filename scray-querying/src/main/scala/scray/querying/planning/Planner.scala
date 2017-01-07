@@ -116,13 +116,14 @@ object Planner extends LazyLogging {
    */
   @inline def basicVerifyQuery(query: Query): Int = {
     // then we can retrieve the latest version of this queryspace
-    val version = Registry.getLatestVersion(query.getQueryspace).getOrElse(throw new QueryspaceViolationException(query))
+    val version = Registry.getLatestVersion(query.getQueryspace).getOrElse({logger.warn("No latest version found");throw new QueryspaceViolationException(query)})
 
     // check that the queryspace is there
-    Registry.getQuerySpace(query.getQueryspace, version).orElse(throw new QueryspaceViolationException(query))
+    Registry.getQuerySpace(query.getQueryspace, version).orElse({logger.warn("No queryspace found"); throw new QueryspaceViolationException(query)})
 
     // check that the table is registered in the queryspace
     Registry.getQuerySpaceTable(query.getQueryspace, version, query.getTableIdentifier).orElse{
+      logger.warn(s"Unable to get query space table. Queryspace: ${query.getQueryspace}, version: ${version}, table identifier: ${query.getTableIdentifier}\nExisting queryspace: ${printQuerySpace(version)}");
       throw new QueryspaceViolationException(query)
     }.map { tableConf =>
       if(!(tableConf.queryableStore.isDefined || tableConf.readableStore.isDefined)) {
@@ -135,7 +136,7 @@ object Planner extends LazyLogging {
     // def to throw if a column is not registered
     @inline def checkColumnReference(reference: Column): Unit = {
       Registry.getQuerySpaceColumn(query.getQueryspace, version, reference) match {
-        case None => throw new QueryspaceColumnViolationException(query, reference)
+        case None => {logger.warn("Unable to get Query space column"); throw new QueryspaceColumnViolationException(query, reference)}
         case _ => // column is registered, o.k.
       }
     }
@@ -144,7 +145,9 @@ object Planner extends LazyLogging {
     query.getResultSetColumns.columns match {
       case Right(columns) => columns.foreach(col => checkColumnReference(col))
       case Left(bool) => if(bool) { /* is a star (*), o.k. */ } else {
-        throw new QueryWithoutColumnsException(query)
+        { logger.warn("Unable to get result set columns")
+          throw new QueryWithoutColumnsException(query)
+        }
       }
     }
 
@@ -596,6 +599,7 @@ object Planner extends LazyLogging {
       case Left(all) => { // the result will be all possible columns, i.e. all from the table + columns from domains
         if(all) {
           (Registry.getQuerySpaceTable(query.getQueryspace, version, table).getOrElse {
+              logger.warn("Unable to get queryspace table 421")
               throw new QueryspaceViolationException(query)
             }.allColumns ++ domains.map(dom => dom.column).toSet)
         } else { throw new QueryWithoutColumnsException(query) }
@@ -735,5 +739,13 @@ object Planner extends LazyLogging {
           Await.result(MergingResultSpool.mergeOrderedSpools(seqs, spools, compRows, ordering.get.ordering.get.descending, indexes))
       }
     }
+  }
+  
+  def printQuerySpace(version: Int): String = {
+    var names = Registry.getQuerySpaceNames()
+    val queryspacesString = new StringBuffer();
+    queryspacesString.append(s"Print queryspaces for version ${version}: ${names} \n")    
+    names.foreach { x => {queryspacesString.append("Found tables for " + x + " : " + Registry.getQuerySpaceTables(x, version))}}
+    queryspacesString.toString()
   }
 }

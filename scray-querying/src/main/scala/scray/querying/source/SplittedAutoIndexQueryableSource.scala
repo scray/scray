@@ -69,7 +69,7 @@ class SplittedAutoIndexQueryableSource[Q <: DomainQuery, T: Ordering](val store:
     val limitOpt = query.getQueryRange.map(_.copy(limit = limit)).orElse(limit.map(lim => QueryRange(None, limit, None)))
     val splitQuery = query.copy(domains = ast, range = limitOpt)
     logger.debug(s"re-fetch query with different range $split to fetch more results : ${splitQuery}")
-    store.requestIterator(queryMapping(splitQuery)).map { it =>
+    store.requestIterator(splitQuery.asInstanceOf[Q]).map { it =>
       skip.map(count => skipIteratorEntries(count, it)).getOrElse(new EmptyIterator[Row])
     }
   }

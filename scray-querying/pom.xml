@@ -3,7 +3,8 @@
 	<parent>
 		<groupId>scray</groupId>
 		<artifactId>scray</artifactId>
-		<version>0.0.1-SNAPSHOT</version>
+		<version>0.9.4-SNAPSHOT</version>
+		<relativePath>../pom.xml</relativePath>
 	</parent>
 
 	<modelVersion>4.0.0</modelVersion>
@@ -21,11 +22,11 @@
 		<dependency>
 			<groupId>scray</groupId>
 			<artifactId>scray-common</artifactId>
-			<version>${scray.version}</version>
+			<version>0.9.4-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>scray</groupId>
-			<artifactId>scray-java</artifactId>
+			<artifactId>scray-client-jdbc</artifactId>
 			<version>${scray.version}</version>
 			<exclusions>
 				<exclusion>
@@ -95,7 +96,7 @@
 		</dependency>
 		<dependency>
 			<groupId>org.scalaz</groupId>
-			<artifactId>scalaz-core_2.11</artifactId>
+			<artifactId>scalaz-core_2.10</artifactId>
 			<version>7.2.2</version>
 		</dependency>
 	</dependencies>
