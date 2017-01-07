@@ -17,11 +17,11 @@
 		<junit-version>4.8.1</junit-version>
 		<scala-maven-plugin-version>3.1.5</scala-maven-plugin-version>
 		<scala-test-version>2.2.4</scala-test-version>
-		<default.package>scray.example.db.adam</default.package>
+		<default.package>scray.example.db.fasta</default.package>
 
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
-	<artifactId>db-adam-adapter</artifactId>
+	<artifactId>db-fasta-input-adapter</artifactId>
 
 <!-- 	<modules> -->
 <!-- 		<module>target/generated-sources/swagger</module> -->
@@ -43,7 +43,7 @@
 							<language>java</language>
 							<configOptions>
 								<output>${project.build.directory}/</output>
-								<groupId>scray.example.db.adam</groupId>
+								<groupId>scray.example.db.fasta</groupId>
 								<artifactId>client</artifactId>
 								<apiPackage>${default.package}.handler</apiPackage>
 								<modelPackage>${default.package}.model</modelPackage>
