@@ -39,7 +39,7 @@
 							<goal>generate</goal>
 						</goals>
 						<configuration>
-							<inputSpec>http://download-data.deutschebahn.com/static/apis/adam/SSTBT_REST-API_ADAM_1_0.yaml</inputSpec>
+							<inputSpec>https://developer.deutschebahn.com/store/api-docs/DBOpenData/FaSta-Station_Facilities_Status/v1</inputSpec>
 							<language>java</language>
 							<configOptions>
 								<output>${project.build.directory}/</output>
