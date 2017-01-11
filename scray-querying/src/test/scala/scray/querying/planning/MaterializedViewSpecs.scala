@@ -72,27 +72,6 @@ class MaterializedViewSpecs extends WordSpec {
       assert(mvDomaine2.column.columnName == "key")
       assert(mvDomaine2.value == "2")
     }
-    
-    " add materialized view information to registry " in {
-        val ti = TableIdentifier("cassandra", "mytestspace", "mycf")
-        val ti1 = TableIdentifier("cassandra", "mytestspace", "mycf")
-
-        val col1 = Column("col1", ti)
-        val col2 = Column("col2", ti)
-        val col3 = Column("col3", ti)
-
-        assert(ti.equals(ti1))
-        val qs = new TestQuerySpace(Set(TestQuerySpace.createTableConfiguration[String](ti, List(col1), List(col2), List(col3), (new HashMap[String, SimpleRow]).toMap)))
-     
-        def checkMaterializedView(mv: MaterializedView, query: DomainQuery): Option[(Boolean, Int)] = {
-          val rr = query.columns.map { queryColumn => {
-              mv.fixedDomains.find { mvColumn => {mvColumn.table.equals(queryColumn)  && mvColumn.columnName == queryColumn.columnName} }
-          }}
-          Some(true, 1)
-        }
-        
-        //val mv = new MaterializedView()
-    }
   }
 
 }

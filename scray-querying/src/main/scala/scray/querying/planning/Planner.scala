@@ -78,12 +78,30 @@ object Planner extends LazyLogging {
 
     // planning of conjunctive queries can be done in parallel
     val plans = conjunctiveQueries.par.map { cQuery =>
-      // transform query into a query only containing domains
-      val domainQuery = transformQueryDomains(cQuery, version)
 
+      def getDomainQuery(): DomainQuery = {
+        val isMv: Boolean = Registry.getQuerySpaceTable(query.getQueryspace, 0, query.getTableIdentifier).map(config => {
+          if (config.materializedViews.size > 0) {
+            true
+          } else {
+            false
+          }
+        }).getOrElse(false)
+
+        if (isMv) {
+          val domains2 = Planner.qualifyPredicates(query).get
+          createQueryDomains(query, version, List(Planner.getMvQuery(domains2, query, query.getTableIdentifier)))
+        } else {
+          // transform query into a query only containing domains
+          transformQueryDomains(cQuery, version)
+        }
+      }
+
+      val domainQuery = getDomainQuery()
+      
       // find the main plan
       val plan = findMainQueryPlan(cQuery, domainQuery)
-
+  
       // add timeout filter source
       val planWithTimeoutCheck = addTimeoutSource(plan, domainQuery)
       
@@ -636,6 +654,10 @@ object Planner extends LazyLogging {
    */
   @inline def transformQueryDomains(query: Query, version: Int): DomainQuery = {
     val domains = qualifyPredicates(query).getOrElse(List())
+    createQueryDomains(query, version, domains) 
+  }
+  
+  @inline def createQueryDomains(query: Query, version: Int, domains: List[Domain[_]]): DomainQuery = {
     val table = query.getTableIdentifier
     DomainQuery(query.getQueryID,
         query.getQueryspace,
