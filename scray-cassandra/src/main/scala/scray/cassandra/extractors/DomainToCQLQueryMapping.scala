@@ -178,7 +178,8 @@ class DomainToCQLQueryMapping[Q <: DomainQuery, S <: CassandraQueryableSource[Q]
    * this recursion probably never overflows the stack as it is only on a few cols or domains
    */
   private def clusterColumnDomains(cols: Set[Column], store: S, query: DomainQuery, storeTableNickName: Option[String]): List[Domain[_]] = {
-    if(cols == Nil) {
+    println("Cols: " + cols + "\t" + cols.equals(Nil) + "\t" + cols.size)
+    if(cols.isEmpty) {
       Nil
     } else {
       // find relevant domain
