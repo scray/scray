@@ -179,7 +179,7 @@ class DomainToCQLQueryMapping[Q <: DomainQuery, S <: CassandraQueryableSource[Q]
    */
   private def clusterColumnDomains(cols: Set[Column], store: S, query: DomainQuery, storeTableNickName: Option[String]): List[Domain[_]] = {
     println("Cols: " + cols + "\t" + cols.equals(Nil) + "\t" + cols.size)
-    if(cols.isEmpty) {
+    if(cols == Nil || cols.isEmpty) {
       Nil
     } else {
       // find relevant domain
