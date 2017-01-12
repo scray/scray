@@ -42,10 +42,6 @@
 	  <tag>HEAD</tag>
   </scm>
 
-	<properties>
-		<scray.version>0.9.3</scray.version>
-	</properties>
-
 	<distributionManagement>
 		<snapshotRepository>
 			<id>ossrh</id>
