@@ -145,6 +145,7 @@ object Registry extends LazyLogging with Registry {
   @inline def getQuerySpaceTables(space: String, version: Int): Map[TableIdentifier, TableConfiguration[_ <: DomainQuery, _ <: DomainQuery, _]] = {
     rwlock.readLock.lock
     try {
+      println("Query table" + space + version + " Existing tables: " + querySpaceTables.keySet)
       querySpaceTables.get(space + version).map(_.toMap).getOrElse(Map())
     } finally {
       rwlock.readLock.unlock
@@ -192,6 +193,8 @@ object Registry extends LazyLogging with Registry {
       querySpaceTables.put(querySpace.name + newVersion, new HashMap[TableIdentifier, TableConfiguration[_ <: DomainQuery, _ <: DomainQuery, _]])
       querySpace.getColumns(newVersion).foreach(col => querySpaceColumns.get(querySpace.name + newVersion).map(_.put(col.column, col)))
       querySpace.getTables(newVersion).foreach(table => querySpaceTables.get(querySpace.name + newVersion).map(_.put(table.table, table)))
+      querySpace.getTables(newVersion).foreach(table => querySpaceTables.get(querySpace.name + newVersion).map(tableIdentifiers => 
+          table.materializedViews.map( materializedViews => materializedViews.foreach ( mv => tableIdentifiers.put(mv.table, table)))))
       querySpaceVersions.put(querySpace.name, querySpaceVersions.get(querySpace.name).getOrElse(Set()) + newVersion)
       logger.debug(s"Registered query space ${querySpaces.get(querySpace.name + newVersion)}")
       newVersion

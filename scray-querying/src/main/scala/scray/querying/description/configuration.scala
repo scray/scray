@@ -119,7 +119,7 @@ case class TableConfiguration[Q <: DomainQuery, K <: DomainQuery, V] (
   domainQueryMapping: DomainQuery => Q, // maps a scray-DomainQuery to a query of the store
   queryableStore: Option[QueryableStoreSource[Q]], // the queryable store representation, allowing to query the store, None if versioned
   readableStore: Option[QueryableStoreSource[K]], // the readablestore, used in case this is used by a HashJoinSource, None if versioned
-  materializedViews: List[MaterializedView] // materialized views for this table
+  materializedViews: Option[List[MaterializedView]] // materialized views for this table
 )
 
 /**

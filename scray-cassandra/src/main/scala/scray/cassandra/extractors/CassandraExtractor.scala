@@ -329,7 +329,7 @@ class CassandraExtractor[Q <: DomainQuery](session: Session, table: TableIdentif
       cassQuerySource,
       cassQuerySource,
       // TODO: add materialized views
-      List()
+      None
     )
   }
 
