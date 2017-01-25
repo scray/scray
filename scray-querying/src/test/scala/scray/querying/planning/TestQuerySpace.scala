@@ -44,7 +44,7 @@ object TestQuerySpace {
     query => query,
     None, //Some(() => createQueryableStore[K](data)),
     None, //Some(() => new MapStore(data)),
-    List()
+    None
   )
   
 //  def createQueryableStore[K](data: Map[K, SimpleRow]): QueryableSource = new QueryableSource {

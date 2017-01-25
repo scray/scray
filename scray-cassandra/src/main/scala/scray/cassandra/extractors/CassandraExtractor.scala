@@ -46,6 +46,7 @@ import scray.cassandra.sync.CassandraJobInfo
 import com.twitter.util.FuturePool
 import com.datastax.driver.core.{ Row => CassRow }
 import scray.querying.source.store.QueryableStoreSource
+import scray.querying.description.internal.MaterializedView
 
 /**
  * Helper class to create a configuration for a Cassandra table
@@ -328,8 +329,7 @@ class CassandraExtractor[Q <: DomainQuery](session: Session, table: TableIdentif
       },
       cassQuerySource,
       cassQuerySource,
-      // TODO: add materialized views
-      None
+      Some(List(new MaterializedView(table)))
     )
   }
 

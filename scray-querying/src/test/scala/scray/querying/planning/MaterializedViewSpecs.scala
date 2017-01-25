@@ -19,6 +19,8 @@ import scala.collection.mutable.HashMap
 import scray.querying.description.SimpleRow
 import scray.querying.description.internal.MaterializedView
 import scray.querying.queries.DomainQuery
+import scray.querying.description.TableIdentifier
+import scray.querying.queries.SimpleQuery
 
 @RunWith(classOf[JUnitRunner])
 class MaterializedViewSpecs extends WordSpec {
