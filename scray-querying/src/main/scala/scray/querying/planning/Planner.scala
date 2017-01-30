@@ -89,7 +89,7 @@ object Planner extends LazyLogging {
         }).getOrElse(false)
 
         if (isMv) {
-          val domains2 = Planner.qualifyPredicates(query).get
+          val domains2 = Planner.qualifyPredicates(cQuery).get
           createQueryDomains(query, version, List(Planner.getMvQuery(domains2, query, query.getTableIdentifier)))
         } else {
           // transform query into a query only containing domains
