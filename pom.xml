@@ -79,7 +79,6 @@
 		<module>scray-common</module>
 		<module>scray-client-jdbc</module>
 		<module>scray-loader</module>
-		<module>scray-archetype</module>
 	</modules>
 
 	<distributionManagement>
@@ -163,11 +162,6 @@
 				<groupId>com.google.guava</groupId>
 				<artifactId>guava</artifactId>
 				<version>16.0.1</version>
-			</dependency>
-			<dependency>
-				<groupId>org.parboiled</groupId>
-				<artifactId>parboiled_2.10</artifactId>
-				<version>${parboiled.version}</version>
 			</dependency>
 
 			<dependency>
@@ -415,4 +409,3 @@
 	</profiles>
 
 </project>
-
