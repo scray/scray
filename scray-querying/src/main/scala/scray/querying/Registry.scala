@@ -145,6 +145,7 @@ object Registry extends LazyLogging with Registry {
   @inline def getQuerySpaceTables(space: String, version: Int): Map[TableIdentifier, TableConfiguration[_ <: DomainQuery, _ <: DomainQuery, _]] = {
     rwlock.readLock.lock
     try {
+      println("Query table" + space + version + " Existing tables: " + querySpaceTables.keySet)
       querySpaceTables.get(space + version).map(_.toMap).getOrElse(Map())
     } finally {
       rwlock.readLock.unlock
@@ -157,7 +158,9 @@ object Registry extends LazyLogging with Registry {
   @inline def getQuerySpaceTable(space: String, version: Int, ti: TableIdentifier): Option[TableConfiguration[_ <: DomainQuery, _ <: DomainQuery, _]] = {
     rwlock.readLock.lock
     try {
-      querySpaceTables.get(space + version).flatMap(_.get(ti))
+      val qt = querySpaceTables.get(space + version)
+      logger.debug(s"Search table with identifier ${ti} in dataset ${qt}")
+      qt.flatMap(_.get(ti))
     } finally {
       rwlock.readLock.unlock
     }
@@ -184,13 +187,16 @@ object Registry extends LazyLogging with Registry {
   def registerQuerySpace(querySpace: QueryspaceConfiguration, version: Option[Int] = None): Int = {
     rwlock.writeLock.lock
     try {
-      val newVersion = version.orElse(getLatestVersion(querySpace.name).map(_ + 1)).getOrElse(1)
+      val newVersion = version.orElse(getLatestVersion(querySpace.name).map(_ + 1)).getOrElse(0)
       querySpaces.put(querySpace.name + newVersion, querySpace)
       querySpaceColumns.put(querySpace.name + newVersion, new HashMap[Column, ColumnConfiguration])
       querySpaceTables.put(querySpace.name + newVersion, new HashMap[TableIdentifier, TableConfiguration[_ <: DomainQuery, _ <: DomainQuery, _]])
       querySpace.getColumns(newVersion).foreach(col => querySpaceColumns.get(querySpace.name + newVersion).map(_.put(col.column, col)))
       querySpace.getTables(newVersion).foreach(table => querySpaceTables.get(querySpace.name + newVersion).map(_.put(table.table, table)))
+      querySpace.getTables(newVersion).foreach(table => querySpaceTables.get(querySpace.name + newVersion).map(tableIdentifiers => 
+          table.materializedViews.map( materializedViews => materializedViews.foreach ( mv => tableIdentifiers.put(mv.table, table)))))
       querySpaceVersions.put(querySpace.name, querySpaceVersions.get(querySpace.name).getOrElse(Set()) + newVersion)
+      logger.debug(s"Registered query space ${querySpaces.get(querySpace.name + newVersion)}")
       newVersion
     } finally {
       rwlock.writeLock.unlock

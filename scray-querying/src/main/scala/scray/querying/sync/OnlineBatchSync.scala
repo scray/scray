@@ -1,5 +1,6 @@
 package scray.querying.sync
 
+import java.util.Date
 import java.util.{ Iterator => JIterator }
 
 import scala.annotation.tailrec
@@ -10,6 +11,7 @@ import com.typesafe.scalalogging.slf4j.LazyLogging
 import scray.common.serialization.BatchID
 import scray.querying.description.TableIdentifier
 import scray.querying.sync.State.State
+import java.util.Calendar
 
 trait OnlineBatchSyncWithTableIdentifier[Statement, InsertIn, Result] extends LazyLogging {
 
@@ -76,9 +78,20 @@ trait OnlineBatchSync[Statement, InsertIn, Result] extends LazyLogging {
   //def insertInOnlineTable[DataType](jobName: JobInfo[Statement, InsertIn, Result], slot: Int, data: DataType): Try[Unit]
   
   def getOnlineJobData[T <: RowWithValue](jobname: String, slot: Int, result: T): Option[List[RowWithValue]]
+  /**
+   * Get all values of batch view.
+   */
   def getBatchJobData[T <: RowWithValue](jobname: String, slot: Int, result: T): Option[List[RowWithValue]]
+  
+  /**
+   * Get batch view data for a special key
+   */
+  def getBatchJobData[T <: RowWithValue, K](jobname: String, slot: Int, key: K, result: T): Option[RowWithValue]
     
-  def getLatestBatch(job: JOB_INFO): Option[Int] 
+  def getLatestBatch(job: JOB_INFO): Option[Int]
+  
+  def getOnlineStartTime(job: JOB_INFO): Option[Long]
+  def setOnlineStartTime(job: JOB_INFO, time: Long): Try[Unit]
 }
 
 
@@ -86,9 +99,13 @@ abstract class JobInfo[Statement, InsertIn, Result](
   val name: String,
   val numberOfBatchSlots: Int = 3,
   val numberOfOnlineSlots: Int = 2,
-  val dbSystem: String = "cassandra" // Defines the db system for the results of this job.
+  val dbSystem: String = "cassandra", // Defines the db system for the results of this job.
+  val startTime: Option[Long] = None, // This job is defined for a given time range. Default is the start time is end time of last batch job or current time.
+  val endTime: Option[Long] = None, //Default is the current time when this job finished.
+  val onlineStartTime: Long = 0,
+  val numberOfWorkers: Option[Long] = None
   ) extends Serializable {
-    
+
   var lock: Option[LockApi[Statement, InsertIn, Result]] = None
   def getLock(dbSession: DbSession[Statement, InsertIn, Result]): LockApi[Statement, InsertIn, Result]
       
@@ -97,6 +114,50 @@ abstract class JobInfo[Statement, InsertIn, Result](
 trait StateMonitoringApi[Statement, InsertIn, Result] extends LazyLogging {
   def getBatchJobState(job: JobInfo[Statement, InsertIn, Result], slot: Int): Option[State]
   def getOnlineJobState(job: JobInfo[Statement, InsertIn, Result], slot: Int): Option[State]
+}
+
+/**
+ * Merge two elements.
+ * @param element1 Key value pair of first operand.
+ * @param element2 Function witch returns the second operand depending on the key of the first operand.
+ * @param operator Operation to merge element1 and element2.
+ */
+object Merge {
+  def merge[K, V](element1: (K, V), operator: (V, V) => V, element2: (K) => V): V = {
+    operator(element1._2, element2(element1._1))
+  }
+}
+
+/**
+ * Filter all data from the future. Compared to the start time.
+ */
+class TimeFilter[Statement, InsertIn, Result](val startTime: Long) {
+  def this(startTime: Date) = this(startTime.getTime)
+  def this() = this(0)
+
+  def filter[T](date: Long, data: T): Option[T] = {
+    if (date >= startTime) {
+      None
+    } else {
+      Some(data)
+    }
+  }
+  
+  def filter[T](date: Calendar, data: T): Option[T] = {
+    if (date.getTimeInMillis >= startTime) {
+      None
+    } else {
+      Some(data)
+    }
+  }
+  
+  def filter[T](date: Date, data: T): Option[T] = {
+    if (date.getTime >= startTime) {
+      None
+    } else {
+      Some(data)
+    }
+  }
 }
 
 case class RunningJobExistsException(message: String) extends Exception(message)

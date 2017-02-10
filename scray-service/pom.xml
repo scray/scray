@@ -1,9 +1,8 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<parent>
-		<groupId>scray</groupId>
-		<artifactId>scray</artifactId>
-		<version>0.0.1-SNAPSHOT</version>
+		<groupId>org.scray</groupId>
+		<artifactId>scray-parent</artifactId>
+		<version>0.9.6-SNAPSHOT</version>
 		<relativePath>../pom.xml</relativePath>
 	</parent>
 
@@ -12,11 +11,22 @@
 	<name>Scray - Service</name>
 	<description>scray remote query service interface</description>
 
+	<distributionManagement>
+		<snapshotRepository>
+			<id>ossrh</id>
+			<url>https://oss.sonatype.org/content/repositories/snapshots</url>
+		</snapshotRepository>
+		<repository>
+			<id>ossrh</id>
+			<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+		</repository>
+	</distributionManagement>
 	<dependencies>
 		<dependency>
-			<groupId>scray</groupId>
+			<groupId>org.scray</groupId>
 			<artifactId>scray-common</artifactId>
-			<version>0.0.1-SNAPSHOT</version>
+			<version>0.9.6-SNAPSHOT</version>
+
 			<exclusions>
 				<exclusion>
 					<artifactId>slf4j-jdk14</artifactId>
@@ -25,13 +35,14 @@
 			</exclusions>
 		</dependency>
 		<dependency>
-			<groupId>scray</groupId>
+			<groupId>org.scray</groupId>
 			<artifactId>scray-querying</artifactId>
-			<version>0.0.1-SNAPSHOT</version>
+			<version>0.9.6-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>org.parboiled</groupId>
 			<artifactId>parboiled_${scala.suffix}</artifactId>
+			<version>${parboiled.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.thrift</groupId>
@@ -131,7 +142,7 @@
 					<reportsDirectory>${project.build.directory}/surefire-reports</reportsDirectory>
 					<junitxml>.</junitxml>
 					<filereports>WDF TestSuite.txt</filereports>
-					<tagsToExclude>com.seeburger.tags.IntegrationTest</tagsToExclude>					
+					<tagsToExclude>com.seeburger.tags.IntegrationTest</tagsToExclude>
 				</configuration>
 				<executions>
 					<execution>
@@ -142,7 +153,6 @@
 					</execution>
 				</executions>
 			</plugin>
-
 		</plugins>
 		<pluginManagement>
 			<plugins>
@@ -170,7 +180,7 @@
 										</goals>
 									</pluginExecutionFilter>
 									<action>
-										<ignore></ignore>
+										<ignore />
 									</action>
 								</pluginExecution>
 							</pluginExecutions>
@@ -203,7 +213,7 @@
 							<reportsDirectory>${project.build.directory}/surefire-reports</reportsDirectory>
 							<junitxml>.</junitxml>
 							<filereports>WDF TestSuite.txt</filereports>
-							<tagsToExclude/>
+							<tagsToExclude />
 							<tagsToInclude>com.seeburger.tags.IntegrationTest</tagsToInclude>
 						</configuration>
 						<executions>
@@ -219,5 +229,4 @@
 			</build>
 		</profile>
 	</profiles>
-
 </project>

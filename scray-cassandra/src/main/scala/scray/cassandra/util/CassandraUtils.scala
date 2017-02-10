@@ -19,9 +19,79 @@ import org.yaml.snakeyaml.Yaml
 import com.twitter.util.Try
 import java.util.{ Map => JMap, HashMap => JHashMap }
 import scray.querying.description.TableIdentifier
+import com.websudos.phantom.CassandraPrimitive
+import scray.querying.sync.DBColumnImplementation
+import java.util.{ Iterator => JIterator }
+import scala.annotation.tailrec
+import com.datastax.driver.core.Cluster
+import com.datastax.driver.core.ConsistencyLevel
+import com.datastax.driver.core.RegularStatement
+import com.datastax.driver.core.ResultSet
+import com.datastax.driver.core.Row
+import com.datastax.driver.core.Session
+import com.datastax.driver.core.SimpleStatement
+import com.datastax.driver.core.Statement
+import com.datastax.driver.core.querybuilder.Insert
+import com.datastax.driver.core.querybuilder.QueryBuilder
+import java.util.ArrayList
+import scray.querying.sync.DbSession
+import scala.collection.mutable.ArrayBuffer
+import scray.querying.sync.OnlineBatchSync
+import scray.querying.sync.SyncTableBasicClasses.SyncTableRowEmpty
+import scala.collection.mutable.ListBuffer
+import scray.querying.sync.JobInfo
+import com.datastax.driver.core.BatchStatement
+import scray.querying.sync.State.State
+import com.datastax.driver.core.querybuilder.Update.Where
+import com.datastax.driver.core.querybuilder.Update.Conditions
+import scray.querying.sync.SyncTable
+import scray.querying.sync.RunningJobExistsException
+import scray.querying.sync.NoRunningJobExistsException
+import scray.querying.sync.StatementExecutionError
+import scala.util.Failure
+import scala.util.Success
+import scray.querying.description.TableIdentifier
+import scala.collection.mutable.HashSet
+import scray.querying.sync.AbstractRow
+import scray.querying.sync.ColumnWithValue
+import scray.querying.sync.VoidTable
+import scray.querying.sync.RowWithValue
+import scray.querying.sync.Table
+import scray.querying.sync.State
+import scray.querying.sync.AbstractTypeDetection
+import scray.querying.sync.DBTypeImplicit
+import com.datastax.driver.core.BatchStatement
+import com.datastax.driver.core.Cluster
+import com.datastax.driver.core.ConsistencyLevel
+import com.datastax.driver.core.RegularStatement
+import com.datastax.driver.core.ResultSet
+import com.datastax.driver.core.Row
+import com.datastax.driver.core.Statement
+import com.datastax.driver.core.querybuilder.Insert
+import com.datastax.driver.core.querybuilder.QueryBuilder
 import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.websudos.phantom.CassandraPrimitive
+import java.util.{ Iterator => JIterator }
+import scala.annotation.tailrec
+import scala.collection.JavaConverters._
+import scala.collection.mutable.HashSet
+import scala.collection.mutable.ListBuffer
+import scala.util.Failure
+import scala.util.Success
+import scray.querying.description.TableIdentifier
+import scray.querying.sync.JobInfo
+import scray.querying.sync.NoRunningJobExistsException
+import scray.querying.sync.OnlineBatchSync
+import scray.querying.sync.OnlineBatchSyncWithTableIdentifier
+import scray.querying.sync.RunningJobExistsException
+import scray.querying.sync.StateMonitoringApi
+import scray.querying.sync.StatementExecutionError
+import java.util.{ Iterator => JIterator }
+import scray.querying.sync.JobLockTable
+import scray.querying.sync.ArbitrarylyTypedRows
+import scray.querying.sync.SyncTableBasicClasses
 
-object CassandraUtils extends LazyLogging {
+object CassandraUtils extends LazyLogging with Serializable {
 
   /**
    * convenience method to retrieve KeyspaceMetadata from a StoreColumnFamily object
@@ -96,4 +166,53 @@ object CassandraUtils extends LazyLogging {
    */
   def getTablePropertyFromCassandra(ti: TableIdentifier, session: Session, property: String): Option[String] =
     getTablePropertiesFromCassandra(ti, session).flatMap(map => Option(map.get(property)))
+    
+        def getNewestRow(rows: java.util.Iterator[Row], columnName: String): Option[Row] = {
+    import scala.math.Ordering._
+    val comp = implicitly[Ordering[Long]]
+    getComptRow(rows, comp.gt, columnName)
+  }
+
+  def getOldestRow(rows: java.util.Iterator[Row], columnName: String): Option[Row] = {
+    import scala.math.Ordering._
+    val comp = implicitly[Ordering[Long]]
+    getComptRow(rows, comp.lt, columnName)
+  }
+
+  def getComptRow(rows: JIterator[Row], comp: (Long, Long) => Boolean, columnName: String): Option[Row] = {
+    @tailrec def accNewestRow(prevRow: Row, nextRows: JIterator[Row]): Row = {
+      if (nextRows.hasNext) {
+        val localRow = nextRows.next()
+        logger.debug(s"Work with row ${prevRow} and ${localRow}")
+        val max = if (comp(prevRow.getLong(columnName), localRow.getLong(columnName))) {
+          prevRow
+        } else {
+          localRow
+        }
+        accNewestRow(max, nextRows)
+      } else {
+        logger.debug(s"Return newest row ${prevRow}")
+        prevRow
+      }
+    }
+
+    if (rows.hasNext()) {
+      Some(accNewestRow(rows.next(), rows))
+    } else {
+      None
+    }
+  }
+  
+
+  def createTableStatement[T <: AbstractRow](table: Table[T]): Option[String] = {
+    val createStatement = s"CREATE TABLE IF NOT EXISTS ${table.keySpace + "." + table.tableName} (" +
+      s"${table.columns.foldLeft("")((acc, next) => { acc + next.name + " " + next.getDBType + ", " })} " +
+      s"PRIMARY KEY ${table.columns.primaryKey})"
+    logger.debug(s"Create table String: ${createStatement} ")
+    Some(createStatement)
+  }
+
+  def createKeyspaceCreationStatement[T <: AbstractRow](table: Table[T]): Option[String] = {
+    Some(s"CREATE KEYSPACE IF NOT EXISTS ${table.keySpace} WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor' : 1};")
+  }
 }

@@ -50,48 +50,66 @@ class DomainToCQLQueryMapping[Q <: DomainQuery, S <: CassandraQueryableSource[Q]
     }
   }.getOrElse(orgQuery)
 
-  @inline private def removeQuotes(query: String): String = query.filterNot(c => c == '"' || c == ';' || c == ''')
-  
-  @inline private def decideWhere(where: (Boolean, String, String)): String = {
-    if(where._1 && !where._3.isEmpty()) s"WHERE ${where._2}" else ""
-  }
+  @inline private def removeQuotes(query: String): String = query.filterNot(c => c == '"' || c == ';' || c == ''')  
+  @inline private def decideWhere(where: String): String = if(!where.isEmpty()) s"WHERE $where" else ""
+  @inline private def decideLimit(filter: List[String]): String = if(filter.size > 0) filter.head else ""
+
   /**
    * returns a function mapping from Domains to CQL-Strings used in Where clauses
    */
   def getQueryMapping(store: S, storeTableNickName: Option[String]): DomainQuery => String = {
-    (query) => {
-      // first check that we have fixed all partition keys
-      val r = getRowKeyQueryMapping(store, query, storeTableNickName).map { queryStringBegin =>
-        // if this is the case the query can fix clustering keys and the last one may be a rangedomain
-        val baseQuery = getClusterKeyQueryMapping(store, query, storeTableNickName) match {
-          case None => queryStringBegin
-          case Some(queryPart) => s"$queryStringBegin$AND_LITERAL$queryPart"
+    (query) =>
+      {
+        // first check that we have fixed all partition keys
+        val r = getRowKeyQueryMapping(store, query, storeTableNickName).map { queryStringBegin =>
+          // if this is the case the query can fix clustering keys and the last one may be a rangedomain
+          val baseQuery = getClusterKeyQueryMapping(store, query, storeTableNickName) match {
+            case None            => queryStringBegin
+            case Some(queryPart) => s"$queryStringBegin$AND_LITERAL$queryPart"
+          }
+          baseQuery
+        }.getOrElse {
+          // if there is not a partition and maybe a clustering column
+          // we must make sure we have a single index for the col we select (only use one)
+          getValueKeyQueryMapping(store, query, storeTableNickName).getOrElse("")
         }
-        enforceLimit(baseQuery, query)
-      }.getOrElse {
-        // if there is not a partition and maybe a clustering column
-        // we must make sure we have a single index for the col we select (only use one)
-        enforceLimit(getValueKeyQueryMapping(store, query, storeTableNickName).getOrElse(""), query)
+
+        val limit = query.domains.map {
+          _ match {
+            case domain: SingleValueDomain[_] => if (query.domains.size > 1 && domain.isNull) {
+              logger.debug("Domaine: " + domain + query.domains.size)
+              //throw new RuntimeException("A query with a SingleValueDomain and Null expression should not have more than one domains.")
+              ""
+            } else {
+              if (domain.isNull) {
+                "" // No LIMIT for isNull queries 
+              } else {
+                enforceLimit(query)
+              }
+            }
+            case _ => enforceLimit(query)
+          }
+        }
+
+        val result = s"""SELECT * FROM "${removeQuotes(store.ti.dbId)}"."${removeQuotes(store.ti.tableId)}" ${decideWhere(r)} ${decideLimit(limit)}"""
+        logger.debug(s"Query String for Cassandra: $result")
+        result
       }
-      val result = s"""SELECT * FROM "${removeQuotes(store.ti.dbId)}"."${removeQuotes(store.ti.tableId)}" ${decideWhere(r)}"""
-      logger.debug(s"Query String for Cassandra is $result")
-      result
-    }
   }
 
   /**
    * sets given limits at the provided query
    */
-  private def enforceLimit(queryString: String, query: DomainQuery): (Boolean, String, String) = {
+  private def enforceLimit(query: DomainQuery): String = {
     query.getQueryRange.map { range =>
       if(range.limit.isDefined) {
-        val sbuf = new StringBuffer(queryString)
+        val sbuf = new StringBuffer
         val skip = range.skip.getOrElse(0L)
         (true, sbuf.append(LIMIT_LITERAL).append(skip + range.limit.get).toString, queryString)
       } else {
-        (false, queryString, queryString)
+        ""
       }
-    }.getOrElse((false, queryString, queryString))
+    }.getOrElse("")
   }
 
   private def convertValue[T](value: T) = value match {
@@ -101,8 +119,14 @@ class DomainToCQLQueryMapping[Q <: DomainQuery, S <: CassandraQueryableSource[Q]
 
   // private def convertDomainToTargetDomain(domain: Domain[_]):
 
-  private def convertSingleValueDomain(vdomain: SingleValueDomain[_]): String =
-    s""" "${vdomain.column.columnName}"=${convertValue(vdomain.value)}"""
+  private def convertSingleValueDomain(vdomain: SingleValueDomain[_]): String = {
+    if(vdomain.isNull) {
+      ""
+    } else {
+      s""" "${vdomain.column.columnName}"=${convertValue(vdomain.value)}"""
+    }
+  }
+
 
   private def convertRangeValueDomain(vdomain: RangeValueDomain[_]): String = {
     vdomain.lowerBound.map { bound =>
@@ -153,7 +177,8 @@ class DomainToCQLQueryMapping[Q <: DomainQuery, S <: CassandraQueryableSource[Q]
    * this recursion probably never overflows the stack as it is only on a few cols or domains
    */
   private def clusterColumnDomains(cols: Set[Column], store: S, query: DomainQuery, storeTableNickName: Option[String]): List[Domain[_]] = {
-    if(cols == Nil) {
+    println("Cols: " + cols + "\t" + cols.equals(Nil) + "\t" + cols.size)
+    if(cols == Nil || cols.isEmpty) {
       Nil
     } else {
       // find relevant domain

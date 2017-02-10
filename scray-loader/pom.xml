@@ -1,26 +1,32 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<artifactId>scray-loader</artifactId>
 	<name>Scray - Loader</name>
 	<description>Loads and starts a scray query service</description>
-	<parent>
-		<groupId>scray</groupId>
-		<artifactId>scray</artifactId>
-		<version>0.0.1-SNAPSHOT</version>
-	</parent>
+
+
+	<distributionManagement>
+		<snapshotRepository>
+			<id>ossrh</id>
+			<url>https://oss.sonatype.org/content/repositories/snapshots</url>
+		</snapshotRepository>
+		<repository>
+			<id>ossrh</id>
+			<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+		</repository>
+	</distributionManagement>
 
 	<dependencies>
-        <dependency>
-            <groupId>org.osgi</groupId>
-            <artifactId>org.osgi.core</artifactId>
-            <version>4.1.0</version>
-        </dependency>
-        <dependency>
-            <groupId>org.osgi</groupId>
-            <artifactId>org.osgi.compendium</artifactId>
-            <version>4.1.0</version>
-        </dependency>
+		<dependency>
+			<groupId>org.osgi</groupId>
+			<artifactId>org.osgi.core</artifactId>
+			<version>4.1.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.osgi</groupId>
+			<artifactId>org.osgi.compendium</artifactId>
+			<version>4.1.0</version>
+		</dependency>
 		<dependency>
 			<groupId>com.github.scopt</groupId>
 			<artifactId>scopt_2.10</artifactId>
@@ -44,9 +50,9 @@
 			<version>2.3.0</version>
 		</dependency>
 		<dependency>
-			<groupId>scray</groupId>
+			<groupId>org.scray</groupId>
 			<artifactId>scray-querying</artifactId>
-			<version>0.0.1-SNAPSHOT</version>
+			<version>0.9.6-SNAPSHOT</version>
 			<exclusions>
 				<exclusion>
 					<artifactId>shapeless_2.10.4</artifactId>
@@ -55,9 +61,9 @@
 			</exclusions>
 		</dependency>
 		<dependency>
-			<groupId>scray</groupId>
+			<groupId>org.scray</groupId>
 			<artifactId>scray-cassandra</artifactId>
-			<version>0.0.1-SNAPSHOT</version>
+			<version>0.9.6-SNAPSHOT</version>
 			<exclusions>
 				<exclusion>
 					<artifactId>shapeless_2.10.3</artifactId>
@@ -66,22 +72,18 @@
 			</exclusions>
 		</dependency>
 		<dependency>
-			<groupId>scray</groupId>
-			<artifactId>scray-service</artifactId>
-			<version>0.0.1-SNAPSHOT</version>
-		</dependency>
-		<dependency>
 			<groupId>org.parboiled</groupId>
 			<artifactId>parboiled_2.10</artifactId>
+			<version>${parboiled.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.twitter</groupId>
 			<artifactId>util-core_2.10</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>scray</groupId>
+			<groupId>org.scray</groupId>
 			<artifactId>scray-service</artifactId>
-			<version>0.0.1-SNAPSHOT</version>
+			<version>0.9.6-SNAPSHOT</version>
 			<exclusions>
 				<exclusion>
 					<artifactId>slf4j-jdk14</artifactId>
@@ -98,6 +100,12 @@
 			<groupId>org.apache.hadoop</groupId>
 			<artifactId>hadoop-client</artifactId>
 			<version>2.7.2</version>
+			<exclusions>
+				<exclusion>
+					<artifactId>slf4j-log4j12</artifactId>
+					<groupId>org.slf4j</groupId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 	</dependencies>
 	<build>
@@ -126,9 +134,7 @@
 							<goal>single</goal>
 						</goals>
 						<configuration>
-							<descriptors>
-								<descriptor>scray-loader-dependencies.xml</descriptor>
-							</descriptors>
+							<descriptor>scray-loader-dependencies.xml</descriptor>
 						</configuration>
 					</execution>
 				</executions>
@@ -148,6 +154,19 @@
 						<goals>
 							<goal>test</goal>
 						</goals>
+						<configuration>
+							<suffixes>(?&lt;!ScrayIntegration)(Tests|Specs)</suffixes>
+						</configuration>
+					</execution>
+					<execution>
+						<id>integration-test</id>
+						<phase>integration-test</phase>
+						<goals>
+							<goal>test</goal>
+						</goals>
+						<configuration>
+							<suffixes>(?&lt;=Integration)(Tests|Specs)</suffixes>
+						</configuration>
 					</execution>
 				</executions>
 			</plugin>
@@ -181,7 +200,7 @@
 										</goals>
 									</pluginExecutionFilter>
 									<action>
-										<ignore></ignore>
+										<ignore />
 									</action>
 								</pluginExecution>
 							</pluginExecutions>
@@ -200,4 +219,10 @@
 			<comments>A business-friendly OSS license</comments>
 		</license>
 	</licenses>
+	<parent>
+		<groupId>org.scray</groupId>
+		<artifactId>scray-parent</artifactId>
+		<version>0.9.6-SNAPSHOT</version>
+		<relativePath>../pom.xml</relativePath>
+	</parent>
 </project>

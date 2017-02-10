@@ -40,7 +40,7 @@ class ParallelizedQueryableSource[Q <: DomainQuery](val store: QueryableStoreSou
         extends LazySource[Q] with LazyLogging {
   
   @inline def getTransformedDomainQuery(query: DomainQuery, number: Int): Q =
-    queryMapping(query.transformedAstCopy(SingleValueDomain[Int](parallelizationColumn, number) :: query.getWhereAST))
+    (query.transformedAstCopy(SingleValueDomain[Int](parallelizationColumn, number) :: query.getWhereAST)).asInstanceOf[Q]
   
   @inline def spool(query: DomainQuery, number: Int): Future[Spool[Row]] = {
     store.requestIterator(getTransformedDomainQuery(query, number)).flatMap { it =>

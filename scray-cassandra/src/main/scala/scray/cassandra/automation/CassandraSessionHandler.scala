@@ -3,6 +3,7 @@ package scray.cassandra.automation
 import java.util.concurrent.locks.ReentrantLock
 import scala.collection.mutable.HashMap
 import com.datastax.driver.core.{ Cluster, Session }
+import com.datastax.driver.core.Metadata
 
 /**
  * handles sessions for Cassandra clusters based on dbid and keyspace 
@@ -20,7 +21,7 @@ class CassandraSessionHandler {
     try {
       sessions.get(sessionid) match {
         case None =>
-          val session = cluster.connect(sessionid._2)
+          val session = cluster.connect(Metadata.quote(sessionid._2))
           sessions.put(sessionid, session)
           session
         case Some(session) => session
