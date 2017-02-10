@@ -12,7 +12,6 @@ import com.datastax.driver.core.Row
 import com.datastax.driver.core.Session
 import com.datastax.driver.core.SimpleStatement
 import com.datastax.driver.core.Statement
-import com.datastax.driver.core.Metadata
 import com.datastax.driver.core.querybuilder.Insert
 import com.datastax.driver.core.querybuilder.QueryBuilder
 import java.util.ArrayList
@@ -156,7 +155,7 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
 
   def startInicialBatch(job: JOB_INFO, batchID: BatchID): Try[Unit] = {
     def createInicialBatchStatement(slot: Int, online: Boolean, startTime: Long, endTime: Long): Statement = {
-      QueryBuilder.update(Metadata.quote(syncTable.keySpace), Metadata.quote(syncTable.tableName))
+      QueryBuilder.update(syncTable.keySpace, syncTable.tableName)
         .`with`(QueryBuilder.set(syncTable.columns.state.name, State.RUNNING.toString()))
         .and(QueryBuilder.set(syncTable.columns.batchStartTime.name, startTime))
         .and(QueryBuilder.set(syncTable.columns.batchEndTime.name, endTime))
@@ -261,7 +260,7 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
    * Set running job to state new
    */
   private def renewJob(job: JOB_INFO, slot: Int, online: Boolean): Try[Unit] = {
-    val query = QueryBuilder.update(Metadata.quote(syncTable.keySpace), Metadata.quote(syncTable.tableName))
+    val query = QueryBuilder.update(syncTable.keySpace, syncTable.tableName)
       .`with`(QueryBuilder.set(syncTable.columns.state.name, State.NEW.toString()))
       .where(QueryBuilder.eq(syncTable.columns.jobname.name, job.name))
       .and(QueryBuilder.eq(syncTable.columns.online.name, online))
@@ -270,7 +269,7 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
   }
 
   private def completeJob(job: JOB_INFO, slot: Int, online: Boolean): Try[Unit] = {
-    val query = QueryBuilder.update(Metadata.quote(syncTable.keySpace), Metadata.quote(syncTable.tableName))
+    val query = QueryBuilder.update(syncTable.keySpace, syncTable.tableName)
       .`with`(QueryBuilder.set(syncTable.columns.state.name, State.COMPLETED.toString()))
       .and(QueryBuilder.set(syncTable.columns.batchEndTime.name, job.endTime.getOrElse(System.currentTimeMillis())))
       .where(QueryBuilder.eq(syncTable.columns.jobname.name, job.name))
@@ -282,7 +281,6 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
   override def getQueryableTableIdentifiers: List[(String, TableIdentifier, Int)] = {
 
     val jobnames = new HashSet[String]()
-  
     //    val query = QueryBuilder.select(syncTable.columns.jobname.name).from(syncTable.keySpace, syncTable.tableName)
     //    val results = execute(query)
     //    results.map { resultset =>
@@ -315,7 +313,6 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
   }
 
   def getTableIdentifierOfRunningJob(job: JobInfo[Statement, Insert, ResultSet]): Option[TableIdentifier] = {
-
     val tableIdentifierSelectStatement = QueryBuilder.select(syncTable.columns.dbId.name, syncTable.columns.tableId.name).from(syncTable.keySpace, syncTable.tableName).where(
       QueryBuilder.eq(syncTable.columns.jobname.name, job.name)).
       and(QueryBuilder.eq(syncTable.columns.online.name, false)).
@@ -331,7 +328,7 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
   }
 
   def getLatestBatch(job: JOB_INFO): Option[Int] = {
-    val slotQuery = QueryBuilder.select.all().from(Metadata.quote(syncTable.keySpace), Metadata.quote(syncTable.tableName)).where(
+    val slotQuery = QueryBuilder.select.all().from(syncTable.keySpace, syncTable.tableName).where(
       QueryBuilder.eq(syncTable.columns.jobname.name, job.name)).
       and(QueryBuilder.eq(syncTable.columns.online.name, false)).
       and(QueryBuilder.eq(syncTable.columns.state.name, State.COMPLETED.toString()))
@@ -373,7 +370,6 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
 
   def getBatchID(job: JOB_INFO): Option[BatchID] = {
     val slotQuery = QueryBuilder.select.all().from(syncTable.keySpace, syncTable.tableName).where(
-
       QueryBuilder.eq(syncTable.columns.jobname.name, job.name)).
       and(QueryBuilder.eq(syncTable.columns.online.name, false)).
       and(QueryBuilder.eq(syncTable.columns.state.name, State.COMPLETED.toString()))
@@ -433,7 +429,6 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
       0 to job.numberOfOnlineSlots - 1 foreach { i =>
         // Register online tables
         statements.add(QueryBuilder.insertInto(syncTable.keySpace, syncTable.tableName)
-
           .value(syncTable.columns.slot.name, i)
           .value(syncTable.columns.online.name, true)
           .value(syncTable.columns.jobname.name, job.name)
@@ -484,7 +479,7 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
   }
 
   private def getJobState(job: JOB_INFO, slot: Integer, online: Boolean): Option[State] = {
-    execute(QueryBuilder.select(syncTable.columns.state.name).from(Metadata.quote(syncTable.keySpace), Metadata.quote(syncTable.tableName)).allowFiltering().where(
+    execute(QueryBuilder.select(syncTable.columns.state.name).from(syncTable.keySpace, syncTable.tableName).allowFiltering().where(
       QueryBuilder.eq(syncTable.columns.jobname.name, job.name)).
       and(QueryBuilder.eq(syncTable.columns.slot.name, slot))
       and (QueryBuilder.eq(syncTable.columns.online.name, online)))
@@ -621,7 +616,7 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
   //  }
 
   private def isTableLocked(job: JOB_INFO, online: Boolean): Option[Boolean] = {
-    val res = execute(QueryBuilder.select.all().from(Metadata.quote(syncTable.keySpace), Metadata.quote(syncTable.tableName)).allowFiltering().where(
+    val res = execute(QueryBuilder.select.all().from(syncTable.keySpace, syncTable.tableName).allowFiltering().where(
       QueryBuilder.eq(syncTable.columns.jobname.name, job.name)).
       and(QueryBuilder.eq(syncTable.columns.online.name, online)))
     res.map { rows => rows.all().size() > 0 }.toOption
@@ -705,7 +700,6 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
     def fillValue[U](currentRow: Row, destinationColumn: ColumnWithValue[U]) = {
       destinationColumn.value = handleColumnWithValue(currentRow, destinationColumn)
     }
-
 
     def getbatchResults(online: Boolean) = {
       online match {

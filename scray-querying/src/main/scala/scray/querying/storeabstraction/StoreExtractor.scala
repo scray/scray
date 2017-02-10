@@ -47,7 +47,7 @@ trait StoreExtractor[S <: QueryableStoreSource[_]] {
   /**
    * returns the table configuration for this specific store; implementors must override this
    */
-  def getTableConfiguration(rowMapper: (_) => Row, readSyncTable: Boolean, nickName: Option[String] = None): TableConfiguration[_ <: DomainQuery, _ <: DomainQuery, _]
+  def getTableConfiguration(rowMapper: (_) => Row): TableConfiguration[_ <: DomainQuery, _ <: DomainQuery, _]
 
   /**
    * returns a query mapping
@@ -67,6 +67,12 @@ trait StoreExtractor[S <: QueryableStoreSource[_]] {
   /**
    * returns the column configuration for a column
    */
+//  def getColumnConfiguration(store: S, 
+//      column: Column,
+//      querySpace: QueryspaceConfiguration,
+//      index: Option[ManuallyIndexConfiguration[_, _, _, _, _]],
+//      splitters: Map[Column, Splitter[_]]): ColumnConfiguration
+  
   def getColumnConfiguration(session: DbSession[_, _, _],
       dbName: String,
       table: String,

@@ -48,7 +48,6 @@
 //      // insert into "SCHWAETZ" (key, data, time) VALUES ('5', '2', 86786);
 //      // insert into "SCHWAETZ" (key, data, time) VALUES ('6', '2', 55555);
 //    }
-
 //    
 ////    "be able to start up a in-process scray interface and make a simple query" in {
 ////      waitForPortClosed

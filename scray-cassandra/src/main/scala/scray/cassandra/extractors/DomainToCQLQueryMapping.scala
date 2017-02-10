@@ -50,7 +50,8 @@ class DomainToCQLQueryMapping[Q <: DomainQuery, S <: CassandraQueryableSource[Q]
     }
   }.getOrElse(orgQuery)
 
-  @inline private def removeQuotes(query: String): String = query.filterNot(c => c == '"' || c == ';' || c == ''')  
+  @inline private def removeQuotes(query: String): String = query.filterNot(c => c == '"' || c == ';' || c == ''')
+  
   @inline private def decideWhere(where: String): String = if(!where.isEmpty()) s"WHERE $where" else ""
   @inline private def decideLimit(filter: List[String]): String = if(filter.size > 0) filter.head else ""
 
@@ -105,7 +106,7 @@ class DomainToCQLQueryMapping[Q <: DomainQuery, S <: CassandraQueryableSource[Q]
       if(range.limit.isDefined) {
         val sbuf = new StringBuffer
         val skip = range.skip.getOrElse(0L)
-        (true, sbuf.append(LIMIT_LITERAL).append(skip + range.limit.get).toString, queryString)
+        sbuf.append(LIMIT_LITERAL).append(skip + range.limit.get).toString
       } else {
         ""
       }

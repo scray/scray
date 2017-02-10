@@ -26,6 +26,58 @@ import scray.querying.caching.{ Cache, KeyValueCache }
 import scray.querying.caching.serialization.{ KeyValueCacheSerializer, RegisterRowCachingSerializers }
 import com.typesafe.scalalogging.slf4j.LazyLogging
 
+//
+///**
+// * A source that queries a Storehaus-store for a given value.
+// * The query is comprised of a simple key in this case.
+// */
+//class KeyValueSource[K, V](val store: ReadableStore[K, V], space: String, version: Int,
+//    table: TableIdentifier, enableCaching: Boolean = true) extends EagerSource[KeyBasedQuery[K]] with LazyLogging {
+//
+//  private val queryspaceTable = Registry.getQuerySpaceTable(space, version, table)
+//  protected val cache = Registry.getCache[Row, KeyValueCache[K, Row]](this)
+//  
+//  val valueToRow: ((K, V)) => Row = queryspaceTable.get.rowMapper.asInstanceOf[((K, V)) => Row]
+//
+//  override def request(query: KeyBasedQuery[K]): Future[Seq[Row]] = {
+//    query.queryInfo.addNewCosts {(n: Long) => {n + 42}}
+//    if(enableCaching) {
+//      cache.retrieve(query).map { value =>
+//          Future.value(Seq(value))
+//        }.getOrElse {
+//          store.get(query.key).map {
+//      	    case None => Seq[Row]()
+//      	    case Some(value) =>
+//      	      val rowValue = valueToRow((query.key, value))
+//      	      cache.put(query, rowValue)
+//      	      Seq[Row](rowValue)
+//          }
+//        }
+//    } else {
+//      store.get(query.key).map {
+//      	case None => Seq[Row]()
+//      	case Some(value) =>
+//  	      Seq(valueToRow((query.key, value)))
+//      }
+//    }
+//  }
+//  
+//  override def getColumns: Set[Column] = queryspaceTable.get.allColumns
+//  
+//  // as there is only one element this method may return true
+//  override def isOrdered(query: KeyBasedQuery[K]): Boolean = true
+//  
+//  override def getGraph: Graph[Source[DomainQuery, Seq[Row]], DiEdge] = 
+//    Graph.from(List(this.asInstanceOf[Source[DomainQuery, Seq[Row]]]), List())
+//
+//  override def getDiscriminant = table.toString()
+//  
+//  override def createCache: Cache[_] = {
+//    RegisterRowCachingSerializers()
+//    new KeyValueCache[K, Row](getDiscriminant, None, Some(new KeyValueCacheSerializer))
+//  }
+//}
+//
 /**
  * A source that queries a Storehaus-store for a given value.
  * The query is comprised of a simple key in this case.

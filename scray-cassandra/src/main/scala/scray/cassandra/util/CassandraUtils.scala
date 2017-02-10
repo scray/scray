@@ -114,7 +114,6 @@ object CassandraUtils extends LazyLogging with Serializable {
       case Some(ksm) => ksm
       case None      => getKeyspaceMetadata(session, ti.dbId)
     }
-    logger.info("####" + Option(kspaceMeta).map(_.toString).getOrElse("NULL") + "---" + ti.tableId)
     kspaceMeta.getTable(Metadata.quote(ti.tableId))
   }
 

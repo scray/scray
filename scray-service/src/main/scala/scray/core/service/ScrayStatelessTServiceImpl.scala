@@ -42,7 +42,6 @@ import scray.service.qmodel.thrifscala.ScrayTColumnInfo
 import scray.core.service.spools.RowConverter
 import scray.core.service.spools.memcached.MemcachedPageRack
 import scray.core.service.spools.MPageRack
-import org.parboiled2.ErrorFormatter
 
 object ScrayStatelessTServiceImpl {
   def apply() = new ScrayStatelessTServiceImpl(MPageRack)
@@ -60,7 +59,7 @@ class ScrayStatelessTServiceImpl(val rack : PageRack) extends ScrayStatelessTSer
     val parsed = parser.InputLine.run() match {
       case Success(result) => Success(result)
       case Failure(e : ParseError) =>
-        logger.error(parser.formatError(e, new ErrorFormatter(showTraces = true))); Failure(e)
+        logger.error(parser.formatError(e, showTraces = true)); Failure(e)
       case Failure(e) => throw e
     }
     parsed.flatMap(_.createQuery) match {

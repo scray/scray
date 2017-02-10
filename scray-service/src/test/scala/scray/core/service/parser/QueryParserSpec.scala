@@ -36,7 +36,6 @@ import scray.querying.description.Or
 import scray.querying.Query
 import org.scalatest.junit.JUnitRunner
 import scray.core.service.util.TQuerySamples
-import org.parboiled2.ErrorFormatter
 
 @RunWith(classOf[JUnitRunner])
 class QueryParserSpec extends FlatSpec with Matchers with TQuerySamples {
@@ -48,7 +47,7 @@ class QueryParserSpec extends FlatSpec with Matchers with TQuerySamples {
     val parsed = parser.InputLine.run() match {
       case Success(result) => Success(result)
       case Failure(e: ParseError) =>
-        sys.error(parser.formatError(e, new ErrorFormatter(showTraces = true))); Failure(e)
+        sys.error(parser.formatError(e, showTraces = true)); Failure(e)
       case Failure(e) => throw e
     }
     if (DEBUG) println(s"Parsed '$query' ... $parsed.get")

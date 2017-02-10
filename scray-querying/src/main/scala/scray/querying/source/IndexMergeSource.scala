@@ -18,6 +18,8 @@ import scala.collection.mutable.HashSet
 import com.twitter.util.Future
 import com.typesafe.scalalogging.slf4j.LazyLogging
 
+//import com.twitter.concurrent.Spool.{seqToSpool, ToSpool}
+
 case class MergeReferenceColumns[Q <: DomainQuery, R, T <: Source[Q, R]](referenceSource: T, referenceSourceColumn: Column, indexConfig: IndexConfiguration, 
     queryTransformer: (Q, IndexConfiguration) => Q = {(a: Q, b: IndexConfiguration) => a})
 
@@ -63,6 +65,7 @@ class IndexMergeSource[Q <: DomainQuery](main: MergeReferenceColumns[Q, Spool[Ro
   
 
   override def isLazy: Boolean = true
+  // override def transformSeqElement(element: Row, query: Q): Row = element
   override def getColumns: Set[Column] = Set(main.referenceSourceColumn)
   override def isOrdered(query: Q): Boolean = true
   override def getDiscriminant = "MergeReferenceColumns" + main.referenceSource.getDiscriminant + reference

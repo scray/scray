@@ -128,6 +128,8 @@ case class TableConfiguration[Q <: DomainQuery, K <: DomainQuery, V] (
 case class VersioningConfiguration[Q <: DomainQuery, K <: DomainQuery] (
   latestCompleteVersion: () => Option[TableIdentifier], // latest complete version of the table 
   runtimeVersion: () => Option[TableIdentifier], // current real-time version, which is updated continuously
+//  nameVersionMapping: Option[(String, Long) => TableIdentifier], // if needed, a mapping for the table name for the version
   queryableStore: Option[QueryableStoreSource[Q]], // the versioned queryable store representation, allowing to query the store
   readableStore: Option[QueryableStoreSource[K]] // the versioned readablestore, used in case this is used by a HashJoinSource
+//  dataVersionMapping: () // if needed, a mapping for the data to fit the version, not supported yet
 )

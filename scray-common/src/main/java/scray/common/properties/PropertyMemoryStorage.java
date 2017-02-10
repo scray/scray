@@ -22,7 +22,6 @@ public class PropertyMemoryStorage implements PropertyStoragePuttable {
 	public PropertyMemoryStorage() {
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
 	public <T, U> T get(Property<T, U> name) {
 		return name.transformToStorageFormat((U) props.get(name.getName()));

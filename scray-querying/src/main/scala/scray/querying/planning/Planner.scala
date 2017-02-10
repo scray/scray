@@ -25,8 +25,7 @@ import scala.collection.mutable.HashMap
 import scala.collection.parallel.immutable.ParSeq
 
 import scray.querying.{ Query, Registry }
-import scray.querying.description.{ And, AtomicClause, Clause, Column, ColumnConfiguration, ColumnOrdering, Columns, Equal, Greater, GreaterEqual, IsNull, Or }
-import scray.querying.description.{ Row, Smaller, SmallerEqual, TableConfiguration, TableIdentifier, Unequal, Wildcard, WildcardChecker }
+import scray.querying.description.{ And, AtomicClause, Clause, Column, ColumnConfiguration, ColumnOrdering, Columns, Equal, Greater, GreaterEqual, IsNull, Or, Row, Smaller, SmallerEqual, TableConfiguration, TableIdentifier, Unequal, Wildcard, WildcardChecker }
 import scray.querying.description.internal.{ SingleValueDomain, RangeValueDomain, QueryspaceViolationTableUnavailableException, QueryspaceViolationException, QueryspaceColumnViolationException, QueryWithoutColumnsException, QueryDomainParserExceptionReasons, QueryDomainParserException, NonAtomicClauseException, NoPlanException, MaterializedView, IndexTypeException, Domain, Bound, _ }
 import scray.querying.queries.{ DomainQuery, QueryInformation }
 import scray.querying.source.{ EagerCollectingDomainFilterSource, EagerEmptyRowDispenserSource, EagerSource, IdentityEagerCollectingQueryMappingSource, IndexMergeSource, LazyEmptyRowDispenserSource, LazyQueryColumnDispenserSource, LazyQueryDomainFilterSource, LazySource, LimitIncreasingQueryableSource }
@@ -149,7 +148,7 @@ object Planner extends LazyLogging {
       if(!(tableConf.queryableStore.isDefined || tableConf.readableStore.isDefined)) {
           // check that there is a version for the table
           tableConf.versioned.orElse(throw new QueryspaceViolationTableUnavailableException(query)).
-            map(_.queryableStore.orElse(throw new QueryspaceViolationTableUnavailableException(query)))
+            map(_.runtimeVersion().orElse(throw new QueryspaceViolationTableUnavailableException(query)))
       }
     }
 
@@ -317,7 +316,7 @@ object Planner extends LazyLogging {
   def getQueryableStore[Q <: DomainQuery, K <: DomainQuery, V](tableConfig: TableConfiguration[Q, K, V]): QueryableStoreSource[Q] = tableConfig.versioned match {
     case None => tableConfig.queryableStore.get
     case Some(versionInfo) =>
-      logger.info(s"requesting store with ${versionInfo.queryableStore.get.getScrayCoordinates}")
+      logger.info(s"requesting store with ${versionInfo.runtimeVersion().get}")
       versionInfo.queryableStore.get
       // versionInfo.queryableStore(versionInfo.runtimeVersion().get)
   }

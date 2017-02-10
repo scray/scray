@@ -73,6 +73,14 @@ class SimpleHashJoinSource[Q <: DomainQuery, K <: DomainQuery, V](
         query.querySpaceVersion,
         query.getQueryID)
   
+//  def getSimpleKeyBasedQuery(query: Q, inCol: Option[K]): SimpleKeyBasedQuery[R] = new SimpleKeyBasedQuery[R](
+//        typeMapper(inCol.get),
+//        lookupSourceJoinColumns,
+//        lookupSource.getColumns,
+//        query.querySpace,
+//        query.querySpaceVersion,
+//        query.getQueryID)
+//  
   /**
    * transforms the spool. May not skip too many elements because it is not tail recursive.
    */
