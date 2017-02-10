@@ -2,8 +2,12 @@ package scray.common.key
 
 import scala.util.Sorting
 
-class OrderedStringKey(value: Array[String]) extends ScrayKey(value) {
-
+/**
+ * Create a key from a Array[String]. 
+ * The ordering of elements in the array is ignored.
+ */
+class OrderedStringKey(value: Array[String]) extends ScrayKey(value, 1.0f) {
+  
   Sorting.quickSort(value)
   val key = value.foldLeft("")((acc, element) => {
     if (acc.size < 1) {
@@ -20,7 +24,7 @@ class OrderedStringKey(value: Array[String]) extends ScrayKey(value) {
   override def equals(that: Any): Boolean = {
     that match {
       case that: OrderedStringKey => {
-        that.getKeyAsString == this.getKeyAsString
+        that.getKeyAsString == this.getKeyAsString && that.version == this.version
       }
       case _ => false
     }

@@ -5,8 +5,8 @@ package scray.common.key
  * To query this data the scray service requires this key. 
  * This interface can help to use the same keygeneration class.
  */
-abstract class ScrayKey[T](value: T) {
-
+abstract class ScrayKey[T](value: T, val version: Float) {
+  
   /**
    * Provide a string representation of the key.
    * Is used by scray service to query the data.
