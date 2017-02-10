@@ -43,5 +43,26 @@ class TestOrderedStringKey extends WordSpec {
       assert(keyV3.hashCode() == -1293253427)
       assert(keyV4.hashCode() == -1293253427)
     }
+    " be equal for the same input " in {
+     
+      val keyV1 = new OrderedStringKey(Array("a", "b", "c", "d"))
+      val keyV2 = new OrderedStringKey(Array("b", "c", "d", "a"))
+      
+      assert(keyV1.equals(keyV2))
+    }
+    " be unequal for different input " in {
+      
+      val keyV1 = new OrderedStringKey(Array("a0", "b0", "c0", "d0"))
+      val keyV2 = new OrderedStringKey(Array("b1", "c1", "d1", "a1"))
+      
+      assert( ! keyV1.equals(keyV2))
+    }
+    " be unequal for different classes " in {
+      
+      val keyV1 = new OrderedStringKey(Array("a0", "b0", "c0", "d0"))
+      
+      assert( ! keyV1.equals("abcd"))
+    }
+    
   }  
 }

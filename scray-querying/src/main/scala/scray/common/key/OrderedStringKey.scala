@@ -17,23 +17,13 @@ class OrderedStringKey(value: Array[String]) extends ScrayKey(value) {
     key
   }
 
-  override def equals(other: Any): Boolean = {
-    if (other == null) {
-      false
+  override def equals(that: Any): Boolean = {
+    that match {
+      case that: OrderedStringKey => {
+        that.getKeyAsString == this.getKeyAsString
+      }
+      case _ => false
     }
-
-    if (other == this) {
-      true
-    }
-
-    if (!(other.isInstanceOf[OrderedStringKey])) {
-      false
-    }
-
-    // other is a OrderedStringKey
-    val otherKey = other.asInstanceOf[OrderedStringKey]
-
-    return this.getKeyAsString == otherKey.getKeyAsString
   }
 
   override def hashCode: Int = {
