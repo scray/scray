@@ -5,7 +5,7 @@ package scray.common.key
  * To query this data the scray service requires this key. 
  * This interface can help to use the same keygeneration class.
  */
-abstract class ScrayKey[T](value: T, val version: Float) {
+abstract class ScrayKey[T](value: T, val version: Float) extends Serializable {
   
   /**
    * Provide a string representation of the key.

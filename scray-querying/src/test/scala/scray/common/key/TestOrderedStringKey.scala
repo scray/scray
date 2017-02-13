@@ -69,18 +69,19 @@ class TestOrderedStringKey extends WordSpec {
     }
     " serialize and deserialize key " in {
       
-//      val key = new OrderedStringKey(Array("a", "b", "c", "d"))
-//
-//      val keySerialized = new ByteArrayOutputStream()
-//      val oos = new ObjectOutputStream(keySerialized)
-//      oos.writeObject(key)
-//      oos.close()
-//      
-//      val inputStream = new ByteArrayInputStream(keySerialized.toByteArray())
-//      val objectInputStream = new ObjectInputStream(inputStream)
-//      val keyDeserialized = objectInputStream.readObject().asInstanceOf[OrderedStringKey]
-//      
-      // assert(keyDeserialized.getKeyAsString == "a_b_c_d")
+      val key = new OrderedStringKey(Array("a", "b", "c", "d"))
+
+      val keySerialized = new ByteArrayOutputStream()
+      val oos = new ObjectOutputStream(keySerialized)
+      oos.writeObject(key)
+      oos.close()
+      
+      val inputStream = new ByteArrayInputStream(keySerialized.toByteArray())
+      val objectInputStream = new ObjectInputStream(inputStream)
+      val keyDeserialized = objectInputStream.readObject().asInstanceOf[OrderedStringKey]
+      
+      assert(keyDeserialized.version == 1)
+      assert(keyDeserialized.getKeyAsString == "a_b_c_d")
     }
     
   }  
