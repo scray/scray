@@ -6,7 +6,7 @@ import scala.util.Sorting
  * Create a key from a Array[String]. 
  * The ordering of elements in the array is ignored.
  */
-class OrderedStringKey(value: Array[String]) extends ScrayKey(value, 1.0f) {
+class OrderedStringKey(value: Array[String]) extends ScrayKey(value, 1.0f) with Serializable {
   
   Sorting.quickSort(value)
   val key = value.foldLeft("")((acc, element) => {

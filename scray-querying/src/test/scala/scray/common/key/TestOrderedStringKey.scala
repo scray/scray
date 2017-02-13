@@ -1,9 +1,13 @@
 package scray.common.key
 
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
+import java.io.ObjectInputStream
+import java.io.ObjectOutputStream
+
 import org.junit.runner.RunWith
 import org.scalatest.WordSpec
 import org.scalatest.junit.JUnitRunner
-import scray.querying.sync.SyncTableBasicClasses.SyncTableRowEmpty
 
 @RunWith(classOf[JUnitRunner])
 class TestOrderedStringKey extends WordSpec {
@@ -62,6 +66,21 @@ class TestOrderedStringKey extends WordSpec {
       val keyV1 = new OrderedStringKey(Array("a0", "b0", "c0", "d0"))
       
       assert( ! keyV1.equals("abcd"))
+    }
+    " serialize and deserialize key " in {
+      
+//      val key = new OrderedStringKey(Array("a", "b", "c", "d"))
+//
+//      val keySerialized = new ByteArrayOutputStream()
+//      val oos = new ObjectOutputStream(keySerialized)
+//      oos.writeObject(key)
+//      oos.close()
+//      
+//      val inputStream = new ByteArrayInputStream(keySerialized.toByteArray())
+//      val objectInputStream = new ObjectInputStream(inputStream)
+//      val keyDeserialized = objectInputStream.readObject().asInstanceOf[OrderedStringKey]
+//      
+      // assert(keyDeserialized.getKeyAsString == "a_b_c_d")
     }
     
   }  
