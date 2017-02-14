@@ -82,7 +82,7 @@ object Planner extends LazyLogging {
       def getDomainQuery(): DomainQuery = {
         val isMv: Boolean = Registry.getQuerySpaceTable(query.getQueryspace, 0, query.getTableIdentifier).map(config => {
           if (config.materializedViews.size > 0) {
-            true
+            false
           } else {
             false
           }
