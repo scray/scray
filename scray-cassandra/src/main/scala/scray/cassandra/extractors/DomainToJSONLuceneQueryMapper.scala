@@ -48,7 +48,7 @@ object DomainToJSONLuceneQueryMapper extends LazyLogging {
     val result = new StringBuilder
     result ++= ""
     if(vdomain.lowerBound.isDefined || vdomain.upperBound.isDefined) {
-      result ++= s""" { type : "range", field : "${vdomain.column.columnName}", """
+      result ++= s"""filter : { type : "range", field : "${vdomain.column.columnName}", """
       vdomain.lowerBound.map { bound =>
         result ++= s""" lower: "${bound.value}" , include_lower: "${bound.inclusive}" """
         vdomain.upperBound.map ( _ => result ++= "," )

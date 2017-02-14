@@ -121,7 +121,7 @@ class DomainToJsonLuceneTest extends WordSpec with BeforeAndAfter with BeforeAnd
       
        // Create lucene code.
       val queryString = DomainToJSONLuceneQueryMapper.getLuceneColumnsQueryMapping(query, List(domaine), tableId)
-      Assert.assertEquals(queryString.get, " lucene=\'{  filter : { type : \"range\", field : \"column1\",  lower: \"0\" , include_lower: \"true\" , upper: \"100\" , include_upper: \"true\"  } ,  sort : { fields : [ { field : \"column1\" , reverse : false } ] }  }' ")      
+      Assert.assertEquals(queryString.get, " lucene=\'{ filter : { type : \"range\", field : \"column1\",  lower: \"0\" , include_lower: \"true\" , upper: \"100\" , include_upper: \"true\"  } ,  sort : { fields : [ { field : \"column1\" , reverse : false } ] }  }' ")      
     }
   }
 }
