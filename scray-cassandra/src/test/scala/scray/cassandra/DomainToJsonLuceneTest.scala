@@ -18,6 +18,8 @@ import scray.cassandra.extractors.DomainToJSONLuceneQueryMapper
 import scray.querying.queries.DomainQuery
 import scray.querying.description.internal.SingleValueDomain
 import org.junit.Assert
+import scray.querying.description.internal.RangeValueDomain
+import scray.querying.description.internal.Bound
 
 
   @RunWith(classOf[JUnitRunner])
@@ -75,7 +77,51 @@ class DomainToJsonLuceneTest extends WordSpec with BeforeAndAfter with BeforeAnd
     
       // Create lucene code.
       val queryString = DomainToJSONLuceneQueryMapper.getLuceneColumnsQueryMapping(query, List(domaine), tableId)
-      Assert.assertEquals(queryString.get, " lucene='{  { type : \"match\", field : \"column1\", value : \"42\" } ,  sort : { fields : [ { field : \"column1\" , reverse : false } ] }  }' ")      
+      Assert.assertEquals(queryString.get, " lucene='{ filter : { type : \"match\", field : \"column1\", value : \"42\" } ,  sort : { fields : [ { field : \"column1\" , reverse : false } ] }  }' ")      
+    }
+    " generate range query " in {
+      // Define query with domaine
+      val tableId = new TableIdentifier("cassandra", "cassandra", "table1")
+      val column = new Column("column1", tableId)
+      val domaine = new RangeValueDomain(column, Some(new Bound(true, 0)), Some(new Bound(true, 100)))
+
+    val query = new DomainQuery(
+      java.util.UUID.randomUUID,
+      "queryspace1", 
+      0,
+      Set(column),
+      tableId,
+      List(domaine),
+      None,
+      None,
+      Some(QueryRange(None, None, None)))
+      
+       // Create lucene code.
+      val queryString = DomainToJSONLuceneQueryMapper.getLuceneColumnsQueryMapping(query, List(domaine), tableId)
+      Assert.assertEquals(queryString.get, " lucene=\'{ filter : { type : \"range\", field : \"column1\",  lower: \"0\" , include_lower: \"true\" , upper: \"100\" , include_upper: \"true\"  }  }' ")
+    }
+    " generate range query with ordering " in {
+       // Define query with domaine
+      val tableId = new TableIdentifier("cassandra", "cassandra", "table1")
+      val column = new Column("column1", tableId)
+      implicit val ordering = new Ordering[String] { def compare(a: String, b: String) = {0}}
+      val columnOrdering =  new ColumnOrdering(column, false)
+      val domaine = new RangeValueDomain(column, Some(new Bound(true, 0)), Some(new Bound(true, 100)))
+
+    val query = new DomainQuery(
+      java.util.UUID.randomUUID,
+      "queryspace1", 
+      0,
+      Set(column),
+      tableId,
+      List(domaine),
+      None,
+      Some(columnOrdering),
+      Some(QueryRange(None, None, None)))
+      
+       // Create lucene code.
+      val queryString = DomainToJSONLuceneQueryMapper.getLuceneColumnsQueryMapping(query, List(domaine), tableId)
+      Assert.assertEquals(queryString.get, " lucene=\'{ filter : { type : \"range\", field : \"column1\",  lower: \"0\" , include_lower: \"true\" , upper: \"100\" , include_upper: \"true\"  } ,  sort : { fields : [ { field : \"column1\" , reverse : false } ] }  }' ")      
     }
   }
 }
