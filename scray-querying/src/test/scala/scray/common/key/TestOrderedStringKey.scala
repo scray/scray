@@ -83,6 +83,25 @@ class TestOrderedStringKey extends WordSpec {
       assert(keyDeserialized.version == 1)
       assert(keyDeserialized.getKeyAsString == "a_b_c_d")
     }
+    " use key creation interface " in {
+           
+      class KeyHashComperator1(val keygenerator: KeyGenerator[String]) {
+        
+        def compare(value: String)= {
+          assert(keygenerator(value).hashCode == 2987074)
+        }
+      }
+      
+      class KeyHashComperator2(val keygenerator: KeyGenerator[Array[String]]) {
+        
+        def compare(value: Array[String])= {
+          assert(keygenerator(value).hashCode == -1293253427)
+        }
+      }
+
+      new KeyHashComperator1(StringKey).compare("abcd")
+      new KeyHashComperator2(OrderedStringKeyGenerator).compare(Array("a", "b", "c", "d"))
+    }
     
   }  
 }

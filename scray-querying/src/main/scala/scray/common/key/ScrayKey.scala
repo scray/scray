@@ -13,7 +13,6 @@ abstract class ScrayKey[T](value: T, val version: Float) extends Serializable {
    */
   def getKeyAsString: String
   
-
   /**
    * Check if two objects are equals.
    * Is used by Spark
