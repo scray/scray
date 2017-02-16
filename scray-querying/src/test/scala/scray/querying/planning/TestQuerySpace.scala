@@ -25,7 +25,7 @@ class TestQuerySpace(tables: Set[TableConfiguration[_ <: DomainQuery, _ <: Domai
   def getTables(version: Int): Set[TableConfiguration[_ <: DomainQuery, _ <: DomainQuery, _]] = tables
   def queryCanBeGrouped(query: DomainQuery): Option[ColumnConfiguration] = None
   def queryCanBeOrdered(query: DomainQuery): Option[ColumnConfiguration] = None
-  def queryCanUseMaterializedView(query: DomainQuery, materializedView: MaterializedView): Option[(Boolean, Int)] = None
+  def queryCanUseMaterializedView(query: DomainQuery, materializedView: MaterializedView[String]): Option[(Boolean, Int)] = None
   def reInitialize(oldversion: Int): QueryspaceConfiguration = this
 }
 

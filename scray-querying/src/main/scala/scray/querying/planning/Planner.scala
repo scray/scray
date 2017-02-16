@@ -81,11 +81,7 @@ object Planner extends LazyLogging {
 
       def getDomainQuery(): DomainQuery = {
         val isMv: Boolean = Registry.getQuerySpaceTable(query.getQueryspace, 0, query.getTableIdentifier).map(config => {
-          if (config.materializedViews.size > 0) {
-            false
-          } else {
-            false
-          }
+         false
         }).getOrElse(false)
 
         if (isMv) {
@@ -242,7 +238,7 @@ object Planner extends LazyLogging {
    * support the ordering defined, then the "best" of this sub-set be used regardless
    * of other views with better scores (saves memory).
    */
-  private def checkMaterializedViewMatching(space: String, table: TableIdentifier, domQuery: DomainQuery): Option[(Boolean, MaterializedView)] = {
+//  private def checkMaterializedViewMatching(space: String, table: TableIdentifier, domQuery: DomainQuery): Option[(Boolean, MaterializedView)] = {
 //    // check that all
 //    @inline def checkSingleValueDomainValues(column: Column, values: Array[SingleValueDomain[_]]): Boolean = {
 //      values.find { singleVDom =>
@@ -307,8 +303,8 @@ object Planner extends LazyLogging {
 //        None
 //      }
 //    }
-    None
-  }
+//    None
+//  }
 
   /**
    * returns a QueryableStore and uses versioning information, if needed
