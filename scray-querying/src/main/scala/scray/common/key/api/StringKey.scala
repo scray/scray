@@ -1,5 +1,8 @@
 package scray.common.key
 
+import scray.common.key.api.ScrayKey
+import scray.common.key.api.KeyGenerator
+
 class StringKey(value: String, version: Float = 1.0f) extends ScrayKey(value, version) with Serializable {
 
   val key = value

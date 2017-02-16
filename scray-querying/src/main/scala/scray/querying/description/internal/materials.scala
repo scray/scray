@@ -4,7 +4,7 @@ import scray.querying.description.TableIdentifier
 import scray.querying.description.Column
 import scray.querying.description.TableConfiguration
 import scray.querying.queries.DomainQuery
-import scray.common.key.KeyGenerator
+import scray.common.key.api.KeyGenerator
 
 /**
  * represents information to find a materialized view
