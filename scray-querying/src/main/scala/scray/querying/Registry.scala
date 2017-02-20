@@ -159,7 +159,7 @@ object Registry extends LazyLogging with Registry {
     rwlock.readLock.lock
     try {
       val qt = querySpaceTables.get(space + version)
-      logger.debug(s"Search table with identifier ${ti} in dataset ${qt}")
+      logger.trce(s"Search table with identifier ${ti} in dataset ${qt}")
       qt.flatMap(_.get(ti))
     } finally {
       rwlock.readLock.unlock
