@@ -1,4 +1,4 @@
-package scray.common.key
+package scray.common.key.api
 
 /**
  * Some data produced by an aggregation job are identified by key.

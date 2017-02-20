@@ -1,4 +1,4 @@
-package scray.common.key
+package scray.common.key.api
 
 trait KeyGenerator[T] {
   

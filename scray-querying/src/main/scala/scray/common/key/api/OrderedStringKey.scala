@@ -1,6 +1,8 @@
 package scray.common.key
 
 import scala.util.Sorting
+import scray.common.key.api.KeyGenerator
+import scray.common.key.api.ScrayKey
 
 /**
  * Create a key from a Array[String]. 
