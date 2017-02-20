@@ -77,13 +77,6 @@ class ScrayLoaderQuerySpace(name: String, config: ScrayConfiguration, qsConfig: 
     groupingColumn.map {Registry.getQuerySpaceColumn(query.getQueryspace, query.querySpaceVersion, _) }.flatten
   }
   
-//  /**
-//   * If this queryspace can handle the query using the materialized view provided.
-//   * The weight (Int) is an indicator for the specificity of the view and reflects the 
-//   * number of columns that match query arguments.
-//   */
-//  def queryCanUseMaterializedView(query: DomainQuery, materializedView: MaterializedView): Option[(Boolean, Int)] = ???
-  
   /**
    * return a generator for the given named dbms
    */
