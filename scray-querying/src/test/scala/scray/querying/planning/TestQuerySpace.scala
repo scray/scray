@@ -25,8 +25,8 @@ class TestQuerySpace(tables: Set[TableConfiguration[_ <: DomainQuery, _ <: Domai
   def getTables(version: Int): Set[TableConfiguration[_ <: DomainQuery, _ <: DomainQuery, _]] = tables
   def queryCanBeGrouped(query: DomainQuery): Option[ColumnConfiguration] = None
   def queryCanBeOrdered(query: DomainQuery): Option[ColumnConfiguration] = None
-  def queryCanUseMaterializedView(query: DomainQuery, materializedView: MaterializedView[String]): Option[(Boolean, Int)] = None
   def reInitialize(oldversion: Int): QueryspaceConfiguration = this
+  def getMaterializedViews(): Option[MaterializedView] = None 
 }
 
 object TestQuerySpace {
@@ -43,8 +43,7 @@ object TestQuerySpace {
     row => row,
     query => query,
     None, //Some(() => createQueryableStore[K](data)),
-    None, //Some(() => new MapStore(data)),
-    None
+    None //Some(() => new MapStore(data)),
   )
   
 //  def createQueryableStore[K](data: Map[K, SimpleRow]): QueryableSource = new QueryableSource {

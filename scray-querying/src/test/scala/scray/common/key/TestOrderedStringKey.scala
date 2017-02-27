@@ -8,6 +8,7 @@ import java.io.ObjectOutputStream
 import org.junit.runner.RunWith
 import org.scalatest.WordSpec
 import org.scalatest.junit.JUnitRunner
+import scray.common.key.api.KeyGenerator
 
 @RunWith(classOf[JUnitRunner])
 class TestOrderedStringKey extends WordSpec {

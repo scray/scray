@@ -58,6 +58,8 @@ abstract class QueryspaceConfiguration(val name: String) {
    */
   def getColumns(version: Int): List[ColumnConfiguration]
   
+  def getMaterializedViews(): Option[MaterializedView]
+  
   /**
    * re-initialize this queryspace, possibly re-reading the configuration from somewhere
    */
@@ -118,8 +120,7 @@ case class TableConfiguration[Q <: DomainQuery, K <: DomainQuery, V] (
   rowMapper: (V) => Row, // mapper from a result row returned by the store to a scray-row
   domainQueryMapping: DomainQuery => Q, // maps a scray-DomainQuery to a query of the store
   queryableStore: Option[QueryableStoreSource[Q]], // the queryable store representation, allowing to query the store, None if versioned
-  readableStore: Option[QueryableStoreSource[K]], // the readablestore, used in case this is used by a HashJoinSource, None if versioned
-  materializedViews: Option[List[MaterializedView[V]]] // materialized views for this table
+  readableStore: Option[QueryableStoreSource[K]] // the readablestore, used in case this is used by a HashJoinSource, None if versioned
 )
 
 /**

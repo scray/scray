@@ -14,38 +14,35 @@
 // limitations under the License.
 package scray.querying
 
-import scala.collection.mutable.HashMap
-import scray.querying.description.{
-  Column,
-  ColumnConfiguration,
-  QueryspaceConfiguration,
-  TableConfiguration,
-  TableIdentifier
-}
-import scray.querying.planning.PostPlanningActions
-import java.util.concurrent.locks.{
-  ReadWriteLock,
-  ReentrantReadWriteLock,
-  ReentrantLock
-}
-import scray.querying.source.Source
-import org.mapdb.HTreeMap
-import scray.querying.caching.Cache
-import scray.querying.caching.serialization.RegisterRowCachingSerializers
-import scray.querying.monitoring.Monitor
-import scray.querying.caching.MonitoringInfos
-import java.util.concurrent.atomic.AtomicBoolean
-import scray.querying.queries.QueryInformation
 import java.util.UUID
-import com.twitter.util.JavaTimer
-import com.twitter.util.Duration
 import java.util.concurrent.TimeUnit
-import com.twitter.util.Time
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.locks.ReentrantLock
+import java.util.concurrent.locks.ReentrantReadWriteLock
+
 import scala.collection.mutable.ArrayBuffer
-import scray.querying.monitoring.MonitorQuery
+import scala.collection.mutable.HashMap
+
+import com.twitter.util.Duration
+import com.twitter.util.JavaTimer
+import com.twitter.util.Time
 import com.twitter.util.Try
 import com.typesafe.scalalogging.slf4j.LazyLogging
+
+import scray.querying.caching.Cache
+import scray.querying.caching.MonitoringInfos
+import scray.querying.description.Column
+import scray.querying.description.ColumnConfiguration
+import scray.querying.description.QueryspaceConfiguration
+import scray.querying.description.TableConfiguration
+import scray.querying.description.TableIdentifier
+import scray.querying.description.internal.MaterializedView
+import scray.querying.monitoring.Monitor
+import scray.querying.monitoring.MonitorQuery
+import scray.querying.planning.PostPlanningActions
 import scray.querying.queries.DomainQuery
+import scray.querying.queries.QueryInformation
+import scray.querying.source.Source
 
 /**
  * default trait to represent get operations on the registry
@@ -76,6 +73,8 @@ trait Registry {
    * returns all available version of a given query space
    */
   @inline def getVersions(space: String): Set[Int]
+  
+  @inline def getMaterializedView[V](space: String, ti: TableIdentifier): Option[MaterializedView]
 }
 
 
@@ -193,8 +192,6 @@ object Registry extends LazyLogging with Registry {
       querySpaceTables.put(querySpace.name + newVersion, new HashMap[TableIdentifier, TableConfiguration[_ <: DomainQuery, _ <: DomainQuery, _]])
       querySpace.getColumns(newVersion).foreach(col => querySpaceColumns.get(querySpace.name + newVersion).map(_.put(col.column, col)))
       querySpace.getTables(newVersion).foreach(table => querySpaceTables.get(querySpace.name + newVersion).map(_.put(table.table, table)))
-      querySpace.getTables(newVersion).foreach(table => querySpaceTables.get(querySpace.name + newVersion).map(tableIdentifiers => 
-          table.materializedViews.map( materializedViews => materializedViews.foreach ( mv => tableIdentifiers.put(mv.table, table)))))
       querySpaceVersions.put(querySpace.name, querySpaceVersions.get(querySpace.name).getOrElse(Set()) + newVersion)
       logger.debug(s"Registered query space ${querySpaces.get(querySpace.name + newVersion)}")
       newVersion
@@ -364,4 +361,9 @@ object Registry extends LazyLogging with Registry {
       queryMonitorRwLock.writeLock().unlock()
     }
   }
+  
+  @inline def getMaterializedView[V](space: String, ti: TableIdentifier): Option[MaterializedView] = {
+    None
+  }
+
 }
