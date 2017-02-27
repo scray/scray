@@ -166,6 +166,7 @@ class ScrayLoaderQuerySpace(name: String, config: ScrayConfiguration, qsConfig: 
    */
   def reInitialize(oldversion: Int): QueryspaceConfiguration = ???
   
+  def getMaterializedViews(): Option[MaterializedView] = None
   
   override def toString: String = {
     s"""$name { tables: [${getTables(0)}] }"""

@@ -81,7 +81,7 @@ object Planner extends LazyLogging {
 
       def getDomainQuery(): DomainQuery = {
         val isMv: Boolean = Registry.getQuerySpaceTable(query.getQueryspace, 0, query.getTableIdentifier).map(config => {
-         false
+         if(query.getTableIdentifier.tableId.contains("UMCErrorSummary")) true else false
         }).getOrElse(false)
 
         if (isMv) {
