@@ -84,8 +84,8 @@ class ScrayQueryspaceConfigurationParser (override val input: ParserInput, val c
       QueryspaceRowstore(TableIdentifier(dbms, dbid, table)) 
   }}
 
-  def MaterializedView: Rule1[QueryspaceMaterializedView] = rule {"materialized_view" ~ "table" ~ "{" ~ Identifier ~ COMMA ~ QuotedString ~ COMMA ~ QuotedString ~ "}" ~>  {
-    (dbms: String, dbid: String, table: String) => new QueryspaceMaterializedView(TableIdentifier(dbms, dbid, table))
+  def MaterializedView: Rule1[QueryspaceMaterializedView] = rule {"materialized_view" ~ "table" ~ "{" ~ Identifier ~ COMMA ~ QuotedString ~ COMMA ~ QuotedString ~ "}" ~ COMMA ~ "keygeneratorClass:" ~ QuotedString ~>  {
+    (dbms: String, dbid: String, table: String, keygenerator: String) => new QueryspaceMaterializedView(TableIdentifier(dbms, dbid, table), keygenerator)
    }}
   
   def IndexStore: Rule1[QueryspaceIndexstore] = rule { "manualindex" ~ "{" ~ 
@@ -120,7 +120,6 @@ object ScrayQueryspaceConfigurationParser extends LazyLogging {
     logError match {
       case true => parseResult.recoverWith { case e: ParseError =>
         val msg = parser.formatError(e)
-        println(s"Parse error parsing configuration file. Message from parser is $msg", e)
         logger.error(s"Parse error parsing configuration file. Message from parser is $msg", e)
         Failure(e)
       }

@@ -74,7 +74,10 @@ trait Registry {
    */
   @inline def getVersions(space: String): Set[Int]
   
-  @inline def getMaterializedView[V](space: String, ti: TableIdentifier): Option[MaterializedView]
+  /**
+   * return a metrializedView
+   */
+  @inline def getMaterializedView(space: String, version: Integer, ti: TableIdentifier): Option[MaterializedView]
 }
 
 
@@ -144,7 +147,7 @@ object Registry extends LazyLogging with Registry {
   @inline def getQuerySpaceTables(space: String, version: Int): Map[TableIdentifier, TableConfiguration[_ <: DomainQuery, _ <: DomainQuery, _]] = {
     rwlock.readLock.lock
     try {
-      println("Query table" + space + version + " Existing tables: " + querySpaceTables.keySet)
+      logger.trace("Query table" + space + version + " Existing tables: " + querySpaceTables.keySet)
       querySpaceTables.get(space + version).map(_.toMap).getOrElse(Map())
     } finally {
       rwlock.readLock.unlock
@@ -194,6 +197,11 @@ object Registry extends LazyLogging with Registry {
       querySpace.getTables(newVersion).foreach(table => querySpaceTables.get(querySpace.name + newVersion).map(_.put(table.table, table)))
       querySpaceVersions.put(querySpace.name, querySpaceVersions.get(querySpace.name).getOrElse(Set()) + newVersion)
       logger.debug(s"Registered query space ${querySpaces.get(querySpace.name + newVersion)}")
+      
+      // Register materialized views
+      this.materializedViews.put(querySpace.name + newVersion, new HashMap[TableIdentifier, MaterializedView])
+      querySpace.getMaterializedViews().map { mv => this.materializedViews.get(querySpace.name + newVersion).get.put(mv.table, mv)}
+      
       newVersion
     } finally {
       rwlock.writeLock.unlock
@@ -362,8 +370,18 @@ object Registry extends LazyLogging with Registry {
     }
   }
   
-  @inline def getMaterializedView[V](space: String, ti: TableIdentifier): Option[MaterializedView] = {
-    None
+  // shortcut to find materialized views
+  private val materializedViews = new HashMap[String, HashMap[TableIdentifier, MaterializedView]]
+  
+  @inline def getMaterializedView(space: String, version: Integer, ti: TableIdentifier): Option[MaterializedView] = {
+    rwlock.readLock.lock
+    try {
+      val mv = materializedViews.get(space + version)
+      logger.trace(s"Search materialized view table with identifier ${ti} in dataset ${mv}")
+      mv.flatMap(_.get(ti))
+    } finally {
+      rwlock.readLock.unlock
+    }
   }
 
 }

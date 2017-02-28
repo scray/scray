@@ -80,11 +80,9 @@ object Planner extends LazyLogging {
     val plans = conjunctiveQueries.par.map { cQuery =>
 
       def getDomainQuery(): DomainQuery = {
-        val isMv: Boolean = Registry.getQuerySpaceTable(query.getQueryspace, 0, query.getTableIdentifier).map(config => {
-         if(query.getTableIdentifier.tableId.contains("UMCErrorSummary")) true else false
-        }).getOrElse(false)
-
-        if (isMv) {
+        
+        val mv = Registry.getMaterializedView(query.getQueryspace, version, query.getTableIdentifier)
+        if (mv.isDefined) {
           val domains2 = Planner.qualifyPredicates(cQuery).get
           createQueryDomains(query, version, List(Planner.getMvQuery(domains2, query, query.getTableIdentifier)))
         } else {

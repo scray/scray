@@ -58,7 +58,7 @@ abstract class QueryspaceConfiguration(val name: String) {
    */
   def getColumns(version: Int): List[ColumnConfiguration]
   
-  def getMaterializedViews(): Option[MaterializedView]
+  def getMaterializedViews(): Seq[MaterializedView]
   
   /**
    * re-initialize this queryspace, possibly re-reading the configuration from somewhere

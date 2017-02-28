@@ -1,3 +1,3 @@
 name WhateverYouLike version 1
 
-materialized_view table {cassandra, "KS1", "MV1"}
+materialized_view table {cassandra, "KS1", "MV1"}, keygeneratorClass: "scray.common.key.OrderedStringKeyGenerator"

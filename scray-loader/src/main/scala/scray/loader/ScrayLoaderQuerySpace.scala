@@ -36,6 +36,9 @@ import scray.querying.source.store.QueryableStoreSource
 import com.twitter.util.FuturePool
 import scray.querying.description.IndexConfiguration
 import scray.querying.Registry
+import scray.common.key.OrderedStringKeyGenerator
+import scray.common.key.OrderedStringKeyGenerator
+import scray.common.key.StringKey
 
 
 /**
@@ -51,6 +54,17 @@ class ScrayLoaderQuerySpace(name: String, config: ScrayConfiguration, qsConfig: 
   storeConfig.addSessionChangeListener { (name, session) => generators -= name }
   
   val version = qsConfig.version
+  
+  val materializedViews = qsConfig.materializedViews.map { view => 
+    if(view.keyClass.equals("scray.common.key.OrderedStringKeyGenerator")) {
+      new MaterializedView(view.table, OrderedStringKeyGenerator) 
+    } else if (view.keyClass.equals("scray.common.key.StringKey")) {
+      new MaterializedView(view.table, StringKey) 
+    } else {
+      logger.warn("Unknown key generator class. use default: scray.common.key.OrderedStringKeyGenerator")
+      new MaterializedView(view.table, OrderedStringKeyGenerator)
+    }
+  }
   
   /**
    * if this queryspace can order accoring to query all by itself, i.e. 
@@ -166,7 +180,7 @@ class ScrayLoaderQuerySpace(name: String, config: ScrayConfiguration, qsConfig: 
    */
   def reInitialize(oldversion: Int): QueryspaceConfiguration = ???
   
-  def getMaterializedViews(): Option[MaterializedView] = None
+  def getMaterializedViews: Seq[MaterializedView] = materializedViews
   
   override def toString: String = {
     s"""$name { tables: [${getTables(0)}] }"""
