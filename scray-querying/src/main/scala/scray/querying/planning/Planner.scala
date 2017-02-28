@@ -83,8 +83,8 @@ object Planner extends LazyLogging {
         
         val mv = Registry.getMaterializedView(query.getQueryspace, version, query.getTableIdentifier)
         if (mv.isDefined) {
-          val domains2 = Planner.qualifyPredicates(cQuery).get
-          createQueryDomains(query, version, List(Planner.getMvQuery(domains2, query, query.getTableIdentifier)))
+          val mvDomains = Planner.qualifyPredicates(cQuery).get
+          createQueryDomains(query, version, List(Planner.getMvQuery(mvDomains, query, query.getTableIdentifier)))
         } else {
           // transform query into a query only containing domains
           transformQueryDomains(cQuery, version)
