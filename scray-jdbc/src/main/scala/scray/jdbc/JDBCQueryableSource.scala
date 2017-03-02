@@ -13,6 +13,7 @@ import com.twitter.util.Future
 import java.sql.ResultSet
 import scray.jdbc.rows.JDBCRow
 import com.twitter.util.Closable
+import scray.jdbc.extractors.DomainToSQLQueryMapping
 
 class JDBCQueryableSource[Q <: DomainQuery] (
       ti: TableIdentifier,
@@ -20,10 +21,10 @@ class JDBCQueryableSource[Q <: DomainQuery] (
       clusteringKeyColumns: Set[Column],
       allColumns: Set[Column],
       columnConfigs: Set[ColumnConfiguration],
-      val session: Session,
+      //????? val session: Session,
       val queryMapper: DomainToSQLQueryMapping[Q, JDBCQueryableSource[Q]],
       futurePool: FuturePool,
-      rowMapper: JdbcRow => Row
+      rowMapper: JDBCRow => Row
     ) extends QueryableStoreSource[Q](ti, rowKeyColumns, clusteringKeyColumns, allColumns, false) {
   
   val mappingFunction = queryMapper.getQueryMapping(this, Some(ti.tableId))
@@ -44,7 +45,7 @@ class JDBCQueryableSource[Q <: DomainQuery] (
   }
   
   override def request(query: Q): Future[Spool[Row]] = {
-    requestIterator(query).flatMap(it => CassandraQueryableSource.toRowSpool(it))
+    requestIterator(query).flatMap(it => JDBCQueryableSource.toRowSpool(it))
   }
 
   override def keyedRequest(query: KeyedQuery): Future[Iterator[Row]] = {
