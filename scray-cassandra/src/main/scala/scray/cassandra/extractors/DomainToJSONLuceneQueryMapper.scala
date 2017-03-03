@@ -66,7 +66,7 @@ object DomainToJSONLuceneQueryMapper extends LazyLogging {
     case range: RangeValueDomain[_] => convertRangeValueDomain(range)
   }
 
-  private def sortIndex(optOrdering: Option[ColumnOrdering[_]]): String = {
+  private def sortIndex(optOrdering: Option[ColumnOrdering[_]], domains: List[Domain[_]]): String = {
     optOrdering.map { ordering =>
           s""" sort : { fields : [ { field : "${ordering.column.columnName}" , reverse : ${ordering.descending} } ] } """
     }.getOrElse("")
@@ -91,16 +91,16 @@ object DomainToJSONLuceneQueryMapper extends LazyLogging {
           result ++= validDomains.mkString(" , ")
           result ++= """]}"""
         } else {
-          result ++= validDomains.head
+          result ++= "filter :" + validDomains.head
         }
       }
       
       if(query.getOrdering.isDefined) {
         // Sperate JSON objects by comma
         if(result.endsWith(START_LUCENE_EXPRESSION)) {
-          result ++= sortIndex(query.getOrdering)
+          result ++= sortIndex(query.getOrdering, domains)
         } else {
-          result ++= ", " + sortIndex(query.getOrdering)
+          result ++= ", " + sortIndex(query.getOrdering, domains)
         }
       }
       result ++= " }' "

@@ -328,8 +328,7 @@ class CassandraExtractor[Q <: DomainQuery](session: Session, table: TableIdentif
         versioningConfig.map(_.queryableStore.get.asInstanceOf[CassandraQueryableSource[Q]].mappingFunction).orNull.asInstanceOf[DomainQuery => Q]
       },
       cassQuerySource,
-      cassQuerySource,
-      Some(List(new MaterializedView(table)))
+      cassQuerySource
     )
   }
 
