@@ -1,7 +1,7 @@
-package scray.jdbc.extractors
-
-
-
-class JDBCExtractors[Q <: DomainQuery] extends StoreExtractor[JDBCQueryableSource[Q]] {
-
-}
+//package scray.jdbc.extractors
+//
+//
+//
+//class JDBCExtractors[Q <: DomainQuery] extends StoreExtractor[JDBCQueryableSource[Q]] {
+//
+//}

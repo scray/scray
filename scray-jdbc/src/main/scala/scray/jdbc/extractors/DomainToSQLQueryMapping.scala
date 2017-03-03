@@ -21,8 +21,8 @@ import scray.querying.description.Column
 import scray.querying.Registry
 import com.typesafe.scalalogging.slf4j.LazyLogging
 import DomainToSQLQueryMapping.{AND_LITERAL, EMPTY_LITERAL, ORDER_LITERAL, DESC_LITERAL, LIMIT_LITERAL}
-import scray.cassandra.CassandraQueryableSource
 import scray.querying.description.TableIdentifier
+import scray.jdbc.JDBCQueryableSource
 
 /**
  * performs mapping of DomainQueries to valid Cassandra SQL queries,
@@ -93,9 +93,10 @@ class DomainToSQLQueryMapping[Q <: DomainQuery, S <: JDBCQueryableSource[Q]] ext
           }
         }
 
-        val result = s"""SELECT * FROM "${removeQuotes(store.ti.dbId)}"."${removeQuotes(store.ti.tableId)}" ${decideWhere(r)} ${decideLimit(limit)}"""
-        logger.debug(s"Query String for Cassandra: $result")
-        result
+        //val result = s"""SELECT * FROM "${removeQuotes(store.ti.dbId)}"."${removeQuotes(store.ti.tableId)}" ${decideWhere(r)} ${decideLimit(limit)}"""
+        //logger.debug(s"Query String for Cassandra: $result")
+        //result
+        "SELECT * from bla"
       }
   }
 
@@ -212,30 +213,31 @@ class DomainToSQLQueryMapping[Q <: DomainQuery, S <: JDBCQueryableSource[Q]] ext
   }
 
   private def getValueKeyQueryMapping(store: S, query: DomainQuery, storeTableNickName: Option[String]): Option[String] = {
-    val valueCols = store.getValueColumns.map { valueCol => 
-      Registry.getQuerySpaceColumn(query.getQueryspace, query.querySpaceVersion, valueCol)     
-    }.filter(cd => cd.isDefined && cd.get.index.isDefined && cd.get.index.get.isAutoIndexed).
-    partition(cd => cd.get.index.get.autoIndexConfiguration.isDefined)
-    logger.trace(s"value Columns that are indexed: $valueCols")
-    val resultQuery = if(valueCols._1.size > 0) {
-      // if we have lucene entries, we use those as those are supposed to be more flexible
-      logger.debug(s"Using Lucene index on ${valueCols._1}")
-      val ti = valueCols._1.head.get.column.table
-      val domains = query.getWhereAST.filter { dom =>
-        valueCols._1.find{optcolDef => optcolDef.get.column.columnName == dom.column.columnName}.isDefined}
-      DomainToJSONLuceneQueryMapper.getLuceneColumnsQueryMapping(query, domains, ti)
-    } else {
-      None
-    }
-    resultQuery.orElse {
-      // if we a standard Cassandra index we use the first in the list of defined valuesColumns
-      query.domains.find{dom => valueCols._2.find { valueColConf =>
-        val valueCol = valueColConf.get.column
-          dom.column.columnName == valueCol.columnName &&
-          dom.isInstanceOf[SingleValueDomain[_]] &&
-          compareCoordinatesWithNickname(dom.column.table, store, storeTableNickName)
-      }.isDefined}.map(svd => convertSingleValueDomain(svd.asInstanceOf[SingleValueDomain[_]]))
-    }
+//    val valueCols = store.getValueColumns.map { valueCol => 
+//      Registry.getQuerySpaceColumn(query.getQueryspace, query.querySpaceVersion, valueCol)     
+//    }.filter(cd => cd.isDefined && cd.get.index.isDefined && cd.get.index.get.isAutoIndexed).
+//    partition(cd => cd.get.index.get.autoIndexConfiguration.isDefined)
+//    logger.trace(s"value Columns that are indexed: $valueCols")
+//    val resultQuery = if(valueCols._1.size > 0) {
+//      // if we have lucene entries, we use those as those are supposed to be more flexible
+//      logger.debug(s"Using Lucene index on ${valueCols._1}")
+//      val ti = valueCols._1.head.get.column.table
+//      val domains = query.getWhereAST.filter { dom =>
+//        valueCols._1.find{optcolDef => optcolDef.get.column.columnName == dom.column.columnName}.isDefined}
+//      DomainToJSONLuceneQueryMapper.getLuceneColumnsQueryMapping(query, domains, ti)
+//    } else {
+//      None
+//    }
+//    resultQuery.orElse {
+//      // if we a standard Cassandra index we use the first in the list of defined valuesColumns
+//      query.domains.find{dom => valueCols._2.find { valueColConf =>
+//        val valueCol = valueColConf.get.column
+//          dom.column.columnName == valueCol.columnName &&
+//          dom.isInstanceOf[SingleValueDomain[_]] &&
+//          compareCoordinatesWithNickname(dom.column.table, store, storeTableNickName)
+//      }.isDefined}.map(svd => convertSingleValueDomain(svd.asInstanceOf[SingleValueDomain[_]]))
+//    }
+    None
   }
 }
 
