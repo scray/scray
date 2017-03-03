@@ -23,7 +23,7 @@ import scray.querying.description.SimpleRow
 import scala.collection.mutable.ArrayBuffer
 
 class JDBCQueryableSource[Q <: DomainQuery](
-    ti: TableIdentifier,
+    val ti: TableIdentifier,
     rowKeyColumns: Set[Column],
     clusteringKeyColumns: Set[Column],
     allColumns: Set[Column],

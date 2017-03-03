@@ -93,10 +93,9 @@ class DomainToSQLQueryMapping[Q <: DomainQuery, S <: JDBCQueryableSource[Q]] ext
           }
         }
 
-        //val result = s"""SELECT * FROM "${removeQuotes(store.ti.dbId)}"."${removeQuotes(store.ti.tableId)}" ${decideWhere(r)} ${decideLimit(limit)}"""
-        //logger.debug(s"Query String for Cassandra: $result")
-        //result
-        "SELECT * from bla"
+        val result = s"""SELECT * FROM "${removeQuotes(store.ti.dbId)}"."${removeQuotes(store.ti.tableId)}" ${decideWhere(r)} ${decideLimit(limit)}"""
+        logger.debug(s"SQL query string: $result")
+        result
       }
   }
 
