@@ -12,9 +12,15 @@ import scala.util.Success
 import scray.querying.sync.DbSession
 import com.typesafe.scalalogging.slf4j.LazyLogging
 import scray.querying.sync.StatementExecutionError
+import com.datastax.driver.core.Cluster
 
 class CassandraDbSession(val cassandraSession: Session) extends DbSession[Statement, Insert, ResultSet](cassandraSession.getCluster.getMetadata.getAllHosts().iterator().next.getAddress.toString) with LazyLogging{
-      override def execute(statement: String): Try[ResultSet] = {
+  
+  def this(host: String) = {
+    this(Cluster.builder().addContactPoint(host).build().connect())
+  }
+  
+  override def execute(statement: String): Try[ResultSet] = {
       try {
         val result = cassandraSession.execute(statement)
         if(result.wasApplied()) {
