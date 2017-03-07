@@ -117,17 +117,16 @@ class CassandraExtractor[Q <: DomainQuery](session: Session, table: TableIdentif
   /**
    * return whether and maybe how the given column is auto-indexed by Cassandra-Lucene-Plugin 
    */
-  private def getColumnCassandraLuceneIndexed(tmOpt: Option[TableMetadata], column: Column, 
-                                              splitters: Map[Column, Splitter[_]]): Option[AutoIndexConfiguration[_]] = {
-    val cmOpt = tmOpt.flatMap { tm => Option(tm.getColumn(Metadata.quote(CassandraExtractor.LUCENE_COLUMN_NAME))) }
-    val schemaOpt = cmOpt.flatMap (cm => Option(cm.getIndex).map(_.getOption(CassandraExtractor.LUCENE_INDEX_SCHEMA_OPTION_NAME)))
+  private def getColumnCassandraLuceneIndexed(tmOpt: Option[TableMetadata], column: Column,  splitters: Map[Column, Splitter[_]]): Option[AutoIndexConfiguration[_]] = {
+    val idxMetadata = tmOpt.flatMap { tm => Option(tm.getIndex(CassandraExtractor.LUCENE_INDEX_NAME(tm.getName))) }
+    val schemaOpt = idxMetadata.map { schemaOptions => schemaOptions.getOption(CassandraExtractor.LUCENE_INDEX_SCHEMA_OPTION_NAME) }
+
     schemaOpt.flatMap { schema =>
       logger.trace(s"Lucene index schema is: $schema")
       val outerMatcher = CassandraExtractor.outerPattern.matcher(schema) 
       if(outerMatcher.matches()) {
         val fieldString = outerMatcher.group(1)
         if(CassandraExtractor.innerPattern.split(fieldString, -1).find { _.trim() == column.columnName }.isDefined) {
-          cmOpt.get.getType
           if(splitters.get(column).isDefined) {
             logger.debug(s"Found Lucene-indexed column ${column.columnName} for table ${tmOpt.get.getName} with splitting option")
           } else {
@@ -155,9 +154,15 @@ class CassandraExtractor[Q <: DomainQuery](session: Session, table: TableIdentif
       case _ => None
     }
     val tm = metadata.flatMap(ksmeta => Option(CassandraUtils.getTableMetadata(tableName, ksmeta)))
-    val autoIndex = metadata.flatMap{_ => 
-      val cm = tm.map(_.getColumn(Metadata.quote(column.columnName)))
-      cm.flatMap(colmeta => Option(colmeta.getIndex()))}.isDefined
+    val autoIndex = tm.map { tm => 
+        val idxMethadata =  tm.getIndex(Metadata.quote(tm.getName + "_" + column.columnName))
+        if(idxMethadata == null) {
+          None
+        } else {
+          Some(true)
+        }
+    }.isDefined
+
     val autoIndexConfig = getColumnCassandraLuceneIndexed(tm, column, splitters)
     if(autoIndexConfig.isDefined) {
       (true, autoIndexConfig)
@@ -361,7 +366,7 @@ object CassandraExtractor {
 //  }
   
   val DB_ID: String = "cassandra"
-  val LUCENE_COLUMN_NAME: String = "lucene"
+  val LUCENE_INDEX_NAME: String => String = (cfName: String) => s"""${cfName}_lucene_indexe"""
   val LUCENE_INDEX_SCHEMA_OPTION_NAME: String = "schema"
 
   lazy val outerPattern = Pattern.compile("^\\s*\\{\\s*fields\\s*:\\s*\\{(.*)\\s*}\\s*\\}\\s*$", Pattern.DOTALL)
