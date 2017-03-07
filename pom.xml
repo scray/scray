@@ -21,6 +21,11 @@
 
 	<developers>
 		<developer>
+			<name>Christian Zirpins</name>
+			<organization>Scray</organization>
+			<organizationUrl>https://github.com/scray</organizationUrl>
+		</developer>
+		<developer>
 			<name>Andreas Petter</name>
 			<organization>Scray</organization>
 			<organizationUrl>https://github.com/scray</organizationUrl>
@@ -163,11 +168,10 @@
 				<artifactId>guava</artifactId>
 				<version>16.0.1</version>
 			</dependency>
-
 			<dependency>
 				<groupId>com.datastax.cassandra</groupId>
 				<artifactId>cassandra-driver-core</artifactId>
-				<version>3.1.0</version>
+				<version>3.0.0</version>
 				<classifier>shaded</classifier>
 				<exclusions>
 					<exclusion>
@@ -177,8 +181,6 @@
 				</exclusions>
 			</dependency>
 		</dependencies>
-
-
 	</dependencyManagement>
 
 	<build>

@@ -10,7 +10,6 @@ object CostEstimationInfo {
     }
     
     def getCosts(): Double = {
-      println(estimatedCosts.size)
       estimatedCosts.reverse.foldLeft(0L)((b, a) => a.apply(b))
     }
   

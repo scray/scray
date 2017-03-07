@@ -154,11 +154,13 @@ class CassandraExtractor[Q <: DomainQuery](session: Session, table: TableIdentif
       case _ => None
     }
     val tm = metadata.flatMap(ksmeta => Option(CassandraUtils.getTableMetadata(tableName, ksmeta)))
-    val autoIndex = tm.map { tm => 
+    val autoIndex = tm.flatMap { tm => 
         val idxMethadata =  tm.getIndex(Metadata.quote(tm.getName + "_" + column.columnName))
         if(idxMethadata == null) {
+          logger.info("No index for " + tm.getName)
           None
         } else {
+          logger.info("Found index for " + tm.getName)
           Some(true)
         }
     }.isDefined
