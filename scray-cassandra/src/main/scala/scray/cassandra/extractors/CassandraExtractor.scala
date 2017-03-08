@@ -118,9 +118,9 @@ class CassandraExtractor[Q <: DomainQuery](session: Session, table: TableIdentif
    * return whether and maybe how the given column is auto-indexed by Cassandra-Lucene-Plugin 
    */
   private def getColumnCassandraLuceneIndexed(tmOpt: Option[TableMetadata], column: Column,  splitters: Map[Column, Splitter[_]]): Option[AutoIndexConfiguration[_]] = {
-    val idxMetadata = tmOpt.flatMap { tm => Option(tm.getIndex(CassandraExtractor.LUCENE_INDEX_NAME(tm.getName))) }
+    val idxMetadata = tmOpt.flatMap { tm => Option(tm.getIndex(Metadata.quote(CassandraExtractor.LUCENE_INDEX_NAME(tm.getName)))) }
     val schemaOpt = idxMetadata.map { schemaOptions => schemaOptions.getOption(CassandraExtractor.LUCENE_INDEX_SCHEMA_OPTION_NAME) }
-
+    
     schemaOpt.flatMap { schema =>
       logger.trace(s"Lucene index schema is: $schema")
       val outerMatcher = CassandraExtractor.outerPattern.matcher(schema) 
@@ -269,8 +269,8 @@ class CassandraExtractor[Q <: DomainQuery](session: Session, table: TableIdentif
     val cassSession = new CassandraDbSession(session)
     val syncApiInstance = new OnlineBatchSyncCassandra(cassSession)
     val jobInfo = new CassandraJobInfo(jobName)
-    val latestComplete = () => syncApiInstance.getBatchVersion(jobInfo)
-    val runtimeVersion = () => syncApiInstance.getOnlineVersion(jobInfo)
+    val latestComplete = () => None // syncApiInstance.getBatchVersion(jobInfo) // FIXME 
+    val runtimeVersion = () => None // syncApiInstance.getOnlineVersion(jobInfo)
     // if we have a runtime Version, this will be the table to read from, for now. We
     // expect that all data is aggregated with the corresponding complete version.
     // TODO: in the future we want this to be able to merge, such that it will be an
@@ -368,7 +368,7 @@ object CassandraExtractor {
 //  }
   
   val DB_ID: String = "cassandra"
-  val LUCENE_INDEX_NAME: String => String = (cfName: String) => s"""${cfName}_lucene_indexe"""
+  val LUCENE_INDEX_NAME: String => String = (cfName: String) => s"""${cfName}_lucene_index"""
   val LUCENE_INDEX_SCHEMA_OPTION_NAME: String = "schema"
 
   lazy val outerPattern = Pattern.compile("^\\s*\\{\\s*fields\\s*:\\s*\\{(.*)\\s*}\\s*\\}\\s*$", Pattern.DOTALL)
