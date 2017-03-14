@@ -1,7 +1,7 @@
 ## Start Service ##
 * Main class: 
 
-    `scray.loader.ScrayStandaloneService`
+    scray.loader.ScrayStandaloneService
 
 * Programm arguments:
 
@@ -28,8 +28,9 @@
 * `/home/otto/scray-conf/queryspace.scray` File
 ```
 	name SIL version 1
-	
+
 	table { cassandra, "keyspace1", "ColumnFamily1" }
+	table { cassandra, "keyspace1", "ColumnFamily2" }
+	table { cassandra, "keyspace1", "ColumnFamily3" }
 	
 	materialized_view table { cassandra, "keyspace1", "ColumnFamily2" }, keygeneratorClass: "scray.common.key.OrderedStringKeyGenerator"
-```
