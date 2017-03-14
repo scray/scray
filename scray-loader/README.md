@@ -1,7 +1,7 @@
 ## Start Service ##
 * Main class: 
 
-    scray.loader.ScrayStandaloneService
+    ```scray.loader.ScrayStandaloneService```
 
 * Programm arguments:
 
