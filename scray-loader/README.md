@@ -1,5 +1,8 @@
 ## Start Service ##
-* Main class: `scray.loader.ScrayStandaloneService`
+* Main class: 
+
+    `scray.loader.ScrayStandaloneService`
+
 * Programm arguments:
 
     ```--config /home/otto/scray-conf/store.conf```
