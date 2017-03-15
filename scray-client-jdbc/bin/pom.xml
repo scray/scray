@@ -89,7 +89,7 @@
 		</dependency>
 		<dependency>
 			<groupId>com.twitter</groupId>
-			<artifactId>util-core_2.10</artifactId>
+			<artifactId>util-core_${scala.suffix}</artifactId>
 			<version>6.15.0</version>
 		</dependency>
 		<dependency>

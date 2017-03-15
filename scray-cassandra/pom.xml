@@ -32,7 +32,7 @@
 		</dependency>
 		<dependency>
 			<groupId>com.github.scopt</groupId>
-			<artifactId>scopt_2.10</artifactId>
+			<artifactId>scopt_${scala.suffix}</artifactId>
 			<version>3.2.0</version>
 			<scope>test</scope>
 		</dependency>
@@ -43,7 +43,7 @@
 		</dependency>
 		<dependency>
 			<groupId>com.websudos</groupId>
-			<artifactId>phantom-dsl_2.10</artifactId>
+			<artifactId>phantom-dsl_${scala.suffix}</artifactId>
 			<version>1.6.0</version>
 			<exclusions>
 				<exclusion>

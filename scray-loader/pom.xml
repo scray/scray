@@ -29,12 +29,12 @@
 		</dependency>
 		<dependency>
 			<groupId>com.github.scopt</groupId>
-			<artifactId>scopt_2.10</artifactId>
+			<artifactId>scopt_${scala.suffix}</artifactId>
 			<version>3.2.0</version>
 		</dependency>
 		<dependency>
 			<groupId>com.chuusai</groupId>
-			<artifactId>shapeless_2.10</artifactId>
+			<artifactId>shapeless_${scala.suffix}</artifactId>
 			<version>2.3.0</version>
 		</dependency>
 		<dependency>
@@ -43,7 +43,7 @@
 			<version>0.9.6-SNAPSHOT</version>
 			<exclusions>
 				<exclusion>
-					<artifactId>shapeless_2.10.4</artifactId>
+					<artifactId>shapeless_${scala.suffix}.4</artifactId>
 					<groupId>com.chuusai</groupId>
 				</exclusion>
 			</exclusions>
@@ -54,19 +54,19 @@
 			<version>0.9.6-SNAPSHOT</version>
 			<exclusions>
 				<exclusion>
-					<artifactId>shapeless_2.10.3</artifactId>
+					<artifactId>shapeless_${scala.suffix}.3</artifactId>
 					<groupId>com.chuusai</groupId>
 				</exclusion>
 			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>org.parboiled</groupId>
-			<artifactId>parboiled_2.10</artifactId>
+			<artifactId>parboiled_${scala.suffix}</artifactId>
 			<version>${parboiled.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.twitter</groupId>
-			<artifactId>util-core_2.10</artifactId>
+			<artifactId>util-core_${scala.suffix}</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.scray</groupId>
