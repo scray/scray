@@ -55,6 +55,9 @@ class QueryspaceColumnViolationException(query: Query, column: Column)
 class KeyBasedQueryException(query: DomainQuery) 
     extends ScrayException(ExceptionIDs.keyBasedQueryExceptionID, query.getQueryID, s"""query trys to access queryspace
     ${query.getQueryspace} which has not been registered""") with Serializable
+    
+class MaterializedViewQueryException(query: Query) 
+    extends ScrayException(ExceptionIDs.unsupportedMaterializedViewID, query.getQueryID, s"""query trys to use range queries which is not suported""") with Serializable
 
 class NonAtomicClauseException(query: Query)
     extends ScrayException(ExceptionIDs.nonAtomicClauseExceptionID, query.getQueryID, "To qualify predicates those must be either be atomic clauses or 'And's")

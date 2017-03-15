@@ -694,7 +694,7 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
     def handleColumnWithValue[U](currentRow: Row, destinationColumn: ColumnWithValue[U]): U = {
       val dbimpl = destinationColumn.dbimpl
       dbimpl.fromDBRow(destinationColumn.name, currentRow).get
-      // dbimpl.fromDBType(currentRow.get(destinationColumn.name, dbimpl.toDBType(destinationColumn.value).getClass()))
+      dbimpl.fromDBType(currentRow.get(destinationColumn.name, dbimpl.toDBType(destinationColumn.value).getClass()))
     }
 
     def fillValue[U](currentRow: Row, destinationColumn: ColumnWithValue[U]) = {
@@ -741,6 +741,13 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
       } else {
         None
       }
+    }
+    
+    // Return result
+    if(columns.isEmpty) {
+      None
+    } else {
+      Some(columns.toList)
     }
   }
 

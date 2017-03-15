@@ -1,9 +1,9 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<parent>
-		<groupId>scray</groupId>
-		<artifactId>scray</artifactId>
-		<version>0.9.4-SNAPSHOT</version>
+		<groupId>org.scray</groupId>
+		<artifactId>scray-parent</artifactId>
+		<version>0.9.6-SNAPSHOT</version>
 		<relativePath>../pom.xml</relativePath>
 	</parent>
 
@@ -12,22 +12,23 @@
 	<name>Scray - Cassandra</name>
 	<description>scray adapter to r/w Cassandra column families</description>
 
+	<distributionManagement>
+
+		<snapshotRepository>
+			<id>ossrh</id>
+			<url>https://oss.sonatype.org/content/repositories/snapshots</url>
+		</snapshotRepository>
+		<repository>
+			<id>ossrh</id>
+			<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+		</repository>
+	</distributionManagement>
+
 	<dependencies>
 		<dependency>
-			<groupId>com.datastax.cassandra</groupId>
-			<artifactId>cassandra-driver-core</artifactId>
-			<classifier>shaded</classifier>
-			<exclusions>
-				<exclusion>
-					<groupId>io.netty</groupId>
-					<artifactId>*</artifactId>
-				</exclusion>
-			</exclusions>
-		</dependency>
-		<dependency>
-			<groupId>scray</groupId>
+			<groupId>org.scray</groupId>
 			<artifactId>scray-querying</artifactId>
-			<version>${scray.version}</version>
+			<version>0.9.6-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>com.github.scopt</groupId>
@@ -43,11 +44,11 @@
 		<dependency>
 			<groupId>com.websudos</groupId>
 			<artifactId>phantom-dsl_2.10</artifactId>
-			<version>1.4.0</version>
+			<version>1.6.0</version>
 			<exclusions>
 				<exclusion>
-					<groupId>com.datastax.cassandra</groupId>
 					<artifactId>cassandra-driver-core</artifactId>
+					<groupId>com.datastax.cassandra</groupId>
 				</exclusion>
 			</exclusions>
 		</dependency>
@@ -57,7 +58,26 @@
 			<version>2.1.9.2</version>
 			<scope>test</scope>
 		</dependency>
+		<dependency>
+			<groupId>com.datastax.cassandra</groupId>
+			<artifactId>cassandra-driver-core</artifactId>
+			<classifier>shaded</classifier>
+		</dependency>
 	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.2</version>
+				<configuration>
+					<source>1.6</source>
+					<target>1.6</target>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
 
 	<licenses>
 		<license>

@@ -18,6 +18,8 @@ import static org.junit.Assert.*;
 
 import java.net.URISyntaxException;
 
+import junit.framework.Assert;
+
 import org.junit.Test;
 
 public class ScrayURLTest {
@@ -88,4 +90,24 @@ public class ScrayURLTest {
 			}
 		}
 	}
+
+	@Test
+	public void equalsTest() {
+
+		String testurl1 = "jdbc:scray:stateless://127.0.0.1,127.0.0.2:8080/cassandra/myKeyspace/default";
+		String testurl2 = "jdbc:scray:stateless://127.0.0.1,127.0.0.2:8080/cassandra/myKeyspace/default";
+
+		try {
+			ScrayURL surl1 = new ScrayURL(testurl1);
+			ScrayURL surl2 = new ScrayURL(testurl2);
+			
+			assertTrue(surl1.equals(surl2));
+
+		} catch (URISyntaxException e) {
+			e.printStackTrace();
+			fail();
+		}
+
+	}
+
 }

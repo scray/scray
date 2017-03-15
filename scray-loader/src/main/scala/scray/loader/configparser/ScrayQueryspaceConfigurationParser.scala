@@ -21,8 +21,9 @@ import org.parboiled2._
 // scalastyle:on underscore.import
 import scala.util.{ Failure, Try }
 import scray.loader.{ DBMSUndefinedException, UnsupportedMappingTypeException }
-import scray.loader.configuration.{ QueryspaceIndexstore, QueryspaceOption, QueryspaceRowstore }
+import scray.loader.configuration.{ QueryspaceIndexstore, QueryspaceOption, QueryspaceRowstore, QueryspaceMaterializedView }
 import scray.querying.description.TableIdentifier
+
 
 /**
  * Parse properties for a queryspace and build a configuration object.
@@ -34,6 +35,7 @@ import scray.querying.description.TableIdentifier
  * Indexstore ::= "manualindex" "{" "type" ("time" | "wildcard") "," Tableid 
  *                "indexedcolumn" STRING "," "index" STRING ("," "mapping" ID "->" ID)? "}"
  * Tableid ::= "table" "{" ID "," STRING "," STRING "}"
+ * Materialized_View ::= Materialized_View "{" ID "," STRING "," STRING "}[" STRING "]"
  * TODO: implement materialized view configuration
  * 
  */
@@ -56,7 +58,11 @@ class ScrayQueryspaceConfigurationParser (override val input: ParserInput, val c
       val indexstores = options.collect {
         case index: QueryspaceIndexstore => index
       }
-      ScrayQueryspaceConfiguration(name._1, name._2, syncTable, rowstores, indexstores)
+      val materializedViews = options.collect {
+        case mv: QueryspaceMaterializedView => mv
+      }
+      
+      ScrayQueryspaceConfiguration(name._1, name._2, syncTable, rowstores, indexstores, materializedViews)
   }}
 
   /**
@@ -69,7 +75,7 @@ class ScrayQueryspaceConfigurationParser (override val input: ParserInput, val c
   
   def SyncTable: Rule1[TableIdentifier] = rule { "sync" ~ RowStore ~> { (table: QueryspaceRowstore) => table.table }}
   
-  def ConfigurationOptions: Rule1[QueryspaceOption] = rule { RowStore | IndexStore }
+  def ConfigurationOptions: Rule1[QueryspaceOption] = rule { RowStore | IndexStore | MaterializedView}
   
   def RowStore: Rule1[QueryspaceRowstore] = rule { "table" ~ "{" ~ Identifier ~ COMMA ~ QuotedString ~ COMMA ~ QuotedString ~ "}" ~> { 
     (dbms: String, dbid: String, table: String) => 
@@ -77,6 +83,10 @@ class ScrayQueryspaceConfigurationParser (override val input: ParserInput, val c
       config.stores.find { _.getName == dbms }.orElse(throw new DBMSUndefinedException(dbms, name.get))
       QueryspaceRowstore(TableIdentifier(dbms, dbid, table)) 
   }}
+
+  def MaterializedView: Rule1[QueryspaceMaterializedView] = rule {"materialized_view" ~ "table" ~ "{" ~ Identifier ~ COMMA ~ QuotedString ~ COMMA ~ QuotedString ~ "}" ~ optional(COMMA ~ "keygeneratorClass:" ~ QuotedString) ~>  {
+    (dbms: String, dbid: String, table: String, keygenerator: Option[String]) => new QueryspaceMaterializedView(TableIdentifier(dbms, dbid, table), keygenerator.getOrElse(""))
+   }}
   
   def IndexStore: Rule1[QueryspaceIndexstore] = rule { "manualindex" ~ "{" ~ 
     "type" ~ IndexType ~ COMMA ~ 

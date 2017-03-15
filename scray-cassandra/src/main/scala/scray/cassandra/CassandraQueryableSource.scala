@@ -52,7 +52,12 @@ class CassandraQueryableSource[Q <: DomainQuery](
     if(ordering.column.table == ti) { 
       // if we want to check whether the data is ordered according to query Q we need to make sure that...
       // 1. the first clustering key with the particular order given in the query is identical to the columns name
-      clusteringKeyColumns.head.columnName == ordering.column.columnName ||
+      val clusteringKeyOrder = if(!clusteringKeyColumns.isEmpty) {
+        clusteringKeyColumns.head.columnName == ordering.column.columnName
+      } else {
+        false
+      }
+       clusteringKeyOrder ||
       // 2. there isn't any Cassandra-Lucene-Plugin column indexed that can be ordered
         autoIndexedColumns.find { colConf => colConf._1 == ordering.column }.isDefined
     } else {
