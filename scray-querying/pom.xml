@@ -3,7 +3,6 @@
 	<artifactId>scray-querying</artifactId>
 	<name>Scray - Querying</name>
 	<description>query engine core source code</description>
-	<packaging>bundle</packaging>
 
 	<parent>
 		<groupId>org.scray</groupId>
@@ -50,7 +49,7 @@
 		</dependency>
 		<dependency>
 			<groupId>com.twitter</groupId>
-			<artifactId>util-core_2.10</artifactId>
+			<artifactId>util-core_${scala.suffix}</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.slf4j</groupId>
@@ -64,12 +63,12 @@
 		</dependency>
 		<dependency>
 			<groupId>com.assembla.scala-incubator</groupId>
-			<artifactId>graph-core_2.10</artifactId>
+			<artifactId>graph-core_${scala.suffix}</artifactId>
 			<version>1.9.0</version>
 		</dependency>
 		<dependency>
 			<groupId>com.assembla.scala-incubator</groupId>
-			<artifactId>graph-dot_2.10</artifactId>
+			<artifactId>graph-dot_${scala.suffix}</artifactId>
 			<version>1.9.0</version>
 		</dependency>
 		<dependency>
@@ -79,12 +78,12 @@
 		</dependency>
 		<dependency>
 			<groupId>com.twitter</groupId>
-			<artifactId>chill_2.10</artifactId>
+			<artifactId>chill_${scala.suffix}</artifactId>
 			<version>0.8.0</version>
 		</dependency>
 		<dependency>
 			<groupId>com.chuusai</groupId>
-			<artifactId>shapeless_2.10.4</artifactId>
+			<artifactId>shapeless_${scala.suffix}.4</artifactId>
 			<version>2.0.0</version>
 		</dependency>
 		<dependency>
@@ -99,7 +98,7 @@
 		</dependency>
 		<dependency>
 			<groupId>org.scalaz</groupId>
-			<artifactId>scalaz-core_2.10</artifactId>
+			<artifactId>scalaz-core_${scala.suffix}</artifactId>
 			<version>7.2.2</version>
 		</dependency>
 	</dependencies>
