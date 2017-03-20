@@ -31,6 +31,7 @@ import java.io.File
  * any OSGI container, but still conform to the OSGI way of doing things.
  */
 class FakeBundleContext(properties: Map[String, String]) extends BundleContext {
+  def getProperty(name: String): String = properties.get(name).orNull
   def addBundleListener(x$1: org.osgi.framework.BundleListener): Unit = ???
   def addFrameworkListener(x$1: org.osgi.framework.FrameworkListener): Unit = ???
   def addServiceListener(x$1: org.osgi.framework.ServiceListener): Unit = ???
@@ -43,7 +44,6 @@ class FakeBundleContext(properties: Map[String, String]) extends BundleContext {
   def getBundle(): org.osgi.framework.Bundle = ???
   def getBundles(): Array[org.osgi.framework.Bundle] = ???
   def getDataFile(x$1: String): java.io.File = ???
-  def getProperty(x$1: String): String = ???
   def getService[S](x$1: org.osgi.framework.ServiceReference[S]): S = ???
   def getServiceReference[S](x$1: Class[S]): org.osgi.framework.ServiceReference[S] 
    = ???
