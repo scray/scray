@@ -20,6 +20,13 @@ class TestOrderedStringKey extends WordSpec {
       
       assert(key.getKeyAsString == "a_b_c_d")
     }
+    " return default if no data are given " in {
+      
+      val keyElements = Array[String]()
+      val key = new OrderedStringKey(keyElements)
+      
+      assert(key.getKeyAsString == "_")
+    }
     " get hash code for different keys" in {
 
       val key1 = new OrderedStringKey(Array("d", "a", "c", "b"))
