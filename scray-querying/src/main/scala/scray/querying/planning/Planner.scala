@@ -84,7 +84,7 @@ object Planner extends LazyLogging {
         val mv = Registry.getMaterializedView(query.getQueryspace, version, query.getTableIdentifier)
         if (mv.isDefined) {
           val mvDomains = Planner.qualifyPredicates(cQuery).get
-          createQueryDomains(query, version, List(Planner.getMvQuery(mvDomains, query, query.getTableIdentifier)))
+          createQueryDomains(query, version, List(Planner.getMvQuery(mvDomains, query, query.getTableIdentifier, mv.get.primaryKeyColumn)))
         } else {
           // transform query into a query only containing domains
           transformQueryDomains(cQuery, version)
@@ -324,7 +324,7 @@ object Planner extends LazyLogging {
       // versionInfo.readableStore(versionInfo.runtimeVersion().get)
   }
   
- def getMvQuery(domains: List[Domain[_]], query: Query, ti: TableIdentifier): SingleValueDomain[String] = {
+ def getMvQuery(domains: List[Domain[_]], query: Query, ti: TableIdentifier, primaryKeyColumn: String): SingleValueDomain[String] = {
         val pKey = new StringBuilder
         val orderedColumnName = domains.sortBy { x => (x.column.columnName) }
 
@@ -344,7 +344,7 @@ object Planner extends LazyLogging {
           }
         }
 
-      new SingleValueDomain(Column("key", ti), pKey.toString(), false, false)
+      new SingleValueDomain(Column(primaryKeyColumn, ti), pKey.toString(), false, false)
     }
 
   /**
