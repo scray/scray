@@ -31,28 +31,38 @@ import java.io.File
  * any OSGI container, but still conform to the OSGI way of doing things.
  */
 class FakeBundleContext(properties: Map[String, String]) extends BundleContext {
-  override def getProperty(name: String): String = properties.get(name).orNull
-  override def getBundle(): Bundle = ???
-  override def installBundle(bundle: String): Bundle = ???
-  override def installBundle(location: String, input: InputStream): Bundle = ???
-  override def getBundle(id: Long): Bundle = ???
-  override def getBundles(): Array[Bundle] = ???
-  override def addServiceListener(listener: ServiceListener, filter: String): Unit = ???
-  override def addServiceListener(listener: ServiceListener): Unit = ???
-  override def removeServiceListener(listener: ServiceListener): Unit = ???
-  override def addBundleListener(listener: BundleListener): Unit = ???
-  override def removeBundleListener(listener: BundleListener): Unit = ???
-  override def addFrameworkListener(listener: FrameworkListener): Unit = ???
-  override def removeFrameworkListener(listener: FrameworkListener): Unit = ???
-  override def registerService(clazzes: Array[String],
-      service: Any, properties: Dictionary[_, _]): ServiceRegistration = ???
-  override def registerService(clazz: String,
-      service: Any, properties: Dictionary[_, _]): ServiceRegistration = ??? 
-  override def getServiceReferences(clazz: String, filter: String): Array[ServiceReference] = ???
-  override def getAllServiceReferences(clazz: String, filter: String): Array[ServiceReference] = ???
-  override def getServiceReference(clazz: String): ServiceReference = ???
-  override def getService(reference: ServiceReference): Object = ???
-  override def ungetService(reference: ServiceReference): Boolean = ???
-  override def getDataFile(filename: String): File = ???
-  override def createFilter(filter: String): Filter = ???
+  def getProperty(name: String): String = properties.get(name).orNull
+  def addBundleListener(x$1: org.osgi.framework.BundleListener): Unit = ???
+  def addFrameworkListener(x$1: org.osgi.framework.FrameworkListener): Unit = ???
+  def addServiceListener(x$1: org.osgi.framework.ServiceListener): Unit = ???
+  def addServiceListener(x$1: org.osgi.framework.ServiceListener,x$2: String): Unit = ???
+  def createFilter(x$1: String): org.osgi.framework.Filter = ???
+  def getAllServiceReferences(x$1: String,x$2: String): 
+   Array[org.osgi.framework.ServiceReference[_]] = ???
+  def getBundle(x$1: String): org.osgi.framework.Bundle = ???
+  def getBundle(x$1: Long): org.osgi.framework.Bundle = ???
+  def getBundle(): org.osgi.framework.Bundle = ???
+  def getBundles(): Array[org.osgi.framework.Bundle] = ???
+  def getDataFile(x$1: String): java.io.File = ???
+  def getService[S](x$1: org.osgi.framework.ServiceReference[S]): S = ???
+  def getServiceReference[S](x$1: Class[S]): org.osgi.framework.ServiceReference[S] 
+   = ???
+  def getServiceReference(x$1: String): org.osgi.framework.ServiceReference[_] = ???
+  def getServiceReferences[S](x$1: Class[S],x$2: String): 
+   java.util.Collection[org.osgi.framework.ServiceReference[S]] = ???
+  def getServiceReferences(x$1: String,x$2: String): 
+   Array[org.osgi.framework.ServiceReference[_]] = ???
+  def installBundle(x$1: String): org.osgi.framework.Bundle = ???
+  def installBundle(x$1: String,x$2: java.io.InputStream): org.osgi.framework.Bundle 
+   = ???
+  def registerService[S](x$1: Class[S],x$2: S,x$3: java.util.Dictionary[String, _]): 
+   org.osgi.framework.ServiceRegistration[S] = ???
+  def registerService(x$1: String,x$2: Any,x$3: java.util.Dictionary[String, _]): 
+   org.osgi.framework.ServiceRegistration[_] = ???
+  def registerService(x$1: Array[String],x$2: Any,x$3: java.util.Dictionary[String, _]): 
+   org.osgi.framework.ServiceRegistration[_] = ???
+  def removeBundleListener(x$1: org.osgi.framework.BundleListener): Unit = ???
+  def removeFrameworkListener(x$1: org.osgi.framework.FrameworkListener): Unit = ???
+  def removeServiceListener(x$1: org.osgi.framework.ServiceListener): Unit = ???
+  def ungetService(x$1: org.osgi.framework.ServiceReference[_]): Boolean = ???
 }
