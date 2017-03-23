@@ -7,7 +7,7 @@ import org.slf4j.LoggerFactory
 import scala.annotation.tailrec
 import scala.collection.JavaConversions._
 import com.twitter.concurrent.Spool
-import com.twitter.finagle.memcached.Client
+import com.twitter.finagle.memcachedx.Client
 import com.twitter.util.Duration
 import com.twitter.util.Future
 import com.twitter.util.Time
