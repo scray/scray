@@ -109,6 +109,7 @@ class RefreshServing extends LazyLogging {
         }
       } catch {
         case ex: Exception =>
+          client.map { _.shutdown(None) }
           client = None
           getClient(seedAddr)
           if (time < 4) {
