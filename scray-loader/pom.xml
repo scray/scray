@@ -38,6 +38,11 @@
 			<version>2.3.0</version>
 		</dependency>
 		<dependency>
+            <groupId>org.apache.felix</groupId>
+            <artifactId>org.osgi.core</artifactId>
+            <version>1.4.0</version>
+        </dependency>
+		<dependency>
 			<groupId>org.scray</groupId>
 			<artifactId>scray-querying</artifactId>
 			<version>0.9.6-SNAPSHOT</version>
@@ -162,6 +167,7 @@
 					</execution>
 				</executions>
 			</plugin>
+			
 		</plugins>
 		<pluginManagement>
 			<plugins>
