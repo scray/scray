@@ -15,15 +15,15 @@ class CassandraIndexStatementGeneratorImplSpecs extends WordSpec with LazyLoggin
    "CassandraIndexStatementGenerator " should {
      "create index statement for one column " in {
        val statementGenerator = new CassandraIndexStatementGeneratorImpl
-       val configurationString = statementGenerator.getIndexString(TableIdentifier("cassandra", "ks", "cf1"), List("col1", "col2"))
-       
-       assert(configurationString == "CREATE INDEX ON \"ks\".\"cf1\" (\"col1\", \"col2\" );")
-    }
-    "create index statement for multiple columns " in {
-       val statementGenerator = new CassandraIndexStatementGeneratorImpl
        val configurationString = statementGenerator.getIndexString(TableIdentifier("cassandra", "ks", "cf1"), List("col1"))
        
        assert(configurationString == "CREATE INDEX ON \"ks\".\"cf1\" (\"col1\" );")
+    }
+    "create index statement for multiple columns " in {
+       val statementGenerator = new CassandraIndexStatementGeneratorImpl
+       val configurationString = statementGenerator.getIndexString(TableIdentifier("cassandra", "ks", "cf1"), List("col1", "col2"))
+       
+       assert(configurationString == "CREATE INDEX ON \"ks\".\"cf1\" (\"col1\", \"col2\" );")      
     }
    }
 }
