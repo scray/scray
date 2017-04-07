@@ -17,7 +17,7 @@ class LuceneIndexStatementGeneratorImpl extends LuceneIndexStatementGenerator wi
    if(luceneVersion == (2,2,3)) {
      Some(getIndexStringLucene2d2d3(ti, column, luceneVersion))
    } else {
-     logger.error(s"No lucene index congeneration for lucene version ${luceneVersion}")
+     logger.error(s"No generator for lucene version ${luceneVersion}")
      None
    }
   }
@@ -45,6 +45,15 @@ class LuceneIndexStatementGeneratorImpl extends LuceneIndexStatementGenerator wi
      "};"
          
    columns.foldLeft(statementHeader)(ceateFileElement) + statementEnd
+  }
+  
+  def getLuceneType[T](data: T): String = {
+    data match {
+      case _: String => "string"
+      case _: Long => "long"
+      case _: Int => "int"
+      case _: Boolean => "boolean"
+    }
   }
 
 }
