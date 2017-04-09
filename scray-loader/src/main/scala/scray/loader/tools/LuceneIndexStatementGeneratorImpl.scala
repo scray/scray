@@ -51,7 +51,7 @@ class LuceneIndexStatementGeneratorImpl extends LuceneIndexStatementGenerator wi
     data match {
       case _: String => "string"
       case _: Long => "long"
-      case _: Int => "int"
+      case _: Int => "integer"
       case _: Boolean => "boolean"
     }
   }
