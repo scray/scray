@@ -127,6 +127,23 @@ class ReadWriteTest extends WordSpec with LazyLogging {
 
       assert(table.getBatchJobData(jobInfo.name, version, new RowWithValue(columns, primaryKey, indexes)).get.head.columns.head.value === sum.value)
     }
+    "write and read batch data with simple api" in {
+      val table = new OnlineBatchSyncCassandra(dbconnection)
+
+      val sum = new ColumnWithValue[Long]("sum", 200)
+      val columns = sum :: Nil
+      val primaryKey = s"(${sum.name})"
+      val indexes: Option[List[String]] = None
+      val jobInfo = new CassandraJobInfo(getNextJobName)
+
+      assert(table.initJob(jobInfo, new RowWithValue(columns, primaryKey, indexes)).isSuccess)
+      assert(table.startNextBatchJob(jobInfo).isSuccess)
+
+      table.insertInBatchTable(jobInfo, new RowWithValue(columns, primaryKey, indexes))
+      table.completeBatchJob(jobInfo)
+
+      assert(table.getBatchJobData(jobInfo, new RowWithValue(columns, primaryKey, indexes)).get.head.columns.head.value === sum.value)
+    }
     "write multiple batch data and get latest " in {
       val table = new OnlineBatchSyncCassandra(dbconnection)
 

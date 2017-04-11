@@ -7,8 +7,6 @@ import scray.loader.tools.api.Column
 import com.typesafe.scalalogging.slf4j.LazyLogging
 import scray.querying.description.TableIdentifier
 import scala.annotation.tailrec
-import com.stratio.cassandra.lucene.builder.index.Index
-import com.stratio.cassandra.lucene.builder.index.schema.mapping.StringMapper
 import com.datastax.driver.core.Cluster
 import com.datastax.driver.core.DataType.Name._
 import java.util.regex.ASCII
