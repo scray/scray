@@ -732,8 +732,9 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
       if (dbDataIter.hasNext()) {
         while (dbDataIter.hasNext()) {
           val nextRow = result.copy()
+          val casRow = dbDataIter.next()
           nextRow.columns.map { destinationColumn =>
-            fillValue(dbDataIter.next(), destinationColumn)
+            fillValue(casRow, destinationColumn)
           }
           columns += nextRow
         }
