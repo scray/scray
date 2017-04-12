@@ -1,12 +1,12 @@
-package scray.loader.tools
+package scray.cassandra.tools
 
 import scray.querying.description.TableIdentifier
-import scray.loader.tools.api.LuceneIndexStatementGenerator
-import scray.loader.tools.api.Column
+import scray.cassandra.tools.api.LuceneIndexStatementGenerator
+import scray.cassandra.tools.api.Column
 import com.typesafe.scalalogging.slf4j.LazyLogging
 
 
-class LuceneIndexStatementGeneratorImpl extends LuceneIndexStatementGenerator with LazyLogging {
+class CassandraLuceneIndexStatementGeneratorImpl extends LuceneIndexStatementGenerator with LazyLogging {
   
   def getAlterTableStatement(ti: TableIdentifier): String = {
     s"""ALTER TABLE "${ti.dbId}"."${ti.tableId}" ADD lucene text;"""

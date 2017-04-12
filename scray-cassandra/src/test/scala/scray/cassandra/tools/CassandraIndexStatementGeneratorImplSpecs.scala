@@ -1,14 +1,12 @@
-package scray.loader.tools
+package scray.cassandra.tools
 
 
 import org.junit.runner.RunWith
 import com.typesafe.scalalogging.slf4j.LazyLogging
 import org.scalatest.WordSpec
 import org.scalatest.junit.JUnitRunner
-import scray.loader.configparser.ScrayConfigurationParser
 import scray.querying.description.TableIdentifier
-import com.datastax.driver.core.SimpleStatement
-import com.datastax.driver.core.querybuilder.QueryBuilder
+import scray.cassandra.tools.CassandraIndexStatementGeneratorImpl
 
 @RunWith(classOf[JUnitRunner])
 class CassandraIndexStatementGeneratorImplSpecs extends WordSpec with LazyLogging {

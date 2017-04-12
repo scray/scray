@@ -4,8 +4,8 @@ import org.junit.runner.RunWith
 import com.typesafe.scalalogging.slf4j.LazyLogging
 import org.scalatest.WordSpec
 import org.scalatest.junit.JUnitRunner
-import scray.loader.configparser.ScrayConfigurationParser
 import scray.querying.description.TableIdentifier
+import scray.loader.configparser.ScrayConfigurationParser
 
 
 @RunWith(classOf[JUnitRunner])

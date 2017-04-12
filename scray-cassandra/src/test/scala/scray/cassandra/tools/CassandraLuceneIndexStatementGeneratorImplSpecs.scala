@@ -1,26 +1,23 @@
-package scray.loader.tools
+package scray.cassandra.tools
 
 import org.junit.runner.RunWith
 import org.scalatest.WordSpec
 import org.scalatest.junit.JUnitRunner
-import scray.loader.tools.api.Column
+import scray.cassandra.tools.api.Column
 import com.typesafe.scalalogging.slf4j.LazyLogging
 import scray.querying.description.TableIdentifier
 import scala.annotation.tailrec
-import com.stratio.cassandra.lucene.builder.index.Index
-import com.stratio.cassandra.lucene.builder.index.schema.mapping.StringMapper
 import com.datastax.driver.core.Cluster
 import com.datastax.driver.core.DataType.Name._
-import java.util.regex.ASCII
-import com.datastax.driver.core.DataType
 import com.datastax.driver.core.DataType.Name
+import scray.cassandra.tools.CassandraLuceneIndexStatementGeneratorImpl
 
 @RunWith(classOf[JUnitRunner])
-class LuceneIndexStatementGeneratorImplSpecs extends WordSpec with LazyLogging {
+class CassandraLuceneIndexStatementGeneratorImplSpecs extends WordSpec with LazyLogging {
   
   "LuceneIndexStatementGenerator " should {
     "create index statement for one column " in {
-      val statementGenerator = new LuceneIndexStatementGeneratorImpl
+      val statementGenerator = new CassandraLuceneIndexStatementGeneratorImpl
       val configurationString = statementGenerator.getIndexString(
         TableIdentifier("cassandra", "ks1", "cf1"),
         List(Column("col1", "string")),
@@ -46,7 +43,7 @@ class LuceneIndexStatementGeneratorImplSpecs extends WordSpec with LazyLogging {
     }
     "create index statement for multiple columns " in {
 
-      val statementGenerator = new LuceneIndexStatementGeneratorImpl
+      val statementGenerator = new CassandraLuceneIndexStatementGeneratorImpl
       val configurationString = statementGenerator.getIndexString(
         TableIdentifier("cassandra", "ks", "cf1"),
         List(Column("col1", "string"), Column("col2", "string")),
@@ -71,7 +68,7 @@ class LuceneIndexStatementGeneratorImplSpecs extends WordSpec with LazyLogging {
     }
     "create no index statement if lucene plugin version is wrong " in {
 
-      val statementGenerator = new LuceneIndexStatementGeneratorImpl
+      val statementGenerator = new CassandraLuceneIndexStatementGeneratorImpl
       val configurationString = statementGenerator.getIndexString(
         TableIdentifier("cassandra", "ks", "cf1"),
         List(Column("col1", "string")),
@@ -80,7 +77,7 @@ class LuceneIndexStatementGeneratorImplSpecs extends WordSpec with LazyLogging {
       assert( ! configurationString.isDefined)
     }
     " create alter table statement " in {
-      val statementGenerator = new LuceneIndexStatementGeneratorImpl
+      val statementGenerator = new CassandraLuceneIndexStatementGeneratorImpl
       val alterStatement = statementGenerator.getAlterTableStatement(TableIdentifier("cassandra", "ks1", "col1"))
       
       assert(alterStatement == "ALTER TABLE \"ks1\".\"col1\" ADD lucene text;")
@@ -93,7 +90,7 @@ class LuceneIndexStatementGeneratorImplSpecs extends WordSpec with LazyLogging {
       val boolean: Boolean = false
 
       
-      val statementGenerator = new LuceneIndexStatementGeneratorImpl
+      val statementGenerator = new CassandraLuceneIndexStatementGeneratorImpl
       
       assert(statementGenerator.getLuceneType(string) == "string")
       assert(statementGenerator.getLuceneType(long) == "long")

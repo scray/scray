@@ -1,4 +1,4 @@
-package scray.loader.tools.api
+package scray.cassandra.tools.api
 
 import scray.querying.description.TableIdentifier
 
