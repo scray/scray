@@ -3,7 +3,6 @@
 	<artifactId>scray-querying</artifactId>
 	<name>Scray - Querying</name>
 	<description>query engine core source code</description>
-	<packaging>bundle</packaging>
 
 	<parent>
 		<groupId>org.scray</groupId>
@@ -50,17 +49,12 @@
 		</dependency>
 		<dependency>
 			<groupId>com.twitter</groupId>
-			<artifactId>util-core_2.10</artifactId>
+			<artifactId>util-core_${scala.suffix}</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-api</artifactId>
 			<version>1.7.6</version>
-		</dependency>
-		<dependency>
-			<groupId>ch.qos.logback</groupId>
-			<artifactId>logback-classic</artifactId>
-			<version>1.1.2</version>
 		</dependency>
 		<dependency>
 			<groupId>org.mapdb</groupId>
@@ -69,12 +63,12 @@
 		</dependency>
 		<dependency>
 			<groupId>com.assembla.scala-incubator</groupId>
-			<artifactId>graph-core_2.10</artifactId>
+			<artifactId>graph-core_${scala.suffix}</artifactId>
 			<version>1.9.0</version>
 		</dependency>
 		<dependency>
 			<groupId>com.assembla.scala-incubator</groupId>
-			<artifactId>graph-dot_2.10</artifactId>
+			<artifactId>graph-dot_${scala.suffix}</artifactId>
 			<version>1.9.0</version>
 		</dependency>
 		<dependency>
@@ -84,12 +78,12 @@
 		</dependency>
 		<dependency>
 			<groupId>com.twitter</groupId>
-			<artifactId>chill_2.10</artifactId>
+			<artifactId>chill_${scala.suffix}</artifactId>
 			<version>0.8.0</version>
 		</dependency>
 		<dependency>
 			<groupId>com.chuusai</groupId>
-			<artifactId>shapeless_2.10.4</artifactId>
+			<artifactId>shapeless_${scala.suffix}.4</artifactId>
 			<version>2.0.0</version>
 		</dependency>
 		<dependency>
@@ -103,13 +97,8 @@
 			<artifactId>guava</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>com.typesafe.scala-logging</groupId>
-			<artifactId>scala-logging-slf4j_2.10</artifactId>
-			<version>2.1.2</version>
-		</dependency>
-		<dependency>
 			<groupId>org.scalaz</groupId>
-			<artifactId>scalaz-core_2.10</artifactId>
+			<artifactId>scalaz-core_${scala.suffix}</artifactId>
 			<version>7.2.2</version>
 		</dependency>
 	</dependencies>

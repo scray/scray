@@ -93,15 +93,33 @@ class CassandraSyncTableLock (job: JobInfo[Statement, Insert, ResultSet], jobLoc
     }
 }
   
-  val lockQuery = QueryBuilder.update(jobLockTable.keySpace, jobLockTable.tableName)
+  val lockQuery = getLockQuery
+    
+    def getLockQuery = { 
+      val query = QueryBuilder.update(jobLockTable.keySpace, jobLockTable.tableName)
     .`with`(QueryBuilder.set(jobLockTable.columns.locked.name, true))
     .where(QueryBuilder.eq(jobLockTable.columns.jobname.name, job.name))
     .onlyIf(QueryBuilder.eq(jobLockTable.columns.locked.name, false))
+   
+    query.setSerialConsistencyLevel(ConsistencyLevel.LOCAL_SERIAL)
+    
+    query
+  }
+    
+   
       
-  val unLockQuery = QueryBuilder.update(jobLockTable.keySpace, jobLockTable.tableName)
+  val unLockQuery = getUnlocQuery
+    
+    def getUnlocQuery = {
+    val query = QueryBuilder.update(jobLockTable.keySpace, jobLockTable.tableName)
     .`with`(QueryBuilder.set(jobLockTable.columns.locked.name, false))
     .where(QueryBuilder.eq(jobLockTable.columns.jobname.name, job.name))
     .onlyIf(QueryBuilder.eq(jobLockTable.columns.locked.name, true))
+    
+    query.setSerialConsistencyLevel(ConsistencyLevel.LOCAL_SERIAL)
+    
+    query
+  }
   
   def lock(): Unit = {
     @tailrec 

@@ -21,6 +21,11 @@
 
 	<developers>
 		<developer>
+			<name>Christian Zirpins</name>
+			<organization>Scray</organization>
+			<organizationUrl>https://github.com/scray</organizationUrl>
+		</developer>
+		<developer>
 			<name>Andreas Petter</name>
 			<organization>Scray</organization>
 			<organizationUrl>https://github.com/scray</organizationUrl>
@@ -70,8 +75,6 @@
 		<scoverage.scalacPluginVersion>1.3.0</scoverage.scalacPluginVersion>
 	</properties>
 
-
-
 	<modules>
 		<module>scray-querying</module>
 		<module>scray-cassandra</module>
@@ -106,7 +109,7 @@
 		</dependency>
 		<dependency>
 			<groupId>org.scalatest</groupId>
-			<artifactId>scalatest_2.10</artifactId>
+			<artifactId>scalatest_${scala.suffix}</artifactId>
 			<version>2.2.2</version>
 			<scope>test</scope>
 		</dependency>
@@ -118,12 +121,12 @@
 		</dependency>
 		<dependency>
 			<groupId>com.typesafe.scala-logging</groupId>
-			<artifactId>scala-logging-api_2.10</artifactId>
+			<artifactId>scala-logging-api_${scala.suffix}</artifactId>
 			<version>2.1.2</version>
 		</dependency>
 		<dependency>
 			<groupId>com.typesafe.scala-logging</groupId>
-			<artifactId>scala-logging-slf4j_2.10</artifactId>
+			<artifactId>scala-logging-slf4j_${scala.suffix}</artifactId>
 			<version>2.1.2</version>
 		</dependency>
 		<dependency>
@@ -136,7 +139,7 @@
 		<dependencies>
 			<dependency>
 				<groupId>com.twitter</groupId>
-				<artifactId>util-core_2.10</artifactId>
+				<artifactId>util-core_${scala.suffix}</artifactId>
 				<version>6.22.0</version>
 			</dependency>
 			<dependency>
@@ -164,22 +167,12 @@
 				<artifactId>guava</artifactId>
 				<version>16.0.1</version>
 			</dependency>
-
 			<dependency>
 				<groupId>com.datastax.cassandra</groupId>
 				<artifactId>cassandra-driver-core</artifactId>
-				<version>2.1.7.1</version>
-				<classifier>shaded</classifier>
-				<exclusions>
-					<exclusion>
-						<groupId>io.netty</groupId>
-						<artifactId>*</artifactId>
-					</exclusion>
-				</exclusions>
+				<version>3.1.0</version>
 			</dependency>
 		</dependencies>
-
-
 	</dependencyManagement>
 
 	<build>

@@ -70,7 +70,7 @@ trait OnlineBatchSync[Statement, InsertIn, Result] extends LazyLogging {
   def completeBatchJob(job: JobInfo[Statement, InsertIn, Result]): Try[Unit]
   def completeOnlineJob(job: JobInfo[Statement, InsertIn, Result]): Try[Unit]
    
-  //def insertInBatchTable(jobName: JobInfo[Statement, InsertIn, Result], slot: Int, ioOperation: () => Try[Unit]): Try[Unit]
+  def insertInBatchTable(job: JOB_INFO, data: RowWithValue): Try[Unit]
   
   //def insertInOnlineTable[DataType](jobName: JobInfo[Statement, InsertIn, Result], slot: Int, data: DataType): Try[Unit]
   
@@ -79,6 +79,11 @@ trait OnlineBatchSync[Statement, InsertIn, Result] extends LazyLogging {
    * Get all values of batch view.
    */
   def getBatchJobData[T <: RowWithValue](jobname: String, slot: Int, result: T): Option[List[RowWithValue]]
+  
+  /**
+   * Get latest completed batch view
+   */
+  def getBatchJobData[T <: RowWithValue](jobInfo: JOB_INFO, result: T): Option[List[RowWithValue]]
   
   /**
    * Get batch view data for a special key
