@@ -13,6 +13,7 @@ import scray.querying.sync.JobInfo
 import com.typesafe.scalalogging.slf4j.LazyLogging
 import scray.querying.sync.LockApi
 import scray.cassandra.util.CassandraUtils
+import scray.querying.description.TableIdentifier
 
 
 class CassandraJobInfo(
