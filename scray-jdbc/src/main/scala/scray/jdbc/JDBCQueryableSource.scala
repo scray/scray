@@ -21,6 +21,7 @@ import scray.jdbc.extractors.DomainToSQLQueryMapping
 import scray.querying.description.RowColumn
 import scray.querying.description.SimpleRow
 import scala.collection.mutable.ArrayBuffer
+import scray.jdbc.extractors.ScraySQLDialect
 
 class JDBCQueryableSource[Q <: DomainQuery](
     val ti: TableIdentifier,
@@ -31,9 +32,10 @@ class JDBCQueryableSource[Q <: DomainQuery](
     val connection: Connection,
     val queryMapper: DomainToSQLQueryMapping[Q, JDBCQueryableSource[Q]],
     futurePool: FuturePool,
-    rowMapper: JDBCRow => Row) extends QueryableStoreSource[Q](ti, rowKeyColumns, clusteringKeyColumns, allColumns, false) {
+    rowMapper: JDBCRow => Row,
+    dialect: ScraySQLDialect) extends QueryableStoreSource[Q](ti, rowKeyColumns, clusteringKeyColumns, allColumns, false) {
 
-  val mappingFunction = queryMapper.getQueryMapping(this, Some(ti.tableId))
+  val mappingFunction = queryMapper.getQueryMapping(this, Some(ti.tableId), dialect)
   val autoIndexedColumns = columnConfigs.filter(colConf => colConf.index.isDefined &&
     colConf.index.get.isAutoIndexed && colConf.index.get.isSorted).map { colConf =>
     (colConf.column, colConf.index.map(index => index.isAutoIndexed && index.isSorted))
@@ -43,7 +45,9 @@ class JDBCQueryableSource[Q <: DomainQuery](
     import scala.collection.convert.decorateAsScala.asScalaIteratorConverter
     futurePool {
       val queryString = mappingFunction(query)
-      val resultSet = connection.createStatement().executeQuery(queryString)
+      val prep = connection.prepareStatement(queryString._1)
+      queryMapper.mapWhereClauseValues(prep, query.asInstanceOf[DomainQuery].domains)
+      val resultSet = prep.executeQuery(queryString._1)
       getIterator(resultSet)
     }
   }
