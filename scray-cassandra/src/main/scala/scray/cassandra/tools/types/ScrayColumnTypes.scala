@@ -1,6 +1,6 @@
 package scray.cassandra.tools.types
 
-object ScrayColumnType {
+object ScrayColumnTypes {
   
   sealed trait ScrayColumnType
   case class String(value: java.lang.String) extends ScrayColumnType

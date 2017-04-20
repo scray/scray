@@ -1,26 +1,26 @@
 package scray.cassandra.tools.types
 
-import scray.cassandra.tools.types.ScrayColumnType.ScrayColumnType
-import scray.cassandra.tools.types.ScrayColumnType._
+import scray.cassandra.tools.types.ScrayColumnTypes.ScrayColumnType
+import scray.cassandra.tools.types.ScrayColumnTypes._
 
 object LuceneColumnTypes {
   
-  sealed trait LuceneColumnTypes
-  case class String(name: java.lang.String, columnParams: Option[String]) extends LuceneColumnTypes {
+  sealed trait LuceneColumnType
+  case class String(name: java.lang.String, columnParams: Option[String] = None) extends LuceneColumnType {
   override def toString: java.lang.String = {
-      getAsJson(name, "string", columnParams)
+      "string"
     }
   }
   
-  case class Integer(name: java.lang.String, columnParams: Option[String]) extends LuceneColumnTypes {
+  case class Integer(name: java.lang.String, columnParams: Option[String] = None) extends LuceneColumnType {
   override def toString: java.lang.String = {
-      getAsJson(name, "integer", columnParams)
+      "integer"
     }
   }
   
-  case class Long(name: java.lang.String, columnParams: Option[String]) extends LuceneColumnTypes {
+  case class Long(name: java.lang.String, columnParams: Option[String] = None) extends LuceneColumnType {
   override def toString: java.lang.String = {
-     getAsJson(name, "long", columnParams)
+     "long"
     }
   }
   
@@ -28,12 +28,12 @@ object LuceneColumnTypes {
     s"""${name}\t {type: "${luceneType}" ${columnParams.getOrElse("")}}"""
   }
   
-  def getLuceneType(value: ScrayColumnType): LuceneColumnTypes = {
+  def getLuceneType(value: ScrayColumnType): LuceneColumnType = {
 
     value match {
-      case column: ScrayColumnType.String => LuceneColumnTypes.String(column.value, None)
-      case column: ScrayColumnType.Long => LuceneColumnTypes.Long(column.value, None)
-      case column: ScrayColumnType.Integer => LuceneColumnTypes.Integer(column.value, None)
+      case column: ScrayColumnTypes.String => LuceneColumnTypes.String(column.value, None)
+      case column: ScrayColumnTypes.Long => LuceneColumnTypes.Long(column.value, None)
+      case column: ScrayColumnTypes.Integer => LuceneColumnTypes.Integer(column.value, None)
     }
   }
 }

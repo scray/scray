@@ -2,7 +2,7 @@ package scray.cassandra.tools
 
 import scray.querying.description.TableIdentifier
 import scray.cassandra.tools.api.LuceneIndexStatementGenerator
-import scray.cassandra.tools.api.Column
+import scray.cassandra.tools.api.LucenIndexedColumn
 import com.typesafe.scalalogging.slf4j.LazyLogging
 
 
@@ -12,7 +12,7 @@ class CassandraLuceneIndexStatementGeneratorImpl extends LuceneIndexStatementGen
     s"""ALTER TABLE "${ti.dbId}"."${ti.tableId}" ADD lucene text;"""
   }
   
-  def getIndexString(ti: TableIdentifier, column: List[Column], luceneVersion: Tuple3[Int, Int, Int]): Option[String] = {
+  def getIndexString(ti: TableIdentifier, column: List[LucenIndexedColumn], luceneVersion: Tuple3[Int, Int, Int]): Option[String] = {
     
    if(luceneVersion == (2,2,3)) {
      Some(getIndexStringLucene2d2d3(ti, column, luceneVersion))
@@ -22,7 +22,7 @@ class CassandraLuceneIndexStatementGeneratorImpl extends LuceneIndexStatementGen
    }
   }
   
-  val ceateFileElement = (acc: String, column: Column) => {
+  val ceateFileElement = (acc: String, column: LucenIndexedColumn) => {
      if (acc.endsWith("{")) { // Detect first element
         s"""${acc} 
                   ${column.name} : {type: "${column.dataType}"}"""
@@ -32,7 +32,7 @@ class CassandraLuceneIndexStatementGeneratorImpl extends LuceneIndexStatementGen
       }
     }
   
-  private def getIndexStringLucene2d2d3(ti: TableIdentifier, columns: List[Column], luceneVersion: Tuple3[Int, Int, Int]): String = {
+  private def getIndexStringLucene2d2d3(ti: TableIdentifier, columns: List[LucenIndexedColumn], luceneVersion: Tuple3[Int, Int, Int]): String = {
 
     val statementHeader = "CREATE CUSTOM INDEX \"" + ti.tableId + "_lucene_index\" ON \"" + ti.dbId + "\".\"" + ti.tableId + "\" (lucene) \n" +
     "USING 'com.stratio.cassandra.lucene.Index' \n" +
