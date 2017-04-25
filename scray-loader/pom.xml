@@ -45,7 +45,7 @@
 		<dependency>
 			<groupId>org.scray</groupId>
 			<artifactId>scray-querying</artifactId>
-			<version>0.9.6-SNAPSHOT</version>
+			<version>0.10.0</version>
 			<exclusions>
 				<exclusion>
 					<artifactId>shapeless_${scala.suffix}.4</artifactId>
@@ -56,7 +56,7 @@
 		<dependency>
 			<groupId>org.scray</groupId>
 			<artifactId>scray-cassandra</artifactId>
-			<version>0.9.6-SNAPSHOT</version>
+			<version>0.10.0</version>
 			<exclusions>
 				<exclusion>
 					<artifactId>shapeless_${scala.suffix}.3</artifactId>
@@ -76,7 +76,7 @@
 		<dependency>
 			<groupId>org.scray</groupId>
 			<artifactId>scray-service</artifactId>
-			<version>0.9.6-SNAPSHOT</version>
+			<version>0.10.0</version>
 			<exclusions>
 				<exclusion>
 					<artifactId>slf4j-jdk14</artifactId>
@@ -220,7 +220,7 @@
 	<parent>
 		<groupId>org.scray</groupId>
 		<artifactId>scray-parent</artifactId>
-		<version>0.9.6-SNAPSHOT</version>
+		<version>0.10.0</version>
 		<relativePath>../pom.xml</relativePath>
 	</parent>
 </project>
