@@ -5,7 +5,9 @@ import scray.cassandra.tools.api.LuceneIndexStatementGenerator
 import scray.cassandra.tools.api.LucenIndexedColumn
 import com.typesafe.scalalogging.slf4j.LazyLogging
 
-
+/**
+ * Create CQL statement to index columns with "Stratio’s Cassandra Lucene Index"
+ */
 class CassandraLuceneIndexStatementGeneratorImpl extends LuceneIndexStatementGenerator with LazyLogging {
   
   def getAlterTableStatement(ti: TableIdentifier): String = {

@@ -2,8 +2,9 @@ package scray.cassandra.tools.types
 
 import scray.cassandra.tools.types.ScrayColumnTypes.ScrayColumnType
 import scray.cassandra.tools.types.ScrayColumnTypes._
+import com.typesafe.scalalogging.slf4j.LazyLogging
 
-object LuceneColumnTypes {
+object LuceneColumnTypes extends LazyLogging {
   
   sealed trait LuceneColumnType
   case class String(name: java.lang.String, columnParams: Option[String] = None) extends LuceneColumnType {
@@ -28,12 +29,13 @@ object LuceneColumnTypes {
     s"""${name}\t {type: "${luceneType}" ${columnParams.getOrElse("")}}"""
   }
   
-  def getLuceneType(value: ScrayColumnType): LuceneColumnType = {
+  def getLuceneType(value: ScrayColumnType): Option[LuceneColumnType] = {
 
     value match {
-      case column: ScrayColumnTypes.String => LuceneColumnTypes.String(column.value, None)
-      case column: ScrayColumnTypes.Long => LuceneColumnTypes.Long(column.value, None)
-      case column: ScrayColumnTypes.Integer => LuceneColumnTypes.Integer(column.value, None)
+      case column: ScrayColumnTypes.String => Some(LuceneColumnTypes.String(column.value, None))
+      case column: ScrayColumnTypes.Long => Some(LuceneColumnTypes.Long(column.value, None))
+      case column: ScrayColumnTypes.Integer => Some(LuceneColumnTypes.Integer(column.value, None))
+      case unknownCasType => {logger.warn(s"No scray column type for ${unknownCasType} found."); None}
     }
   }
 }

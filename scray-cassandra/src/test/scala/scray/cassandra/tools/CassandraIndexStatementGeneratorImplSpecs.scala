@@ -6,7 +6,6 @@ import com.typesafe.scalalogging.slf4j.LazyLogging
 import org.scalatest.WordSpec
 import org.scalatest.junit.JUnitRunner
 import scray.querying.description.TableIdentifier
-import scray.cassandra.tools.CassandraIndexStatementGeneratorImpl
 
 @RunWith(classOf[JUnitRunner])
 class CassandraIndexStatementGeneratorImplSpecs extends WordSpec with LazyLogging {
