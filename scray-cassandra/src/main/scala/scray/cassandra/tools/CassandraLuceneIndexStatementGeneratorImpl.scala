@@ -14,7 +14,7 @@ class CassandraLuceneIndexStatementGeneratorImpl extends LuceneIndexStatementGen
   
   def getIndexString(ti: TableIdentifier, column: List[LucenIndexedColumn], luceneVersion: Tuple3[Int, Int, Int]): Option[String] = {
     
-   if(luceneVersion == (2,2,3)) {
+   if(luceneVersion == (2,2,7)) {
      Some(getIndexStringLucene2d2d3(ti, column, luceneVersion))
    } else {
      logger.error(s"No generator for lucene version ${luceneVersion}")
