@@ -2,8 +2,8 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.scray</groupId>
-	<artifactId>scray</artifactId>
-	<version>0.9.5</version>
+	<artifactId>scray-parent</artifactId>
+	<version>0.10.0</version>
 	<inceptionYear>2014</inceptionYear>
 	<packaging>pom</packaging>
 	<name>Scray</name>
@@ -20,6 +20,11 @@
 	</licenses>
 
 	<developers>
+		<developer>
+			<name>Christian Zirpins</name>
+			<organization>Scray</organization>
+			<organizationUrl>https://github.com/scray</organizationUrl>
+		</developer>
 		<developer>
 			<name>Andreas Petter</name>
 			<organization>Scray</organization>
@@ -43,7 +48,7 @@
 		<url>https://github.com/scray</url>
 		<connection>scm:git:git://github.com/scray/scray.git</connection>
 		<developerConnection>scm:git:https://github.com/scray/scray.git</developerConnection>
-		<tag>org.scray-0.9.5</tag>
+		<tag>org.scray-0.10.0</tag>
 	</scm>
 
 	<properties>
@@ -103,7 +108,7 @@
 		</dependency>
 		<dependency>
 			<groupId>org.scalatest</groupId>
-			<artifactId>scalatest_2.10</artifactId>
+			<artifactId>scalatest_${scala.suffix}</artifactId>
 			<version>2.2.2</version>
 			<scope>test</scope>
 		</dependency>
@@ -115,12 +120,12 @@
 		</dependency>
 		<dependency>
 			<groupId>com.typesafe.scala-logging</groupId>
-			<artifactId>scala-logging-api_2.10</artifactId>
+			<artifactId>scala-logging-api_${scala.suffix}</artifactId>
 			<version>2.1.2</version>
 		</dependency>
 		<dependency>
 			<groupId>com.typesafe.scala-logging</groupId>
-			<artifactId>scala-logging-slf4j_2.10</artifactId>
+			<artifactId>scala-logging-slf4j_${scala.suffix}</artifactId>
 			<version>2.1.2</version>
 		</dependency>
 		<dependency>
@@ -133,7 +138,7 @@
 		<dependencies>
 			<dependency>
 				<groupId>com.twitter</groupId>
-				<artifactId>util-core_2.10</artifactId>
+				<artifactId>util-core_${scala.suffix}</artifactId>
 				<version>6.22.0</version>
 			</dependency>
 			<dependency>
@@ -161,22 +166,12 @@
 				<artifactId>guava</artifactId>
 				<version>16.0.1</version>
 			</dependency>
-
 			<dependency>
 				<groupId>com.datastax.cassandra</groupId>
 				<artifactId>cassandra-driver-core</artifactId>
-				<version>2.1.7.1</version>
-				<classifier>shaded</classifier>
-				<exclusions>
-					<exclusion>
-						<groupId>io.netty</groupId>
-						<artifactId>*</artifactId>
-					</exclusion>
-				</exclusions>
+				<version>3.1.0</version>
 			</dependency>
 		</dependencies>
-
-
 	</dependencyManagement>
 
 	<build>
@@ -272,7 +267,7 @@
 			<plugin>
 				<groupId>net.alchim31.maven</groupId>
 				<artifactId>scala-maven-plugin</artifactId>
-				<version>3.2.0</version>
+				<version>3.2.1</version>
 				<configuration>
 					<scalaVersion>${scala.version}</scalaVersion>
 				</configuration>
@@ -392,6 +387,32 @@
 				</plugins>
 			</build>
 		</profile>
+		<profile>
+			<id>default</id>
+			<activation>
+				<activeByDefault>true</activeByDefault>
+			</activation>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>net.alchim31.maven</groupId>
+						<artifactId>scala-maven-plugin</artifactId>
+						<version>3.2.1</version>
+						<executions>
+							<execution>
+								<goals>
+									<goal>compile</goal>
+								</goals>
+							</execution>
+						</executions>
+						<configuration>
+							<scalaVersion>${scala.version}</scalaVersion>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
 	</profiles>
+
 </project>
 

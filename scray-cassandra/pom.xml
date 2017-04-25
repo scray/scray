@@ -1,8 +1,8 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<parent>
 		<groupId>org.scray</groupId>
-		<artifactId>scray</artifactId>
-		<version>0.9.5</version>
+		<artifactId>scray-parent</artifactId>
+		<version>0.10.0</version>
 		<relativePath>../pom.xml</relativePath>
 	</parent>
 
@@ -25,24 +25,13 @@
 
 	<dependencies>
 		<dependency>
-			<groupId>com.datastax.cassandra</groupId>
-			<artifactId>cassandra-driver-core</artifactId>
-			<classifier>shaded</classifier>
-			<exclusions>
-				<exclusion>
-					<groupId>io.netty</groupId>
-					<artifactId>*</artifactId>
-				</exclusion>
-			</exclusions>
-		</dependency>
-		<dependency>
 			<groupId>org.scray</groupId>
 			<artifactId>scray-querying</artifactId>
-			<version>0.9.5</version>
+			<version>0.10.0</version>
 		</dependency>
 		<dependency>
 			<groupId>com.github.scopt</groupId>
-			<artifactId>scopt_2.10</artifactId>
+			<artifactId>scopt_${scala.suffix}</artifactId>
 			<version>3.2.0</version>
 			<scope>test</scope>
 		</dependency>
@@ -53,12 +42,12 @@
 		</dependency>
 		<dependency>
 			<groupId>com.websudos</groupId>
-			<artifactId>phantom-dsl_2.10</artifactId>
-			<version>1.4.0</version>
+			<artifactId>phantom-dsl_${scala.suffix}</artifactId>
+			<version>1.6.0</version>
 			<exclusions>
 				<exclusion>
-					<groupId>com.datastax.cassandra</groupId>
 					<artifactId>cassandra-driver-core</artifactId>
+					<groupId>com.datastax.cassandra</groupId>
 				</exclusion>
 			</exclusions>
 		</dependency>
@@ -67,6 +56,20 @@
 			<artifactId>cassandra-unit</artifactId>
 			<version>2.1.9.2</version>
 			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.datastax.cassandra</groupId>
+			<artifactId>cassandra-driver-core</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>ch.qos.logback</groupId>
+			<artifactId>logback-classic</artifactId>
+			<version>1.2.1</version>
+		</dependency>
+		<dependency>
+			<groupId>ch.qos.logback</groupId>
+			<artifactId>logback-core</artifactId>
+			<version>1.2.1</version>
 		</dependency>
 	</dependencies>
 
@@ -83,7 +86,7 @@
 			</plugin>
 		</plugins>
 	</build>
-	
+
 	<licenses>
 		<license>
 			<name>Apache License, Version 2.0</name>

@@ -5,7 +5,7 @@
 	<groupId>org.scray</groupId>
 	<artifactId>scray-common</artifactId>
 	<name>Scray - Common</name>
-	<version>0.9.5</version>
+	<version>0.10.0</version>
 
 	<description>scray artefacts shared between scala and java components</description>
 	<url>http://scray.org</url>
@@ -39,12 +39,8 @@
 		<url>https://github.com/scray</url>
 		<connection>scm:git:git://github.com/scray/scray.git</connection>
 		<developerConnection>scm:git:https://github.com/scray/scray.git</developerConnection>
-	  <tag>org.scray-0.9.5</tag>
+	  <tag>org.scray-0.10.0</tag>
   </scm>
-
-	<properties>
-		<scray.version>0.9.3</scray.version>
-	</properties>
 
 	<distributionManagement>
 		<snapshotRepository>

@@ -25,7 +25,7 @@ import scray.querying.queries.DomainQuery
  * which in turn can be used by DomainToJSONLuceneQueryMapping
  */
 object DomainToJSONLuceneQueryMapper extends LazyLogging {
-
+  
   private def convertSingleValueDomain(vdomain: SingleValueDomain[_]): String = {
     if(vdomain.isNull) {
       ""
@@ -66,13 +66,15 @@ object DomainToJSONLuceneQueryMapper extends LazyLogging {
     case range: RangeValueDomain[_] => convertRangeValueDomain(range)
   }
 
-  private def sortIndex(optOrdering: Option[ColumnOrdering[_]], domains: List[Domain[_]]): String = optOrdering.map { ordering =>
-      domains.find { x => x.column == ordering.column } .map { _ =>
-        s""", sort : { fields : [ { field : "${ordering.column.columnName}" , reverse : ${ordering.descending} } ] } """
-      }.getOrElse("")
+  private def sortIndex(optOrdering: Option[ColumnOrdering[_]], domains: List[Domain[_]]): String = {
+    optOrdering.map { ordering =>
+          s""" sort : { fields : [ { field : "${ordering.column.columnName}" , reverse : ${ordering.descending} } ] } """
     }.getOrElse("")
+  }
 
   def getLuceneColumnsQueryMapping(query: DomainQuery, domains: List[Domain[_]], ti: TableIdentifier): Option[String] = {
+    logger.debug("Create lucene code for " + query)
+    val START_LUCENE_EXPRESSION = " lucene='{ ";
     val result = new StringBuilder
     // check for those domains only containing garbage
     val validDomains = domains.filter { dom =>
@@ -80,16 +82,27 @@ object DomainToJSONLuceneQueryMapper extends LazyLogging {
         dom.column.table.tableId == ti.tableId &&
         dom.column.table.dbSystem == ti.dbSystem
       }.map(domainToQueryString(_)).filter(_ != "")
-    if(validDomains.size > 0) {
-      result ++= " lucene='{ filter : "
-      if(validDomains.size > 1) {
-        result ++= """{ type: "boolean", must :["""
-        result ++= validDomains.mkString(" , ")
-        result ++= """]}"""
-      } else {
-        result ++= validDomains.head
+    if(validDomains.size > 0 | query.getOrdering.isDefined) {
+      result ++= START_LUCENE_EXPRESSION
+      
+      if(validDomains.size > 0) {
+        if(validDomains.size > 1) {
+          result ++= """filter : { type: "boolean", must :["""
+          result ++= validDomains.mkString(" , ")
+          result ++= """]}"""
+        } else {
+          result ++= "filter :" + validDomains.head
+        }
       }
-      result ++= sortIndex(query.getOrdering, domains)
+      
+      if(query.getOrdering.isDefined) {
+        // Sperate JSON objects by comma
+        if(result.endsWith(START_LUCENE_EXPRESSION)) {
+          result ++= sortIndex(query.getOrdering, domains)
+        } else {
+          result ++= ", " + sortIndex(query.getOrdering, domains)
+        }
+      }
       result ++= " }' "
       Some(result.toString)
     } else {

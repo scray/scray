@@ -23,12 +23,12 @@ public class ScrayJdbcAccess {
 	class AccessRequestOptions {
 		/* defaults */
 		int fetchsize = 50;
-		int timeout = 10;
+		int timeout = 1000;
 		int resultsets = -1;		
 		String url = "jdbc:scray:stateful://s030l0331,s030l0334:18181/cassandra/SILNP/SIL";
 		String query = "SELECT * FROM BISMTOlsWorkflowElement WHERE (creationTime > 1L) AND (creationTime < 4000000000000L) LIMIT 10000";
 		boolean dots = true;
-		boolean stress = true;
+		boolean stress = false;
 		int stressCount = 200;
 	}
 

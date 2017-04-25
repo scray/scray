@@ -34,6 +34,11 @@ import scray.querying.description.Row
 import scray.querying.description.Column
 import scray.querying.source.store.QueryableStoreSource
 import com.twitter.util.FuturePool
+import scray.querying.description.IndexConfiguration
+import scray.querying.Registry
+import scray.common.key.OrderedStringKeyGenerator
+import scray.common.key.OrderedStringKeyGenerator
+import scray.common.key.StringKey
 
 
 /**
@@ -50,25 +55,39 @@ class ScrayLoaderQuerySpace(name: String, config: ScrayConfiguration, qsConfig: 
   
   val version = qsConfig.version
   
+  val materializedViews = qsConfig.materializedViews.map { view => 
+    if(view.keyClass.equals("scray.common.key.OrderedStringKeyGenerator")) {
+      new MaterializedView(view.table, OrderedStringKeyGenerator) 
+    } else {
+      logger.warn("Unknown key generator class. use default: scray.common.key.OrderedStringKeyGenerator")
+      new MaterializedView(view.table, OrderedStringKeyGenerator)
+    }
+  }
+  
   /**
    * if this queryspace can order accoring to query all by itself, i.e. 
    * without an extra in-memory step introduced by scray-querying the
    * results will be ordered if the queryspace can choose the main table
    */
-  def queryCanBeOrdered(query: DomainQuery): Option[ColumnConfiguration] = ???
+  def queryCanBeOrdered(query: DomainQuery): Option[ColumnConfiguration] = {
+    val orderingColumn = query.ordering match {
+      case Some(columnOrdering) => Some(columnOrdering.column)
+      case _ => None
+    }
+    orderingColumn.map {Registry.getQuerySpaceColumn(query.getQueryspace, query.querySpaceVersion, _) }.flatten
+  }
   
   /**
    * if this queryspace can group accoring to query all by itself, i.e. 
    * without an extra in-memory step introduced by scray-querying
    */
-  def queryCanBeGrouped(query: DomainQuery): Option[ColumnConfiguration] = ???
-  
-  /**
-   * If this queryspace can handle the query using the materialized view provided.
-   * The weight (Int) is an indicator for the specificity of the view and reflects the 
-   * number of columns that match query arguments.
-   */
-  def queryCanUseMaterializedView(query: DomainQuery, materializedView: MaterializedView): Option[(Boolean, Int)] = ???
+  def queryCanBeGrouped(query: DomainQuery): Option[ColumnConfiguration] = {
+    val groupingColumn = query.grouping match {
+      case Some(grouping) => Some(grouping.column)
+      case _ => None
+    }
+    groupingColumn.map {Registry.getQuerySpaceColumn(query.getQueryspace, query.querySpaceVersion, _) }.flatten
+  }
   
   /**
    * return a generator for the given named dbms
@@ -159,6 +178,7 @@ class ScrayLoaderQuerySpace(name: String, config: ScrayConfiguration, qsConfig: 
    */
   def reInitialize(oldversion: Int): QueryspaceConfiguration = ???
   
+  def getMaterializedViews: Seq[MaterializedView] = materializedViews
   
   override def toString: String = {
     s"""$name { tables: [${getTables(0)}] }"""

@@ -46,6 +46,7 @@ import scray.cassandra.sync.CassandraJobInfo
 import com.twitter.util.FuturePool
 import com.datastax.driver.core.{ Row => CassRow }
 import scray.querying.source.store.QueryableStoreSource
+import scray.querying.description.internal.MaterializedView
 
 /**
  * Helper class to create a configuration for a Cassandra table
@@ -116,21 +117,20 @@ class CassandraExtractor[Q <: DomainQuery](session: Session, table: TableIdentif
   /**
    * return whether and maybe how the given column is auto-indexed by Cassandra-Lucene-Plugin 
    */
-  private def getColumnCassandraLuceneIndexed(tmOpt: Option[TableMetadata], column: Column, 
-                                              splitters: Map[Column, Splitter[_]]): Option[AutoIndexConfiguration[_]] = {
-    val cmOpt = tmOpt.flatMap { tm => Option(tm.getColumn(Metadata.quote(CassandraExtractor.LUCENE_COLUMN_NAME))) }
-    val schemaOpt = cmOpt.flatMap (cm => Option(cm.getIndex).map(_.getOption(CassandraExtractor.LUCENE_INDEX_SCHEMA_OPTION_NAME)))
+  private def getColumnCassandraLuceneIndexed(tmOpt: Option[TableMetadata], column: Column,  splitters: Map[Column, Splitter[_]]): Option[AutoIndexConfiguration[_]] = {
+    val idxMetadata = tmOpt.flatMap { tm => Option(tm.getIndex(Metadata.quote(CassandraExtractor.LUCENE_INDEX_NAME(tm.getName)))) }
+    val schemaOpt = idxMetadata.map { schemaOptions => schemaOptions.getOption(CassandraExtractor.LUCENE_INDEX_SCHEMA_OPTION_NAME) }
+    
     schemaOpt.flatMap { schema =>
       logger.trace(s"Lucene index schema is: $schema")
       val outerMatcher = CassandraExtractor.outerPattern.matcher(schema) 
       if(outerMatcher.matches()) {
         val fieldString = outerMatcher.group(1)
         if(CassandraExtractor.innerPattern.split(fieldString, -1).find { _.trim() == column.columnName }.isDefined) {
-          cmOpt.get.getType
           if(splitters.get(column).isDefined) {
-            logger.debug(s"Found Lucene-indexed column ${column.columnName} for table ${tmOpt.get.getName} with splitting option")
+            logger.debug(s"Found Lucene-indexed column ${column.columnName} for table ${tmOpt.get.getKeyspace.getName}.${tmOpt.get.getName} with splitting option")
           } else {
-            logger.debug(s"Found Lucene-indexed column ${column.columnName} for table ${tmOpt.get.getName}")
+            logger.debug(s"Found Lucene-indexed column ${column.columnName} for table ${tmOpt.get.getKeyspace.getName}.${tmOpt.get.getName}")
           }
           Some(AutoIndexConfiguration[Any](isRangeIndex = true, isFullTextIndex = true, isSorted = true,
                   rangePartioned = splitters.get(column).map(_.splitter).asInstanceOf[Option[((Any, Any), Boolean) => Iterator[(Any, Any)]]]))
@@ -154,9 +154,16 @@ class CassandraExtractor[Q <: DomainQuery](session: Session, table: TableIdentif
       case _ => None
     }
     val tm = metadata.flatMap(ksmeta => Option(CassandraUtils.getTableMetadata(tableName, ksmeta)))
-    val autoIndex = metadata.flatMap{_ => 
-      val cm = tm.map(_.getColumn(Metadata.quote(column.columnName)))
-      cm.flatMap(colmeta => Option(colmeta.getIndex()))}.isDefined
+    val autoIndex = tm.flatMap { tm => 
+        val idxMethadata =  tm.getIndex(Metadata.quote(tm.getName + "_" + column.columnName))
+        if(idxMethadata == null) {
+          None
+        } else {
+          logger.debug(s"Found index for ${tm.getKeyspace.getName}.${tm.getName}.${column.columnName} ")
+          Some(true)
+        }
+    }.isDefined
+
     val autoIndexConfig = getColumnCassandraLuceneIndexed(tm, column, splitters)
     if(autoIndexConfig.isDefined) {
       (true, autoIndexConfig)
@@ -261,8 +268,8 @@ class CassandraExtractor[Q <: DomainQuery](session: Session, table: TableIdentif
     val cassSession = new CassandraDbSession(session)
     val syncApiInstance = new OnlineBatchSyncCassandra(cassSession)
     val jobInfo = new CassandraJobInfo(jobName)
-    val latestComplete = () => syncApiInstance.getBatchVersion(jobInfo)
-    val runtimeVersion = () => syncApiInstance.getOnlineVersion(jobInfo)
+    val latestComplete = () => None // syncApiInstance.getBatchVersion(jobInfo) // FIXME 
+    val runtimeVersion = () => None // syncApiInstance.getOnlineVersion(jobInfo)
     // if we have a runtime Version, this will be the table to read from, for now. We
     // expect that all data is aggregated with the corresponding complete version.
     // TODO: in the future we want this to be able to merge, such that it will be an
@@ -327,9 +334,7 @@ class CassandraExtractor[Q <: DomainQuery](session: Session, table: TableIdentif
         versioningConfig.map(_.queryableStore.get.asInstanceOf[CassandraQueryableSource[Q]].mappingFunction).orNull.asInstanceOf[DomainQuery => Q]
       },
       cassQuerySource,
-      cassQuerySource,
-      // TODO: add materialized views
-      List()
+      cassQuerySource
     )
   }
 
@@ -362,7 +367,7 @@ object CassandraExtractor {
 //  }
   
   val DB_ID: String = "cassandra"
-  val LUCENE_COLUMN_NAME: String = "lucene"
+  val LUCENE_INDEX_NAME: String => String = (cfName: String) => s"""${cfName}_lucene_index"""
   val LUCENE_INDEX_SCHEMA_OPTION_NAME: String = "schema"
 
   lazy val outerPattern = Pattern.compile("^\\s*\\{\\s*fields\\s*:\\s*\\{(.*)\\s*}\\s*\\}\\s*$", Pattern.DOTALL)

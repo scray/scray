@@ -32,6 +32,8 @@ import scray.querying.source.{ EagerCollectingDomainFilterSource, EagerEmptyRowD
 import scray.querying.source.{ OrderingEagerMappingSource, ParallelizedQueryableSource, QueryableSource, SimpleHashJoinSource, Source, SplittedAutoIndexQueryableSource, TimeoutMappingSource, MergeReferenceColumns, KeyedSource }
 //import scray.querying.source.indexing.{ SimpleHashJoinConfig, TimeIndexConfig, TimeIndexSource }
 import scray.querying.source.store.QueryableStoreSource
+import scray.common.key.api.KeyGenerator
+import scala.collection.mutable.ListBuffer
 
 /**
  * Simple planner to execute queries.
@@ -78,12 +80,24 @@ object Planner extends LazyLogging {
 
     // planning of conjunctive queries can be done in parallel
     val plans = conjunctiveQueries.par.map { cQuery =>
-      // transform query into a query only containing domains
-      val domainQuery = transformQueryDomains(cQuery, version)
 
+      def getDomainQuery(): DomainQuery = {
+        
+        val mv = Registry.getMaterializedView(query.getQueryspace, version, query.getTableIdentifier)
+        if (mv.isDefined) {
+          val mvDomains = Planner.qualifyPredicates(cQuery)
+          createQueryDomains(query, version, List(Planner.getMvQuery(mvDomains, query, query.getTableIdentifier, mv.get.primaryKeyColumn, mv.get.keyGenerationClass)))
+        } else {
+          // transform query into a query only containing domains
+          transformQueryDomains(cQuery, version)
+        }
+      }
+
+      val domainQuery = getDomainQuery()
+      
       // find the main plan
       val plan = findMainQueryPlan(cQuery, domainQuery)
-
+  
       // add timeout filter source
       val planWithTimeoutCheck = addTimeoutSource(plan, domainQuery)
       
@@ -224,72 +238,73 @@ object Planner extends LazyLogging {
    * support the ordering defined, then the "best" of this sub-set be used regardless
    * of other views with better scores (saves memory).
    */
-  private def checkMaterializedViewMatching(space: String, table: TableIdentifier, domQuery: DomainQuery): Option[(Boolean, MaterializedView)] = {
-    // check that all
-    @inline def checkSingleValueDomainValues(column: Column, values: Array[SingleValueDomain[_]]): Boolean = {
-      values.find { singleVDom =>
-        domQuery.domains.find { dom =>
-          dom.column == column && (dom match {
-            case single: SingleValueDomain[_] => singleVDom.value == single.value
-            case _ => false
-          })
-        }.isDefined
-      }.isDefined
-    }
-    @inline def checkRangeValueDomainValues(column: Column, values: Array[RangeValueDomain[_]]): Boolean = {
-      values.find { rangeDom =>
-        domQuery.domains.find { dom =>
-          dom.column == column && (dom match {
-            case range: RangeValueDomain[_] => range.asInstanceOf[RangeValueDomain[Any]].
-              isSubIntervalOf(rangeDom.asInstanceOf[RangeValueDomain[Any]])
-            case _ => false
-          })
-        }.isDefined
-      }.isDefined
-    }
-    @tailrec def findMaterializedViews(views: List[MaterializedView],
-                                          resultViews: List[(Boolean, Int, MaterializedView)]):
-                                          List[(Boolean, Int, MaterializedView)] = {
-      if(views.isEmpty) {
-        resultViews
-      } else {
-        val matView = views.head
-        // but... do we have constraints? If yes, check these first.
-        val moreThanZero = (!matView.fixedDomains.isEmpty) || (!matView.rangeDomains.isEmpty)
-        val matOpt: Option[(Boolean, Int)] = if(moreThanZero) {
-          // if we don't find a Domain of the view that doesn't match we found a usable view
-          val fdom = matView.fixedDomains.find((mat) => !checkSingleValueDomainValues(mat._1, mat._2)).isEmpty
-          val rdom = matView.rangeDomains.find((mat) => !checkRangeValueDomainValues(mat._1, mat._2)).isEmpty
-          if(fdom && rdom) {
-            matView.checkMaterializedView(matView, domQuery)
-          } else {
-            None
-          }
-        } else {
-          // no constraints return whether view is matching and how
-          matView.checkMaterializedView(matView, domQuery)
-        }
-        val resultlist = matOpt match {
-          case Some(addMatView) => (addMatView._1, addMatView._2, matView) :: resultViews
-          case None => resultViews
-        }
-        findMaterializedViews(views.tail, resultlist)
-      }
-    }
-    Registry.getQuerySpaceTable(space, domQuery.querySpaceVersion, table).flatMap { config =>
-      val views = findMaterializedViews(config.materializedViews, Nil)
-      if(!views.isEmpty) {
-        val orderedViews = views.filter(_._1)
-        if(!orderedViews.isEmpty) {
-          Some((true, orderedViews.maxBy[Int](_._2)._3))
-        } else {
-          Some((false, views.maxBy[Int](_._2)._3))
-        }
-      } else {
-        None
-      }
-    }
-  }
+//  private def checkMaterializedViewMatching(space: String, table: TableIdentifier, domQuery: DomainQuery): Option[(Boolean, MaterializedView)] = {
+//    // check that all
+//    @inline def checkSingleValueDomainValues(column: Column, values: Array[SingleValueDomain[_]]): Boolean = {
+//      values.find { singleVDom =>
+//        domQuery.domains.find { dom =>
+//          dom.column == column && (dom match {
+//            case single: SingleValueDomain[_] => singleVDom.value == single.value
+//            case _ => false
+//          })
+//        }.isDefined
+//      }.isDefined
+//    }
+//    @inline def checkRangeValueDomainValues(column: Column, values: Array[RangeValueDomain[_]]): Boolean = {
+//      values.find { rangeDom =>
+//        domQuery.domains.find { dom =>
+//          dom.column == column && (dom match {
+//            case range: RangeValueDomain[_] => range.asInstanceOf[RangeValueDomain[Any]].
+//              isSubIntervalOf(rangeDom.asInstanceOf[RangeValueDomain[Any]])
+//            case _ => false
+//          })
+//        }.isDefined
+//      }.isDefined
+//    }
+//    @tailrec def findMaterializedViews(views: List[MaterializedView],
+//                                          resultViews: List[(Boolean, Int, MaterializedView)]):
+//                                          List[(Boolean, Int, MaterializedView)] = {
+//      if(views.isEmpty) {
+//        resultViews
+//      } else {
+//        val matView = views.head
+//        // but... do we have constraints? If yes, check these first.
+//        val moreThanZero = (!matView.fixedDomains.isEmpty) || (!matView.rangeDomains.isEmpty)
+//        val matOpt: Option[(Boolean, Int)] = if(moreThanZero) {
+//          // if we don't find a Domain of the view that doesn't match we found a usable view
+//          val fdom = matView.fixedDomains.find((mat) => !checkSingleValueDomainValues(mat._1, mat._2)).isEmpty
+//          val rdom = matView.rangeDomains.find((mat) => !checkRangeValueDomainValues(mat._1, mat._2)).isEmpty
+//          if(fdom && rdom) {
+//            matView.checkMaterializedView(matView, domQuery)
+//          } else {
+//            None
+//          }
+//        } else {
+//          // no constraints return whether view is matching and how
+//          matView.checkMaterializedView(matView, domQuery)
+//        }
+//        val resultlist = matOpt match {
+//          case Some(addMatView) => (addMatView._1, addMatView._2, matView) :: resultViews
+//          case None => resultViews
+//        }
+//        findMaterializedViews(views.tail, resultlist)
+//      }
+//    }
+//    Registry.getQuerySpaceTable(space, domQuery.querySpaceVersion, table).flatMap { config =>
+//      val views = findMaterializedViews(config.materializedViews, Nil)
+//      if(!views.isEmpty) {
+//        val orderedViews = views.filter(_._1)
+//        if(!orderedViews.isEmpty) {
+//          Some((true, orderedViews.maxBy[Int](_._2)._3))
+//        } else {
+//          Some((false, views.maxBy[Int](_._2)._3))
+//        }
+//      } else {
+//        None
+//      }
+//    }
+//    None
+//  }
 
   /**
    * returns a QueryableStore and uses versioning information, if needed
@@ -310,6 +325,28 @@ object Planner extends LazyLogging {
     case Some(versionInfo) => versionInfo.readableStore.get
       // versionInfo.readableStore(versionInfo.runtimeVersion().get)
   }
+  
+ def getMvQuery(domains: Option[List[Domain[_]]], query: Query, ti: TableIdentifier, primaryKeyColumn: String, keyGenerator: KeyGenerator[Array[String]]): SingleValueDomain[String] = {
+        val keyElements = new ListBuffer[String]
+
+        domains.map { domain => 
+        val orderedColumnName = domain.sortBy { x => (x.column.columnName) }
+
+          orderedColumnName.map { domaine =>
+            {
+              domaine match {
+                // compose primary key
+                case sDomaine: SingleValueDomain[_] => {
+                    keyElements += (s"""${sDomaine.column.columnName}=${sDomaine.value}""")
+                  }
+                case _ => throw new MaterializedViewQueryException(query)
+              }
+            }
+          }
+        }
+
+      new SingleValueDomain(Column(primaryKeyColumn, ti), keyGenerator(keyElements.toArray).getKeyAsString, false, false)
+    }
 
   /**
    * Finds the main query
@@ -347,39 +384,38 @@ object Planner extends LazyLogging {
     // 1. check if we have a matching materialized view prepared and
     // whether it is ordered according to our ordering: Option[(ordered: Boolean, table)]
 
-    checkMaterializedViewMatching(query.getQueryspace, query.getTableIdentifier, domainQuery) match {
-      case Some((ordered, viewConf)) =>
-        // TODO: how do we handle the "ordered" here?
-        val qSource = viewConf.viewTable.queryableStore.asInstanceOf[Option[QueryableStoreSource[DomainQuery]]] 
-        return ComposablePlan.getComposablePlan(qSource.get, domainQuery)
-      case _ =>
-    }
-
-    // 2. materialized views aren't available for this query. Build non-view-based plan
-    val sortedColumnConfig: Option[ColumnConfiguration] = query.getOrdering.flatMap { _ =>
-      // we shall sort - do we have sorting in the query space?
-      Registry.getQuerySpace(query.getQueryspace, domainQuery.querySpaceVersion).flatMap(_.queryCanBeOrdered(domainQuery))
-    }
-
-    val groupedColumnConfig: Option[ColumnConfiguration] = query.getOrdering.flatMap { _ =>
-      // we shall group - do we have auto-grouping?
-      Registry.getQuerySpace(query.getQueryspace, domainQuery.querySpaceVersion).flatMap(_.queryCanBeGrouped(domainQuery))
-    }
-
-    val listOfIndexedColumns = isIndexMergable
-
-    val mainColumns = sortedColumnConfig.orElse(groupedColumnConfig).map { sortOrGroup =>
-      // sort with an additional index to be merged in
-      List(sortOrGroup) ++ listOfIndexedColumns
-    }.getOrElse {
-      // if we do not have a sorting nor a grouping, we try to find all hand-made indexes
-      listOfIndexedColumns
-    }
+//    checkMaterializedViewMatching(query.getQueryspace, query.getTableIdentifier, domainQuery) match {
+//      case Some((ordered, viewConf)) =>
+//        // TODO: how do we handle the "ordered" here?
+//        val qSource = viewConf.viewTable.queryableStore.asInstanceOf[Option[QueryableStoreSource[DomainQuery]]] 
+//        return ComposablePlan.getComposablePlan(qSource.get, domainQuery)
+//      case _ =>
+//    }
+//
+//    // 2. materialized views aren't available for this query. Build non-view-based plan
+//    val sortedColumnConfig: Option[ColumnConfiguration] = query.getOrdering.flatMap { _ =>
+//      // we shall sort - do we have sorting in the query space?
+//      Registry.getQuerySpace(query.getQueryspace, domainQuery.querySpaceVersion).flatMap(_.queryCanBeOrdered(domainQuery))
+//    }
+//
+//    val groupedColumnConfig: Option[ColumnConfiguration] = query.getOrdering.flatMap { _ =>
+//      // we shall group - do we have auto-grouping?
+//      Registry.getQuerySpace(query.getQueryspace, domainQuery.querySpaceVersion).flatMap(_.queryCanBeGrouped(domainQuery))
+//    }
+//
+//    val listOfIndexedColumns = isIndexMergable
+//
+//    val mainColumns = sortedColumnConfig.orElse(groupedColumnConfig).map { sortOrGroup =>
+//      // sort with an additional index to be merged in
+//      List(sortOrGroup) ++ listOfIndexedColumns
+//    }.getOrElse {
+//      // if we do not have a sorting nor a grouping, we try to find all hand-made indexes
+//      listOfIndexedColumns
+//    }
 
     def createHashJoinSource[A <: DomainQuery, K <: DomainQuery, V](indexSource: QueryableStoreSource[A], colConf: ColumnConfiguration, 
         lookupSource: KeyedSource[K, V], lookupTableConfig: TableConfiguration[A, K, V]) = new SimpleHashJoinSource(indexSource, Set(colConf.column), lookupSource, lookupTableConfig.primarykeyColumns)//(defaultFactory)
     
-        
     // construct a simple plan
 //    mainColumns.headOption.map { colConf =>
 //      colConf.index.flatMap(index => index.isManuallyIndexed.map { tableConf =>
@@ -613,6 +649,10 @@ object Planner extends LazyLogging {
    */
   @inline def transformQueryDomains(query: Query, version: Int): DomainQuery = {
     val domains = qualifyPredicates(query).getOrElse(List())
+    createQueryDomains(query, version, domains) 
+  }
+  
+  @inline def createQueryDomains(query: Query, version: Int, domains: List[Domain[_]]): DomainQuery = {
     val table = query.getTableIdentifier
     DomainQuery(query.getQueryID,
         query.getQueryspace,

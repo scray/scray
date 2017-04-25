@@ -20,42 +20,35 @@
 		<dependency>
 			<groupId>org.osgi</groupId>
 			<artifactId>org.osgi.core</artifactId>
-			<version>4.1.0</version>
+			<version>5.0.0</version>
 		</dependency>
 		<dependency>
 			<groupId>org.osgi</groupId>
 			<artifactId>org.osgi.compendium</artifactId>
-			<version>4.1.0</version>
+			<version>5.0.0</version>
 		</dependency>
 		<dependency>
 			<groupId>com.github.scopt</groupId>
-			<artifactId>scopt_2.10</artifactId>
+			<artifactId>scopt_${scala.suffix}</artifactId>
 			<version>3.2.0</version>
 		</dependency>
 		<dependency>
-			<groupId>com.datastax.cassandra</groupId>
-			<artifactId>cassandra-driver-core</artifactId>
-			<version>2.1.7.1</version>
-			<classifier>shaded</classifier>
-			<exclusions>
-				<exclusion>
-					<groupId>io.netty</groupId>
-					<artifactId>*</artifactId>
-				</exclusion>
-			</exclusions>
-		</dependency>
-		<dependency>
 			<groupId>com.chuusai</groupId>
-			<artifactId>shapeless_2.10</artifactId>
+			<artifactId>shapeless_${scala.suffix}</artifactId>
 			<version>2.3.0</version>
 		</dependency>
 		<dependency>
+            <groupId>org.apache.felix</groupId>
+            <artifactId>org.osgi.core</artifactId>
+            <version>1.4.0</version>
+        </dependency>
+		<dependency>
 			<groupId>org.scray</groupId>
 			<artifactId>scray-querying</artifactId>
-			<version>0.9.5</version>
+			<version>0.10.0</version>
 			<exclusions>
 				<exclusion>
-					<artifactId>shapeless_2.10.4</artifactId>
+					<artifactId>shapeless_${scala.suffix}.4</artifactId>
 					<groupId>com.chuusai</groupId>
 				</exclusion>
 			</exclusions>
@@ -63,27 +56,27 @@
 		<dependency>
 			<groupId>org.scray</groupId>
 			<artifactId>scray-cassandra</artifactId>
-			<version>0.9.5</version>
+			<version>0.10.0</version>
 			<exclusions>
 				<exclusion>
-					<artifactId>shapeless_2.10.3</artifactId>
+					<artifactId>shapeless_${scala.suffix}.3</artifactId>
 					<groupId>com.chuusai</groupId>
 				</exclusion>
 			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>org.parboiled</groupId>
-			<artifactId>parboiled_2.10</artifactId>
+			<artifactId>parboiled_${scala.suffix}</artifactId>
 			<version>${parboiled.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.twitter</groupId>
-			<artifactId>util-core_2.10</artifactId>
+			<artifactId>util-core_${scala.suffix}</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.scray</groupId>
 			<artifactId>scray-service</artifactId>
-			<version>0.9.5</version>
+			<version>0.10.0</version>
 			<exclusions>
 				<exclusion>
 					<artifactId>slf4j-jdk14</artifactId>
@@ -94,7 +87,6 @@
 		<dependency>
 			<groupId>com.google.guava</groupId>
 			<artifactId>guava</artifactId>
-			<version>16.0.1</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.hadoop</groupId>
@@ -106,6 +98,11 @@
 					<groupId>org.slf4j</groupId>
 				</exclusion>
 			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>ch.qos.logback</groupId>
+			<artifactId>logback-classic</artifactId>
+			<version>1.2.1</version>
 		</dependency>
 	</dependencies>
 	<build>
@@ -170,6 +167,7 @@
 					</execution>
 				</executions>
 			</plugin>
+			
 		</plugins>
 		<pluginManagement>
 			<plugins>
@@ -221,8 +219,8 @@
 	</licenses>
 	<parent>
 		<groupId>org.scray</groupId>
-		<artifactId>scray</artifactId>
-		<version>0.9.5</version>
+		<artifactId>scray-parent</artifactId>
+		<version>0.10.0</version>
 		<relativePath>../pom.xml</relativePath>
 	</parent>
 </project>
