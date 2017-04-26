@@ -9,6 +9,7 @@ import scala.util.Try
 
 import com.typesafe.scalalogging.slf4j.LazyLogging
 import scray.querying.description.TableIdentifier
+import scala.collection.mutable.HashMap
 
 class Table[T <: AbstractRow](val keySpace: String, val tableName: String, val columns: T) extends Serializable {
   val rows: ListBuffer[RowWithValue]= ListBuffer[RowWithValue]()
@@ -47,13 +48,29 @@ abstract class AbstractRow extends Serializable {
   val primaryKey = ""
   val indexes: Option[List[String]] = None
 
+  // Put columns in map to makes it easier to find them by name
+  private lazy val columnMap = {
+    val map = new HashMap[String, this.ColumnType]
+    columns.foldLeft(map)((accMap, nextColum) => {
+      accMap.put(nextColum.name, nextColum)
+      accMap
+    })
+  } 
+ 
+  def getColumn[T](column: Column[T]): Option[ColumnWithValue[T]] = {
+    columnMap.get(column.name).map { _ match {
+        case column: ColumnWithValue[T] => Some(column) // does not work for T because of erasure
+        case _ => None
+      }
+    }.flatten
+  }
   def foldLeft[B](z: B)(f: (B, ColumnType) => B): B = {
     columns.foldLeft(z)(f)
   }
 }
 
 object ColumnHelpers {
-  def getColum[T: DBColumnImplementation](name: String, value: Option[T]): Column[T] = {
+  def getColumn[T: DBColumnImplementation](name: String, value: Option[T]): Column[T] = {
     value match {
       case Some(value) => new ColumnWithValue(name, value)
       case None =>  new Column(name)
@@ -78,7 +95,7 @@ class RowWithValue(
     override val indexes: Option[List[String]]) extends AbstractRow {
 
   override type ColumnType = ColumnWithValue[_]
-
+  
   def copy(): RowWithValue = {
     val columnCopies = this.columns.foldLeft(List[ColumnWithValue[_]]())((acc, column) => { column.clone() :: acc })
     new RowWithValue(columnCopies, this.primaryKey, this.indexes)
@@ -89,7 +106,7 @@ class Columns(
   override val columns: List[Column[_]],
   override val primaryKey: String,
   override val indexes: Option[List[String]]) extends AbstractRow {
-  
+
   override type ColumnType = Column[_]
 }
 

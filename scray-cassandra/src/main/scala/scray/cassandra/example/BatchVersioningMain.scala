@@ -35,7 +35,7 @@ object BatchVersioningMain {
       val lastBatchData = table.getBatchJobData(jobInfo, BatchOutputTable.row)
       
       // Create new data (Increment counter)
-      val newCount: Int = lastBatchData.map { x => x.head.columns.head.value.asInstanceOf[Int] }.getOrElse(0) + 1
+      val newCount: Int = lastBatchData.map {_.head.getColumn(BatchOutputTable.count).map { _.value }}.flatten.getOrElse(0) + 1
       Thread.sleep(5000)
 
       // Write new data
