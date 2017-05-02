@@ -48,6 +48,8 @@ class JDBCQueryableSource[Q <: DomainQuery](
       val prep = connection.prepareStatement(queryString._1)
       queryMapper.mapWhereClauseValues(prep, query.asInstanceOf[DomainQuery].domains)
       val resultSet = prep.executeQuery(queryString._1)
+      val resultMetadata = resultSet.getMetaData 
+      (1 to resultMetadata.getColumnCount).map(number => resultMetadata.) 
       getIterator(resultSet)
     }
   }
@@ -88,6 +90,7 @@ class JDBCQueryableSource[Q <: DomainQuery](
       if (!fetchedNextRow) {
         entities.next
       }
+      
       SimpleRow(ArrayBuffer.empty[RowColumn[_]])
     }
   }
