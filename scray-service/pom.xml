@@ -2,7 +2,7 @@
 	<parent>
 		<groupId>org.scray</groupId>
 		<artifactId>scray-parent</artifactId>
-		<version>0.9.6-SNAPSHOT</version>
+		<version>0.10.1-SNAPSHOT</version>
 		<relativePath>../pom.xml</relativePath>
 	</parent>
 
@@ -25,7 +25,7 @@
 		<dependency>
 			<groupId>org.scray</groupId>
 			<artifactId>scray-common</artifactId>
-			<version>0.9.6-SNAPSHOT</version>
+			<version>0.10.1-SNAPSHOT</version>
 
 			<exclusions>
 				<exclusion>
@@ -37,7 +37,7 @@
 		<dependency>
 			<groupId>org.scray</groupId>
 			<artifactId>scray-querying</artifactId>
-			<version>0.9.6-SNAPSHOT</version>
+			<version>0.10.1-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>org.parboiled</groupId>

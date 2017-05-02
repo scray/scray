@@ -26,8 +26,6 @@ public class ScrayDriverSingle implements java.sql.Driver {
 	
 	private static ScrayDriverSingle instance = null;
 	private ScrayConnection connection = null;
-	private Timer connectionTimeoutTimer = new Timer();
-
 	
 	private ReentrantLock rwLock = new ReentrantLock();
 	
@@ -78,10 +76,12 @@ public class ScrayDriverSingle implements java.sql.Driver {
 		rwLock.lock();
 		try {
 			if(getConnection() == null || getConnection().getIsFailed().get()) {
+				Timer connectionTimeoutTimer = new Timer();
 				ConnectionTimeoutTask tt = new ConnectionTimeoutTask(Thread.currentThread());
 				connectionTimeoutTimer.schedule(tt, new Date(System.currentTimeMillis() + 120000));
 				setConnection(generateNewConnection(url, info));
 				tt.finish();
+				connectionTimeoutTimer.cancel();
 			}
 			return getConnection();
 		} finally {

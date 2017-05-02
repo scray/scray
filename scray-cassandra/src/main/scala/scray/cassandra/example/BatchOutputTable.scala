@@ -10,10 +10,12 @@ import scray.querying.sync.ColumnWithValue
 import scray.querying.sync.RowWithValue
 
 object BatchOutputTable  {
-    val columns = new Columns(new Column[String]("key") :: new Column[Int]("count") :: Nil, "(key)", None)
-    val table = new Table("\"BDQ_BATCH\"", "\"BatchCountExample\"", columns)
+  val count = new Column[Int]("count")
+  
+  val columns = new Columns(new Column[String]("key") :: count :: Nil, "(key)", None)
+  val table = new Table("\"BDQ_BATCH\"", "\"BatchCountExample\"", columns)
     
-    val row = new RowWithValue(new ColumnWithValue[String]("key", "key") :: new ColumnWithValue("count", 1) :: Nil, "(key)", None)
+  val row = new RowWithValue(new ColumnWithValue[String]("key", "key") :: new ColumnWithValue("count", 1) :: Nil, "(key)", None)
     
-    def setCounter(count: Int) = {new RowWithValue(new ColumnWithValue[String]("key", "key") :: new ColumnWithValue("count", count) :: Nil, "(key)", None)}
+  def setCounter(count: Int) = {new RowWithValue(new ColumnWithValue[String]("key", "key") :: new ColumnWithValue("count", count) :: Nil, "(key)", None)}
 }

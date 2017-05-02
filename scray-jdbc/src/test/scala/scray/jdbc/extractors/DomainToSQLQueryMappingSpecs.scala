@@ -1,4 +1,4 @@
-package scray.jdbc.automation
+package scray.jdbc.extractors
 
 import org.junit.runner.RunWith
 import org.scalatest.WordSpec
@@ -15,7 +15,6 @@ import org.mockito.runners.MockitoJUnitRunner
 import scray.querying.description.TableIdentifier
 import com.twitter.util.FuturePool
 import scray.jdbc.rows.JDBCRow
-import scray.jdbc.extractors.DomainToSQLQueryMapping
 import scray.querying.description.ColumnConfiguration
 import scray.querying.description.Column
 import scray.querying.queries.DomainQuery
@@ -30,16 +29,13 @@ import scray.querying.description.ColumnOrdering
 import scray.querying.description.internal.SingleValueDomain
 
 @RunWith(classOf[JUnitRunner])
-class DomainToSQLQueryMappingTest extends WordSpec with LazyLogging {
+class DomainToSQLQueryMappingSpecs extends WordSpec with LazyLogging {
 
   "DomainToSQLQueryMapping " should {
     " generate SELECT query " in {
 
-      val tableId = new TableIdentifier("oracle", "db1", "table1")
-      val column1 = new Column("column1", tableId)
-
-      implicit val ordering = new Ordering[String] { def compare(a: String, b: String) = { 0 } }
-      val columnOrdering = new ColumnOrdering(column1, false)
+      val tableId = new TableIdentifier("oracle", "DB1", "TABLE1")
+      val column1 = new Column("key", tableId)
       val domaines = new SingleValueDomain(column1, "abc1", false, false) :: Nil
 
 
@@ -51,7 +47,7 @@ class DomainToSQLQueryMappingTest extends WordSpec with LazyLogging {
         tableId,
         domaines,
         None,
-        Some(columnOrdering),
+        None,
         Some(QueryRange(None, None, None)))
 
       val connection = MockitoSugar.mock[Connection]
@@ -66,12 +62,13 @@ class DomainToSQLQueryMappingTest extends WordSpec with LazyLogging {
           connection, 
           new DomainToSQLQueryMapping[DomainQuery, JDBCQueryableSource[DomainQuery]], 
           FuturePool(Executors.newCachedThreadPool()), 
-          rowMapper)
+          rowMapper,
+          ScraySQLDialectFactory.getDialect(ScraySQLDialectFactory.ORACLE))
       
       val mapper2 = new DomainToSQLQueryMapping[DomainQuery, JDBCQueryableSource[DomainQuery]]
       
-      println(mapper2.getQueryMapping(jdbcSource, None)(query))
-      assert(mapper2.getQueryMapping(jdbcSource, None)(query).toString() === "SELECT * FROM \"db1\".\"table1\" WHERE  \"column1\"=\'abc1\'  ")
+      println(mapper2.getQueryMapping(jdbcSource, None, ScraySQLDialectFactory.getDialect(ScraySQLDialectFactory.ORACLE))(query))
+      assert(mapper2.getQueryMapping(jdbcSource, None, ScraySQLDialectFactory.getDialect(ScraySQLDialectFactory.ORACLE))(query).toString() === "(SELECT * FROM \"DB1\".\"TABLE1\" WHERE  key = ?   AND    ,1)")
 
     }
 

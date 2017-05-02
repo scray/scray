@@ -1,6 +1,6 @@
-package scray.loader.tools
+package scray.cassandra.tools
 
-import scray.loader.tools.api.CassandraIndexStatementGenerator
+import scray.cassandra.tools.api.CassandraIndexStatementGenerator
 import scray.querying.description.TableIdentifier
 
 class CassandraIndexStatementGeneratorImpl extends CassandraIndexStatementGenerator {
