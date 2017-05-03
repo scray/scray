@@ -44,4 +44,6 @@ object ScrayOracleDialect extends ScraySQLDialect(ScraySQLDialectFactory.ORACLE)
    * TODO: Probably we need to account for that in the query generation! 
    */
   override def emptyStringIsNull: Boolean = true
+  
+  override val DRIVER_CLASS_NAME = "oracle.jdbc.OracleDriver"
 }

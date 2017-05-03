@@ -193,7 +193,7 @@ class DomainToSQLQueryMapping[Q <: DomainQuery, S <: JDBCQueryableSource[Q]] ext
         (select, whereClauseSQLString._2)
       }
   }
-  
+
 }
 
 object DomainToSQLQueryMapping {

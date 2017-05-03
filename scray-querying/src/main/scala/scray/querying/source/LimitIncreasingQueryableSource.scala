@@ -43,7 +43,7 @@ class LimitIncreasingQueryableSource[Q <: DomainQuery](val store: QueryableStore
     with LazySource[Q]
     with LazyLogging {
   
-  val queryMapping: DomainQuery => Q = tableConf.domainQueryMapping
+  // val queryMapping: DomainQuery => Q = tableConf.domainQueryMapping
   
   /**
    * create function to fetch new data with, which uses a given limit
@@ -56,7 +56,6 @@ class LimitIncreasingQueryableSource[Q <: DomainQuery](val store: QueryableStore
     }
   }
 
-  
   override def request(query: Q): Future[Spool[Row]] = requestIterator(query).flatMap { it =>
     QueryableSource.iteratorToSpool[Row](it, row => row)
   }

@@ -22,6 +22,7 @@ import scray.querying.description.RowColumn
 import scray.querying.description.SimpleRow
 import scala.collection.mutable.ArrayBuffer
 import scray.jdbc.extractors.ScraySQLDialect
+import com.zaxxer.hikari.HikariDataSource
 
 class JDBCQueryableSource[Q <: DomainQuery](
     val ti: TableIdentifier,
@@ -29,10 +30,10 @@ class JDBCQueryableSource[Q <: DomainQuery](
     clusteringKeyColumns: Set[Column],
     allColumns: Set[Column],
     columnConfigs: Set[ColumnConfiguration],
-    val connection: Connection,
+    val hikari: HikariDataSource,
     val queryMapper: DomainToSQLQueryMapping[Q, JDBCQueryableSource[Q]],
     futurePool: FuturePool,
-    rowMapper: JDBCRow => Row,
+    rowMapper: ResultSet => Row,
     dialect: ScraySQLDialect) extends QueryableStoreSource[Q](ti, rowKeyColumns, clusteringKeyColumns, allColumns, false) {
 
   val mappingFunction = queryMapper.getQueryMapping(this, Some(ti.tableId), dialect)
@@ -45,12 +46,15 @@ class JDBCQueryableSource[Q <: DomainQuery](
     import scala.collection.convert.decorateAsScala.asScalaIteratorConverter
     futurePool {
       val queryString = mappingFunction(query)
-      val prep = connection.prepareStatement(queryString._1)
-      queryMapper.mapWhereClauseValues(prep, query.asInstanceOf[DomainQuery].domains)
-      val resultSet = prep.executeQuery(queryString._1)
-      val resultMetadata = resultSet.getMetaData 
-      (1 to resultMetadata.getColumnCount).map(number => resultMetadata.) 
-      getIterator(resultSet)
+      val connection = hikari.getConnection
+      try {
+        val prep = connection.prepareStatement(queryString._1)
+        queryMapper.mapWhereClauseValues(prep, query.asInstanceOf[DomainQuery].domains)
+        val resultSet = prep.executeQuery(queryString._1)
+        getIterator(resultSet)
+      } finally {
+        connection.close()
+      }
     }
   }
 
@@ -78,7 +82,7 @@ class JDBCQueryableSource[Q <: DomainQuery](
     var fetchedNextRow = false
     var hasNextRow = false
 
-    def hasNext = {
+    override def hasNext: Boolean = {
       if (!fetchedNextRow) {
         hasNextRow = entities.next
         fetchedNextRow = true;
@@ -86,12 +90,11 @@ class JDBCQueryableSource[Q <: DomainQuery](
       hasNextRow
     }
 
-    def next = {
+    override def next: Row = {
       if (!fetchedNextRow) {
         entities.next
       }
-      
-      SimpleRow(ArrayBuffer.empty[RowColumn[_]])
+      rowMapper.apply(entities)
     }
   }
 }

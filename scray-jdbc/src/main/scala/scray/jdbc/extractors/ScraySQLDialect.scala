@@ -49,4 +49,8 @@ abstract class ScraySQLDialect(val name: String, unequal: String = "<>") {
    */
   def decideWhere(where: String): String = if(!where.isEmpty()) s"WHERE $where" else ""
 
+  /**
+   * class name of the driver for the database of this dialect
+   */
+  val DRIVER_CLASS_NAME: String
 }
