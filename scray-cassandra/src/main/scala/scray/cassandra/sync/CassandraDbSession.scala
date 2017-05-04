@@ -48,6 +48,7 @@ class CassandraDbSession(val cassandraSession: Session) extends DbSession[Statem
 
     def insert(statement: Insert): Try[ResultSet] = {
       try {
+        logger.debug("Insert " + statement)
         val result = cassandraSession.execute(statement)
         if(result.wasApplied()) {
          Success(result)

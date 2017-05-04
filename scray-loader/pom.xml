@@ -38,9 +38,14 @@
 			<version>2.3.0</version>
 		</dependency>
 		<dependency>
+            <groupId>org.apache.felix</groupId>
+            <artifactId>org.osgi.core</artifactId>
+            <version>1.4.0</version>
+        </dependency>
+		<dependency>
 			<groupId>org.scray</groupId>
 			<artifactId>scray-querying</artifactId>
-			<version>0.9.6-SNAPSHOT</version>
+			<version>0.10.1-SNAPSHOT</version>
 			<exclusions>
 				<exclusion>
 					<artifactId>shapeless_${scala.suffix}.4</artifactId>
@@ -51,7 +56,7 @@
 		<dependency>
 			<groupId>org.scray</groupId>
 			<artifactId>scray-cassandra</artifactId>
-			<version>0.9.6-SNAPSHOT</version>
+			<version>0.10.1-SNAPSHOT</version>
 			<exclusions>
 				<exclusion>
 					<artifactId>shapeless_${scala.suffix}.3</artifactId>
@@ -71,7 +76,7 @@
 		<dependency>
 			<groupId>org.scray</groupId>
 			<artifactId>scray-service</artifactId>
-			<version>0.9.6-SNAPSHOT</version>
+			<version>0.10.1-SNAPSHOT</version>
 			<exclusions>
 				<exclusion>
 					<artifactId>slf4j-jdk14</artifactId>
@@ -162,6 +167,7 @@
 					</execution>
 				</executions>
 			</plugin>
+			
 		</plugins>
 		<pluginManagement>
 			<plugins>
@@ -214,7 +220,7 @@
 	<parent>
 		<groupId>org.scray</groupId>
 		<artifactId>scray-parent</artifactId>
-		<version>0.9.6-SNAPSHOT</version>
+		<version>0.10.1-SNAPSHOT</version>
 		<relativePath>../pom.xml</relativePath>
 	</parent>
 </project>

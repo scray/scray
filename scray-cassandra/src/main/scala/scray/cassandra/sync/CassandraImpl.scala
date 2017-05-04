@@ -75,6 +75,7 @@ import scray.querying.sync.JobLockTable
 import scray.querying.sync.ArbitrarylyTypedRows
 import scray.querying.sync.SyncTableBasicClasses
 import scray.cassandra.util.CassandraUtils
+import scray.querying.sync.Columns
 
 
 object CassandraImplementation extends AbstractTypeDetection with Serializable {
@@ -563,6 +564,18 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
       case Failure(message) => Failure(this.throwInsertStatementError(job.name, slot, statement, message.toString()))
     }
   }
+  
+  def insertInBatchTable(job: JOB_INFO, data: RowWithValue): Try[Unit] = {
+    val insertResult =  this.getRunningBatchJobSlot(job).map { slot => 
+      logger.debug(s"Insert data in batch table for job ${job}. Slot: ${slot}")
+      this.insertInBatchTable(job: JOB_INFO, slot: Int, data: RowWithValue)    
+    }
+    
+    insertResult match {
+      case None => Failure(new NoRunningJobExistsException(s"Unable to insert data ${data} for job ${job}"))
+      case Some(exception) => exception
+    }
+  }
 
   //  /**
   //   * Lock online table if it is used by another spark job.
@@ -678,6 +691,11 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
   def getBatchJobData[T <: RowWithValue, K](jobname: String, slot: Int, key: K, result: T): Option[RowWithValue] = {
     getJobData(jobname, slot, false, Some(key), result).map { row => row.head } // One key is referred to one key
   }
+  
+  def getBatchJobData[T <: RowWithValue](jobInfo: JOB_INFO, result: T): Option[List[RowWithValue]] = {
+    val latestCompletedBatch = this.getLatestBatch(jobInfo).getOrElse(0)
+    this.getBatchJobData(jobInfo.name, latestCompletedBatch, result)
+  }
 
   def getOnlineJobData[T <: RowWithValue, K](jobname: String, slot: Int, key: K, result: T): Option[List[RowWithValue]] = {
     getJobData(jobname, slot, true, Some(key), result)
@@ -732,8 +750,9 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
       if (dbDataIter.hasNext()) {
         while (dbDataIter.hasNext()) {
           val nextRow = result.copy()
+          val casRow = dbDataIter.next()
           nextRow.columns.map { destinationColumn =>
-            fillValue(dbDataIter.next(), destinationColumn)
+            fillValue(casRow, destinationColumn)
           }
           columns += nextRow
         }

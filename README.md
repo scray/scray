@@ -1,5 +1,5 @@
 [![Build Status](https://travis-ci.org/scray/scray.svg?branch=master)](https://travis-ci.org/scray/scray)
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.scray/scray/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.scray/scray)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.scray/scray/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.scray/scray-parent)
 
 Scray - A Serving-Layer Framework for "BigData"
 ===============================================

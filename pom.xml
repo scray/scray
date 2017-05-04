@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.scray</groupId>
 	<artifactId>scray-parent</artifactId>
-	<version>0.9.6-SNAPSHOT</version>
+	<version>0.10.1-SNAPSHOT</version>
 	<inceptionYear>2014</inceptionYear>
 	<packaging>pom</packaging>
 	<name>Scray</name>
@@ -356,6 +356,19 @@
 								<arg>-Xlog-implicits</arg>
 							</args>
 						</configuration>
+					</plugin>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-source-plugin</artifactId>
+						<version>2.2.1</version>
+						<executions>
+							<execution>
+								<id>attach-sources</id>
+								<goals>
+									<goal>jar-no-fork</goal>
+								</goals>
+							</execution>
+						</executions>
 					</plugin>
 					<plugin>
 						<groupId>org.apache.maven.plugins</groupId>
