@@ -39,6 +39,7 @@ import scray.querying.Registry
 import scray.common.key.OrderedStringKeyGenerator
 import scray.common.key.OrderedStringKeyGenerator
 import scray.common.key.StringKey
+import scray.querying.source.Splitter
 
 
 /**
@@ -158,7 +159,7 @@ class ScrayLoaderQuerySpace(name: String, config: ScrayConfiguration, qsConfig: 
         val index = extractor.createManualIndexConfiguration(column, name, version, table.queryableStore.get.asInstanceOf[F], Map(), Map())
         storeConfig.getSessionForStore(column.table.dbSystem).map { session =>
           // TODO: add splitter configuration
-          extractor.getColumnConfiguration(session, column.table.dbId, column.table.tableId, column, index, Map())
+          extractor.getColumnConfiguration(session, column.table.dbId, column.table.tableId, column, index, Map[Column, Splitter[_]]())
         }.getOrElse(throw new DBMSUndefinedException(column.table.dbSystem, name))
       }
       table.allColumns.map { column =>

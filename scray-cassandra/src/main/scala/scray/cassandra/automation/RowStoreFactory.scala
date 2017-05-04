@@ -32,6 +32,7 @@ import scray.querying.description.Row
 import scray.cassandra.rows.GenericCassandraRowStoreMapper
 import scray.cassandra.CassandraTableNonexistingException
 import com.typesafe.scalalogging.slf4j.LazyLogging
+import scray.querying.source.Splitter
 
 
 
@@ -65,7 +66,7 @@ object RowStoreFactory extends LazyLogging {
             allColumns,
             allColumns.map(col => 
               // TODO: ManualIndexConfiguration and Map of Splitter must be extracted from config
-              cassExtractor.getColumnConfiguration(cassSession, ti.dbId, ti.tableId, Column(col.columnName, ti), None, Map())),
+              cassExtractor.getColumnConfiguration(cassSession, ti.dbId, ti.tableId, Column(col.columnName, ti), None, Map[Column, Splitter[_]]())),
             cassSession.cassandraSession,
             new DomainToCQLQueryMapping[Q, CassandraQueryableSource[Q]](),
             futurePool,
