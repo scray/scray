@@ -28,12 +28,15 @@ import scray.jdbc.sync.JDBCDbSession
 import scray.querying.description.AutoIndexConfiguration
 import scray.querying.description.IndexConfiguration
 import java.sql.Types
+import com.typesafe.scalalogging.slf4j.LazyLogging
 
 
 /**
  * This is only a first version that is able to 
  */
-class JDBCExtractors[Q <: DomainQuery, S <: JDBCQueryableSource[Q]](ti: TableIdentifier, hikari: HikariDataSource, metadataConnection: Connection, sqlDialect: ScraySQLDialect, futurePool: FuturePool) extends StoreExtractor[JDBCQueryableSource[Q]] {
+class JDBCExtractors[Q <: DomainQuery, S <: JDBCQueryableSource[Q]](
+    ti: TableIdentifier, hikari: HikariDataSource, metadataConnection: Connection,
+    sqlDialect: ScraySQLDialect, futurePool: FuturePool) extends StoreExtractor[JDBCQueryableSource[Q]] with LazyLogging {
 
   // private val ti = store.ti
   
@@ -46,12 +49,12 @@ class JDBCExtractors[Q <: DomainQuery, S <: JDBCQueryableSource[Q]](ti: TableIde
   /**
    * transforms a metadata query for columns into a internal column representation
    */
-  @tailrec private def scanColumns(resSet: ResultSet, columns: ListBuffer[JDBCColumn]): Seq[JDBCColumn] = {
+  @tailrec private def scanColumns(resSet: ResultSet, columns: ListBuffer[JDBCColumn], typ: Boolean = true): Seq[JDBCColumn] = {
     if(resSet.next()) {
       val newColumn = JDBCColumn(
         resSet.getString("COLUMN_NAME"), 
         ti,
-        resSet.getInt("DATA_TYPE")
+        if(typ) Some(resSet.getInt("DATA_TYPE")) else None
         )
       scanColumns(resSet, columns += newColumn)
     } else {
@@ -76,7 +79,7 @@ class JDBCExtractors[Q <: DomainQuery, S <: JDBCQueryableSource[Q]](ti: TableIde
   val rowKeyColumns = {
     val rs = dbmsMetadata.getPrimaryKeys(null, ti.dbId, ti.tableId)
     try {
-      val rowKeyCols = scanColumns(rs, new ListBuffer[JDBCColumn]())
+      val rowKeyCols = scanColumns(rs, new ListBuffer[JDBCColumn](), false)
       if(rowKeyCols.isEmpty) {
         // primary key are all columns if there is no primary key defined
         columns
@@ -128,6 +131,7 @@ class JDBCExtractors[Q <: DomainQuery, S <: JDBCQueryableSource[Q]](ti: TableIde
     val rs = dbmsMetadata.getIndexInfo(null, ti.dbId, ti.tableId, false, false)
     try {
       val iInfo = getIndexInfos(rs, new ListBuffer[TemporaryIndexInfo], None)
+      iInfo.foreach(index => logger.debug(s"Found index for ${ti.dbSystem}.${ti.dbId}.${ti.tableId}.${index.column}"))
       iInfo.map(index => index.column -> index).toMap
     } finally {
       rs.close

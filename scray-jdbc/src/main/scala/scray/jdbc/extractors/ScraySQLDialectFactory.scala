@@ -6,13 +6,15 @@ package scray.jdbc.extractors
  */
 object ScraySQLDialectFactory {
   
-  def getDialect(name: String): ScraySQLDialect = name.toUpperCase() match {
-    case ORACLE => ScrayOracleDialect
-    case _ => throw new AbstractMethodError(s"Scray SQL Dialect '${name}' is unknown") 
+  def getDialectFromJdbcURL(url: String): ScraySQLDialect = {
+    knownDialects.find(_.isDialectJdbcURL(url)).
+      getOrElse(throw new AbstractMethodError(s"Scray SQL Dialect for jdbc URL '${url}' is unknown"))
   }
   
-  val ORACLE = "ORACLE"
-  val MYSQL = "MYSQL"
-  val HANA = "HANA"
+  def getDialect(name: String): ScraySQLDialect = 
+    knownDialects.find(_.getName == name.toUpperCase()).
+      getOrElse(throw new AbstractMethodError(s"Scray SQL Dialect '${name}' is unknown")) 
+  
+  val knownDialects = List(ScrayOracleDialect, ScrayHanaDialect, ScrayMySQLDialect, ScrayMSSQLDialect, ScraySparkDialect, ScrayH2Dialect)
   
 }

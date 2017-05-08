@@ -23,6 +23,7 @@ import scray.querying.description.SimpleRow
 import scala.collection.mutable.ArrayBuffer
 import scray.jdbc.extractors.ScraySQLDialect
 import com.zaxxer.hikari.HikariDataSource
+import scala.util.Try
 
 class JDBCQueryableSource[Q <: DomainQuery](
     val ti: TableIdentifier,
@@ -47,14 +48,10 @@ class JDBCQueryableSource[Q <: DomainQuery](
     futurePool {
       val queryString = mappingFunction(query)
       val connection = hikari.getConnection
-      try {
-        val prep = connection.prepareStatement(queryString._1)
-        queryMapper.mapWhereClauseValues(prep, query.asInstanceOf[DomainQuery].domains)
-        val resultSet = prep.executeQuery(queryString._1)
-        getIterator(resultSet)
-      } finally {
-        connection.close()
-      }
+      val prep = connection.prepareStatement(queryString._1)
+      queryMapper.mapWhereClauseValues(prep, query.asInstanceOf[DomainQuery].domains)
+      val resultSet = prep.executeQuery(queryString._1)
+      getIterator(resultSet, connection)
     }
   }
 
@@ -78,14 +75,23 @@ class JDBCQueryableSource[Q <: DomainQuery](
     }
   }.getOrElse(false)
 
-  protected def getIterator(entities: ResultSet) = new Iterator[Row] {
+  protected def getIterator(entities: ResultSet, connection: Connection) = new Iterator[Row] {
     var fetchedNextRow = false
     var hasNextRow = false
 
     override def hasNext: Boolean = {
-      if (!fetchedNextRow) {
-        hasNextRow = entities.next
-        fetchedNextRow = true;
+      if(entities.isAfterLast()) {
+        entities.close()
+        connection.close()
+      }
+      if(entities.isClosed()) {
+        hasNextRow = false
+      } else {
+        if (!fetchedNextRow) {
+          hasNextRow = entities.next
+          fetchedNextRow = true
+        }
+        
       }
       hasNextRow
     }
@@ -95,6 +101,15 @@ class JDBCQueryableSource[Q <: DomainQuery](
         entities.next
       }
       rowMapper.apply(entities)
+    }
+    
+    override def finalize(): Unit = {
+      Try { if(!entities.isClosed()) {
+        entities.close()
+      }}
+      Try { if(!connection.isClosed()) {
+        connection.close()
+      }}
     }
   }
 }

@@ -7,7 +7,7 @@ import scray.querying.description.QueryRange
 /**
  * Oracle dialect for Scray
  */
-object ScrayOracleDialect extends ScraySQLDialect(ScraySQLDialectFactory.ORACLE) {
+object ScrayOracleDialect extends ScraySQLDialect("ORACLE") {
   
   /**
    * Oracle implements limits by introducing an implicit column
@@ -17,6 +17,8 @@ object ScrayOracleDialect extends ScraySQLDialect(ScraySQLDialectFactory.ORACLE)
     // if we have entries in the list, then we do not need the "and" upfront...
     if(where.size > 0) {
       sbuf.append(DomainToSQLQueryMapping.AND_LITERAL)
+    } else {
+      sbuf.append(" WHERE ")
     }
     range.skip.foreach { skip =>
       sbuf.append(s" ROWNUM > $skip ")
@@ -44,6 +46,13 @@ object ScrayOracleDialect extends ScraySQLDialect(ScraySQLDialectFactory.ORACLE)
    * TODO: Probably we need to account for that in the query generation! 
    */
   override def emptyStringIsNull: Boolean = true
+  
+  /**
+   * we scan if the URL is of format:
+   * jdbc:oracle:thin:...
+   */
+  override def isDialectJdbcURL(jdbcURL: String): Boolean =
+    jdbcURL.toUpperCase().startsWith("JDBC:ORACLE:THIN:")
   
   override val DRIVER_CLASS_NAME = "oracle.jdbc.OracleDriver"
 }

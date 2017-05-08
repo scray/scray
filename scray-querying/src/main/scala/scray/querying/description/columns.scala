@@ -1,13 +1,15 @@
 package scray.querying.description
 
+import scala.math.BigDecimal
 import java.math.BigInteger
-import java.math.BigDecimal
+import java.math.{BigDecimal => JBigDecimal}
 import java.util.UUID
 import java.net.URI
 import java.net.URL
 import java.sql.Timestamp
 import java.sql.Date
 import java.sql.Time
+
 
 object BasicTypeIds extends Enumeration {
   type BasicTypeIds = Value
@@ -19,7 +21,7 @@ object BasicTypeIds extends Enumeration {
   val FLOAT      = Value(6,  classOf[Float].getName)
   val DOUBLE     = Value(7,  classOf[Double].getName)
   val BIGINT     = Value(8,  classOf[BigInt].getName)
-  val BIGDECIMAL = Value(9,  classOf[BigDecimal].getName)
+  val BIGDECIMAL = Value(9,  classOf[JBigDecimal].getName)
   val BIGINTEGER = Value(10, classOf[BigInteger].getName)
   val INTEGER    = Value(11, classOf[Integer].getName)
   val OBJECT     = Value(13, classOf[Object].getName)
@@ -79,7 +81,7 @@ object BigIntType extends ColumnType[BigInt] {
   override val className: String = BasicTypeIds.BIGINT.toString
 }
 
-object BigDecimalType extends ColumnType[BigDecimal] {
+object BigDecimalType extends ColumnType[JBigDecimal] {
   override val typeId: Int = BasicTypeIds.BIGDECIMAL.id
   override val className: String = BasicTypeIds.BIGDECIMAL.toString
 }
@@ -138,6 +140,126 @@ object URIType extends ColumnType[URI] {
 
 trait SpecializedColumn[T] extends Serializable {
   val columnType: ColumnType[T]
+}
+
+class StringColumn(override val column: Column, override val value: String) 
+  extends RowColumn[String](column, value) with SpecializedColumn[String] {
+  override val columnType = StringType
+}
+
+class LongColumn(override val column: Column, override val value: Long) 
+  extends RowColumn[Long](column, value) with SpecializedColumn[Long] {
+  override val columnType = LongType
+}
+
+class IntColumn(override val column: Column, override val value: Int) 
+  extends RowColumn[Int](column, value) with SpecializedColumn[Int] {
+  override val columnType = IntType
+}
+
+class UUIDColumn(override val column: Column, override val value: UUID) 
+  extends RowColumn[UUID](column, value) with SpecializedColumn[UUID] {
+  override val columnType = UUIDType
+}
+
+class ShortColumn(override val column: Column, override val value: Short) 
+  extends RowColumn[Short](column, value) with SpecializedColumn[Short] {
+  override val columnType = ShortType
+}
+
+class FloatColumn(override val column: Column, override val value: Float) 
+  extends RowColumn[Float](column, value) with SpecializedColumn[Float] {
+  override val columnType = FloatType
+}
+
+class DoubleColumn(override val column: Column, override val value: Double) 
+  extends RowColumn[Double](column, value) with SpecializedColumn[Double] {
+  override val columnType = DoubleType
+}
+
+class BigIntColumn(override val column: Column, override val value: BigInt) 
+  extends RowColumn[BigInt](column, value) with SpecializedColumn[BigInt] {
+  override val columnType = BigIntType
+}
+
+class BigDecimalColumn(override val column: Column, override val value: JBigDecimal) 
+  extends RowColumn[JBigDecimal](column, value) with SpecializedColumn[JBigDecimal] {
+  override val columnType = BigDecimalType
+}
+
+class BigIntegerColumn(override val column: Column, override val value: BigInteger) 
+  extends RowColumn[BigInteger](column, value) with SpecializedColumn[BigInteger] {
+  override val columnType = BigIntegerType
+}
+
+class IntegerColumn(override val column: Column, override val value: Integer) 
+  extends RowColumn[Integer](column, value) with SpecializedColumn[Integer] {
+  override val columnType = IntegerType
+}
+
+class ObjectColumn(override val column: Column, override val value: Object) 
+  extends RowColumn[Object](column, value) with SpecializedColumn[Object] {
+  override val columnType = ObjectType
+}
+
+class ByteColumn(override val column: Column, override val value: Byte) 
+  extends RowColumn[Byte](column, value) with SpecializedColumn[Byte] {
+  override val columnType = ByteType
+}
+
+class ArrayByteColumn(override val column: Column, override val value: Array[Byte]) 
+  extends RowColumn[Array[Byte]](column, value) with SpecializedColumn[Array[Byte]] {
+  override val columnType = ByteArrType
+}
+
+class DateColumn(override val column: Column, override val value: Date) 
+  extends RowColumn[Date](column, value) with SpecializedColumn[Date] {
+  override val columnType = DateType
+}
+
+class TimeColumn(override val column: Column, override val value: Time) 
+  extends RowColumn[Time](column, value) with SpecializedColumn[Time] {
+  override val columnType = TimeType
+}
+
+class TimestampColumn(override val column: Column, override val value: Timestamp) 
+  extends RowColumn[Timestamp](column, value) with SpecializedColumn[Timestamp] {
+  override val columnType = TimestampType
+}
+
+class URLColumn(override val column: Column, override val value: URL) 
+  extends RowColumn[URL](column, value) with SpecializedColumn[URL] {
+  override val columnType = URLType
+}
+
+class URIColumn(override val column: Column, override val value: URI) 
+  extends RowColumn[URI](column, value) with SpecializedColumn[URI] {
+  override val columnType = URIType
+}
+
+
+object ColumnFactory {
   
+  def getColumnFromValue(col:Column, value: Any): RowColumn[_] = {
+    value match {
+      case i: Int => new IntColumn(col, i)
+      case s: String => new StringColumn(col, s)
+      case bi: BigInt => new BigIntegerColumn(col, bi.bigInteger)
+      case bi: BigInteger => new BigIntegerColumn(col, bi)
+      case bc: BigDecimal => new BigDecimalColumn(col, bc.bigDecimal)
+      case jbc: JBigDecimal => new BigDecimalColumn(col, jbc)
+      case u: URL => new URLColumn(col, new URL(u.toString()))
+      case u: URI => new URIColumn(col, new URI(u.toString()))
+      case t: Timestamp => new TimestampColumn(col, new Timestamp(t.getTime()))
+      case t: Time => new TimeColumn(col, new Time(t.getTime()))
+      case d: Date => new DateColumn(col, d)
+      case b: Byte => new ByteColumn(col, b)
+      case f: Float => new FloatColumn(col, f)
+      case db: Double => new DoubleColumn(col, db)
+      case a: Array[Byte] => new ArrayByteColumn(col, a)
+      case _ => new ObjectColumn(col, value.asInstanceOf[Object]).asInstanceOf[RowColumn[Object]]
+    }
+  }
   
 }
+

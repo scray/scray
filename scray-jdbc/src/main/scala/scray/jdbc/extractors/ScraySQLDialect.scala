@@ -10,6 +10,11 @@ import scray.querying.description.QueryRange
 abstract class ScraySQLDialect(val name: String, unequal: String = "<>") {
   
   /**
+   * returns true if the provided jdbcURL is valid for this type of dialect
+   */
+  def isDialectJdbcURL(jdbcURL: String): Boolean
+  
+  /**
    * returns the name of this dialect for extraction
    */
   def getName: String = name

@@ -18,9 +18,12 @@ import scray.querying.sync.DbSession
 import scray.querying.sync.StatementExecutionError
 import com.zaxxer.hikari.HikariConfig
 import scray.jdbc.extractors.ScraySQLDialect
+import scray.jdbc.extractors.ScraySQLDialectFactory
 
-
-class JDBCDbSession(val ds: HikariDataSource, connection: Connection, sqlDialiect: ScraySQLDialect) extends DbSession[PreparedStatement, PreparedStatement, ResultSet](ds.getJdbcUrl) with LazyLogging{
+/**
+ * Session implementation for JDBC datasources using a Hikari connection pool
+ */
+class JDBCDbSession(val ds: HikariDataSource, val metadataConnection: Connection, val sqlDialiect: ScraySQLDialect) extends DbSession[PreparedStatement, PreparedStatement, ResultSet](ds.getJdbcUrl) with LazyLogging{
   
   def this(ds: HikariDataSource, sqlDialiect: ScraySQLDialect) = this(ds, ds.getConnection, sqlDialiect)
   
@@ -36,9 +39,12 @@ class JDBCDbSession(val ds: HikariDataSource, connection: Connection, sqlDialiec
     )
   }
   
+  def this(jdbcURL: String, username: String, password: String) =
+    this(jdbcURL, ScraySQLDialectFactory.getDialectFromJdbcURL(jdbcURL), username, password)
+  
   override def execute(statement: String): Try[ResultSet] = {
       try {
-        val prepStatement = connection.prepareStatement(statement)
+        val prepStatement = metadataConnection.prepareStatement(statement)
         val result = prepStatement.executeQuery()
         Success(result)
       } catch {

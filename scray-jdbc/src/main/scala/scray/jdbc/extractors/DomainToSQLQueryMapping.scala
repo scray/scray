@@ -164,7 +164,7 @@ class DomainToSQLQueryMapping[Q <: DomainQuery, S <: JDBCQueryableSource[Q]] ext
         case _ => ("", 0)
       }
     }.unzip(a => (a._1, a._2))
-    (domTuple._1.mkString(DomainToSQLQueryMapping.AND_LITERAL), domTuple._2.reduce(_ + _))
+    (domTuple._1.mkString(DomainToSQLQueryMapping.AND_LITERAL), domTuple._2.foldLeft(0)(_ + _))
   }
   
   /**

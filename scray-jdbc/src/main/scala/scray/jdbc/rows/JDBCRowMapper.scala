@@ -9,16 +9,21 @@ import scray.querying.description.TableIdentifier
 import scray.querying.description.Column
 import scray.querying.description.SimpleRow
 import scala.collection.mutable.ArrayBuffer
+import scray.querying.description.RowColumn
+import scray.querying.description.TableIdentifier
+import scray.querying.description.SimpleRow
+import com.typesafe.scalalogging.slf4j.LazyLogging
+import scray.jdbc.extractors.JDBCSpecialColumnHandling
 
 /**
  * simple Row-Mapper for JDBC columns from JDBC ResultSets 
  * TODO: use new type system for mappings
  */
-class JDBCRowMapper(ti: TableIdentifier) extends Function1[ResultSet, Row] {
+class JDBCRowMapper(ti: TableIdentifier) extends Function1[ResultSet, Row] with LazyLogging {
   
   @tailrec private def walkColumns(rsMetadata: ResultSetMetaData, rs: ResultSet, counter: Int, colAgg: ArrayBuffer[RowColumn[_]]): ArrayBuffer[RowColumn[_]] = {
     def typesafeAdd[T](newValue: T): Unit = {
-      colAgg += RowColumn(Column(rsMetadata.getColumnName(counter), ti), newValue)
+      colAgg += JDBCSpecialColumnHandling.getColumnFromValue(Column(rsMetadata.getColumnName(counter), ti), newValue)
     }
     
     if(counter > 0) {
