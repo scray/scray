@@ -43,8 +43,6 @@ class LimitIncreasingQueryableSource[Q <: DomainQuery](val store: QueryableStore
     with LazySource[Q]
     with LazyLogging {
   
-  // val queryMapping: DomainQuery => Q = tableConf.domainQueryMapping
-  
   /**
    * create function to fetch new data with, which uses a given limit
    */

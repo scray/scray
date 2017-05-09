@@ -45,8 +45,6 @@ class SplittedAutoIndexQueryableSource[Q <: DomainQuery, T: Ordering](val store:
     with LazySource[Q] 
     with LazyLogging {
 
-  //val queryMapping: DomainQuery => Q = tableConf.domainQueryMapping
-  
   private def transformWhereAST(domains: List[Domain[_]], bounds: (T, T)): List[Domain[_]] = {
     domains.map { domain => 
       if(domain.column == splitcolumn) {
