@@ -13,7 +13,7 @@ object ScrayMSSQLDialect extends ScraySQLDialect("MSSQL") {
    * MSSQL implements limits by offset and fetch
    * Warning: can only be applied if there will be an order by clause
    */
-  override def getEnforcedLimit(rangeOpt: Option[QueryRange], where: List[Domain[_]]): String = rangeOpt.map { range =>
+  override def getEnforcedLimit(rangeOpt: Option[QueryRange], where: List[Domain[_]]): (String, List[Domain[_]]) = rangeOpt.map { range =>
     val sbuf = new StringBuffer
     if(range.skip.isDefined || range.limit.isDefined) {
       sbuf.append(s" OFFSET ${range.skip.getOrElse(0L)} ROWS ")
@@ -21,8 +21,8 @@ object ScrayMSSQLDialect extends ScraySQLDialect("MSSQL") {
         sbuf.append(s" FETCH NEXT ${limit} ROWS ONLY ")
       }
     }
-    sbuf.toString
-  }.getOrElse("")
+    (sbuf.toString, List())
+  }.getOrElse(("", List()))
 
   /**
    * we scan if the URL is of format:

@@ -42,7 +42,7 @@ abstract class ScraySQLDialect(val name: String, unequal: String = "<>") {
    * limits are usually non-standard for DBMS systems, so we leave the implementation
    * open to enforce implementation in concrete dialects
    */
-  def getEnforcedLimit(range: Option[QueryRange], where: List[Domain[_]]): String
+  def getEnforcedLimit(range: Option[QueryRange], where: List[Domain[_]]): (String, List[Domain[_]])
   
   /**
    * if the empty String should be consered to be equal to NULL values

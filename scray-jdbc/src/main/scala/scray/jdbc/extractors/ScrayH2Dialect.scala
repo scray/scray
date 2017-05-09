@@ -12,7 +12,7 @@ object ScrayH2Dialect extends ScraySQLDialect("H2") {
   /**
    * H2 implements limits by limit and offset (if limit has been specified) or offset and fetch
    */
-  override def getEnforcedLimit(rangeOpt: Option[QueryRange], where: List[Domain[_]]): String = rangeOpt.map { range =>
+  override def getEnforcedLimit(rangeOpt: Option[QueryRange], where: List[Domain[_]]): (String, List[Domain[_]]) = rangeOpt.map { range =>
     val sbuf = new StringBuffer
     if(range.skip.isDefined || range.limit.isDefined) {
       range.limit.map { limit =>
@@ -24,8 +24,8 @@ object ScrayH2Dialect extends ScraySQLDialect("H2") {
         sbuf.append(s" OFFSET ${range.skip.getOrElse(0L)} ROWS ")
       }
     }
-    sbuf.toString
-  }.getOrElse("")
+    (sbuf.toString, List())
+  }.getOrElse(("", List()))
 
   /**
    * we scan if the URL is of format:

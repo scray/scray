@@ -29,6 +29,11 @@ import scray.querying.description.AutoIndexConfiguration
 import scray.querying.description.IndexConfiguration
 import java.sql.Types
 import com.typesafe.scalalogging.slf4j.LazyLogging
+import scray.querying.description.internal.Domain
+import java.util.concurrent.locks.ReentrantLock
+import scala.collection.mutable.HashTable
+import scala.collection.mutable.HashMap
+import java.sql.DatabaseMetaData
 
 
 /**
@@ -38,12 +43,10 @@ class JDBCExtractors[Q <: DomainQuery, S <: JDBCQueryableSource[Q]](
     ti: TableIdentifier, hikari: HikariDataSource, metadataConnection: Connection,
     sqlDialect: ScraySQLDialect, futurePool: FuturePool) extends StoreExtractor[JDBCQueryableSource[Q]] with LazyLogging {
 
-  // private val ti = store.ti
-  
   private val queryMapping = new DomainToSQLQueryMapping[Q, S]
   
   // cache metadata connection for later use
-  private val dbmsMetadata  = metadataConnection.getMetaData()
+  private val dbmsMetadata  = JDBCExtractors.fetchOrGetDatabaseMetadata(ti.dbSystem, ti.dbId, metadataConnection)
   
   
   /**
@@ -92,51 +95,10 @@ class JDBCExtractors[Q <: DomainQuery, S <: JDBCQueryableSource[Q]](
     }
   }
 
-  case class TemporaryIndexInfo(column: String, ordered: Boolean, count: Int, lastOrdinal: Short)
+  
   
   // at present we can only use non-combined indexes
-  val indexInformations = {  
-    def getIndexInfos(rs: ResultSet, indexes: ListBuffer[TemporaryIndexInfo], lastIndexRow: Option[TemporaryIndexInfo]): List[TemporaryIndexInfo] = {
-      if(rs.next) {
-        Option(rs.getString("INDEX_NAME")).map { _ =>
-          val newIndex = TemporaryIndexInfo(rs.getString("COLUMN_NAME"), 
-              Option(rs.getString("ASC_OR_DESC")).map(_ => true).getOrElse(false), 
-              1, 
-              rs.getShort("ORDINAL_POSITION"))
-          lastIndexRow.map { index =>
-            if(rs.getShort("ORDINAL_POSITION") <= index.lastOrdinal) {
-              // found next index, add the last if there is only one entry
-              if(index.count == 1) {
-                getIndexInfos(rs, indexes += index, Some(newIndex))
-              } else {
-                getIndexInfos(rs, indexes, Some(newIndex))
-              }
-            } else {
-              // found another row for the index at hand => do not use it, but increase count to at least 2
-              getIndexInfos(rs, indexes, Some(index.copy(count = 2)))
-            }
-          }.getOrElse(getIndexInfos(rs, indexes, Some(newIndex)))
-        }.getOrElse(getIndexInfos(rs, indexes, lastIndexRow))
-      } else {
-        lastIndexRow.map { index =>
-          if(index.count == 1) {
-            (indexes += index).toList
-          } else {
-            indexes.toList
-          }
-        }.getOrElse(indexes.toList)
-      }
-    }
-    
-    val rs = dbmsMetadata.getIndexInfo(null, ti.dbId, ti.tableId, false, false)
-    try {
-      val iInfo = getIndexInfos(rs, new ListBuffer[TemporaryIndexInfo], None)
-      iInfo.foreach(index => logger.debug(s"Found index for ${ti.dbSystem}.${ti.dbId}.${ti.tableId}.${index.column}"))
-      iInfo.map(index => index.column -> index).toMap
-    } finally {
-      rs.close
-    }
-  }
+  val indexInformations = JDBCExtractors.fetchOrGetIndexInformation(dbmsMetadata, ti)
 
   
   // assume that value columns are all columns that are not indexed
@@ -195,7 +157,7 @@ class JDBCExtractors[Q <: DomainQuery, S <: JDBCQueryableSource[Q]](
   /**
    * returns a query mapping
    */
-  def getQueryMapping(store: S, tableName: Option[String]): DomainQuery => (String, Int) = 
+  def getQueryMapping(store: S, tableName: Option[String]): DomainQuery => (String, Int, List[Domain[_]]) = 
     queryMapping.getQueryMapping(store, tableName, sqlDialect)
 
   /**
@@ -302,3 +264,83 @@ class JDBCExtractors[Q <: DomainQuery, S <: JDBCQueryableSource[Q]](
 
 }
 
+/**
+ * since fetching database meta-information seems to be expensive for most relational
+ * DBMS, we fetch and cache
+ */
+object JDBCExtractors extends LazyLogging {
+  
+  case class TemporaryIndexInfo(column: String, ordered: Boolean, count: Int, lastOrdinal: Short)
+  
+  private val lock = new ReentrantLock()
+  
+  private val dbmsHash = new HashMap[(String, String), DatabaseMetaData]()
+  private val indexHash = new HashMap[TableIdentifier, Map[String, TemporaryIndexInfo]]()
+  
+  def fetchOrGetDatabaseMetadata(dbms: String, dbId: String, connection: Connection): DatabaseMetaData = {
+    lock.lock()
+    try {
+      dbmsHash.get((dbms, dbId)).getOrElse { 
+        val meta = connection.getMetaData
+        dbmsHash.put((dbms, dbId), meta)
+        meta
+      }
+    } finally {
+      lock.unlock()
+    }
+  }
+  
+  def fetchOrGetIndexInformation(dbMeta: DatabaseMetaData, ti: TableIdentifier): Map[String, TemporaryIndexInfo] = {
+    def getIndexInfos(rs: ResultSet, indexes: ListBuffer[JDBCExtractors.TemporaryIndexInfo], 
+        lastIndexRow: Option[JDBCExtractors.TemporaryIndexInfo]): List[JDBCExtractors.TemporaryIndexInfo] = {
+      if(rs.next) {
+        Option(rs.getString("INDEX_NAME")).map { _ =>
+          val newIndex = JDBCExtractors.TemporaryIndexInfo(rs.getString("COLUMN_NAME"), 
+              Option(rs.getString("ASC_OR_DESC")).map(_ => true).getOrElse(false), 
+              1, 
+              rs.getShort("ORDINAL_POSITION"))
+          lastIndexRow.map { index =>
+            if(rs.getShort("ORDINAL_POSITION") <= index.lastOrdinal) {
+              // found next index, add the last if there is only one entry
+              if(index.count == 1) {
+                getIndexInfos(rs, indexes += index, Some(newIndex))
+              } else {
+                getIndexInfos(rs, indexes, Some(newIndex))
+              }
+            } else {
+              // found another row for the index at hand => do not use it, but increase count to at least 2
+              getIndexInfos(rs, indexes, Some(index.copy(count = 2)))
+            }
+          }.getOrElse(getIndexInfos(rs, indexes, Some(newIndex)))
+        }.getOrElse(getIndexInfos(rs, indexes, lastIndexRow))
+      } else {
+        lastIndexRow.map { index =>
+          if(index.count == 1) {
+            (indexes += index).toList
+          } else {
+            indexes.toList
+          }
+        }.getOrElse(indexes.toList)
+      }
+    }
+
+    lock.lock()
+    try {
+      indexHash.get(ti).getOrElse {
+        val rs = dbMeta.getIndexInfo(null, ti.dbId, ti.tableId, false, false)
+        try {
+          val iInfo = getIndexInfos(rs, new ListBuffer[JDBCExtractors.TemporaryIndexInfo], None)
+          iInfo.foreach(index => logger.debug(s"Found index for ${ti.dbSystem}.${ti.dbId}.${ti.tableId}.${index.column}"))
+          val result = iInfo.map(index => index.column -> index).toMap
+          indexHash.put(ti, result)
+          result
+        } finally {
+          rs.close
+        }
+      }
+    } finally {
+      lock.unlock()
+    }
+  }
+  
+}

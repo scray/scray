@@ -24,6 +24,7 @@ import scala.collection.mutable.ArrayBuffer
 import scray.jdbc.extractors.ScraySQLDialect
 import com.zaxxer.hikari.HikariDataSource
 import scala.util.Try
+import com.typesafe.scalalogging.slf4j.LazyLogging
 
 class JDBCQueryableSource[Q <: DomainQuery](
     val ti: TableIdentifier,
@@ -35,7 +36,8 @@ class JDBCQueryableSource[Q <: DomainQuery](
     val queryMapper: DomainToSQLQueryMapping[Q, JDBCQueryableSource[Q]],
     futurePool: FuturePool,
     rowMapper: ResultSet => Row,
-    dialect: ScraySQLDialect) extends QueryableStoreSource[Q](ti, rowKeyColumns, clusteringKeyColumns, allColumns, false) {
+    dialect: ScraySQLDialect) extends QueryableStoreSource[Q](ti, rowKeyColumns, clusteringKeyColumns, allColumns, false) 
+    with LazyLogging {
 
   val mappingFunction = queryMapper.getQueryMapping(this, Some(ti.tableId), dialect)
   val autoIndexedColumns = columnConfigs.filter(colConf => colConf.index.isDefined &&
@@ -43,14 +45,18 @@ class JDBCQueryableSource[Q <: DomainQuery](
     (colConf.column, colConf.index.map(index => index.isAutoIndexed && index.isSorted))
   }
 
+  override def hasSkipAndLimit: Boolean = true
+  
   @inline def requestIterator(query: Q): Future[Iterator[Row]] = {
     import scala.collection.convert.decorateAsScala.asScalaIteratorConverter
     futurePool {
       val queryString = mappingFunction(query)
       val connection = hikari.getConnection
       val prep = connection.prepareStatement(queryString._1)
-      queryMapper.mapWhereClauseValues(prep, query.asInstanceOf[DomainQuery].domains)
-      val resultSet = prep.executeQuery(queryString._1)
+      queryMapper.mapWhereClauseValues(prep, query.asInstanceOf[DomainQuery].domains ++ queryString._3)
+logger.info(s" Executing QUERY NOW")
+      val resultSet = prep.executeQuery()
+logger.info(s" Fetching Iterator NOW")
       getIterator(resultSet, connection)
     }
   }
@@ -98,8 +104,9 @@ class JDBCQueryableSource[Q <: DomainQuery](
 
     override def next: Row = {
       if (!fetchedNextRow) {
-        entities.next
+        hasNextRow = entities.next
       }
+      fetchedNextRow = false
       rowMapper.apply(entities)
     }
     

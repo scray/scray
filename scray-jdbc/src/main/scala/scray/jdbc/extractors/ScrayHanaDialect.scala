@@ -12,7 +12,7 @@ object ScrayHanaDialect extends ScraySQLDialect("HANA") {
   /**
    * Hana implements limits by LIMIT <limit> [ OFFSET <offset> ]
    */
-  override def getEnforcedLimit(rangeOpt: Option[QueryRange], where: List[Domain[_]]): String = rangeOpt.map { range =>
+  override def getEnforcedLimit(rangeOpt: Option[QueryRange], where: List[Domain[_]]): (String, List[Domain[_]]) = rangeOpt.map { range =>
     val sbuf = new StringBuffer
     if(range.skip.isDefined || range.limit.isDefined) {
       sbuf.append(" LIMIT ")
@@ -28,8 +28,8 @@ object ScrayHanaDialect extends ScraySQLDialect("HANA") {
         sbuf.append(s" OFFSET ${skip}")
       }
     }
-    sbuf.toString
-  }.getOrElse("")
+    (sbuf.toString, List())
+  }.getOrElse(("", List()))
 
   /**
    * we scan if the URL is of format:

@@ -12,7 +12,7 @@ object ScraySparkDialect extends ScraySQLDialect("SPARK") {
   /**
    * Oracle implements limits by introducing an implicit column
    */
-  override def getEnforcedLimit(rangeOpt: Option[QueryRange], where: List[Domain[_]]): String = rangeOpt.map { range =>
+  override def getEnforcedLimit(rangeOpt: Option[QueryRange], where: List[Domain[_]]): (String, List[Domain[_]]) = rangeOpt.map { range =>
     val sbuf = new StringBuffer
     if(range.skip.isDefined || range.limit.isDefined) {
       sbuf.append(" LIMIT ")
@@ -28,8 +28,8 @@ object ScraySparkDialect extends ScraySQLDialect("SPARK") {
         sbuf.append(s" OFFSET ${skip}")
       }
     }
-    sbuf.toString
-  }.getOrElse("")
+    (sbuf.toString, List())
+  }.getOrElse(("", List()))
 
   /**
    * Because Oracle has a special way of handling limits we need a special SELECT clause for it

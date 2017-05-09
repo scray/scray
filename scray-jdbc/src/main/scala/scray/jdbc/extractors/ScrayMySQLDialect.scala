@@ -12,7 +12,7 @@ object ScrayMySQLDialect extends ScraySQLDialect("MYSQL") {
   /**
    * MySQL implements limits by LIMIT [<offset> ,] <limit>
    */
-  override def getEnforcedLimit(rangeOpt: Option[QueryRange], where: List[Domain[_]]): String = rangeOpt.map { range =>
+  override def getEnforcedLimit(rangeOpt: Option[QueryRange], where: List[Domain[_]]): (String, List[Domain[_]]) = rangeOpt.map { range =>
     val sbuf = new StringBuffer
     if(range.skip.isDefined || range.limit.isDefined) {
       sbuf.append(" LIMIT ")
@@ -31,8 +31,8 @@ object ScrayMySQLDialect extends ScraySQLDialect("MYSQL") {
         sbuf.append(s"${range.limit.get}")
       }
     }
-    sbuf.toString
-  }.getOrElse("")
+    (sbuf.toString, List())
+  }.getOrElse(("", List()))
 
   /**
    * we scan if the URL is of format:
