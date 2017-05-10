@@ -32,6 +32,8 @@ import scray.querying.source.{ EagerCollectingDomainFilterSource, EagerEmptyRowD
 import scray.querying.source.{ OrderingEagerMappingSource, ParallelizedQueryableSource, QueryableSource, SimpleHashJoinSource, Source, SplittedAutoIndexQueryableSource, TimeoutMappingSource, MergeReferenceColumns, KeyedSource }
 //import scray.querying.source.indexing.{ SimpleHashJoinConfig, TimeIndexConfig, TimeIndexSource }
 import scray.querying.source.store.QueryableStoreSource
+import scray.common.key.api.KeyGenerator
+import scala.collection.mutable.ListBuffer
 
 /**
  * Simple planner to execute queries.
@@ -83,8 +85,8 @@ object Planner extends LazyLogging {
         
         val mv = Registry.getMaterializedView(query.getQueryspace, version, query.getTableIdentifier)
         if (mv.isDefined) {
-          val mvDomains = Planner.qualifyPredicates(cQuery).get
-          createQueryDomains(query, version, List(Planner.getMvQuery(mvDomains, query, query.getTableIdentifier)))
+          val mvDomains = Planner.qualifyPredicates(cQuery)
+          createQueryDomains(query, version, List(Planner.getMvQuery(mvDomains, query, query.getTableIdentifier, mv.get.primaryKeyColumn, mv.get.keyGenerationClass)))
         } else {
           // transform query into a query only containing domains
           transformQueryDomains(cQuery, version)
@@ -324,27 +326,26 @@ object Planner extends LazyLogging {
       // versionInfo.readableStore(versionInfo.runtimeVersion().get)
   }
   
- def getMvQuery(domains: List[Domain[_]], query: Query, ti: TableIdentifier): SingleValueDomain[String] = {
-        val pKey = new StringBuilder
-        val orderedColumnName = domains.sortBy { x => (x.column.columnName) }
+ def getMvQuery(domains: Option[List[Domain[_]]], query: Query, ti: TableIdentifier, primaryKeyColumn: String, keyGenerator: KeyGenerator[Array[String]]): SingleValueDomain[String] = {
+        val keyElements = new ListBuffer[String]
 
-        orderedColumnName.map { domaine =>
-          {
-            domaine match {
-              // compose primary key
-              case sDomaine: SingleValueDomain[_] => {
-                  if(pKey.size > 0) {
-                    pKey.append("_" + sDomaine.value)
-                  } else {
-                    pKey.append(sDomaine.value)
+        domains.map { domain => 
+        val orderedColumnName = domain.sortBy { x => (x.column.columnName) }
+
+          orderedColumnName.map { domaine =>
+            {
+              domaine match {
+                // compose primary key
+                case sDomaine: SingleValueDomain[_] => {
+                    keyElements += (s"""${sDomaine.column.columnName}=${sDomaine.value}""")
                   }
-                }
-              case _ => throw new MaterializedViewQueryException(query)
+                case _ => throw new MaterializedViewQueryException(query)
+              }
             }
           }
         }
 
-      new SingleValueDomain(Column("key", ti), pKey.toString(), false, false)
+      new SingleValueDomain(Column(primaryKeyColumn, ti), keyGenerator(keyElements.toArray).getKeyAsString, false, false)
     }
 
   /**
@@ -479,7 +480,12 @@ object Planner extends LazyLogging {
 //      }
 //    }.getOrElse {
     def getLimitIncreasingSource[Q <: DomainQuery, K <: DomainQuery, V](tableConf: TableConfiguration[Q, K, V], isOrdered: Boolean = false) = {
-      new LimitIncreasingQueryableSource(getQueryableStore(tableConf), tableConf, tableConf.table, isOrdered)
+      val storeSource = getQueryableStore(tableConf)
+      if(!storeSource.hasSkipAndLimit) {
+        new LimitIncreasingQueryableSource(storeSource, tableConf, tableConf.table, isOrdered)
+      } else {
+        storeSource
+      }
     }
     
       // construct plan using information on main table

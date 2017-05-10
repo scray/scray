@@ -58,8 +58,6 @@ class ScrayLoaderQuerySpace(name: String, config: ScrayConfiguration, qsConfig: 
   val materializedViews = qsConfig.materializedViews.map { view => 
     if(view.keyClass.equals("scray.common.key.OrderedStringKeyGenerator")) {
       new MaterializedView(view.table, OrderedStringKeyGenerator) 
-    } else if (view.keyClass.equals("scray.common.key.StringKey")) {
-      new MaterializedView(view.table, StringKey) 
     } else {
       logger.warn("Unknown key generator class. use default: scray.common.key.OrderedStringKeyGenerator")
       new MaterializedView(view.table, OrderedStringKeyGenerator)

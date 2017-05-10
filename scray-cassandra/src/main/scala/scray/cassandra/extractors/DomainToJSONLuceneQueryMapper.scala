@@ -25,7 +25,7 @@ import scray.querying.queries.DomainQuery
  * which in turn can be used by DomainToJSONLuceneQueryMapping
  */
 object DomainToJSONLuceneQueryMapper extends LazyLogging {
-
+  
   private def convertSingleValueDomain(vdomain: SingleValueDomain[_]): String = {
     if(vdomain.isNull) {
       ""

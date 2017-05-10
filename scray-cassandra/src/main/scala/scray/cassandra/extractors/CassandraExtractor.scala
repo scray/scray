@@ -88,7 +88,7 @@ class CassandraExtractor[Q <: DomainQuery](session: Session, table: TableIdentif
   /**
    * returns a generic Cassandra-store query mapping
    */
-  override def getQueryMapping(store: CassandraQueryableSource[Q], tableName: Option[String]): DomainQuery => String =
+  def getQueryMapping(store: CassandraQueryableSource[Q], tableName: Option[String]): DomainQuery => String =
     new DomainToCQLQueryMapping[Q, CassandraQueryableSource[Q]]().getQueryMapping(store, tableName)
 
   /**
@@ -128,9 +128,9 @@ class CassandraExtractor[Q <: DomainQuery](session: Session, table: TableIdentif
         val fieldString = outerMatcher.group(1)
         if(CassandraExtractor.innerPattern.split(fieldString, -1).find { _.trim() == column.columnName }.isDefined) {
           if(splitters.get(column).isDefined) {
-            logger.debug(s"Found Lucene-indexed column ${column.columnName} for table ${tmOpt.get.getName} with splitting option")
+            logger.debug(s"Found Lucene-indexed column ${column.columnName} for table ${tmOpt.get.getKeyspace.getName}.${tmOpt.get.getName} with splitting option")
           } else {
-            logger.debug(s"Found Lucene-indexed column ${column.columnName} for table ${tmOpt.get.getName}")
+            logger.debug(s"Found Lucene-indexed column ${column.columnName} for table ${tmOpt.get.getKeyspace.getName}.${tmOpt.get.getName}")
           }
           Some(AutoIndexConfiguration[Any](isRangeIndex = true, isFullTextIndex = true, isSorted = true,
                   rangePartioned = splitters.get(column).map(_.splitter).asInstanceOf[Option[((Any, Any), Boolean) => Iterator[(Any, Any)]]]))
@@ -159,7 +159,7 @@ class CassandraExtractor[Q <: DomainQuery](session: Session, table: TableIdentif
         if(idxMethadata == null) {
           None
         } else {
-          logger.debug(s"Found index for ${tm.getName}.${column.columnName} ")
+          logger.debug(s"Found index for ${tm.getKeyspace.getName}.${tm.getName}.${column.columnName} ")
           Some(true)
         }
     }.isDefined
@@ -330,9 +330,9 @@ class CassandraExtractor[Q <: DomainQuery](session: Session, table: TableIdentif
       clusterKeys,
       allColumns,
       rowMapper.asInstanceOf[CassRow => Row],
-      cassQuerySource.map(_.mappingFunction.asInstanceOf[DomainQuery => Q]).getOrElse {
-        versioningConfig.map(_.queryableStore.get.asInstanceOf[CassandraQueryableSource[Q]].mappingFunction).orNull.asInstanceOf[DomainQuery => Q]
-      },
+//      cassQuerySource.map(_.mappingFunction.asInstanceOf[DomainQuery => Q]).getOrElse {
+//        versioningConfig.map(_.queryableStore.get.asInstanceOf[CassandraQueryableSource[Q]].mappingFunction).orNull.asInstanceOf[DomainQuery => Q]
+//      },
       cassQuerySource,
       cassQuerySource
     )

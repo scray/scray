@@ -22,7 +22,8 @@ public enum KryoSerializerNumber {
 
 	column(200), rowcolumn(201), simplerow(202), compositerow(203),	
 	Set1(18), Set2(19), Set3(20), Set4(21), Set(22), // small scala sets -> java set
-	UUID(81), BigInteger(211), // various JAVA type numbers
+	SqlDate(77), SqlTime(78), SqlTimestamp(79), URI(80), InetSockerAddress(81),
+	UUID(82), Locale(83), SimpleDateFormat(84), BigInteger(211), // various JAVA type numbers
 	BatchId(210); // because clients usually do not have a batch id 
 
 	private int number;

@@ -118,7 +118,6 @@ case class TableConfiguration[Q <: DomainQuery, K <: DomainQuery, V] (
   clusteringKeyColumns: Set[Column], // some more primary key columns which can be ordered
   allColumns: Set[Column], // a List of all columns in the table
   rowMapper: (V) => Row, // mapper from a result row returned by the store to a scray-row
-  domainQueryMapping: DomainQuery => Q, // maps a scray-DomainQuery to a query of the store
   queryableStore: Option[QueryableStoreSource[Q]], // the queryable store representation, allowing to query the store, None if versioned
   readableStore: Option[QueryableStoreSource[K]] // the readablestore, used in case this is used by a HashJoinSource, None if versioned
 )

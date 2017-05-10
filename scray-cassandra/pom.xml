@@ -1,9 +1,8 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<parent>
 		<groupId>org.scray</groupId>
 		<artifactId>scray-parent</artifactId>
-		<version>0.9.6-SNAPSHOT</version>
+		<version>0.10.1-SNAPSHOT</version>
 		<relativePath>../pom.xml</relativePath>
 	</parent>
 
@@ -13,7 +12,6 @@
 	<description>scray adapter to r/w Cassandra column families</description>
 
 	<distributionManagement>
-
 		<snapshotRepository>
 			<id>ossrh</id>
 			<url>https://oss.sonatype.org/content/repositories/snapshots</url>
@@ -28,11 +26,11 @@
 		<dependency>
 			<groupId>org.scray</groupId>
 			<artifactId>scray-querying</artifactId>
-			<version>0.9.6-SNAPSHOT</version>
+			<version>0.10.1-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>com.github.scopt</groupId>
-			<artifactId>scopt_2.10</artifactId>
+			<artifactId>scopt_${scala.suffix}</artifactId>
 			<version>3.2.0</version>
 			<scope>test</scope>
 		</dependency>
@@ -43,7 +41,7 @@
 		</dependency>
 		<dependency>
 			<groupId>com.websudos</groupId>
-			<artifactId>phantom-dsl_2.10</artifactId>
+			<artifactId>phantom-dsl_${scala.suffix}</artifactId>
 			<version>1.6.0</version>
 			<exclusions>
 				<exclusion>
@@ -61,7 +59,16 @@
 		<dependency>
 			<groupId>com.datastax.cassandra</groupId>
 			<artifactId>cassandra-driver-core</artifactId>
-			<classifier>shaded</classifier>
+		</dependency>
+		<dependency>
+			<groupId>ch.qos.logback</groupId>
+			<artifactId>logback-classic</artifactId>
+			<version>1.2.1</version>
+		</dependency>
+		<dependency>
+			<groupId>ch.qos.logback</groupId>
+			<artifactId>logback-core</artifactId>
+			<version>1.2.1</version>
 		</dependency>
 	</dependencies>
 

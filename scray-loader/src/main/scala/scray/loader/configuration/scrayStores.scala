@@ -27,6 +27,8 @@ import com.typesafe.scalalogging.slf4j.LazyLogging
 import scray.cassandra.automation.CassandraSessionHandler
 import scray.cassandra.automation.CassandraStoreGenerators
 import com.twitter.util.FuturePool
+import scray.jdbc.automation.JDBCStoreGenerators
+import scray.jdbc.sync.JDBCDbSession
 
 /**
  * abstraction for the management of configuration of stores
@@ -84,6 +86,11 @@ class ScrayStores(startConfig: ScrayConfiguration) extends LazyLogging {
   
   def getStoreGenerator(dbId: String, session: DbSession[_, _, _], queryspace: String, futurePool: FuturePool): StoreGenerators = { 
     storeConfigs.get(dbId).map { config => config match {
+//      case hdfsConfig: HDFSConfiguration =>
+//        
+      case jdbcConfig: JDBCConfiguration =>
+        val jdbcSession = session.asInstanceOf[JDBCDbSession]
+        new JDBCStoreGenerators(jdbcSession.ds, jdbcSession.metadataConnection, jdbcSession.sqlDialiect, futurePool)
       case cassConfig: CassandraClusterConfiguration =>
         new CassandraStoreGenerators(dbId, session, cassandraSessionHandler, futurePool)
       case _ => throw new DBMSUndefinedException(dbId, queryspace)
