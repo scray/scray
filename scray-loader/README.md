@@ -20,17 +20,23 @@
             clustername "Test Cluster"
     }
 
+    connection oracle jdbc {
+            url "jdbc:oracle:thin:DBUSR1/Pw12@10.1.1.1:1521:SCRAY",
+            credentials "DBUSR1" : "Pw12"
+    }
+
     queryspacelocations {
             url "file:///home/otto/scray-conf/queryspace.scray"
     }
 ```
 
-* `/home/otto/scray-conf/queryspace.scray` File
+* `~/scray-conf/queryspace.scray` File
 ```
 	name SIL version 1
 
 	table { cassandra, "keyspace1", "ColumnFamily1" }
 	table { cassandra, "keyspace1", "ColumnFamily2" }
 	table { cassandra, "keyspace1", "ColumnFamily3" }
+	table { oracle,    "SCRAY",     "Table1" }
 	
 	materialized_view table { cassandra, "keyspace1", "ColumnFamily2" }, keygeneratorClass: "scray.common.key.OrderedStringKeyGenerator"
