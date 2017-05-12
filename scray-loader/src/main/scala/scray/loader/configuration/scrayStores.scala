@@ -29,6 +29,9 @@ import scray.cassandra.automation.CassandraStoreGenerators
 import com.twitter.util.FuturePool
 import scray.jdbc.automation.JDBCStoreGenerators
 import scray.jdbc.sync.JDBCDbSession
+import scray.hdfs.automation.HDFSStoreGenerators
+import org.apache.hadoop.io.Text
+import scray.hdfs.sync.HDFSSession
 
 /**
  * abstraction for the management of configuration of stores
@@ -74,6 +77,7 @@ class ScrayStores(startConfig: ScrayConfiguration) extends LazyLogging {
     properties match {
       case cass: CassandraClusterProperties => new CassandraClusterConfiguration(cass)
       case jdbc: JDBCProperties => new JDBCConfiguration(jdbc)
+      case hdfs: HDFSProperties => new HDFSConfiguration(hdfs)
     }
   }
   
@@ -86,8 +90,9 @@ class ScrayStores(startConfig: ScrayConfiguration) extends LazyLogging {
   
   def getStoreGenerator(dbId: String, session: DbSession[_, _, _], queryspace: String, futurePool: FuturePool): StoreGenerators = { 
     storeConfigs.get(dbId).map { config => config match {
-//      case hdfsConfig: HDFSConfiguration =>
-//        
+      case hdfsConfig: HDFSConfiguration =>
+        val hdfsSession = session.asInstanceOf[HDFSSession]
+        new HDFSStoreGenerators[Text](hdfsSession.directory, futurePool)
       case jdbcConfig: JDBCConfiguration =>
         val jdbcSession = session.asInstanceOf[JDBCDbSession]
         new JDBCStoreGenerators(jdbcSession.ds, jdbcSession.metadataConnection, jdbcSession.sqlDialiect, futurePool)
