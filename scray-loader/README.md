@@ -25,6 +25,10 @@
             credentials "DBUSR1" : "Pw12"
     }
 
+    connection hdfscluster hdfs {
+        url "hdfs://10.1.1.1:8020/user/scray/scray-hdfs-data/"
+    }
+
     queryspacelocations {
             url "file:///home/otto/scray-conf/queryspace.scray"
     }
@@ -38,5 +42,5 @@
 	table { cassandra, "keyspace1", "ColumnFamily2" }
 	table { cassandra, "keyspace1", "ColumnFamily3" }
 	table { oracle,    "SCRAY",     "Table1" }
-	
+	table { hdfscluster, "blobrefs", "Elementbuffers" }	
 	materialized_view table { cassandra, "keyspace1", "ColumnFamily2" }, keygeneratorClass: "scray.common.key.OrderedStringKeyGenerator"
