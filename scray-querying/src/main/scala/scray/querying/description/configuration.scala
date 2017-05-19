@@ -19,6 +19,7 @@ import scray.querying.queries.DomainQuery
 import scray.querying.source.indexing.IndexConfig
 import scray.querying.description.internal.MaterializedView
 import scray.querying.source.store.QueryableStoreSource
+import scray.common.errorhandling.ErrorHandler
 
 /**
  * parent class of queryspace-configuration, used to identify which tables
@@ -63,7 +64,7 @@ abstract class QueryspaceConfiguration(val name: String) {
   /**
    * re-initialize this queryspace, possibly re-reading the configuration from somewhere
    */
-  def reInitialize(oldversion: Int): QueryspaceConfiguration
+  def reInitialize(oldversion: Int, newConfig: Any, errorHandler: ErrorHandler): Option[QueryspaceConfiguration]
 }
 
 

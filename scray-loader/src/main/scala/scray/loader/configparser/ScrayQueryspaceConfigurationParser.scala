@@ -84,8 +84,8 @@ class ScrayQueryspaceConfigurationParser (override val input: ParserInput, val c
       QueryspaceRowstore(TableIdentifier(dbms, dbid, table)) 
   }}
 
-  def MaterializedView: Rule1[QueryspaceMaterializedView] = rule {"materialized_view" ~ "table" ~ "{" ~ Identifier ~ COMMA ~ QuotedString ~ COMMA ~ QuotedString ~ "}" ~ optional(COMMA ~ "keygeneratorClass:" ~ QuotedString) ~>  {
-    (dbms: String, dbid: String, table: String, keygenerator: Option[String]) => new QueryspaceMaterializedView(TableIdentifier(dbms, dbid, table), keygenerator.getOrElse(""))
+  def MaterializedView: Rule1[QueryspaceMaterializedView] = rule {"materialized_view" ~ "table" ~ "{" ~ Identifier ~ COMMA ~ QuotedString ~ COMMA ~ QuotedString ~ "}" ~ optional(COMMA ~ "keygeneratorClass" ~ QuotedString) ~ optional(COMMA ~ "bundleOrJarFile" ~ QuotedString) ~>  {
+    (dbms: String, dbid: String, table: String, keygenerator: Option[String], bundleOrJarFile: Option[String]) => new QueryspaceMaterializedView(TableIdentifier(dbms, dbid, table), keygenerator.getOrElse(""), bundleOrJarFile.getOrElse(""))
    }}
   
   def IndexStore: Rule1[QueryspaceIndexstore] = rule { "manualindex" ~ "{" ~ 

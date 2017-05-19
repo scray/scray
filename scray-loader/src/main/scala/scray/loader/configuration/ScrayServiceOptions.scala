@@ -18,6 +18,7 @@ import com.twitter.util.Duration
 import java.net.{ InetAddress, InetSocketAddress }
 
 trait ScrayServiceOption
+case class ScrayServiceRereadInterval(interval: Int) extends ScrayServiceOption
 case class ScrayCompressionSize(size: Int) extends ScrayServiceOption
 case class ScrayServiceIp(ip: InetAddress) extends ScrayServiceOption 
 case class ScraySeedIps(ips: Seq[InetAddress]) extends ScrayServiceOption 

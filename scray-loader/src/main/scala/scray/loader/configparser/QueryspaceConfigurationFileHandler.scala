@@ -34,7 +34,7 @@ import java.io.FileInputStream
  */
 object QueryspaceConfigurationFileHandler extends LazyLogging {
   
-  type UpdateCallback = (String, Option[(ScrayQueryspaceConfiguration, Long)]) => Unit
+  type UpdateCallback = (String, Option[(ScrayQueryspaceConfiguration, Long, Option[Long])]) => Unit
   
   val WITH_QS = " with queryspace "
   val READ_FILE = "Read queryspace configuration file "
@@ -52,12 +52,13 @@ object QueryspaceConfigurationFileHandler extends LazyLogging {
       val oldQs = oldqueryspaces.get(scannedFiles.get.name) 
       if(oldQs.isEmpty) {
         // new queryspace registered... notify
-        callbacks.foreach { _(scannedFiles.get.name, Some((scannedFiles.get.queryspaceConfig, scannedFiles.get.version))) }
+        callbacks.foreach { _(scannedFiles.get.name, Some((scannedFiles.get.queryspaceConfig, scannedFiles.get.version, None))) }
         oldqueryspaces.update(scannedFiles.get.name, (scannedFiles.get.version, scannedFiles.get.queryspaceConfig))
       } else {
         // new version? -> notify
         if(oldQs.get._1 != scannedFiles.get.version) {
-          callbacks.foreach { _(scannedFiles.get.name, Some((scannedFiles.get.queryspaceConfig, scannedFiles.get.version))) }
+          logger.debug(s"New version of queryspace config file: previous version was ${oldQs.get._1} new is ${scannedFiles.get.version}, content is ${scannedFiles.get.queryspaceConfig}")
+          callbacks.foreach { _(scannedFiles.get.name, Some((scannedFiles.get.queryspaceConfig, scannedFiles.get.version, Some(oldQs.get._1)))) }
           oldqueryspaces.update(scannedFiles.get.name, (scannedFiles.get.version, scannedFiles.get.queryspaceConfig))
         }
       }
@@ -72,7 +73,14 @@ object QueryspaceConfigurationFileHandler extends LazyLogging {
   /**
    * reads a file into a String directly from HDFS
    */
-  def readFileFromHDFS(filePath: Path, fs: FileSystem): String = IOUtils.toString(fs.open(filePath))
+  def readFileFromHDFS(filePath: Path, fs: FileSystem): String = {
+    val istream = fs.open(filePath)
+    try {
+      IOUtils.toString(istream)
+    } finally {
+      istream.close
+    }
+  }
   
   private def handleHDFS(url: ScrayQueryspaceConfigurationURL, config: ScrayConfiguration): 
       Seq[Try[ScannedQueryspaceConfigfiles]] = {
@@ -85,13 +93,13 @@ object QueryspaceConfigurationFileHandler extends LazyLogging {
         val stati = fs.listStatus(path)
         stati.filter(_.getPath().getName().endsWith(SCRAY_QUERYSPACE_CONFIG_ENDING)).map { status => Try {
           val parsedFile = ScrayQueryspaceConfigurationParser.parse(readFileFromHDFS(status.getPath, fs), config, true)
-          logger.info(READ_FILE + status.getPath + WITH_QS + parsedFile.get.name) 
+          logger.info(READ_FILE + status.getPath + WITH_QS + parsedFile.get.name + "and version " + parsedFile.get.version) 
           ScannedQueryspaceConfigfiles(status.getPath.toString(), parsedFile.get.name, parsedFile.get.version, parsedFile.get)
         }}.toSeq
       } else {
         Seq(Try {
           val parsedFile = ScrayQueryspaceConfigurationParser.parse(readFileFromHDFS(path, fs), config, true)
-          logger.info(READ_FILE + url.url + WITH_QS + parsedFile.get.name)
+          logger.info(READ_FILE + url.url + WITH_QS + parsedFile.get.name + "and version " + parsedFile.get.version)
           ScannedQueryspaceConfigfiles(url.url, parsedFile.get.name, parsedFile.get.version, parsedFile.get)
         })
       }
@@ -114,7 +122,7 @@ object QueryspaceConfigurationFileHandler extends LazyLogging {
       Seq(Try {
         val fileURL = new URL(url.url)
         val parsedFile = ScrayQueryspaceConfigurationParser.parse(IOUtils.toString(fileURL.openStream()), config, true)
-        logger.info(READ_FILE + url.url + WITH_QS + parsedFile.get.name) 
+        logger.info(READ_FILE + url.url + WITH_QS + parsedFile.get.name + "and version " + parsedFile.get.version) 
         ScannedQueryspaceConfigfiles(url.url, parsedFile.get.name, parsedFile.get.version, parsedFile.get)
       })
     }
@@ -130,13 +138,13 @@ object QueryspaceConfigurationFileHandler extends LazyLogging {
           override def accept(dir: File, name: String): Boolean = name.endsWith(SCRAY_QUERYSPACE_CONFIG_ENDING) })
         files.map { conffile => Try {
           val parsedFile = ScrayQueryspaceConfigurationParser.parse(IOUtils.toString(new FileInputStream(conffile)), config, true)
-          logger.info(READ_FILE + conffile.toString() + WITH_QS + parsedFile.get.name) 
+          logger.info(READ_FILE + conffile.toString() + WITH_QS + parsedFile.get.name  + "and version " + parsedFile.get.version) 
           ScannedQueryspaceConfigfiles(conffile.toString(), parsedFile.get.name, parsedFile.get.version, parsedFile.get)
         }}.toSeq
       } else {
         Seq(Try {
           val parsedFile = ScrayQueryspaceConfigurationParser.parse(IOUtils.toString(new FileInputStream(file)), config, true)
-          logger.info(READ_FILE + url.url + WITH_QS + parsedFile.get.name) 
+          logger.info(READ_FILE + url.url + WITH_QS + parsedFile.get.name + "and version " + parsedFile.get.version) 
           ScannedQueryspaceConfigfiles(url.url, parsedFile.get.name, parsedFile.get.version, parsedFile.get)
         })
       }

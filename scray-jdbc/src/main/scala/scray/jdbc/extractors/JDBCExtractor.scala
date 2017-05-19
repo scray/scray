@@ -343,4 +343,14 @@ object JDBCExtractors extends LazyLogging {
     }
   }
   
+  def clearMetadataCache(): Unit = {
+    lock.lock()
+    try {
+      dbmsHash.clear
+      indexHash.clear
+    } finally {
+      lock.unlock();
+    }
+  }
+  
 }

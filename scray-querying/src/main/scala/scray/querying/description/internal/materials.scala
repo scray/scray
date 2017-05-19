@@ -14,6 +14,7 @@ import scray.common.key.OrderedStringKeyGenerator
  */
 case class MaterializedView(
     val table:TableIdentifier,
+    val bundleNameOrJarFile: String,
     val keyGenerationClass: KeyGenerator[Array[String]] = OrderedStringKeyGenerator,
     val primaryKeyColumn: String = "key"
     //val fixedDomains: Array[Column]//, // single value domains -> multiple possible values 

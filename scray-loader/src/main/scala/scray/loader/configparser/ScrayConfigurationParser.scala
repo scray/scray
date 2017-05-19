@@ -38,6 +38,7 @@ import scray.loader.configuration.HDFSProperty
 import scray.loader.configuration.HDFSURLProperty
 import scray.loader.configuration.HDFSCredentialsProperty
 import scray.loader.HDFSURLUndefinedException
+import scray.loader.configuration.ScrayServiceRereadInterval
 
 /**
  * A syntax parser for scray configuration files.
@@ -49,7 +50,8 @@ import scray.loader.HDFSURLUndefinedException
  *   ScrayConfiguration ::= Service Datastores+ QueryspaceURLs
  *   Service ::= "service" "{" ServiceSetting ("," ServiceSetting)* "}"
  *   ServiceSetting ::= "compressionsize" INT | "service" Host | "seed" Hosts | "memcache" Hosts | 
- *     "service" Port | "meta" Port | "advertise" Host | "lifetime" LONG TIMEUNIT | "writeDot" ("Y" | "N")
+ *     "service" Port | "meta" Port | "advertise" Host | "lifetime" LONG TIMEUNIT | "writeDot" ("Y" | "N") |
+ *     "refresh" INT
  *   Port ::= "port" INT
  *   Host ::= "host" STRING
  *   Hosts ::= "hosts" "(" STRING ("," STRING)* ")"
@@ -185,6 +187,9 @@ class ScrayConfigurationParser(override val input: ParserInput) extends ScrayGen
   /* -------------------------------- Service option rules ----------------------------------- */
   def ServiceOptions: Rule1[ScrayServiceOptions] = rule { "service" ~ BRACE_OPEN ~ oneOrMore(ServiceOption).separatedBy(COMMA) ~ BRACE_CLOSE ~> {
     (options: Seq[ScrayServiceOption]) =>
+      val interval = options.collect {
+        case size: ScrayServiceRereadInterval => size.interval
+      }.toOption.getOrElse(3600)
       val compressionsize = options.collect {
         case size: ScrayCompressionSize => size.size
       }.toOption.getOrElse(PredefinedProperties.RESULT_COMPRESSION_MIN_SIZE.getDefault().toInt)
@@ -216,11 +221,12 @@ class ScrayConfigurationParser(override val input: ParserInput) extends ScrayGen
         logger.warn(s"Warning: Scray service advertise address not set. Will advertise possibly wrong address: ${localip.getHostAddress()}")
         localip
       }
-      ScrayServiceOptions(scraySeedIps.toSet, advertiseip, serviceip, compressionsize, memcacheIps.toSet, serviceport, metaport)
+      ScrayServiceOptions(scraySeedIps.toSet, advertiseip, serviceip, compressionsize, memcacheIps.toSet, serviceport, metaport, lifetime, writeDot, interval)
   }}
-  def ServiceOption: Rule1[ScrayServiceOption] = rule { ServiceCompressionSize | ServiceIP | ServiceSeedIPs | 
+  def ServiceOption: Rule1[ScrayServiceOption] = rule { ServiceCompressionSize | ServiceIP | ServiceSeedIPs | ServiceRereadTime |
     ServiceMemcacheIPs | ServicePort | ServiceMetaPort | ServiceAdvertiseIP | ServiceLifetime | ServiceWriteDot }
   
+  def ServiceRereadTime: Rule1[ScrayServiceRereadInterval] = rule { "refresh" ~ IntNumber ~> { (size: Int) => ScrayServiceRereadInterval(size) }}
   def ServiceCompressionSize: Rule1[ScrayCompressionSize] = rule { "compressionsize" ~ IntNumber ~> { (size: Int) => ScrayCompressionSize(size) }}
   def ServiceIP: Rule1[ScrayServiceIp] = rule { "listening" ~ "host" ~ QuotedString ~> { (address: String) => ScrayServiceIp(InetAddress.getByName(address)) }}
   def ServiceSeedIPs: Rule1[ScraySeedIps] = rule { "seed" ~ HostAddressList ~> {(hosts: Seq[InetAddress]) => ScraySeedIps(hosts)}}

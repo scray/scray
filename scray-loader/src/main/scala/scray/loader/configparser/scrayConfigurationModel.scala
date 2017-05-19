@@ -50,7 +50,8 @@ case class ScrayServiceOptions(seeds: Set[InetAddress] = Set(),
     serviceport: Int = PredefinedProperties.SCRAY_QUERY_PORT.getDefault,
     metaport: Int = PredefinedProperties.SCRAY_META_PORT.getDefault,
     lifetime: Duration = ScrayServicePropertiesRegistrar.SCRAY_ENDPOINT_LIFETIME.getDefault,
-    writeDot: Boolean = false) {
+    writeDot: Boolean = false,
+    interval: Int = 3600) {
   def propagate: Unit = {
     ScrayProperties.setPropertyValue(PredefinedProperties.SCRAY_QUERY_PORT, new Integer(serviceport), true)
     ScrayProperties.setPropertyValue(PredefinedProperties.SCRAY_META_PORT, new Integer(metaport), true)

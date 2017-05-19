@@ -42,6 +42,12 @@ import com.twitter.util.FuturePool
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.LinkedBlockingQueue
 import com.twitter.util.ExecutorServiceFuturePool
+import org.osgi.framework.FrameworkUtil
+import scray.loader.ClassBundleLoaderAbstraction
+import scray.loader.tools.SimpleLoggingErrorHandler
+import scray.common.errorhandling.ErrorHandler
+import java.util.Timer
+import scray.loader.configuration.ScrayQueryspaceUpdater
 
 /**
  * Bundle activator in order to run scray thrift service.
@@ -83,11 +89,11 @@ class Activator extends KryoPoolRegistration with BundleActivator with LazyLoggi
   /**
    * registers all query spaces
    */
-  private def registerQuerySpaces(scrayConfiguration: ScrayConfiguration) = {
+  private def registerQuerySpaces(scrayConfiguration: ScrayConfiguration, errorHandler: ErrorHandler) = {
     QueryspaceConfigurationFileHandler.performQueryspaceUpdate(scrayConfiguration, Activator.queryspaces, Seq())
     Activator.queryspaces.map { config =>
       logger.debug(s"Registering queryspace ${config._1}")
-      val qs = new ScrayLoaderQuerySpace(config._1, scrayConfiguration, config._2._2, Activator.scrayStores.get, futurePool.get)
+      val qs = new ScrayLoaderQuerySpace(config._1, scrayConfiguration, config._2._2, Activator.scrayStores.get, futurePool.get, errorHandler)
       Registry.registerQuerySpace(qs, Some(0))
     }    
   }
@@ -102,6 +108,19 @@ class Activator extends KryoPoolRegistration with BundleActivator with LazyLoggi
         new LinkedBlockingQueue[Runnable](10 * poolSize), new ThreadPoolExecutor.CallerRunsPolicy()))
   }
     
+  /**
+   * checks if the Activator class is running in an OSGI environment
+   */
+  def checkIfOSGI(): Boolean = Option(FrameworkUtil.getBundle(classOf[Activator])).isDefined
+  
+  /**
+   * starts a timer refresh daemon to perform updates on the Registry with new QS versions 
+   */
+  def startupQueryspaceRefreshTimer(config: ScrayConfiguration, errorHandler: ErrorHandler): Unit = {
+    val timer = new Timer("Queryspace Refresh Timer", true)
+    timer.schedule(new ScrayQueryspaceUpdater(config, errorHandler), config.service.interval * 1000L, config.service.interval * 1000L)
+    logger.debug(s"Refreshing queryspace information every ${config.service.interval} seconds.")
+  }
   
   /**
    * registers shutdown hook for emergency shutdowns
@@ -164,12 +183,22 @@ class Activator extends KryoPoolRegistration with BundleActivator with LazyLoggi
         logger.info(s"Reading main configuration file $filename")
         val scrayConfiguration = loadMainConfigFile(filename)
         
+        // configure error handler
+        val errorHandler = new SimpleLoggingErrorHandler
+        
+        // preparing plugin loading mechanism
+        ClassBundleLoaderAbstraction.setClassBundleLoaderAbstraction(context, if(checkIfOSGI()) {
+          new ScrayOSGIBundlePluginFacility(context, errorHandler)
+        } else {
+          new ScraySimpleClassloaderPluginFacility(errorHandler)
+        })
+        
         // setup connections
         logger.info(s"Preparing store instances")
         Activator.scrayStores = Some(new ScrayStores(scrayConfiguration))
         
         // read configs and start queryspace registration
-        registerQuerySpaces(scrayConfiguration)
+        registerQuerySpaces(scrayConfiguration, errorHandler)
         
         // start service
         statelessService = getStateless(context)
@@ -183,6 +212,9 @@ class Activator extends KryoPoolRegistration with BundleActivator with LazyLoggi
         
         logger.info(s"Scray Combined Server (Version ${getVersion}) started on ${Activator.refresher.get.addrStr}. Waiting for client requests...")
     
+        // setup daemon timer to refresh queryspace information on a regular basis
+        startupQueryspaceRefreshTimer(scrayConfiguration, errorHandler)
+        
         latch.countDown()
         // start update service
         while(Activator.keepRunning) {
@@ -220,6 +252,9 @@ class Activator extends KryoPoolRegistration with BundleActivator with LazyLoggi
       refresher.destroyResources
       refresher.client = None
     }
+
+    // free resources from plugins
+    ClassBundleLoaderAbstraction.getClassBundleLoaderAbstraction().stop()
     
     // shutdown service
     shutdownServer()
@@ -232,7 +267,8 @@ class Activator extends KryoPoolRegistration with BundleActivator with LazyLoggi
     // shutdown connections
     
   }
-  
+
+  // stop serving
   private def shutdownServer(): Unit = {
     Activator.keepRunning = false
     futurePool.get match {

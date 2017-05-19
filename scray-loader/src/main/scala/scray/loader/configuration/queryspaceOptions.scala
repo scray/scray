@@ -20,4 +20,4 @@ trait QueryspaceOption
 case class QueryspaceRowstore(table: TableIdentifier) extends QueryspaceOption
 case class QueryspaceIndexstore(indextype: String, table: TableIdentifier,
     column: String, indexjobid: String, mapping: Option[String] = None) extends QueryspaceOption
-case class QueryspaceMaterializedView(table: TableIdentifier, keyClass: String) extends QueryspaceOption
+case class QueryspaceMaterializedView(table: TableIdentifier, keyClass: String, bundleOrJarFile: String) extends QueryspaceOption
