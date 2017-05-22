@@ -35,6 +35,8 @@ abstract class QueryableStoreSource[Q <: DomainQuery](
   def requestIterator(query: Q): Future[Iterator[Row]]
   def keyedRequest(query: KeyedQuery): Future[Iterator[Row]]
   
+  def hasSkipAndLimit: Boolean = false
+  
   def getScrayCoordinates: TableIdentifier = ti
   
   // Members declared in scray.querying.source.Source

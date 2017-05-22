@@ -65,6 +65,11 @@
 			</exclusions>
 		</dependency>
 		<dependency>
+			<groupId>org.scray</groupId>
+			<artifactId>scray-jdbc</artifactId>
+			<version>0.10.1-SNAPSHOT</version>
+		</dependency>
+		<dependency>
 			<groupId>org.parboiled</groupId>
 			<artifactId>parboiled_${scala.suffix}</artifactId>
 			<version>${parboiled.version}</version>
@@ -96,6 +101,10 @@
 				<exclusion>
 					<artifactId>slf4j-log4j12</artifactId>
 					<groupId>org.slf4j</groupId>
+				</exclusion>
+				<exclusion>
+					<groupId>log4j</groupId>
+					<artifactId>log4j</artifactId>
 				</exclusion>
 			</exclusions>
 		</dependency>

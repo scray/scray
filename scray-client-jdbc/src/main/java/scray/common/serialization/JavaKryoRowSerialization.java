@@ -16,12 +16,12 @@ package scray.common.serialization;
 
 import java.lang.reflect.Field;
 import java.math.BigInteger;
+import java.net.InetSocketAddress;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
-
-import scray.common.serialization.numbers.KryoRowTypeNumber;
-import scray.common.serialization.numbers.KryoSerializerNumber;
 
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.Registration;
@@ -30,7 +30,17 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import com.esotericsoftware.kryo.util.DefaultClassResolver;
 import com.esotericsoftware.kryo.util.IntMap;
+import com.twitter.chill.java.InetSocketAddressSerializer;
+import com.twitter.chill.java.LocaleSerializer;
+import com.twitter.chill.java.SimpleDateFormatSerializer;
+import com.twitter.chill.java.SqlDateSerializer;
+import com.twitter.chill.java.SqlTimeSerializer;
+import com.twitter.chill.java.TimestampSerializer;
+import com.twitter.chill.java.URISerializer;
 import com.twitter.chill.java.UUIDSerializer;
+
+import scray.common.serialization.numbers.KryoRowTypeNumber;
+import scray.common.serialization.numbers.KryoSerializerNumber;
 
 /**
  * some classes for JAVA-interoperability to prevent importing Scala
@@ -61,8 +71,22 @@ public class JavaKryoRowSerialization {
 				KryoSerializerNumber.Set.getNumber());
 		kryo.register(BigInteger.class, new JavaBigIntegerSerializer(),
 				KryoSerializerNumber.BigInteger.getNumber());
+		kryo.register(java.sql.Date.class, new SqlDateSerializer(),
+				KryoSerializerNumber.SqlDate.getNumber());
+		kryo.register(java.sql.Time.class, new SqlTimeSerializer(),
+				KryoSerializerNumber.SqlTime.getNumber());
+		kryo.register(java.sql.Timestamp.class, new TimestampSerializer(),
+				KryoSerializerNumber.SqlTimestamp.getNumber());
+		kryo.register(java.net.URI.class, new URISerializer(),
+				KryoSerializerNumber.URI.getNumber());
 		kryo.register(UUID.class, new UUIDSerializer(),
 				KryoSerializerNumber.UUID.getNumber());
+		kryo.register(InetSocketAddress.class, new InetSocketAddressSerializer(),
+				KryoSerializerNumber.InetSockerAddress.getNumber());
+		kryo.register(Locale.class, new LocaleSerializer(),
+				KryoSerializerNumber.Locale.getNumber());
+		kryo.register(SimpleDateFormat.class, new SimpleDateFormatSerializer(),
+				KryoSerializerNumber.SimpleDateFormat.getNumber());
 		// useful to debug interoperability problems introduced through kryo or chill
 		// printRegistrations(kryo)
 	}

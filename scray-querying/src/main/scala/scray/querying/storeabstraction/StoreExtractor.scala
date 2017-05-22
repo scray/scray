@@ -50,11 +50,6 @@ trait StoreExtractor[S <: QueryableStoreSource[_]] {
   def getTableConfiguration(rowMapper: (_) => Row): TableConfiguration[_ <: DomainQuery, _ <: DomainQuery, _]
 
   /**
-   * returns a query mapping
-   */
-  def getQueryMapping(store: S, tableName: Option[String]): DomainQuery => String
-
-  /**
    * DB-System is fixed
    */
   def getDefaultDBSystem: String

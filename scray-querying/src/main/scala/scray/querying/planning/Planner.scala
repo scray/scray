@@ -480,7 +480,12 @@ object Planner extends LazyLogging {
 //      }
 //    }.getOrElse {
     def getLimitIncreasingSource[Q <: DomainQuery, K <: DomainQuery, V](tableConf: TableConfiguration[Q, K, V], isOrdered: Boolean = false) = {
-      new LimitIncreasingQueryableSource(getQueryableStore(tableConf), tableConf, tableConf.table, isOrdered)
+      val storeSource = getQueryableStore(tableConf)
+      if(!storeSource.hasSkipAndLimit) {
+        new LimitIncreasingQueryableSource(storeSource, tableConf, tableConf.table, isOrdered)
+      } else {
+        storeSource
+      }
     }
     
       // construct plan using information on main table

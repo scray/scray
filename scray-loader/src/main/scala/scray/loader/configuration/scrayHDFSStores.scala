@@ -30,24 +30,24 @@ import scray.jdbc.sync.JDBCDbSession
 import com.typesafe.scalalogging.slf4j.LazyLogging
 
 /**
- * JDBC properties, needed to setup a JDBC connection
+ * HDFS properties, needed to setup a HDFS connection
  */
-case class JDBCProperties(url: String,
+case class HDFSProperties(url: String,
       credentials: ScrayCredentials = new ScrayCredentials(),
       name: Option[String] = None) extends DBMSConfigProperties {
-  override def getName: String = name.getOrElse("jdbc")
+  override def getName: String = name.getOrElse("hdfs")
   override def setName(newName: Option[String]): DBMSConfigProperties = this.copy(name = newName)
 }
 
-trait JDBCProperty
-case class JDBCURLProperty(url: String) extends JDBCProperty
-case class JDBCCredentialsProperty(credentials: ScrayCredentials) extends JDBCProperty
+trait HDFSProperty
+case class HDFSURLProperty(url: String) extends HDFSProperty
+case class HDFSCredentialsProperty(credentials: ScrayCredentials) extends HDFSProperty
 
 /**
  * sets up and manages a Cassandra Cluster
  */
-class JDBCConfiguration(override protected val startconfig: JDBCProperties) 
-    extends DBMSConfiguration[JDBCProperties](startconfig) with LazyLogging {
+class HDFSConfiguration(override protected val startconfig: HDFSProperties) 
+    extends DBMSConfiguration[HDFSProperties](startconfig) with LazyLogging {
 
   var currentURL: Option[String] = None
   private var sessioncount = 0
@@ -65,15 +65,15 @@ class JDBCConfiguration(override protected val startconfig: JDBCProperties)
     
   } 
 
-  override def readConfig(config: ScrayConfiguration, old: JDBCProperties): Option[JDBCProperties] = 
-    JDBCConfiguration.readConfig(config, old)
+  override def readConfig(config: ScrayConfiguration, old: HDFSProperties): Option[HDFSProperties] = 
+    HDFSConfiguration.readConfig(config, old)
 }
 
-object JDBCConfiguration extends ReadableConfig[JDBCProperties] {
+object HDFSConfiguration extends ReadableConfig[HDFSProperties] {
   
-  override def readConfig(config: ScrayConfiguration, old: JDBCProperties): Option[JDBCProperties] = 
+  override def readConfig(config: ScrayConfiguration, old: HDFSProperties): Option[HDFSProperties] = 
     config.stores.find { storecf => storecf.getName == old.getName }.flatMap { 
-      case jdbc: JDBCProperties => Some(jdbc)
+      case hdfs: HDFSProperties => Some(hdfs)
       case _ => None
     }
 }

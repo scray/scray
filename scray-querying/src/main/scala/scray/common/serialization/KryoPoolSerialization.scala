@@ -31,7 +31,7 @@ object KryoPoolSerialization {
 
   case class SerializerEntry[T](val cls: Class[T], ser: Serializer[T], num: Int)
   
-  val POOL_SIZE = 10;
+  val POOL_SIZE = 100;
   
   private val instantiator = new ScrayKryoInstantiator
   private val serializers = new ArrayBuffer[SerializerEntry[_]]
@@ -56,7 +56,7 @@ class ScrayKryoInstantiator extends ScalaKryoInstantiator with LazyLogging {
     reg(k)
     KryoPoolSerialization.getSerializers.foreach(ser => k.register(ser.cls, ser.ser, ser.num))
     // uncomment for displaying registrations (e.g. to compare with Java registrations), can be useful to debug compatibility issues
-    // printRegistrations(k)
+    printRegistrations(k)
     k
   }
   
