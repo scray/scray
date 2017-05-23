@@ -17,6 +17,8 @@ import scray.jdbc.extractors.DomainToSQLQueryMapping
 import scray.jdbc.JDBCQueryableSource
 import scray.jdbc.rows.JDBCRowMapper
 import scray.querying.description.Column
+import scray.querying.source.Splitter
+import scray.querying.description.ManuallyIndexConfiguration
 
 /**
  * store generator for JDBC
@@ -33,7 +35,7 @@ class JDBCStoreGenerators(hikari: HikariDataSource, metadataConnection: Connecti
       extractor.getRowKeyColumns,
       extractor.getClusteringKeyColumns,
       extractor.getColumns,
-      extractor.getColumnConfigurations(null, table.dbId, table.tableId, null, Map(), Map()),
+      extractor.getColumnConfigurations(null, table.dbId, table.tableId, null, Map[String, ManuallyIndexConfiguration[_ <: DomainQuery, _ <: DomainQuery, _, _, _ <: DomainQuery]](), Map[Column, Splitter[_]]()),
       hikari,
       new DomainToSQLQueryMapping[Q, JDBCQueryableSource[Q]](),
       futurePool,
