@@ -127,15 +127,21 @@ public class ScrayURL {
 					path = absoluteUri[j].getPath();
 
 					StringTokenizer pathElems = new StringTokenizer(path, "/");
-
-					if (pathElems.countTokens() != 3) {
+					if (pathElems.countTokens() == 3) {
+						dbSystem = pathElems.nextToken();
+						dbId = pathElems.nextToken();
+						querySpace = pathElems.nextToken();
+					} else if( pathElems.countTokens() == 1) {
+						// if there is only a single token, we have a queryspacename, only
+						querySpace = pathElems.nextToken();
+						dbSystem = "";
+						dbId = "";
+					} else {
 						throw new URISyntaxException(path,
-								"Invalid URL: faulty path");
+							"Invalid URL: faulty path");
 					}
 
-					dbSystem = pathElems.nextToken();
-					dbId = pathElems.nextToken();
-					querySpace = pathElems.nextToken();
+					
 				}
 			}
 
