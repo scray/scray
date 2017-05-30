@@ -25,11 +25,21 @@ import scray.querying.sync.SyncTableBasicClasses
 import scray.querying.sync.Table
 import scray.querying.sync.UnableToLockJobError
 import scray.querying.sync.StatementExecutionError
+import org.slf4j.LoggerFactory
+
 
 class CassandraSyncTableLock (job: JobInfo[Statement, Insert, ResultSet], jobLockTable: Table[SyncTableBasicClasses.JobLockTable], 
-  dbSession: DbSession[Statement, Insert, ResultSet], val timeOut: Int) extends LockApi[Statement, Insert, ResultSet](job, jobLockTable, dbSession) with LazyLogging {
+  dbSession: DbSession[Statement, Insert, ResultSet], val timeOut: Int) extends LockApi[Statement, Insert, ResultSet](job, jobLockTable, dbSession) with Serializable {
   
   val timeBetweenRetries = 100 // ms
+  @transient
+  lazy val lockQuery = getLockQuery
+  
+  @transient    
+  lazy val unLockQuery = getUnlocQuery
+  
+  @transient
+  lazy val logger =  LoggerFactory.getLogger(CassandraSyncTableLock.getClass);
    
   class CassandraSessionBasedDBSession(cassandraSession: Session) extends DbSession[Statement, Insert, ResultSet](cassandraSession.getCluster.getMetadata.getAllHosts().iterator().next.getAddress.toString) {
 
@@ -91,12 +101,11 @@ class CassandraSyncTableLock (job: JobInfo[Statement, Insert, ResultSet], jobLoc
          case _                          => "It is currently not possible to execute : " + s
       }
     }
-}
+  }
   
-  val lockQuery = getLockQuery
     
     def getLockQuery = { 
-      val query = QueryBuilder.update(jobLockTable.keySpace, jobLockTable.tableName)
+     val query = QueryBuilder.update(jobLockTable.keySpace, jobLockTable.tableName)
     .`with`(QueryBuilder.set(jobLockTable.columns.locked.name, true))
     .where(QueryBuilder.eq(jobLockTable.columns.jobname.name, job.name))
     .onlyIf(QueryBuilder.eq(jobLockTable.columns.locked.name, false))
@@ -106,12 +115,10 @@ class CassandraSyncTableLock (job: JobInfo[Statement, Insert, ResultSet], jobLoc
     query
   }
     
-   
-      
-  val unLockQuery = getUnlocQuery
-    
-    def getUnlocQuery = {
-    val query = QueryBuilder.update(jobLockTable.keySpace, jobLockTable.tableName)
+       
+  def getUnlocQuery = {
+    @transient
+    lazy val query = QueryBuilder.update(jobLockTable.keySpace, jobLockTable.tableName)
     .`with`(QueryBuilder.set(jobLockTable.columns.locked.name, false))
     .where(QueryBuilder.eq(jobLockTable.columns.jobname.name, job.name))
     .onlyIf(QueryBuilder.eq(jobLockTable.columns.locked.name, true))
@@ -170,7 +177,8 @@ class CassandraSyncTableLock (job: JobInfo[Statement, Insert, ResultSet], jobLoc
     tryToLockR
   }
   def tryLock(): Boolean = {
-    executeQuorum(lockQuery).isSuccess
+    //executeQuorum(lockQuery).isSuccess
+    true
   }
   
   def unlock(): Unit = {
@@ -255,7 +263,7 @@ class CassandraSyncTableLock (job: JobInfo[Statement, Insert, ResultSet], jobLoc
   }
 }
 
-object CassandraSyncTableLock {
+object CassandraSyncTableLock extends Serializable {
   def apply(
       job: JobInfo[Statement, Insert, ResultSet], 
       jobLockTable: Table[SyncTableBasicClasses.JobLockTable], 
