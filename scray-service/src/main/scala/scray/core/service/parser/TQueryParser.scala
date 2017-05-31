@@ -20,7 +20,7 @@ import scray.querying.Query
 import scray.querying.description._
 import scray.service.qmodel.thrifscala.ScrayTQuery
 import org.parboiled2.ParserInput.apply
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 
 /**
  * Thrift query parser resulting in a _Query model

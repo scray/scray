@@ -26,7 +26,7 @@ import scray.querying.queries.DomainQuery
 import scala.collection.mutable.ArrayBuffer
 import scray.querying.source.costs.QueryCosts
 import scray.querying.source.costs.QueryCostFunctionFactory
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 
 /**
  * A source to lazily post-process data from a provided lazy source.

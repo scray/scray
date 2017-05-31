@@ -10,7 +10,7 @@ import scala.util.Try
 import scala.util.Failure
 import scala.util.Success
 import scray.querying.sync.DbSession
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 import scray.querying.sync.StatementExecutionError
 import com.datastax.driver.core.Cluster
 

@@ -19,7 +19,7 @@ import scray.querying.description.TableConfiguration
 import scray.querying.description.internal.MaterializedView
 import scray.querying.queries.DomainQuery
 import scray.querying.description.ColumnConfiguration
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 import scray.loader.configparser.ScrayQueryspaceConfiguration
 import scray.loader.configparser.ScrayConfiguration
 import scray.loader.configuration.ScrayStores

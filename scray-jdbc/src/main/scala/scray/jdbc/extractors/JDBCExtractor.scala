@@ -28,7 +28,7 @@ import scray.jdbc.sync.JDBCDbSession
 import scray.querying.description.AutoIndexConfiguration
 import scray.querying.description.IndexConfiguration
 import java.sql.Types
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 import scray.querying.description.internal.Domain
 import java.util.concurrent.locks.ReentrantLock
 import scala.collection.mutable.HashTable

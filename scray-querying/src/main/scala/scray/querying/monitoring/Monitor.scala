@@ -13,7 +13,7 @@ import scray.querying.Registry
 import scray.querying.description.TableConfiguration
 import scray.querying.description.TableIdentifier
 import java.util.concurrent.locks.ReentrantLock
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 import scray.querying.queries.DomainQuery
 
 /**

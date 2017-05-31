@@ -15,7 +15,7 @@ import scray.querying.sync.Column
 import scray.querying.sync.DbSession
 import shapeless.ops.hlist._
 import shapeless.syntax.singleton._
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 
 
   /**

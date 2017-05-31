@@ -11,7 +11,7 @@ import org.scalatest.BeforeAndAfterAll
 import org.scalatest.WordSpec
 import org.scalatest.junit.JUnitRunner
 
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 
 import scray.cassandra.sync.CassandraImplementation._
 import scray.cassandra.sync.helpers.TestDbSession

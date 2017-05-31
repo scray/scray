@@ -1,6 +1,6 @@
 package scray.cassandra.automation
 
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 import com.websudos.phantom.CassandraPrimitive
 import scray.cassandra.rows.GenericCassandraRowStoreMapper
 import scray.querying.description.{ Row, TableIdentifier, VersioningConfiguration }

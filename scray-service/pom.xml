@@ -71,11 +71,6 @@
 			<version>0.8.0</version>
 		</dependency>
 		<dependency>
-			<groupId>com.typesafe.scala-logging</groupId>
-			<artifactId>scala-logging_2.11</artifactId>
-			<version>3.5.0</version>
-		</dependency>
-		<dependency>
 			<groupId>com.twitter</groupId>
 			<artifactId>storehaus-memcache_${scala.suffix}</artifactId>
 			<version>0.13.0</version>

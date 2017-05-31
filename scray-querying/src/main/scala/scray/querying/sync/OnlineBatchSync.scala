@@ -6,7 +6,7 @@ import java.util.{ Iterator => JIterator }
 import scala.annotation.tailrec
 import scala.util.Try
 
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 
 import scray.common.serialization.BatchID
 import scray.querying.description.TableIdentifier

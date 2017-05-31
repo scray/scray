@@ -3,7 +3,7 @@ package scray.cassandra.tools
 import scray.querying.description.TableIdentifier
 import scray.cassandra.tools.api.LuceneIndexStatementGenerator
 import scray.cassandra.tools.api.LucenIndexedColumn
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 
 /**
  * Create CQL statement to index columns with "Stratio’s Cassandra Lucene Index"

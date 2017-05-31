@@ -3,7 +3,7 @@ package scray.cassandra.tools
 import org.junit.runner.RunWith
 import org.scalatest.WordSpec
 import org.scalatest.junit.JUnitRunner
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 import scray.querying.description.TableIdentifier
 import scala.annotation.tailrec
 import com.datastax.driver.core.Cluster

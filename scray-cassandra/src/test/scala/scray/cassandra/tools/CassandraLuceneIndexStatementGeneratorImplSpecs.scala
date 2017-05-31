@@ -6,7 +6,7 @@ import org.junit.runner.RunWith
 import org.scalatest.WordSpec
 import org.scalatest.junit.JUnitRunner
 
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 
 import scray.cassandra.tools.types.ScrayColumnTypes._
 import scray.cassandra.tools.api.LucenIndexedColumn

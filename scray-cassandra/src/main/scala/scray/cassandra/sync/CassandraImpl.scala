@@ -51,7 +51,7 @@ import com.datastax.driver.core.Row
 import com.datastax.driver.core.Statement
 import com.datastax.driver.core.querybuilder.Insert
 import com.datastax.driver.core.querybuilder.QueryBuilder
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 import com.websudos.phantom.CassandraPrimitive
 import java.util.{ Iterator => JIterator }
 import scala.annotation.tailrec

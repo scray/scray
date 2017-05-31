@@ -18,7 +18,7 @@ import com.google.common.collect.EvictingQueue
 import com.twitter.concurrent.Spool
 import com.twitter.concurrent.Spool.*::
 import com.twitter.util.{Await, Duration, Future, FuturePool, Throw, Return}
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 import java.util.concurrent.{Executors, TimeUnit}
 import scalax.collection.GraphEdge._
 import scalax.collection.GraphEdge.DiEdge

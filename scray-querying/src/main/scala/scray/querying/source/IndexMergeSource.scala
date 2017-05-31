@@ -16,7 +16,7 @@ import scalax.collection.GraphPredef._
 import com.twitter.util.Await
 import scala.collection.mutable.HashSet
 import com.twitter.util.Future
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 
 //import com.twitter.concurrent.Spool.{seqToSpool, ToSpool}
 

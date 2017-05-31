@@ -31,7 +31,7 @@ import scray.querying.description.Column
 import scray.querying.description.Row
 import scray.cassandra.rows.GenericCassandraRowStoreMapper
 import scray.cassandra.CassandraTableNonexistingException
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 import scray.querying.source.Splitter
 
 

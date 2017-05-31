@@ -35,7 +35,7 @@ import com.twitter.concurrent.Spool
 import scray.querying.description.Row
 import org.slf4j.LoggerFactory
 import scray.core.service.spools.TSpoolRack
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 
 object ScrayStatefulTServiceImpl {
   def apply() = new ScrayStatefulTServiceImpl(TSpoolRack)

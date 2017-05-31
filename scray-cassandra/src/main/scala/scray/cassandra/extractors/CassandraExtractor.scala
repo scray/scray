@@ -15,7 +15,7 @@
 package scray.cassandra.extractors
 
 import com.datastax.driver.core.{ KeyspaceMetadata, Metadata, TableMetadata }
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 import java.util.regex.Pattern
 import org.yaml.snakeyaml.Yaml
 import scray.cassandra.util.CassandraUtils

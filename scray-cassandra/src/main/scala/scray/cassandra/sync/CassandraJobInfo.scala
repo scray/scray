@@ -10,7 +10,7 @@ import scray.querying.sync.JobLockTable
 import scray.querying.sync.DbSession
 import scray.common.serialization.BatchID
 import scray.querying.sync.JobInfo
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 import scray.querying.sync.LockApi
 import scray.cassandra.util.CassandraUtils
 import scray.querying.description.TableIdentifier

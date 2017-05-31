@@ -13,7 +13,7 @@ import scray.querying.description.TableConfiguration
 import scray.querying.description.TableIdentifier
 import java.util.concurrent.locks.ReentrantLock
 import scray.querying.queries.QueryInformation
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 
 
 class MonitorQuery extends LazyLogging {

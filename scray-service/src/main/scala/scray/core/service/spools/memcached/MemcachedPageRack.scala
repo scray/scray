@@ -19,7 +19,7 @@ import scray.querying.Query
 import scray.querying.description.Row
 import scray.service.qmodel.thrifscala.ScrayTQueryInfo
 import scray.service.qmodel.thrifscala.ScrayUUID
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 
 class MemcachedPageRack(planAndExecute: (Query) => Spool[Row], pageTTL: Duration = DEFAULT_TTL)
   extends PageRackImplBase(planAndExecute, pageTTL) {

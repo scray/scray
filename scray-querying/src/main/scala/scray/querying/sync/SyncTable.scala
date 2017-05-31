@@ -7,7 +7,7 @@ import scala.collection.mutable.ListBuffer
 import scala.reflect.runtime.universe._
 import scala.util.Try
 
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 import scray.querying.description.TableIdentifier
 import scala.collection.mutable.HashMap
 

@@ -16,7 +16,7 @@ package scray.loader.configparser
 
 import com.datastax.driver.core.ConsistencyLevel
 import com.twitter.util.Duration
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 import java.net.{ InetAddress, InetSocketAddress }
 import org.apache.commons.io.IOUtils
 // scalastyle:off underscore.import

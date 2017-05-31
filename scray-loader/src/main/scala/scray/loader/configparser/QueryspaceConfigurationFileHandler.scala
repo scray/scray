@@ -23,7 +23,7 @@ import java.net.URL
 import scala.collection.mutable.HashMap
 import scala.util.Failure
 import scala.collection.mutable.ArrayBuffer
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 import java.io.File
 import java.io.FilenameFilter
 import java.io.IOException
