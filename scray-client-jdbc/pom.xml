@@ -70,11 +70,6 @@
 
 	<dependencies>
 		<dependency>
-			<groupId>com.seeburger.sil</groupId>
-			<artifactId>sil-client-api</artifactId>
-			<version>${sil.version}</version>
-		</dependency>
-		<dependency>
 			<groupId>com.seeburger.common</groupId>
 			<artifactId>config</artifactId>
 			<version>2.1.1</version>
@@ -88,48 +83,6 @@
 			<groupId>com.seeburger.common</groupId>
 			<artifactId>logger-api</artifactId>
 			<version>2.1.1</version>
-		</dependency>
-		<dependency>
-			<groupId>com.seeburger.sil</groupId>
-			<artifactId>sil-client-impl</artifactId>
-			<version>${sil.version}</version>
-			<exclusions>
-				<exclusion>
-					<artifactId>xercesImpl</artifactId>
-					<groupId>xerces</groupId>
-				</exclusion>
-				<exclusion>
-					<artifactId>guava</artifactId>
-					<groupId>com.google.guava</groupId>
-				</exclusion>
-				<exclusion>
-					<artifactId>jackson-core</artifactId>
-					<groupId>com.fasterxml.jackson.core</groupId>
-				</exclusion>
-				<exclusion>
-					<artifactId>jackson-databind</artifactId>
-					<groupId>com.fasterxml.jackson.core</groupId>
-				</exclusion>
-				<exclusion>
-					<artifactId>jackson-annotations</artifactId>
-					<groupId>com.fasterxml.jackson.core</groupId>
-				</exclusion>
-			</exclusions>
-		</dependency>
-		<dependency>
-			<groupId>com.seeburger.sil</groupId>
-			<artifactId>sil-client-dca-provider-raw</artifactId>
-			<version>${sil.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>com.seeburger.sil</groupId>
-			<artifactId>sil-bismt-elements</artifactId>
-			<version>${sil.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>com.seeburger.sil</groupId>
-			<artifactId>sil-client-dpa-provider-raw</artifactId>
-			<version>${sil.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.scray</groupId>
