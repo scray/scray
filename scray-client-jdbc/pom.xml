@@ -46,8 +46,9 @@
 		<libthrift.version>0.9.1</libthrift.version>
 		<scrooge.version>4.5.0</scrooge.version>
 		<snappy-java.version>1.1.1.6</snappy-java.version>
-				<sil.version>2.46.0</sil.version>
-		
+		<scrooge.version>3.4.0</scrooge.version>
+		<snappy-java.version>1.1.1.6</snappy-java.version>		
+
 	</properties>
 
 	<distributionManagement>
@@ -69,21 +70,6 @@
 	</repositories>
 
 	<dependencies>
-		<dependency>
-			<groupId>com.seeburger.common</groupId>
-			<artifactId>config</artifactId>
-			<version>2.1.1</version>
-		</dependency>
-		<dependency>
-			<groupId>com.seeburger.common</groupId>
-			<artifactId>genericutil</artifactId>
-			<version>2.1.1</version>
-		</dependency>
-		<dependency>
-			<groupId>com.seeburger.common</groupId>
-			<artifactId>logger-api</artifactId>
-			<version>2.1.1</version>
-		</dependency>
 		<dependency>
 			<groupId>org.scray</groupId>
 			<artifactId>scray-common</artifactId>
