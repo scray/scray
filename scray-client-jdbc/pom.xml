@@ -1,4 +1,5 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.scray</groupId>
@@ -34,8 +35,8 @@
 		<url>https://github.com/scray</url>
 		<connection>scm:git:git://github.com/scray/scray.git</connection>
 		<developerConnection>scm:git:https://github.com/scray/scray.git</developerConnection>
-	  <tag>HEAD</tag>
-  </scm>
+		<tag>HEAD</tag>
+	</scm>
 
 	<properties>
 		<maven.compiler.source>1.6</maven.compiler.source>
@@ -46,9 +47,6 @@
 		<libthrift.version>0.9.1</libthrift.version>
 		<scrooge.version>4.5.0</scrooge.version>
 		<snappy-java.version>1.1.1.6</snappy-java.version>
-		<scrooge.version>3.4.0</scrooge.version>
-		<snappy-java.version>1.1.1.6</snappy-java.version>		
-
 	</properties>
 
 	<distributionManagement>
