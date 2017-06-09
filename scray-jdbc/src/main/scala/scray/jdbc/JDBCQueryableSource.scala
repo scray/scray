@@ -22,6 +22,9 @@ import scray.querying.description.RowColumn
 import scray.querying.description.SimpleRow
 import scala.collection.mutable.ArrayBuffer
 import scray.jdbc.extractors.ScraySQLDialect
+import com.zaxxer.hikari.HikariDataSource
+import scala.util.Try
+import com.typesafe.scalalogging.slf4j.LazyLogging
 
 class JDBCQueryableSource[Q <: DomainQuery](
     val ti: TableIdentifier,
@@ -29,11 +32,12 @@ class JDBCQueryableSource[Q <: DomainQuery](
     clusteringKeyColumns: Set[Column],
     allColumns: Set[Column],
     columnConfigs: Set[ColumnConfiguration],
-    val connection: Connection,
+    val hikari: HikariDataSource,
     val queryMapper: DomainToSQLQueryMapping[Q, JDBCQueryableSource[Q]],
     futurePool: FuturePool,
-    rowMapper: JDBCRow => Row,
-    dialect: ScraySQLDialect) extends QueryableStoreSource[Q](ti, rowKeyColumns, clusteringKeyColumns, allColumns, false) {
+    rowMapper: ResultSet => Row,
+    dialect: ScraySQLDialect) extends QueryableStoreSource[Q](ti, rowKeyColumns, clusteringKeyColumns, allColumns, false) 
+    with LazyLogging {
 
   val mappingFunction = queryMapper.getQueryMapping(this, Some(ti.tableId), dialect)
   val autoIndexedColumns = columnConfigs.filter(colConf => colConf.index.isDefined &&
@@ -41,16 +45,19 @@ class JDBCQueryableSource[Q <: DomainQuery](
     (colConf.column, colConf.index.map(index => index.isAutoIndexed && index.isSorted))
   }
 
+  override def hasSkipAndLimit: Boolean = true
+  
   @inline def requestIterator(query: Q): Future[Iterator[Row]] = {
     import scala.collection.convert.decorateAsScala.asScalaIteratorConverter
     futurePool {
       val queryString = mappingFunction(query)
+      val connection = hikari.getConnection
       val prep = connection.prepareStatement(queryString._1)
-      queryMapper.mapWhereClauseValues(prep, query.asInstanceOf[DomainQuery].domains)
-      val resultSet = prep.executeQuery(queryString._1)
-      val resultMetadata = resultSet.getMetaData 
-      (1 to resultMetadata.getColumnCount).map(number => resultMetadata.) 
-      getIterator(resultSet)
+      queryMapper.mapWhereClauseValues(prep, query.asInstanceOf[DomainQuery].domains ++ queryString._3)
+logger.info(s" Executing QUERY NOW")
+      val resultSet = prep.executeQuery()
+logger.info(s" Fetching Iterator NOW")
+      getIterator(resultSet, connection)
     }
   }
 
@@ -74,24 +81,42 @@ class JDBCQueryableSource[Q <: DomainQuery](
     }
   }.getOrElse(false)
 
-  protected def getIterator(entities: ResultSet) = new Iterator[Row] {
+  protected def getIterator(entities: ResultSet, connection: Connection) = new Iterator[Row] {
     var fetchedNextRow = false
     var hasNextRow = false
 
-    def hasNext = {
-      if (!fetchedNextRow) {
-        hasNextRow = entities.next
-        fetchedNextRow = true;
+    override def hasNext: Boolean = {
+      if(entities.isAfterLast()) {
+        entities.close()
+        connection.close()
+      }
+      if(entities.isClosed()) {
+        hasNextRow = false
+      } else {
+        if (!fetchedNextRow) {
+          hasNextRow = entities.next
+          fetchedNextRow = true
+        }
+        
       }
       hasNextRow
     }
 
-    def next = {
+    override def next: Row = {
       if (!fetchedNextRow) {
-        entities.next
+        hasNextRow = entities.next
       }
-      
-      SimpleRow(ArrayBuffer.empty[RowColumn[_]])
+      fetchedNextRow = false
+      rowMapper.apply(entities)
+    }
+    
+    override def finalize(): Unit = {
+      Try { if(!entities.isClosed()) {
+        entities.close()
+      }}
+      Try { if(!connection.isClosed()) {
+        connection.close()
+      }}
     }
   }
 }

@@ -53,7 +53,13 @@ object DomainFilterSource extends LazyLogging {
       } else if(single.isWildcard){
         !WildcardChecker.checkValueAgainstPredicate(single.value.asInstanceOf[String], value.asInstanceOf[String])
       } else {
-        !single.equiv.equiv(value, single.value)
+        if(value.getClass().isPrimitive() || value.getClass().isAssignableFrom(single.value.getClass)) {
+          !single.equiv.equiv(value, single.value)
+        } else {
+          converter.map { converter =>
+            val mapped = converter.mapDomain(domain).asInstanceOf[Option[SingleValueDomain[T]]]
+            mapped.map(svd => !svd.equiv.equiv(value, svd.value)).getOrElse(true)}.getOrElse(true)
+        }
       }
     }.getOrElse(converter.map{converter =>
       val mapped = converter.mapDomain(domain).asInstanceOf[Option[SingleValueDomain[T]]]

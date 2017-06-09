@@ -108,6 +108,7 @@ abstract class JobInfo[Statement, InsertIn, Result](
   val numberOfWorkers: Option[Long] = None
   ) extends Serializable {
 
+  @transient
   var lock: Option[LockApi[Statement, InsertIn, Result]] = None
   def getLock(dbSession: DbSession[Statement, InsertIn, Result]): LockApi[Statement, InsertIn, Result]
       

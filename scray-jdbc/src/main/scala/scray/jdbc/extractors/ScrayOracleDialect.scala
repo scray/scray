@@ -3,40 +3,63 @@ package scray.jdbc.extractors
 import scray.querying.description.internal.Domain
 import scray.querying.description.TableIdentifier
 import scray.querying.description.QueryRange
+import scala.collection.mutable.ListBuffer
+import scray.querying.description.internal.SingleValueDomain
+import scray.querying.description.Column
 
 /**
  * Oracle dialect for Scray
  */
-object ScrayOracleDialect extends ScraySQLDialect(ScraySQLDialectFactory.ORACLE) {
+object ScrayOracleDialect extends ScraySQLDialect("ORACLE") {
+  
+  // only used to set limits, which are handled differently
+  private val dummyTi = TableIdentifier("", "", "")
   
   /**
    * Oracle implements limits by introducing an implicit column
    */
-  override def getEnforcedLimit(rangeOpt: Option[QueryRange], where: List[Domain[_]]): String = rangeOpt.map { range =>
+  override def getEnforcedLimit(rangeOpt: Option[QueryRange], where: List[Domain[_]]): (String, List[Domain[_]]) = rangeOpt.map { range =>
+    val domainBuf = new ListBuffer[Domain[_]]
     val sbuf = new StringBuffer
     // if we have entries in the list, then we do not need the "and" upfront...
-    if(where.size > 0) {
-      sbuf.append(DomainToSQLQueryMapping.AND_LITERAL)
-    }
     range.skip.foreach { skip =>
-      sbuf.append(s" ROWNUM > $skip ")
-    }
-    if(range.skip.isDefined && range.limit.isDefined) {
-      sbuf.append(DomainToSQLQueryMapping.AND_LITERAL)
+      sbuf.append(">")
+      // name of column doesn't matter, so use dummy
+      domainBuf.+=(new SingleValueDomain[Int](Column("", dummyTi), skip.toInt))
     }
     range.limit.foreach { limit =>
-      sbuf.append(s" ROWNUM <= $limit ")
+      sbuf.append("<")
+      // name of column doesn't matter, so use dummy
+      domainBuf.+=(new SingleValueDomain[Int](Column("", dummyTi), limit.toInt))
     }
-    sbuf.toString
-    
-  }.getOrElse("")
+    (sbuf.toString, domainBuf.toList)    
+  }.getOrElse(("", List()))
 
   /**
    * Because Oracle has a special way of handling limits we need a special SELECT clause for it
    */
   override def getFormattedSelectString(table: TableIdentifier, where: String, limit: String,
       groupBy: String, orderBy: String): String =
-    s"""SELECT * FROM "${removeQuotes(table.dbId)}"."${removeQuotes(table.tableId)}" ${decideWhere(where)} ${limit} ${groupBy} ${orderBy} """
+    if (limit.length == 0) {
+      s"""SELECT * FROM "${removeQuotes(table.dbId)}"."${removeQuotes(table.tableId)}" ${decideWhere(where)} ${groupBy} ${orderBy} """
+    } else {
+      if(limit.trim() == ("><")) { 
+        s"""SELECT * FROM (
+            SELECT a.*, rownum rnum FROM (
+                SELECT * FROM "${removeQuotes(table.dbId)}"."${removeQuotes(table.tableId)}" ${decideWhere(where)} ${groupBy} ${orderBy}) a 
+                WHERE rownum <= ?)
+            WHERE rnum >= ?"""
+      } else {
+        if(limit.trim() == ">") {
+          s"""SELECT * FROM (
+            SELECT a.*, rownum rnum FROM (
+                SELECT * FROM "${removeQuotes(table.dbId)}"."${removeQuotes(table.tableId)}" ${decideWhere(where)} ${groupBy} ${orderBy}) a) 
+            WHERE rnum >= ?"""
+        } else {
+          s"""SELECT * FROM (SELECT a.*, rownum rnum FROM (SELECT * FROM "${removeQuotes(table.dbId)}"."${removeQuotes(table.tableId)}" ${decideWhere(where)} ${groupBy} ${orderBy}) a WHERE rownum <= ?)"""          
+        }
+      }
+    }
 
   
   /**
@@ -44,4 +67,13 @@ object ScrayOracleDialect extends ScraySQLDialect(ScraySQLDialectFactory.ORACLE)
    * TODO: Probably we need to account for that in the query generation! 
    */
   override def emptyStringIsNull: Boolean = true
+  
+  /**
+   * we scan if the URL is of format:
+   * jdbc:oracle:thin:...
+   */
+  override def isDialectJdbcURL(jdbcURL: String): Boolean =
+    jdbcURL.toUpperCase().startsWith("JDBC:ORACLE:THIN:")
+  
+  override val DRIVER_CLASS_NAME = "oracle.jdbc.OracleDriver"
 }

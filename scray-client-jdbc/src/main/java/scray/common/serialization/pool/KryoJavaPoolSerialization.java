@@ -41,7 +41,7 @@ public class KryoJavaPoolSerialization {
 		return KryoJavaPoolSerializationHolder.instance;
 	}
 
-	private int POOL_SIZE = 10;
+	private int POOL_SIZE = 100;
 	private ScrayJavaKryoInstantiator instantiator = new ScrayJavaKryoInstantiator();
 	private List<SerializerEntry<?>> serializers = new LinkedList<SerializerEntry<?>>();
 

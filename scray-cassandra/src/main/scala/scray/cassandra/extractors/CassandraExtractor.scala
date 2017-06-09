@@ -88,7 +88,7 @@ class CassandraExtractor[Q <: DomainQuery](session: Session, table: TableIdentif
   /**
    * returns a generic Cassandra-store query mapping
    */
-  override def getQueryMapping(store: CassandraQueryableSource[Q], tableName: Option[String]): DomainQuery => String =
+  def getQueryMapping(store: CassandraQueryableSource[Q], tableName: Option[String]): DomainQuery => String =
     new DomainToCQLQueryMapping[Q, CassandraQueryableSource[Q]]().getQueryMapping(store, tableName)
 
   /**
@@ -330,9 +330,9 @@ class CassandraExtractor[Q <: DomainQuery](session: Session, table: TableIdentif
       clusterKeys,
       allColumns,
       rowMapper.asInstanceOf[CassRow => Row],
-      cassQuerySource.map(_.mappingFunction.asInstanceOf[DomainQuery => Q]).getOrElse {
-        versioningConfig.map(_.queryableStore.get.asInstanceOf[CassandraQueryableSource[Q]].mappingFunction).orNull.asInstanceOf[DomainQuery => Q]
-      },
+//      cassQuerySource.map(_.mappingFunction.asInstanceOf[DomainQuery => Q]).getOrElse {
+//        versioningConfig.map(_.queryableStore.get.asInstanceOf[CassandraQueryableSource[Q]].mappingFunction).orNull.asInstanceOf[DomainQuery => Q]
+//      },
       cassQuerySource,
       cassQuerySource
     )

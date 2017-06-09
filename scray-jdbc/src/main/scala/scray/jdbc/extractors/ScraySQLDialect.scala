@@ -10,6 +10,11 @@ import scray.querying.description.QueryRange
 abstract class ScraySQLDialect(val name: String, unequal: String = "<>") {
   
   /**
+   * returns true if the provided jdbcURL is valid for this type of dialect
+   */
+  def isDialectJdbcURL(jdbcURL: String): Boolean
+  
+  /**
    * returns the name of this dialect for extraction
    */
   def getName: String = name
@@ -37,7 +42,7 @@ abstract class ScraySQLDialect(val name: String, unequal: String = "<>") {
    * limits are usually non-standard for DBMS systems, so we leave the implementation
    * open to enforce implementation in concrete dialects
    */
-  def getEnforcedLimit(range: Option[QueryRange], where: List[Domain[_]]): String
+  def getEnforcedLimit(range: Option[QueryRange], where: List[Domain[_]]): (String, List[Domain[_]])
   
   /**
    * if the empty String should be consered to be equal to NULL values
@@ -49,4 +54,8 @@ abstract class ScraySQLDialect(val name: String, unequal: String = "<>") {
    */
   def decideWhere(where: String): String = if(!where.isEmpty()) s"WHERE $where" else ""
 
+  /**
+   * class name of the driver for the database of this dialect
+   */
+  val DRIVER_CLASS_NAME: String
 }

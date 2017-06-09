@@ -164,7 +164,7 @@ class DomainToSQLQueryMapping[Q <: DomainQuery, S <: JDBCQueryableSource[Q]] ext
         case _ => ("", 0)
       }
     }.unzip(a => (a._1, a._2))
-    (domTuple._1.mkString(DomainToSQLQueryMapping.AND_LITERAL), domTuple._2.reduce(_ + _))
+    (domTuple._1.mkString(DomainToSQLQueryMapping.AND_LITERAL), domTuple._2.foldLeft(0)(_ + _))
   }
   
   /**
@@ -183,17 +183,17 @@ class DomainToSQLQueryMapping[Q <: DomainQuery, S <: JDBCQueryableSource[Q]] ext
   /**
    * returns a function mapping from Domains to SQL-Strings used in Where clauses
    */
-  def getQueryMapping(store: S, storeTableNickName: Option[String], dialect: ScraySQLDialect): DomainQuery => (String, Int) = {
+  def getQueryMapping(store: S, storeTableNickName: Option[String], dialect: ScraySQLDialect): DomainQuery => (String, Int, List[Domain[_]]) = {
     (query) =>
       {
         val whereClauseSQLString = mapWhereClausesAndQuestions(query.domains, dialect)
         val limit = dialect.getEnforcedLimit(query.range, query.domains)
-        val select = dialect.getFormattedSelectString(store.ti, whereClauseSQLString._1, limit, getGroupBy(query), getOrderBy(query))
+        val select = dialect.getFormattedSelectString(store.ti, whereClauseSQLString._1, limit._1, getGroupBy(query), getOrderBy(query))
         logger.debug(s"SQL query string: $select")
-        (select, whereClauseSQLString._2)
+        (select, whereClauseSQLString._2, limit._2)
       }
   }
-  
+
 }
 
 object DomainToSQLQueryMapping {
