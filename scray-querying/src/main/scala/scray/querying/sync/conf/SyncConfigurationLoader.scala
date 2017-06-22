@@ -1,4 +1,4 @@
-package src.main.scala.scray.querying.sync.conf
+package scray.querying.sync.conf
 
 
 class SyncConfigurationLoader {

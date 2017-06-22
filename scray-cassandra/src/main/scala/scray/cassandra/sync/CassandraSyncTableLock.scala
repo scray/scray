@@ -1,3 +1,18 @@
+// See the LICENCE.txt file distributed with this work for additional
+// information regarding copyright ownership.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package scray.cassandra.sync
 
 import java.util.concurrent.TimeUnit
@@ -32,6 +47,7 @@ class CassandraSyncTableLock (job: JobInfo[Statement, Insert, ResultSet], jobLoc
   dbSession: DbSession[Statement, Insert, ResultSet], val timeOut: Int) extends LockApi[Statement, Insert, ResultSet](job, jobLockTable, dbSession) with Serializable {
   
   val timeBetweenRetries = 100 // ms
+  
   @transient
   lazy val lockQuery = getLockQuery
   
@@ -107,7 +123,7 @@ class CassandraSyncTableLock (job: JobInfo[Statement, Insert, ResultSet], jobLoc
     def getLockQuery = { 
      val query = QueryBuilder.update(jobLockTable.keySpace, jobLockTable.tableName)
     .`with`(QueryBuilder.set(jobLockTable.columns.locked.name, true))
-    .where(QueryBuilder.eq(jobLockTable.columns.jobname.name, job.name))
+    .where(QueryBuilder.eq(jobLockTable.columns.jobname.name, job.name))  
     .onlyIf(QueryBuilder.eq(jobLockTable.columns.locked.name, false))
    
     query.setSerialConsistencyLevel(ConsistencyLevel.LOCAL_SERIAL)
