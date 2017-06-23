@@ -137,12 +137,12 @@ class CassandraSyncTableLock (job: JobInfo[Statement, Insert, ResultSet], jobLoc
     .where(QueryBuilder.eq(jobLockTable.columns.jobname.name, job.name))  
 
       // Set consistency level for lightweight transactions
-      config.versionUpdateConsitencyLevel
       config.versionUpdateConsitencyLevel match {
          case scray.querying.sync.conf.ConsistencyLevel.LOCAL_SERIAL => {
            query.onlyIf(QueryBuilder.eq(jobLockTable.columns.locked.name, false))
            query.setSerialConsistencyLevel(com.datastax.driver.core.ConsistencyLevel.LOCAL_SERIAL)
          }
+         case _ => // No action required
        }
 
     query
@@ -161,6 +161,7 @@ class CassandraSyncTableLock (job: JobInfo[Statement, Insert, ResultSet], jobLoc
         query.onlyIf(QueryBuilder.eq(jobLockTable.columns.locked.name, false))
         query.setSerialConsistencyLevel(com.datastax.driver.core.ConsistencyLevel.LOCAL_SERIAL)
       }
+      case _ => // No action required
     }
 
     query
