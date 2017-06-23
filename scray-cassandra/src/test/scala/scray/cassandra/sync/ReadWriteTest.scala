@@ -2,27 +2,18 @@ package scray.cassandra.sync
 
 import java.util.concurrent.atomic.AtomicInteger
 
-import scala.annotation.tailrec
-import scala.concurrent.ExecutionContext.Implicits.global
-
 import org.junit.runner.RunWith
-import org.scalatest.BeforeAndAfter
-import org.scalatest.BeforeAndAfterAll
 import org.scalatest.WordSpec
 import org.scalatest.junit.JUnitRunner
-
 import com.typesafe.scalalogging.LazyLogging
 
 import scray.cassandra.sync.CassandraImplementation._
 import scray.cassandra.sync.helpers.TestDbSession
 import scray.common.serialization.BatchID
-import scray.querying.description.Row
-import scray.querying.sync.RowWithValue
-import shapeless.ops.hlist._
-import shapeless.syntax.singleton._
+import scray.querying.sync.{ColumnWithValue, Merge, RowWithValue}
+import scray.cassandra.sync.CassandraImplementation._
+
 import scala.collection.mutable.HashMap
-import scray.querying.sync.Merge
-import scray.querying.sync.ColumnWithValue
 
 @RunWith(classOf[JUnitRunner])
 class ReadWriteTest extends WordSpec with LazyLogging {

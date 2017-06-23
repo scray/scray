@@ -1,12 +1,6 @@
 package scray.cassandra.sync.helpers
 
-import scala.util.Failure
-import scala.util.Success
-import scala.util.Try
-import org.cassandraunit.utils.EmbeddedCassandraServerHelper
-import com.datastax.driver.core.Cluster
-import com.datastax.driver.core.ResultSet
-import com.datastax.driver.core.Statement
+import com.datastax.driver.core.{Cluster, ResultSet, Statement}
 import com.datastax.driver.core.querybuilder.Insert
 import scray.querying.sync._
 import scray.cassandra.sync.CassandraImplementation._
@@ -16,6 +10,11 @@ import scray.querying.sync.DbSession
 import shapeless.ops.hlist._
 import shapeless.syntax.singleton._
 import com.typesafe.scalalogging.LazyLogging
+import org.cassandraunit.utils.EmbeddedCassandraServerHelper
+import scray.querying.sync.{ArbitrarylyTypedRows, Column, DbSession, _}
+import scray.cassandra.sync.CassandraImplementation._
+
+import scala.util.{Failure, Success, Try}
 
 
   /**

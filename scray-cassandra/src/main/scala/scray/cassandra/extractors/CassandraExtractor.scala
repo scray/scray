@@ -12,41 +12,26 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
 package scray.cassandra.extractors
 
 import com.datastax.driver.core.{ KeyspaceMetadata, Metadata, TableMetadata }
 import com.typesafe.scalalogging.LazyLogging
 import java.util.regex.Pattern
-import org.yaml.snakeyaml.Yaml
+
+import com.datastax.driver.core.{KeyspaceMetadata, Metadata, Session, TableMetadata, Row => CassRow}
+import com.twitter.util.FuturePool
+import scray.cassandra.CassandraQueryableSource
+import scray.cassandra.sync.{CassandraDbSession, CassandraJobInfo, OnlineBatchSyncCassandra}
 import scray.cassandra.util.CassandraUtils
 import scray.querying.Registry
-import scray.querying.description.{
-  AutoIndexConfiguration,
-  Column,
-  ManuallyIndexConfiguration,
-  ColumnConfiguration,
-  QueryspaceConfiguration,
-  IndexConfiguration,
-  TableIdentifier, 
-  TableConfiguration,
-  Row,
-  VersioningConfiguration
-}
-import scray.querying.description.internal.SingleValueDomain
+import scray.querying.description._
 import scray.querying.queries.DomainQuery
 import scray.querying.source.Splitter
 import scray.querying.source.indexing.IndexConfig
-import scray.querying.storeabstraction.StoreExtractor
-import com.datastax.driver.core.Session
-import scray.querying.sync.DbSession
-import scray.cassandra.sync.CassandraDbSession
-import scray.cassandra.CassandraQueryableSource
-import scray.cassandra.sync.OnlineBatchSyncCassandra
-import scray.cassandra.sync.CassandraJobInfo
-import com.twitter.util.FuturePool
-import com.datastax.driver.core.{ Row => CassRow }
 import scray.querying.source.store.QueryableStoreSource
-import scray.querying.description.internal.MaterializedView
+import scray.querying.storeabstraction.StoreExtractor
+import scray.querying.sync.DbSession
 
 /**
  * Helper class to create a configuration for a Cassandra table

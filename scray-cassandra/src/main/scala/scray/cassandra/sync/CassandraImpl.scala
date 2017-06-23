@@ -1,6 +1,26 @@
+// See the LICENCE.txt file distributed with this work for additional
+// information regarding copyright ownership.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package scray.cassandra.sync
 
+import java.util.{Iterator => JIterator}
+
+import com.datastax.driver.core._
+import com.datastax.driver.core.querybuilder.{Insert, QueryBuilder}
 import com.websudos.phantom.CassandraPrimitive
+<<<<<<< HEAD
 import scray.querying.sync.DBColumnImplementation
 import java.util.{ Iterator => JIterator }
 import scala.annotation.tailrec
@@ -61,21 +81,16 @@ import scala.collection.mutable.ListBuffer
 import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
+import scray.cassandra.util.CassandraUtils
 import scray.common.serialization.BatchID
 import scray.querying.description.TableIdentifier
-import scray.querying.sync.JobInfo
-import scray.querying.sync.NoRunningJobExistsException
-import scray.querying.sync.OnlineBatchSync
-import scray.querying.sync.OnlineBatchSyncWithTableIdentifier
-import scray.querying.sync.RunningJobExistsException
-import scray.querying.sync.StateMonitoringApi
-import scray.querying.sync.StatementExecutionError
-import java.util.{ Iterator => JIterator }
-import scray.querying.sync.JobLockTable
-import scray.querying.sync.ArbitrarylyTypedRows
-import scray.querying.sync.SyncTableBasicClasses
-import scray.cassandra.util.CassandraUtils
-import scray.querying.sync.Columns
+import scray.querying.sync.State.State
+import scray.querying.sync._
+import scray.querying.sync.conf.ConsistencyLevel._
+
+import scala.annotation.tailrec
+import scala.collection.mutable.{HashSet, ListBuffer}
+import scala.util.{Failure, Success, Try}
 
 
 object CassandraImplementation extends AbstractTypeDetection with Serializable {

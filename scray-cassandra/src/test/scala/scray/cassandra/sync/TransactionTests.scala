@@ -3,30 +3,15 @@ package scray.cassandra.sync
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
-import scala.util.Failure
-import scala.util.Success
-import scala.util.Try
-
-import org.cassandraunit.utils.EmbeddedCassandraServerHelper
 import org.junit.runner.RunWith
 import org.scalatest.WordSpec
 import org.scalatest.junit.JUnitRunner
+import scray.cassandra.sync.helpers.{SumTestColumns, TestDbSession}
+import scray.querying.sync.UnableToLockJobError
+import scray.cassandra.sync.CassandraImplementation._
 
-import com.datastax.driver.core.Cluster
-import com.datastax.driver.core.ResultSet
-import com.datastax.driver.core.Statement
-import com.datastax.driver.core.querybuilder.Insert
 
-import scray.common.serialization.BatchID
-import scray.cassandra.sync.CassandraJobInfo
-import scray.querying.sync.ArbitrarylyTypedRows
-import scray.querying.sync.Column
-import scray.querying.sync.DbSession
-import scray.querying.sync.UnableToLockJobError;
-import scray.cassandra.sync.helpers.TestDbSession
-import scray.cassandra.sync.helpers.SumTestColumns
-import scray.cassandra.sync.OnlineBatchSyncCassandra
-import scray.cassandra.sync.helpers.TestDbSession
+import scala.util.{Failure, Try}
 
 @RunWith(classOf[JUnitRunner])
 class TransactionTests extends WordSpec {

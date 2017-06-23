@@ -14,8 +14,9 @@
 // limitations under the License.
 package scray.cassandra.util
 
-import com.datastax.driver.core.{ KeyspaceMetadata, Metadata, TableMetadata, ResultSet, Session }
-import org.yaml.snakeyaml.Yaml
+import java.util.{HashMap => JHashMap, Iterator => JIterator, Map => JMap}
+
+import com.datastax.driver.core._
 import com.twitter.util.Try
 import java.util.{ Map => JMap, HashMap => JHashMap }
 import scray.querying.description.TableIdentifier
@@ -78,18 +79,11 @@ import scala.collection.mutable.HashSet
 import scala.collection.mutable.ListBuffer
 import scala.util.Failure
 import scala.util.Success
+import org.yaml.snakeyaml.Yaml
 import scray.querying.description.TableIdentifier
-import scray.querying.sync.JobInfo
-import scray.querying.sync.NoRunningJobExistsException
-import scray.querying.sync.OnlineBatchSync
-import scray.querying.sync.OnlineBatchSyncWithTableIdentifier
-import scray.querying.sync.RunningJobExistsException
-import scray.querying.sync.StateMonitoringApi
-import scray.querying.sync.StatementExecutionError
-import java.util.{ Iterator => JIterator }
-import scray.querying.sync.JobLockTable
-import scray.querying.sync.ArbitrarylyTypedRows
-import scray.querying.sync.SyncTableBasicClasses
+import scray.querying.sync.{AbstractRow, Table}
+
+import scala.annotation.tailrec
 
 object CassandraUtils extends LazyLogging with Serializable {
 

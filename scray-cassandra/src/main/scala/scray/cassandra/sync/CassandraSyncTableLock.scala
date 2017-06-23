@@ -1,7 +1,32 @@
+// See the LICENCE.txt file distributed with this work for additional
+// information regarding copyright ownership.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package scray.cassandra.sync
 
 import java.util.concurrent.TimeUnit
 
+import com.datastax.driver.core.querybuilder.{Insert, QueryBuilder}
+import org.slf4j.LoggerFactory
+import scray.querying.sync._
+import scray.querying.sync.conf.SyncConfiguration
+
+import scala.annotation.tailrec
+import scala.util.{Failure, Success, Try}
+
+import com.datastax.driver.core.ResultSet
+import com.datastax.driver.core.Statement
 import scala.annotation.tailrec
 import scala.util.Failure
 import scala.util.Success
@@ -25,18 +50,22 @@ import scray.querying.sync.SyncTableBasicClasses
 import scray.querying.sync.Table
 import scray.querying.sync.UnableToLockJobError
 import scray.querying.sync.StatementExecutionError
-import org.slf4j.LoggerFactory
+
 
 
 class CassandraSyncTableLock (job: JobInfo[Statement, Insert, ResultSet], jobLockTable: Table[SyncTableBasicClasses.JobLockTable], 
-  dbSession: DbSession[Statement, Insert, ResultSet], val timeOut: Int) extends LockApi[Statement, Insert, ResultSet](job, jobLockTable, dbSession) with LazyLogging with Serializable {
+  dbSession: DbSession[Statement, Insert, ResultSet], val timeOut: Int)
+  extends LockApi[Statement, Insert, ResultSet](job, jobLockTable, dbSession) with Serializable {
   
   val timeBetweenRetries = 100 // ms
+
+  val config = new SyncConfiguration // TODO read config from file
+  
   @transient
   lazy val lockQuery = getLockQuery
   
   @transient    
-  lazy val unLockQuery = getUnlocQuery
+  lazy val unLockQuery = getUnlockQuery
   
    
   class CassandraSessionBasedDBSession(cassandraSession: Session) extends DbSession[Statement, Insert, ResultSet](cassandraSession.getCluster.getMetadata.getAllHosts().iterator().next.getAddress.toString) {
@@ -102,27 +131,38 @@ class CassandraSyncTableLock (job: JobInfo[Statement, Insert, ResultSet], jobLoc
   }
   
     
-    def getLockQuery = { 
+    def getLockQuery: Statement = {
      val query = QueryBuilder.update(jobLockTable.keySpace, jobLockTable.tableName)
     .`with`(QueryBuilder.set(jobLockTable.columns.locked.name, true))
-    .where(QueryBuilder.eq(jobLockTable.columns.jobname.name, job.name))
-    .onlyIf(QueryBuilder.eq(jobLockTable.columns.locked.name, false))
-   
-    query.setSerialConsistencyLevel(ConsistencyLevel.LOCAL_SERIAL)
-    
+    .where(QueryBuilder.eq(jobLockTable.columns.jobname.name, job.name))  
+
+      // Set consistency level for lightweight transactions
+      config.versionUpdateConsitencyLevel
+      config.versionUpdateConsitencyLevel match {
+         case scray.querying.sync.conf.ConsistencyLevel.LOCAL_SERIAL => {
+           query.onlyIf(QueryBuilder.eq(jobLockTable.columns.locked.name, false))
+           query.setSerialConsistencyLevel(com.datastax.driver.core.ConsistencyLevel.LOCAL_SERIAL)
+         }
+       }
+
     query
   }
     
        
-  def getUnlocQuery = {
+  def getUnlockQuery = {
     @transient
     lazy val query = QueryBuilder.update(jobLockTable.keySpace, jobLockTable.tableName)
     .`with`(QueryBuilder.set(jobLockTable.columns.locked.name, false))
     .where(QueryBuilder.eq(jobLockTable.columns.jobname.name, job.name))
-    .onlyIf(QueryBuilder.eq(jobLockTable.columns.locked.name, true))
-    
-    query.setSerialConsistencyLevel(ConsistencyLevel.LOCAL_SERIAL)
-    
+
+    // Set consistency level for lightweight transactions
+    config.versionUpdateConsitencyLevel match {
+      case scray.querying.sync.conf.ConsistencyLevel.LOCAL_SERIAL => {
+        query.onlyIf(QueryBuilder.eq(jobLockTable.columns.locked.name, false))
+        query.setSerialConsistencyLevel(com.datastax.driver.core.ConsistencyLevel.LOCAL_SERIAL)
+      }
+    }
+
     query
   }
   

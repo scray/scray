@@ -1,5 +1,6 @@
 package scray.cassandra.example
 
+import scray.cassandra.sync.{CassandraJobInfo, OnlineBatchSyncCassandra}
 import scray.cassandra.sync.CassandraJobInfo
 import scray.cassandra.sync.OnlineBatchSyncCassandra
 import scray.querying.sync.ColumnWithValue

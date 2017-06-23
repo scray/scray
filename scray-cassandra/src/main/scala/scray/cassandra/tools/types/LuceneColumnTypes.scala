@@ -3,6 +3,7 @@ package scray.cassandra.tools.types
 import scray.cassandra.tools.types.ScrayColumnTypes.ScrayColumnType
 import scray.cassandra.tools.types.ScrayColumnTypes._
 import com.typesafe.scalalogging.LazyLogging
+import scray.cassandra.tools.types.ScrayColumnTypes.ScrayColumnType
 
 object LuceneColumnTypes extends LazyLogging {
   
