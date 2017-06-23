@@ -2,24 +2,12 @@ package scray.cassandra.sync;
 
 import java.util.logging.LogManager
 
-import org.junit.runner.RunWith
-import org.scalatest.BeforeAndAfter
-import org.scalatest.BeforeAndAfterAll
-import org.scalatest.WordSpec
-import org.scalatest.junit.JUnitRunner
-
-import scray.cassandra.sync.CassandraImplementation._
-import scray.common.serialization.BatchID
-import shapeless.ops.hlist._
-import shapeless.syntax.singleton._
-import scray.querying.sync.ColumnWithValue
-import scray.querying.sync.ArbitrarylyTypedRows
-import scray.querying.sync.RowWithValue
-import scray.querying.sync.JobInfo
-import scray.querying.sync.Column
-import scray.querying.sync.JobLockTable
-import scray.querying.sync.SyncTableBasicClasses.JobLockTable
 import org.apache.commons.lang3.SerializationUtils
+import org.junit.runner.RunWith
+import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, WordSpec}
+import org.scalatest.junit.JUnitRunner
+import scray.cassandra.sync.CassandraImplementation._
+import scray.querying.sync.JobLockTable
 
 
 @RunWith(classOf[JUnitRunner])

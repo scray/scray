@@ -17,11 +17,11 @@ package scray.querying.sync.conf
 
 import scala.beans.BeanProperty
 
+object ConsistencyLevel extends Enumeration {
+  type ConsistencyLevel = Value
+  val LOCAL_SERIAL, ALL = Value
+}
+
 class SyncConfiguration {
-  
-  object ConsistencyLevel extends Enumeration {
-    val LOCAL_SERIAL, ALL = Value
-  }
-  
-  @BeanProperty var versionUpdateConsitencyLevel: String = "LOCAL_SERIAL"
+  @BeanProperty var versionUpdateConsitencyLevel: ConsistencyLevel.ConsistencyLevel = ConsistencyLevel.ALL
 }

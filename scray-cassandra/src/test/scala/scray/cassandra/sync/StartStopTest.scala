@@ -2,27 +2,14 @@ package scray.cassandra.sync
 
 import java.util.concurrent.atomic.AtomicInteger
 
-import scala.annotation.tailrec
-
 import org.junit.runner.RunWith
-import org.scalatest.BeforeAndAfter
-import org.scalatest.BeforeAndAfterAll
 import org.scalatest.WordSpec
 import org.scalatest.junit.JUnitRunner
-
-import scray.cassandra.sync.CassandraImplementation._
-import scray.cassandra.sync.CassandraJobInfo
-import scray.cassandra.sync.OnlineBatchSyncCassandra
 import scray.cassandra.sync.helpers.TestDbSession
 import scray.common.serialization.BatchID
-import scray.querying.sync.ArbitrarylyTypedRows
-import scray.querying.sync.Column
-import scray.querying.sync.RowWithValue
-import shapeless.ops.hlist._
-import shapeless.syntax.singleton._
-import scray.querying.sync.ColumnWithValue
-import scala.util.Try
-import scray.querying.sync.State
+import scray.querying.sync._
+import scray.cassandra.sync.CassandraImplementation._
+
 
 @RunWith(classOf[JUnitRunner])
 class StartStopTest extends WordSpec {

@@ -1,3 +1,4 @@
+/*
 package scray.querying.planning
 
 import scray.querying.description.QueryspaceConfiguration
@@ -61,3 +62,4 @@ object TestQuerySpace {
 //    }
 //  } 
 }
+*/

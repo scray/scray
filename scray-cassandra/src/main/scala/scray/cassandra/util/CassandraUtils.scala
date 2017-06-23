@@ -14,82 +14,16 @@
 // limitations under the License.
 package scray.cassandra.util
 
-import com.datastax.driver.core.{ KeyspaceMetadata, Metadata, TableMetadata, ResultSet, Session }
-import org.yaml.snakeyaml.Yaml
+import java.util.{HashMap => JHashMap, Iterator => JIterator, Map => JMap}
+
+import com.datastax.driver.core._
 import com.twitter.util.Try
-import java.util.{ Map => JMap, HashMap => JHashMap }
-import scray.querying.description.TableIdentifier
-import com.websudos.phantom.CassandraPrimitive
-import scray.querying.sync.DBColumnImplementation
-import java.util.{ Iterator => JIterator }
-import scala.annotation.tailrec
-import com.datastax.driver.core.Cluster
-import com.datastax.driver.core.ConsistencyLevel
-import com.datastax.driver.core.RegularStatement
-import com.datastax.driver.core.ResultSet
-import com.datastax.driver.core.Row
-import com.datastax.driver.core.Session
-import com.datastax.driver.core.SimpleStatement
-import com.datastax.driver.core.Statement
-import com.datastax.driver.core.querybuilder.Insert
-import com.datastax.driver.core.querybuilder.QueryBuilder
-import java.util.ArrayList
-import scray.querying.sync.DbSession
-import scala.collection.mutable.ArrayBuffer
-import scray.querying.sync.OnlineBatchSync
-import scray.querying.sync.SyncTableBasicClasses.SyncTableRowEmpty
-import scala.collection.mutable.ListBuffer
-import scray.querying.sync.JobInfo
-import com.datastax.driver.core.BatchStatement
-import scray.querying.sync.State.State
-import com.datastax.driver.core.querybuilder.Update.Where
-import com.datastax.driver.core.querybuilder.Update.Conditions
-import scray.querying.sync.SyncTable
-import scray.querying.sync.RunningJobExistsException
-import scray.querying.sync.NoRunningJobExistsException
-import scray.querying.sync.StatementExecutionError
-import scala.util.Failure
-import scala.util.Success
-import scray.querying.description.TableIdentifier
-import scala.collection.mutable.HashSet
-import scray.querying.sync.AbstractRow
-import scray.querying.sync.ColumnWithValue
-import scray.querying.sync.VoidTable
-import scray.querying.sync.RowWithValue
-import scray.querying.sync.Table
-import scray.querying.sync.State
-import scray.querying.sync.AbstractTypeDetection
-import scray.querying.sync.DBTypeImplicit
-import com.datastax.driver.core.BatchStatement
-import com.datastax.driver.core.Cluster
-import com.datastax.driver.core.ConsistencyLevel
-import com.datastax.driver.core.RegularStatement
-import com.datastax.driver.core.ResultSet
-import com.datastax.driver.core.Row
-import com.datastax.driver.core.Statement
-import com.datastax.driver.core.querybuilder.Insert
-import com.datastax.driver.core.querybuilder.QueryBuilder
 import com.typesafe.scalalogging.slf4j.LazyLogging
-import com.websudos.phantom.CassandraPrimitive
-import java.util.{ Iterator => JIterator }
-import scala.annotation.tailrec
-import scala.collection.JavaConverters._
-import scala.collection.mutable.HashSet
-import scala.collection.mutable.ListBuffer
-import scala.util.Failure
-import scala.util.Success
+import org.yaml.snakeyaml.Yaml
 import scray.querying.description.TableIdentifier
-import scray.querying.sync.JobInfo
-import scray.querying.sync.NoRunningJobExistsException
-import scray.querying.sync.OnlineBatchSync
-import scray.querying.sync.OnlineBatchSyncWithTableIdentifier
-import scray.querying.sync.RunningJobExistsException
-import scray.querying.sync.StateMonitoringApi
-import scray.querying.sync.StatementExecutionError
-import java.util.{ Iterator => JIterator }
-import scray.querying.sync.JobLockTable
-import scray.querying.sync.ArbitrarylyTypedRows
-import scray.querying.sync.SyncTableBasicClasses
+import scray.querying.sync.{AbstractRow, Table}
+
+import scala.annotation.tailrec
 
 object CassandraUtils extends LazyLogging with Serializable {
 

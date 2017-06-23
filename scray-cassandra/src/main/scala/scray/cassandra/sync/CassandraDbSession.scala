@@ -1,18 +1,26 @@
+// See the LICENCE.txt file distributed with this work for additional
+// information regarding copyright ownership.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package scray.cassandra.sync
 
-import com.datastax.driver.core.ResultSet
-import com.datastax.driver.core.Session
-import com.datastax.driver.core.SimpleStatement
-import com.datastax.driver.core.Statement
+import com.datastax.driver.core._
 import com.datastax.driver.core.querybuilder.Insert
-import com.datastax.driver.core.BatchStatement
-import scala.util.Try
-import scala.util.Failure
-import scala.util.Success
-import scray.querying.sync.DbSession
 import com.typesafe.scalalogging.slf4j.LazyLogging
-import scray.querying.sync.StatementExecutionError
-import com.datastax.driver.core.Cluster
+import scray.querying.sync.{DbSession, StatementExecutionError}
+
+import scala.util.{Failure, Success, Try}
 
 class CassandraDbSession(val cassandraSession: Session) extends DbSession[Statement, Insert, ResultSet](cassandraSession.getCluster.getMetadata.getAllHosts().iterator().next.getAddress.toString) with LazyLogging{
   
