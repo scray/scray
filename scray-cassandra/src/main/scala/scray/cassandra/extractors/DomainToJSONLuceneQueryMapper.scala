@@ -14,13 +14,9 @@
 // limitations under the License.
 package scray.cassandra.extractors
 
-<<<<<<< HEAD
 import scray.querying.Registry
 import com.typesafe.scalalogging.LazyLogging
 import scray.querying.description.{Column, ColumnOrdering, TableIdentifier}
-=======
-import com.typesafe.scalalogging.slf4j.LazyLogging
->>>>>>> feature/syncConf
 import scray.querying.description.internal.{Domain, RangeValueDomain, SingleValueDomain}
 import scray.querying.description.{ColumnOrdering, TableIdentifier}
 import scray.querying.queries.DomainQuery

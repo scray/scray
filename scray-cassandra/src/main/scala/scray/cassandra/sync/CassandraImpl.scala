@@ -20,7 +20,6 @@ import java.util.{Iterator => JIterator}
 import com.datastax.driver.core._
 import com.datastax.driver.core.querybuilder.{Insert, QueryBuilder}
 import com.websudos.phantom.CassandraPrimitive
-<<<<<<< HEAD
 import scray.querying.sync.DBColumnImplementation
 import java.util.{ Iterator => JIterator }
 import scala.annotation.tailrec
