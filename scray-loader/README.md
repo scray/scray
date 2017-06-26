@@ -44,3 +44,11 @@
 	table { oracle,    "SCRAY",     "Table1" }
 	table { hdfscluster, "blobrefs", "Elementbuffers" }	
 	materialized_view table { cassandra, "keyspace1", "ColumnFamily2" }, keygeneratorClass: "scray.common.key.OrderedStringKeyGenerator"
+```
+
+* Example:
+```
+cd ~/git/scray
+mvn clean install
+java -cp "scray-loader/target/lib/*:scray-loader/target/scray-loader-0.10.1.jar" scray.loader.ScrayStandaloneService --config /home/otto/scray-conf/store.conf
+``` 
