@@ -47,15 +47,16 @@
 ```
 
 * Example: Scray service with Cassandra only
+
 ```
 cd ~/git/scray
 mvn clean install
 java -cp "scray-loader/target/lib/*:scray-loader/target/scray-loader-0.10.1.jar" scray.loader.ScrayStandaloneService --config ~/scray-conf/store.conf
 ``` 
 
-* Example: Scray service with JDBC connection
-To run scray with JDBC backend the JDBC database driver for your SQL database must be present in the JVM classpath. 
-E.g. by adding ~/libs/jdbc/oracle/ojdbc6.jar to use a Oracle database
+* Example: Scray service with JDBC connection  
+    To run scray with JDBC backend the JDBC database driver for your SQL database must be present in the JVM classpath.   
+    E.g. by adding ~/libs/jdbc/oracle/ojdbc6.jar to use a Oracle database.
 
 ```
 cd ~/git/scray
