@@ -8,7 +8,7 @@
     ```--config /home/otto/scray-conf/store.conf```
 * `store.conf` File    
 
-```
+    ```
     service {
             advertise host "127.0.0.1",
             service port 18181,
@@ -32,10 +32,10 @@
     queryspacelocations {
             url "file:///home/otto/scray-conf/queryspace.scray"
     }
-```
+    ```
 
 * `~/scray-conf/queryspace.scray` File
-```
+    ```
 	name SIL version 1
 
 	table { cassandra, "keyspace1", "ColumnFamily1" }
@@ -44,22 +44,20 @@
 	table { oracle,    "SCRAY",     "Table1" }
 	table { hdfscluster, "blobrefs", "Elementbuffers" }	
 	materialized_view table { cassandra, "keyspace1", "ColumnFamily2" }, keygeneratorClass: "scray.common.key.OrderedStringKeyGenerator"
-```
+    ```
 
-* Example: Scray service with Cassandra only
-
-```
-cd ~/git/scray
-mvn clean install
-java -cp "scray-loader/target/lib/*:scray-loader/target/scray-loader-0.10.1.jar" scray.loader.ScrayStandaloneService --config ~/scray-conf/store.conf
-``` 
-
-* Example: Scray service with JDBC connection  
+* ####Example: Scray service with Cassandra only
+    ```
+    cd ~/git/scray
+    mvn clean install
+    java -cp "scray-loader/target/lib/*:scray-loader/target/scray-loader-0.10.1.jar" scray.loader.ScrayStandaloneService --config ~/scray-conf/store.conf
+    ``` 
+    
+* ####Example: Scray service with JDBC connection
     To run scray with JDBC backend the JDBC database driver for your SQL database must be present in the JVM classpath.   
     E.g. by adding ~/libs/jdbc/oracle/ojdbc6.jar to use a Oracle database.
-
-```
-cd ~/git/scray
-mvn clean install
-java -cp "scray-loader/target/lib/*:~/libs/jdbc/oracle/ojdbc6.jar:scray-loader/target/scray-loader-0.10.1.jar" scray.loader.ScrayStandaloneService --config ~/scray-conf/store.conf
-``` 
+    ```
+    cd ~/git/scray
+    mvn clean install
+    java -cp "scray-loader/target/lib/*:~/libs/jdbc/oracle/ojdbc6.jar:scray-loader/target/scray-loader-0.10.1.jar" scray.loader.ScrayStandaloneService --config ~/scray-conf/store.conf
+    ``` 
