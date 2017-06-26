@@ -46,9 +46,19 @@
 	materialized_view table { cassandra, "keyspace1", "ColumnFamily2" }, keygeneratorClass: "scray.common.key.OrderedStringKeyGenerator"
 ```
 
-* Example:
+* Example: Scray service with Cassandra only
 ```
 cd ~/git/scray
 mvn clean install
-java -cp "scray-loader/target/lib/*:scray-loader/target/scray-loader-0.10.1.jar" scray.loader.ScrayStandaloneService --config /home/otto/scray-conf/store.conf
+java -cp "scray-loader/target/lib/*:scray-loader/target/scray-loader-0.10.1.jar" scray.loader.ScrayStandaloneService --config ~/scray-conf/store.conf
+``` 
+
+* Example: Scray service with JDBC connection
+To run scray with JDBC backend the JDBC database driver for your SQL database must be present in the JVM classpath. 
+E.g. by adding ~/libs/jdbc/oracle/ojdbc6.jar to use a Oracle database
+
+```
+cd ~/git/scray
+mvn clean install
+java -cp "scray-loader/target/lib/*:~/libs/jdbc/oracle/ojdbc6.jar:scray-loader/target/scray-loader-0.10.1.jar" scray.loader.ScrayStandaloneService --config ~/scray-conf/store.conf
 ``` 
