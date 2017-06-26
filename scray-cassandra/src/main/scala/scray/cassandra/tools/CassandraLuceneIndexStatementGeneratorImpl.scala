@@ -27,10 +27,10 @@ class CassandraLuceneIndexStatementGeneratorImpl extends LuceneIndexStatementGen
   val ceateFileElement = (acc: String, column: LucenIndexedColumn) => {
      if (acc.endsWith("{")) { // Detect first element
         s"""${acc} 
-                  ${column.name} : {type: "${column.dataType}"}"""
+                  ${column.name} : {type: "${column.dataType}", sorted: ${column.isSorted} }"""
       } else {
         s"""${acc} 
-                  ${column.name} : {type: "${column.dataType}"}"""
+                  ${column.name} : {type: "${column.dataType}", sorted: ${column.isSorted} }"""
       }
     }
   

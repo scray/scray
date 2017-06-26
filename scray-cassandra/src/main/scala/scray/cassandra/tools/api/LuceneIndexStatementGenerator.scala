@@ -3,7 +3,7 @@ package scray.cassandra.tools.api
 import scray.querying.description.TableIdentifier
 import scray.cassandra.tools.types.LuceneColumnTypes.LuceneColumnType
 
-case class LucenIndexedColumn(name: String, dataType: LuceneColumnType)
+case class LucenIndexedColumn(name: String, dataType: LuceneColumnType, isSorted: Boolean)
 
 
 trait LuceneIndexStatementGenerator {
