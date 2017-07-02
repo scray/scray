@@ -31,7 +31,7 @@ class SyncTableTests extends WordSpec {
     }
     def getDBType: String = "text"
     def fromDBType(value: AnyRef): T = value.asInstanceOf[T]
-    def toDBType(value: T): AnyRef = value
+    def toDBType(value: T): AnyRef = value.asInstanceOf[AnyRef]
   }
   
   "Tables " should {
