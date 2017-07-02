@@ -30,18 +30,18 @@ class TestQuerySpace(tables: Set[TableConfiguration[_ <: DomainQuery, _ <: Domai
 }
 
 object TestQuerySpace {
-    
+  
   def createTableConfiguration[K](tableid: TableIdentifier, 
       primaryKeyColumns: List[Column], 
       clusteringKeyColumns: List[Column], 
       valueColumns: List[Column],
       data: Map[K, SimpleRow]): TableConfiguration[DomainQuery, DomainQuery, Row] = TableConfiguration[DomainQuery, DomainQuery, Row](
-    tableid, None, 
+    tableid, 
+    None, 
     primaryKeyColumns.toSet,
     clusteringKeyColumns.toSet,
     valueColumns.toSet,
     row => row,
-    query => query,
     None, //Some(() => createQueryableStore[K](data)),
     None //Some(() => new MapStore(data)),
   )
