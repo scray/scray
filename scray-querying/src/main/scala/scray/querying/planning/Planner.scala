@@ -131,7 +131,7 @@ object Planner extends LazyLogging {
    */
   @inline def basicVerifyQuery(query: Query): Int = {
     // then we can retrieve the latest version of this queryspace
-    val version = Registry.getLatestVersion(query.getQueryspace).getOrElse({logger.warn("No latest version found");throw new QueryspaceViolationException(query)})
+    val version = Registry.getLatestVersion(query.getQueryspace).getOrElse({logger.error("No latest version for queryspace found!");throw new NoQueryspaceRegistered(query)})
 
     // check that the queryspace is there
     Registry.getQuerySpace(query.getQueryspace, version).orElse({logger.warn("No queryspace found"); throw new QueryspaceViolationException(query)})

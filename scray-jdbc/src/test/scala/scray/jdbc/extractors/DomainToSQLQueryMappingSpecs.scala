@@ -27,6 +27,8 @@ import com.typesafe.scalalogging.LazyLogging
 import scray.querying.description.QueryRange
 import scray.querying.description.ColumnOrdering
 import scray.querying.description.internal.SingleValueDomain
+import com.zaxxer.hikari.HikariDataSource
+import java.sql.ResultSet
 
 @RunWith(classOf[JUnitRunner])
 class DomainToSQLQueryMappingSpecs extends WordSpec with LazyLogging {
@@ -50,8 +52,8 @@ class DomainToSQLQueryMappingSpecs extends WordSpec with LazyLogging {
         None,
         Some(QueryRange(None, None, None)))
 
-      val connection = MockitoSugar.mock[Connection]
-      val rowMapper = (row: JDBCRow) => SimpleRow(ArrayBuffer.empty[RowColumn[_]])
+      val connection = MockitoSugar.mock[HikariDataSource]
+      val rowMapper = (row: ResultSet) => SimpleRow(ArrayBuffer.empty[RowColumn[_]])
 
       val jdbcSource =  new JDBCQueryableSource(
           tableId, 
@@ -63,12 +65,12 @@ class DomainToSQLQueryMappingSpecs extends WordSpec with LazyLogging {
           new DomainToSQLQueryMapping[DomainQuery, JDBCQueryableSource[DomainQuery]], 
           FuturePool(Executors.newCachedThreadPool()), 
           rowMapper,
-          ScraySQLDialectFactory.getDialect(ScraySQLDialectFactory.ORACLE))
+          ScraySQLDialectFactory.getDialect("ORACLE"))
       
       val mapper2 = new DomainToSQLQueryMapping[DomainQuery, JDBCQueryableSource[DomainQuery]]
       
-      println(mapper2.getQueryMapping(jdbcSource, None, ScraySQLDialectFactory.getDialect(ScraySQLDialectFactory.ORACLE))(query))
-      assert(mapper2.getQueryMapping(jdbcSource, None, ScraySQLDialectFactory.getDialect(ScraySQLDialectFactory.ORACLE))(query).toString() === "(SELECT * FROM \"DB1\".\"TABLE1\" WHERE  key = ?   AND    ,1)")
+      println(mapper2.getQueryMapping(jdbcSource, None, ScraySQLDialectFactory.getDialect("ORACLE"))(query))
+      assert(mapper2.getQueryMapping(jdbcSource, None, ScraySQLDialectFactory.getDialect("ORACLE"))(query).toString() === "(SELECT * FROM \"DB1\".\"TABLE1\" WHERE  key = ?    ,1,List())")
 
     }
 
