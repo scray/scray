@@ -22,6 +22,6 @@ object ConsistencyLevel extends Enumeration {
   val LOCAL_SERIAL, ALL = Value
 }
 
-class SyncConfiguration {
-  @BeanProperty var versionUpdateConsitencyLevel: ConsistencyLevel.ConsistencyLevel = ConsistencyLevel.ALL
+class SyncConfiguration(versionUpdateConsitencyLevelIn: ConsistencyLevel.ConsistencyLevel = ConsistencyLevel.ALL) extends Serializable {
+  @BeanProperty var versionUpdateConsitencyLevel: ConsistencyLevel.ConsistencyLevel = versionUpdateConsitencyLevelIn
 }
