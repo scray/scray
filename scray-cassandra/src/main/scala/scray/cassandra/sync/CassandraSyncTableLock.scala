@@ -177,8 +177,7 @@ class CassandraSyncTableLock (job: JobInfo[Statement, Insert, ResultSet], jobLoc
     tryToLockR
   }
   def tryLock(): Boolean = {
-    //executeQuorum(lockQuery).isSuccess
-    true
+    executeQuorum(lockQuery).isSuccess
   }
   
   def unlock(): Unit = {
