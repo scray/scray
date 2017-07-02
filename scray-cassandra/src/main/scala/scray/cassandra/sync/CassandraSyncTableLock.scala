@@ -54,8 +54,7 @@ import scray.querying.sync.StatementExecutionError
 
 
 class CassandraSyncTableLock (job: JobInfo[Statement, Insert, ResultSet], jobLockTable: Table[SyncTableBasicClasses.JobLockTable], 
-  dbSession: DbSession[Statement, Insert, ResultSet], val timeOut: Int)
-  extends LockApi[Statement, Insert, ResultSet](job, jobLockTable, dbSession) with Serializable {
+  dbSession: DbSession[Statement, Insert, ResultSet], val timeOut: Int) extends LockApi[Statement, Insert, ResultSet](job, jobLockTable, dbSession) {
   
   val timeBetweenRetries = 100 // ms
 
@@ -218,8 +217,7 @@ class CassandraSyncTableLock (job: JobInfo[Statement, Insert, ResultSet], jobLoc
     tryToLockR
   }
   def tryLock(): Boolean = {
-    //executeQuorum(lockQuery).isSuccess
-    true
+    executeQuorum(lockQuery).isSuccess
   }
   
   def unlock(): Unit = {
