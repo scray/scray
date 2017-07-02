@@ -57,8 +57,6 @@ class CassandraSyncTableLock (job: JobInfo[Statement, Insert, ResultSet], jobLoc
   dbSession: DbSession[Statement, Insert, ResultSet], val timeOut: Int) extends LockApi[Statement, Insert, ResultSet](job, jobLockTable, dbSession) {
   
   val timeBetweenRetries = 100 // ms
-
-  val config = new SyncConfiguration // TODO read config from file
   
   @transient
   lazy val lockQuery = getLockQuery
@@ -138,7 +136,7 @@ class CassandraSyncTableLock (job: JobInfo[Statement, Insert, ResultSet], jobLoc
     .where(QueryBuilder.eq(jobLockTable.columns.jobname.name, job.name))  
 
       // Set consistency level for lightweight transactions
-      config.versionUpdateConsitencyLevel match {
+      job.syncConf.versionUpdateConsitencyLevel match {
          case scray.querying.sync.conf.ConsistencyLevel.LOCAL_SERIAL => {
            query.onlyIf(QueryBuilder.eq(jobLockTable.columns.locked.name, false))
            query.setSerialConsistencyLevel(com.datastax.driver.core.ConsistencyLevel.LOCAL_SERIAL)
@@ -157,9 +155,9 @@ class CassandraSyncTableLock (job: JobInfo[Statement, Insert, ResultSet], jobLoc
     .where(QueryBuilder.eq(jobLockTable.columns.jobname.name, job.name))
 
     // Set consistency level for lightweight transactions
-    config.versionUpdateConsitencyLevel match {
+    job.syncConf.versionUpdateConsitencyLevel match {
       case scray.querying.sync.conf.ConsistencyLevel.LOCAL_SERIAL => {
-        query.onlyIf(QueryBuilder.eq(jobLockTable.columns.locked.name, false))
+        query.onlyIf(QueryBuilder.eq(jobLockTable.columns.locked.name, true))
         query.setSerialConsistencyLevel(com.datastax.driver.core.ConsistencyLevel.LOCAL_SERIAL)
       }
       case _ => // No action required

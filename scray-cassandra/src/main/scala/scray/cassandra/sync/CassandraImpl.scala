@@ -30,6 +30,7 @@ import scray.querying.sync.conf.ConsistencyLevel._
 import scala.annotation.tailrec
 import scala.collection.mutable.{HashSet, ListBuffer}
 import scala.util.{Failure, Success, Try}
+import scray.querying.sync.conf.SyncConfiguration
 
 
 object CassandraImplementation extends AbstractTypeDetection with Serializable {
@@ -68,7 +69,7 @@ object CassandraImplementation extends AbstractTypeDetection with Serializable {
 
 }
 
-class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet]) extends OnlineBatchSync[Statement, Insert, ResultSet] with OnlineBatchSyncWithTableIdentifier[Statement, Insert, ResultSet] with StateMonitoringApi[Statement, Insert, ResultSet] {
+class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet], config: SyncConfiguration = new SyncConfiguration) extends OnlineBatchSync[Statement, Insert, ResultSet] with OnlineBatchSyncWithTableIdentifier[Statement, Insert, ResultSet] with StateMonitoringApi[Statement, Insert, ResultSet] {
 
   import CassandraImplementation.genericCassandraColumnImplicit
 

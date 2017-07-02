@@ -12,6 +12,8 @@ import scray.cassandra.sync.CassandraImplementation._
 
 
 import scala.util.{Failure, Try}
+import scray.querying.sync.conf.SyncConfiguration
+import scray.querying.sync.conf.ConsistencyLevel
 
 @RunWith(classOf[JUnitRunner])
 class TransactionTests extends WordSpec {
@@ -32,12 +34,12 @@ class TransactionTests extends WordSpec {
       assert(true)
     }
     "lock and unlock " in {
-      val job1 = new CassandraJobInfo(getNextJobName)
+      val job1 = new CassandraJobInfo(name = getNextJobName, syncConfV = new SyncConfiguration(ConsistencyLevel.LOCAL_SERIAL))
       val table = new OnlineBatchSyncCassandra(dbconnection)
       table.initJob(job1, new SumTestColumns())
 
       assert(job1.getLock(dbconnection).tryLock(100, TimeUnit.MILLISECONDS))
-      assert(job1.getLock(dbconnection).tryLock(100, TimeUnit.MILLISECONDS) == false)
+      assert(job1.getLock(dbconnection).tryLock(500, TimeUnit.MILLISECONDS) == false)
     }
     "use transaction method" in {
       val job1 = new CassandraJobInfo(getNextJobName)

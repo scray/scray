@@ -21,6 +21,7 @@ import com.typesafe.scalalogging.slf4j.LazyLogging
 import scray.cassandra.util.CassandraUtils
 import scray.common.serialization.BatchID
 import scray.querying.sync.{DbSession, JobInfo, JobLockTable, LockApi}
+import scray.querying.sync.conf.SyncConfiguration
 
 
 class CassandraJobInfo(
@@ -28,7 +29,8 @@ class CassandraJobInfo(
     numberOfBatchSlots: Int = 3,
     numberOfOnlineSlots: Int = 2,
     numberOfWorkersV: Option[Long] = None,
-    lockTimeOut: Int = 500) extends JobInfo[Statement, Insert, ResultSet](name, numberOfBatchSlots, numberOfOnlineSlots, numberOfWorkers = numberOfWorkersV) with LazyLogging {
+    lockTimeOut: Int = 500,
+    syncConfV: SyncConfiguration = new SyncConfiguration) extends JobInfo[Statement, Insert, ResultSet](name, numberOfBatchSlots, numberOfOnlineSlots, numberOfWorkers = numberOfWorkersV, syncConf = syncConfV) with LazyLogging {
 
   import CassandraImplementation.genericCassandraColumnImplicit
   
