@@ -108,7 +108,7 @@ class CachingSpecs extends WordSpec {
       checkAndDeleteIfExisting(filename1)
       checkAndDeleteIfExisting(filename2)
       val k = new Kryo
-      k.register(classOf[UUID], new UUIDSerializer, 81)
+      k.register(classOf[UUID], new UUIDSerializer, 81221)
       k.register(classOf[Column], new ColumnSerialization, KryoSerializerNumber.column.getNumber)
       k.register(classOf[RowColumn[_]], new RowColumnSerialization, KryoSerializerNumber.rowcolumn.getNumber)
       k.register(classOf[SimpleRow], new SimpleRowSerialization, KryoSerializerNumber.simplerow.getNumber)
@@ -125,7 +125,7 @@ class CachingSpecs extends WordSpec {
       str2.close
       // now read that stuff out from the files using a different registration
       val k2 = new Kryo
-      k2.register(classOf[UUID], new UUIDSerializer, 81)
+      k2.register(classOf[UUID], new UUIDSerializer, 81221)
       JavaKryoRowSerialization.registerSerializers(k2)
       val istr = new Input(new FileInputStream(filename1))
       val result = k2.readObject(istr, classOf[JavaSimpleRow])
