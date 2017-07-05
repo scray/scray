@@ -58,7 +58,7 @@
 		<dependency>
 			<groupId>com.twitter</groupId>
 			<artifactId>scrooge-core_${scala.suffix}</artifactId>
-			<version>4.6.0</version>
+			<version>${scrooge.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.twitter</groupId>
@@ -80,7 +80,7 @@
 					<groupId>org.apache.thrift</groupId>
 				</exclusion>
 				<exclusion>
-					<artifactId>finagle-core_2.10</artifactId>
+					<artifactId>finagle-core_${scala.suffix}</artifactId>
 					<groupId>com.twitter</groupId>
 				</exclusion>
 			</exclusions>
