@@ -5,13 +5,13 @@
 
 * Programm arguments:
 
-    ```--config /home/otto/scray-conf/store.conf```
+    ```--config ~/scray-conf/store.conf```
 * `store.conf` File    
 
     ```
     service {
             advertise host "127.0.0.1",
-            service port 18181,
+            service port 18181
     }
 
     connection cassandra cassandra {
