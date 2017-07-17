@@ -1,19 +1,27 @@
+// See the LICENCE.txt file distributed with this work for additional
+// information regarding copyright ownership.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package scray.cassandra.sync
 
-import com.datastax.driver.core.Cluster
-import com.datastax.driver.core.ResultSet
-import com.datastax.driver.core.Statement
-import com.datastax.driver.core.querybuilder.Insert
-import com.datastax.driver.core.querybuilder.QueryBuilder
-import scala.collection.JavaConversions._
-import scray.querying.sync.JobLockTable
-import scray.querying.sync.DbSession
-import scray.common.serialization.BatchID
-import scray.querying.sync.JobInfo
+import com.datastax.driver.core.{Cluster, ResultSet, Statement}
+import com.datastax.driver.core.querybuilder.{Insert, QueryBuilder}
 import com.typesafe.scalalogging.slf4j.LazyLogging
-import scray.querying.sync.LockApi
 import scray.cassandra.util.CassandraUtils
-import scray.querying.description.TableIdentifier
+import scray.common.serialization.BatchID
+import scray.querying.sync.{DbSession, JobInfo, JobLockTable, LockApi}
+import scray.querying.sync.conf.SyncConfiguration
 
 
 class CassandraJobInfo(
@@ -21,7 +29,8 @@ class CassandraJobInfo(
     numberOfBatchSlots: Int = 3,
     numberOfOnlineSlots: Int = 2,
     numberOfWorkersV: Option[Long] = None,
-    lockTimeOut: Int = 500) extends JobInfo[Statement, Insert, ResultSet](name, numberOfBatchSlots, numberOfOnlineSlots, numberOfWorkers = numberOfWorkersV) with LazyLogging {
+    lockTimeOut: Int = 500,
+    syncConfV: SyncConfiguration = new SyncConfiguration) extends JobInfo[Statement, Insert, ResultSet](name, numberOfBatchSlots, numberOfOnlineSlots, numberOfWorkers = numberOfWorkersV, syncConf = syncConfV) with LazyLogging {
 
   import CassandraImplementation.genericCassandraColumnImplicit
   

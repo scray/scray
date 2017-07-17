@@ -13,12 +13,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package scray.cassandra
+package scray.querying.sync.conf
 
-import java.util.UUID
+import scala.beans.BeanProperty
 
-import scray.common.exceptions.ScrayException
+object ConsistencyLevel extends Enumeration {
+  type ConsistencyLevel = Value
+  val LOCAL_SERIAL, ALL = Value
+}
 
-class CassandraTableNonexistingException(tableName: String) extends ScrayException(ExceptionIDs.tableNonExistingInCassandraID, 
-        UUID.nameUUIDFromBytes(Array[Byte](0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)),
-        s"$tableName : does not exist in Cassandra. Please create table before (re-)loading Scray.") with Serializable
+class SyncConfiguration(versionUpdateConsitencyLevelIn: ConsistencyLevel.ConsistencyLevel = ConsistencyLevel.ALL) extends Serializable {
+  @BeanProperty var versionUpdateConsitencyLevel: ConsistencyLevel.ConsistencyLevel = versionUpdateConsitencyLevelIn
+}

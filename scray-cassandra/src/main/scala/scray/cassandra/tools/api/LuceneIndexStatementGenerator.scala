@@ -1,7 +1,7 @@
 package scray.cassandra.tools.api
 
-import scray.querying.description.TableIdentifier
 import scray.cassandra.tools.types.LuceneColumnTypes.LuceneColumnType
+import scray.querying.description.TableIdentifier
 
 case class LucenIndexedColumn(name: String, dataType: LuceneColumnType, isSorted: Boolean)
 

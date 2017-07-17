@@ -9,6 +9,7 @@ import scray.querying.sync.RowWithValue
 import scray.querying.sync.ColumnWithValue
 import scray.querying.sync.RowWithValue
 
+
 object BatchOutputTable  {
   val count = new Column[Int]("count")
   
