@@ -1,18 +1,17 @@
 package scray.cassandra.automation
 
+import com.twitter.util.FuturePool
 import com.typesafe.scalalogging.slf4j.LazyLogging
 import com.websudos.phantom.CassandraPrimitive
-import scray.cassandra.rows.GenericCassandraRowStoreMapper
-import scray.querying.description.{ Row, TableIdentifier, VersioningConfiguration }
-import scray.querying.storeabstraction.StoreGenerators
-import scray.cassandra.sync.CassandraDbSession
-import scray.querying.sync.DbSession
-import scray.querying.storeabstraction.StoreExtractor
-import scray.cassandra.extractors.CassandraExtractor
-import scray.querying.source.store.QueryableStoreSource
-import scray.querying.queries.DomainQuery
-import com.twitter.util.FuturePool
 import scray.cassandra.CassandraQueryableSource
+import scray.cassandra.extractors.CassandraExtractor
+import scray.cassandra.rows.GenericCassandraRowStoreMapper
+import scray.cassandra.sync.CassandraDbSession
+import scray.querying.description.{Row, TableIdentifier, VersioningConfiguration}
+import scray.querying.queries.DomainQuery
+import scray.querying.source.store.QueryableStoreSource
+import scray.querying.storeabstraction.{StoreExtractor, StoreGenerators}
+import scray.querying.sync.DbSession
 
 /**
  * Generators for Scray store abstractions for Cassandra

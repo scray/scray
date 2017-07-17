@@ -1,10 +1,8 @@
 package scray.cassandra.tools.types
 
-import com.datastax.driver.core.Cluster
-import scray.cassandra.tools.types.ScrayColumnTypes.ScrayColumnType
-import com.datastax.driver.core.DataType
-import com.datastax.driver.core.Metadata
+import com.datastax.driver.core.{Cluster, DataType, Metadata}
 import com.typesafe.scalalogging.slf4j.LazyLogging
+import scray.cassandra.tools.types.ScrayColumnTypes.ScrayColumnType
 
 class CassandraColumnTypeReader(host: String, ks: String) extends LazyLogging {
 

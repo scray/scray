@@ -1,9 +1,10 @@
 package scray.cassandra.automation
 
 import java.util.concurrent.locks.ReentrantLock
+
+import com.datastax.driver.core.{Cluster, Metadata, Session}
+
 import scala.collection.mutable.HashMap
-import com.datastax.driver.core.{ Cluster, Session }
-import com.datastax.driver.core.Metadata
 
 /**
  * handles sessions for Cassandra clusters based on dbid and keyspace 

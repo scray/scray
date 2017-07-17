@@ -3,30 +3,17 @@ package scray.cassandra.sync
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
-import scala.util.Failure
-import scala.util.Success
-import scala.util.Try
-
-import org.cassandraunit.utils.EmbeddedCassandraServerHelper
 import org.junit.runner.RunWith
 import org.scalatest.WordSpec
 import org.scalatest.junit.JUnitRunner
+import scray.cassandra.sync.helpers.{SumTestColumns, TestDbSession}
+import scray.querying.sync.UnableToLockJobError
+import scray.cassandra.sync.CassandraImplementation._
 
-import com.datastax.driver.core.Cluster
-import com.datastax.driver.core.ResultSet
-import com.datastax.driver.core.Statement
-import com.datastax.driver.core.querybuilder.Insert
 
-import scray.common.serialization.BatchID
-import scray.cassandra.sync.CassandraJobInfo
-import scray.querying.sync.ArbitrarylyTypedRows
-import scray.querying.sync.Column
-import scray.querying.sync.DbSession
-import scray.querying.sync.UnableToLockJobError;
-import scray.cassandra.sync.helpers.TestDbSession
-import scray.cassandra.sync.helpers.SumTestColumns
-import scray.cassandra.sync.OnlineBatchSyncCassandra
-import scray.cassandra.sync.helpers.TestDbSession
+import scala.util.{Failure, Try}
+import scray.querying.sync.conf.SyncConfiguration
+import scray.querying.sync.conf.ConsistencyLevel
 
 @RunWith(classOf[JUnitRunner])
 class TransactionTests extends WordSpec {
@@ -47,12 +34,12 @@ class TransactionTests extends WordSpec {
       assert(true)
     }
     "lock and unlock " in {
-      val job1 = new CassandraJobInfo(getNextJobName)
+      val job1 = new CassandraJobInfo(name = getNextJobName, syncConfV = new SyncConfiguration(ConsistencyLevel.LOCAL_SERIAL))
       val table = new OnlineBatchSyncCassandra(dbconnection)
       table.initJob(job1, new SumTestColumns())
 
       assert(job1.getLock(dbconnection).tryLock(100, TimeUnit.MILLISECONDS))
-      assert(job1.getLock(dbconnection).tryLock(100, TimeUnit.MILLISECONDS) == false)
+      assert(job1.getLock(dbconnection).tryLock(500, TimeUnit.MILLISECONDS) == false)
     }
     "use transaction method" in {
       val job1 = new CassandraJobInfo(getNextJobName)
