@@ -43,9 +43,9 @@
 		<maven.compiler.target>1.8</maven.compiler.target>
 		<encoding>UTF-8</encoding>
 		<scala.suffix>2.11</scala.suffix>
-		<finagle.version>6.44.0</finagle.version>
-		<libthrift.version>0.8.0</libthrift.version>
-		<scrooge.version>4.16.0</scrooge.version>
+		<finagle.version>6.33.0</finagle.version>
+		<libthrift.version>0.9.1</libthrift.version>
+		<scrooge.version>4.5.0</scrooge.version>
 		<snappy-java.version>1.1.1.6</snappy-java.version>
 	</properties>
 
@@ -78,38 +78,12 @@
 			<artifactId>scrooge-core_${scala.suffix}</artifactId>
 			<version>${scrooge.version}</version>
 		</dependency>
-		<!-- <dependency> -->
-		<!-- <groupId>com.twitter</groupId> -->
-		<!-- <artifactId>scrooge-runtime_${scala.suffix}</artifactId> -->
-		<!-- <version>${scrooge.version}</version> -->
-		<!-- </dependency> -->
 		<dependency>
 			<groupId>com.twitter</groupId>
-			<artifactId>finagle-thrift_${scala.suffix}</artifactId>
-			<version>${finagle.version}</version>
+			<artifactId>scrooge-runtime_${scala.suffix}</artifactId>
+			<version>${scrooge.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>com.twitter</groupId>
-			<artifactId>util-core_2.11</artifactId>
-			<version>6.43.0</version>
-		</dependency>
-		<dependency>
-			<groupId>com.twitter</groupId>
-			<artifactId>util-codec_2.11</artifactId>
-			<version>6.43.0</version>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.thrift</groupId>
-			<artifactId>libthrift</artifactId>
-			<version>${libthrift.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>com.twitter</groupId>
-			<artifactId>finagle-core_2.11</artifactId>
-			<version>6.44.0</version>
-		</dependency>
-		<dependency>
-
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
 			<version>4.4</version>
@@ -160,7 +134,7 @@
 				<artifactId>scrooge-maven-plugin</artifactId>
 				<version>${scrooge.version}</version>
 				<configuration>
-					<language>java</language>
+					<language>experimental-java</language>
 					<thriftOpts>
 						<thriftOpt>--finagle</thriftOpt>
 					</thriftOpts>

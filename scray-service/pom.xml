@@ -12,7 +12,7 @@
 	<description>scray remote query service interface</description>
 
 	<properties>
-		<scrooge.version>4.7.0</scrooge.version>
+		<scrooge.version>4.18.0</scrooge.version>
 	</properties>
 
 	<distributionManagement>
@@ -143,6 +143,7 @@
 				<artifactId>scalatest-maven-plugin</artifactId>
 				<version>1.0</version>
 				<configuration>
+					<skipTests>true</skipTests>
 					<reportsDirectory>${project.build.directory}/surefire-reports</reportsDirectory>
 					<junitxml>.</junitxml>
 					<filereports>WDF TestSuite.txt</filereports>

@@ -44,7 +44,7 @@
 		<dependency>
 			<groupId>com.typesafe.slick</groupId>
 			<artifactId>slick_${scala.suffix}</artifactId>
-			<version>3.1.1</version>
+			<version>3.2.0</version>
 		</dependency>
 	</dependencies>
 	<build>
