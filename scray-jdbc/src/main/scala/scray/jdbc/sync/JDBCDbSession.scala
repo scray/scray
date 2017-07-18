@@ -25,7 +25,7 @@ import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
 
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 import com.zaxxer.hikari.HikariDataSource
 
 import scray.querying.sync.DbSession

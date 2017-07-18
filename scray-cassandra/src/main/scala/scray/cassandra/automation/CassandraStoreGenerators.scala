@@ -14,8 +14,8 @@
 // limitations under the License.
 package scray.cassandra.automation
 
+import com.typesafe.scalalogging.LazyLogging
 import com.twitter.util.FuturePool
-import com.typesafe.scalalogging.slf4j.LazyLogging
 import com.websudos.phantom.CassandraPrimitive
 import scray.cassandra.CassandraQueryableSource
 import scray.cassandra.extractors.CassandraExtractor

@@ -36,7 +36,7 @@ import scray.service.qservice.thrifscala.ScrayMetaTService
 import scray.service.qservice.thrifscala.ScrayTServiceEndpoint
 import scray.core.service.properties.ScrayServicePropertiesRegistration
 import scray.service.qmodel.thrifscala.ScrayUUID
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 
 trait KryoPoolRegistration {
   def registerSerializers = RegisterRowCachingSerializers()

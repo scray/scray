@@ -84,7 +84,7 @@
 		</dependency>
 		<dependency>
 			<groupId>com.chuusai</groupId>
-			<artifactId>shapeless_${scala.suffix}.4</artifactId>
+			<artifactId>shapeless_${scala.suffix}</artifactId>
 			<version>2.0.0</version>
 		</dependency>
 		<dependency>

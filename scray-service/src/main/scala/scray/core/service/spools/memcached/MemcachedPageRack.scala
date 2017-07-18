@@ -7,7 +7,7 @@ import org.slf4j.LoggerFactory
 import scala.annotation.tailrec
 import scala.collection.JavaConversions._
 import com.twitter.concurrent.Spool
-import com.twitter.finagle.memcached.Client
+import com.twitter.finagle.memcachedx.Client
 import com.twitter.util.Duration
 import com.twitter.util.Future
 import com.twitter.util.Time
@@ -19,7 +19,7 @@ import scray.querying.Query
 import scray.querying.description.Row
 import scray.service.qmodel.thrifscala.ScrayTQueryInfo
 import scray.service.qmodel.thrifscala.ScrayUUID
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 
 class MemcachedPageRack(planAndExecute: (Query) => Spool[Row], pageTTL: Duration = DEFAULT_TTL)
   extends PageRackImplBase(planAndExecute, pageTTL) {

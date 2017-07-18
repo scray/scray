@@ -55,9 +55,9 @@
 		<maven.compiler.source>1.6</maven.compiler.source>
 		<maven.compiler.target>1.6</maven.compiler.target>
 		<encoding>UTF-8</encoding>
-		<scala.tools.version>2.10</scala.tools.version>
-		<scala.version>2.10.6</scala.version>
-		<scala.suffix>2.10</scala.suffix>
+		<scala.tools.version>2.11</scala.tools.version>
+		<scala.version>2.11.8</scala.version>
+		<scala.suffix>2.11</scala.suffix>
 
 		<!-- finagle 6.12 might be needed for scray stateless services because 
 			storehaus-memcached depends on it - need to test -->
@@ -121,13 +121,13 @@
 		</dependency>
 		<dependency>
 			<groupId>com.typesafe.scala-logging</groupId>
-			<artifactId>scala-logging-api_${scala.suffix}</artifactId>
-			<version>2.1.2</version>
+			<artifactId>scala-logging_${scala.suffix}</artifactId>
+			<version>3.5.0</version>
 		</dependency>
 		<dependency>
-			<groupId>com.typesafe.scala-logging</groupId>
-			<artifactId>scala-logging-slf4j_${scala.suffix}</artifactId>
-			<version>2.1.2</version>
+			<groupId>ch.qos.logback</groupId>
+			<artifactId>logback-classic</artifactId>
+			<version>1.1.7</version>
 		</dependency>
 		<dependency>
 			<groupId>com.esotericsoftware</groupId>

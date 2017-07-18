@@ -12,13 +12,15 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
 package scray.cassandra.extractors
 
+import com.datastax.driver.core.{ KeyspaceMetadata, Metadata, TableMetadata }
+import com.typesafe.scalalogging.LazyLogging
 import java.util.regex.Pattern
 
 import com.datastax.driver.core.{KeyspaceMetadata, Metadata, Session, TableMetadata, Row => CassRow}
 import com.twitter.util.FuturePool
-import com.typesafe.scalalogging.slf4j.LazyLogging
 import scray.cassandra.CassandraQueryableSource
 import scray.cassandra.sync.{CassandraDbSession, CassandraJobInfo, OnlineBatchSyncCassandra}
 import scray.cassandra.util.CassandraUtils
@@ -162,7 +164,7 @@ class CassandraExtractor[Q <: DomainQuery](session: Session, table: TableIdentif
       dbName: String,
       table: String,
       column: Column,
-      index: Option[ManuallyIndexConfiguration[_, _, _, _, _]],
+      index: Option[ManuallyIndexConfiguration[_ <: DomainQuery, _ <: DomainQuery, _, _, _ <: DomainQuery]],
       splitters: Map[Column, Splitter[_]]): ColumnConfiguration = {
     val indexConfig = index match {
       case None =>
@@ -210,7 +212,7 @@ class CassandraExtractor[Q <: DomainQuery](session: Session, table: TableIdentif
       indexes: Map[_ <: (QueryableStoreSource[_ <: DomainQuery], String), _ <: (QueryableStoreSource[_ <: DomainQuery], String, 
               IndexConfig, Option[Function1[_,_]], Set[String])],
       mappers: Map[_ <: QueryableStoreSource[_], ((_) => Row, Option[String], Option[VersioningConfiguration[_, _]])]):
-        Option[ManuallyIndexConfiguration[_, _, _, _, _]] = {
+        Option[ManuallyIndexConfiguration[_ <: DomainQuery, _ <: DomainQuery, _, _, _ <: DomainQuery]] = {
     def internalStores[A <: QueryableStoreSource[_]](intmappers: Map[A, 
         ((_) => Row, Option[String], Option[VersioningConfiguration[_, _]])], indexStore: CassandraQueryableSource[_]) = {
       (intmappers.get(indexStore.asInstanceOf[A]).get, intmappers.get(store.asInstanceOf[A]).get)
@@ -270,7 +272,7 @@ class CassandraExtractor[Q <: DomainQuery](session: Session, table: TableIdentif
         allColumns,
         allColumns.map(col => 
           // TODO: ManualIndexConfiguration and Map of Splitter must be extracted from config
-          getColumnConfiguration(cassSession, tableToRead.dbId, tableToRead.tableId, Column(col.columnName, tableToRead), None, Map())),
+          getColumnConfiguration(cassSession, tableToRead.dbId, tableToRead.tableId, Column(col.columnName, tableToRead), None, Map[Column, Splitter[_]]())),
         session,
         new DomainToCQLQueryMapping[Q, CassandraQueryableSource[Q]](),
         futurePool,
@@ -299,7 +301,7 @@ class CassandraExtractor[Q <: DomainQuery](session: Session, table: TableIdentif
         allColumns,
         allColumns.map(col => 
           // TODO: ManualIndexConfiguration and Map of Splitter must be extracted from config
-          getColumnConfiguration(cassSession, table.dbId, table.tableId, Column(col.columnName, table), None, Map())),
+          getColumnConfiguration(cassSession, table.dbId, table.tableId, Column(col.columnName, table), None, Map[Column, Splitter[_]]())),
         session,
         new DomainToCQLQueryMapping[Q, CassandraQueryableSource[Q]](),
         futurePool,

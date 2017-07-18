@@ -15,7 +15,7 @@
 package scray.jdbc.extractors
 
 
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 
 import DomainToSQLQueryMapping.AND_LITERAL
 import DomainToSQLQueryMapping.DESC_LITERAL

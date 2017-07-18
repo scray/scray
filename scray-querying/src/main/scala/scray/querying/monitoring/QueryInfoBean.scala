@@ -24,7 +24,7 @@ import scray.querying.description.Unequal
 import scray.querying.description.Wildcard
 import scray.querying.queries.QueryInformation
 import javax.management.ObjectName
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 
 class QueryInfoBean(qinfo: QueryInformation, beans: HashMap[String, QueryInfoBean]) extends DynamicMBean with LazyLogging {
 

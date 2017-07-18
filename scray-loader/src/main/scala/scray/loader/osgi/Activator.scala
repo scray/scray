@@ -16,7 +16,7 @@ package scray.loader.osgi
 
 import com.twitter.finagle.Thrift
 import com.twitter.util.{ Await, Duration }
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit

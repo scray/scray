@@ -16,7 +16,6 @@ package scray.cassandra.automation
 
 import com.datastax.driver.core.{Row => CassRow}
 import com.twitter.util.FuturePool
-import com.typesafe.scalalogging.slf4j.LazyLogging
 import com.websudos.phantom.CassandraPrimitive
 import scray.cassandra.{CassandraQueryableSource, CassandraTableNonexistingException}
 import scray.cassandra.extractors.{CassandraExtractor, DomainToCQLQueryMapping}
@@ -26,10 +25,17 @@ import scray.cassandra.util.CassandraUtils
 import scray.querying.description.{Column, TableIdentifier}
 import scray.querying.queries.DomainQuery
 import scray.querying.sync.DbSession
-
+import scray.cassandra.sync.CassandraDbSession
+import com.twitter.util.FuturePool
+import scray.cassandra.extractors.CassandraExtractor
+import scray.cassandra.extractors.DomainToCQLQueryMapping
+import scray.querying.description.Column
+import scray.querying.description.Row
+import scray.cassandra.rows.GenericCassandraRowStoreMapper
+import scray.cassandra.CassandraTableNonexistingException
+import com.typesafe.scalalogging.LazyLogging
+import scray.querying.source.Splitter
 import scala.collection.JavaConverters._
-
-
 
 
 /**
@@ -61,7 +67,7 @@ object RowStoreFactory extends LazyLogging {
             allColumns,
             allColumns.map(col => 
               // TODO: ManualIndexConfiguration and Map of Splitter must be extracted from config
-              cassExtractor.getColumnConfiguration(cassSession, ti.dbId, ti.tableId, Column(col.columnName, ti), None, Map())),
+              cassExtractor.getColumnConfiguration(cassSession, ti.dbId, ti.tableId, Column(col.columnName, ti), None, Map[Column, Splitter[_]]())),
             cassSession.cassandraSession,
             new DomainToCQLQueryMapping[Q, CassandraQueryableSource[Q]](),
             futurePool,

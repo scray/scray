@@ -22,7 +22,7 @@ import scray.querying.description.internal.RangeValueDomain
 import scray.querying.description.ColumnOrdering
 import scray.querying.caching.Cache
 import scray.querying.caching.NullCache
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 
 /**
  * source which pulls all data into memory and starts sorting

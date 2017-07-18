@@ -16,7 +16,7 @@
 package scray.core.service
 
 import com.twitter.util.{Future, Time, Duration, JavaTimer}
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 
 import java.net.{InetAddress, InetSocketAddress}
 import java.util.UUID

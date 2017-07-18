@@ -15,9 +15,20 @@
 
 package scray.cassandra.sync
 
+import com.datastax.driver.core.Cluster
+import com.datastax.driver.core.ResultSet
+import com.datastax.driver.core.Statement
+import com.datastax.driver.core.querybuilder.Insert
+import com.datastax.driver.core.querybuilder.QueryBuilder
+import scala.collection.JavaConversions._
+import scray.querying.sync.JobLockTable
+import scray.querying.sync.DbSession
+import scray.common.serialization.BatchID
+import scray.querying.sync.JobInfo
+import com.typesafe.scalalogging.LazyLogging
+import scray.querying.sync.LockApi
 import com.datastax.driver.core.{Cluster, ResultSet, Statement}
 import com.datastax.driver.core.querybuilder.{Insert, QueryBuilder}
-import com.typesafe.scalalogging.slf4j.LazyLogging
 import scray.cassandra.util.CassandraUtils
 import scray.common.serialization.BatchID
 import scray.querying.sync.{DbSession, JobInfo, JobLockTable, LockApi}

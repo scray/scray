@@ -23,7 +23,7 @@ import org.scalatest.mock.MockitoSugar
 import com.twitter.util.Future
 import com.twitter.concurrent.Spool
 import scray.querying.description.Row
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 import scray.querying.description.QueryRange
 import scray.querying.description.ColumnOrdering
 import scray.querying.description.internal.SingleValueDomain
