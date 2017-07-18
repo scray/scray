@@ -16,6 +16,9 @@ import scray.jdbc.extractors.ScrayOracleDialect
 import java.sql.PreparedStatement
 import scray.querying.sync.SyncTable
 import scray.querying.sync.JobLockTable
+import scray.querying.sync.DBColumnImplementation
+import scray.querying.sync.DBColumnImplementation
+import scray.jdbc.sync.ScalaToJDBCType._
 
 //import com.websudos.phantom.CassandraPrimitive
 //import scray.querying.sync.DBColumnImplementation
@@ -96,15 +99,15 @@ import scray.querying.sync.JobLockTable
 //
 //
 object JDBCImplementation extends AbstractTypeDetection with Serializable {
-  
-  implicit def genericJDBCColumnImplicit[T]: DBColumnImplementation[T] = new DBColumnImplementation[T] {
+  // (implicit jdbcImplicit: scray.jdbc.sync.ScalaToJDBCType.JDBCType[T])
+  implicit def genericJDBCColumnImplicit[T](implicit jdbcImplicit: scray.jdbc.sync.ScalaToJDBCType.JDBCTypes[T]): DBColumnImplementation[T] = new DBColumnImplementation[T] {
     type RowType = ResultSet
     override val rowConv = new DBRowImplementation[RowType] {
       override def convertRow(name: String, row: RowType): Option[T] = None //cassImplicit.fromRow(row, name)
     }
-    override def getDBType: String = "ORACLE"
+    override def getDBType: String = ""
     override def fromDBType(value: AnyRef): T = value.asInstanceOf[T]
-    override def toDBType(value: T): AnyRef = value.asInstanceOf[AnyRef]
+    override def toDBType(value: T): AnyRef = ""
   }
 
   implicit class RichBoolean(val b: Boolean) extends AnyVal with Serializable {
@@ -121,7 +124,7 @@ object JDBCImplementation extends AbstractTypeDetection with Serializable {
 
   def dbType[T: DBTypeImplicit]: DBColumnImplementation[T] = {
     //val imp = implicitly[DBTypeImplicit[T]].asInstanceOf[CassandraPrimitive[T]]
-    this.genericJDBCColumnImplicit
+    //this.genericJDBCColumnImplicit
   }
 
   def strType: DBColumnImplementation[String] = genericJDBCColumnImplicit[String]
