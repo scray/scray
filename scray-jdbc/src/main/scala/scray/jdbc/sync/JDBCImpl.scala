@@ -1,5 +1,22 @@
-//package scray.jdbc.sync
-//
+package scray.jdbc.sync
+
+import scray.querying.sync.DBTypeImplicit
+import scray.querying.sync.AbstractTypeDetection
+import scray.querying.sync.DBColumnImplementation
+import scala.util.Try
+import scray.querying.description.Row
+
+import java.sql.ResultSet
+import scray.querying.sync.StateMonitoringApi
+import scray.querying.sync.OnlineBatchSync
+import scray.jdbc.extractors.ScraySQLDialect
+import scray.querying.sync.DbSession
+import scray.querying.sync.OnlineBatchSyncWithTableIdentifier
+import scray.jdbc.extractors.ScrayOracleDialect
+import java.sql.PreparedStatement
+import scray.querying.sync.SyncTable
+import scray.querying.sync.JobLockTable
+
 //import com.websudos.phantom.CassandraPrimitive
 //import scray.querying.sync.DBColumnImplementation
 //import java.util.{ Iterator => JIterator }
@@ -78,80 +95,60 @@
 //import scray.querying.sync.Columns
 //
 //
-//object JDBCImplementation extends AbstractTypeDetection with Serializable {
-//
-//  /*
-//   * trait DBColumnImplementation[T] {
-//  type RowType
-//  trait DBRowImplementation[RowType] {
-//    def convertRow(name: String, row: RowType): Option[T]
-//  }
-//  val rowConv: DBRowImplementation[RowType]
-//  def getDBType: String
-//  def fromDBType(value: AnyRef): T
-//  def toDBType(value: T): AnyRef
-//  def fromDBRow[U](name: String, row: U): Option[T] = rowConv.convertRow(name, row.asInstanceOf[RowType])
-//}
-//   */
-//  
-//  
-//  implicit def genericJDBCColumnImplicit[T](implicit cassImplicit: CassandraPrimitive[T]): DBColumnImplementation[T] = new DBColumnImplementation[T] {
-//    type RowType = Row
-//    override val rowConv = new DBRowImplementation[RowType] {
-//      override def convertRow(name: String, row: RowType): Option[T] = cassImplicit.fromRow(row, name)
-//    }
-//    override def getDBType: String = cassImplicit.cassandraType
-//    override def fromDBType(value: AnyRef): T = cassImplicit.fromCType(value)
-//    override def toDBType(value: T): AnyRef = cassImplicit.toCType(value)
-//  }
-//
-//  implicit class RichBoolean(val b: Boolean) extends AnyVal with Serializable {
-//    final def toOption[A](a: => A): Option[A] = if (b) Some(a) else None
-//    final def toTry[A, E <: Throwable](a: => A, c: => E): Try[A] = Try { if (b) a else throw c }
-//    final def ?[A](a: => A, c: => A): A = if (b) a else c
-//    final def ?[A](a: => A) = if (b) a
-//    final def ![A](a: => A) = if (!b) a
-//  }
-//
-//  implicit class RichOption[T](val b: Option[T]) extends AnyVal with Serializable {
-//    final def toTry[E <: Throwable](c: => E): Try[T] = Try { b.getOrElse(throw c) }
-//  }
-//
-//  def dbType[T: DBTypeImplicit]: DBColumnImplementation[T] = {
-//    val imp = implicitly[DBTypeImplicit[T]].asInstanceOf[CassandraPrimitive[T]]
-//    this.genericCassandraColumnImplicit(imp)
-//  }
-//
-//  def strType: DBColumnImplementation[String] = genericCassandraColumnImplicit[String]
-//  def intType: DBColumnImplementation[Int] = genericCassandraColumnImplicit[Int]
-//  def lngType: DBColumnImplementation[Long] = genericCassandraColumnImplicit[Long]
-//  def boolType: DBColumnImplementation[Boolean] = genericCassandraColumnImplicit[Boolean]
-//
-//}
-//
-//class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet]) extends OnlineBatchSync[Statement, Insert, ResultSet] with OnlineBatchSyncWithTableIdentifier[Statement, Insert, ResultSet] with StateMonitoringApi[Statement, Insert, ResultSet] {
-//
-//  import CassandraImplementation.genericCassandraColumnImplicit
-//
-//  def this(dbHostname: String) = {
-//    this(new CassandraDbSession(Cluster.builder().addContactPoint(dbHostname).build().connect()))
-//  }
-//
-//  def this(dbHostname: String, port: Int) = {
-//    this(new CassandraDbSession(Cluster.builder().addContactPoint(dbHostname).withPort(port).build().connect()))
-//  }
-//
-//  // Create or use a given DB session.
-//  @transient val session = dbSession
-//
-//  val syncTable = SyncTable("silidx", "SyncTable")
-//  val jobLockTable = JobLockTable("silidx", "JobLockTable")
-//  val statementGenerator = CassandraUtils
-//  val lockTimeOut = 500 //ms
-//
-//  /**
-//   * Create and register tables for a new job.
-//   */
+object JDBCImplementation extends AbstractTypeDetection with Serializable {
+  
+  implicit def genericJDBCColumnImplicit[T]: DBColumnImplementation[T] = new DBColumnImplementation[T] {
+    type RowType = ResultSet
+    override val rowConv = new DBRowImplementation[RowType] {
+      override def convertRow(name: String, row: RowType): Option[T] = None //cassImplicit.fromRow(row, name)
+    }
+    override def getDBType: String = "ORACLE"
+    override def fromDBType(value: AnyRef): T = value.asInstanceOf[T]
+    override def toDBType(value: T): AnyRef = value.asInstanceOf[AnyRef]
+  }
+
+  implicit class RichBoolean(val b: Boolean) extends AnyVal with Serializable {
+    final def toOption[A](a: => A): Option[A] = if (b) Some(a) else None
+    final def toTry[A, E <: Throwable](a: => A, c: => E): Try[A] = Try { if (b) a else throw c }
+    final def ?[A](a: => A, c: => A): A = if (b) a else c
+    final def ?[A](a: => A) = if (b) a
+    final def ![A](a: => A) = if (!b) a
+  }
+
+  implicit class RichOption[T](val b: Option[T]) extends AnyVal with Serializable {
+    final def toTry[E <: Throwable](c: => E): Try[T] = Try { b.getOrElse(throw c) }
+  }
+
+  def dbType[T: DBTypeImplicit]: DBColumnImplementation[T] = {
+    //val imp = implicitly[DBTypeImplicit[T]].asInstanceOf[CassandraPrimitive[T]]
+    this.genericJDBCColumnImplicit
+  }
+
+  def strType: DBColumnImplementation[String] = genericJDBCColumnImplicit[String]
+  def intType: DBColumnImplementation[Int] = genericJDBCColumnImplicit[Int]
+  def lngType: DBColumnImplementation[Long] = genericJDBCColumnImplicit[Long]
+  def boolType: DBColumnImplementation[Boolean] = genericJDBCColumnImplicit[Boolean]
+
+}
+
+class OnlineBatchSyncJDBC(dbSession: DbSession[PreparedStatement, PreparedStatement, ResultSet]) extends OnlineBatchSync[PreparedStatement, PreparedStatement, ResultSet] with OnlineBatchSyncWithTableIdentifier[PreparedStatement, PreparedStatement, ResultSet] with StateMonitoringApi[PreparedStatement, PreparedStatement, ResultSet] {
+
+  import scray.jdbc.sync.JDBCImplementation._
+  
+  @transient val session = dbSession
+  
+  val syncTable = SyncTable("silidx", "SyncTable")
+  val jobLockTable = JobLockTable("silidx", "JobLockTable")
+  val statementGenerator = None
+
+
+  def this(dbHostname: String) = {
+    this(new JDBCDbSession("jdbc:oracle:thin:BISDBADMIN/Seeburger12@10.11.14.73:1521:UMCORCL", ScrayOracleDialect, "BISDBADMIN", "Seeburger12"))
+  }
+  
+    /**
+   * Create and register tables for a new job.
+   */
 //  @Override
 //  def initJob[T <: AbstractRow](job: JOB_INFO, dataTable: T): Try[Unit] = Try {
 //    statementGenerator.createKeyspaceCreationStatement(syncTable).map { statement => dbSession.execute(statement) }
@@ -160,6 +157,45 @@
 //    this.crateAndRegisterTablesIfNotExists(job)
 //    this.createDataTables(job, dataTable)
 //  }
+  
+  def getBatchJobData[T <: scray.querying.sync.RowWithValue, K](jobname: String,slot: Int,key: K,result: T): Option[scray.querying.sync.RowWithValue] =  {
+    None
+  }
+  def getBatchJobData[T <: scray.querying.sync.RowWithValue](jobInfo: scray.querying.sync.JobInfo[java.sql.PreparedStatement,java.sql.PreparedStatement,java.sql.ResultSet],result: T): Option[List[scray.querying.sync.RowWithValue]] = ???
+  def getBatchJobData[T <: scray.querying.sync.RowWithValue](jobname: String,slot: Int,result: T): Option[List[scray.querying.sync.RowWithValue]] = ???
+  def getLatestBatch(job: scray.querying.sync.JobInfo[java.sql.PreparedStatement,java.sql.PreparedStatement,java.sql.ResultSet]): Option[Int] = ???
+  def getOnlineJobData[T <: scray.querying.sync.RowWithValue](jobname: String,slot: Int,result: T): Option[List[scray.querying.sync.RowWithValue]] = ???
+  def getOnlineStartTime(job: scray.querying.sync.JobInfo[java.sql.PreparedStatement,java.sql.PreparedStatement,java.sql.ResultSet]): Option[Long] = ???
+  def initJob[DataTableT <: scray.querying.sync.ArbitrarylyTypedRows](job: scray.querying.sync.JobInfo[java.sql.PreparedStatement,java.sql.PreparedStatement,java.sql.ResultSet],dataTable: DataTableT): scala.util.Try[Unit] = ???
+  def insertInBatchTable(job: scray.querying.sync.JobInfo[java.sql.PreparedStatement,java.sql.PreparedStatement,java.sql.ResultSet],data: scray.querying.sync.RowWithValue): scala.util.Try[Unit] = ???
+  def setOnlineStartTime(job: scray.querying.sync.JobInfo[java.sql.PreparedStatement,java.sql.PreparedStatement,java.sql.ResultSet],time: Long): scala.util.Try[Unit] = ???
+  def startInicialBatch(job: scray.querying.sync.JobInfo[java.sql.PreparedStatement,java.sql.PreparedStatement,java.sql.ResultSet],batchID: scray.common.serialization.BatchID): scala.util.Try[Unit] = ???
+  def startNextBatchJob(job: scray.querying.sync.JobInfo[java.sql.PreparedStatement,java.sql.PreparedStatement,java.sql.ResultSet]): scala.util.Try[Unit] = ???
+  
+  // Members declared in scray.querying.sync.OnlineBatchSyncWithTableIdentifier
+  def completeBatchJob(job: scray.querying.sync.JobInfo[java.sql.PreparedStatement,java.sql.PreparedStatement,java.sql.ResultSet]): scala.util.Try[Unit] = ???
+  def completeOnlineJob(job: scray.querying.sync.JobInfo[java.sql.PreparedStatement,java.sql.PreparedStatement,java.sql.ResultSet]): scala.util.Try[Unit] = ???
+  def getBatchVersion(job: scray.querying.sync.JobInfo[java.sql.PreparedStatement,java.sql.PreparedStatement,java.sql.ResultSet]): Option[scray.querying.description.TableIdentifier] = ???
+  def getOnlineVersion(job: scray.querying.sync.JobInfo[java.sql.PreparedStatement,java.sql.PreparedStatement,java.sql.ResultSet]): Option[scray.querying.description.TableIdentifier] = ???
+  def getQueryableTableIdentifiers: List[(String, scray.querying.description.TableIdentifier, Int)] = ???
+  def getTableIdentifierOfRunningJob(job: scray.querying.sync.JobInfo[java.sql.PreparedStatement,java.sql.PreparedStatement,java.sql.ResultSet]): Option[scray.querying.description.TableIdentifier] = ???
+  def initJob[DataTableT <: scray.querying.sync.ArbitrarylyTypedRows](job: scray.querying.sync.JobInfo[java.sql.PreparedStatement,java.sql.PreparedStatement,java.sql.ResultSet]): scala.util.Try[Unit] = ???
+  def startNextBatchJob(job: scray.querying.sync.JobInfo[java.sql.PreparedStatement,java.sql.PreparedStatement,java.sql.ResultSet],dataTable: scray.querying.description.TableIdentifier): scala.util.Try[Unit] = ???
+  def startNextOnlineJob(job: scray.querying.sync.JobInfo[java.sql.PreparedStatement,java.sql.PreparedStatement,java.sql.ResultSet]): scala.util.Try[Unit] = ???
+  
+  // Members declared in scray.querying.sync.StateMonitoringApi
+  def getBatchJobState(job: scray.querying.sync.JobInfo[java.sql.PreparedStatement,java.sql.PreparedStatement,java.sql.ResultSet],slot: Int): Option[scray.querying.sync.State.State] = ???
+  def getOnlineJobState(job: scray.querying.sync.JobInfo[java.sql.PreparedStatement,java.sql.PreparedStatement,java.sql.ResultSet],slot: Int): Option[scray.querying.sync.State.State] = ???
+
+//  // Create or use a given DB session.
+//  @transient val session = dbSession
+//
+//  val syncTable = SyncTable("silidx", "SyncTable")
+//  val jobLockTable = JobLockTable("silidx", "JobLockTable")
+//  val statementGenerator = CassandraUtils
+//  val lockTimeOut = 500 //ms
+//
+
 //
 //  @Override
 //  def initJob[DataTableT <: ArbitrarylyTypedRows](job: JOB_INFO): Try[Unit] = {
@@ -852,4 +888,4 @@
 //      None
 //    }
 //  }
-//}
+}

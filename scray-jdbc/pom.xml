@@ -41,6 +41,11 @@
 			<artifactId>scray-querying</artifactId>
 			<version>0.10.1-SNAPSHOT</version>
 		</dependency>
+		<dependency>
+			<groupId>com.typesafe.slick</groupId>
+			<artifactId>slick_${scala.suffix}</artifactId>
+			<version>3.1.1</version>
+		</dependency>
 	</dependencies>
 	<build>
 		<plugins>
