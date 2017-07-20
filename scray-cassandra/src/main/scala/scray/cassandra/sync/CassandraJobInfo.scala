@@ -39,6 +39,7 @@ class CassandraJobInfo(
     override val name: String,
     numberOfBatchSlots: Int = 3,
     numberOfOnlineSlots: Int = 2,
+    dbSystem: String = "Cassandra",
     numberOfWorkersV: Option[Long] = None,
     lockTimeOut: Int = 500,
     syncConfV: SyncConfiguration = new SyncConfiguration) extends JobInfo[Statement, Insert, ResultSet](name, numberOfBatchSlots, numberOfOnlineSlots, numberOfWorkers = numberOfWorkersV, syncConf = syncConfV) with LazyLogging {

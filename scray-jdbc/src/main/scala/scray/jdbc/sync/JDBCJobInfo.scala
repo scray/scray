@@ -25,7 +25,6 @@ import java.sql.ResultSet
 import com.typesafe.scalalogging.LazyLogging
 import java.sql.PreparedStatement
 
-
 /**
  * JDBC implementation of JobInfo
  */
@@ -47,7 +46,7 @@ object JDBCJobInfo {
     new JDBCJobInfo(name)
   }
   
-  def apply(name: String, batchID: BatchID, numberOfBatchVersions: Int, numberOfOnlineVersions: Int) = {
+  def apply(name: String, numberOfBatchVersions: Int, numberOfOnlineVersions: Int) = {
     new JDBCJobInfo(name, numberOfBatchVersions, numberOfOnlineVersions)
   }
 }
