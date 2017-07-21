@@ -5,15 +5,15 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import scray.client.jdbc.ScrayURL;
-import scray.service.qservice.thriftjava.ScrayCombinedStatefulTService;
-import scray.service.qservice.thriftjava.ScrayTServiceEndpoint;
-
 import com.google.common.base.Joiner;
 import com.twitter.finagle.Thrift;
 import com.twitter.util.Await;
 import com.twitter.util.Duration;
 import com.twitter.util.Future;
+
+import scray.client.jdbc.ScrayURL;
+import scray.service.qservice.thriftjava.ScrayCombinedStatefulTService;
+import scray.service.qservice.thriftjava.ScrayTServiceEndpoint;
 
 public class ScrayCombinedTServiceManager {
 
@@ -32,7 +32,7 @@ public class ScrayCombinedTServiceManager {
 	}
 
 	private class CombinedServiceConnection {
-		private ScrayCombinedStatefulTService.FutureIface combinedServiceClient;
+		private ScrayCombinedStatefulTService.AsyncIface combinedServiceClient;
 		private ScrayURL scrayURL;
 		private boolean isFailed = false;
 

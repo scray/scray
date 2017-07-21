@@ -2,26 +2,33 @@ package scray.client.finagle;
 
 import java.sql.SQLException;
 
-import scray.service.qmodel.thriftjava.ScrayTQuery;
-import scray.service.qmodel.thriftjava.ScrayUUID;
-import scray.service.qservice.thriftjava.ScrayCombinedStatefulTService;
-import scray.service.qservice.thriftjava.ScrayTResultFrame;
-
 import com.twitter.finagle.Thrift;
 import com.twitter.util.Await;
 import com.twitter.util.Duration;
 import com.twitter.util.Future;
 
+import scray.service.qmodel.thriftjava.ScrayTQuery;
+import scray.service.qmodel.thriftjava.ScrayUUID;
+import scray.service.qservice.thriftjava.ScrayCombinedStatefulTService;
+import scray.service.qservice.thriftjava.ScrayTResultFrame;
+import com.twitter.finagle.builder.ClientBuilder;
+
 public class ScrayCombinedStatefulTServiceAdapter implements ScrayTServiceAdapter {
 
-	private ScrayCombinedStatefulTService.FutureIface client;
+	private ScrayCombinedStatefulTService.Client client;
 	private String endpoint;
 
-	public ScrayCombinedStatefulTService.FutureIface getClient() {
+	public ScrayCombinedStatefulTService.Client getClient() {
 		// lazy init
 		if (client == null) {
-			client = Thrift.newIface(endpoint,
-					ScrayCombinedStatefulTService.FutureIface.class);
+			String clientService = new ClientBuilder()
+				      .hosts()
+				      .stack(Thrift.client)
+				      .hostConnectionLimit(1)
+				.build()
+			client = scray.service.qservice.thriftjava.ScrayCombinedStatefulTService.Client;
+			//Thrift.newIface(endpoint,
+//					ScrayCombinedStatefulTService.FutureIface.class);
 		}
 		return client;
 	}
@@ -33,7 +40,7 @@ public class ScrayCombinedStatefulTServiceAdapter implements ScrayTServiceAdapte
 	public ScrayUUID query(ScrayTQuery query, int queryTimeout)
 			throws SQLException {
 		try {
-			Future<ScrayUUID> fuuid = getClient().query(query);
+			ScrayUUID fuuid = getClient().query(query);
 			return Await.result(fuuid, Duration.fromSeconds(queryTimeout));
 		} catch (Exception e) {
 			throw new SQLException(e);

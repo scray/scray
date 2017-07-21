@@ -43,9 +43,10 @@
 		<maven.compiler.target>1.8</maven.compiler.target>
 		<encoding>UTF-8</encoding>
 		<scala.suffix>2.11</scala.suffix>
+		<scrooge.version>4.16.0</scrooge.version>
+		<libthrift.version>0.8.0</libthrift.version>
 		<finagle.version>6.33.0</finagle.version>
-		<libthrift.version>0.9.1</libthrift.version>
-		<scrooge.version>4.5.0</scrooge.version>
+		
 		<snappy-java.version>1.1.1.6</snappy-java.version>
 	</properties>
 
@@ -68,6 +69,31 @@
 	</repositories>
 
 	<dependencies>
+	    <dependency>
+      <groupId>com.twitter</groupId>
+      <artifactId>util-core_2.11</artifactId>
+      <version>6.43.0</version>
+    </dependency>
+    <dependency>
+      <groupId>com.twitter</groupId>
+      <artifactId>util-codec_2.11</artifactId>
+      <version>6.43.0</version>
+    </dependency>
+    <dependency>
+      <groupId>com.twitter</groupId>
+      <artifactId>finagle-core_2.11</artifactId>
+      <version>6.44.0</version>
+    </dependency>
+    <dependency>
+      <groupId>com.twitter</groupId>
+      <artifactId>finagle-thrift_2.11</artifactId>
+      <version>6.44.0</version>
+    </dependency>
+    <dependency>
+      <groupId>com.twitter</groupId>
+      <artifactId>scrooge-core_2.11</artifactId>
+      <version>4.16.0</version>
+</dependency>
 		<dependency>
 			<groupId>org.scray</groupId>
 			<artifactId>scray-common</artifactId>
@@ -80,8 +106,8 @@
 		</dependency>
 		<dependency>
 			<groupId>com.twitter</groupId>
-			<artifactId>scrooge-runtime_${scala.suffix}</artifactId>
-			<version>${scrooge.version}</version>
+			<artifactId>scrooge-runtime</artifactId>
+			<version>3.9.0</version>
 		</dependency>
 		<dependency>
 			<groupId>junit</groupId>
@@ -132,9 +158,9 @@
 			<plugin>
 				<groupId>com.twitter</groupId>
 				<artifactId>scrooge-maven-plugin</artifactId>
-				<version>${scrooge.version}</version>
+				<version>4.18.0</version>
 				<configuration>
-					<language>experimental-java</language>
+					<language>java</language>
 					<thriftOpts>
 						<thriftOpt>--finagle</thriftOpt>
 					</thriftOpts>
