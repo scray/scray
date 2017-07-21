@@ -134,7 +134,7 @@ class JDBCStatementsSpecs extends WordSpec with BeforeAndAfterAll with LazyLoggi
       // Check if job1_batch0 is marked as completed
       val tableIdRows = Await.result(db.run(syncApi.getLatestCompletedJobStatement(jobInfo, false)), Duration("1 second"))
 
-      assert(tableIdRows.size == 1) // Only one job should be marked as completed
+      assert(tableIdRows.size == 1) // Only one latest completed job should exists
       assert(tableIdRows.head.state == State.COMPLETED.toString()) 
     }
     " complete online job " in {
@@ -153,7 +153,7 @@ class JDBCStatementsSpecs extends WordSpec with BeforeAndAfterAll with LazyLoggi
       // Check if job1_batch0 is marked as completed
       val tableIdRows = Await.result(db.run(syncApi.getLatestCompletedJobStatement(jobInfo, true)), Duration("1 second"))
 
-      assert(tableIdRows.size == 1) // Only one job should be marked as completed
+      assert(tableIdRows.size == 1) // Only one latest completed job should exists
       assert(tableIdRows.head.state == State.COMPLETED.toString())
 
     }
@@ -175,7 +175,6 @@ class JDBCStatementsSpecs extends WordSpec with BeforeAndAfterAll with LazyLoggi
       // Check if job1_batch0 is marked as completed
       val tableIdRows = Await.result(db.run(syncApi.getLatestCompletedJobStatement(jobInfo, false)), Duration("1 second"))
 
-      assert(tableIdRows.size == 1) // Only one job should be marked as completed
       assert(tableIdRows.head.state == State.COMPLETED.toString()) 
       assert(tableIdRows.head.batchEndTime == Some(BATCH_END_TIME))  // Check if latest completed job is provided
     }

@@ -17,7 +17,14 @@ trait DriverComponent {
   val driver: JdbcProfile
 }
 
-/** UserComponent provides database definitions for User objects */
+/** 
+ *  SyncTableComponent provides database definitions for SyncTable table
+ *  and some statements to manipulate data.
+ *  
+ *  No semantic checks are made to protect from manipulating wrong data.
+ *  
+ *   
+ */
 class SyncTableComponent(val driver: JdbcProfile, val dbSystemId: String = "BISDBADMIN", val tablename: String = "TBDQSYNCTABLE") {
   import driver.api._
 
@@ -58,23 +65,9 @@ class SyncTableComponent(val driver: JdbcProfile, val dbSystemId: String = "BISD
    */
   def create = table.schema.create
 
-  /**
-   * Return batch job row with the newest time stamp
-   */
-  def getLatestCompletedJobStatement(jobInfo: JobInfo[_, _, _], online: Boolean) = {
-    table.
-      filter(_.jobname === jobInfo.name).
-      filter(_.online === online).
-      filter(_.state === State.COMPLETED.toString()).
-      sortBy(_.batchEndTime.desc).
-      take(1).
-      result
-  }
-
 
   /**
    * Register job in database.
-   * WARNING: This statement overrides existing values.
    */
   def registerJobStatement(jobInfo: JobInfo[_, _, _]) = {
 
@@ -143,6 +136,19 @@ class SyncTableComponent(val driver: JdbcProfile, val dbSystemId: String = "BISD
       filter(_.jobname === jobInfo.name).
       filter(_.online === online).
       filter(_.state === State.RUNNING.toString()).
+      result
+  }
+  
+    /**
+   * Return batch job row with the newest time stamp
+   */
+  def getLatestCompletedJobStatement(jobInfo: JobInfo[_, _, _], online: Boolean) = {
+    table.
+      filter(_.jobname === jobInfo.name).
+      filter(_.online === online).
+      filter(_.state === State.COMPLETED.toString()).
+      sortBy(_.batchEndTime.desc).
+      take(1).
       result
   }
 
