@@ -58,16 +58,25 @@ class SyncTableComponent(val driver: JdbcProfile, val dbSystemId: String = "BISD
    */
   def create = table.schema.create
 
-  def getLatestBatch(jobInfo: JobInfo[_, _, _]) = {
+  /**
+   * Return batch job row with the newest time stamp
+   */
+  def getLatestCompletedJobStatement(jobInfo: JobInfo[_, _, _], online: Boolean) = {
     table.
       filter(_.jobname === jobInfo.name).
-      filter(_.online === false).
+      filter(_.online === online).
       filter(_.state === State.COMPLETED.toString()).
-      map(_.batchEndTime).
-      max.result
+      sortBy(_.batchEndTime.desc).
+      take(1).
+      result
   }
 
-  def registerJob(jobInfo: JobInfo[_, _, _]) = {
+
+  /**
+   * Register job in database.
+   * WARNING: This statement overrides existing values.
+   */
+  def registerJobStatement(jobInfo: JobInfo[_, _, _]) = {
 
     // Statements to set start values in sync table
     def createSyncTableBatchEntries(slotIn: Int) = {
@@ -107,7 +116,37 @@ class SyncTableComponent(val driver: JdbcProfile, val dbSystemId: String = "BISD
 
     statements
   }
+  
+  
+  def startJobStatement(jobInfo: JobInfo[_, _, _], slot: Int, online: Boolean) = {
+     val row = table.
+      filter(_.jobname === jobInfo.name).
+      filter(_.online === online).
+      filter(_.slot === slot).
+      map(_.state)
+      
+      row.update(State.RUNNING.toString())
+  }
+  
+  def completeJobStatement(jobInfo: JobInfo[_, _, _], slot: Int, online: Boolean, completionTime: Long) = {
+     val row = table.
+      filter(_.jobname === jobInfo.name).
+      filter(_.online === online).
+      filter(_.slot === slot).
+      map(row => (row.state, row.batchEndTime))
+      
+      row.update((State.COMPLETED.toString(), Some(completionTime)))
+  }
+  
+  def getRunningJobStatement(jobInfo: JobInfo[_, _, _], online: Boolean) = {
+    table.
+      filter(_.jobname === jobInfo.name).
+      filter(_.online === online).
+      filter(_.state === State.RUNNING.toString()).
+      result
+  }
 
+  
   private def getBatchJobName(jobname: String, nr: Int): String = { jobname + "_batch" + nr }
   private def getOnlineJobName(jobname: String, nr: Int): String = { jobname + "_online" + nr }
 
