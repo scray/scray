@@ -34,6 +34,9 @@ object IndexFileReader extends LazyLogging {
    */
   def getIndexForKey(fs: FileSystem, indexfile: String, key: ArrayBytes, ti: TableIdentifier): Option[(String, Long)] = {
     HDFSBlobResolver.getCachedIdxPos(key).orElse {
+      
+      logger.info("getIndexForKey:" + key)
+      
       // create blobfile from indexfile
       val blobfile = indexfile.stripSuffix(INDEX.toString()) + BLOB.toString()
       // need to read the index to find this key

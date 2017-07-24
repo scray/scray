@@ -48,6 +48,9 @@ class HDFSBlobResolver[T <: Writable](ti: TableIdentifier, directory: String) ex
    * If that could be found, it would return the relevant SingleFile for blobs.
    */
   def readAllIndexesUntilKeyIsfound(key: ArrayBytes, files: List[CombinedFiles]): Option[(String, Long)] = {
+    
+    //logger.info("readAllIndexesUntilKeyIsfo")
+    
     if(files.isEmpty) {
       None
     } else {
@@ -63,13 +66,49 @@ class HDFSBlobResolver[T <: Writable](ti: TableIdentifier, directory: String) ex
   }
   
   
+  // test
+  def getAnyBlob(): Option[Array[Byte]] = {
+    
+    val files = directoryScanner.getFiles
+    val zz : org.apache.hadoop.io.Writable = transformHadoopTypes("A")
+    
+    val hashedKey = new ArrayBytes(computeHash(byteTransformHadoopType(zz), ti))
+    readAllIndexesUntilKeyIsfound(hashedKey, files)
+    
+    val filepos: (scray.hdfs.index.HDFSBlobResolver.ArrayBytes, String, Long)  = HDFSBlobResolver.getAnyCachedIdxPos()
+    
+    logger.info("" + filepos.toString())
+    
+    val key:ArrayBytes = filepos._1
+    
+    logger.info("INDEX ---->" + idxmap.size)
+    
+    //getBlob(HDFSBlobResolver.transformHadoopTypes(key).asInstanceOf[T])
+    
+    /* val headFiles = files.head.getFileSet
+    val indexFile = headFiles.find(sf => sf.getType == INDEX.toString())
+    val longOption = indexFile.flatMap { idxFile =>
+        IndexFileReader.getIndexForKey(fs, idxFile.getNameWithPath, key, ti) 
+    } */
+    
+    BlobFileReader.getBlobForPosition(fs, filepos._2, filepos._1, ti, filepos._3) 
+    
+}
+
+  
+  
   // correct algorithm would be:
   // check the bloom filter for newest entry of the key
   // 
   
   
   def getBlob(key: T): Option[Array[Byte]] = {
+    logger.info("getBlob:" + key.toString())
+    
     val hashedKey = new ArrayBytes(computeHash(byteTransformHadoopType(key), ti))
+    
+    logger.info("" + hashedKey.toString())
+    
     val blob = HDFSBlobResolver.getCachedBlob(hashedKey).orElse {
       val files = directoryScanner.getFiles
     logger.info(s"known files: ${files}")
@@ -89,7 +128,7 @@ class HDFSBlobResolver[T <: Writable](ti: TableIdentifier, directory: String) ex
   }
 }
 
-object HDFSBlobResolver {
+object HDFSBlobResolver extends LazyLogging {
   
   // cache for index and positions
   val indexlock = new ReentrantReadWriteLock()
@@ -101,6 +140,24 @@ object HDFSBlobResolver {
   // cache for blobs
   val lock = new ReentrantReadWriteLock()
   val blobmap = new HashMap[ArrayBytes, Array[Byte]]
+  
+  
+  //test
+  def getAnyCachedIdxPos(): (scray.hdfs.index.HDFSBlobResolver.ArrayBytes,String, Long) = {
+    indexlock.readLock().lock()
+    try {
+      val a = idxmap.iterator.next()
+      
+      logger.info(a.toString())
+      
+      (a._1, filesMap.get(a._2._1).get, a._2._2) 
+      
+      //get(key).map(pos => (filesMap.get(pos._1).get, pos._2))
+    } finally {
+      indexlock.readLock().unlock()
+    }
+  }
+  
   
   def getCachedIdxPos(key: ArrayBytes): Option[(String, Long)] = {
     indexlock.readLock().lock()
