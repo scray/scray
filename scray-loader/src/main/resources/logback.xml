@@ -1,0 +1,20 @@
+<configuration scan="true" scanPeriod="30 seconds">
+
+  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <!-- encoders are assigned the type
+         ch.qos.logback.classic.encoder.PatternLayoutEncoder by default -->
+    <encoder>
+      <pattern>%d{YYYY-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+    </encoder>
+  </appender>
+
+  <logger name="scray" level="INFO" />
+  <logger name="com.twitter" level="INFO" />
+  <logger name="com.twitter.storehaus" level="WARN" />
+  <logger name="com.datastax" level="ERROR" />
+  <logger name="scray.common.properties" level="ERROR" />
+
+  <root level="INFO">
+    <appender-ref ref="STDOUT" />
+  </root>
+</configuration>

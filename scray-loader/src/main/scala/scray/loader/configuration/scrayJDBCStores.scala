@@ -61,8 +61,11 @@ class JDBCConfiguration(override protected val startconfig: JDBCProperties)
     // need to check how often this is called
     sessioncount += 1
     logger.info(s"Started new JDBC Session, maybe count is ${sessioncount}")
-    new JDBCDbSession(startconfig.url, startconfig.credentials.getUsername, new String(startconfig.credentials.getPassword))
+    logger.info("url="+ startconfig.url.toString())
     
+    logger.error("!!!!!!!!! FIXME: use all parameters for JDBCDbSession")
+    //new JDBCDbSession(startconfig.url, startconfig.credentials.getUsername, new String(startconfig.credentials.getPassword))
+    new JDBCDbSession(startconfig.url,"","")
   } 
 
   override def readConfig(config: ScrayConfiguration, old: JDBCProperties): Option[JDBCProperties] = 

@@ -54,9 +54,9 @@ class JDBCQueryableSource[Q <: DomainQuery](
       val connection = hikari.getConnection
       val prep = connection.prepareStatement(queryString._1)
       queryMapper.mapWhereClauseValues(prep, query.asInstanceOf[DomainQuery].domains ++ queryString._3)
-logger.info(s" Executing QUERY NOW")
+logger.error(s" Executing QUERY NOW")
       val resultSet = prep.executeQuery()
-logger.info(s" Fetching Iterator NOW")
+logger.error(s" Fetching Iterator NOW")
       getIterator(resultSet, connection)
     }
   }
@@ -85,6 +85,8 @@ logger.info(s" Fetching Iterator NOW")
     var fetchedNextRow = false
     var hasNextRow = false
 
+    logger.error("getIterator")
+    
     override def hasNext: Boolean = {
       if(entities.isAfterLast()) {
         entities.close()
