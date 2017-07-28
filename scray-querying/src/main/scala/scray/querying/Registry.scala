@@ -193,6 +193,7 @@ object Registry extends LazyLogging with Registry {
       querySpaces.put(querySpace.name + newVersion, querySpace)
       querySpaceColumns.put(querySpace.name + newVersion, new HashMap[Column, ColumnConfiguration])
       querySpaceTables.put(querySpace.name + newVersion, new HashMap[TableIdentifier, TableConfiguration[_ <: DomainQuery, _ <: DomainQuery, _]])
+      logger.error("getColumns")
       querySpace.getColumns(newVersion).foreach(col => querySpaceColumns.get(querySpace.name + newVersion).map(_.put(col.column, col)))
       querySpace.getTables(newVersion).foreach(table => querySpaceTables.get(querySpace.name + newVersion).map(_.put(table.table, table)))
       querySpaceVersions.put(querySpace.name, querySpaceVersions.get(querySpace.name).getOrElse(Set()) + newVersion)
