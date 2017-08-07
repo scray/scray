@@ -39,6 +39,8 @@ class JDBCRowMapper(ti: TableIdentifier) extends Function1[ResultSet, Row] with 
   override def apply(rs: ResultSet): Row = {
     val rsMetadata = rs.getMetaData
     val columns = walkColumns(rsMetadata, rs, rsMetadata.getColumnCount, new ArrayBuffer[RowColumn[_]])
-    SimpleRow(columns)
+    val res = SimpleRow(columns)
+    logger.error("row:" + res.toString())
+    res
   }
 }

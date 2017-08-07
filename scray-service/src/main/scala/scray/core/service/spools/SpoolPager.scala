@@ -42,21 +42,23 @@ class SpoolPager(sspool: ServiceSpool) extends LazyLogging {
   val pagesize: Int = sspool.tQueryInfo.pagesize.getOrElse(DEFAULT_PAGESIZE)
 
   // fetches a page worth of of converted rows and returns it paired with the remaining spool
-  def page(): Future[(Seq[ScrayTRow], Spool[Row])] = if (!sspool.spool.isEmpty) {
+  def page(): Future[(Seq[ScrayTRow], Spool[Row])] = { 
+    if (!sspool.spool.isEmpty) {
     part(Seq(sspool.spool.head), sspool.spool.tail, pagesize - 1).map { pair => (pair._1 map { RowConverter.convertRow(_) }, pair._2) }
   } else {
     Future.value((Seq(ScrayTRow(None, None)), sspool.spool))
-  }
+  }}
 
   def pageAll(): Future[Spool[Seq[Row]]] = pageAll(sspool.spool)
 
   // lazily fetch spool rows chunked as pages
-  private def pageAll(spool: Spool[Row]): Future[Spool[Seq[Row]]] = if (!spool.isEmpty) {
+  private def pageAll(spool: Spool[Row]): Future[Spool[Seq[Row]]] = { 
+    if (!spool.isEmpty) {
     part(Seq(spool.head), spool.tail, pagesize - 1) flatMap { pair => pageAll(pair._2) map (pair._1 **:: _) }
   } else {
     logFin(System.currentTimeMillis())
     Future.value(Seq[Row](new SucceedingRow()) **:: Spool.empty)
-  }
+  }}
 
   // recursive function parting a given spool into an eager head (Page part) and a lazy tail (Spool part)
   private def part(dest: Seq[Row], src: Future[Spool[Row]], pos: Int): Future[(Seq[Row], Spool[Row])] =

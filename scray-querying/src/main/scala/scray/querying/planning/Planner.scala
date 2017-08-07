@@ -48,6 +48,8 @@ object Planner extends LazyLogging {
    * plans the execution and starts it
    */
   def planAndExecute(query: Query): Spool[Row] = {
+    logger.error("planAndExecute --------------------->")
+    
     val (plans, queryInfo) = Planner.plan(query)
     
     queryInfo.finishedPlanningTime.set(System.currentTimeMillis())
@@ -56,11 +58,22 @@ object Planner extends LazyLogging {
     val ordering = plans.find((execution) => execution._1.isInstanceOf[OrderedComposablePlan[_, _]]).
       map(_._1.asInstanceOf[OrderedComposablePlan[DomainQuery, _]])
     
-    
+    logger.error("planAndExecute=" + query.toString())
     // run the plans and merge if it is needed
-    MergingResultSpool.seekingLimitingSpoolTransformer(
-        executePlans(plans.asInstanceOf[ParSeq[(OrderedComposablePlan[DomainQuery,_], DomainQuery)]], ordering == None, ordering, queryInfo),
-        query.getQueryRange)
+    
+    val pl = plans.asInstanceOf[ParSeq[(OrderedComposablePlan[DomainQuery,_], DomainQuery)]]
+    logger.error("planAndExecute: " + pl.toString())
+    val sp = executePlans(pl, ordering == None, ordering, queryInfo)
+    
+    
+    logger.error("planAndExecute " + sp.isEmpty)
+    val range = query.getQueryRange
+    logger.error("planAndExecute " + range.get.toString())
+    val res = MergingResultSpool.seekingLimitingSpoolTransformer(sp,range)
+        
+    logger.error("planAndExecute = " + res.isEmpty)   
+    logger.error("planAndExecute <---------------------")
+        res
   }
   
   def plan(query: Query) = {
@@ -754,19 +767,53 @@ object Planner extends LazyLogging {
     
     // Store request time for jmx statistics
     queryInfo.requestSentTime.set(System.currentTimeMillis())
+    
+    
+    logger.error("executePlans:(1):" + plans.head._2.toString())
+    
+    
     // run all at once
     val futures = plans.par.map { (execution) =>
       val source = execution._1.getSource
+      logger.error("_2" + execution._2)
       (source.isLazy, source.request(execution._2))
-    }.seq
+    }.seq 
+    
+   
+     //val futures: Seq[(Boolean, Future[Any])] = Seq((plans.head._1.getSource.isLazy, plans.head._1.getSource.request(plans.head._2)))
+    
+   /* val source = plans.head._1.getSource
+    val isLazy = source.isLazy
+    val query = plans.head._2 
+    logger.error("----------------------->" + source.toString())
+    val request = source.request(query)
+    logger.error("<-----------------------")
+    
+    val futuresV = (isLazy, request)
+    val futures: Seq[(Boolean, Future[Any])] = Seq(futuresV) */
+    
+    /* val futures = plans.par.map { (execution) =>
+      val source = execution._1.getSource
+      (source.isLazy, source.request(execution._2))
+    }.seq */
 
+    
+    //logger.error("executePlans:" +  futures.length)
+    
+    //logger.error("executePlans:(2):" + futures.head._2.toString())
+    
     if(futures.size == 0) {
       Spool.empty[Row]
     } else if(futures.size == 1) {
+      logger.error("AWAIT executePlans ----->")
       // in case we only have results for one query we can quickly return them
-      Await.result(futures.head._2) match {
-        case spool: Spool[_] => spool.asInstanceOf[Spool[Row]]
-        case seq: Seq[_] => Spool.seqToSpool[Row](seq.asInstanceOf[Seq[Row]]).toSpool
+      
+     val res = Await.result(futures.head._2) 
+     logger.error("AWAIT <----------" + res.toString())
+     
+     res match {
+        case spool:  Spool[_] => {spool.asInstanceOf[Spool[Row]] }
+        case seq: Seq[_] => {Spool.seqToSpool[Row](seq.asInstanceOf[Seq[Row]]).toSpool}
       }
     } else {
       val seqtuple = futures.partition ( future => future._1 )

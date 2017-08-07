@@ -33,6 +33,7 @@ import scala.collection.mutable.ArrayBuffer
 class ScrayQueryingExecutorTest extends WordSpec {
 
   val ti = TableIdentifier("cassandra", "mytestspace", "mycf")
+  //val ti = TableIdentifier("hive", "some","healthtable")
   
   val cols = 1.until(10).map(i => Column(s"bla$i", ti))
 

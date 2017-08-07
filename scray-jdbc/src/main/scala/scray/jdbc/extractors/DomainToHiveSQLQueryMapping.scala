@@ -96,6 +96,7 @@ class DomainToHiveSQLQueryMapping[Q <: DomainQuery, S <: JDBCHiveQueryableSource
    * processing with PreparedStaments
    */
   private def mapSingleValueDomainValue[T](domain: SingleValueDomain[T], stmt: PreparedStatement, pos: Int): Int = {
+    logger.error("mapSingleValueDomainValue: " + domain.toString() + "|" + stmt.toString() + "|" + pos)
     if(!domain.isNull) {
       switchAndSetValueType(domain.value, stmt, pos)
       pos + 1
@@ -157,6 +158,8 @@ class DomainToHiveSQLQueryMapping[Q <: DomainQuery, S <: JDBCHiveQueryableSource
    * maps the where clause from Domains to a String which can be fed into a PreparedStatement
    */
   private def mapWhereClausesAndQuestions(domains: List[Domain[_]], dialect: ScraySQLDialect): (String, Int) = {
+    
+    logger.error("mapWhereClausesAndQuestions 1")
     val domTuple = domains.map { domain =>
       domain match {
         case single: SingleValueDomain[_] => mapSingleValueDomainQuestion(single)
@@ -171,6 +174,7 @@ class DomainToHiveSQLQueryMapping[Q <: DomainQuery, S <: JDBCHiveQueryableSource
    * sets the prepared question marks by executing sets on the given preparedStatement
    */
   def mapWhereClauseValues(stmt: PreparedStatement, domains: List[Domain[_]]): Unit = {
+    logger.error("mapWhereClausesAndQuestions 2")
     domains.foldLeft(1) { (acc, domain) =>
       domain match {
         case single: SingleValueDomain[_] => mapSingleValueDomainValue(single, stmt, acc)
@@ -184,12 +188,13 @@ class DomainToHiveSQLQueryMapping[Q <: DomainQuery, S <: JDBCHiveQueryableSource
    * returns a function mapping from Domains to SQL-Strings used in Where clauses
    */
   def getQueryMapping(store: S, storeTableNickName: Option[String], dialect: ScraySQLDialect): DomainQuery => (String, Int, List[Domain[_]]) = {
+    logger.error("getQueryMapping")
     (query) =>
       {
         val whereClauseSQLString = mapWhereClausesAndQuestions(query.domains, dialect)
         val limit = dialect.getEnforcedLimit(query.range, query.domains)
         val select = dialect.getFormattedSelectString(store.ti, whereClauseSQLString._1, limit._1, getGroupBy(query), getOrderBy(query))
-        logger.debug(s"SQL query string: $select")
+        logger.error(s"SQL query string: $select")
         (select, whereClauseSQLString._2, limit._2)
       }
   }

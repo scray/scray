@@ -41,7 +41,9 @@ object ScrayHiveDialect extends ScraySQLDialect("HIVE") with LazyLogging {
     //val query1:String = s"""SELECT * FROM "${removeQuotes(table.dbId)}"."${removeQuotes(table.tableId)}" ${decideWhere(where)} ${groupBy} ${orderBy} ${limit} """
     val query:String = s"""SELECT * FROM `${removeQuotes(table.tableId)}` ${decideWhere(where)} ${groupBy} ${orderBy} ${limit} """
   
-    //val query:String = "select * from `health_table`"
+    //val query:String = s"""SELECT * FROM `${removeQuotes(table.tableId)}` ${decideWhere(where)} ${groupBy} ${orderBy} """
+    
+    //val query:String = "select * from `health_table` WHERE  spending = 18 LIMIT 3"
     
     logger.error(query)
     

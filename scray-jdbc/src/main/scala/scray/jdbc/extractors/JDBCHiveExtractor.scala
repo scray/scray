@@ -72,9 +72,12 @@ class JDBCHiveExtractors[Q <: DomainQuery, S <: JDBCHiveQueryableSource[Q]](
   
   // cache all column results for later use
   val columnMetadata = {
-    logger.error("columnMetadata")
+    logger.error("columnMetadata" + dbmsMetadata.toString() + dbmsMetadata.getCatalogs.next() + "|" +  ti.dbId + "|" + ti.tableId)
     
+    //logger.error("FIXME !!!!! - add missing ti.dbId to config - using null currently")
     val rs = dbmsMetadata.getColumns(null, ti.dbId, ti.tableId, null)
+    //val rs = dbmsMetadata.getColumns(null, "default", ti.tableId, null)
+    
     try {
       scanColumns(rs, new ListBuffer[JDBCColumn]())
     } finally {

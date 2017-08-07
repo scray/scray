@@ -25,6 +25,7 @@ object QueryableSource extends LazyLogging {
    * copied from com.twitter.storehaus.IterableStore, but removed tuple dependency
    */
   def iteratorToSpool[V](it: Iterator[V], transformer: (V) => Row): Future[Spool[Row]] = Future.value {
+    logger.error("iteratorToSpool")
     if (it.hasNext) {
       // *:: for lazy/deferred tail
       val next = it.next

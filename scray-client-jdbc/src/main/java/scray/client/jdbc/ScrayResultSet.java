@@ -26,6 +26,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import org.xerial.snappy.Snappy;
 
 import scray.common.properties.ScrayProperties;
@@ -37,6 +40,8 @@ import scray.service.qservice.thriftjava.ScrayTResultFrame;
 
 public class ScrayResultSet implements java.sql.ResultSet {
 
+	Logger log = LoggerFactory.getLogger(this.getClass());
+	
 	class CachePosition {
 		int row;
 		String column;
@@ -165,6 +170,9 @@ public class ScrayResultSet implements java.sql.ResultSet {
 	}
 
 	private void changeCursor(int newCursor) throws SQLException {
+		
+		//System.out.println("ScrayResultSet/changeCursor");
+		
 		cursor = newCursor;
 		ScrayTRow row = rows.get(cursor - 1);
 		if (row.isSetColumns()) {

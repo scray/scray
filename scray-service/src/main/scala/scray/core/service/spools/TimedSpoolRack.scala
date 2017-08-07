@@ -58,10 +58,12 @@ class TimedSpoolRack(val ttl: Duration = DEFAULT_TTL, planAndExecute: (Query) =>
   private def expires = Time.now + ttl
 
   // monitoring wrapper for planner function
-  private val wrappedPlanAndExecute: (Query) => Spool[Row] = (q) => { planLog(q); planAndExecute(q) }
-  private def planLog(q: Query): Unit = logger.debug(s"Planner called for query $q");
+  private val wrappedPlanAndExecute: (Query) => Spool[Row] = (q) => { logger.error("wrappedPlanAndExecute"); planLog(q); planAndExecute(q) }
+  private def planLog(q: Query): Unit = logger.error(s"Planner called for query $q");
 
   override def createSpool(query: Query, tQueryInfo: ScrayTQueryInfo): ScrayTQueryInfo = {
+    
+    logger.error("createSpool")
     // exit if exists
     if (spoolMap.contains(query.getQueryID)) return tQueryInfo
 
@@ -115,6 +117,9 @@ class TimedSpoolRack(val ttl: Duration = DEFAULT_TTL, planAndExecute: (Query) =>
   }
 
   override def updateSpool(uuid: ScrayUUID, spool: ServiceSpool): ServiceSpool = {
+    
+    logger.error("updateSpool")
+    
     // fix expiration duration
     val expiration = expires
 

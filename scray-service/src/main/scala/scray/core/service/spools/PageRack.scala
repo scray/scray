@@ -56,6 +56,8 @@ object MPageRack extends MemcachedPageRack(planAndExecute = Planner.planAndExecu
 abstract class PageRackImplBase(val planAndExecute : (Query) => Spool[Row], val pageTTL : Duration = DEFAULT_TTL) extends PageRack {
   val logger = LoggerFactory.getLogger(classOf[PageRackImplBase])
 
+  logger.error("PageRackImplBase")
+  
   // computes expiration time for collecting frames
   def expires = Time.now + pageTTL
 

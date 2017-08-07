@@ -6,6 +6,7 @@ import com.twitter.concurrent.Spool
 import com.twitter.concurrent.Spool.syntax
 import com.twitter.util.Closable
 import com.twitter.util.Future
+import com.twitter.util.Promise
 
 import scray.jdbc.rows.JDBCRow
 import scray.querying.description.Row
@@ -50,16 +51,20 @@ class JDBCHiveQueryableSource[Q <: DomainQuery](
   @inline def requestIterator(query: Q): Future[Iterator[Row]] = {
     import scala.collection.convert.decorateAsScala.asScalaIteratorConverter
     futurePool {
-      val queryString = mappingFunction(query)
+      //val queryString = mappingFunction(query)
+      val queryString = "SELECT * FROM `healthtable` WHERE  spending = 18 LIMIT 2"
       val connection = hikari.getConnection
-      val prep = connection.prepareStatement(queryString._1)
-      queryMapper.mapWhereClauseValues(prep, query.asInstanceOf[DomainQuery].domains ++ queryString._3)
-      logger.error(s" Executing QUERY NOW=" + queryString._1 + connection.toString())
+      //val prep = connection.prepareStatement(queryString._1)
+      val prep = connection.prepareStatement(queryString)
+      
+      //queryMapper.mapWhereClauseValues(prep, query.asInstanceOf[DomainQuery].domains ++ queryString._3)
+      //logger.error(s" Executing QUERY NOW=" + queryString._1 + connection.toString())
+      logger.error(s" Executing QUERY NOW=" + queryString + connection.toString())
       val resultSet = prep.executeQuery()
       
-      logger.error("result:" + resultSet)
+      //logger.error("result:" + resultSet)
       ///////////////
-      def testHiveTable() = { 
+      /* def testHiveTable() = { 
     		  logger.error("count=" + resultSet.getMetaData.getColumnCount)
     		  val metadata  = resultSet.getMetaData
     		  val count = metadata.getColumnCount
@@ -77,17 +82,24 @@ class JDBCHiveQueryableSource[Q <: DomainQuery](
     			  }
     			  println(resultSet.getString(count))
     		  }  
-      }
+      } */
+      //testHiveTable
       ////////////
 
-logger.error(s" Fetching Iterator NOW")
+      logger.error(s" Fetching Iterator NOW")
       getIterator(resultSet, connection)
     }
   }
 
-  override def request(query: Q): Future[Spool[Row]] = {
-    requestIterator(query).flatMap(it => JDBCHiveQueryableSource.toRowSpool(it))
-  }
+  override def request(query: Q): Future[Spool[Row]] = requestIterator(query).flatMap(it => JDBCHiveQueryableSource.toRowSpool(it))
+  
+  /* override def request(query: Q): Future[Spool[Row]] = {
+    val res = requestIterator(query).flatMap(it => JDBCHiveQueryableSource.toRowSpool(it))
+    logger.error("request query:" + query.toString())
+    logger.error("request ---->:" + res.toString())
+    logger.error("request <----:" + res.get().head.toString())
+    return res
+  } */
 
   override def keyedRequest(query: KeyedQuery): Future[Iterator[Row]] = {
     requestIterator(query.asInstanceOf[Q])
@@ -114,7 +126,7 @@ logger.error(s" Fetching Iterator NOW")
     
     override def hasNext: Boolean = {
       
-      
+      logger.error("hasNext")
       
       /* if(entities.isAfterLast()) {
         entities.close()
@@ -128,19 +140,26 @@ logger.error(s" Fetching Iterator NOW")
           
           hasNextRow = entities.next
           fetchedNextRow = true
-         
         }
         
       }
+      ///// test
+      if(!hasNextRow) {
+        entities.close()
+        connection.close()
+      }
+      ///test
+        
       hasNextRow
     }
 
     override def next: Row = {
       
-      
+      logger.error("next")
       
       if (!fetchedNextRow) {
         
+        logger.error("ERROR !!!!!!!!!!!")
         hasNextRow = entities.next
         
       }
@@ -166,9 +185,25 @@ object JDBCHiveQueryableSource {
 
   //def resultSet2Iterator(rSet: ResultSet, ti: TableIdentifier): Iterator[JDBCRow] = new Iterator[JDBCRow] with Closable 
   def toRowSpool(it: Iterator[Row]): Future[Spool[Row]] = Future.value {
+    if (it.hasNext) {
+      it.next *:: toRowSpool(it)
+    }
+    else
+      Spool.empty
+  }
+}
+
+
+/* object JDBCHiveQueryableSource extends LazyLogging {
+
+  //def resultSet2Iterator(rSet: ResultSet, ti: TableIdentifier): Iterator[JDBCRow] = new Iterator[JDBCRow] with Closable 
+  def toRowSpool(it: Iterator[Row]): Future[Spool[Row]] = { val res = Future.value {
+    logger.error("toRowSpool")
     if (it.hasNext)
       it.next *:: toRowSpool(it)
     else
       Spool.empty
   }
-}
+  logger.error("toRowSpool" + res.get().toString())
+  return res }
+} */

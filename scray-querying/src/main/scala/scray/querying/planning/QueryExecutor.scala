@@ -27,12 +27,12 @@ import org.slf4j.LoggerFactory
 import scray.querying.Query
 import scray.querying.description.Row
 import scray.querying.description.internal.ExecutorShutdownException
-
+import com.typesafe.scalalogging.slf4j.LazyLogging
 /**
  * daemon thread executing queries in a pool  */
 
 class QueryExecutor(poolSize: Int = QueryExecutor.threadPoolSize,
-      timeout: Duration = Duration.fromSeconds(QueryExecutor.numberOfSecondsForShutdown)) {
+      timeout: Duration = Duration.fromSeconds(QueryExecutor.numberOfSecondsForShutdown)) extends LazyLogging {
 
   private val log = LoggerFactory.getLogger(classOf[QueryExecutor])
   
@@ -66,10 +66,19 @@ class QueryExecutor(poolSize: Int = QueryExecutor.threadPoolSize,
    * Thread safetyness is not guarenteed (test-and-set) but suffices as it is no problem 
    * if a query squeezes through the time slot of checking and setting shutdownFlag
    */
-  def submitQuery(query: Query): Future[Spool[Row]] = if(!shutdownFlag) {
-    futurePool(Planner.planAndExecute(query))
+  def submitQuery(query: Query): Future[Spool[Row]] = {
+    logger.error("submitQuery = ")
+    if(!shutdownFlag) {
+    
+    
+    val res = futurePool(Planner.planAndExecute(query))
+    
+    //logger.error("submitQuery = " + res.get.head.getColumns.length)
+    
+    res
   } else {
     throw new ExecutorShutdownException(query)
+  }
   }
   
   def shutdown: Unit = {

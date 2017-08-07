@@ -91,7 +91,8 @@ class JDBCQueryableSource[Q <: DomainQuery](
       if(entities.isAfterLast()) {
         entities.close()
         connection.close()
-      }
+      } 
+      
       if(entities.isClosed()) {
         hasNextRow = false
       } else {
