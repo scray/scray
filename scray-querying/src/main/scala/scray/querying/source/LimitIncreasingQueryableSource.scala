@@ -47,8 +47,6 @@ class LimitIncreasingQueryableSource[Q <: DomainQuery](val store: QueryableStore
    * create function to fetch new data with, which uses a given limit
    */
   def fetchAndSkipDataIterator: ITERATOR_EXTENDER_FUNCTION[Row] = (query, limit, skip) => Await.result {
-    
-    logger.info("fetchAndSkipDataIterator")
     val increasedLimitQuery = query.copy(range = Some(query.getQueryRange.get.copy(limit = Some(limit))))
     logger.debug(s"re-fetch query with increased limit $limit to fetch more results : ${increasedLimitQuery}")
     store.requestIterator(increasedLimitQuery.asInstanceOf[Q]).map { it =>
@@ -56,26 +54,16 @@ class LimitIncreasingQueryableSource[Q <: DomainQuery](val store: QueryableStore
     }
   }
 
-  override def request(query: Q): Future[Spool[Row]] = {
-    logger.info("request")
-    requestIterator(query).flatMap { it =>
-    QueryableSource.iteratorToSpool[Row](it, row => row)}
+  override def request(query: Q): Future[Spool[Row]] = requestIterator(query).flatMap { it =>
+    QueryableSource.iteratorToSpool[Row](it, row => row)
   }
 
   override def keyedRequest(query: KeyedQuery): Future[Iterator[Row]] = requestIterator(query.asInstanceOf[Q])
   
   override def requestIterator(query: Q): Future[Iterator[Row]] = {
-    logger.info("requestIterator")
     query.queryInfo.addNewCosts {(n: Long) => {n + 42}}
     logger.debug(s"Requesting data from store with LimitIncreasingQueryableSource on query ${query}")
-    
-    logger.info(store.toString())
-    
-    val sit : Future[Iterator[Row]] = store.requestIterator(query)
-    
-    logger.info("length" + sit.get().length)
-    
-    sit.map { it =>
+    store.requestIterator(query).map { it =>
         // construct lazy spool
         query.getQueryRange.flatMap { range =>
           range.limit.map { limit =>
@@ -102,8 +90,6 @@ object LimitIncreasingQueryableSource extends LazyLogging {
    * skips a number of entries from an Iterator
    */
   @tailrec def skipIteratorEntries[V](count: Long, iterator: => Iterator[V]): Iterator[V] = {
-   
-    logger.info("skipIteratorEntries")
     if(!iterator.hasNext || count == 0) {
       iterator
     } else {
@@ -129,7 +115,6 @@ object LimitIncreasingQueryableSource extends LazyLogging {
     }
     
     def hasNext: Boolean = currentIterator.hasNext ||  {
-    
         if(current == 0) {
           fetchNext
           currentIterator.hasNext
