@@ -42,7 +42,7 @@ class HDFSQueryableSource[Q <: DomainQuery, T <: Writable](
     }
   }
   override def requestIterator(query: Q): Future[Iterator[Row]] = {
-    logger.info("requestIterator: " + query.toString() + " length: " + query.domains.length)
+    //logger.info("requestIterator: " + query.toString() + " length: " + query.domains.length)
     
     //logger.info("blob" + resolver.getAnyBlob().toString())
     
@@ -55,15 +55,16 @@ class HDFSQueryableSource[Q <: DomainQuery, T <: Writable](
         val value = resolver.getBlob(HDFSBlobResolver.transformHadoopTypes(mkey).asInstanceOf[T])
         new OneHDFSBlobIterator(rowColumn, Some(mkey), valueColumn, value)
       }.getOrElse {
-        //new OneHDFSBlobIterator(rowColumn, None, valueColumn, None)
+        new OneHDFSBlobIterator(rowColumn, None, valueColumn, None)
         
         // for testing
-        resolver.getAnyBlob()
+        /* resolver.getAnyBlob()
         val filepos: (scray.hdfs.index.HDFSBlobResolver.ArrayBytes, String, Long)  = HDFSBlobResolver.getAnyCachedIdxPos() 
-        val mkey = filepos._1
+        val mkey = filepos._1 */
         //val value = resolver.getBlob(HDFSBlobResolver.transformHadoopTypes(mkey).asInstanceOf[T])
-        val value = resolver.getAnyBlob()
-        new OneHDFSBlobIterator(rowColumn, Some(mkey), valueColumn, value)
+        /* val value = resolver.getAnyBlob()
+        new OneHDFSBlobIterator(rowColumn, Some(mkey), valueColumn, value) */
+        // for testing
       }
     }
   }
