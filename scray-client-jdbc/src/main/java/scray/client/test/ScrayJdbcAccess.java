@@ -188,8 +188,7 @@ public class ScrayJdbcAccess {
 						System.out
 								.println("====================================================================");
 
-						System.out.println("Result set nr " + count
-								+ " loaded in " + nextTime + " ms.");
+						System.out.println("Result set nr " + count + " loaded in " + nextTime + " ms.");
 
 						System.out
 								.println("====================================================================");

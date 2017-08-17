@@ -15,6 +15,7 @@ import org.apache.hadoop.fs.Path
 import org.apache.hadoop.fs.FileSystem
 import java.io.DataInputStream
 import com.typesafe.scalalogging.slf4j.LazyLogging
+import scray.hdfs.index.HDFSBlobResolver
 
 object BlobFileReader extends LazyLogging {
   import HDFSBlobResolver.ArrayBytes

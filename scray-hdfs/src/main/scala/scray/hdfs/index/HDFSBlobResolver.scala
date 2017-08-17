@@ -103,7 +103,7 @@ class HDFSBlobResolver[T <: Writable](ti: TableIdentifier, directory: String) ex
   
   
   def getBlob(key: T): Option[Array[Byte]] = {
-    logger.info("getBlob:" + key.toString())
+    // logger.info("getBlob:" + key.toString())
     
     val hashedKey = new ArrayBytes(computeHash(byteTransformHadoopType(key), ti))
     
@@ -123,7 +123,7 @@ class HDFSBlobResolver[T <: Writable](ti: TableIdentifier, directory: String) ex
         }
       }
     }
-    logger.info(s"Test result = $blob")
+    // logger.info(s"Test result = $blob")
     blob
   }
 }

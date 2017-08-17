@@ -19,6 +19,9 @@ import org.scalatest.WordSpec
 import java.io.ByteArrayInputStream
 import java.io.DataInputStream
 import org.junit.Assert
+import java.io.BufferedInputStream
+import java.io.FileInputStream
+import java.io.File
 
 class IndexFileRecordSpecs  extends WordSpec with LazyLogging {
   
@@ -38,5 +41,18 @@ class IndexFileRecordSpecs  extends WordSpec with LazyLogging {
       
       Assert.assertEquals("abc", new String(recordNew.getKey))
     }
+//    "print keys" in {
+//      val fileInputStream = new FileInputStream(new File("/home/stefan/Downloads/tsilsilerrorblobs-1494510423171(1).idx"))
+//      val is = new DataInputStream(new BufferedInputStream(fileInputStream, 2000000))
+//      
+//      val bytes = new Array[Byte](4)
+//      is.read(bytes)
+//      
+//      for(i <- 0 to 100000000) {
+//        val idxRecord = IndexFileRecord(is)
+//        println(i)
+//        println(new String(idxRecord.getKey))
+//      }
+//    }
   }
 }

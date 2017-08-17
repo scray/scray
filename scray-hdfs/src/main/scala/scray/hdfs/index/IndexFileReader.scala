@@ -10,6 +10,7 @@ import com.typesafe.scalalogging.slf4j.LazyLogging
 import scray.querying.description.TableIdentifier
 import java.util.Arrays
 import scray.hdfs.index.format.IndexFile
+import scray.hdfs.index.HDFSBlobResolver
 
 /**
  * reads an index file from HDFS
@@ -45,7 +46,7 @@ object IndexFileReader extends LazyLogging {
       try {
                 
         val dis = new DataInputStream(new BufferedInputStream(fileIS, 2000000))
-        val indexFile = IndexFile(dis)
+        val indexFile = IndexFile.apply.getReader(dis)
         
         if(!checkVersion(indexFile.getVersion)) throw new IOException(s"Indexfile version for $indexfile is not 0001")
         while(indexFile.hasNextRecord) {

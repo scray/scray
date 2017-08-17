@@ -16,38 +16,66 @@ package scray.hdfs.index.format
 
 import java.io.DataInputStream
 import java.io.EOFException
-import com.typesafe.scalalogging.slf4j.LazyLogging
 
-class IndexFile(stream: DataInputStream) extends LazyLogging {
-  val version = new Array[Byte](4)
-  stream.read(version)
+import com.typesafe.scalalogging.slf4j.LazyLogging
+import java.io.FileOutputStream
+
+class IndexFile extends LazyLogging {
+  val version = Array[Byte](0, 0, 0, 1)
   
-  var nextRecord: Option[IndexFileRecord] = None
-  
-  def hasNextRecord: Boolean = {
-    try {
-      nextRecord = Some(IndexFileRecord(stream))
-      true
-    } catch {
-      case e: EOFException => false
-      case e: Exception => {
-          logger.error(s"Error while reding idx record ${e.getMessage}" )
+  def getReader(stream: DataInputStream) = {
+    new IndexFileReader2(stream)
+  }
+
+  class IndexFileReader2(stream: DataInputStream) {
+    val version = new Array[Byte](4)
+    stream.read(version)
+
+    var nextRecord: Option[IndexFileRecord] = None
+
+    def hasNextRecord: Boolean = {
+      try {
+        nextRecord = Some(IndexFileRecord(stream))
+        true
+      } catch {
+        case e: EOFException => false
+        case e: Exception => {
+          logger.error(s"Error while reding idx record ${e.getMessage}")
           false
+        }
       }
+    }
+
+    def getNextRecord = {
+      nextRecord
+    }
+
+    def getVersion = {
+      version
     }
   }
   
-  def getNextRecord = {
-    nextRecord
-  }
-  
+  def writeIndexFile(path: String, recordsIn: List[IndexFileRecord]) = {
+      val datOutput = new FileOutputStream(path);
+       
+      datOutput.write(version);
+      val records = recordsIn.iterator
+      
+      while (records.hasNext) {
+        datOutput.write(records.next().getByteRepresentation)
+      }
+
+      datOutput.flush()
+      datOutput.close()
+    }
+
   def getVersion = {
     version
   }
 }
 
 object IndexFile {
-  def apply(stream: DataInputStream) = {
-    new IndexFile(stream)
+  def apply = {
+    new IndexFile
   }
 }
