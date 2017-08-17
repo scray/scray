@@ -35,7 +35,7 @@ public class ScrayTServiceManager {
 	}
 
 	private class MetaServiceConnection {
-		private ScrayMetaTService.FutureIface metaServiceClient;
+		private ScrayMetaTService.Client.FutureIface metaServiceClient;
 		private ScrayURL scrayURL;
 
 		MetaServiceConnection(ScrayURL scrayURL) {

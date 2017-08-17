@@ -55,7 +55,7 @@ abstract class ScrayCombinedStatefulTServer extends KryoPoolRegistration with Ap
   initializeResources
 
   // launch combined service
-  val server = Thrift.serveIface(SCRAY_QUERY_LISTENING_ENDPOINT, ScrayCombinedStatefulTServiceImpl())
+  val server = Thrift.server.serveIface(SCRAY_QUERY_LISTENING_ENDPOINT, ScrayCombinedStatefulTServiceImpl())
   def getVersion: String = "0.9.2"
 
   // endpoint registration refresh timer
@@ -100,7 +100,7 @@ abstract class ScrayCombinedStatefulTServer extends KryoPoolRegistration with Ap
   private def getClient(seedAddr: String): ScrayCombinedStatefulTService.FutureIface = {
     client.getOrElse {
       logger.info("Initializing thrift-client ")
-      val clientIface = Thrift.newIface[ScrayCombinedStatefulTService.FutureIface](seedAddr)
+      val clientIface = Thrift.client.newIface[ScrayCombinedStatefulTService.FutureIface](seedAddr)
       client = Some(clientIface)
       clientIface
     }

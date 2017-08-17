@@ -78,10 +78,10 @@
 	<modules>
 		<module>scray-querying</module>
 		<module>scray-cassandra</module>
-		<module>scray-jdbc</module>
+<!--		<module>scray-jdbc</module> -->
 		<module>scray-service</module>
 		<module>scray-common</module>
-		<module>scray-client-jdbc</module>
+	<!--	<module>scray-client-jdbc</module> -->
 		<module>scray-loader</module>
 	</modules>
 
@@ -140,7 +140,7 @@
 			<dependency>
 				<groupId>com.twitter</groupId>
 				<artifactId>util-core_${scala.suffix}</artifactId>
-				<version>6.22.0</version>
+				<version>6.43.0</version>
 			</dependency>
 			<dependency>
 				<groupId>com.google.code.findbugs</groupId>

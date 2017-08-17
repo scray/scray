@@ -89,7 +89,7 @@ class RefreshServing extends LazyLogging {
   private def getClient(seedAddr: String): ScrayCombinedStatefulTService.FutureIface = {
     client.getOrElse {
       logger.info("Initializing thrift-client ")
-      val clientIface = Thrift.newIface[ScrayCombinedStatefulTService.FutureIface](seedAddr)
+      val clientIface = Thrift.client.newIface[ScrayCombinedStatefulTService.FutureIface](seedAddr)
       client = Some(clientIface)
       clientIface
     }

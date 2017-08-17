@@ -10,15 +10,17 @@ import com.twitter.util.Future;
 import scray.service.qmodel.thriftjava.ScrayTQuery;
 import scray.service.qmodel.thriftjava.ScrayUUID;
 import scray.service.qservice.thriftjava.ScrayCombinedStatefulTService;
+import scray.service.qservice.thriftjava.ScrayCombinedStatefulTService.AsyncClient;
 import scray.service.qservice.thriftjava.ScrayTResultFrame;
+
 import com.twitter.finagle.builder.ClientBuilder;
 
-public class ScrayCombinedStatefulTServiceAdapter implements ScrayTServiceAdapter {
+class ScrayCombinedStatefulTServiceAdapter implements ScrayTServiceAdapter {
 
-	private ScrayCombinedStatefulTService.Client client;
+	private ScrayCombinedStatefulTService.AsyncClient client;
 	private String endpoint;
 
-	public ScrayCombinedStatefulTService.Client getClient() {
+	public ScrayCombinedStatefulTService.AsyncClient getClient() {
 		// lazy init
 		if (client == null) {
 			String clientService = new ClientBuilder()
