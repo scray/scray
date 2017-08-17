@@ -1,9 +1,8 @@
 package scray.cassandra.tools
 
-import scray.querying.description.TableIdentifier
-import scray.cassandra.tools.api.LuceneIndexStatementGenerator
-import scray.cassandra.tools.api.LucenIndexedColumn
 import com.typesafe.scalalogging.slf4j.LazyLogging
+import scray.cassandra.tools.api.{LucenIndexedColumn, LuceneIndexStatementGenerator}
+import scray.querying.description.TableIdentifier
 
 /**
  * Create CQL statement to index columns with "Stratio’s Cassandra Lucene Index"
@@ -27,10 +26,10 @@ class CassandraLuceneIndexStatementGeneratorImpl extends LuceneIndexStatementGen
   val ceateFileElement = (acc: String, column: LucenIndexedColumn) => {
      if (acc.endsWith("{")) { // Detect first element
         s"""${acc} 
-                  ${column.name} : {type: "${column.dataType}"}"""
+                  ${column.name} : {type: "${column.dataType}", sorted: ${column.isSorted} }"""
       } else {
         s"""${acc} 
-                  ${column.name} : {type: "${column.dataType}"}"""
+                  ${column.name} : {type: "${column.dataType}", sorted: ${column.isSorted} }"""
       }
     }
   

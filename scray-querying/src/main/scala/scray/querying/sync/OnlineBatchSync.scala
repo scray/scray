@@ -12,6 +12,7 @@ import scray.common.serialization.BatchID
 import scray.querying.description.TableIdentifier
 import scray.querying.sync.State.State
 import java.util.Calendar
+import scray.querying.sync.conf.SyncConfiguration
 
 trait OnlineBatchSyncWithTableIdentifier[Statement, InsertIn, Result] extends LazyLogging {
 
@@ -105,9 +106,11 @@ abstract class JobInfo[Statement, InsertIn, Result](
   val startTime: Option[Long] = None, // This job is defined for a given time range. Default is the start time is end time of last batch job or current time.
   val endTime: Option[Long] = None, //Default is the current time when this job finished.
   val onlineStartTime: Long = 0,
-  val numberOfWorkers: Option[Long] = None
+  val numberOfWorkers: Option[Long] = None,
+  val syncConf: SyncConfiguration = new SyncConfiguration
   ) extends Serializable {
 
+  @transient
   var lock: Option[LockApi[Statement, InsertIn, Result]] = None
   def getLock(dbSession: DbSession[Statement, InsertIn, Result]): LockApi[Statement, InsertIn, Result]
       

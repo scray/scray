@@ -1,81 +1,36 @@
+// See the LICENCE.txt file distributed with this work for additional
+// information regarding copyright ownership.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package scray.cassandra.sync
 
+import java.util.{Iterator => JIterator}
+
+import com.datastax.driver.core._
+import com.datastax.driver.core.querybuilder.{Insert, QueryBuilder}
 import com.websudos.phantom.CassandraPrimitive
-import scray.querying.sync.DBColumnImplementation
-import java.util.{ Iterator => JIterator }
-import scala.annotation.tailrec
-import com.datastax.driver.core.Cluster
-import com.datastax.driver.core.ConsistencyLevel
-import com.datastax.driver.core.RegularStatement
-import com.datastax.driver.core.ResultSet
-import com.datastax.driver.core.Row
-import com.datastax.driver.core.Session
-import com.datastax.driver.core.SimpleStatement
-import com.datastax.driver.core.Statement
-import com.datastax.driver.core.querybuilder.Insert
-import com.datastax.driver.core.querybuilder.QueryBuilder
-import java.util.ArrayList
-import scray.querying.sync.DbSession
-import scala.collection.mutable.ArrayBuffer
-import scray.querying.sync.OnlineBatchSync
-import scray.querying.sync.SyncTableBasicClasses.SyncTableRowEmpty
-import scala.collection.mutable.ListBuffer
-import scray.querying.sync.JobInfo
-import com.datastax.driver.core.BatchStatement
-import scray.querying.sync.State.State
-import com.datastax.driver.core.querybuilder.Update.Where
-import com.datastax.driver.core.querybuilder.Update.Conditions
-import scray.querying.sync.SyncTable
-import scala.util.Try
-import scray.querying.sync.RunningJobExistsException
-import scray.querying.sync.NoRunningJobExistsException
-import scray.querying.sync.StatementExecutionError
-import scala.util.Failure
-import scala.util.Success
-import scray.querying.description.TableIdentifier
-import scala.collection.mutable.HashSet
-import scray.querying.sync.AbstractRow
-import scray.querying.sync.ColumnWithValue
-import scray.querying.sync.VoidTable
-import scray.querying.sync.RowWithValue
-import scray.querying.sync.Table
-import scray.querying.sync.State
-import scray.querying.sync.AbstractTypeDetection
-import scray.querying.sync.DBTypeImplicit
-import com.datastax.driver.core.BatchStatement
-import com.datastax.driver.core.Cluster
-import com.datastax.driver.core.ConsistencyLevel
-import com.datastax.driver.core.RegularStatement
-import com.datastax.driver.core.ResultSet
-import com.datastax.driver.core.Row
-import com.datastax.driver.core.Statement
-import com.datastax.driver.core.querybuilder.Insert
-import com.datastax.driver.core.querybuilder.QueryBuilder
-import com.typesafe.scalalogging.slf4j.LazyLogging
-import com.websudos.phantom.CassandraPrimitive
-import java.util.{ Iterator => JIterator }
-import scala.annotation.tailrec
-import scala.collection.JavaConverters._
-import scala.collection.mutable.HashSet
-import scala.collection.mutable.ListBuffer
-import scala.util.Failure
-import scala.util.Success
-import scala.util.Try
+import scray.cassandra.util.CassandraUtils
 import scray.common.serialization.BatchID
 import scray.querying.description.TableIdentifier
-import scray.querying.sync.JobInfo
-import scray.querying.sync.NoRunningJobExistsException
-import scray.querying.sync.OnlineBatchSync
-import scray.querying.sync.OnlineBatchSyncWithTableIdentifier
-import scray.querying.sync.RunningJobExistsException
-import scray.querying.sync.StateMonitoringApi
-import scray.querying.sync.StatementExecutionError
-import java.util.{ Iterator => JIterator }
-import scray.querying.sync.JobLockTable
-import scray.querying.sync.ArbitrarylyTypedRows
-import scray.querying.sync.SyncTableBasicClasses
-import scray.cassandra.util.CassandraUtils
-import scray.querying.sync.Columns
+import scray.querying.sync.State.State
+import scray.querying.sync._
+import scray.querying.sync.conf.ConsistencyLevel._
+
+import scala.annotation.tailrec
+import scala.collection.mutable.{HashSet, ListBuffer}
+import scala.util.{Failure, Success, Try}
+import scray.querying.sync.conf.SyncConfiguration
 
 
 object CassandraImplementation extends AbstractTypeDetection with Serializable {
@@ -114,7 +69,7 @@ object CassandraImplementation extends AbstractTypeDetection with Serializable {
 
 }
 
-class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet]) extends OnlineBatchSync[Statement, Insert, ResultSet] with OnlineBatchSyncWithTableIdentifier[Statement, Insert, ResultSet] with StateMonitoringApi[Statement, Insert, ResultSet] {
+class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet], config: SyncConfiguration = new SyncConfiguration) extends OnlineBatchSync[Statement, Insert, ResultSet] with OnlineBatchSyncWithTableIdentifier[Statement, Insert, ResultSet] with StateMonitoringApi[Statement, Insert, ResultSet] {
 
   import CassandraImplementation.genericCassandraColumnImplicit
 

@@ -377,7 +377,7 @@ object Registry extends LazyLogging with Registry {
     rwlock.readLock.lock
     try {
       val mv = materializedViews.get(space + version)
-      logger.trace(s"Search materialized view table with identifier ${ti} in dataset ${mv}")
+      logger.debug(s"Search materialized view table with identifier ${ti} in dataset ${mv}")
       mv.flatMap(_.get(ti))
     } finally {
       rwlock.readLock.unlock

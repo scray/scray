@@ -1,18 +1,14 @@
 package scray.cassandra.tools
 
-import scala.annotation.tailrec
-
+import com.typesafe.scalalogging.slf4j.LazyLogging
 import org.junit.runner.RunWith
 import org.scalatest.WordSpec
 import org.scalatest.junit.JUnitRunner
-
-import com.typesafe.scalalogging.slf4j.LazyLogging
-
-import scray.cassandra.tools.types.ScrayColumnTypes._
 import scray.cassandra.tools.api.LucenIndexedColumn
-import scray.querying.description.TableIdentifier
 import scray.cassandra.tools.types.LuceneColumnTypes
-import scray.cassandra.tools.types.LuceneColumnTypes.LuceneColumnType
+import scray.querying.description.TableIdentifier
+
+import scala.annotation.tailrec
 
 @RunWith(classOf[JUnitRunner])
 class CassandraLuceneIndexStatementGeneratorImplSpecs extends WordSpec with LazyLogging {
@@ -22,8 +18,8 @@ class CassandraLuceneIndexStatementGeneratorImplSpecs extends WordSpec with Lazy
       val statementGenerator = new CassandraLuceneIndexStatementGeneratorImpl
       val configurationString = statementGenerator.getIndexString(
         TableIdentifier("cassandra", "ks1", "cf1"),
-        List(LucenIndexedColumn("col1", LuceneColumnTypes.String(""))),
-        (2, 2, 3))
+        List(LucenIndexedColumn("col1", LuceneColumnTypes.String(""), true)),
+        (2, 2, 7))
 
       
       val expectedResult = s"""
@@ -33,12 +29,12 @@ class CassandraLuceneIndexStatementGeneratorImplSpecs extends WordSpec with Lazy
         	'refresh_seconds' : '1',
           'schema' : '{
             fields : { 
-              col1 : {type: "string"}
+              col1 : {type: "string", sorted: true }
 		        }
 	        }'
         };"""
         
-
+println(configurationString)
       assert(configurationString.isDefined)
       assert(removePrettyPrintingChars(configurationString.getOrElse("")) == removePrettyPrintingChars(expectedResult))
 
@@ -48,8 +44,8 @@ class CassandraLuceneIndexStatementGeneratorImplSpecs extends WordSpec with Lazy
       val statementGenerator = new CassandraLuceneIndexStatementGeneratorImpl
       val configurationString = statementGenerator.getIndexString(
         TableIdentifier("cassandra", "ks", "cf1"),
-        List(LucenIndexedColumn("col1", LuceneColumnTypes.String("")), LucenIndexedColumn("col2", LuceneColumnTypes.String(""))),
-        (2, 2, 3))
+        List(LucenIndexedColumn("col1", LuceneColumnTypes.String(""), false), LucenIndexedColumn("col2", LuceneColumnTypes.String(""), false)),
+        (2, 2, 7))
 
         val expectedResult = s"""
           CREATE CUSTOM INDEX "cf1_lucene_index" ON "ks"."cf1" (lucene) 
@@ -58,8 +54,8 @@ class CassandraLuceneIndexStatementGeneratorImplSpecs extends WordSpec with Lazy
 	          'refresh_seconds' : '1', 
 	          'schema' : '{ 
 		          fields : { 
-                  col1 : {type: "string"} 
-                  col2 : {type: "string"}
+                  col1 : {type: "string", sorted: false } 
+                  col2 : {type: "string", sorted: false }
 		          }
 	        }' 
         };"""
@@ -73,7 +69,7 @@ class CassandraLuceneIndexStatementGeneratorImplSpecs extends WordSpec with Lazy
       val statementGenerator = new CassandraLuceneIndexStatementGeneratorImpl
       val configurationString = statementGenerator.getIndexString(
         TableIdentifier("cassandra", "ks", "cf1"),
-        List(LucenIndexedColumn("col1", LuceneColumnTypes.String(""))),
+        List(LucenIndexedColumn("col1", LuceneColumnTypes.String(""), false)),
         (1, 0, 0))
 
       assert( ! configurationString.isDefined)

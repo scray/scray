@@ -2,24 +2,14 @@ package scray.cassandra
 
 import java.util.logging.LogManager
 
-import org.junit.runner.RunWith
-import org.scalatest.BeforeAndAfter
-import org.scalatest.BeforeAndAfterAll
-import org.scalatest.WordSpec
-import org.scalatest.junit.JUnitRunner
-
-import scray.querying.description.Column
-import scray.querying.description.ColumnOrdering
-import scray.querying.description.TableIdentifier
-import scala.math.Ordering.StringOrdering
-import scala.math.Ordering.StringOrdering
-import scray.querying.description.QueryRange
-import scray.cassandra.extractors.DomainToJSONLuceneQueryMapper
-import scray.querying.queries.DomainQuery
-import scray.querying.description.internal.SingleValueDomain
 import org.junit.Assert
-import scray.querying.description.internal.RangeValueDomain
-import scray.querying.description.internal.Bound
+import org.junit.runner.RunWith
+import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, WordSpec}
+import org.scalatest.junit.JUnitRunner
+import scray.cassandra.extractors.DomainToJSONLuceneQueryMapper
+import scray.querying.description.{Column, ColumnOrdering, QueryRange, TableIdentifier}
+import scray.querying.description.internal.{Bound, RangeValueDomain, SingleValueDomain}
+import scray.querying.queries.DomainQuery
 
 
   @RunWith(classOf[JUnitRunner])
