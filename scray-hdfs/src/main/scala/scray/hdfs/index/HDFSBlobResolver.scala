@@ -48,21 +48,39 @@ class HDFSBlobResolver[T <: Writable](ti: TableIdentifier, directory: String) ex
    * If that could be found, it would return the relevant SingleFile for blobs.
    */
   def readAllIndexesUntilKeyIsfound(key: ArrayBytes, files: List[CombinedFiles]): Option[(String, Long)] = {
-    
-    //logger.info("readAllIndexesUntilKeyIsfo")
-    
-    if(files.isEmpty) {
-      None
-    } else {
-      val headFiles = files.head.getFileSet
-      val indexFile = headFiles.find(sf => sf.getType == INDEX.toString())
-      val longOption = indexFile.flatMap { idxFile =>
-        IndexFileReader.getIndexForKey(fs, idxFile.getNameWithPath, key, ti)
-      }
-      longOption.orElse {
-        readAllIndexesUntilKeyIsfound(key, files.tail)
-      }
-    }
+
+		  //logger.info("readAllIndexesUntilKeyIsfo")
+
+		  if(files.isEmpty) {
+			  None
+		  } else {
+			  val headFiles = files.head.getFileSet
+					  val indexFile = headFiles.find(sf => sf.getType == INDEX.toString())
+					  val longOption = indexFile.flatMap { idxFile =>
+					  IndexFileReader.getIndexForKey(fs, idxFile.getNameWithPath, key, ti)
+			  }
+			  longOption.orElse {
+				  readAllIndexesUntilKeyIsfound(key, files.tail)
+			  }
+		  }
+  }
+
+  /**
+   * reads index files 
+   */
+  
+  def readAllIndexes(files: List[CombinedFiles]) : Unit = {
+
+		  //logger.info("readAllIndexesUntilKeyIsfo")
+		  if(files.isEmpty) {
+			  None
+		  } else {
+
+			  files.foreach(f => {val indexFile = f.getFileSet.find(sf => sf.getType == INDEX.toString());
+			    indexFile.foreach(f => IndexFileReader.updateCache(fs, f.getNameWithPath, ti))
+			  })
+
+		  }
   }
   
   
@@ -116,11 +134,15 @@ class HDFSBlobResolver[T <: Writable](ti: TableIdentifier, directory: String) ex
       HDFSBlobResolver.getCachedIdxPos(hashedKey).flatMap { filepos =>
         BlobFileReader.getBlobForPosition(fs, filepos._1, hashedKey, ti, filepos._2)
       }.orElse {
+        // js - put all keys into cache
+        readAllIndexes(files)
+        return HDFSBlobResolver.getCachedBlob(hashedKey)
         // if we did not find the key, we need to find an index which contains it
-        readAllIndexesUntilKeyIsfound(hashedKey, files).flatMap { filepos =>
+        /* readAllIndexesUntilKeyIsfound(hashedKey, files).flatMap { filepos =>
           logger.info(s"Found key: ${key} in index")
           BlobFileReader.getBlobForPosition(fs, filepos._1, hashedKey, ti, filepos._2)
-        }
+        } */
+        
       }
     }
     // logger.info(s"Test result = $blob")
