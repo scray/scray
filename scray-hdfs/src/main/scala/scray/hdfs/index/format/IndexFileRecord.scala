@@ -21,11 +21,11 @@ class IndexFileRecord(
   private val key: Array[Byte],
   private val valueLength: Int,
   private val startPositon: Long // Last byte of previous byte record
- ) {
+ ) extends HasByteRepresentation {
   
   private val keyLength: Int =  key.length
     
-  def getByteRepresentation: Array[Byte] = {
+  override def getByteRepresentation: Array[Byte] = {
     
     val buffer = ByteBuffer.allocate(
         4 +   // key length

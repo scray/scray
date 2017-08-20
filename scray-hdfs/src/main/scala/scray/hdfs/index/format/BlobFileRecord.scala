@@ -20,13 +20,13 @@ import java.io.DataInputStream
 class BlobFileRecord(
   private val key: Array[Byte],
   private val value: Array[Byte]
- ) {
+ ) extends HasByteRepresentation {
   
   private val keyLength: Int = key.length
   private val valueLength: Int = value.length
 
   
-  def getByteRepresentation: Array[Byte] = {
+  override def getByteRepresentation: Array[Byte] = {
     
     val buffer = ByteBuffer.allocate(
         4 + // key length
