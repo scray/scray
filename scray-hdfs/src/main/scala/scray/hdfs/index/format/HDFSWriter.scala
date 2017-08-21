@@ -28,67 +28,65 @@ import java.util.concurrent.Callable
  * @param path Path to root directory of blob store
  * @param batchSize Size of buffer which will be flushed to HDFS if it is full.
  */
-class HDFSWriter[T <: HasByteRepresentation](path: String, batchSize: Int) extends Callable[Boolean] with LazyLogging {
-  
-  var buffer = new ArrayList[T](batchSize)
-  
+class HDFSWriter[T <: HasByteRepresentation](path: String, data: ArrayList[T]) extends Callable[Boolean] with LazyLogging {
+
   var outputStream: FSDataOutputStream = null;
   val config = new Configuration;
   var fileSystem: FileSystem = null
   init
-  
+
   def init = {
     if (outputStream == null) {
       val conf = new Configuration;
-
       conf.set("fs.defaultFS", path);
 
       fileSystem = FileSystem.get(conf);
     }
 
-    if (!fileSystem.exists(new Path(path))) {
-      logger.debug(s"Create path ${path}")
-      fileSystem.mkdirs(new Path(path))
-    }
-  }
-
-  def addValue(value: Tuple2[BlobFileRecord, IndexFileRecord]) {
-
-    if (batchBuffer.size() == batchSize) {
-      logger.debug(s"Flush to HDFS")
-      this.writeIdx
-
-      println("Re update buffer")
-      batchBuffer = new ArrayList[Tuple2[BlobFileRecord, IndexFileRecord]](batchSize)
-    }
-
-    batchBuffer.add(value)
+//    if (!fileSystem.exists(new Path(path))) {
+//      logger.debug(s"Create path ${path}")
+//      fileSystem.mkdirs(new Path(path))
+//    }
   }
 
   def writeIdx = {
+    if (data.size() > 0) {
+      val fileType = data.get(0) match {
+        case t: BlobFileRecord  => ".blob"
+        case t: IndexFileRecord => "idx"
+      }
+      outputStream = fileSystem.create(new Path(path + "/bdq-blob-" + System.currentTimeMillis() + fileType))
 
-    outputStream = fileSystem.create(new Path(path + "/bdq-elembuffer-" + System.currentTimeMillis() + ".idx"))
+      logger.debug(s"Write ${data.size()} elemens of type ${fileType}")
+      for (i <- 0 to (data.size() - 1)) {
+        outputStream.write(data.get(i).getByteRepresentation)
+      }
 
-    for (i <- 0 to (batchBuffer.size() - 1)) {
-      println(i)
-      outputStream.write(batchBuffer.get(i)._2.getByteRepresentation)
+      outputStream.close()
     }
-
-    outputStream.close()
   }
-  
+
   override def call: Boolean = {
-    
+    try {
+      writeIdx
+    } catch {
+      case e: Exception => {
+        logger.error(s"Error while writing to HDFS. Error ${e.getMessage}")
+        e.printStackTrace()
+        return false
+      }
+    }
+    true
   }
 
-  def clearFolder = {
-    val conf = new Configuration;
-    fileSystem.delete(new Path(path), true)
-    this.init
-  }
+//  def clearFolder = {
+//    val conf = new Configuration;
+//    fileSystem.delete(new Path(path), true)
+//    this.init
+//  }
 
   def close = {
-    if(outputStream != null) {
+    if (outputStream != null) {
       outputStream.close();
     } else {
       logger.debug("No stream to close");
