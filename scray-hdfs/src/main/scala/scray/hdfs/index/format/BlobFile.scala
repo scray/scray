@@ -20,10 +20,21 @@ import java.io.EOFException
 import scalaz.std.stream
 import java.io.DataOutputStream
 import java.io.FileOutputStream
+import scala.collection.mutable.MutableList
 
 class BlobFile extends LazyLogging {
-  val version = new Array[Byte](4)
+  private val version = new Array[Byte](4)
+  private val records = new MutableList[BlobFileRecord]
 
+
+  def addRecord(record: BlobFileRecord) = {
+    records += record
+  }
+  
+  def getRecords: List[BlobFileRecord] = {
+    records.toList
+  }
+  
   def getReader(stream: DataInputStream): BlobFileReader2 = {
     new BlobFileReader2(stream)
   }
@@ -56,16 +67,16 @@ class BlobFile extends LazyLogging {
     }
   }
   
-  def writeBlobFile(path: String, recordsIn: List[BlobFileRecord]) {
+  def writeBlobFile(path: String) {
     val version = Array[Byte](0, 0, 0, 1)
     
     val datOutput = new FileOutputStream(path);
        
       datOutput.write(version);
-      val records = recordsIn.iterator
+      val recordsIter = records.iterator
       
-      while (records.hasNext) {
-        datOutput.write(records.next().getByteRepresentation)
+      while (recordsIter.hasNext) {
+        datOutput.write(recordsIter.next().getByteRepresentation)
       }
 
       datOutput.flush()
