@@ -23,7 +23,7 @@ class DataConverter {
     val idxRecord = IndexFileRecord(key, idxFile.getLastPosition, value.length)
     val datRecord = BlobFileRecord(key,value)
     
-    idxFile.addRecord(idxRecord)
+    idxFile.addRecord(idxRecord, value.length)
     dataFile.addRecord(datRecord)
   }
   

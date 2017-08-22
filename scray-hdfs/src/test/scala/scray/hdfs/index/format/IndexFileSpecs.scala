@@ -30,16 +30,16 @@ class IndexFileSpecs extends WordSpec with LazyLogging {
 
       val key1 = s"key1".getBytes("UTF8")
 
-      idxFile.addRecord(new IndexFileRecord(key1, idxFile.getLastPosition))
+      idxFile.addRecord(new IndexFileRecord(key1, idxFile.getLastPosition), 42)
 
       Assert.assertEquals("key1", new String(idxFile.getRecords.head.getKey))
       Assert.assertEquals(0, idxFile.getRecords.head.getStartPosition)
 
       val key2 = s"key2".getBytes("UTF8")
-      idxFile.addRecord(new IndexFileRecord(key2, idxFile.getLastPosition))
+      idxFile.addRecord(new IndexFileRecord(key2, idxFile.getLastPosition), 42)
 
       Assert.assertEquals("key2", new String(idxFile.getRecords.tail.head.getKey))
-      Assert.assertEquals(12, idxFile.getRecords.tail.head.getStartPosition)
+      Assert.assertEquals(54, idxFile.getRecords.tail.head.getStartPosition)
     }
     " read and write records to file " in {
 
@@ -50,9 +50,8 @@ class IndexFileSpecs extends WordSpec with LazyLogging {
         val key = s"key${i}".getBytes("UTF8")
         val value = s"val${i}".getBytes("UTF8")
 
-        idxFile.addRecord(IndexFileRecord(key, 0, value.length))
+        idxFile.addRecord(IndexFileRecord(key, 0, value.length), 42)
       }
-
       idxFile.writeIndexFile("target/testIdxFile.idx")
 
       // Read data from file and check result
@@ -63,7 +62,7 @@ class IndexFileSpecs extends WordSpec with LazyLogging {
 
       Assert.assertTrue(indexFile.hasNextRecord)
       Assert.assertEquals("key0", new String(indexFile.getNextRecord.get.getKey))
-      Assert.assertEquals(0, indexFile.getNextRecord.get.getStartPosition)
+      Assert.assertEquals(8, indexFile.getNextRecord.get.getStartPosition)
     }
   }
 }

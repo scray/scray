@@ -29,43 +29,69 @@ class DataConverterSpecs extends WordSpec with LazyLogging {
     " create blob and idx records " in {
 
       val converter = new DataConverter
-      
-      val idx  = new IndexFile
+
+      val idx = new IndexFile
       val data = new BlobFile
-      
-      for (i <- 0 to 10) {
+
+      for (i <- 0 to 9) {
         val key = s"key${i}".getBytes("UTF8")
         val value = s"val${i}".getBytes("UTF8")
 
         converter.addRecord(key, value, idx, data)
-   
+
       }
-      
+
       Assert.assertEquals("key0", new String(idx.getRecords.head.getKey))
       Assert.assertEquals("key1", new String(idx.getRecords.tail.head.getKey))
       Assert.assertEquals("key2", new String(idx.getRecords.tail.tail.head.getKey))
-      
+
       Assert.assertEquals(0, idx.getRecords.head.getStartPosition)
       Assert.assertEquals(16, idx.getRecords.tail.head.getStartPosition)
       Assert.assertEquals(32, idx.getRecords.tail.tail.head.getStartPosition)
     }
+    " create blob and idx records with different data sizes " in {
+
+      val converter = new DataConverter
+
+      val idx = new IndexFile
+      val data = new BlobFile
+
+      converter.addRecord(
+        "key1".getBytes("UTF8"),
+        "v".getBytes("UTF8"), idx, data)
+
+      converter.addRecord(
+        "key2".getBytes("UTF8"),
+        "vv".getBytes("UTF8"), idx, data)
+
+      converter.addRecord(
+        "key3".getBytes("UTF8"),
+        "vvv".getBytes("UTF8"), idx, data)
+
+      Assert.assertEquals("key1", new String(idx.getRecords.head.getKey))
+      Assert.assertEquals("key2", new String(idx.getRecords.tail.head.getKey))
+      Assert.assertEquals("key3", new String(idx.getRecords.tail.tail.head.getKey))
+
+      Assert.assertEquals(0, idx.getRecords.head.getStartPosition)
+      Assert.assertEquals(13, idx.getRecords.tail.head.getStartPosition)
+      Assert.assertEquals(27, idx.getRecords.tail.tail.head.getStartPosition)
+    }
     " create blob and idx records and wirite records to file " in {
 
       val converter = new DataConverter
-      val idx  = new IndexFile
+      val idx = new IndexFile
       val data = new BlobFile
 
       for (i <- 0 to 10000) {
         val key = s"key${i}".getBytes("UTF8")
         val value = s"val${i}".getBytes("UTF8")
-   
+
         converter.addRecord(key, value, idx, data)
 
       }
-      
-     
+
       val time = System.currentTimeMillis()
-      
+
       data.writeBlobFile(s"target/tsilerrorblobs-${time}.blob")
       idx.writeIndexFile(s"target/tsilerrorblobs-${time}.idx")
     }

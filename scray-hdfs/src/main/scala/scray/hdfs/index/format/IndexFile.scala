@@ -27,11 +27,14 @@ class IndexFile extends LazyLogging {
   private var lastPosition = 0L
   private val records: MutableList[IndexFileRecord] = new MutableList[IndexFileRecord]
   
-  
-  def addRecord(record: IndexFileRecord) {
+  /**
+   * @param dataLength Number of bytes of data field
+   */
+  def addRecord(record: IndexFileRecord, dataLength: Int) {
     lastPosition = lastPosition + 
            8 + // Bytes for key length and blob length
-           record.getKey.length 
+           record.getKey.length +
+           dataLength
      
     records += record       
   }
