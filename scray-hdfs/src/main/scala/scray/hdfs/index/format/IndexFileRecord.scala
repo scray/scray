@@ -19,7 +19,6 @@ import java.io.DataInputStream
 
 class IndexFileRecord(
   private val key: Array[Byte],
-  private val valueLength: Int,
   private val startPositon: Long // Last byte of previous byte record
  ) extends HasByteRepresentation {
   
@@ -39,19 +38,13 @@ class IndexFileRecord(
     buffer.putLong(
         startPositon + 
         4 +   // key length information
-        keyLength +
-        4 +   // value length information
-        valueLength
+        keyLength
     )
     buffer.array
   }
   
   def getKey = {
     key
-  }
-  
-  def getValueLength = {
-    valueLength
   }
   
   def getStartPosition = {
@@ -69,12 +62,12 @@ object IndexFileRecord {
     
     val position = records.readLong()
     
-    new IndexFileRecord(key, 0, position)
+    new IndexFileRecord(key, position)
   }
   
   def apply(key: Array[Byte], startPossiton: Long, valueLength: Int) = {
     val keyLength = key.length
     
-    new IndexFileRecord(key, valueLength, startPossiton)
+    new IndexFileRecord(key, startPossiton)
   }
 }

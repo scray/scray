@@ -16,13 +16,30 @@ package scray.hdfs.index.format
 
 import java.io.DataInputStream
 import java.io.EOFException
-
-import com.typesafe.scalalogging.slf4j.LazyLogging
 import java.io.FileOutputStream
 
+import scala.collection.mutable.MutableList
+
+import com.typesafe.scalalogging.slf4j.LazyLogging
+
 class IndexFile extends LazyLogging {
-  val version = Array[Byte](0, 0, 0, 1)
+  private val version = Array[Byte](0, 0, 0, 1)
+  private var lastPosition = 0L
+  private val records: MutableList[IndexFileRecord] = new MutableList[IndexFileRecord]
   
+  
+  def addRecord(record: IndexFileRecord) {
+    lastPosition = lastPosition + 
+           8 + // Bytes for key length and blob length
+           record.getKey.length 
+     
+    records += record       
+  }
+  
+  def getRecords: List[IndexFileRecord] = {
+    records.toList
+  }
+
   def getReader(stream: DataInputStream) = {
     new IndexFileReader2(stream)
   }
@@ -55,14 +72,14 @@ class IndexFile extends LazyLogging {
     }
   }
   
-  def writeIndexFile(path: String, recordsIn: List[IndexFileRecord]) = {
+  def writeIndexFile(path: String) = {
       val datOutput = new FileOutputStream(path);
        
       datOutput.write(version);
-      val records = recordsIn.iterator
+      val recordsIter = records.iterator
       
-      while (records.hasNext) {
-        datOutput.write(records.next().getByteRepresentation)
+      while (recordsIter.hasNext) {
+        datOutput.write(recordsIter.next().getByteRepresentation)
       }
 
       datOutput.flush()
@@ -71,6 +88,10 @@ class IndexFile extends LazyLogging {
 
   def getVersion = {
     version
+  }
+  
+  def getLastPosition: Long = {
+    lastPosition
   }
 }
 

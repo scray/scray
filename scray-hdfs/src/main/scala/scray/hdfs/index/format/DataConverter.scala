@@ -16,16 +16,15 @@ package scray.hdfs.index.format
 
 class DataConverter {
   
-  def createDataAndIndexRecord(key: Array[Byte], value: Array[Byte], prevPossiton: Long): Tuple3[BlobFileRecord, IndexFileRecord, Long] = {
-       val idxRecord = IndexFileRecord(key, prevPossiton, value.length)
-       val datRecord = BlobFileRecord(key,value)
-       
-       (datRecord, idxRecord, (
-           prevPossiton + 
-           8 + // Bytes for key length and blob length
-           key.length + 
-           value.length
-           ))
+  /**
+   * Create index and data record from the given key and value. IndexFile and BlobFile will be updated.
+   */
+  def addRecord(key: Array[Byte], value: Array[Byte], idxFile: IndexFile, dataFile: BlobFile) {
+    val idxRecord = IndexFileRecord(key, idxFile.getLastPosition, value.length)
+    val datRecord = BlobFileRecord(key,value)
+    
+    idxFile.addRecord(idxRecord)
+    dataFile.addRecord(datRecord)
   }
   
 }

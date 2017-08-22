@@ -24,31 +24,46 @@ import scala.collection.mutable.MutableList
 import org.junit.Assert
 
 class IndexFileSpecs extends WordSpec with LazyLogging {
-    "Index file " should {
-      " write index records to file" in {
-        
-        val records = new MutableList[IndexFileRecord] 
-        
-        for(i <- 0 to 10) {
-          val key = s"key${i}".getBytes("UTF8")
-          val value = s"val${i}".getBytes("UTF8")
-          
-          records += IndexFileRecord(key, 0, value.length)
-        }
-        
-        val idxFile = IndexFile.apply.writeIndexFile("target/testIdxFile.idx", records.toList)
-      }
-      " be read from file " in {
-          val fileInputStream = new FileInputStream(new File("target/testIdxFile.idx"))
-          val is = new DataInputStream(new BufferedInputStream(fileInputStream, 2000000))
-          
-          val indexFile = IndexFile.apply.getReader(is)
-          
-          while(indexFile.hasNextRecord) {
-            println(new String(indexFile.nextRecord.get.getKey))
-            println((indexFile.nextRecord.get.getStartPosition))
-            println(indexFile.nextRecord.get.getValueLength)
-          }
-      }
+  "Index file " should {
+    "store key value pairs " in {
+      val idxFile = new IndexFile
+
+      val key1 = s"key1".getBytes("UTF8")
+
+      idxFile.addRecord(new IndexFileRecord(key1, idxFile.getLastPosition))
+
+      Assert.assertEquals("key1", new String(idxFile.getRecords.head.getKey))
+      Assert.assertEquals(0, idxFile.getRecords.head.getStartPosition)
+
+      val key2 = s"key2".getBytes("UTF8")
+      idxFile.addRecord(new IndexFileRecord(key2, idxFile.getLastPosition))
+
+      Assert.assertEquals("key2", new String(idxFile.getRecords.tail.head.getKey))
+      Assert.assertEquals(12, idxFile.getRecords.tail.head.getStartPosition)
     }
+    " read and write records to file " in {
+
+      // Create and write data to file
+      val idxFile = new IndexFile
+
+      for (i <- 0 to 10) {
+        val key = s"key${i}".getBytes("UTF8")
+        val value = s"val${i}".getBytes("UTF8")
+
+        idxFile.addRecord(IndexFileRecord(key, 0, value.length))
+      }
+
+      idxFile.writeIndexFile("target/testIdxFile.idx")
+
+      // Read data from file and check result
+      val fileInputStream = new FileInputStream(new File("target/testIdxFile.idx"))
+      val is = new DataInputStream(new BufferedInputStream(fileInputStream, 2000000))
+
+      val indexFile = IndexFile.apply.getReader(is)
+
+      Assert.assertTrue(indexFile.hasNextRecord)
+      Assert.assertEquals("key0", new String(indexFile.getNextRecord.get.getKey))
+      Assert.assertEquals(0, indexFile.getNextRecord.get.getStartPosition)
+    }
+  }
 }

@@ -50,7 +50,6 @@ class IndexFileRecordSpecs  extends WordSpec with LazyLogging {
 //      
 //      for(i <- 0 to 100000000) {
 //        val idxRecord = IndexFileRecord(is)
-//        println(i)
 //        println(new String(idxRecord.getKey))
 //      }
 //    }

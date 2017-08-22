@@ -29,48 +29,45 @@ class DataConverterSpecs extends WordSpec with LazyLogging {
     " create blob and idx records " in {
 
       val converter = new DataConverter
-      val records = new MutableList[Tuple3[BlobFileRecord, IndexFileRecord, Long]] 
-      var positon = 0L
-
+      
+      val idx  = new IndexFile
+      val data = new BlobFile
+      
       for (i <- 0 to 10) {
         val key = s"key${i}".getBytes("UTF8")
         val value = s"val${i}".getBytes("UTF8")
 
-        val dataIdxRecord = converter.createDataAndIndexRecord(key, value, positon)
-        positon = dataIdxRecord._3
-        records += dataIdxRecord        
+        converter.addRecord(key, value, idx, data)
+   
       }
       
-      Assert.assertEquals("key0", new String(records.head._2.getKey))
-      Assert.assertEquals("key1", new String(records.tail.head._2.getKey))
-      Assert.assertEquals("key2", new String(records.tail.tail.head._2.getKey))
+      Assert.assertEquals("key0", new String(idx.getRecords.head.getKey))
+      Assert.assertEquals("key1", new String(idx.getRecords.tail.head.getKey))
+      Assert.assertEquals("key2", new String(idx.getRecords.tail.tail.head.getKey))
       
-      Assert.assertEquals(0, records.head._2.getStartPosition)
-      Assert.assertEquals(16, records.tail.head._2.getStartPosition)
-      Assert.assertEquals(32, records.tail.tail.head._2.getStartPosition)
+      Assert.assertEquals(0, idx.getRecords.head.getStartPosition)
+      Assert.assertEquals(16, idx.getRecords.tail.head.getStartPosition)
+      Assert.assertEquals(32, idx.getRecords.tail.tail.head.getStartPosition)
     }
     " create blob and idx records and wirite records to file " in {
 
       val converter = new DataConverter
-      val records = new MutableList[Tuple3[BlobFileRecord, IndexFileRecord, Long]] 
-      var positon = 0L
+      val idx  = new IndexFile
+      val data = new BlobFile
 
       for (i <- 0 to 10000) {
         val key = s"key${i}".getBytes("UTF8")
         val value = s"val${i}".getBytes("UTF8")
+   
+        converter.addRecord(key, value, idx, data)
 
-        val dataIdxRecord = converter.createDataAndIndexRecord(key, value, positon)
-        positon = dataIdxRecord._3
-        records += dataIdxRecord        
       }
       
-      val blobRecords = records.foldLeft(new MutableList[BlobFileRecord])((acc, next) => {acc += next._1; acc})
-      val idxRecords = records.foldLeft(new MutableList[IndexFileRecord])((acc, next) => {acc += next._2; acc})
-      
+     
       val time = System.currentTimeMillis()
       
-      BlobFile.apply.writeBlobFile(s"target/tsilerrorblobs-${time}.blob", blobRecords.toList)
-      IndexFile.apply.writeIndexFile(s"target/tsilerrorblobs-${time}.idx", idxRecords.toList)
+      data.writeBlobFile(s"target/tsilerrorblobs-${time}.blob")
+      idx.writeIndexFile(s"target/tsilerrorblobs-${time}.idx")
     }
   }
 }
