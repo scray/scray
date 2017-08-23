@@ -97,8 +97,8 @@ class DataConverterSpecs extends WordSpec with LazyLogging {
 
       val time = System.currentTimeMillis()
 
-      data.writeBlobFile(s"file://target/tsilerrorblobs-${time}.blob")
-      idx.writeIndexFile(s"file://target/tsilerrorblobs-${time}.idx")
+      data.writeBlobFile(s"file://target/")
+      idx.writeIndexFile(s"file://target/")
     }
     " create blob and idx records and write records to hdfs " taggedAs(RequiresHDFS) in {
 

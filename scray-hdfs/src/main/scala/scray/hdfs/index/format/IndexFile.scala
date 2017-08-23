@@ -76,9 +76,9 @@ class IndexFile extends LazyLogging {
     }
   }
 
-  def writeIndexFile(path: String, flush: Boolean = false) = {
+  def writeIndexFile(path: String, flush: Boolean = false, filename: () => String = ()=>{"bdq-blob-" + System.currentTimeMillis() + ".idx"}) = {
     if (path.startsWith("file://")) {
-      val datOutput = new FileOutputStream(path.split("file://")(1) + "bdq-blob-" + System.currentTimeMillis() + ".idx" )
+      val datOutput = new FileOutputStream(path.split("file://")(1) +  filename())
 
       datOutput.write(version);
       val recordsIter = records.iterator
