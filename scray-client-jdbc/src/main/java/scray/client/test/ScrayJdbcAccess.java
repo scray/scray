@@ -172,17 +172,13 @@ public class ScrayJdbcAccess {
 			long aggTime = 0;
 			long snap = System.currentTimeMillis();
 
-			//System.out.println("readDataBase");
-			
 			if (state.statement.execute(opts.query)) {
 				do {
 					count++;
 					ResultSet results = state.statement.getResultSet();
 					long nextTime = System.currentTimeMillis() - snap;
 					aggTime += nextTime;
-                   
-					//System.out.println("" + results.getRow());
-					
+
 					if (!opts.dots) {
 						System.out.println();
 						System.out
