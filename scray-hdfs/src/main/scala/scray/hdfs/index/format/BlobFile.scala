@@ -21,6 +21,7 @@ import scalaz.std.stream
 import java.io.DataOutputStream
 import java.io.FileOutputStream
 import scala.collection.mutable.MutableList
+import java.net.MalformedURLException
 
 class BlobFile extends LazyLogging {
   private val version = new Array[Byte](4)
@@ -67,10 +68,14 @@ class BlobFile extends LazyLogging {
     }
   }
   
-  def writeBlobFile(path: String) {
+  /**
+   * @param path Path to blob folder
+   */
+  def writeBlobFile(path: String, flush: Boolean = false) {
     val version = Array[Byte](0, 0, 0, 1)
-    
-    val datOutput = new FileOutputStream(path);
+  
+    if(path.startsWith("file://")) {
+      val datOutput = new FileOutputStream(path.split("file://")(1) + "bdq-blob-" + System.currentTimeMillis() + ".blob" );
        
       datOutput.write(version);
       val recordsIter = records.iterator
@@ -81,6 +86,16 @@ class BlobFile extends LazyLogging {
 
       datOutput.flush()
       datOutput.close()
+      
+    } else if(path.startsWith("hdfs://")) {
+      val buffer = new Buffer(10000, path)
+
+      records.map(record => {buffer.addValue(record, false)})
+      if(flush) buffer.flush
+      
+    } else {
+      throw new MalformedURLException(s"${path} (file:// or hdfs:// is supported) ")
+    }
   }
 
   def getVersion = {

@@ -21,24 +21,25 @@ import java.io.FileOutputStream
 import scala.collection.mutable.MutableList
 
 import com.typesafe.scalalogging.slf4j.LazyLogging
+import java.net.MalformedURLException
 
 class IndexFile extends LazyLogging {
   private val version = Array[Byte](0, 0, 0, 1)
   private var lastPosition = 0L
   private val records: MutableList[IndexFileRecord] = new MutableList[IndexFileRecord]
-  
+
   /**
    * @param dataLength Number of bytes of data field
    */
   def addRecord(record: IndexFileRecord, dataLength: Int) {
-    lastPosition = lastPosition + 
-           8 + // Bytes for key length and blob length
-           record.getKey.length +
-           dataLength
-     
-    records += record       
+    lastPosition = lastPosition +
+      8 + // Bytes for key length and blob length
+      record.getKey.length +
+      dataLength
+
+    records += record
   }
-  
+
   def getRecords: List[IndexFileRecord] = {
     records.toList
   }
@@ -74,25 +75,36 @@ class IndexFile extends LazyLogging {
       version
     }
   }
-  
-  def writeIndexFile(path: String) = {
-      val datOutput = new FileOutputStream(path);
-       
+
+  def writeIndexFile(path: String, flush: Boolean = false) = {
+    if (path.startsWith("file://")) {
+      val datOutput = new FileOutputStream(path.split("file://")(1) + "bdq-blob-" + System.currentTimeMillis() + ".idx" )
+
       datOutput.write(version);
       val recordsIter = records.iterator
-      
+
       while (recordsIter.hasNext) {
         datOutput.write(recordsIter.next().getByteRepresentation)
       }
 
       datOutput.flush()
       datOutput.close()
+
+    } else if (path.startsWith("hdfs://")) {
+      val buffer = new Buffer(10000, path)
+
+      records.map(record => buffer.addValue(record, false))
+      
+      if(flush) buffer.flush
+    } else {
+      throw new MalformedURLException(s"${path} (file:// or hdfs:// is supported) ")
     }
+  }
 
   def getVersion = {
     version
   }
-  
+
   def getLastPosition: Long = {
     lastPosition
   }

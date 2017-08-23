@@ -23,6 +23,11 @@ import java.io.BufferedInputStream
 import java.io.FileInputStream
 import java.io.File
 import scala.collection.mutable.MutableList
+import org.scalatest.FlatSpec
+import org.scalatest.tagobjects.Slow
+import org.scalatest.Tag
+
+object RequiresHDFS extends Tag("scray.hdfs.tags.RequiresHDFS")
 
 class DataConverterSpecs extends WordSpec with LazyLogging {
   "DataConverter " should {
@@ -76,7 +81,7 @@ class DataConverterSpecs extends WordSpec with LazyLogging {
       Assert.assertEquals(13, idx.getRecords.tail.head.getStartPosition)
       Assert.assertEquals(27, idx.getRecords.tail.tail.head.getStartPosition)
     }
-    " create blob and idx records and wirite records to file " in {
+    " create blob and idx records and write records to file " in {
 
       val converter = new DataConverter
       val idx = new IndexFile
@@ -92,8 +97,27 @@ class DataConverterSpecs extends WordSpec with LazyLogging {
 
       val time = System.currentTimeMillis()
 
-      data.writeBlobFile(s"target/tsilerrorblobs-${time}.blob")
-      idx.writeIndexFile(s"target/tsilerrorblobs-${time}.idx")
+      data.writeBlobFile(s"file://target/tsilerrorblobs-${time}.blob")
+      idx.writeIndexFile(s"file://target/tsilerrorblobs-${time}.idx")
+    }
+    " create blob and idx records and write records to hdfs " taggedAs(RequiresHDFS) in {
+
+      val converter = new DataConverter
+      val idx = new IndexFile
+      val data = new BlobFile
+
+      for (i <- 0 to 10000) {
+        val key = s"key${i}".getBytes("UTF8")
+        val value = s"val${i}".getBytes("UTF8")
+
+        converter.addRecord(key, value, idx, data)
+
+      }
+
+      val time = System.currentTimeMillis()
+
+      data.writeBlobFile(s"hdfs://10.11.22.41:8020/bdq-blob/")
+      idx.writeIndexFile(s"hdfs://10.11.22.41:8020/bdq-blob/")
     }
   }
 }

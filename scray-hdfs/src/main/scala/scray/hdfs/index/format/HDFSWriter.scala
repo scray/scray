@@ -53,7 +53,7 @@ class HDFSWriter[T <: HasByteRepresentation](path: String, data: ArrayList[T]) e
     if (data.size() > 0) {
       val fileType = data.get(0) match {
         case t: BlobFileRecord  => ".blob"
-        case t: IndexFileRecord => "idx"
+        case t: IndexFileRecord => ".idx"
       }
       outputStream = fileSystem.create(new Path(path + "/bdq-blob-" + System.currentTimeMillis() + fileType))
 

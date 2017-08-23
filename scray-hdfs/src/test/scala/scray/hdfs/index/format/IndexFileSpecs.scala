@@ -52,7 +52,7 @@ class IndexFileSpecs extends WordSpec with LazyLogging {
 
         idxFile.addRecord(IndexFileRecord(key, 0, value.length), 42)
       }
-      idxFile.writeIndexFile("target/testIdxFile.idx")
+      idxFile.writeIndexFile("file://target/testIdxFile.idx")
 
       // Read data from file and check result
       val fileInputStream = new FileInputStream(new File("target/testIdxFile.idx"))
