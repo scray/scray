@@ -48,9 +48,10 @@ object Planner extends LazyLogging {
    * plans the execution and starts it
    */
   def planAndExecute(query: Query): Spool[Row] = {
-    val (plans, queryInfo) = Planner.plan(query)
     
-    queryInfo.finishedPlanningTime.set(System.currentTimeMillis())
+    logger.info("plan:" + query.getTableIdentifier.toString())
+    
+    val (plans, queryInfo) = Planner.plan(query)
     
     // do we need to order?
     val ordering = plans.find((execution) => execution._1.isInstanceOf[OrderedComposablePlan[_, _]]).
@@ -69,6 +70,7 @@ object Planner extends LazyLogging {
     logger.info(s"qid is ${query.getQueryID}")
     val version = basicVerifyQuery(query)
 
+      
 
     // TODO: memoize query-plans if basicVerifyQuery has been successful
 
@@ -655,6 +657,7 @@ object Planner extends LazyLogging {
    */
   @inline def transformQueryDomains(query: Query, version: Int): DomainQuery = {
     val domains = qualifyPredicates(query).getOrElse(List())
+    logger.info("transformQueryDomains" + domains.length)
     createQueryDomains(query, version, domains) 
   }
   
