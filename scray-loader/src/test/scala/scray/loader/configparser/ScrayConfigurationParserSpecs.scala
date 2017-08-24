@@ -117,6 +117,26 @@ class ScrayConfigurationParserSpecs extends WordSpec with LazyLogging {
       assert(result.get.indexStores(1).indexjobid === "myfobid")
       assert(result.get.indexStores(1).mapping.get === "UUID->TEXT")
     }
+    "load test queryspace config with idnex-store and comments " in {
+      val config = ScrayConfigurationParser.parseResource("/configs/scraymulticonfig1.txt")
+      val result = ScrayQueryspaceConfigurationParser.parseResource("/configs/queryspaceconfigWithComments.txt", config.get, true)
+      assert(result.get.name === "WhateverYouLike")
+      assert(result.get.syncTable === Some(TableIdentifier("test1", "IDX", "SyncTable")))
+      assert(result.get.rowStores.size == 3)
+      assert(result.get.rowStores(0) === TableIdentifier("test1", "BLA1", "SCHWAETZ1"))
+      assert(result.get.rowStores(1) === TableIdentifier("test1", "BLUBB2", "SCHWAETZ1"))
+      assert(result.get.rowStores(2) === TableIdentifier("test2", "BRUMM", "SCHWAETZ2"))
+      assert(result.get.indexStores.size == 2)
+      assert(result.get.indexStores(0).indextype === "time")
+      assert(result.get.indexStores(0).table === TableIdentifier("test1", "BLA1", "SCHWAETZ1"))
+      assert(result.get.indexStores(0).column === "indexedcol")
+      assert(result.get.indexStores(0).indexjobid === "myjobid")
+      assert(result.get.indexStores(1).indextype === "time")
+      assert(result.get.indexStores(1).table === TableIdentifier("test1", "BLUBB2", "SCHWAETZ1"))
+      assert(result.get.indexStores(1).column === "indexedcol2")
+      assert(result.get.indexStores(1).indexjobid === "myfobid")
+      assert(result.get.indexStores(1).mapping.get === "UUID->TEXT")
+    }
     "load materialized view queryspace config" in {
       val config = ScrayConfigurationParser.parseResource("/configs/scrayjdbcconfig1.txt")
       val result = ScrayQueryspaceConfigurationParser.parseResource("/configs/queryspaceconfigMv.txt", config.get, false)
@@ -145,7 +165,7 @@ class ScrayConfigurationParserSpecs extends WordSpec with LazyLogging {
     }
     "load test minimalistic user config 0" in {
       val config = ScrayConfigurationParser.parseResource("/configs/scrayjdbcconfig1.txt")
-      val result = ScrayUserConfigurationParser.parseResource("/configs/usertest0.txt", config.get, false)
+      val result = ScrayUserConfigurationParser.parseResource("/configs/usertest0.txt", config.get, true)
       assert(result.get.users.size == 1)
       assert(result.get.users.find { x => x.user == "Barack" }.isDefined)
     }

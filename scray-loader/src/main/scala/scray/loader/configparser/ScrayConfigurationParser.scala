@@ -79,7 +79,7 @@ class ScrayConfigurationParser(override val input: ParserInput) extends ScrayGen
    */
   def InputLine: Rule1[ScrayConfiguration] = rule { ConfigModel ~ EOI }
 
-  def ConfigModel: Rule1[ScrayConfiguration] = rule { ServiceOptions ~ oneOrMore(Datastores) ~ ConfigurationLocations ~> { 
+  def ConfigModel: Rule1[ScrayConfiguration] = rule { ServiceOptions ~ optional(Comment) ~ oneOrMore(Datastores) ~ ConfigurationLocations ~> { 
     (serviceoptions: ScrayServiceOptions, stores: Seq[DBMSConfigProperties], urls: Seq[ScrayQueryspaceConfigurationURL]) => 
       ScrayConfiguration(serviceoptions, stores, urls) }}
   
@@ -269,6 +269,7 @@ object ScrayConfigurationParser extends LazyLogging {
     logError match {
       case true => parseResult.recoverWith { case e: ParseError =>
         val msg = parser.formatError(e)
+        println(s"Parse error parsing configuration file. Message from parser is $msg", e)
         logger.error(s"Parse error parsing configuration file. Message from parser is $msg", e)
         Failure(e)
       }
