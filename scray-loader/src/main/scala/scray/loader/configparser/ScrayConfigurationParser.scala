@@ -232,7 +232,7 @@ class ScrayConfigurationParser(override val input: ParserInput) extends ScrayGen
   def ServiceLifetime: Rule1[ScrayEndpointLifetime] = rule { "lifetime" ~ DurationRule ~> { (duration: Duration) => ScrayEndpointLifetime(duration) }}
   def ServiceWriteDot: Rule1[ScrayServiceWriteDot] = rule { "writeDot" ~ BooleanRule ~> { (bool: Boolean) => ScrayServiceWriteDot(bool) }}
 
-  def HostList: Rule1[Seq[String]] = rule { "hosts" ~ "(" ~ oneOrMore(QuotedString).separatedBy(COMMA) ~ ")" }
+  def HostList: Rule1[Seq[String]] = rule { "hosts" ~ "(" ~ oneOrMore(QuotedString).separatedBy(COMMA) ~ ")" ~ zeroOrMore(Comment) }
   def HostPort: Rule1[Int] = rule { "port" ~ IntNumber }
   def HostAddressList: Rule1[Seq[InetAddress]] = rule { HostList ~> { (hosts: Seq[String]) => 
     hosts.map(host => InetAddress.getByName(host)) }}
