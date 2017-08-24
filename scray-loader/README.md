@@ -29,6 +29,10 @@
         url "hdfs://10.1.1.1:8020/user/scray/scray-hdfs-data/"
     }
 
+    connection hive jdbc {
+        url "jdbc:hive2://10.0.0.1:10000/"
+    }
+
     queryspacelocations {
             url "file:///home/otto/scray-conf/queryspace.scray"
     }
@@ -42,7 +46,8 @@
 	table { cassandra, "keyspace1", "ColumnFamily2" }
 	table { cassandra, "keyspace1", "ColumnFamily3" }
 	table { oracle,    "SCRAY",     "Table1" }
-	table { hdfscluster, "blobrefs", "Elementbuffers" }	
+	table { hdfscluster, "blobrefs", "Elementbuffers" } # Query data in Scray format from HDFS
+	table { hive,       "default",   "table1"    }      # Query data from APACHE HIVE table 'table1' in database default	
 	materialized_view table { cassandra, "keyspace1", "ColumnFamily2" }, keygeneratorClass: "scray.common.key.OrderedStringKeyGenerator"
     ```
 
