@@ -76,6 +76,14 @@ class ScrayConfigurationParserSpecs extends WordSpec with LazyLogging {
       assert(urls(0).url.length() > 0)
       assert(urls(0).url.substring(0, urls(0).url.length() - 1) === urls(1).url.substring(0, urls(0).url.length() - 1))
     }
+    "load test queryspace config with comments" in {
+      val result = ScrayConfigurationParser.parseResource("/configs/scrayqstestconfigWithComments.txt")
+      val urls = result.get.urls
+      assert(urls.size == 2)
+      assert(urls(0).reload === ScrayQueryspaceConfigurationURLReload(Some(ScrayQueryspaceConfigurationURLReload.DEFAULT_URL_RELOAD)))
+      assert(urls(0).url.length() > 0)
+      assert(urls(0).url.substring(0, urls(0).url.length() - 1) === urls(1).url.substring(0, urls(0).url.length() - 1))
+    }
   }
   "Scray's queryspace configuration parser" should {
     "throw on an empty config file" in {

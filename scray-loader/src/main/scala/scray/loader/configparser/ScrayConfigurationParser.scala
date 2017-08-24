@@ -79,11 +79,11 @@ class ScrayConfigurationParser(override val input: ParserInput) extends ScrayGen
    */
   def InputLine: Rule1[ScrayConfiguration] = rule { ConfigModel ~ EOI }
 
-  def ConfigModel: Rule1[ScrayConfiguration] = rule { ServiceOptions ~ optional(Comment) ~ oneOrMore(Datastores) ~ ConfigurationLocations ~> { 
+  def ConfigModel: Rule1[ScrayConfiguration] = rule { zeroOrMore(Comment) ~ ServiceOptions ~ zeroOrMore(Comment) ~ oneOrMore(Datastores) ~ ConfigurationLocations ~> { 
     (serviceoptions: ScrayServiceOptions, stores: Seq[DBMSConfigProperties], urls: Seq[ScrayQueryspaceConfigurationURL]) => 
       ScrayConfiguration(serviceoptions, stores, urls) }}
   
-  def Datastores: Rule1[DBMSConfigProperties] = rule { "connection" ~ optional(Identifier) ~ StoreTypes ~> {
+  def Datastores: Rule1[DBMSConfigProperties] = rule { zeroOrMore(Comment) ~ "connection" ~ optional(Identifier) ~ StoreTypes ~ zeroOrMore(Comment) ~> {
     (name: Option[String], dbmsproperties: DBMSConfigProperties) => dbmsproperties.setName(name) }}
   
   def StoreTypes: Rule1[DBMSConfigProperties] = rule {  CassandraStoreConnection | JDBCStoreConnection | HDFSStoreConnection }
@@ -164,11 +164,11 @@ class ScrayConfigurationParser(override val input: ParserInput) extends ScrayGen
   
   /* -------------------------------- Queryspaces configuration location rules ----------------------------------- */
   
-  def ConfigurationLocations: Rule1[Seq[ScrayQueryspaceConfigurationURL]] = rule { "queryspacelocations" ~ BRACE_OPEN ~ 
-    oneOrMore(ConfigurationLocationSetting).separatedBy(COMMA) ~ BRACE_CLOSE} 
+  def ConfigurationLocations: Rule1[Seq[ScrayQueryspaceConfigurationURL]] = rule { zeroOrMore(Comment) ~ "queryspacelocations" ~ BRACE_OPEN ~ 
+    oneOrMore(ConfigurationLocationSetting).separatedBy(COMMA) ~ BRACE_CLOSE ~ zeroOrMore(Comment)} 
 
   def ConfigurationLocationSetting: Rule1[ScrayQueryspaceConfigurationURL] =
-    rule { "url" ~ QuotedString ~ optional("reload" ~ ConfigurationLocationAutoreload) ~> { 
+    rule { zeroOrMore(Comment) ~ "url" ~ QuotedString ~ optional("reload" ~ ConfigurationLocationAutoreload) ~ zeroOrMore(Comment) ~> { 
       (url: String, autoreload: Option[ScrayQueryspaceConfigurationURLReload]) => 
           ScrayQueryspaceConfigurationURL(url, autoreload.getOrElse(ScrayQueryspaceConfigurationURLReload())) }}
   def ConfigurationLocationAutoreload: Rule1[ScrayQueryspaceConfigurationURLReload] = 
