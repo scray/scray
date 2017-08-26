@@ -205,7 +205,7 @@ object CassandraUtils extends LazyLogging with Serializable {
     Some(createStatement)
   }
 
-  def createKeyspaceCreationStatement[T <: AbstractRow](table: Table[T]): Option[String] = {
-    Some(s"CREATE KEYSPACE IF NOT EXISTS ${table.keySpace} WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor' : 1};")
-      }
+  def createKeyspaceCreationStatement[T <: AbstractRow](table: Table[T]): Option[String] = {  
+    Some(s"CREATE KEYSPACE IF NOT EXISTS ${table.keySpace} WITH REPLICATION = ${table.replicationSettings.getOrElse("{ 'class' : 'SimpleStrategy', 'replication_factor' : 1}")};")
+  }
 }
