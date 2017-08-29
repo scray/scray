@@ -31,6 +31,8 @@ import scala.annotation.tailrec
 import scala.collection.mutable.{HashSet, ListBuffer}
 import scala.util.{Failure, Success, Try}
 import scray.querying.sync.conf.SyncConfiguration
+import scray.querying.sync.conf.SyncConfigurationLoader
+import scray.querying.sync.DBColumnImplementation
 
 
 object CassandraImplementation extends AbstractTypeDetection with Serializable {
@@ -69,7 +71,7 @@ object CassandraImplementation extends AbstractTypeDetection with Serializable {
 
 }
 
-class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet], config: SyncConfiguration = new SyncConfiguration) extends OnlineBatchSync[Statement, Insert, ResultSet] with OnlineBatchSyncWithTableIdentifier[Statement, Insert, ResultSet] with StateMonitoringApi[Statement, Insert, ResultSet] {
+class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet]) extends OnlineBatchSync[Statement, Insert, ResultSet] with OnlineBatchSyncWithTableIdentifier[Statement, Insert, ResultSet] with StateMonitoringApi[Statement, Insert, ResultSet] {
 
   import CassandraImplementation.genericCassandraColumnImplicit
 
@@ -83,9 +85,10 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
 
   // Create or use a given DB session.
   @transient val session = dbSession
-
-  val syncTable = SyncTable("silidx", "SyncTable")
-  val jobLockTable = JobLockTable("silidx", "JobLockTable")
+  val config: SyncConfiguration = (new SyncConfigurationLoader).loadConfig
+  
+  val syncTable = SyncTable(config.dbSystem, config.tableName)
+  val jobLockTable = JobLockTable(config.dbSystem, "JobLockTable")
   val statementGenerator = CassandraUtils
   val lockTimeOut = 500 //ms
 
@@ -94,7 +97,7 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
    */
   @Override
   def initJob[T <: AbstractRow](job: JOB_INFO, dataTable: T): Try[Unit] = Try {
-    statementGenerator.createKeyspaceCreationStatement(syncTable).map { statement => dbSession.execute(statement) }
+    statementGenerator.createKeyspaceCreationStatement(syncTable, config.replicationSetting).map { statement => dbSession.execute(statement) }
     statementGenerator.createTableStatement(syncTable).map { statement => dbSession.execute(statement) }
 
     this.crateAndRegisterTablesIfNotExists(job)
@@ -103,7 +106,7 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
 
   @Override
   def initJob[DataTableT <: ArbitrarylyTypedRows](job: JOB_INFO): Try[Unit] = {
-    statementGenerator.createKeyspaceCreationStatement(syncTable).map { statement => dbSession.execute(statement) }
+    statementGenerator.createKeyspaceCreationStatement(syncTable, config.replicationSetting).map { statement => dbSession.execute(statement) }
     statementGenerator.createTableStatement(syncTable).map { statement => dbSession.execute(statement) }
 
     this.crateAndRegisterTablesIfNotExists(job)

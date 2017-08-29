@@ -34,7 +34,9 @@ class TransactionTests extends WordSpec {
       assert(true)
     }
     "lock and unlock " in {
-      val job1 = new CassandraJobInfo(name = getNextJobName, syncConfV = new SyncConfiguration(ConsistencyLevel.LOCAL_SERIAL))
+      val syncConfV1 = new SyncConfiguration
+      syncConfV1.versionUpdateConsitencyLevel = ConsistencyLevel.LOCAL_SERIAL
+      val job1 = new CassandraJobInfo(name = getNextJobName, syncConfV = syncConfV1)
       val table = new OnlineBatchSyncCassandra(dbconnection)
       table.initJob(job1, new SumTestColumns())
 

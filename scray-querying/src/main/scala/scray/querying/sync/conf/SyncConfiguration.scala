@@ -16,12 +16,16 @@
 package scray.querying.sync.conf
 
 import scala.beans.BeanProperty
+import com.typesafe.scalalogging.slf4j.LazyLogging
 
 object ConsistencyLevel extends Enumeration {
   type ConsistencyLevel = Value
   val LOCAL_SERIAL, ALL = Value
 }
 
-class SyncConfiguration(versionUpdateConsitencyLevelIn: ConsistencyLevel.ConsistencyLevel = ConsistencyLevel.ALL) extends Serializable {
-  @BeanProperty var versionUpdateConsitencyLevel: ConsistencyLevel.ConsistencyLevel = versionUpdateConsitencyLevelIn
+class SyncConfiguration extends Serializable with LazyLogging {
+ var dbSystem: String   = "Sync"
+ var tableName: String  = "SyncTable"
+ var replicationSetting: String = "{ 'class' : 'SimpleStrategy', 'replication_factor' : 1}"
+ var versionUpdateConsitencyLevel: ConsistencyLevel.ConsistencyLevel = ConsistencyLevel.ALL
 }
