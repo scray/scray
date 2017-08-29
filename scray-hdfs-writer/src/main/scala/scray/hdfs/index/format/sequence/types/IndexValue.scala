@@ -1,13 +1,11 @@
-package scray.hdfs.index.format.sequence
+package scray.hdfs.index.format.sequence.types
 
 import org.apache.hadoop.io.Writable
-import javafx.beans.value.WritableLongValue
 import org.apache.hadoop.io.LongWritable
-import org.apache.hadoop.io.IntWritable
 
 class IndexValue(updateTimeIn: Long, positionIn: Long) extends Writable {
-  val updateTime = new LongWritable(updateTimeIn)
-  val position = new LongWritable(positionIn)
+  private val updateTime = new LongWritable(updateTimeIn)
+  private val position = new LongWritable(positionIn)
   
   def this() {
     this(0L, 0)
@@ -20,6 +18,18 @@ class IndexValue(updateTimeIn: Long, positionIn: Long) extends Writable {
   def write(out: java.io.DataOutput): Unit = {
     out.writeLong(updateTime.get)
     out.writeLong(position.get)
+  }
+  
+  def getUpdateTime: Long = {
+    updateTime.get
+  }
+  
+  def getPosition: Long = {
+    position.get
+  }
+  
+  override def toString(): String = {
+    s"IndexValue{updateTime: ${updateTime.get}, position: ${position.get}}"
   }
 
 }

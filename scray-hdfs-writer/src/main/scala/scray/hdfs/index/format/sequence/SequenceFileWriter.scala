@@ -30,6 +30,7 @@ import org.apache.hadoop.io.SequenceFile.Metadata
 import org.apache.hadoop.io.BytesWritable
 import org.apache.hadoop.io.Writable
 import org.apache.hadoop.io.LongWritable
+import scray.hdfs.index.format.sequence.types.IndexValue
 
 class SequenceFileWriter(hdfsConf: Configuration, path: String, fs: Option[FileSystem]) extends scray.hdfs.index.format.Writer {
 
@@ -74,8 +75,7 @@ class SequenceFileWriter(hdfsConf: Configuration, path: String, fs: Option[FileS
     dataWriter.append(key, new BytesWritable(data));
 
     // Write idx
-    idxValue.position.set(dataWriter.getLength) 
-    idxWriter.append(key, idxValue)
+    idxWriter.append(key, new IndexValue(updateTime, dataWriter.getLength))
   }
   
   def close = {
