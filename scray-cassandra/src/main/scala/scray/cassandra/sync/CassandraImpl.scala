@@ -85,7 +85,7 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
 
   // Create or use a given DB session.
   @transient val session = dbSession
-  val config: SyncConfiguration = (new SyncConfigurationLoader).loadConfig
+  val config: SyncConfiguration = SyncConfigurationLoader.loadConfig
   
   val syncTable = SyncTable(config.dbSystem, config.tableName)
   val jobLockTable = JobLockTable(config.dbSystem, "JobLockTable")

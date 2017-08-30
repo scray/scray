@@ -26,34 +26,83 @@ import org.yaml.snakeyaml.introspector.PropertyUtils;
 import com.typesafe.scalalogging.slf4j.LazyLogging
 import com.twitter.chill.config.Config
 
-
 /**
  * Load scray sync configuration
  */
-class SyncConfigurationLoader(path: String = "scray-sync.yaml") extends LazyLogging {
+object SyncConfigurationLoader extends LazyLogging {
 
-  def loadConfig: SyncConfiguration = {
+  val DEFAULT_CONFIGURATION = "scray-sync.yaml";
 
-    val url: URL = (new File(path)).toURI().toURL
+  private def getConfigURL: Option[URL] = {
+    var configUrl = System.getProperty("cassandra.config");
 
-    val yaml = new Yaml;
-    val yamlData = yaml.load(url.openStream).asInstanceOf[Map[String, String]]
-    
-    val conf =  new SyncConfiguration
-
-    
-    if(yamlData.get("dbSystem") != null) {
-      conf.dbSystem = yamlData.get("dbSystem")
+    if (configUrl == null) {
+      logger.debug(s"Option -Dcassandra.config not foud. Try to use ${DEFAULT_CONFIGURATION}")
+      configUrl = DEFAULT_CONFIGURATION;
     }
-    
-    if(yamlData.get("tableName") != null) {
-      conf.tableName = yamlData.get("tableName")
+
+    var url: Option[URL] = None
+    try {
+      url = Some(new URL(configUrl))
+      url.get.openStream().close();
+    } catch {
+      case e: Exception => {
+        val loader = SyncConfigurationLoader.getClass.getClassLoader
+        val resourceURL = loader.getResource(configUrl)
+
+        if (resourceURL == null) {
+          logger.warn(s"No valid configuration file found in ${configUrl}. Use default values")
+          url = None
+        } else {
+          url = Some(resourceURL)
+        }
+      }
     }
+
+    url
+  }
+
+  def loadConfig: SyncConfiguration = this.synchronized {
+    var conf: Option[SyncConfiguration] = None
+
+    getConfigURL.map(url => {
+
+      if (conf.isDefined) {
+        logger.debug(s"Configuration already loaded. Use existing configuration: ${conf.get}")
+      } else {
+
+        conf = Some(new SyncConfiguration)
+        conf.map(confe => {
+          try {
+            val yaml = new Yaml;
+            val yamlData = yaml.load(url.openStream).asInstanceOf[Map[String, String]]
+
+            if (yamlData.get("dbSystem") != null) {
+              confe.dbSystem = yamlData.get("dbSystem")
+            }
+
+            if (yamlData.get("tableName") != null) {
+              confe.tableName = yamlData.get("tableName")
+            }
+
+            if (yamlData.get("replication") != null) {
+              confe.replicationSetting = yamlData.get("replication")
+            }
+          } catch {
+            case e: YAMLException => {
+              logger.error(s"Invalid sync configuration yaml: ${url}, ${e.getMessage}")
+              conf = None
+            }
+          }
+        })
+      }
+    })
     
-    if(yamlData.get("replication") != null) {
-      conf.replicationSetting = yamlData.get("replication")
+    // Use default configuration if no configuration file was provided
+    if(conf.isDefined) {
+      conf.get
+    } else {
+      new SyncConfiguration      
     }
-    
-    conf
   }
 }

@@ -41,7 +41,7 @@ class CassandraJobInfo(
 
   def getLock(dbSession: DbSession[Statement, Insert, ResultSet]): LockApi[Statement, Insert, ResultSet] = {
      this.lock = this.lock.orElse {
-      val configSync: SyncConfiguration = (new SyncConfigurationLoader).loadConfig
+      val configSync: SyncConfiguration = SyncConfigurationLoader.loadConfig
       val table = JobLockTable(configSync.dbSystem, "JobSync")
 
       dbSession.execute(statementGenerator.createKeyspaceCreationStatement(table, configSync.replicationSetting).get).

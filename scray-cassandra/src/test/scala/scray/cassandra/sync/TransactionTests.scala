@@ -28,7 +28,7 @@ class TransactionTests extends WordSpec {
     "lock job" in {
       val jobInfo = CassandraJobInfo(getNextJobName)
       val table = new OnlineBatchSyncCassandra(dbconnection)
-      table.initJob(jobInfo, new SumTestColumns())
+      table.initJob(jobInfo, new SumTestColumns)
 
       jobInfo.getLock(dbconnection)
       assert(true)
