@@ -32,7 +32,7 @@ import org.apache.hadoop.io.Writable
 import org.apache.hadoop.io.LongWritable
 import scray.hdfs.index.format.sequence.types.IndexValue
 
-class SequenceFileWriter(hdfsConf: Configuration, path: String, fs: Option[FileSystem]) extends scray.hdfs.index.format.Writer {
+class SequenceFileWriter(path: String, hdfsConf: Configuration = new Configuration, fs: Option[FileSystem] = None) extends scray.hdfs.index.format.Writer {
 
   var dataWriter: SequenceFile.Writer = null;
   var idxWriter:  SequenceFile.Writer = null;
@@ -61,7 +61,7 @@ class SequenceFileWriter(hdfsConf: Configuration, path: String, fs: Option[FileS
   }
 
   def insert(id: String, updateTime: Long, data: Array[Byte]) = {
-    
+
     if(dataWriter == null) {
       dataWriter =  initWriter(key, new BytesWritable(), fs.getOrElse(FileSystem.get(hdfsConf)), ".dat")
     }
@@ -70,12 +70,12 @@ class SequenceFileWriter(hdfsConf: Configuration, path: String, fs: Option[FileS
       idxWriter = initWriter(key, idxValue, fs.getOrElse(FileSystem.get(hdfsConf)), ".idx")
     }
       
-    // Write data
-    key.set(id) 
-    dataWriter.append(key, new BytesWritable(data));
-
     // Write idx
-    idxWriter.append(key, new IndexValue(updateTime, dataWriter.getLength))
+    key.set(id) 
+    idxWriter.append(key, new IndexValue(key.toString(), updateTime, dataWriter.getLength))
+    
+    // Write data
+    dataWriter.append(key, new BytesWritable(data));
   }
   
   def close = {
