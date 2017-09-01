@@ -1,20 +1,16 @@
 package scray.client.test;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.concurrent.*;
 
 public class ScrayJdbcAccess {
 
@@ -167,50 +163,21 @@ public class ScrayJdbcAccess {
 	public void readDataBase(AccessRequestOptions opts,
 			QueryExecutionState state) throws Exception {
 		try {
-			
-			String keyFile = "/tmp/tsilsilerrorblobs.back.keys";
-			String query = "SELECT * FROM Elementbuffers  WHERE KEY='key9999' LIMIT 10";
-
-			ArrayList<String> queries = new ArrayList<String>(1099297);
-			
-			BufferedReader br = new BufferedReader(new FileReader(keyFile));
-			try {
-			    String key = br.readLine();
-			    
-			    while (key != null) {
-			    	queries.add(query.replace("key9999", key));
-			    	key = br.readLine();
-			    }
-	
-			} finally {
-			    br.close();
-			}
-			
-			
-			state.connect = DriverManager.getConnection("jdbc:scray:stateful://10.11.22.31:18181/hdfscluster/tsilsilerrorblobs/SIL");
+			state.connect = DriverManager.getConnection(opts.url);
 			state.statement = state.connect.createStatement();
 			state.statement.setQueryTimeout(opts.timeout);
 			state.statement.setFetchSize(opts.fetchsize);
 
+			int count = 0;
+			long aggTime = 0;
+			long snap = System.currentTimeMillis();
 
-
-			
-			for (int i = 0; i < queries.size(); i++) {
-				
-				int count = 0;
-				long aggTime = 0;
-				//long snap = System.currentTimeMillis();
-
-				int possition = (int)(Math.random() * (1099297-1));
-				String query1 = queries.get(possition);
-				
-				long start =  System.currentTimeMillis();
-			if (state.statement.execute(query1)) {
+			if (state.statement.execute(opts.query)) {
 				do {
 					count++;
 					ResultSet results = state.statement.getResultSet();
-					//long nextTime = System.currentTimeMillis() - snap;
-					//aggTime += nextTime;
+					long nextTime = System.currentTimeMillis() - snap;
+					aggTime += nextTime;
 
 					if (!opts.dots) {
 						System.out.println();
@@ -221,7 +188,8 @@ public class ScrayJdbcAccess {
 						System.out
 								.println("====================================================================");
 
-						//System.out.println("Result set nr " + count + " loaded in " + nextTime + " ms.");
+						System.out.println("Result set nr " + count
+								+ " loaded in " + nextTime + " ms.");
 
 						System.out
 								.println("====================================================================");
@@ -231,36 +199,33 @@ public class ScrayJdbcAccess {
 								.println("====================================================================");
 					}
 
-					//writeResultSet(results, opts.dots, state);
-					//snap = System.currentTimeMillis();
+					writeResultSet(results, opts.dots, state);
+					snap = System.currentTimeMillis();
 
 				} while (state.statement.getMoreResults()
 						&& count != (opts.resultsets - 1));
 
-//				System.out.println();
-//
-//				System.out
-//						.println("====================================================================");
-//				System.out
-//						.println("====================================================================");
-//				System.out
-//						.println("====================================================================");
+				System.out.println();
 
-//				System.out.println("Finished - fetched " + state.totalcount
-//						+ " result(s) in " + count
-//						+ " result set(s) with pagesize of " + opts.fetchsize
-//						+ " in " + aggTime + " ms.");
-				
-				System.out.println(System.currentTimeMillis() - start);
+				System.out
+						.println("====================================================================");
+				System.out
+						.println("====================================================================");
+				System.out
+						.println("====================================================================");
 
-//				System.out
-//						.println("====================================================================");
-//				System.out
-//						.println("====================================================================");
-//				System.out
-//						.println("====================================================================");
+				System.out.println("Finished - fetched " + state.totalcount
+						+ " result(s) in " + count
+						+ " result set(s) with pagesize of " + opts.fetchsize
+						+ " in " + aggTime + " ms.");
 
-			}
+				System.out
+						.println("====================================================================");
+				System.out
+						.println("====================================================================");
+				System.out
+						.println("====================================================================");
+
 			}
 
 		} catch (Exception e) {

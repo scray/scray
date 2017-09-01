@@ -63,7 +63,7 @@ class SequenceFileWriter(path: String, hdfsConf: Configuration = new Configurati
   def insert(id: String, updateTime: Long, data: Array[Byte]) = {
 
     if(dataWriter == null) {
-      dataWriter =  initWriter(key, new BytesWritable(), fs.getOrElse(FileSystem.get(hdfsConf)), ".dat")
+      dataWriter =  initWriter(key, new BytesWritable(), fs.getOrElse(FileSystem.get(hdfsConf)), ".blob")
     }
     
     if(idxWriter == null) {

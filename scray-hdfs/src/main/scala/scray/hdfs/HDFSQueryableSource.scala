@@ -25,7 +25,7 @@ import scray.querying.description.ColumnFactory
  */
 class HDFSQueryableSource[Q <: DomainQuery, T <: Writable](
     val ti: TableIdentifier,
-    val resolver: HDFSBlobResolver[T],
+    val resolver: HDFSBlobResolver[org.apache.hadoop.io.Text],
     futurePool: FuturePool) extends QueryableStoreSource[Q](ti, getRowKeyColumns(ti), Set(), getAllColumns(ti), false) 
     with LazyLogging {
   
@@ -47,7 +47,7 @@ class HDFSQueryableSource[Q <: DomainQuery, T <: Writable](
         case _ => None
       }
       key.map { mkey =>
-        val value = resolver.getBlob(HDFSBlobResolver.transformHadoopTypes(mkey).asInstanceOf[T])
+        val value = resolver.getBlob(HDFSBlobResolver.transformHadoopTypes(mkey).asInstanceOf[org.apache.hadoop.io.Text])
         new OneHDFSBlobIterator(rowColumn, Some(mkey), valueColumn, value)
       }.getOrElse {
         new OneHDFSBlobIterator(rowColumn, None, valueColumn, None)
@@ -58,7 +58,7 @@ class HDFSQueryableSource[Q <: DomainQuery, T <: Writable](
     futurePool {
       val key = query.keys.find(rowcol => rowcol.column.columnName == rowKeyColumnName).map(_.value)
       key.map { mkey =>
-        val value = resolver.getBlob(mkey.asInstanceOf[T])
+        val value = resolver.getBlob(mkey.asInstanceOf[org.apache.hadoop.io.Text])
         new OneHDFSBlobIterator(rowColumn, Some(mkey), valueColumn, value)
       }.getOrElse {
         new OneHDFSBlobIterator(rowColumn, None, valueColumn, None)

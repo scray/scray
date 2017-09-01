@@ -27,7 +27,7 @@ import java.net.URL
 import com.typesafe.scalalogging.slf4j.LazyLogging
 import java.util.Arrays
 
-class HDFSBlobResolver[T <: Writable](ti: TableIdentifier, directory: String) extends BlobResolver[T] with LazyLogging {
+class HDFSBlobResolver[T <: org.apache.hadoop.io.Text](ti: TableIdentifier, directory: String) extends BlobResolver[org.apache.hadoop.io.Text] with LazyLogging {
   import IndexFilenameStructure.FileTypes._
   import HDFSBlobResolver._
   
@@ -70,63 +70,24 @@ class HDFSBlobResolver[T <: Writable](ti: TableIdentifier, directory: String) ex
    */
   
   def readAllIndexes(files: List[CombinedFiles]) : Unit = {
-
-		  //logger.info("readAllIndexesUntilKeyIsfo")
 		  if(files.isEmpty) {
 			  None
 		  } else {
-
-			  files.foreach(f => {val indexFile = f.getFileSet.find(sf => sf.getType == INDEX.toString());
+			  files.foreach(f => { val indexFile = f.getFileSet.find(sf => sf.getType == INDEX.toString());
 			    indexFile.foreach(f => IndexFileReader.updateCache(fs, f.getNameWithPath, ti))
 			  })
-
 		  }
   }
-  
-  
-  // test
-  def getAnyBlob(): Option[Array[Byte]] = {
-    
-    val files = directoryScanner.getFiles
-    val zz : org.apache.hadoop.io.Writable = transformHadoopTypes("A")
-    
-    val hashedKey = new ArrayBytes(computeHash(byteTransformHadoopType(zz), ti))
-    readAllIndexesUntilKeyIsfound(hashedKey, files)
-    
-    val filepos: (scray.hdfs.index.HDFSBlobResolver.ArrayBytes, String, Long)  = HDFSBlobResolver.getAnyCachedIdxPos()
-    
-    logger.info("" + filepos.toString())
-    
-    val key:ArrayBytes = filepos._1
-    
-    logger.info("INDEX ---->" + idxmap.size)
-    
-    //getBlob(HDFSBlobResolver.transformHadoopTypes(key).asInstanceOf[T])
-    
-    /* val headFiles = files.head.getFileSet
-    val indexFile = headFiles.find(sf => sf.getType == INDEX.toString())
-    val longOption = indexFile.flatMap { idxFile =>
-        IndexFileReader.getIndexForKey(fs, idxFile.getNameWithPath, key, ti) 
-    } */
-    
-    BlobFileReader.getBlobForPosition(fs, filepos._2, filepos._1, ti, filepos._3) 
-    
-}
-
-  
   
   // correct algorithm would be:
   // check the bloom filter for newest entry of the key
   // 
   
   
-  def getBlob(key: T): Option[Array[Byte]] = {
+  def getBlob(key: Text): Option[Array[Byte]] = {
     // logger.info("getBlob:" + key.toString())
-    
-    val hashedKey = new ArrayBytes(computeHash(byteTransformHadoopType(key), ti))
-    
-    logger.info("" + hashedKey.toString())
-    
+    val hashedKey = new ArrayBytes(computeHash(key, ti))
+        
     val blob = HDFSBlobResolver.getCachedBlob(hashedKey).orElse {
       val files = directoryScanner.getFiles
     logger.info(s"known files: ${files}")
@@ -182,6 +143,7 @@ object HDFSBlobResolver extends LazyLogging {
   
   
   def getCachedIdxPos(key: ArrayBytes): Option[(String, Long)] = {
+    logger.debug(s"Request entry for key ${key} \t ${idxmap.get(key)}")
     indexlock.readLock().lock()
     try {
       idxmap.get(key).map(pos => (filesMap.get(pos._1).get, pos._2))
@@ -237,22 +199,21 @@ object HDFSBlobResolver extends LazyLogging {
     hasher.getValueBytesBigEndian
   }
   
-  // internally we use murmur3f (128Bits) to represent the Blob keys...
-  def computeHash(key: Array[Byte], ti: TableIdentifier): Array[Byte] = {
-    val hasher = new Murmur3F()
-    val bos = new ByteArrayOutputStream()
-    val dos = new DataOutputStream(bos)
-    dos.write(key)
-    dos.writeUTF(ti.dbId)
-    dos.writeUTF(ti.tableId)
-    hasher.update(bos.toByteArray())
-    // don't need to close these streams as close does nothing
-    hasher.getValueBytesBigEndian
-  }
+//  // internally we use murmur3f (128Bits) to represent the Blob keys...
+//  def computeHash(key: Array[Byte], ti: TableIdentifier): Array[Byte] = {
+//    val hasher = new Murmur3F()
+//    val bos = new ByteArrayOutputStream()
+//    val dos = new DataOutputStream(bos)
+//    dos.write(key)
+//    dos.writeUTF(ti.dbId)
+//    dos.writeUTF(ti.tableId)
+//    hasher.update(bos.toByteArray())
+//    // don't need to close these streams as close does nothing
+//    hasher.getValueBytesBigEndian
+//  }
   
-  def byteTransformHadoopType[T <: Writable](input: T): Array[Byte] = input match {
+  def byteTransformHadoopType(input: Text): Array[Byte] = input match {
     case t: Text => t.toString().getBytes("UTF-8")
-    
   }
   
   

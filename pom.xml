@@ -80,6 +80,7 @@
 		<module>scray-cassandra</module>
 		<module>scray-jdbc</module>
 		<module>scray-hdfs</module>
+		<module>scray-hdfs-writer</module>
 		<module>scray-service</module>
 		<module>scray-common</module>
 		<module>scray-client-jdbc</module>
@@ -418,4 +419,3 @@
 	</profiles>
 
 </project>
-

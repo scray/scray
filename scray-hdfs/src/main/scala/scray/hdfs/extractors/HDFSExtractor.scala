@@ -23,10 +23,10 @@ import scray.querying.source.Splitter
 /**
  * a simple extractor to be used with HDFS
  */
-class HDFSExtractor[Q <: DomainQuery, T <: Writable, S <: HDFSQueryableSource[Q, T]](ti: TableIdentifier, 
+class HDFSExtractor[Q <: DomainQuery, T <: org.apache.hadoop.io.Text, S <: HDFSQueryableSource[Q, T]](ti: TableIdentifier, 
     directory: String, futurePool: FuturePool) extends StoreExtractor[S] {
   System.setProperty("hadoop.home.dir", "/")
-  val blobResolver = new HDFSBlobResolver[T](ti, directory)
+  val blobResolver = new HDFSBlobResolver[org.apache.hadoop.io.Text](ti, directory)
   
   override def getColumns: Set[Column] = HDFSQueryableSource.getAllColumns(ti)
   override def getClusteringKeyColumns: Set[Column] = Set()

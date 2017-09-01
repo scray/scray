@@ -13,7 +13,7 @@ import scray.hdfs.HDFSQueryableSource
 import scray.hdfs.index.HDFSBlobResolver
 import scray.hdfs.extractors.HDFSExtractor
 
-class HDFSStoreGenerators[T <: Writable](directory: String, futurePool: FuturePool) extends StoreGenerators {
+class HDFSStoreGenerators[T <: org.apache.hadoop.io.Text](directory: String, futurePool: FuturePool) extends StoreGenerators {
   
   def createRowStore[Q <: DomainQuery](table: TableIdentifier): Option[(QueryableStoreSource[Q], ((_) => Row, Option[String], Option[VersioningConfiguration[_, _]]))] = {
     val extractor = new HDFSExtractor[Q, T, HDFSQueryableSource[Q, T]](table, directory, futurePool)

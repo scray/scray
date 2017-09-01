@@ -21,9 +21,11 @@ import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.io.SequenceFile.Reader
 import scray.hdfs.index.format.sequence.types.IndexValue
 import org.apache.hadoop.io.Text
+import com.typesafe.scalalogging.slf4j.LazyLogging
 
-class IdxReader(path: String, hdfsConf: Configuration = new Configuration, fs: Option[FileSystem] = None) {
+class IdxReader(path: String, hdfsConf: Configuration = new Configuration, fs: Option[FileSystem] = None) extends LazyLogging {
 
+  logger.debug(s"Try to read from path ${path}")
   val reader: SequenceFile.Reader = new SequenceFile.Reader(hdfsConf, Reader.file(new Path(path)), Reader.bufferSize(4096));
 
   val key = new Text();
@@ -64,5 +66,9 @@ class IdxReader(path: String, hdfsConf: Configuration = new Configuration, fs: O
       hasNext
       next
     }
+  }
+  
+  def close = {
+    reader.close()
   }
 }

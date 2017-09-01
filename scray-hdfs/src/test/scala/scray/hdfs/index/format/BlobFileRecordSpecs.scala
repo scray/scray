@@ -40,7 +40,6 @@ class BlobFileRecordSpecs  extends WordSpec with LazyLogging {
       
       Assert.assertEquals("abc", new String(recordNew.getKey))
       Assert.assertEquals("data", new String(recordNew.getValue))
-
     }
   }
 }

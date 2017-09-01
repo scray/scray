@@ -28,8 +28,8 @@ class IndexValue(
     out.writeLong(position.get)
   }
   
-  def getKey: String = {
-    key.toString()
+  def getKey: org.apache.hadoop.io.Text = {
+    key
   }
   
   def getUpdateTime: Long = {
