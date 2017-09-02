@@ -1,39 +1,32 @@
+// See the LICENCE.txt file distributed with this work for additional
+// information regarding copyright ownership.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package scray.cassandra.sync
 
-import scala.collection.JavaConverters._
+import java.util.concurrent.{Callable, Executors, TimeUnit, TimeoutException}
 
-import com.datastax.driver.core.ResultSet
-import com.datastax.driver.core.Row
-import com.datastax.driver.core.Statement
-import com.datastax.driver.core.querybuilder.Insert
-import com.datastax.driver.core.querybuilder.QueryBuilder
-import com.typesafe.scalalogging.slf4j.LazyLogging
-
-import scray.cassandra.sync.CassandraImplementation.genericCassandraColumnImplicit
-import scray.querying.sync.ArbitrarylyTypedRows
-import scray.querying.sync.Column
-import scray.querying.sync.DBColumnImplementation
-import scray.querying.sync.DbSession
-import scray.querying.sync.JobInfo
-import scray.querying.sync.Table
-import scala.util.Try
-import scala.util.Failure
-import scray.cassandra.util.CassandraUtils
-import shapeless.syntax.singleton._
-import scala.concurrent.duration._
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
-import scala.util.Failure
-import scala.util.Success
-import java.util.concurrent.Callable
-import scala.concurrent.Await
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.datastax.driver.core.{Cluster, ResultSet, Row, Statement}
+import com.datastax.driver.core.querybuilder.{Insert, QueryBuilder}
+import com.typesafe.scalalogging.slf4j.{LazyLogging, Logger}
 import org.slf4j.LoggerFactory
-import com.typesafe.scalalogging.slf4j.Logger
-import java.util.concurrent.TimeoutException
-import com.datastax.driver.core.Cluster
-import java.util.concurrent.Executors
-import java.util.concurrent.TimeUnit
+import scray.cassandra.sync.CassandraImplementation.genericCassandraColumnImplicit
+import scray.cassandra.util.CassandraUtils
+import scray.querying.sync._
+
+import scala.collection.JavaConverters._
+import scala.util.Try
 
 /**
  * Find a consensus about the start time of a job.
@@ -70,7 +63,7 @@ class StartTimeDetector(job: JobInfo[Statement, Insert, ResultSet],
         case e => { logger.error(s"DB error while fetching all element of the vote for ${job.name}. Error: ${e.getMessage}"); throw e }
       }.toOption.map { rows =>
         if (rows.size() > 0) {
-          logger.debug(rows.size() + "Notes sent start time")
+          logger.debug(rows.size() + " note(s) sent start time")
           ((rows.get(0).getInt(startConsensusTable.columns.numberOfWorkers.name) <= rows.size()), rows)
         } else {
           logger.debug("No node sent start time")
@@ -109,6 +102,18 @@ class StartTimeDetector(job: JobInfo[Statement, Insert, ResultSet],
       val wasSuccesfull = publishLocalStartTime(time)
     }
   }
+  
+  /**
+   * Reset all sent start times for the given job.
+   */
+  def resetSentStartTimes: Try[Boolean] = {
+    val statement =  QueryBuilder.delete.from(startConsensusTable.keySpace, startConsensusTable.tableName)
+    .where(
+        QueryBuilder.eq(startConsensusTable.columns.jobname.name, job.name)
+     )
+     
+    Try(dbSession.execute(statement).isSuccess)
+  } 
 
   /**
    * Get the time of the first element.
@@ -145,6 +150,7 @@ class StartTimeDetector(job: JobInfo[Statement, Insert, ResultSet],
       
       def call(): Long =  {
         // poll db
+        println(poll)
         while (poll < 1) {
           logger.debug(s"No first element time found. Poll again in ${sleepTimeBetweenPolling}ms")
           Thread.sleep(sleepTimeBetweenPolling)
@@ -155,7 +161,8 @@ class StartTimeDetector(job: JobInfo[Statement, Insert, ResultSet],
         time
       }
     }
-          // Wait for result
+    
+    // Wait for result
     val firstElementTime = try {
       val thread = Executors.newSingleThreadExecutor;   
       Some(thread.submit(pollingTask).get(timeout, TimeUnit.SECONDS))

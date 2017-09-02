@@ -72,7 +72,7 @@ class CassandraClusterConfiguration(override protected val startconfig: Cassandr
     val clusterCredentials = config.get.credentials
     val cassandraHost = config.get.hosts.map(h => InetAddress.getByName(h)).asJava
     val builder = Cluster.builder().addContactPoints(cassandraHost).
-      withLoadBalancingPolicy(new TokenAwarePolicy(new DCAwareRoundRobinPolicy(config.get.datacenter))).
+      //withLoadBalancingPolicy(new TokenAwarePolicy(new DCAwareRoundRobinPolicy(config.get.datacenter))).
       withReconnectionPolicy(Policies.defaultReconnectionPolicy).
       withRetryPolicy(Policies.defaultRetryPolicy)
     Option(clusterCredentials.getUsername).map(creds =>

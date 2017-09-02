@@ -17,7 +17,9 @@ package scray.querying.description
 /**
  * identifies a table
  */
-case class TableIdentifier(dbSystem: String, dbId: String, tableId: String)
+case class TableIdentifier(dbSystem: String, dbId: String, tableId: String) {
+  
+}
 
 /**
  * represents a column

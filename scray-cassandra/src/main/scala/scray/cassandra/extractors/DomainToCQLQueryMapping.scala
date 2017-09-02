@@ -14,14 +14,13 @@
 // limitations under the License.
 package scray.cassandra.extractors
 
-import scray.querying.queries.DomainQuery
-import scray.querying.description.internal.{Domain, RangeValueDomain, SingleValueDomain}
-import scray.querying.description.Column
-import scray.querying.Registry
 import com.typesafe.scalalogging.slf4j.LazyLogging
-import DomainToCQLQueryMapping.{AND_LITERAL, EMPTY_LITERAL, ORDER_LITERAL, DESC_LITERAL, LIMIT_LITERAL}
 import scray.cassandra.CassandraQueryableSource
-import scray.querying.description.TableIdentifier
+import scray.cassandra.extractors.DomainToCQLQueryMapping._
+import scray.querying.Registry
+import scray.querying.description.{Column, TableIdentifier}
+import scray.querying.description.internal.{Domain, RangeValueDomain, SingleValueDomain}
+import scray.querying.queries.DomainQuery
 
 /**
  * performs mapping of DomainQueries to valid Cassandra CQL queries,
@@ -178,7 +177,7 @@ class DomainToCQLQueryMapping[Q <: DomainQuery, S <: CassandraQueryableSource[Q]
    * this recursion probably never overflows the stack as it is only on a few cols or domains
    */
   private def clusterColumnDomains(cols: Set[Column], store: S, query: DomainQuery, storeTableNickName: Option[String]): List[Domain[_]] = {
-    if(cols == Nil) {
+    if(cols == Nil || cols.isEmpty) {
       Nil
     } else {
       // find relevant domain

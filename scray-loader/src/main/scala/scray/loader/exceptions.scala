@@ -39,6 +39,11 @@ class JDBCURLUndefinedException()
         UUID.nameUUIDFromBytes(Array[Byte](0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)),
         s"jdbc is specified as a DBMS system, at least a JDBC-URL to connect must be provided") with Serializable
 
+class HDFSURLUndefinedException()
+    extends ScrayException(ExceptionIDs.urlMissingExceptionID,
+        UUID.nameUUIDFromBytes(Array[Byte](0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)),
+        s"hdfs is specified as a DBMS system, at least a HDFS-URL to connect must be provided") with Serializable
+
 class CassandraClusterSpecificationException()
     extends ScrayException(ExceptionIDs.hostMissingExceptionID,
         UUID.nameUUIDFromBytes(Array[Byte](0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)),

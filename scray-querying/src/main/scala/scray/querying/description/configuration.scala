@@ -39,12 +39,12 @@ abstract class QueryspaceConfiguration(val name: String) {
    */
   def queryCanBeGrouped(query: DomainQuery): Option[ColumnConfiguration]
   
-  /**
-   * If this queryspace can handle the query using the materialized view provided.
-   * The weight (Int) is an indicator for the specificity of the view and reflects the 
-   * number of columns that match query arguments.
-   */
-  def queryCanUseMaterializedView(query: DomainQuery, materializedView: MaterializedView): Option[(Boolean, Int)]
+//  /**
+//   * If this queryspace can handle the query using the materialized view provided.
+//   * The weight (Int) is an indicator for the specificity of the view and reflects the 
+//   * number of columns that match query arguments.
+//   */
+//  def queryCanUseMaterializedView(query: DomainQuery, materializedView: MaterializedView): Option[(Boolean, Int)]
   
   /**
    * returns configuration of tables which are included in this query space
@@ -57,6 +57,8 @@ abstract class QueryspaceConfiguration(val name: String) {
    * Internal use! 
    */
   def getColumns(version: Int): List[ColumnConfiguration]
+  
+  def getMaterializedViews(): Seq[MaterializedView]
   
   /**
    * re-initialize this queryspace, possibly re-reading the configuration from somewhere
@@ -116,10 +118,8 @@ case class TableConfiguration[Q <: DomainQuery, K <: DomainQuery, V] (
   clusteringKeyColumns: Set[Column], // some more primary key columns which can be ordered
   allColumns: Set[Column], // a List of all columns in the table
   rowMapper: (V) => Row, // mapper from a result row returned by the store to a scray-row
-  domainQueryMapping: DomainQuery => Q, // maps a scray-DomainQuery to a query of the store
   queryableStore: Option[QueryableStoreSource[Q]], // the queryable store representation, allowing to query the store, None if versioned
-  readableStore: Option[QueryableStoreSource[K]], // the readablestore, used in case this is used by a HashJoinSource, None if versioned
-  materializedViews: List[MaterializedView] // materialized views for this table
+  readableStore: Option[QueryableStoreSource[K]] // the readablestore, used in case this is used by a HashJoinSource, None if versioned
 )
 
 /**

@@ -1,50 +1,54 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>scray</groupId>
-	<artifactId>scray</artifactId>
-	<version>0.9.4-SNAPSHOT</version>
+	<groupId>org.scray</groupId>
+	<artifactId>scray-parent</artifactId>
+	<version>0.10.1-SNAPSHOT</version>
 	<inceptionYear>2014</inceptionYear>
 	<packaging>pom</packaging>
 	<name>Scray</name>
 	<description>Lambda Architecture Framework for Big Data, NoSQL and SQL-Stores</description>
-	<url>https://github.com/scray/scray</url>
+	<url>http://scray.org</url>
 
 	<licenses>
-                <license>
-                        <name>Apache License, Version 2.0</name>
-                        <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-                        <distribution>repo</distribution>
-                        <comments>A business-friendly OSS license</comments>
-                </license>
-        </licenses>
-
+		<license>
+			<name>Apache License, Version 2.0</name>
+			<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+			<distribution>repo</distribution>
+			<comments>A business-friendly OSS license</comments>
+		</license>
+	</licenses>
 
 	<developers>
-                <developer>
-			<name>Andreas Petter</name>
-                        <organization>Scray</organization>
-                        <organizationUrl>https://github.com/scray</organizationUrl>
-                </developer>
-    		<developer>
-			<name>Johannes Strassner</name>
-      			<email>j.strassner@seeburger.de</email>
-      			<organization>Scray</organization>
-     			<organizationUrl>https://github.com/scray</organizationUrl>
-    		</developer>
 		<developer>
-                        <name>Stefan Obermeier</name>
-                        <email>git@stefan-obermeier.de</email>
-                        <organization>Scray</organization>
-                        <organizationUrl>https://github.com/scray</organizationUrl>
-                </developer>
+			<name>Christian Zirpins</name>
+			<organization>Scray</organization>
+			<organizationUrl>https://github.com/scray</organizationUrl>
+		</developer>
+		<developer>
+			<name>Andreas Petter</name>
+			<organization>Scray</organization>
+			<organizationUrl>https://github.com/scray</organizationUrl>
+		</developer>
+		<developer>
+			<name>Johannes Strassner</name>
+			<email>j.strassner@seeburger.de</email>
+			<organization>Scray</organization>
+			<organizationUrl>https://github.com/scray</organizationUrl>
+		</developer>
+		<developer>
+			<name>Stefan Obermeier</name>
+			<email>st.obermeier@seeburger.de</email>
+			<organization>Scray</organization>
+			<organizationUrl>https://github.com/scray</organizationUrl>
+		</developer>
+	</developers>
 
-  	</developers>
-	
 	<scm>
 		<url>https://github.com/scray</url>
 		<connection>scm:git:git://github.com/scray/scray.git</connection>
 		<developerConnection>scm:git:https://github.com/scray/scray.git</developerConnection>
+		<tag>HEAD</tag>
 	</scm>
 
 	<properties>
@@ -55,7 +59,6 @@
 		<scala.version>2.10.6</scala.version>
 		<scala.suffix>2.10</scala.suffix>
 
-		<scray.version>0.9.4-SNAPSHOT</scray.version>
 		<!-- finagle 6.12 might be needed for scray stateless services because 
 			storehaus-memcached depends on it - need to test -->
 		<!-- <finagle.version>6.12.2</finagle.version> -->
@@ -75,11 +78,23 @@
 	<modules>
 		<module>scray-querying</module>
 		<module>scray-cassandra</module>
+		<module>scray-jdbc</module>
 		<module>scray-service</module>
 		<module>scray-common</module>
 		<module>scray-client-jdbc</module>
 		<module>scray-loader</module>
 	</modules>
+
+	<distributionManagement>
+		<snapshotRepository>
+			<id>ossrh</id>
+			<url>https://oss.sonatype.org/content/repositories/snapshots</url>
+		</snapshotRepository>
+		<repository>
+			<id>ossrh</id>
+			<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+		</repository>
+	</distributionManagement>
 
 	<dependencies>
 		<dependency>
@@ -94,7 +109,7 @@
 		</dependency>
 		<dependency>
 			<groupId>org.scalatest</groupId>
-			<artifactId>scalatest_2.10</artifactId>
+			<artifactId>scalatest_${scala.suffix}</artifactId>
 			<version>2.2.2</version>
 			<scope>test</scope>
 		</dependency>
@@ -106,12 +121,12 @@
 		</dependency>
 		<dependency>
 			<groupId>com.typesafe.scala-logging</groupId>
-			<artifactId>scala-logging-api_2.10</artifactId>
+			<artifactId>scala-logging-api_${scala.suffix}</artifactId>
 			<version>2.1.2</version>
 		</dependency>
 		<dependency>
 			<groupId>com.typesafe.scala-logging</groupId>
-			<artifactId>scala-logging-slf4j_2.10</artifactId>
+			<artifactId>scala-logging-slf4j_${scala.suffix}</artifactId>
 			<version>2.1.2</version>
 		</dependency>
 		<dependency>
@@ -124,7 +139,7 @@
 		<dependencies>
 			<dependency>
 				<groupId>com.twitter</groupId>
-				<artifactId>util-core_2.10</artifactId>
+				<artifactId>util-core_${scala.suffix}</artifactId>
 				<version>6.22.0</version>
 			</dependency>
 			<dependency>
@@ -152,49 +167,18 @@
 				<artifactId>guava</artifactId>
 				<version>16.0.1</version>
 			</dependency>
-
 			<dependency>
 				<groupId>com.datastax.cassandra</groupId>
 				<artifactId>cassandra-driver-core</artifactId>
-				<version>2.1.7.1</version>
-				<classifier>shaded</classifier>
-				<exclusions>
-					<exclusion>
-						<groupId>io.netty</groupId>
-						<artifactId>*</artifactId>
-					</exclusion>
-				</exclusions>
+				<version>3.1.0</version>
 			</dependency>
 		</dependencies>
-
-
 	</dependencyManagement>
 
 	<build>
 		<sourceDirectory>src/main/scala</sourceDirectory>
 		<testSourceDirectory>src/test/scala</testSourceDirectory>
 		<plugins>
-			<plugin>
-				<groupId>net.alchim31.maven</groupId>
-				<artifactId>scala-maven-plugin</artifactId>
-				<version>3.2.0</version>
-				<executions>
-					<execution>
-						<goals>
-							<goal>compile</goal>
-							<goal>testCompile</goal>
-						</goals>
-					</execution>
-				</executions>
-				<configuration>
-					<scalaVersion>${scala.version}</scalaVersion>
-					<args>
-						<!--<arg>-unchecked</arg> <arg>-deprecation</arg> -->
-						<!--<arg>-explaintypes</arg> -->
-						<!-- <arg>-Xlog-implicits</arg> -->
-					</args>
-				</configuration>
-			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-eclipse-plugin</artifactId>
@@ -268,61 +252,42 @@
 					</execution>
 				</executions>
 			</plugin>
+
 			<plugin>
-      				<groupId>org.apache.maven.plugins</groupId>
-      				<artifactId>maven-source-plugin</artifactId>
-				<version>3.0.1</version>
-      				<executions>
-        				<execution>
-          					<id>attach-sources</id>
-          					<goals>
-            						<goal>jar</goal>
-          					</goals>
-        				</execution>
-      				</executions>
-    			</plugin>
-	    		<plugin>
-      				<groupId>org.apache.maven.plugins</groupId>
-      				<artifactId>maven-javadoc-plugin</artifactId>
-				<version>2.10.4</version>
-      				<executions>
-        				<execution>
-          					<id>attach-javadocs</id>
-          					<goals>
-            						<goal>jar</goal>
-          					</goals>
-        				</execution>
-      				</executions>
-    			</plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-release-plugin</artifactId>
+				<version>2.5.3</version>
+				<configuration>
+					<useReleaseProfile>false</useReleaseProfile>
+				</configuration>
+			</plugin>
 		</plugins>
 	</build>
-
 	<reporting>
 		<plugins>
 			<plugin>
 				<groupId>net.alchim31.maven</groupId>
 				<artifactId>scala-maven-plugin</artifactId>
-				<version>3.2.0</version>
+				<version>3.2.1</version>
 				<configuration>
 					<scalaVersion>${scala.version}</scalaVersion>
 				</configuration>
 			</plugin>
-                        <plugin>
-                                <groupId>org.scoverage</groupId>
-                                <artifactId>scoverage-maven-plugin</artifactId>
-                                <version>${scoverage.plugin.version}</version>
-                                <configuration>
-                                        <aggregate>true</aggregate>
-                                </configuration>
+			<plugin>
+				<groupId>org.scoverage</groupId>
+				<artifactId>scoverage-maven-plugin</artifactId>
+				<version>${scoverage.plugin.version}</version>
+				<configuration>
+					<aggregate>true</aggregate>
+				</configuration>
 				<reportSets>
-                    			<reportSet>
-                        			<reports>
-                            				<report>report</report>
-                        			</reports>
-                    			</reportSet>
-                		</reportSets>
+					<reportSet>
+						<reports>
+							<report>report</report>
+						</reports>
+					</reportSet>
+				</reportSets>
 			</plugin>
-
 		</plugins>
 	</reporting>
 
@@ -363,6 +328,93 @@
 			<url>http://scala-tools.org/repo-releases</url>
 		</pluginRepository>
 	</pluginRepositories>
+
+	<profiles>
+		<profile>
+			<id>release</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>net.alchim31.maven</groupId>
+						<artifactId>scala-maven-plugin</artifactId>
+						<version>3.2.1</version>
+						<executions>
+							<execution>
+								<id>attach-javadocs</id>
+								<goals>
+									<goal>compile</goal>
+									<goal>testCompile</goal>
+									<goal>doc-jar</goal>
+								</goals>
+							</execution>
+						</executions>
+						<configuration>
+							<scalaVersion>${scala.version}</scalaVersion>
+							<args>
+								<arg>-unchecked</arg>
+								<arg>-deprecation</arg>
+								<arg>-explaintypes</arg>
+								<arg>-Xlog-implicits</arg>
+							</args>
+						</configuration>
+					</plugin>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-source-plugin</artifactId>
+						<version>2.2.1</version>
+						<executions>
+							<execution>
+								<id>attach-sources</id>
+								<goals>
+									<goal>jar-no-fork</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-gpg-plugin</artifactId>
+						<version>1.5</version>
+						<executions>
+							<execution>
+								<id>sign-artifacts</id>
+								<phase>verify</phase>
+								<goals>
+									<goal>sign</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+		<profile>
+			<id>default</id>
+			<activation>
+				<activeByDefault>true</activeByDefault>
+			</activation>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>net.alchim31.maven</groupId>
+						<artifactId>scala-maven-plugin</artifactId>
+						<version>3.2.1</version>
+						<executions>
+							<execution>
+								<goals>
+									<goal>compile</goal>
+                                                                        <goal>testCompile</goal>
+								</goals>
+							</execution>
+						</executions>
+						<configuration>
+							<scalaVersion>${scala.version}</scalaVersion>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
 
 </project>
 

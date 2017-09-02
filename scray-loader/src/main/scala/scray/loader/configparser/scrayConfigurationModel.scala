@@ -29,6 +29,7 @@ import scray.querying.Registry
 import scray.querying.description.TableIdentifier
 import scray.querying.planning.PostPlanningActions
 import scray.loader.configuration.DBMSConfigProperties
+import scray.loader.configuration.QueryspaceMaterializedView
 
 /**
  * the whole configuration is ScrayConfiguration
@@ -105,16 +106,15 @@ case class ScrayQueryspaceConfiguration(
     version: Long,
     syncTable: Option[TableIdentifier],
     rowStores: Seq[TableIdentifier],
-    indexStores: Seq[QueryspaceIndexstore]/*,
-    materializedViews: Seq[ScrayMaterializedView]*/)
+    indexStores: Seq[QueryspaceIndexstore],
+    materializedViews: Seq[QueryspaceMaterializedView]
+    )
 
 /**
  * sub-parameters if the store is versioned; i.e. all we need for 
  * 
  */
 case class ScrayVersionedStore()
-
-case class ScrayMaterializedView()
 
 case class ScannedQueryspaceConfigfiles(path: String, name: String, version: Long, queryspaceConfig: ScrayQueryspaceConfiguration)
 

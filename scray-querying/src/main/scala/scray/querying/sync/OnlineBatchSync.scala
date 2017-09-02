@@ -12,6 +12,7 @@ import scray.common.serialization.BatchID
 import scray.querying.description.TableIdentifier
 import scray.querying.sync.State.State
 import java.util.Calendar
+import scray.querying.sync.conf.SyncConfiguration
 
 trait OnlineBatchSyncWithTableIdentifier[Statement, InsertIn, Result] extends LazyLogging {
 
@@ -70,7 +71,7 @@ trait OnlineBatchSync[Statement, InsertIn, Result] extends LazyLogging {
   def completeBatchJob(job: JobInfo[Statement, InsertIn, Result]): Try[Unit]
   def completeOnlineJob(job: JobInfo[Statement, InsertIn, Result]): Try[Unit]
    
-  //def insertInBatchTable(jobName: JobInfo[Statement, InsertIn, Result], slot: Int, ioOperation: () => Try[Unit]): Try[Unit]
+  def insertInBatchTable(job: JOB_INFO, data: RowWithValue): Try[Unit]
   
   //def insertInOnlineTable[DataType](jobName: JobInfo[Statement, InsertIn, Result], slot: Int, data: DataType): Try[Unit]
   
@@ -79,6 +80,11 @@ trait OnlineBatchSync[Statement, InsertIn, Result] extends LazyLogging {
    * Get all values of batch view.
    */
   def getBatchJobData[T <: RowWithValue](jobname: String, slot: Int, result: T): Option[List[RowWithValue]]
+  
+  /**
+   * Get latest completed batch view
+   */
+  def getBatchJobData[T <: RowWithValue](jobInfo: JOB_INFO, result: T): Option[List[RowWithValue]]
   
   /**
    * Get batch view data for a special key
@@ -100,9 +106,11 @@ abstract class JobInfo[Statement, InsertIn, Result](
   val startTime: Option[Long] = None, // This job is defined for a given time range. Default is the start time is end time of last batch job or current time.
   val endTime: Option[Long] = None, //Default is the current time when this job finished.
   val onlineStartTime: Long = 0,
-  val numberOfWorkers: Option[Long] = None
+  val numberOfWorkers: Option[Long] = None,
+  val syncConf: SyncConfiguration = new SyncConfiguration
   ) extends Serializable {
 
+  @transient
   var lock: Option[LockApi[Statement, InsertIn, Result]] = None
   def getLock(dbSession: DbSession[Statement, InsertIn, Result]): LockApi[Statement, InsertIn, Result]
       
