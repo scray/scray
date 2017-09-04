@@ -93,7 +93,7 @@ class HDFSBlobResolver[T <: org.apache.hadoop.io.Text](ti: TableIdentifier, dire
     logger.info(s"known files: ${files}")
       // scan index-cache for existing entries
       HDFSBlobResolver.getCachedIdxPos(hashedKey).flatMap { filepos =>
-        BlobFileReader.getBlobForPosition(fs, filepos._1, hashedKey, ti, filepos._2)
+        BlobFileReader.getBlobForPosition(fs, filepos._1, hashedKey, key.toString(), ti, filepos._2)
       }.orElse {
         // js - put all keys into cache
         readAllIndexes(files)
