@@ -76,11 +76,6 @@
 			<version>${scala.logging.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>org.slf4j</groupId>
-			<artifactId>slf4j-log4j12</artifactId>
-			<version>${slf4j.version}</version>
-		</dependency>
-		<dependency>
 			<groupId>com.twitter</groupId>
 			<artifactId>chill_${scala.compat.version}</artifactId>
 			<version>0.8.0</version>
@@ -175,6 +170,7 @@
 							<generateApiDocumentation>false</generateApiDocumentation>
 							<generateSupportingFiles>false</generateSupportingFiles>
 							<configOptions>
+								<serializableModel>true</serializableModel>
 								<modelPackage>${swagger.package}.model</modelPackage>
 							</configOptions>
 						</configuration>
