@@ -1,71 +1,89 @@
 package org.scray.example
 
-import java.util.concurrent.locks.ReentrantLock
-
-import scala.collection.convert.decorateAsScala.asScalaIteratorConverter
-import scala.collection.convert.decorateAsScala.asScalaBufferConverter
-import scala.collection.mutable.HashMap
-import scala.reflect.runtime.universe
-
-import org.apache.spark.SparkConf
-import org.apache.spark.streaming.Seconds
 import org.apache.spark.streaming.State
-import org.apache.spark.streaming.StateSpec
 import org.apache.spark.streaming.StreamingContext
+import org.apache.spark.streaming.Time
 import org.apache.spark.streaming.dstream.DStream
 import org.apache.spark.streaming.dstream.DStream.toPairDStreamFunctions
+import org.scray.example.data.JsonFacilityParser
 
-import com.datastax.driver.core.PreparedStatement
-import com.datastax.driver.core.Row
-import com.datastax.driver.core.Session
-import com.datastax.spark.connector.CassandraRow
-import com.datastax.spark.connector.rdd.CassandraTableScanRDD
-import com.datastax.spark.connector.streaming.toDStreamFunctions
-import com.datastax.spark.connector.streaming.toStreamingContextFunctions
-import org.scray.example.data.AggregationKey
-import com.typesafe.scalalogging.slf4j.LazyLogging
-import scray.querying.sync.JobInfo
-import com.datastax.driver.core.querybuilder.Insert
 import com.datastax.driver.core.ResultSet
 import com.datastax.driver.core.Statement
-import org.apache.spark.streaming.dstream.InputDStream
-import org.apache.kafka.clients.consumer.ConsumerRecord
-import scalaz.Forall
+import com.datastax.driver.core.querybuilder.Insert
+import com.typesafe.scalalogging.slf4j.LazyLogging
+
+import scray.example.input.db.fasta.model.Facility
+import scray.example.input.db.fasta.model.Facility.StateEnum
+import scray.querying.sync.JobInfo
+import org.apache.spark.streaming.StateSpec
 
 
-/**
- * job that transforms data :)
- */
+case class Availibility(activeCounter: Integer, inactiveCounter: Integer, unknownCounter: Integer)
+
 class StreamingJob(@transient val ssc: StreamingContext, jobInfo: JobInfo[Statement, Insert, ResultSet]) extends LazyLogging with Serializable {
-  
-  /**
-   * main job execution method: filter for wrong keys, perform aggregation with state changes, transform data into
-   * output format and save
-   */
-  def runTuple(dstream: InputDStream[ConsumerRecord[String,String]]) = {  
-    val stream = dstream.map(ff => {
-      println(ff)
-      ("a", ff.value().split(","))
-    }).map(xx => {println(xx._2.size); xx})
+
+  lazy val jsonParser = new JsonFacilityParser
+
+  def runTuple[T <: Option[org.apache.spark.streaming.dstream.DStream[(String, String)]]](dstream: T) = {
+   
+    // Parse input data and create K, V. K ::= Equipmentnumber, V ::= State counter
+    val facilities = dstream.get.flatMap(facilitiesAsJson => {
+      val parsedFacilities = jsonParser.jsonReader(facilitiesAsJson._2)
+      parsedFacilities.map(facilities =>
+        facilities.map(facility => {
+          (facility.getEquipmentnumber, mapStateToCount(facility))
+        }))
+    }).flatMap(x => x)
+
+    // Count all states of this batch
+    val availibilityBatch = facilities.reduceByKey((a, b) => {
+      Availibility(
+          a.activeCounter + b.activeCounter,
+          a.inactiveCounter + b.inactiveCounter,
+          a.unknownCounter + b.unknownCounter)
+    })
     
-    stream.print()
+    val availibilitySinceStart = availibilityBatch.mapWithState(StateSpec.function(addOldAvailibility _))
+    
+    availibilitySinceStart.print(200)
+
   }
-
-
-}
-
-object StreamingJob {
+    
+  def mapStateToCount(fac: Facility): Availibility = {
+     if(fac.getState == StateEnum.ACTIVE) {
+       Availibility(1, 0, 0)
+    } else if(fac.getState == StateEnum.INACTIVE) {
+        Availibility(0, 1, 0)
+    } else {
+        Availibility(0, 0, 1)
+    }
+  }
   
-  /**
-   * TODO: setup a key for the aggregation function using the key class defined in data
-   */
-  def buildAggregationKey(row: (String, String, String, String)): Option[AggregationKey] = {
-    Some(AggregationKey(row._1, row._2, row._3, row._4))
-  }
+  
+  def addOldAvailibility(
+     batchTime: Time, 
+     facId: java.lang.Long,
+     batchAvailibility: Option[Availibility],
+     state: State[Tuple3[Long, Long, Long]]
+  ): Option[Tuple2[Long, Float]] = {
+    
+    val (activeCount, inactiveCount, unknownCount) = state.getOption().getOrElse((0L, 0L, 0L))
+    
+    batchAvailibility.map( lastBatchResult => {
+    state.update(
+        (
+            activeCount + lastBatchResult.activeCounter,
+            inactiveCount + lastBatchResult.inactiveCounter, 
+            unknownCount + lastBatchResult.unknownCounter
+         )
+       ) 
+    })
+    
+    val (activeCountNew, inactiveCountNew, unknownCountNew) = state.get()
+    val allValues = activeCountNew + inactiveCountNew
+    val av = (activeCountNew * 1f)/ allValues
+    
 
-  /**
-   * TODO: transform data into common tuple format for storage
-   */
-  def saveDataMap(data: (AggregationKey, Long)): (String, String, String, String, Long) =
-    (data._1.access, data._1.typ, data._1.category, data._1.direction, data._2)
+    Some((facId, av)) 
+  }
 }
