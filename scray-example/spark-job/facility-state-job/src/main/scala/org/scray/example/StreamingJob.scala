@@ -18,7 +18,7 @@ import scray.querying.sync.JobInfo
 import org.apache.spark.streaming.StateSpec
 
 
-case class Availibility(activeCounter: Integer, inactiveCounter: Integer, unknownCounter: Integer)
+case class Availability(activeCounter: Integer, inactiveCounter: Integer, unknownCounter: Integer)
 
 class StreamingJob(@transient val ssc: StreamingContext, jobInfo: JobInfo[Statement, Insert, ResultSet]) extends LazyLogging with Serializable {
 
@@ -37,7 +37,7 @@ class StreamingJob(@transient val ssc: StreamingContext, jobInfo: JobInfo[Statem
 
     // Count all states of this batch
     val availibilityBatch = facilities.reduceByKey((a, b) => {
-      Availibility(
+      Availability(
           a.activeCounter + b.activeCounter,
           a.inactiveCounter + b.inactiveCounter,
           a.unknownCounter + b.unknownCounter)
@@ -49,13 +49,13 @@ class StreamingJob(@transient val ssc: StreamingContext, jobInfo: JobInfo[Statem
 
   }
     
-  def mapStateToCount(fac: Facility): Availibility = {
+  def mapStateToCount(fac: Facility): Availability = {
      if(fac.getState == StateEnum.ACTIVE) {
-       Availibility(1, 0, 0)
+       Availability(1, 0, 0)
     } else if(fac.getState == StateEnum.INACTIVE) {
-        Availibility(0, 1, 0)
+        Availability(0, 1, 0)
     } else {
-        Availibility(0, 0, 1)
+        Availability(0, 0, 1)
     }
   }
   
@@ -63,7 +63,7 @@ class StreamingJob(@transient val ssc: StreamingContext, jobInfo: JobInfo[Statem
   def addOldAvailibility(
      batchTime: Time, 
      facId: java.lang.Long,
-     batchAvailibility: Option[Availibility],
+     batchAvailibility: Option[Availability],
      state: State[Tuple3[Long, Long, Long]]
   ): Option[Tuple2[Long, Float]] = {
     
