@@ -18,7 +18,7 @@ object DayAvailabilityTable  {
       time :: 
       availability :: 
       Nil, "((facility), time)", None)
-  val table = new Table("\"www.db.opendata.s-node.de\"", "\"DayAvailabilityTable\"", columns, Some("{'class' : 'NetworkTopologyStrategy', 'DC1' : 0, 'DC2' : 1}"))
+  val table = new Table("\"FaStaExample\"", "\"DayAvailabilityTable\"", columns)
     
   val row = new RowWithValue(facility :: time :: availability :: Nil, "(facility)", None)
     

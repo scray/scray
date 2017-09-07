@@ -1,24 +1,14 @@
 package org.scray.example
 
-import kafka.serializer.{Decoder, StringDecoder}
 import org.apache.spark._
-import org.apache.spark.rdd.RDD
 import org.apache.spark.streaming._
-import org.apache.spark.streaming.dstream.InputDStream
 import com.typesafe.scalalogging.slf4j.LazyLogging
 import org.scray.example.cli.{Config, Options}
-import scala.collection.mutable.Queue
 import scray.querying.sync.ArbitrarylyTypedRows
 import scray.querying.sync.Column
 import scray.cassandra.sync.CassandraImplementation._
-import scray.querying.sync.OnlineBatchSync
 import scray.cassandra.sync.OnlineBatchSyncCassandra
-import scray.querying.sync.JobInfo
-import scray.querying.sync.AbstractRow
 import scray.cassandra.sync.CassandraJobInfo
-import com.datastax.driver.core.querybuilder.Insert
-import com.datastax.driver.core.ResultSet
-import com.datastax.driver.core.Statement
 
 
 object FacilityStateJob extends LazyLogging {
@@ -27,7 +17,7 @@ object FacilityStateJob extends LazyLogging {
    * creates a Spark Streaming context
    */
   def setupSparkStreamingConfig(masterURL: String, seconds: Int): () => StreamingContext = () => { 
-    logger.info(s"Connecting streaming context to Spark on $masterURL and micro batches with $seconds s")
+       
     val conf = new SparkConf().setAppName("Stream: " + this.getClass.getName).setMaster(masterURL)
     new StreamingContext(conf, Seconds(seconds))
   }

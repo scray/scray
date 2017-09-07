@@ -1,4 +1,4 @@
-package de.s_node.data.db
+package org.scray.example.data
 
 import scala.io.Source._
 

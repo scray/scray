@@ -2,15 +2,12 @@ package org.scray.example
 
 import org.apache.spark.streaming.dstream.InputDStream
 import org.apache.spark.streaming.StreamingContext
-import org.apache.hadoop.mapreduce.InputFormat
 import scala.reflect.ClassTag
 import org.apache.spark.streaming.dstream.DStream
 import org.apache.spark.storage.StorageLevel
 import kafka.serializer.Decoder
 import kafka.serializer.StringDecoder
-import org.scray.example.serializers.GenericKafkaKryoSerializer
 import org.apache.kafka.clients.consumer.ConsumerRecord
-import org.apache.kafka.common.serialization.StringDeserializer
 import org.apache.spark.streaming.kafka010._
 import org.apache.spark.streaming.kafka010.LocationStrategies.PreferConsistent
 import org.apache.spark.streaming.kafka010.ConsumerStrategies.Subscribe

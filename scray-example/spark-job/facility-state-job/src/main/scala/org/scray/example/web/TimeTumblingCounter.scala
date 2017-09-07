@@ -2,9 +2,9 @@ package de.s_node.analyser.web
 
 import java.util.Calendar
 
-import de.s_node.opendata.db.TimeDecorator
-import scray.example.db.fasta.model.Facility
 import com.typesafe.scalalogging.slf4j.LazyLogging
+import org.scray.example.data.TimeDecorator
+import scray.example.input.db.fasta.model.Facility
 
 class TimeTumblingCounter extends LazyLogging {
 
@@ -44,7 +44,7 @@ class TimeTumblingCounter extends LazyLogging {
     }
   }
 
-  def isSameDay(date1: Calendar, date2: Calendar): Boolean = {
+  def isSameDay(date1: Calendar, date2: Calendar): Boolean = synchronized {
 
     val isSameDay = date1.get(Calendar.DAY_OF_MONTH).equals(date2.get(Calendar.DAY_OF_MONTH)) &&
       date1.get(Calendar.MONTH).equals(date2.get(Calendar.MONTH)) &&
