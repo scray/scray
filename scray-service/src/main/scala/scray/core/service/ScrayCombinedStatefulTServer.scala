@@ -38,6 +38,11 @@ import scray.service.qservice.thrifscala.ScrayTServiceEndpoint
 import scray.core.service.properties.ScrayServicePropertiesRegistration
 import scray.service.qmodel.thrifscala.ScrayUUID
 import com.typesafe.scalalogging.LazyLogging
+import org.apache.thrift.protocol.TBinaryProtocol
+import com.twitter.finagle.builder.ServerBuilder
+import com.twitter.finagle.http._
+import org.apache.thrift.transport.TSocket
+import com.twitter.finagle.thrift.ThriftServerFramedCodec
 
 abstract class ScrayCombinedStatefulTServer extends KryoPoolRegistration with App with LazyLogging {
   // abstract functions to be customized
