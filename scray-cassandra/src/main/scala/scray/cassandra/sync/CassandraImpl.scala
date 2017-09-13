@@ -77,9 +77,6 @@ import scala.annotation.tailrec
 import scala.collection.JavaConverters._
 import scala.collection.mutable.HashSet
 import scala.collection.mutable.ListBuffer
-import scala.util.Failure
-import scala.util.Success
-import scala.util.Try
 import scray.cassandra.util.CassandraUtils
 import scray.common.serialization.BatchID
 import scray.querying.description.TableIdentifier

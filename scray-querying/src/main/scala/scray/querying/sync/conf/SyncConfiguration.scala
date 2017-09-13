@@ -16,7 +16,7 @@
 package scray.querying.sync.conf
 
 import scala.beans.BeanProperty
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 
 object ConsistencyLevel extends Enumeration {
   type ConsistencyLevel = Value
