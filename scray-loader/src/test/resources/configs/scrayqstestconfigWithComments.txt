@@ -1,0 +1,16 @@
+# Test comment1
+service {
+	advertise host "192.168.0.1",
+	service port 18181
+}
+
+# Test comment2
+connection test cassandra {
+	hosts ( "phobos", "venus" ,"wuppertal") # Test comment3
+}
+
+# Test comment4
+queryspacelocations {
+	url "file://tmp/test.queryspace.scray1", # Test comment5
+	url "file://tmp/test.queryspace.scray2"
+}

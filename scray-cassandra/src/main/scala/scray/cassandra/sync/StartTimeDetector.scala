@@ -44,6 +44,8 @@ import scray.cassandra.util.CassandraUtils
 import scray.querying.sync._
 import scala.collection.JavaConverters._
 import scala.util.Try
+import scray.querying.sync.conf.SyncConfigurationLoader
+import scray.querying.sync.conf.SyncConfiguration
 
 /**
  * Find a consensus about the start time of a job.
@@ -54,7 +56,9 @@ import scala.util.Try
 class StartTimeDetector(job: JobInfo[Statement, Insert, ResultSet],
                         dbSession: DbSession[Statement, Insert, ResultSet]) extends LazyLogging {
 
-  val startConsensusTable = new Table("silidx", "startconsensus", new StartConsensusRow)
+  val configSync: SyncConfiguration = SyncConfigurationLoader.loadConfig
+  val startConsensusTable = new Table(configSync.dbSystem, "startconsensus", new StartConsensusRow)
+  
   var valueAlreadySet = false
 
   def this(job: JobInfo[Statement, Insert, ResultSet], dbHostname: String) {
@@ -66,7 +70,7 @@ class StartTimeDetector(job: JobInfo[Statement, Insert, ResultSet],
    */
   def init = {
     logger.debug("Init StartTimeDetector")
-    CassandraUtils.createKeyspaceCreationStatement(startConsensusTable).map { statement => dbSession.execute(statement) }
+    CassandraUtils.createKeyspaceCreationStatement(startConsensusTable, configSync.replicationSetting).map { statement => dbSession.execute(statement) }
     CassandraUtils.createTableStatement(startConsensusTable).map { statement => dbSession.execute(statement) }
   }
 
