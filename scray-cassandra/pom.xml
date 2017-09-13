@@ -27,6 +27,12 @@
 			<groupId>org.scray</groupId>
 			<artifactId>scray-querying</artifactId>
 			<version>0.10.1-SNAPSHOT</version>
+			<exclusions>
+				<exclusion>
+					<groupId>com.twitter</groupId>
+					<artifactId>finagle-thrift_2.11</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>com.github.scopt</groupId>
