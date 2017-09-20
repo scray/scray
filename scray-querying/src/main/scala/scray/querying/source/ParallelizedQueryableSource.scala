@@ -25,7 +25,7 @@ import scray.querying.description.internal.SingleValueDomain
 import scray.querying.queries.DomainQuery
 import scray.querying.planning.MergingResultSpool
 import scala.annotation.tailrec
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 import scray.querying.source.store.QueryableStoreSource
 import scray.querying.description.TableIdentifier
 import scray.querying.caching.Cache

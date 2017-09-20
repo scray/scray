@@ -3,27 +3,25 @@ package scray.client.finagle;
 import java.sql.SQLException;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import scray.service.qmodel.thriftjava.ScrayTQuery;
-import scray.service.qmodel.thriftjava.ScrayUUID;
-import scray.service.qservice.thriftjava.ScrayStatefulTService;
-import scray.service.qservice.thriftjava.ScrayTResultFrame;
-
-import com.twitter.finagle.Service;
 import com.twitter.finagle.Thrift;
-import com.twitter.finagle.builder.ClientBuilder;
-import com.twitter.finagle.thrift.ThriftClientFramedCodec;
-import com.twitter.finagle.thrift.ThriftClientRequest;
 import com.twitter.util.Await;
 import com.twitter.util.Duration;
 import com.twitter.util.Future;
 
+import scray.service.qmodel.thriftjava.ScrayTQuery;
+import scray.service.qmodel.thriftjava.ScrayUUID;
+import scray.service.qservice.thriftjava.ScrayStatefulTService;
+import scray.service.qservice.thriftjava.ScrayStatefulTService.ServiceIface;
+import scray.service.qservice.thriftjava.ScrayTResultFrame;
+
+
 public class ScrayStatefulTServiceAdapter implements ScrayTServiceAdapter {
 
-	private ScrayStatefulTService.FutureIface client = null;
+	private ServiceIface client = null;
 	private ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock();
 	private String endpoint;
 
-	public ScrayStatefulTService.FutureIface getClient() {
+	public ServiceIface getClient() {
 		rwLock.readLock().lock();
 		try {
 			if(client == null) {
@@ -31,9 +29,8 @@ public class ScrayStatefulTServiceAdapter implements ScrayTServiceAdapter {
 				rwLock.writeLock().lock();
 				try {
 					if(client == null) {
-						client = Thrift.<ScrayStatefulTService.FutureIface>newIface(endpoint,
-								ScrayStatefulTService.FutureIface.class);
-						
+						client = Thrift.client().<ScrayStatefulTService.ServiceIface>newIface(endpoint,
+								ScrayStatefulTService.ServiceIface.class);
 					}
 				} finally {
 					rwLock.writeLock().unlock();
@@ -63,9 +60,8 @@ public class ScrayStatefulTServiceAdapter implements ScrayTServiceAdapter {
 	public ScrayTResultFrame getResults(ScrayUUID queryId, int queryTimeout)
 			throws SQLException {
 		try {
-			Future<ScrayTResultFrame> fframe = getClient().getResults(queryId);
-			ScrayTResultFrame frame = Await.result(fframe,
-					Duration.fromSeconds(queryTimeout));
+			Future<ScrayTResultFrame> fframe = getClient().getResults(queryId); // getResults(queryId);
+			ScrayTResultFrame frame = Await.result(fframe, Duration.fromSeconds(queryTimeout));
 			return frame;
 		} catch (Exception e) {
 			throw new SQLException(e);

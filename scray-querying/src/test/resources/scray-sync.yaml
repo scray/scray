@@ -1,0 +1,3 @@
+dbSystem: scray
+tableName : synctable
+replication: "{'class': 'NetworkTopologyStrategy', 'DC1': '5', 'DC2': '3', 'DC3': '0'}"

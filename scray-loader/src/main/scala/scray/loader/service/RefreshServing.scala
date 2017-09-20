@@ -16,7 +16,7 @@ package scray.loader.service
 
 import com.twitter.finagle.Thrift
 import com.twitter.util.{ Await, Duration, JavaTimer, TimerTask }
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 import java.util.concurrent.TimeUnit
 import scala.collection.convert.decorateAsScala.asScalaSetConverter
 import scray.core.service.{ EXPIRATION, SCRAY_QUERY_HOST_ENDPOINT, SCRAY_SEEDS, inetAddr2EndpointString }
@@ -89,7 +89,7 @@ class RefreshServing extends LazyLogging {
   private def getClient(seedAddr: String): ScrayCombinedStatefulTService.FutureIface = {
     client.getOrElse {
       logger.info("Initializing thrift-client ")
-      val clientIface = Thrift.newIface[ScrayCombinedStatefulTService.FutureIface](seedAddr)
+      val clientIface = Thrift.client.newIface[ScrayCombinedStatefulTService.FutureIface](seedAddr)
       client = Some(clientIface)
       clientIface
     }

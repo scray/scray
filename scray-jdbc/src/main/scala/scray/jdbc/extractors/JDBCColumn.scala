@@ -8,7 +8,7 @@ import scray.querying.description.Column
 import scray.querying.description.ColumnFactory
 import java.lang.{Long => JLong, Integer => JInteger}
 import scray.querying.description.ArrayByteColumn
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 import java.sql.Blob
 
 /**

@@ -12,7 +12,7 @@ import scala.collection.mutable.ArrayBuffer
 import scray.querying.description.RowColumn
 import scray.querying.description.TableIdentifier
 import scray.querying.description.SimpleRow
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 import scray.jdbc.extractors.JDBCSpecialColumnHandling
 
 /**

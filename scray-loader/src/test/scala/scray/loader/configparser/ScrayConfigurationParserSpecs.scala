@@ -10,7 +10,7 @@ import org.scalatest.WordSpec
 import org.scalatest.junit.JUnitRunner
 import scray.common.tools.ScrayCredentials
 import scray.loader.configuration.CassandraClusterProperties
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 import com.twitter.util.{Try, Throw}
 import org.parboiled2._
 import scray.loader.CassandraHostsUndefinedException

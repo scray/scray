@@ -35,20 +35,22 @@ public class ScrayTServiceManager {
 	}
 
 	private class MetaServiceConnection {
-		private ScrayMetaTService.FutureIface metaServiceClient;
+		// private ScrayMetaTService.Client.FutureIface metaServiceClient;
+		private ScrayMetaTService.ServiceIface metaServiceClient;
+
 		private ScrayURL scrayURL;
 
 		MetaServiceConnection(ScrayURL scrayURL) {
 			this.scrayURL = scrayURL;
 		}
 
-		ScrayMetaTService.FutureIface getMetaClient() throws SQLException {
+		ScrayMetaTService.ServiceIface getMetaClient() throws SQLException {
 			String[] seedEndpoints = scrayURL.getHostAndPort();
 			for (int i = 0; i < seedEndpoints.length; i++) {
 				log.trace("Trying to connect to " + seedEndpoints[i]);
 				if (metaServiceClient == null) {
-					metaServiceClient = Thrift.newIface(seedEndpoints[i],
-							ScrayMetaTService.FutureIface.class);
+					metaServiceClient = Thrift.client().newIface(seedEndpoints[i],
+							ScrayMetaTService.ServiceToClient.class);
 					try {
 						if (Await.result(metaServiceClient.ping()))
 							return metaServiceClient;

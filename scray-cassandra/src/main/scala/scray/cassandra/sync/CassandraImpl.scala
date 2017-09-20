@@ -20,6 +20,63 @@ import java.util.{Iterator => JIterator}
 import com.datastax.driver.core._
 import com.datastax.driver.core.querybuilder.{Insert, QueryBuilder}
 import com.websudos.phantom.CassandraPrimitive
+import scray.querying.sync.DBColumnImplementation
+import java.util.{ Iterator => JIterator }
+import scala.annotation.tailrec
+import com.datastax.driver.core.Cluster
+import com.datastax.driver.core.ConsistencyLevel
+import com.datastax.driver.core.RegularStatement
+import com.datastax.driver.core.ResultSet
+import com.datastax.driver.core.Row
+import com.datastax.driver.core.Session
+import com.datastax.driver.core.SimpleStatement
+import com.datastax.driver.core.Statement
+import com.datastax.driver.core.querybuilder.Insert
+import com.datastax.driver.core.querybuilder.QueryBuilder
+import java.util.ArrayList
+import scray.querying.sync.DbSession
+import scala.collection.mutable.ArrayBuffer
+import scray.querying.sync.OnlineBatchSync
+import scray.querying.sync.SyncTableBasicClasses.SyncTableRowEmpty
+import scala.collection.mutable.ListBuffer
+import scray.querying.sync.JobInfo
+import com.datastax.driver.core.BatchStatement
+import scray.querying.sync.State.State
+import com.datastax.driver.core.querybuilder.Update.Where
+import com.datastax.driver.core.querybuilder.Update.Conditions
+import scray.querying.sync.SyncTable
+import scala.util.Try
+import scray.querying.sync.RunningJobExistsException
+import scray.querying.sync.NoRunningJobExistsException
+import scray.querying.sync.StatementExecutionError
+import scala.util.Failure
+import scala.util.Success
+import scray.querying.description.TableIdentifier
+import scala.collection.mutable.HashSet
+import scray.querying.sync.AbstractRow
+import scray.querying.sync.ColumnWithValue
+import scray.querying.sync.VoidTable
+import scray.querying.sync.RowWithValue
+import scray.querying.sync.Table
+import scray.querying.sync.State
+import scray.querying.sync.AbstractTypeDetection
+import scray.querying.sync.DBTypeImplicit
+import com.datastax.driver.core.BatchStatement
+import com.datastax.driver.core.Cluster
+import com.datastax.driver.core.ConsistencyLevel
+import com.datastax.driver.core.RegularStatement
+import com.datastax.driver.core.ResultSet
+import com.datastax.driver.core.Row
+import com.datastax.driver.core.Statement
+import com.datastax.driver.core.querybuilder.Insert
+import com.datastax.driver.core.querybuilder.QueryBuilder
+import com.typesafe.scalalogging.LazyLogging
+import com.websudos.phantom.CassandraPrimitive
+import java.util.{ Iterator => JIterator }
+import scala.annotation.tailrec
+import scala.collection.JavaConverters._
+import scala.collection.mutable.HashSet
+import scala.collection.mutable.ListBuffer
 import scray.cassandra.util.CassandraUtils
 import scray.common.serialization.BatchID
 import scray.querying.description.TableIdentifier
@@ -31,6 +88,8 @@ import scala.annotation.tailrec
 import scala.collection.mutable.{HashSet, ListBuffer}
 import scala.util.{Failure, Success, Try}
 import scray.querying.sync.conf.SyncConfiguration
+import scray.querying.sync.conf.SyncConfigurationLoader
+import scray.querying.sync.DBColumnImplementation
 
 
 object CassandraImplementation extends AbstractTypeDetection with Serializable {
@@ -69,7 +128,7 @@ object CassandraImplementation extends AbstractTypeDetection with Serializable {
 
 }
 
-class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet], config: SyncConfiguration = new SyncConfiguration) extends OnlineBatchSync[Statement, Insert, ResultSet] with OnlineBatchSyncWithTableIdentifier[Statement, Insert, ResultSet] with StateMonitoringApi[Statement, Insert, ResultSet] {
+class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet]) extends OnlineBatchSync[Statement, Insert, ResultSet] with OnlineBatchSyncWithTableIdentifier[Statement, Insert, ResultSet] with StateMonitoringApi[Statement, Insert, ResultSet] {
 
   import CassandraImplementation.genericCassandraColumnImplicit
 
@@ -83,9 +142,10 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
 
   // Create or use a given DB session.
   @transient val session = dbSession
-
-  val syncTable = SyncTable("silidx", "SyncTable")
-  val jobLockTable = JobLockTable("silidx", "JobLockTable")
+  val config: SyncConfiguration = SyncConfigurationLoader.loadConfig
+  
+  val syncTable = SyncTable(config.dbSystem, config.tableName)
+  val jobLockTable = JobLockTable(config.dbSystem, "JobLockTable")
   val statementGenerator = CassandraUtils
   val lockTimeOut = 500 //ms
 
@@ -94,7 +154,7 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
    */
   @Override
   def initJob[T <: AbstractRow](job: JOB_INFO, dataTable: T): Try[Unit] = Try {
-    statementGenerator.createKeyspaceCreationStatement(syncTable).map { statement => dbSession.execute(statement) }
+    statementGenerator.createKeyspaceCreationStatement(syncTable, config.replicationSetting).map { statement => dbSession.execute(statement) }
     statementGenerator.createTableStatement(syncTable).map { statement => dbSession.execute(statement) }
 
     this.crateAndRegisterTablesIfNotExists(job)
@@ -103,7 +163,7 @@ class OnlineBatchSyncCassandra(dbSession: DbSession[Statement, Insert, ResultSet
 
   @Override
   def initJob[DataTableT <: ArbitrarylyTypedRows](job: JOB_INFO): Try[Unit] = {
-    statementGenerator.createKeyspaceCreationStatement(syncTable).map { statement => dbSession.execute(statement) }
+    statementGenerator.createKeyspaceCreationStatement(syncTable, config.replicationSetting).map { statement => dbSession.execute(statement) }
     statementGenerator.createTableStatement(syncTable).map { statement => dbSession.execute(statement) }
 
     this.crateAndRegisterTablesIfNotExists(job)

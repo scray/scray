@@ -14,7 +14,7 @@
 // limitations under the License.
 package scray.loader.configparser
 
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 import org.apache.commons.io.IOUtils
 // scalastyle:off underscore.import
 import org.parboiled2._
