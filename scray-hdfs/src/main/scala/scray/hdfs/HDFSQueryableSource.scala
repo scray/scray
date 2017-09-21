@@ -2,7 +2,6 @@ package scray.hdfs
 
 import scray.querying.queries.DomainQuery
 import scray.querying.description.TableIdentifier
-import com.typesafe.scalalogging.slf4j.LazyLogging
 import com.twitter.util.FuturePool
 import scray.querying.source.store.QueryableStoreSource
 import scray.querying.description.Column
@@ -19,6 +18,7 @@ import scray.querying.description.ArrayByteColumn
 import scray.querying.description.internal.SingleValueDomain
 import com.twitter.concurrent.Spool
 import scray.querying.description.ColumnFactory
+import com.typesafe.scalalogging.LazyLogging
 
 /**
  * Some HDFS queryable source to query Blobs from HDFS

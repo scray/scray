@@ -1,9 +1,9 @@
 package scray.hdfs.index.format
 
 import java.util.ArrayList
-import com.typesafe.scalalogging.slf4j.LazyLogging
 import java.util.concurrent.Executors
 import java.util.concurrent.Future
+import com.typesafe.scalalogging.LazyLogging
 
 class Buffer(batchSize: Int, path: String) extends LazyLogging {
 

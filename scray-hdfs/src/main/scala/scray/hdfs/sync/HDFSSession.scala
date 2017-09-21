@@ -1,6 +1,5 @@
 package scray.hdfs.sync
 
-import com.typesafe.scalalogging.slf4j.LazyLogging
 import scray.querying.sync.DbSession
 import scray.querying.sync.StatementExecutionError
 import java.sql.PreparedStatement
@@ -8,6 +7,7 @@ import scala.util.Failure
 import scala.util.Success
 import java.sql.ResultSet
 import scala.util.Try
+import com.typesafe.scalalogging.LazyLogging
 
 /**
  * Session object used only for compatibility

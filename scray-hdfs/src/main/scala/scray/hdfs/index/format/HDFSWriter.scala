@@ -18,9 +18,9 @@ import java.util.ArrayList
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.FileSystem
 import org.apache.hadoop.fs.Path
-import com.typesafe.scalalogging.slf4j.LazyLogging
 import org.apache.hadoop.fs.FSDataOutputStream
 import java.util.concurrent.Callable
+import com.typesafe.scalalogging.LazyLogging
 
 /**
  * Write index and data files to HDFS

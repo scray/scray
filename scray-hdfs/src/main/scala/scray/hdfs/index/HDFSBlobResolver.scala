@@ -1,35 +1,38 @@
 package scray.hdfs.index
 
-import scray.querying.source.store.BlobResolver
-import org.apache.hadoop.io.Writable
-import scray.querying.description.TableIdentifier
-import java.util.concurrent.locks.ReentrantReadWriteLock
-import java.io.DataOutputStream
 import java.io.ByteArrayOutputStream
-import de.greenrobot.common.hash.Murmur3F
-import scala.collection.mutable.HashMap
-import org.apache.hadoop.fs.FileSystem
-import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.io.Text
-import org.apache.hadoop.io.IntWritable
-import org.apache.hadoop.io.DoubleWritable
-import org.apache.hadoop.io.LongWritable
-import org.apache.hadoop.io.FloatWritable
-import org.apache.hadoop.io.ShortWritable
-import org.apache.hadoop.io.BooleanWritable
-import java.math.BigInteger
-import org.apache.hadoop.io.BytesWritable
-import org.apache.hadoop.io.ObjectWritable
-import java.util.UUID
-import scray.hdfs.hadoop.UUIDWritable
-import scray.hdfs.hadoop.URLWritable
+import java.io.DataOutputStream
 import java.net.URL
-import com.typesafe.scalalogging.slf4j.LazyLogging
 import java.util.Arrays
+import java.util.UUID
+import java.util.concurrent.locks.ReentrantReadWriteLock
+
+import scala.collection.mutable.HashMap
+
+import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.fs.FileSystem
+import org.apache.hadoop.io.BooleanWritable
+import org.apache.hadoop.io.BytesWritable
+import org.apache.hadoop.io.DoubleWritable
+import org.apache.hadoop.io.FloatWritable
+import org.apache.hadoop.io.IntWritable
+import org.apache.hadoop.io.LongWritable
+import org.apache.hadoop.io.ObjectWritable
+import org.apache.hadoop.io.ShortWritable
+import org.apache.hadoop.io.Text
+import org.apache.hadoop.io.Writable
+
+import com.typesafe.scalalogging.LazyLogging
+
+import de.greenrobot.common.hash.Murmur3F
+import scray.hdfs.hadoop.URLWritable
+import scray.hdfs.hadoop.UUIDWritable
+import scray.querying.description.TableIdentifier
+import scray.querying.source.store.BlobResolver
 
 class HDFSBlobResolver[T <: org.apache.hadoop.io.Text](ti: TableIdentifier, directory: String) extends BlobResolver[org.apache.hadoop.io.Text] with LazyLogging {
-  import IndexFilenameStructure.FileTypes._
   import HDFSBlobResolver._
+  import IndexFilenameStructure.FileTypes._
   
   private val fs = getFileSystem()
   private val directoryScanner = new IndexFilenameStructure(fs, directory)

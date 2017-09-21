@@ -14,11 +14,11 @@
 // limitations under the License.
 package scray.hdfs.index.format
 
-import com.typesafe.scalalogging.slf4j.LazyLogging
 import org.scalatest.WordSpec
 import java.io.ByteArrayInputStream
 import java.io.DataInputStream
 import org.junit.Assert
+import com.typesafe.scalalogging.LazyLogging
 
 class BlobFileRecordSpecs  extends WordSpec with LazyLogging {
   

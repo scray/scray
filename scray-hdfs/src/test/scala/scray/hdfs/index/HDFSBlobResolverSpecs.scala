@@ -1,8 +1,6 @@
 package scray.hdfs.index
 
-import com.typesafe.scalalogging.slf4j.LazyLogging
 import scray.hdfs.index.HDFSBlobResolver._
-import com.typesafe.scalalogging.slf4j.LazyLogging
 import org.scalatest.WordSpec
 import java.io.ByteArrayInputStream
 import java.io.DataInputStream
@@ -16,6 +14,7 @@ import org.scalatest.tagobjects.Slow
 import org.scalatest.Tag
 import scray.querying.description.TableIdentifier
 import org.apache.hadoop.io.Text
+import com.typesafe.scalalogging.LazyLogging
 
 class HDFSBlobResolverSpecs extends WordSpec with LazyLogging  {
   "HDFSBlobResolver" should {

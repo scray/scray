@@ -6,13 +6,13 @@ import java.io.BufferedInputStream
 import java.io.DataInputStream
 import java.io.IOException
 import java.io.EOFException
-import com.typesafe.scalalogging.slf4j.LazyLogging
 import scray.querying.description.TableIdentifier
 import java.util.Arrays
 import scray.hdfs.index.format.IndexFile
 import scray.hdfs.index.HDFSBlobResolver
 import scray.hdfs.index.format.sequence.IdxReader
 import org.apache.hadoop.io.Text
+import com.typesafe.scalalogging.LazyLogging
 
 /**
  * reads an index file from HDFS

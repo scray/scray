@@ -14,7 +14,6 @@
 // limitations under the License.
 package scray.hdfs.index.format
 
-import com.typesafe.scalalogging.slf4j.LazyLogging
 import java.io.DataInputStream
 import java.io.EOFException
 import scalaz.std.stream
@@ -22,6 +21,7 @@ import java.io.DataOutputStream
 import java.io.FileOutputStream
 import scala.collection.mutable.MutableList
 import java.net.MalformedURLException
+import com.typesafe.scalalogging.LazyLogging
 
 class BlobFile extends LazyLogging {
   private val version = new Array[Byte](4)

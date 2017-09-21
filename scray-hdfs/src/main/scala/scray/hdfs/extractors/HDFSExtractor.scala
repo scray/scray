@@ -42,12 +42,12 @@ class HDFSExtractor[Q <: DomainQuery, T <: org.apache.hadoop.io.Text, S <: HDFSQ
       dbName: String,
       table: String,
       column: Column,
-      index: Option[ManuallyIndexConfiguration[_, _, _, _, _]],
+      index: Option[ManuallyIndexConfiguration[_ <: DomainQuery, _ <: DomainQuery, _, _, _ <: DomainQuery]],
       splitters: Map[Column, Splitter[_]]): ColumnConfiguration = ColumnConfiguration(column, None)
       
   override def createManualIndexConfiguration(column: Column, queryspaceName: String, version: Int, store: S,
       indexes: Map[_ <: (QueryableStoreSource[_ <: DomainQuery], String), _ <: (QueryableStoreSource[_ <: DomainQuery], String, 
               IndexConfig, Option[Function1[_,_]], Set[String])],
       mappers: Map[_ <: QueryableStoreSource[_], ((_) => Row, Option[String], Option[VersioningConfiguration[_, _]])]):
-        Option[ManuallyIndexConfiguration[_, _, _, _, _]] = None
+        Option[ManuallyIndexConfiguration[_ <: DomainQuery, _ <: DomainQuery, _, _, _ <: DomainQuery]] = None
   }

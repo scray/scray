@@ -14,7 +14,6 @@
 // limitations under the License.
 package scray.hdfs.index.format
 
-import com.typesafe.scalalogging.slf4j.LazyLogging
 import org.scalatest.WordSpec
 import java.io.FileInputStream
 import java.io.BufferedInputStream
@@ -22,6 +21,7 @@ import java.io.DataInputStream
 import java.io.File
 import scala.collection.mutable.MutableList
 import org.junit.Assert
+import com.typesafe.scalalogging.LazyLogging
 
 class IndexFileSpecs extends WordSpec with LazyLogging {
   "Index file " should {

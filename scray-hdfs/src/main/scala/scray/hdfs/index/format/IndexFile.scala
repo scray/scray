@@ -1,4 +1,5 @@
 // See the LICENCE.txt file distributed with this work for additional
+
 // information regarding copyright ownership.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,8 +21,8 @@ import java.io.FileOutputStream
 
 import scala.collection.mutable.MutableList
 
-import com.typesafe.scalalogging.slf4j.LazyLogging
 import java.net.MalformedURLException
+import com.typesafe.scalalogging.LazyLogging
 
 class IndexFile extends LazyLogging {
   private val version = Array[Byte](0, 0, 0, 1)

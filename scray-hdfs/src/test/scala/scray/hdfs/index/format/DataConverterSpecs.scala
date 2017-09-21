@@ -14,7 +14,6 @@
 // limitations under the License.
 package scray.hdfs.index.format
 
-import com.typesafe.scalalogging.slf4j.LazyLogging
 import org.scalatest.WordSpec
 import java.io.ByteArrayInputStream
 import java.io.DataInputStream
@@ -26,6 +25,7 @@ import scala.collection.mutable.MutableList
 import org.scalatest.FlatSpec
 import org.scalatest.tagobjects.Slow
 import org.scalatest.Tag
+import com.typesafe.scalalogging.LazyLogging
 
 object RequiresHDFS extends Tag("scray.hdfs.tags.RequiresHDFS")
 
