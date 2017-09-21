@@ -21,7 +21,7 @@ import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.io.SequenceFile.Reader
 import scray.hdfs.index.format.sequence.types.IndexValue
 import org.apache.hadoop.io.Text
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 
 class IdxReader(path: String, hdfsConf: Configuration = new Configuration, fs: Option[FileSystem] = None) extends LazyLogging {
 
@@ -36,7 +36,7 @@ class IdxReader(path: String, hdfsConf: Configuration = new Configuration, fs: O
   var hasNextValue = false
 
   /**
-   * Check if more elmenets exists
+   * Check if more elements exists
    */
   def hasNext: Boolean = synchronized {
     if (!hasNextWasCalled) { // Has next reads data from fs. For this reason we store the state
@@ -68,7 +68,7 @@ class IdxReader(path: String, hdfsConf: Configuration = new Configuration, fs: O
     }
   }
   
-  def close = {
+  def close: Unit = {
     reader.close()
   }
 }

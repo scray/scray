@@ -34,8 +34,8 @@ import scray.hdfs.index.format.sequence.types.IndexValue
 
 class SequenceFileWriter(path: String, hdfsConf: Configuration = new Configuration, fs: Option[FileSystem] = None) extends scray.hdfs.index.format.Writer {
 
-  var dataWriter: SequenceFile.Writer = null;
-  var idxWriter:  SequenceFile.Writer = null;
+  var dataWriter: SequenceFile.Writer = null; // scalastyle:off null
+  var idxWriter:  SequenceFile.Writer = null; // scalastyle:off null
 
   val key = new Text();
   val idxValue = new IndexValue // Block position in data file
@@ -60,13 +60,13 @@ class SequenceFileWriter(path: String, hdfsConf: Configuration = new Configurati
     writer
   }
 
-  def insert(id: String, updateTime: Long, data: Array[Byte]) = {
+  override def insert(id: String, updateTime: Long, data: Array[Byte]): Unit = {
 
-    if(dataWriter == null) {
+    if(dataWriter == null) { // scalastyle:off null
       dataWriter =  initWriter(key, new BytesWritable(), fs.getOrElse(FileSystem.get(hdfsConf)), ".blob")
     }
     
-    if(idxWriter == null) {
+    if(idxWriter == null) { // scalastyle:off null
       idxWriter = initWriter(key, idxValue, fs.getOrElse(FileSystem.get(hdfsConf)), ".idx")
     }
       
@@ -78,7 +78,7 @@ class SequenceFileWriter(path: String, hdfsConf: Configuration = new Configurati
     dataWriter.append(key, new BytesWritable(data));
   }
   
-  def close = {
+  def close: Unit = {
     IOUtils.closeStream(dataWriter);
     IOUtils.closeStream(idxWriter);
   }

@@ -1,6 +1,5 @@
 package scray.hdfs.index.format
 
-import com.typesafe.scalalogging.slf4j.LazyLogging
 import org.scalatest.WordSpec
 import org.apache.hadoop.fs.FileSystem
 import org.apache.hadoop.conf.Configuration
@@ -9,6 +8,7 @@ import org.junit.Assert
 import scray.hdfs.index.format.sequence.IdxReader
 import scray.hdfs.index.format.sequence.BlobFileReader
 import org.scalatest.Tag
+import com.typesafe.scalalogging.LazyLogging
 
 class SequenceFileWriterSpecs extends WordSpec with LazyLogging {
 
