@@ -12,7 +12,7 @@ import scalax.collection.GraphEdge._
 import scray.querying.description.Column
 import scray.querying.caching.NullCache
 import sun.reflect.generics.reflectiveObjects.NotImplementedException
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 
 class LazyTestSource(spool: Spool[Row], ordered: Boolean = true) extends LazySource[DomainQuery] with LazyLogging {
   override def request(query: DomainQuery): LazyDataFuture = Future.value(spool)

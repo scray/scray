@@ -3,7 +3,7 @@ package scray.common.key
 import scala.util.Sorting
 import scray.common.key.api.KeyGenerator
 import scray.common.key.api.ScrayKey
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 
 /**
  * Create a key of Array[String].

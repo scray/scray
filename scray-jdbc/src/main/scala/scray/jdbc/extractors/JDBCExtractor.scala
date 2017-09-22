@@ -28,7 +28,7 @@ import scray.jdbc.sync.JDBCDbSession
 import scray.querying.description.AutoIndexConfiguration
 import scray.querying.description.IndexConfiguration
 import java.sql.Types
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 import scray.querying.description.internal.Domain
 import java.util.concurrent.locks.ReentrantLock
 import scala.collection.mutable.HashTable
@@ -135,7 +135,7 @@ class JDBCExtractors[Q <: DomainQuery, S <: JDBCQueryableSource[Q]](
         getColumns,
         getColumns.map(col => 
           // TODO: ManualIndexConfiguration and Map of Splitter must be extracted from config
-          getColumnConfiguration(jdbcSession, ti.dbId, ti.tableId, Column(col.columnName, ti), None, Map())),
+          getColumnConfiguration(jdbcSession, ti.dbId, ti.tableId, Column(col.columnName, ti), None, Map[Column, Splitter[_]]())),
         hikari,
         new DomainToSQLQueryMapping[Q, JDBCQueryableSource[Q]](),
         futurePool,
@@ -195,7 +195,7 @@ class JDBCExtractors[Q <: DomainQuery, S <: JDBCQueryableSource[Q]](
       dbName: String,
       table: String,
       column: Column,
-      index: Option[ManuallyIndexConfiguration[_, _, _, _, _]],
+      index: Option[ManuallyIndexConfiguration[_ <: DomainQuery, _ <: DomainQuery, _, _, _ <: DomainQuery]],
       splitters: Map[Column, Splitter[_]]): ColumnConfiguration = {
     ColumnConfiguration(column, getAutoIndexConfiguration(column.columnName))
   }
@@ -207,7 +207,7 @@ class JDBCExtractors[Q <: DomainQuery, S <: JDBCQueryableSource[Q]](
       dbName: String,
       table: String,
       querySpace: QueryspaceConfiguration, 
-      indexes: Map[String, ManuallyIndexConfiguration[_, _, _, _, _]],
+      indexes: Map[String, ManuallyIndexConfiguration[_ <: DomainQuery, _ <: DomainQuery, _, _, _ <: DomainQuery]],
       splitters: Map[Column, Splitter[_]]): Set[ColumnConfiguration] = {
     getColumns.map(col => getColumnConfiguration(session, dbName, table, col, indexes.get(col.columnName), splitters))
   }
@@ -219,7 +219,7 @@ class JDBCExtractors[Q <: DomainQuery, S <: JDBCQueryableSource[Q]](
       indexes: Map[_ <: (QueryableStoreSource[_ <: DomainQuery], String), _ <: (QueryableStoreSource[_ <: DomainQuery], String, 
           IndexConfig, Option[Function1[_, _]], Set[String])],
       mappers: Map[_ <: QueryableStoreSource[_], ((_) => Row, Option[String], Option[VersioningConfiguration[_, _]])]): 
-      Option[ManuallyIndexConfiguration[_, _, _, _, _]] = None
+      Option[ManuallyIndexConfiguration[_ <: DomainQuery, _ <: DomainQuery, _, _, _ <: DomainQuery]] = None
 
   private def getTableConfigurationFunction[Q <: DomainQuery, K <: DomainQuery, V](ti: TableIdentifier, space: String, version: Int): TableConfiguration[Q, K, V] = 
     Registry.getQuerySpaceTable(space, version, ti).get.asInstanceOf[TableConfiguration[Q, K, V]]

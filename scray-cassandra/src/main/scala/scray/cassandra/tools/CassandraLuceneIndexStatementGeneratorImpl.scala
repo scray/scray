@@ -1,6 +1,7 @@
 package scray.cassandra.tools
 
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import scray.querying.description.TableIdentifier
+import com.typesafe.scalalogging.LazyLogging
 import scray.cassandra.tools.api.{LucenIndexedColumn, LuceneIndexStatementGenerator}
 import scray.querying.description.TableIdentifier
 

@@ -173,7 +173,7 @@ public class ScrayResultSet implements java.sql.ResultSet {
 				CachePosition pos = new CachePosition(cursor, tcol
 						.getColumnInfo().getName());
 				if (!valueCache.containsKey(pos)) {
-					valueCache.put(pos, decode(tcol.getValue()));
+					valueCache.put(pos, decode(tcol.BufferForValue()));
 				}
 			}
 		}

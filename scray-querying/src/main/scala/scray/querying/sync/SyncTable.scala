@@ -7,11 +7,11 @@ import scala.collection.mutable.ListBuffer
 import scala.reflect.runtime.universe._
 import scala.util.Try
 
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 import scray.querying.description.TableIdentifier
 import scala.collection.mutable.HashMap
 
-class Table[T <: AbstractRow](val keySpace: String, val tableName: String, val columns: T) extends Serializable {
+class Table[T <: AbstractRow](val keySpace: String, val tableName: String, val columns: T, val replicationSettings: Option[String] = None) extends Serializable {
   val rows: ListBuffer[RowWithValue]= ListBuffer[RowWithValue]()
   
   def addRow(row: RowWithValue) {

@@ -41,7 +41,6 @@ import com.datastax.driver.core.SimpleStatement
 import com.datastax.driver.core.Statement
 import com.datastax.driver.core.querybuilder.Insert
 import com.datastax.driver.core.querybuilder.QueryBuilder
-import com.typesafe.scalalogging.slf4j.LazyLogging
 
 import scray.querying.sync.JobInfo
 import scray.querying.sync.DbSession
@@ -49,12 +48,12 @@ import scray.querying.sync.LockApi
 import scray.querying.sync.SyncTableBasicClasses
 import scray.querying.sync.Table
 import scray.querying.sync.UnableToLockJobError
-import scray.querying.sync.StatementExecutionError
-
+import com.typesafe.scalalogging.LazyLogging
 
 
 class CassandraSyncTableLock (job: JobInfo[Statement, Insert, ResultSet], jobLockTable: Table[SyncTableBasicClasses.JobLockTable], 
-  dbSession: DbSession[Statement, Insert, ResultSet], val timeOut: Int) extends LockApi[Statement, Insert, ResultSet](job, jobLockTable, dbSession) {
+  dbSession: DbSession[Statement, Insert, ResultSet], val timeOut: Int) extends LockApi[Statement, Insert, ResultSet](job, jobLockTable, dbSession) with LazyLogging {
+
   
   val timeBetweenRetries = 100 // ms
   
@@ -64,8 +63,6 @@ class CassandraSyncTableLock (job: JobInfo[Statement, Insert, ResultSet], jobLoc
   @transient    
   lazy val unLockQuery = getUnlockQuery
   
-  @transient
-  lazy val logger =  LoggerFactory.getLogger(CassandraSyncTableLock.getClass);
    
   class CassandraSessionBasedDBSession(cassandraSession: Session) extends DbSession[Statement, Insert, ResultSet](cassandraSession.getCluster.getMetadata.getAllHosts().iterator().next.getAddress.toString) {
 

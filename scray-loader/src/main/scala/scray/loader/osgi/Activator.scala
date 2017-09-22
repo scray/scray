@@ -16,7 +16,7 @@ package scray.loader.osgi
 
 import com.twitter.finagle.Thrift
 import com.twitter.util.{ Await, Duration }
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
@@ -42,6 +42,9 @@ import com.twitter.util.FuturePool
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.LinkedBlockingQueue
 import com.twitter.util.ExecutorServiceFuturePool
+import scray.service.qservice.thriftjava.ScrayStatefulTService
+import scray.core.service.spools.TSpoolRack
+
 
 /**
  * Bundle activator in order to run scray thrift service.
@@ -201,9 +204,10 @@ class Activator extends KryoPoolRegistration with BundleActivator with LazyLoggi
 
   lazy val server = {
     val srv = if(statelessService) {
-      Thrift.serveIface(SCRAY_QUERY_LISTENING_ENDPOINT, ScrayStatelessTServiceImpl())
+      Thrift.server.serveIface(SCRAY_QUERY_LISTENING_ENDPOINT, ScrayStatelessTServiceImpl())
     } else {
-      Thrift.serveIface(SCRAY_QUERY_LISTENING_ENDPOINT, ScrayCombinedStatefulTServiceImpl())
+
+      Thrift.server.serveIface(SCRAY_QUERY_LISTENING_ENDPOINT, new ScrayCombinedStatefulTServiceImpl(TSpoolRack))
     }
     logger.info(s"Going to install listening Scray meta- and query-service on ${srv.boundAddress}...")
     srv

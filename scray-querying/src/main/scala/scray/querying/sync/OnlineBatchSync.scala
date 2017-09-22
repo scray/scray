@@ -6,7 +6,7 @@ import java.util.{ Iterator => JIterator }
 import scala.annotation.tailrec
 import scala.util.Try
 
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 
 import scray.common.serialization.BatchID
 import scray.querying.description.TableIdentifier
@@ -97,7 +97,10 @@ trait OnlineBatchSync[Statement, InsertIn, Result] extends LazyLogging {
   def setOnlineStartTime(job: JOB_INFO, time: Long): Try[Unit]
 }
 
-
+/**
+ * Some metadata to manage a job.
+ * This class should contain all informations to manage a job
+ */
 abstract class JobInfo[Statement, InsertIn, Result](
   val name: String,
   val numberOfBatchSlots: Int = 3,

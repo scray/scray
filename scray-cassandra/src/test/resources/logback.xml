@@ -12,7 +12,7 @@
   <logger name="com.datastax.driver" level="ERROR" />
   <logger name="scray" level="DEBUG" />
 
-  <root level="ERROR">
+  <root level="debug">
     <appender-ref ref="STDOUT" />
   </root>
 </configuration>

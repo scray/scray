@@ -24,7 +24,7 @@ import scala.collection.mutable.ArrayBuffer
 import scray.jdbc.extractors.ScraySQLDialect
 import com.zaxxer.hikari.HikariDataSource
 import scala.util.Try
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 
 class JDBCQueryableSource[Q <: DomainQuery](
     val ti: TableIdentifier,

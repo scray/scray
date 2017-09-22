@@ -30,8 +30,8 @@ import org.apache.commons.io.IOUtils
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.FileSystem
 import org.apache.hadoop.fs.Path
+import com.typesafe.scalalogging.LazyLogging
 
-import com.typesafe.scalalogging.slf4j.LazyLogging
 
 /**
  * handles reading scray config files from external sources.

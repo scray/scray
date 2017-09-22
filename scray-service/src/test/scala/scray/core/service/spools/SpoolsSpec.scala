@@ -25,6 +25,7 @@ import scray.service.qmodel.thrifscala.ScrayTQuery
 import scray.service.qmodel.thrifscala.ScrayTRow
 import org.xerial.snappy.Snappy
 import scray.common.properties.predefined.PredefinedProperties
+import com.twitter.util.Await
 
 @RunWith(classOf[JUnitRunner])
 class SpoolsSpec
@@ -43,7 +44,7 @@ class SpoolsSpec
 
   // prepare back end (query engine) mock
   val mockplanner = mock[(Query) => Spool[Row]]
-  when(mockplanner(anyObject())).thenReturn(spoolOf8.get)
+  when(mockplanner(anyObject())).thenReturn(Await.result(spoolOf8))
 
   // prepare query related objects
   val tquery : ScrayTQuery = createTQuery(pagesize = PGSZ, buff = kryoStrbuff, expr = "SELECT @col1 FROM @myTableId")
@@ -116,24 +117,24 @@ class SpoolsSpec
     val rack = new TimedSpoolRack(planAndExecute = mockplanner)
     val qinf1 = rack createSpool (query, tquery.queryInfo)
     val spool0 = rack.getSpool(uuid).get
-    val spoolsize0 = spool0.spool.toSeq.get.size
-    val pair1 = new SpoolPager(spool0).page.get
+    val spoolsize0 = Await.result(spool0.spool.toSeq).size
+    val pair1 = Await.result(new SpoolPager(spool0).page)
     pair1._1.size should be(PGSZ)
-    pair1._2.toSeq.get.size should be(spoolsize0 - PGSZ)
+    Await.result(pair1._2.toSeq).size should be(spoolsize0 - PGSZ)
     val spool1 = rack updateSpool (uuid, ServiceSpool(pair1._2, tquery.queryInfo))
-    val spoolsize1 = spool1.spool.toSeq.get.size
-    val pair2 = new SpoolPager(spool1).page.get
+    val spoolsize1 = Await.result(spool1.spool.toSeq).size
+    val pair2 = Await.result(new SpoolPager(spool1).page)
     pair2._1.size should be(PGSZ)
-    pair2._2.toSeq.get.size should be(spoolsize1 - PGSZ)
+    Await.result(pair2._2.toSeq).size should be(spoolsize1 - PGSZ)
   }
 
   it should "convert row spools to page spools" in {
     val rack = new TimedSpoolRack(planAndExecute = mockplanner)
     val qinf1 = rack createSpool (query, tquery.queryInfo)
     val spool0 = rack.getSpool(uuid).get
-    val spoolsize0 = spool0.spool.toSeq.get.size
-    val pspool = new SpoolPager(spool0).pageAll.get
-    pspool.toSeq.get.size should be((spoolsize0 / PGSZ) + 1)
+    val spoolsize0 = Await.result(spool0.spool.toSeq).size
+    val pspool = Await.result(new SpoolPager(spool0).pageAll)
+    Await.result(pspool.toSeq).size should be((spoolsize0 / PGSZ) + 1)
   }
 
   "Chill-based page serialization" should "serialize page value objects" in {
@@ -141,8 +142,8 @@ class SpoolsSpec
     val rack = new TimedSpoolRack(planAndExecute = mockplanner)
     val qinf1 = rack createSpool (query, tquery.queryInfo)
     val spool0 = rack.getSpool(uuid).get
-    val spoolsize0 = spool0.spool.toSeq.get.size
-    val page1 = PageValue(new SpoolPager(spool0).pageAll.get.head, spool0.tQueryInfo)
+    val spoolsize0 = Await.result(spool0.spool.toSeq).size
+    val page1 = PageValue(Await.result(new SpoolPager(spool0).pageAll).head, spool0.tQueryInfo)
     // bijection-based kryo serialization plus string encoding
     val pooledKryoInjection = KryoInjection.instance(KryoPoolSerialization.chill)
     val bytes = pooledKryoInjection(page1)
@@ -164,7 +165,7 @@ class SpoolsSpec
     val qinf1 = rack createSpool (query, tquery.queryInfo)
     val spool0 = rack.getSpool(uuid).get
     // SpoolPager.page calls row converter and returns a converted page
-    val spage = new SpoolPager(spool0).page.get._1
+    val spage = Await.result(new SpoolPager(spool0).page)._1
     // page elements should be service model objects
     spage.head.isInstanceOf[ScrayTRow] should be(true)
     // column values should be properly serialized as ByteBuffers

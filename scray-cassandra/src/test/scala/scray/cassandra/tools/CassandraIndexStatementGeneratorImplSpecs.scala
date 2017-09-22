@@ -1,7 +1,8 @@
 package scray.cassandra.tools
 
 
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import org.junit.runner.RunWith
+import com.typesafe.scalalogging.LazyLogging
 import org.junit.runner.RunWith
 import org.scalatest.WordSpec
 import org.scalatest.junit.JUnitRunner

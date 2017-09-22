@@ -41,6 +41,22 @@
 			<artifactId>scray-querying</artifactId>
 			<version>0.10.1-SNAPSHOT</version>
 		</dependency>
+		<dependency>
+			<groupId>com.typesafe.slick</groupId>
+			<artifactId>slick_${scala.suffix}</artifactId>
+			<version>3.2.0</version>
+		</dependency>
+		<dependency>
+			<groupId>com.typesafe.slick</groupId>
+			<artifactId>slick-hikaricp_${scala.suffix}</artifactId>
+			<version>3.2.0</version>
+		</dependency>
+		<dependency>
+			<groupId>com.h2database</groupId>
+			<artifactId>h2</artifactId>
+			<version>1.4.196</version>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
 	<build>
 		<plugins>
@@ -49,8 +65,8 @@
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>3.2</version>
 				<configuration>
-					<source>1.8</source>
-					<target>1.8</target>
+					<source>1.6</source>
+					<target>1.6</target>
 				</configuration>
 			</plugin>
 		</plugins>

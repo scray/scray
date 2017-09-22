@@ -1,6 +1,6 @@
 package scray.querying.source
 
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 import scray.querying.description.Row
 import scray.querying.queries.DomainQuery
 import scray.querying.description.EmptyRow

@@ -23,7 +23,7 @@ import scray.cassandra.automation.{ CassandraSessionHandler, CassandraStoreGener
 import scray.cassandra.extractors.CassandraExtractor
 import scray.cassandra.rows.GenericCassandraRowStoreMapper
 import scray.cassandra.rows.GenericCassandraRowStoreMapper.cassandraPrimitiveTypeMap
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 import scray.cassandra.automation.CassandraSessionHandler
 import scray.cassandra.automation.CassandraStoreGenerators
 import com.twitter.util.FuturePool
