@@ -74,8 +74,58 @@
 					<target>1.8</target>
 				</configuration>
 			</plugin>
+			<plugin>
+				<groupId>org.scalatest</groupId>
+				<artifactId>scalatest-maven-plugin</artifactId>
+				<version>1.0</version>
+				<configuration>
+					<reportsDirectory>${project.build.directory}/surefire-reports</reportsDirectory>
+					<junitxml>.</junitxml>
+					<filereports>WDF TestSuite.txt</filereports>
+					<tagsToExclude>scray.jdbc.tags.RequiresMySQLServer</tagsToExclude>
+				</configuration>
+				<executions>
+					<execution>
+						<id>test</id>
+						<goals>
+							<goal>test</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
 		</plugins>
+
 	</build>
+
+	<profiles>
+		<profile>
+			<id>IntegrationTest</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.scalatest</groupId>
+						<artifactId>scalatest-maven-plugin</artifactId>
+						<version>1.0</version>
+						<configuration combine.self="override">
+							<reportsDirectory>${project.build.directory}/surefire-reports</reportsDirectory>
+							<junitxml>.</junitxml>
+							<filereports>WDF TestSuite.txt</filereports>
+							<tagsToExclude />
+							<tagsToInclude>scray.jdbc.tags.RequiresMySQLServer</tagsToInclude>
+						</configuration>
+						<executions>
+							<execution>
+								<id>test</id>
+								<goals>
+									<goal>test</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
 	<licenses>
 		<license>
 			<name>Apache License, Version 2.0</name>
