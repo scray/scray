@@ -68,7 +68,7 @@ trait StoreExtractor[S <: QueryableStoreSource[_]] {
 //      index: Option[ManuallyIndexConfiguration[_, _, _, _, _]],
 //      splitters: Map[Column, Splitter[_]]): ColumnConfiguration
   
-  def getColumnConfiguration(session: DbSession[_, _, _],
+  def getColumnConfiguration(session: DbSession[_, _, _, _],
       dbName: String,
       table: String,
       column: Column,
@@ -78,7 +78,7 @@ trait StoreExtractor[S <: QueryableStoreSource[_]] {
   /**
    * returns all column configurations
    */
-  def getColumnConfigurations(session: DbSession[_, _, _],
+  def getColumnConfigurations(session: DbSession[_, _, _, _],
       dbName: String,
       table: String,
       querySpace: QueryspaceConfiguration, 

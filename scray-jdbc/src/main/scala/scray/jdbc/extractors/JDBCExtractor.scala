@@ -191,7 +191,7 @@ class JDBCExtractors[Q <: DomainQuery, S <: JDBCQueryableSource[Q]](
   /**
    * returns the column configuration for a column
    */
-  def getColumnConfiguration(session: DbSession[_, _, _],
+  def getColumnConfiguration(session: DbSession[_, _, _, _],
       dbName: String,
       table: String,
       column: Column,
@@ -203,7 +203,7 @@ class JDBCExtractors[Q <: DomainQuery, S <: JDBCQueryableSource[Q]](
   /**
    * returns all column configurations
    */
-  override def getColumnConfigurations(session: DbSession[_, _, _],
+  override def getColumnConfigurations(session: DbSession[_, _, _, _],
       dbName: String,
       table: String,
       querySpace: QueryspaceConfiguration, 

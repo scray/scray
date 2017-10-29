@@ -33,11 +33,12 @@ import scray.querying.sync.StatementExecutionError
 import com.zaxxer.hikari.HikariConfig
 import scray.jdbc.extractors.ScraySQLDialect
 import scray.jdbc.extractors.ScraySQLDialectFactory
+import slick.jdbc.JdbcProfile
 
 /**
  * Session implementation for JDBC datasources using a Hikari connection pool
  */
-class JDBCDbSession(val ds: HikariDataSource, val metadataConnection: Connection, val sqlDialiect: ScraySQLDialect) extends DbSession[PreparedStatement, PreparedStatement, ResultSet](ds.getJdbcUrl) with LazyLogging {
+class JDBCDbSession(val ds: HikariDataSource, val metadataConnection: Connection, val sqlDialiect: ScraySQLDialect) extends DbSession[PreparedStatement, PreparedStatement, ResultSet, JdbcProfile](ds.getJdbcUrl) with LazyLogging {
   
   def this(ds: HikariDataSource, sqlDialiect: ScraySQLDialect) = this(ds, ds.getConnection, sqlDialiect)
   
@@ -51,6 +52,11 @@ class JDBCDbSession(val ds: HikariDataSource, val metadataConnection: Connection
         new HikariDataSource(config)
       }, sqlDialect
     )
+  }
+  
+  def getConnectionInformations: Option[JdbcProfile] = {
+    
+    None
   }
   
   def this(jdbcURL: String, username: String, password: String) =
@@ -75,7 +81,6 @@ class JDBCDbSession(val ds: HikariDataSource, val metadataConnection: Connection
       }
     }
 
-  
   override def insert(statement: PreparedStatement): Try[ResultSet] = {
       try {
         logger.debug("Insert " + statement)

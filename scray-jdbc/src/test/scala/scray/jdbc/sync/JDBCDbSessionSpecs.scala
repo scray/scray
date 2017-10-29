@@ -37,7 +37,7 @@ class JDBCDbSessionSpecs  extends WordSpec {
      
       syncApi.create.statements.map { x => session.execute(x) match {
         case Success(row) => Assert.assertTrue(true)
-        case Failure(ex) => Assert.fail()
+        case Failure(ex) => Assert.fail(s"Exception: ${ex.getMessage}")
         }
       }       
     }

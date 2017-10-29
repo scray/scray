@@ -115,7 +115,7 @@ abstract class JobInfo[Statement, InsertIn, Result](
 
   @transient
   var lock: Option[LockApi[Statement, InsertIn, Result]] = None
-  def getLock(dbSession: DbSession[Statement, InsertIn, Result]): LockApi[Statement, InsertIn, Result]
+  def getLock(dbSession: DbSession[Statement, InsertIn, Result, _]): LockApi[Statement, InsertIn, Result]
       
 }
 

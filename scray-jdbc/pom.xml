@@ -99,7 +99,7 @@
 
 	<profiles>
 		<profile>
-			<id>IntegrationTest</id>
+			<id>MySQLIntegrationTest</id>
 			<build>
 				<plugins>
 					<plugin>
