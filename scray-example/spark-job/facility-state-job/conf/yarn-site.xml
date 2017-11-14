@@ -9,18 +9,18 @@
 	</property>
 	<property>
 		<name>yarn.resourcemanager.resource-tracker.address</name>
-		<value>127.0.0.1:8025</value>
+		<value>10.11.22.34:8025</value>
 	</property>
 	<property>
 		<name>yarn.resourcemanager.scheduler.address</name>
-		<value>127.0.0.1:8030</value>
+		<value>10.11.22.34:8030</value>
 	</property>
 	<property>
 		<name>yarn.resourcemanager.address</name>
-		<value>127.0.0.1:8032</value>
+		<value>10.11.22.34:8032</value>
 	</property>
 	<property>
 		<name>yarn.resourcemanager.webapp.address</name>
-		<value>127.0.0.1:8089</value>
+		<value>10.11.22.34:8089</value>
 	</property>
 </configuration>

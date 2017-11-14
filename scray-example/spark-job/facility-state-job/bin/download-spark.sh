@@ -18,10 +18,10 @@ if [ ! -z $SPARK_SUBMIT ]; then
   exit 1
 fi
 
-SPARK_BINARY_URL="http://archive.apache.org/dist/spark/spark-2.0.0/spark-2.0.0-bin-hadoop2.7.tgz"
+SPARK_BINARY_URL="http://archive.apache.org/dist/spark/spark-2.2.0/spark-2.2.0-bin-hadoop2.7.tgz"
 
 
-EXTRACTED_SPARK_FOLDER_NAME="spark-2.0.0-bin-hadoop2.7"
+EXTRACTED_SPARK_FOLDER_NAME="spark-2.2.0-bin-hadoop2.7"
 
 echo "SPARK_HOME="$MY_FULL_PATH/$EXTRACTED_SPARK_FOLDER_NAME
 export SPARK_HOME=$MY_FULL_PATH/$EXTRACTED_SPARK_FOLDER_NAME
@@ -33,7 +33,7 @@ export YARN_CONF_DIR=$MY_FULL_PATH/../conf
 function downloadSparkBinaries {
         echo $SPARK_BINARY_URL
         wget $SPARK_BINARY_URL -O $MY_FULL_PATH/tmp_spark.tgz && mv $MY_FULL_PATH/tmp_spark.tgz $MY_FULL_PATH/spark.tgz
-        tar -xvzf $MY_FULL_PATH/spark.tgz
+        tar -xvzf $MY_FULL_PATH/lib/spark.tgz
 }
 
 
