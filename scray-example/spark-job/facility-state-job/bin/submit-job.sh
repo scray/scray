@@ -57,6 +57,6 @@ if [ -z "$CORES" ]; then
   exit 3
 fi
 
-exec $SPARK_SUBMIT --master $SPARK_MASTER --total-executor-cores $CORES --class org.scray.example.facility-state-job target/facility-state-job-1.0-SNAPSHOT-jar-with-dependencies.jar ${ARGUMENTS[@]}
+exec $SPARK_SUBMIT --master $SPARK_MASTER --total-executor-cores $CORES --class org.scray.example.FacilityStateJob target/facility-state-job-1.0-SNAPSHOT-jar-with-dependencies.jar ${ARGUMENTS[@]}
 
 cd $ORIGDIR
