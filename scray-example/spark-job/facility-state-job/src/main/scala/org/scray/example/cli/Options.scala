@@ -1,7 +1,7 @@
 package org.scray.example.cli
 
 import scopt.OptionParser
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 
 /**
  * This class is designed to handle options coming from CLI

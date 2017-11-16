@@ -2,24 +2,34 @@ package org.scray.example
 
 import org.apache.spark._
 import org.apache.spark.streaming._
-import com.typesafe.scalalogging.slf4j.LazyLogging
 import org.scray.example.cli.{Config, Options}
 import scray.querying.sync.ArbitrarylyTypedRows
 import scray.querying.sync.Column
 import scray.cassandra.sync.CassandraImplementation._
 import scray.cassandra.sync.OnlineBatchSyncCassandra
 import scray.cassandra.sync.CassandraJobInfo
+import com.typesafe.scalalogging.LazyLogging
+import com.typesafe.scalalogging.Logger
+import scray.querying.sync.JobInfo
+import com.datastax.driver.core.querybuilder.Insert
+import com.datastax.driver.core.ResultSet
+import com.datastax.driver.core.Statement
 
-
-object FacilityStateJob extends LazyLogging {
+object FacilityStateJob  {
   
+  val logger = Logger("org.scray.example.FacilityStateJob")
   /**
    * creates a Spark Streaming context
    */
-  def setupSparkStreamingConfig(masterURL: String, seconds: Int): () => StreamingContext = () => { 
+  def setupSparkStreamingConfig(masterURL: String, seconds: Int, jobInfo: JobInfo[Statement, Insert, ResultSet], config: Config): () => StreamingContext = () => { 
        
     val conf = new SparkConf().setAppName("Stream: " + this.getClass.getName).setMaster(masterURL)
-    new StreamingContext(conf, Seconds(seconds))
+    val ssc = new StreamingContext(conf, Seconds(seconds))
+    
+    val streamingJob = new StreamingJob(ssc, jobInfo)
+    streamSetup(ssc, streamingJob, config)
+    
+    ssc
   }
   
   def setupSparkBatchConfig(masterURL: String): () => SparkContext = () => {
@@ -67,14 +77,13 @@ object FacilityStateJob extends LazyLogging {
    * execute streaming function
    */
   def stream(config: Config) = {
-    logger.info(s"Using HDFS-URL=${config.hdfsDStreamURL} and Kafka-URL=${config.kafkaDStreamURL}")
+    logger.error(s"Using HDFS-URL=${config.hdfsDStreamURL} and Kafka-URL=${config.kafkaDStreamURL}")
     //val syncTable = new OnlineBatchSyncCassandra(config.cassandraHost.getOrElse("127.0.0.1"))
     val jobInfo = new CassandraJobInfo("facility-state-job", config.numberOfBatchVersions, config.numberOfOnlineVersions)
     //if(syncTable.startNextOnlineJob(jobInfo).isSuccess) {
-      val ssc = StreamingContext.getOrCreate(config.checkpointPath, setupSparkStreamingConfig(config.master, config.seconds))
+      val ssc = StreamingContext.getOrCreate(config.checkpointPath, setupSparkStreamingConfig(config.master, config.seconds, jobInfo, config))
       ssc.checkpoint(config.checkpointPath)
-      val streamingJob = new StreamingJob(ssc, jobInfo)
-      val dstream = streamSetup(ssc, streamingJob, config)
+      
       // prepare to checkpoint in order to use some state (updateStateByKey)
       ssc.start()
       // TODO: write out zk information for closing this app  

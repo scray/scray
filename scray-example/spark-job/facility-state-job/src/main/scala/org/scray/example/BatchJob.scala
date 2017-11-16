@@ -1,6 +1,5 @@
 package org.scray.example
 
-import com.typesafe.scalalogging.slf4j.LazyLogging
 import org.apache.spark.SparkContext
 import com.datastax.spark.connector._
 import org.apache.spark.SparkContext._
@@ -11,6 +10,7 @@ import scray.querying.sync.JobInfo
 import com.datastax.driver.core.querybuilder.Insert
 import com.datastax.driver.core.ResultSet
 import com.datastax.driver.core.Statement
+import com.typesafe.scalalogging.LazyLogging
 
 /**
  * Class containing all the batch stuff

@@ -14,7 +14,7 @@ import org.apache.spark.streaming.kafka010.ConsumerStrategies.Subscribe
 
 object StreamingDStreams {
   
-  val KAFKA_CONSUMER_GROUP = "group1"
+  val KAFKA_CONSUMER_GROUP = "group1" + System.currentTimeMillis()
   
   /**
    * initializes distributed stream source for a generic Kafka source, which needs serializers to be specified
@@ -34,7 +34,7 @@ object StreamingDStreams {
         "key.deserializer" -> "org.apache.kafka.common.serialization.StringDeserializer",
         "value.deserializer" -> "org.apache.kafka.common.serialization.StringDeserializer",
         "group.id" -> KAFKA_CONSUMER_GROUP)
-
+        
     Some(KafkaUtils.createDirectStream(ssc, PreferConsistent, Subscribe[K, V](kafkaTopicsf, kafkaParams)))
   }
   

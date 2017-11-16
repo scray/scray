@@ -11,12 +11,13 @@ import akka.NotUsed
 import java.util.concurrent.LinkedBlockingQueue
 
 import scray.example.input.db.fasta.model.Facility
-import com.typesafe.scalalogging.slf4j.LazyLogging
-
+import com.typesafe.scalalogging.LazyLogging
+import com.fasterxml.jackson.databind.DeserializationFeature
 
 class JsonFacilityParser extends LazyLogging {
   val mapper = new ObjectMapper()
   mapper.registerModule(DefaultScalaModule)
+  mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
   def jsonReader(json: String): Option[Seq[Facility]] = {
     try {

@@ -10,29 +10,33 @@ import org.scray.example.data.JsonFacilityParser
 import com.datastax.driver.core.ResultSet
 import com.datastax.driver.core.Statement
 import com.datastax.driver.core.querybuilder.Insert
-import com.typesafe.scalalogging.slf4j.LazyLogging
 
 import scray.example.input.db.fasta.model.Facility
 import scray.example.input.db.fasta.model.Facility.StateEnum
 import scray.querying.sync.JobInfo
 import org.apache.spark.streaming.StateSpec
 import org.apache.kafka.clients.consumer.ConsumerRecord
+import com.typesafe.scalalogging.LazyLogging
+import scray.example.input.db.fasta.model.Facility.TypeEnum
+import scray.example.output.GraphiteWriter
 
 
 case class Availability(activeCounter: Integer, inactiveCounter: Integer, unknownCounter: Integer)
 
+@SerialVersionUID(1000L)
 class StreamingJob(@transient val ssc: StreamingContext, jobInfo: JobInfo[Statement, Insert, ResultSet]) extends LazyLogging with Serializable {
 
   lazy val jsonParser = new JsonFacilityParser
+  lazy val outputOperation = new GraphiteWriter("10.11.22.36")
 
   def runTuple[T <: org.apache.spark.streaming.dstream.DStream[ConsumerRecord[String, String]]](dstream: T) = {
-   
+    
     // Parse input data and create K, V. K ::= Equipmentnumber, V ::= State counter
     val facilities = dstream.flatMap(facilitiesAsJson => {
       val parsedFacilities = jsonParser.jsonReader(facilitiesAsJson.value())
       parsedFacilities.map(facilities =>
         facilities.map(facility => {
-          (facility.getEquipmentnumber, mapStateToCount(facility))
+          (facility.getType, mapStateToCount(facility))
         }))
     }).flatMap(x => x)
 
@@ -44,12 +48,28 @@ class StreamingJob(@transient val ssc: StreamingContext, jobInfo: JobInfo[Statem
           a.unknownCounter + b.unknownCounter)
     })
     
-    val availibilitySinceStart = availibilityBatch.mapWithState(StateSpec.function(addOldAvailibility _))
-    
-    availibilitySinceStart.print(200)
-
+    availibilityBatch.foreachRDD { rdd =>
+      rdd.foreachPartition { availableHostsPartition =>
+        availableHostsPartition.foreach { availibility =>
+        
+          val (facilityType, count) = availibility
+          
+          if(facilityType.equals(TypeEnum.ELEVATOR)) {
+            if(count.inactiveCounter > 0 || count.activeCounter > 0) { 
+              outputOperation.sentElevator(count.inactiveCounter, count.activeCounter)
+            }
+          }
+          if(facilityType.equals(TypeEnum.ESCALATOR)) {
+            if(count.inactiveCounter > 0 || count.activeCounter > 0) { 
+              outputOperation.sentEscalator(count.inactiveCounter, count.activeCounter)
+            }
+          }
+        }
+      }
+    }
   }
     
+
   def mapStateToCount(fac: Facility): Availability = {
      if(fac.getState == StateEnum.ACTIVE) {
        Availability(1, 0, 0)

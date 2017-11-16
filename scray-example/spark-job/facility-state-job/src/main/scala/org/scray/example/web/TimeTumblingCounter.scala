@@ -2,9 +2,9 @@ package de.s_node.analyser.web
 
 import java.util.Calendar
 
-import com.typesafe.scalalogging.slf4j.LazyLogging
 import org.scray.example.data.TimeDecorator
 import scray.example.input.db.fasta.model.Facility
+import com.typesafe.scalalogging.LazyLogging
 
 class TimeTumblingCounter extends LazyLogging {
 

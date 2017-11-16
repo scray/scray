@@ -1,8 +1,8 @@
 package org.scray.example.data
 
-import com.typesafe.scalalogging.slf4j.LazyLogging
 import org.scalatest.WordSpec
 import org.junit.Assert
+import com.typesafe.scalalogging.LazyLogging
 
 class JsonFacilityParserSpecs extends WordSpec with LazyLogging {
   
