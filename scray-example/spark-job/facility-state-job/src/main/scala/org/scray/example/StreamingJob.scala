@@ -19,6 +19,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecord
 import com.typesafe.scalalogging.LazyLogging
 import scray.example.input.db.fasta.model.Facility.TypeEnum
 import scray.example.output.GraphiteWriter
+import org.apache.spark.streaming.Seconds
 
 
 case class Availability(activeCounter: Integer, inactiveCounter: Integer, unknownCounter: Integer)
@@ -41,7 +42,7 @@ class StreamingJob(@transient val ssc: StreamingContext, jobInfo: JobInfo[Statem
     }).flatMap(x => x)
 
     // Count all states of this batch
-    val availibilityBatch = facilities.reduceByKey((a, b) => {
+    val availibilityBatch = facilities.reduceByKey((a: Availability, b: Availability) => {
       Availability(
           a.activeCounter + b.activeCounter,
           a.inactiveCounter + b.inactiveCounter,
@@ -55,12 +56,12 @@ class StreamingJob(@transient val ssc: StreamingContext, jobInfo: JobInfo[Statem
           val (facilityType, count) = availibility
           
           if(facilityType.equals(TypeEnum.ELEVATOR)) {
-            if(count.inactiveCounter > 0 || count.activeCounter > 0) { 
+            if(count.inactiveCounter > 10 && count.activeCounter > 10) { 
               outputOperation.sentElevator(count.inactiveCounter, count.activeCounter)
             }
           }
           if(facilityType.equals(TypeEnum.ESCALATOR)) {
-            if(count.inactiveCounter > 0 || count.activeCounter > 0) { 
+            if(count.inactiveCounter > 10 && count.activeCounter > 10) { 
               outputOperation.sentEscalator(count.inactiveCounter, count.activeCounter)
             }
           }

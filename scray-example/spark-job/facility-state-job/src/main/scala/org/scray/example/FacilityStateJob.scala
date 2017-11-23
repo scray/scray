@@ -1,19 +1,25 @@
 package org.scray.example
 
-import org.apache.spark._
-import org.apache.spark.streaming._
-import org.scray.example.cli.{Config, Options}
-import scray.querying.sync.ArbitrarylyTypedRows
-import scray.querying.sync.Column
-import scray.cassandra.sync.CassandraImplementation._
-import scray.cassandra.sync.OnlineBatchSyncCassandra
-import scray.cassandra.sync.CassandraJobInfo
-import com.typesafe.scalalogging.LazyLogging
-import com.typesafe.scalalogging.Logger
-import scray.querying.sync.JobInfo
-import com.datastax.driver.core.querybuilder.Insert
+import org.apache.spark.SparkConf
+import org.apache.spark.SparkContext
+import org.apache.spark.streaming.Seconds
+import org.apache.spark.streaming.StreamingContext
+import org.scray.example.cli.Config
+import org.scray.example.cli.Options
+
 import com.datastax.driver.core.ResultSet
 import com.datastax.driver.core.Statement
+import com.datastax.driver.core.querybuilder.Insert
+import com.typesafe.scalalogging.Logger
+
+import scray.cassandra.sync.CassandraJobInfo
+import scray.cassandra.sync.OnlineBatchSyncCassandra
+import scray.querying.sync.ArbitrarylyTypedRows
+import scray.querying.sync.Column
+import scray.querying.sync.JobInfo
+import org.apache.spark.sql.SparkSession
+import org.scray.example.cli.ConfigurationReader
+import org.scray.example.cli.ConfigurationReader
 
 object FacilityStateJob  {
   
@@ -40,7 +46,7 @@ object FacilityStateJob  {
 
   def streamSetup(ssc: StreamingContext, streamingJob: StreamingJob, config: Config): Unit = {
       
-    val dstream = StreamingDStreams.getKafkaStringSource(ssc, config.kafkaDStreamURL, config.kafkaTopic)
+    //val dstream = StreamingDStreams.getKafkaStringSource(ssc, config.kafkaDStreamURL, config.kafkaTopic)
     
     /* example how to stream from Kafka
     val dstream = config.kafkaDStreamURL.flatMap { url =>.
@@ -53,7 +59,7 @@ object FacilityStateJob  {
     } */
     //val dstream = ssc.queueStream(queue)
     //dstream.checkpoint(Duration(config.checkpointDuration))
-     streamingJob.runTuple(dstream.getOrElse(throw new RuntimeException("No stream to get data from")))
+    // streamingJob.runTuple(dstream.getOrElse(throw new RuntimeException("No stream to get data from")))
    }
 
 
@@ -61,51 +67,63 @@ object FacilityStateJob  {
    * execute batch function
    */
   def batch(config: Config) = {
-    logger.info(s"Using Batch mode.")
-    val syncTable = new OnlineBatchSyncCassandra(config.cassandraHost.getOrElse("127.0.0.1"))
-    val jobInfo = new CassandraJobInfo("facility-state-job", config.numberOfBatchVersions, config.numberOfOnlineVersions)
-    if(syncTable.startNextBatchJob(jobInfo).isSuccess) {
-      val sc = setupSparkBatchConfig(config.master)()
-      val batchJob = new BatchJob(sc, jobInfo)
-      batchJob.batchAggregate()
-    } else {
-      logger.error("Batch table is locked.") 
-    }
+//    logger.info(s"Using Batch mode.")
+//    val syncTable = new OnlineBatchSyncCassandra(config.cassandraHost.getOrElse("127.0.0.1"))
+//    val jobInfo = new CassandraJobInfo("facility-state-job", config.numberOfBatchVersions, config.numberOfOnlineVersions)
+//    if(syncTable.startNextBatchJob(jobInfo).isSuccess) {
+//      val sc = setupSparkBatchConfig(config.master)()
+//      val batchJob = new BatchJob(sc, jobInfo)
+//      batchJob.batchAggregate()
+//    } else {
+//      logger.error("Batch table is locked.") 
+//    }
   }
 
   /**
    * execute streaming function
    */
   def stream(config: Config) = {
-    logger.error(s"Using HDFS-URL=${config.hdfsDStreamURL} and Kafka-URL=${config.kafkaDStreamURL}")
+    
+    
+    //logger.error(s"Using HDFS-URL=${config.hdfsDStreamURL} and Kafka-URL=${config.kafkaDStreamURL}")
     //val syncTable = new OnlineBatchSyncCassandra(config.cassandraHost.getOrElse("127.0.0.1"))
-    val jobInfo = new CassandraJobInfo("facility-state-job", config.numberOfBatchVersions, config.numberOfOnlineVersions)
+    //val jobInfo = new CassandraJobInfo("facility-state-job", config.numberOfBatchVersions, config.numberOfOnlineVersions)
     //if(syncTable.startNextOnlineJob(jobInfo).isSuccess) {
-      val ssc = StreamingContext.getOrCreate(config.checkpointPath, setupSparkStreamingConfig(config.master, config.seconds, jobInfo, config))
-      ssc.checkpoint(config.checkpointPath)
+     // val ssc = StreamingContext.getOrCreate(config.checkpointPath, setupSparkStreamingConfig(config.master, config.seconds, jobInfo, config))
+     // ssc.checkpoint(config.checkpointPath)
+    
+    val spark = SparkSession.builder().appName(this.getClass.getName).getOrCreate()
       
+    val configuration = (new ConfigurationReader()).readConfFromHDFS
+
+
+    val job = new SparkSQLStreamingJob(spark, configuration)
+    
+    job.run
+
+    
       // prepare to checkpoint in order to use some state (updateStateByKey)
-      ssc.start()
+      //ssc.start()
       // TODO: write out zk information for closing this app  
       // log out random port to connect to
       // TODO: remove code to insert data
      // streamSomeBatches(ssc)
   
-      ssc.awaitTermination()
+      //ssc.awaitTermination()
     //} else {
     //  logger.error("Streaming table locked")
     //}
   }
   
-  object ExampleTable extends ArbitrarylyTypedRows {
-    val time = new Column[Long]("time")
-    val name = new Column[String]("name")
-    val sum = new Column[Int]("sum")
-         
-    override val columns = time :: name :: sum :: Nil
-    override val primaryKey = s"(${time.name})"
-    override val indexes = None
-  }
+//  object ExampleTable extends ArbitrarylyTypedRows {
+//    val time = new Column[Long]("time")
+//    val name = new Column[String]("name")
+//    val sum = new Column[Int]("sum")
+//         
+//    override val columns = time :: name :: sum :: Nil
+//    override val primaryKey = s"(${time.name})"
+//    override val indexes = None
+//  }
 
   def main(args : Array[String]) = {
     Options.parse(args) match {

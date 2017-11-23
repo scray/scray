@@ -34,18 +34,16 @@ class ConfigurationReader(confFileName: String = "facility-state-job.conf") exte
 
       try {
         var line = br.readLine()
+        configurationString.append(line)
 
         while (line != null) {
-          System.out.println(line)
-          line = br.readLine()
-          
-          configurationString.append(line)
+          configurationString.append(br.readLine())
         }
       } finally {
         br.close();
       }
 
-      (new JsonConfigurationParser).jsonReader(configurationString.toString())
+      (new JsonConfigurationParser).parse(configurationString.toString())
     }).flatten
     
     configuration.getOrElse({

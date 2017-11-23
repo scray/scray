@@ -19,7 +19,7 @@ class JsonConfigurationParser  extends LazyLogging {
   mapper.registerModule(DefaultScalaModule)
   mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
-  def jsonReader(json: String): Option[Config] = {
+  def parse(json: String): Option[Config] = {
     try {
       return Some(mapper.readValue(json, classOf[Config]))
     } catch {
