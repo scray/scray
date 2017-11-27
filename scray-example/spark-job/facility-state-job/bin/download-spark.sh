@@ -32,8 +32,8 @@ export YARN_CONF_DIR=$MY_FULL_PATH/../conf
 
 function downloadSparkBinaries {
         echo $SPARK_BINARY_URL
-        wget $SPARK_BINARY_URL -O $MY_FULL_PATH/tmp_spark.tgz && mv $MY_FULL_PATH/tmp_spark.tgz $MY_FULL_PATH/spark.tgz
-        tar -xvzf $MY_FULL_PATH/lib/spark.tgz
+        wget $SPARK_BINARY_URL -O $MY_FULL_PATH/spark.tgz && mv $MY_FULL_PATH/spark.tgz $MY_FULL_PATH/../lib/
+        tar -xvzf $MY_FULL_PATH/../lib/spark.tgz -C $MY_FULL_PATH/../lib/ 
 }
 
 

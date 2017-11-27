@@ -4,7 +4,6 @@ import org.apache.spark.SparkConf
 import org.apache.spark.SparkContext
 import org.apache.spark.streaming.Seconds
 import org.apache.spark.streaming.StreamingContext
-import org.scray.example.cli.Config
 import org.scray.example.cli.Options
 
 import com.datastax.driver.core.ResultSet
@@ -18,8 +17,9 @@ import scray.querying.sync.ArbitrarylyTypedRows
 import scray.querying.sync.Column
 import scray.querying.sync.JobInfo
 import org.apache.spark.sql.SparkSession
-import org.scray.example.cli.ConfigurationReader
-import org.scray.example.cli.ConfigurationReader
+import org.scray.example.conf.ConfigurationReader
+import org.scray.example.conf.ConfigurationReader
+import org.scray.example.conf.JobParameter
 
 object FacilityStateJob  {
   
@@ -27,7 +27,7 @@ object FacilityStateJob  {
   /**
    * creates a Spark Streaming context
    */
-  def setupSparkStreamingConfig(masterURL: String, seconds: Int, jobInfo: JobInfo[Statement, Insert, ResultSet], config: Config): () => StreamingContext = () => { 
+  def setupSparkStreamingConfig(masterURL: String, seconds: Int, jobInfo: JobInfo[Statement, Insert, ResultSet], config: JobParameter): () => StreamingContext = () => { 
        
     val conf = new SparkConf().setAppName("Stream: " + this.getClass.getName).setMaster(masterURL)
     val ssc = new StreamingContext(conf, Seconds(seconds))
@@ -44,7 +44,7 @@ object FacilityStateJob  {
   }
 
 
-  def streamSetup(ssc: StreamingContext, streamingJob: StreamingJob, config: Config): Unit = {
+  def streamSetup(ssc: StreamingContext, streamingJob: StreamingJob, config: JobParameter): Unit = {
       
     //val dstream = StreamingDStreams.getKafkaStringSource(ssc, config.kafkaDStreamURL, config.kafkaTopic)
     
@@ -66,7 +66,7 @@ object FacilityStateJob  {
   /**
    * execute batch function
    */
-  def batch(config: Config) = {
+  def batch(config: JobParameter) = {
 //    logger.info(s"Using Batch mode.")
 //    val syncTable = new OnlineBatchSyncCassandra(config.cassandraHost.getOrElse("127.0.0.1"))
 //    val jobInfo = new CassandraJobInfo("facility-state-job", config.numberOfBatchVersions, config.numberOfOnlineVersions)
@@ -82,7 +82,7 @@ object FacilityStateJob  {
   /**
    * execute streaming function
    */
-  def stream(config: Config) = {
+  def stream(config: JobParameter) = {
     
     
     //logger.error(s"Using HDFS-URL=${config.hdfsDStreamURL} and Kafka-URL=${config.kafkaDStreamURL}")

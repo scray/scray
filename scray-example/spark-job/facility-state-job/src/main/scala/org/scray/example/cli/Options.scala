@@ -2,6 +2,7 @@ package org.scray.example.cli
 
 import scopt.OptionParser
 import com.typesafe.scalalogging.LazyLogging
+import org.scray.example.conf.JobParameter
 
 /**
  * This class is designed to handle options coming from CLI
@@ -11,7 +12,7 @@ object Options extends LazyLogging {
   /**
    * Parser to parse CLI args
    */
-  val parser = new OptionParser[Config]("facility-state-job") {
+  val parser = new OptionParser[JobParameter]("facility-state-job") {
     head("facility-state-job", "1.0-SNAPSHOT")
     opt[Unit]('b', "batch").optional() action { (x, c) =>
       c.copy(batch = true) } text("provide URL to Kafka Broker if sourcing from Kafka is desired")
@@ -26,7 +27,7 @@ object Options extends LazyLogging {
   /**
    * parse the arguments and return Config
    */
-  def parse(args: Array[String]): Option[Config] = {
+  def parse(args: Array[String]): Option[JobParameter] = {
 //    val config = parser.parse(args, Config("master"))
 //    config.flatMap { conf => 
 //    val Config(master, batch) = conf
@@ -54,6 +55,6 @@ object Options extends LazyLogging {
     
 //    config
     
-    Some(Config())
+    Some(JobParameter())
   }
 }

@@ -1,7 +1,5 @@
-package org.scray.example.cli
+package org.scray.example.conf
 
-import org.apache.spark.SparkFiles
-import org.apache.hadoop.fs.FSDataInputStream
 import org.apache.hadoop.fs.FileSystem
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
@@ -9,9 +7,10 @@ import java.io.BufferedReader
 import java.io.InputStreamReader
 import com.typesafe.scalalogging.LazyLogging
 
+
 class ConfigurationReader(confFileName: String = "facility-state-job.conf") extends LazyLogging {
 
-  def readConfFromHDFS: Config = {
+  def readConfFromHDFS: JobParameter = {
     val files = System.getenv("SPARK_YARN_CACHE_FILES")
     
     def getConfFilePath: Option[String] = {
@@ -37,7 +36,8 @@ class ConfigurationReader(confFileName: String = "facility-state-job.conf") exte
         configurationString.append(line)
 
         while (line != null) {
-          configurationString.append(br.readLine())
+          line = br.readLine()
+          configurationString.append(line)
         }
       } finally {
         br.close();
@@ -47,8 +47,8 @@ class ConfigurationReader(confFileName: String = "facility-state-job.conf") exte
     }).flatten
     
     configuration.getOrElse({
-        logger.warn(s"No configuration file found. Use default configuration ${Config()}")
-        Config()
+        logger.warn(s"No configuration file found. Use default configuration ${JobParameter()}")
+        JobParameter()
       })
 
   }

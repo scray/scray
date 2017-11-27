@@ -10,12 +10,12 @@ import org.apache.spark.sql.types.TimestampType
 import java.sql.Timestamp
 import scray.example.input.db.fasta.model.Facility
 import org.scray.example.output.GraphiteForeachWriter
-import org.scray.example.cli.Config
 import org.apache.spark.sql.types.DataType
+import org.scray.example.conf.JobParameter
 
 case class FacilityStateCounter(facilityType: String, state: String, count: Long)
 
-class SparkSQLStreamingJob(spark: SparkSession, conf: Config) {
+class SparkSQLStreamingJob(spark: SparkSession, conf: JobParameter) {
 
   def run = {
     import spark.implicits._

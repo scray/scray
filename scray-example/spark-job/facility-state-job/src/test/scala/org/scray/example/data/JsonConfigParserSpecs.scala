@@ -3,7 +3,7 @@ package org.scray.example.data
 import org.scalatest.WordSpec
 import org.junit.Assert
 import com.typesafe.scalalogging.LazyLogging
-import org.scray.example.cli.JsonConfigurationParser
+import org.scray.example.conf.JsonConfigurationParser
 
 class JsonConfigParserSpecs extends WordSpec with LazyLogging {
   

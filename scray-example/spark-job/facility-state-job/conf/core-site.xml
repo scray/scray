@@ -1,7 +1,7 @@
 <configuration>
 	<property>
 		<name>fs.defaultFS</name>
-		<value>hdfs://10.11.22.34:8020</value>
+		<value>hdfs://hdfs-namenode:8020</value>
 		<description>NameNode URI</description>
 	</property>
 </configuration>
