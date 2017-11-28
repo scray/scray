@@ -8,7 +8,7 @@ import java.io.InputStreamReader
 import com.typesafe.scalalogging.LazyLogging
 
 
-class ConfigurationReader(confFileName: String = "facility-state-job.conf") extends LazyLogging {
+class ConfigurationReader(confFileName: String = "facility-state-job.yaml") extends LazyLogging {
 
   def readConfFromHDFS: JobParameter = {
     val files = System.getenv("SPARK_YARN_CACHE_FILES")
@@ -33,17 +33,16 @@ class ConfigurationReader(confFileName: String = "facility-state-job.conf") exte
 
       try {
         var line = br.readLine()
-        configurationString.append(line)
 
         while (line != null) {
+          configurationString.append(line + "\n")
           line = br.readLine()
-          configurationString.append(line)
         }
       } finally {
         br.close();
       }
 
-      (new JsonConfigurationParser).parse(configurationString.toString())
+      (new YamlConfigurationParser).parse(configurationString.toString())
     }).flatten
     
     configuration.getOrElse({

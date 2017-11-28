@@ -57,6 +57,6 @@ if [ -z "$CORES" ]; then
   exit 3
 fi
 
-exec $SPARK_SUBMIT --packages org.apache.spark:spark-sql-kafka-0-10_2.11:2.2.0 --master $SPARK_MASTER --deploy-mode cluster --total-executor-cores $CORES  --files $BASEDIR/../conf/log4j.properties,$BASEDIR/../conf/facility-state-job.conf --class org.scray.example.FacilityStateJob target/facility-state-job-1.0-SNAPSHOT-jar-with-dependencies.jar ${ARGUMENTS[@]}
+exec $SPARK_SUBMIT --packages org.apache.spark:spark-sql-kafka-0-10_2.11:2.2.0 --master $SPARK_MASTER --deploy-mode cluster --total-executor-cores $CORES  --files $BASEDIR/../conf/log4j.properties,$BASEDIR/../conf/facility-state-job.yaml --class org.scray.example.FacilityStateJob target/facility-state-job-1.0-SNAPSHOT-jar-with-dependencies.jar ${ARGUMENTS[@]}
 
 cd $ORIGDIR

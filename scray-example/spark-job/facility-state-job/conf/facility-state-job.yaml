@@ -1,0 +1,7 @@
+graphiteHost:  graphite-host        
+graphitePort: 2003
+  
+kafkaBootstrapServers: kafka-broker-1:9092
+kafkaTopic: facility
+
+kafkaDataSchemaAsJsonExample: "{\"type\":\"struct\",\"fields\":[{\"name\":\"type\",\"type\":\"string\",\"nullable\":true,\"metadata\":{}},{\"name\":\"state\",\"type\":\"string\",\"nullable\":true,\"metadata\":{}},{\"name\":\"timestamp\",\"type\":\"long\",\"nullable\":true,\"metadata\":{}}]}"
