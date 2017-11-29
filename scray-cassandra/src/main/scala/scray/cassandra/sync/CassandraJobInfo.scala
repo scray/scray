@@ -48,7 +48,7 @@ class CassandraJobInfo(
   
   val statementGenerator = CassandraUtils
 
-  def getLock(dbSession: DbSession[Statement, Insert, ResultSet]): LockApi[Statement, Insert, ResultSet] = {
+  def getLock(dbSession: DbSession[Statement, Insert, ResultSet, _]): LockApi[Statement, Insert, ResultSet] = {
      this.lock = this.lock.orElse {
       val table = JobLockTable("SILIDX", "JobSync")
 

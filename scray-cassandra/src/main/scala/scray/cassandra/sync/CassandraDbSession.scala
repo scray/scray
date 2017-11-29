@@ -29,7 +29,7 @@ import scray.querying.sync.{DbSession, StatementExecutionError}
 
 import scala.util.{Failure, Success, Try}
 
-class CassandraDbSession(val cassandraSession: Session) extends DbSession[Statement, Insert, ResultSet](cassandraSession.getCluster.getMetadata.getAllHosts().iterator().next.getAddress.toString) with LazyLogging{
+class CassandraDbSession(val cassandraSession: Session) extends DbSession[Statement, Insert, ResultSet, String](cassandraSession.getCluster.getMetadata.getAllHosts().iterator().next.getAddress.toString) with LazyLogging{
   
   def this(host: String) = {
     this(Cluster.builder().addContactPoint(host).build().connect())

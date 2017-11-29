@@ -52,7 +52,7 @@ import scala.util.Try
  * Also other ordinal attributes can be use.
  */
 class StartTimeDetector(job: JobInfo[Statement, Insert, ResultSet],
-                        dbSession: DbSession[Statement, Insert, ResultSet]) extends LazyLogging {
+                        dbSession: DbSession[Statement, Insert, ResultSet, _]) extends LazyLogging {
 
   val startConsensusTable = new Table("silidx", "startconsensus", new StartConsensusRow)
   var valueAlreadySet = false

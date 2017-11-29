@@ -17,5 +17,5 @@ package scray.loader.configparser
 import scray.querying.sync.DbSession
 
 trait UpdatetableConfiguration {
-  def updateConfiguration(config: ScrayConfiguration): Option[DbSession[_, _, _]]
+  def updateConfiguration(config: ScrayConfiguration): Option[DbSession[_, _, _, _]]
 }

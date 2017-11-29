@@ -93,7 +93,7 @@ class ScrayLoaderQuerySpace(name: String, config: ScrayConfiguration, qsConfig: 
   /**
    * return a generator for the given named dbms
    */
-  private def getGenerator(dbmsId: String, session: DbSession[_, _, _]) = {
+  private def getGenerator(dbmsId: String, session: DbSession[_, _, _, _]) = {
     generators.get(dbmsId).getOrElse {
       val generator = storeConfig.getStoreGenerator(dbmsId, session, name, futurePool)
       generators += ((dbmsId, generator))

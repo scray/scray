@@ -30,7 +30,7 @@ import scray.querying.sync.DbSession
 /**
  * Generators for Scray store abstractions for Cassandra
  */
-class CassandraStoreGenerators(dbID: String, session: DbSession[_, _, _], 
+class CassandraStoreGenerators(dbID: String, session: DbSession[_, _, _, _], 
     cassSessionHandler: CassandraSessionHandler, futurePool: FuturePool)(
         implicit typeMaps: Map[String, CassandraPrimitive[_]]) extends StoreGenerators with LazyLogging {
   

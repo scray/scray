@@ -35,13 +35,13 @@ import scray.jdbc.sync.JDBCDbSession
  */
 class ScrayStores(startConfig: ScrayConfiguration) extends LazyLogging {
   
-  type SessionChangeListener = (String, DbSession[_, _, _]) => Unit
+  type SessionChangeListener = (String, DbSession[_, _, _, _]) => Unit
   
   private val storeConfigs: HashMap[String, DBMSConfiguration[_ <: DBMSConfigProperties]] = new HashMap[String, DBMSConfiguration[_ <: DBMSConfigProperties]]
-  private val storeSessions: HashMap[String, DbSession[_, _, _]] = new HashMap[String, DbSession[_, _, _]]
+  private val storeSessions: HashMap[String, DbSession[_, _, _, _]] = new HashMap[String, DbSession[_, _, _, _]]
   private val sessionChangeListeners: ArrayBuffer[SessionChangeListener] = new ArrayBuffer[SessionChangeListener]
   
-  def getSessionForStore(dbmsId: String): Option[DbSession[_, _, _]] = storeSessions.get(dbmsId).orElse {
+  def getSessionForStore(dbmsId: String): Option[DbSession[_, _, _, _]] = storeSessions.get(dbmsId).orElse {
     storeConfigs.get(dbmsId).map { sc =>
       val sess = sc.getSession
       storeSessions += ((dbmsId, sess))
@@ -84,7 +84,7 @@ class ScrayStores(startConfig: ScrayConfiguration) extends LazyLogging {
 
   val cassandraSessionHandler = new CassandraSessionHandler
   
-  def getStoreGenerator(dbId: String, session: DbSession[_, _, _], queryspace: String, futurePool: FuturePool): StoreGenerators = { 
+  def getStoreGenerator(dbId: String, session: DbSession[_, _, _, _], queryspace: String, futurePool: FuturePool): StoreGenerators = { 
     storeConfigs.get(dbId).map { config => config match {
 //      case hdfsConfig: HDFSConfiguration =>
 //        
@@ -119,7 +119,7 @@ abstract class DBMSConfiguration[T <: DBMSConfigProperties](protected val startc
   
   def performUpdateTasks(): Unit
   
-  override def updateConfiguration(configUpdate: ScrayConfiguration): Option[DbSession[_, _, _]] = {
+  override def updateConfiguration(configUpdate: ScrayConfiguration): Option[DbSession[_, _, _, _]] = {
     if(config.isEmpty) {
       // TODO: re-read in case of previously erasing the config -> i.e. probably we need to make it new...
       throw new UnsupportedOperationException("re-reading the config is not supported in case of previously erasing it")      
@@ -135,5 +135,5 @@ abstract class DBMSConfiguration[T <: DBMSConfigProperties](protected val startc
     }
   }
   
-  def getSession: DbSession[_, _, _]
+  def getSession: DbSession[_, _, _, _]
 }

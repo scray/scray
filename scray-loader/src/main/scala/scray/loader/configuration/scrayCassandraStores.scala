@@ -91,7 +91,7 @@ class CassandraClusterConfiguration(override protected val startconfig: Cassandr
     }.toOption
   }
   
-  override def getSession: DbSession[_, _, _] = {
+  override def getSession: DbSession[_, _, _, _] = {
     val session = getCassandraCluster.map { _.connect() }.get
     new CassandraDbSession(session)
   }

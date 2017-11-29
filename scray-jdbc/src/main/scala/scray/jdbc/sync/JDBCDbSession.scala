@@ -54,7 +54,7 @@ class JDBCDbSession(val ds: HikariDataSource, val metadataConnection: Connection
     )
   }
   
-  def getConnectionInformations: Option[JdbcProfile] = {
+  override def getConnectionInformations: Option[JdbcProfile] = {
     
     None
   }
