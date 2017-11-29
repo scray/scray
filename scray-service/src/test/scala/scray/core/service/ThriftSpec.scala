@@ -38,12 +38,12 @@ class ThriftSpec
   // prepare back end (query engine) mock
   val mockplanner = mock[(Query) => Spool[Row]]
   object MockedSpoolRack extends TimedSpoolRack(planAndExecute = mockplanner)
-  when(mockplanner(anyObject())).thenReturn(spool1.get)
+  when(mockplanner(anyObject())).thenReturn(Await.result(spool1))
 
   // prepare finagle
   object TestService extends ScrayStatefulTServiceImpl(MockedSpoolRack)
-  val server = Thrift.serveIface(inetAddr2EndpointString(SCRAY_QUERY_LISTENING_ENDPOINT), TestService)
-  val client = Thrift.newIface[ScrayStatefulTService.FutureIface](inetAddr2EndpointString(SCRAY_QUERY_HOST_ENDPOINT))
+  val server = Thrift.server.serveIface(inetAddr2EndpointString(SCRAY_QUERY_LISTENING_ENDPOINT), TestService)
+  val client = Thrift.client.newIface[ScrayStatefulTService.FutureIface](inetAddr2EndpointString(SCRAY_QUERY_HOST_ENDPOINT))
 
   before {
     // register kryo serializers

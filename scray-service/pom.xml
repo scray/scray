@@ -1,4 +1,5 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<parent>
 		<groupId>org.scray</groupId>
 		<artifactId>scray-parent</artifactId>
@@ -12,7 +13,7 @@
 	<description>scray remote query service interface</description>
 
 	<properties>
-		<scrooge.version>4.18.0</scrooge.version>
+		<scrooge.version>4.16.0</scrooge.version>
 	</properties>
 
 	<distributionManagement>
@@ -43,6 +44,12 @@
 			<groupId>org.scray</groupId>
 			<artifactId>scray-querying</artifactId>
 			<version>0.10.1-SNAPSHOT</version>
+			<exclusions>
+				<exclusion>
+					<groupId>com.twitter</groupId>
+					<artifactId>scrooge-runtime</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>org.parboiled</groupId>
@@ -61,9 +68,34 @@
 			<version>${scrooge.version}</version>
 		</dependency>
 		<dependency>
+			<groupId>org.apache.thrift</groupId>
+			<artifactId>libthrift</artifactId>
+			<version>0.8.0</version>
+		</dependency>
+		<dependency>
 			<groupId>com.twitter</groupId>
 			<artifactId>chill_${scala.suffix}</artifactId>
 			<version>0.8.0</version>
+		</dependency>
+		<dependency>
+			<groupId>com.twitter</groupId>
+			<artifactId>util-core_${scala.suffix}</artifactId>
+			<version>6.43.0</version>
+		</dependency>
+		<dependency>
+			<groupId>com.twitter</groupId>
+			<artifactId>util-codec_${scala.suffix}</artifactId>
+			<version>6.43.0</version>
+		</dependency>
+		<dependency>
+			<groupId>com.twitter</groupId>
+			<artifactId>finagle-core_${scala.suffix}</artifactId>
+			<version>6.44.0</version>
+		</dependency>
+		<dependency>
+			<groupId>com.twitter</groupId>
+			<artifactId>finagle-thrift_${scala.suffix}</artifactId>
+			<version>6.44.0</version>
 		</dependency>
 		<dependency>
 			<groupId>com.twitter</groupId>
@@ -73,18 +105,15 @@
 		<dependency>
 			<groupId>com.twitter</groupId>
 			<artifactId>storehaus-memcache_${scala.suffix}</artifactId>
-			<version>0.13.0</version>
+			<version>0.15.0</version>
 			<exclusions>
 				<exclusion>
-					<artifactId>libthrift</artifactId>
-					<groupId>org.apache.thrift</groupId>
-				</exclusion>
-				<exclusion>
-					<artifactId>finagle-core_${scala.suffix}</artifactId>
+					<artifactId>finagle-core_2.11</artifactId>
 					<groupId>com.twitter</groupId>
 				</exclusion>
 			</exclusions>
 		</dependency>
+
 		<dependency>
 			<groupId>org.xerial.snappy</groupId>
 			<artifactId>snappy-java</artifactId>
@@ -99,8 +128,8 @@
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>2.5.1</version>
 				<configuration>
-					<source>1.8</source>
-					<target>1.8</target>
+					<source>${maven.compiler.source}</source>
+					<target>${maven.compiler.target}</target>
 					<fork>true</fork>
 					<meminitial>128m</meminitial>
 					<maxmem>512m</maxmem>
@@ -111,7 +140,7 @@
 				<groupId>com.twitter</groupId>
 				<artifactId>scrooge-maven-plugin</artifactId>
 				<!-- this version must match the version from scrooge-gen.ivy.xml -->
-				<version>3.14.1</version>
+				<version>4.16.0</version>
 				<configuration>
 					<language>scala</language>
 					<!-- default is scala, can also be java -->

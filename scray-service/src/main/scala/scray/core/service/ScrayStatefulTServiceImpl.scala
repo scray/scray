@@ -38,7 +38,7 @@ import scray.core.service.spools.TSpoolRack
 import com.typesafe.scalalogging.LazyLogging
 
 object ScrayStatefulTServiceImpl {
-  def apply() = new ScrayStatefulTServiceImpl(TSpoolRack)
+  def apply(): ScrayStatefulTServiceImpl  = new ScrayStatefulTServiceImpl(TSpoolRack)
 }
 
 class ScrayStatefulTServiceImpl(val rack : SpoolRack) extends ScrayStatefulTService.FutureIface with LazyLogging {

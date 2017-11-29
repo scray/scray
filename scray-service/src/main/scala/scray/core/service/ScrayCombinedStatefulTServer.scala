@@ -38,6 +38,11 @@ import scray.service.qservice.thrifscala.ScrayTServiceEndpoint
 import scray.core.service.properties.ScrayServicePropertiesRegistration
 import scray.service.qmodel.thrifscala.ScrayUUID
 import com.typesafe.scalalogging.LazyLogging
+import org.apache.thrift.protocol.TBinaryProtocol
+import com.twitter.finagle.builder.ServerBuilder
+import com.twitter.finagle.http._
+import org.apache.thrift.transport.TSocket
+import com.twitter.finagle.thrift.ThriftServerFramedCodec
 
 abstract class ScrayCombinedStatefulTServer extends KryoPoolRegistration with App with LazyLogging {
   // abstract functions to be customized
@@ -55,7 +60,7 @@ abstract class ScrayCombinedStatefulTServer extends KryoPoolRegistration with Ap
   initializeResources
 
   // launch combined service
-  val server = Thrift.serveIface(SCRAY_QUERY_LISTENING_ENDPOINT, ScrayCombinedStatefulTServiceImpl())
+  val server = Thrift.server.serveIface(SCRAY_QUERY_LISTENING_ENDPOINT, ScrayCombinedStatefulTServiceImpl())
   def getVersion: String = "0.9.2"
 
   // endpoint registration refresh timer
@@ -100,7 +105,7 @@ abstract class ScrayCombinedStatefulTServer extends KryoPoolRegistration with Ap
   private def getClient(seedAddr: String): ScrayCombinedStatefulTService.FutureIface = {
     client.getOrElse {
       logger.info("Initializing thrift-client ")
-      val clientIface = Thrift.newIface[ScrayCombinedStatefulTService.FutureIface](seedAddr)
+      val clientIface = Thrift.client.newIface[ScrayCombinedStatefulTService.FutureIface](seedAddr)
       client = Some(clientIface)
       clientIface
     }

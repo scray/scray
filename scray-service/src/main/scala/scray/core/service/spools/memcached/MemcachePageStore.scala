@@ -4,7 +4,7 @@ import scala.util.Try
 import org.jboss.netty.buffer.ChannelBuffer
 import com.twitter.bijection.Injection
 import com.twitter.bijection.netty.ChannelBufferBijection
-import com.twitter.finagle.memcachedx.Client
+import com.twitter.finagle.memcached.Client
 import com.twitter.storehaus.ConvertedStore
 import com.twitter.storehaus.memcache.MemcacheStore
 import com.twitter.util.Duration

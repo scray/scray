@@ -43,7 +43,7 @@ class MemcachedPagesSpec
 
   // prepare back end (query engine) mock
   val mockplanner = mock[(Query) => Spool[Row]]
-  when(mockplanner(anyObject())).thenReturn(spoolOf8.get)
+  when(mockplanner(anyObject())).thenReturn(Await.result(spoolOf8))
 
   // prepare query related objects
   val tquery : ScrayTQuery = createTQuery(pagesize = PGSZ, buff = kryoStrbuff, expr = "SELECT @col1 FROM @myTableId")
@@ -57,7 +57,7 @@ class MemcachedPagesSpec
     val key0 = PageKey(updQInf.queryId.get, 0)
     // need to wait until pages are available in cache, otherwise we'll receive None
     try { Thread.sleep(50) } catch { case ex : InterruptedException => Thread.currentThread().interrupt() }
-    val blockingPageValOption = rack.getPage(key0).get()
+    val blockingPageValOption = Await.result(rack.getPage(key0))
     println(s"PageKey:$key0 (${pidKeyEncoder(key0)}) PageValue:$blockingPageValOption")
     blockingPageValOption.get.page.nonEmpty should be(true)
   }

@@ -79,11 +79,11 @@ class ScrayConfigurationParser(override val input: ParserInput) extends ScrayGen
    */
   def InputLine: Rule1[ScrayConfiguration] = rule { ConfigModel ~ EOI }
 
-  def ConfigModel: Rule1[ScrayConfiguration] = rule { ServiceOptions ~ oneOrMore(Datastores) ~ ConfigurationLocations ~> { 
+  def ConfigModel: Rule1[ScrayConfiguration] = rule { zeroOrMore(Comment) ~ ServiceOptions ~ zeroOrMore(Comment) ~ oneOrMore(Datastores) ~ ConfigurationLocations ~> { 
     (serviceoptions: ScrayServiceOptions, stores: Seq[DBMSConfigProperties], urls: Seq[ScrayQueryspaceConfigurationURL]) => 
       ScrayConfiguration(serviceoptions, stores, urls) }}
   
-  def Datastores: Rule1[DBMSConfigProperties] = rule { "connection" ~ optional(Identifier) ~ StoreTypes ~> {
+  def Datastores: Rule1[DBMSConfigProperties] = rule { zeroOrMore(Comment) ~ "connection" ~ optional(Identifier) ~ StoreTypes ~ zeroOrMore(Comment) ~> {
     (name: Option[String], dbmsproperties: DBMSConfigProperties) => dbmsproperties.setName(name) }}
   
   def StoreTypes: Rule1[DBMSConfigProperties] = rule {  CassandraStoreConnection | JDBCStoreConnection | HDFSStoreConnection }
@@ -164,11 +164,11 @@ class ScrayConfigurationParser(override val input: ParserInput) extends ScrayGen
   
   /* -------------------------------- Queryspaces configuration location rules ----------------------------------- */
   
-  def ConfigurationLocations: Rule1[Seq[ScrayQueryspaceConfigurationURL]] = rule { "queryspacelocations" ~ BRACE_OPEN ~ 
-    oneOrMore(ConfigurationLocationSetting).separatedBy(COMMA) ~ BRACE_CLOSE} 
+  def ConfigurationLocations: Rule1[Seq[ScrayQueryspaceConfigurationURL]] = rule { zeroOrMore(Comment) ~ "queryspacelocations" ~ BRACE_OPEN ~ 
+    oneOrMore(ConfigurationLocationSetting).separatedBy(COMMA) ~ BRACE_CLOSE ~ zeroOrMore(Comment)} 
 
   def ConfigurationLocationSetting: Rule1[ScrayQueryspaceConfigurationURL] =
-    rule { "url" ~ QuotedString ~ optional("reload" ~ ConfigurationLocationAutoreload) ~> { 
+    rule { zeroOrMore(Comment) ~ "url" ~ QuotedString ~ optional("reload" ~ ConfigurationLocationAutoreload) ~ zeroOrMore(Comment) ~> { 
       (url: String, autoreload: Option[ScrayQueryspaceConfigurationURLReload]) => 
           ScrayQueryspaceConfigurationURL(url, autoreload.getOrElse(ScrayQueryspaceConfigurationURLReload())) }}
   def ConfigurationLocationAutoreload: Rule1[ScrayQueryspaceConfigurationURLReload] = 
@@ -232,7 +232,7 @@ class ScrayConfigurationParser(override val input: ParserInput) extends ScrayGen
   def ServiceLifetime: Rule1[ScrayEndpointLifetime] = rule { "lifetime" ~ DurationRule ~> { (duration: Duration) => ScrayEndpointLifetime(duration) }}
   def ServiceWriteDot: Rule1[ScrayServiceWriteDot] = rule { "writeDot" ~ BooleanRule ~> { (bool: Boolean) => ScrayServiceWriteDot(bool) }}
 
-  def HostList: Rule1[Seq[String]] = rule { "hosts" ~ "(" ~ oneOrMore(QuotedString).separatedBy(COMMA) ~ ")" }
+  def HostList: Rule1[Seq[String]] = rule { "hosts" ~ "(" ~ oneOrMore(QuotedString).separatedBy(COMMA) ~ ")" ~ zeroOrMore(Comment) }
   def HostPort: Rule1[Int] = rule { "port" ~ IntNumber }
   def HostAddressList: Rule1[Seq[InetAddress]] = rule { HostList ~> { (hosts: Seq[String]) => 
     hosts.map(host => InetAddress.getByName(host)) }}
@@ -269,6 +269,7 @@ object ScrayConfigurationParser extends LazyLogging {
     logError match {
       case true => parseResult.recoverWith { case e: ParseError =>
         val msg = parser.formatError(e)
+        println(s"Parse error parsing configuration file. Message from parser is $msg", e)
         logger.error(s"Parse error parsing configuration file. Message from parser is $msg", e)
         Failure(e)
       }

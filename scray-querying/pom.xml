@@ -14,7 +14,6 @@
 
 	<modelVersion>4.0.0</modelVersion>
 
-
 	<properties>
 		<maven-bundle-plugin.version>3.0.1</maven-bundle-plugin.version>
 	</properties>

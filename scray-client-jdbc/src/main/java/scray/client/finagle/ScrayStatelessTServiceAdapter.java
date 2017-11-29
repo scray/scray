@@ -5,6 +5,7 @@ import java.sql.SQLException;
 import scray.service.qmodel.thriftjava.ScrayTQuery;
 import scray.service.qmodel.thriftjava.ScrayUUID;
 import scray.service.qservice.thriftjava.ScrayStatelessTService;
+import scray.service.qservice.thriftjava.ScrayStatelessTService.ServiceIface;
 import scray.service.qservice.thriftjava.ScrayTResultFrame;
 
 import com.twitter.finagle.Thrift;
@@ -17,14 +18,14 @@ public class ScrayStatelessTServiceAdapter implements ScrayTServiceAdapter {
 	// adapter keeps paging state
 	private int pageIndex = 0;
 
-	protected ScrayStatelessTService.FutureIface client;
+	protected ScrayStatelessTService.ServiceIface client;
 	private String endpoint;
 
-	public ScrayStatelessTService.FutureIface getClient() {
+	public ServiceIface getClient() {
 		// lazy init
 		if (client == null) {
-			client = Thrift.newIface(endpoint,
-					ScrayStatelessTService.FutureIface.class);
+			client = Thrift.client().newIface(endpoint,
+					ScrayStatelessTService.ServiceToClient.class);
 		}
 		return client;
 	}

@@ -6,6 +6,11 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
+import com.twitter.finagle.Thrift;
+import com.twitter.util.Await;
+import com.twitter.util.Function;
+import com.twitter.util.Future;
+
 import scala.runtime.BoxedUnit;
 import scray.service.qmodel.thriftjava.ScrayTColumnInfo;
 import scray.service.qmodel.thriftjava.ScrayTQuery;
@@ -16,18 +21,12 @@ import scray.service.qmodel.thriftjava.ScrayUUID;
 import scray.service.qservice.thriftjava.ScrayStatelessTService;
 import scray.service.qservice.thriftjava.ScrayTResultFrame;
 
-import com.twitter.finagle.Thrift;
-import com.twitter.scrooge.Option;
-import com.twitter.util.Await;
-import com.twitter.util.Function;
-import com.twitter.util.Future;
-
 public class FinagleTestClient {
 
 	public static void main(String[] args) throws Exception {
 
-		ScrayStatelessTService.FutureIface client = Thrift.newIface(
-				"localhost:18181", ScrayStatelessTService.FutureIface.class);
+		ScrayStatelessTService.ServiceIface client = Thrift.client().newIface(
+				"localhost:18181", ScrayStatelessTService.ServiceToClient.class);
 
 		// prepare a query
 		List<ScrayTColumnInfo> clist = new LinkedList<ScrayTColumnInfo>();
@@ -37,8 +36,9 @@ public class FinagleTestClient {
 		}
 
 		ScrayTTableInfo tinfo = new ScrayTTableInfo("foo", "bar", "baz");
-		ScrayTQueryInfo qinfo = new ScrayTQueryInfo(Option.<ScrayUUID> none(),
-				"bla", tinfo, clist, Option.make(true, 2), Option.<Long> none());
+	
+		
+		ScrayTQueryInfo qinfo = new ScrayTQueryInfo("bla", tinfo, clist);
 		ScrayTQuery query = new ScrayTQuery(qinfo,
 				new HashMap<String, ByteBuffer>(),
 				"SELECT col1, col2 FROM @baz");

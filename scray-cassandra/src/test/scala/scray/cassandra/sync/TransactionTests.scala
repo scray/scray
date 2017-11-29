@@ -28,13 +28,15 @@ class TransactionTests extends WordSpec {
     "lock job" in {
       val jobInfo = CassandraJobInfo(getNextJobName)
       val table = new OnlineBatchSyncCassandra(dbconnection)
-      table.initJob(jobInfo, new SumTestColumns())
+      table.initJob(jobInfo, new SumTestColumns)
 
       jobInfo.getLock(dbconnection)
       assert(true)
     }
     "lock and unlock " in {
-      val job1 = new CassandraJobInfo(name = getNextJobName, syncConfV = new SyncConfiguration(ConsistencyLevel.LOCAL_SERIAL))
+      val syncConfV1 = new SyncConfiguration
+      syncConfV1.versionUpdateConsitencyLevel = ConsistencyLevel.LOCAL_SERIAL
+      val job1 = new CassandraJobInfo(name = getNextJobName, syncConfV = syncConfV1)
       val table = new OnlineBatchSyncCassandra(dbconnection)
       table.initJob(job1, new SumTestColumns())
 
