@@ -32,7 +32,7 @@ object FacilityStateJob  {
     val conf = new SparkConf().setAppName("Stream: " + this.getClass.getName).setMaster(masterURL)
     val ssc = new StreamingContext(conf, Seconds(seconds))
     
-    val streamingJob = new StreamingJob(ssc, jobInfo)
+    val streamingJob = new StreamingJob(ssc, jobInfo, config)
     streamSetup(ssc, streamingJob, config)
     
     ssc

@@ -20,15 +20,16 @@ import com.typesafe.scalalogging.LazyLogging
 import scray.example.input.db.fasta.model.Facility.TypeEnum
 import scray.example.output.GraphiteWriter
 import org.apache.spark.streaming.Seconds
+import org.scray.example.conf.JobParameter
 
 
 case class Availability(activeCounter: Integer, inactiveCounter: Integer, unknownCounter: Integer)
 
 @SerialVersionUID(1000L)
-class StreamingJob(@transient val ssc: StreamingContext, jobInfo: JobInfo[Statement, Insert, ResultSet]) extends LazyLogging with Serializable {
+class StreamingJob(@transient val ssc: StreamingContext, jobInfo: JobInfo[Statement, Insert, ResultSet], conf: JobParameter) extends LazyLogging with Serializable {
 
   lazy val jsonParser = new JsonFacilityParser
-  lazy val outputOperation = new GraphiteWriter("10.11.22.36")
+  lazy val outputOperation = new GraphiteWriter(conf.graphiteHost)
 
   def runTuple[T <: org.apache.spark.streaming.dstream.DStream[ConsumerRecord[String, String]]](dstream: T) = {
     

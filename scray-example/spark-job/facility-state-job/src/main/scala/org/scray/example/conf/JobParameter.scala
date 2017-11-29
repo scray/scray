@@ -7,10 +7,10 @@ case class JobParameter(
   var master: String  = "yarn-cluster",                             // Spark master URL
   var batch: Boolean = false,
 
-  var graphiteHost: String   =   "10.11.22.36",        
+  var graphiteHost: String   =   "127.0.0.1",        
   var graphitePort: Int      =   2003,
   
-  var kafkaBootstrapServers: String  =  "10.11.22.34:9092",
+  var kafkaBootstrapServers: String  =  "127.0.0.1:9092",
   var kafkaTopic: String             =  "facility",
   
   var windowDuration: String  = "20 seconds",
