@@ -95,6 +95,8 @@ object FacilityStateJob  {
     val spark = SparkSession.builder().appName(this.getClass.getName).getOrCreate()
       
     val configuration = (new ConfigurationReader()).readConfFromHDFS
+    
+    logger.info(s"Job configuration parameters: ${configuration}")
 
 
     val job = new SparkSQLStreamingJob(spark, configuration)

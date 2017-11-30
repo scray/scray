@@ -45,6 +45,12 @@ class YamlConfigurationParser extends LazyLogging {
       } else {
         logger.debug(s"kafkaDataSchemaAsJsonExample not defined use default: ${confObject.kafkaDataSchemaAsJsonExample}")
       }
+      
+      if(yamlData.get("graphiteRetries") != null) {
+        confObject.graphiteRetries = yamlData.get("graphiteRetries").asInstanceOf[Integer]
+      } else {
+        logger.debug(s"graphiteRetries not defined use default: ${confObject.graphiteRetries}")
+      }
 
     } catch {
       case e: YAMLException => {

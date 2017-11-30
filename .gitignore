@@ -60,5 +60,5 @@ buildNumber.properties
 .mvn/timing.properties
 
 # External job libs
-scray-example/spark-job/facility-state-job/lib/
+scray-example/spark-job/facility-state-job/lib/*
 scray-example/spark-job/facility-state-job/bin/*.tgz

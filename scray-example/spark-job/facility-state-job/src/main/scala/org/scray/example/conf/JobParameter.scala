@@ -9,6 +9,7 @@ case class JobParameter(
 
   var graphiteHost: String   =   "127.0.0.1",        
   var graphitePort: Int      =   2003,
+  var graphiteRetries: Int   =   20,              // Number of retries after an connection exception.
   
   var kafkaBootstrapServers: String  =  "127.0.0.1:9092",
   var kafkaTopic: String             =  "facility",

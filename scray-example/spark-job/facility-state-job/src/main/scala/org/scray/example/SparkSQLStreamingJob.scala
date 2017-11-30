@@ -20,7 +20,7 @@ class SparkSQLStreamingJob(spark: SparkSession, conf: JobParameter) {
   def run = {
     import spark.implicits._
 
-    val graphiteWriter = new GraphiteForeachWriter(conf.graphiteHost, conf.graphitePort)
+    val graphiteWriter = new GraphiteForeachWriter(conf.graphiteHost, conf.graphitePort, conf.graphiteRetries)
 
     // Connect to kafa stream
     val kafkaSource = spark.readStream.format("kafka")
