@@ -1,5 +1,8 @@
 #!/bin/bash
 
+
+GRAPHITE_IP=$(getent hosts graphite-host | awk '{ print $1 }')
+sed "s/graphite_/${GRAPHITE_IP}/" Template_Datasource_DEMO_graphite.json | sed "s/id_/${ID}/" > Datasource_DEMO_graphite.json
 curl -X POST  "http://admin:admin@localhost:3001/api/datasources" -d "@./Datasource_DEMO_graphite.json" -H "Content-Type: application/json"
 
 curl -X POST  "http://admin:admin@localhost:3001/api/dashboards/db/" -d "@./Dasboard_null_.json" -H "Content-Type: application/json"
