@@ -2,10 +2,10 @@
   "pipelineConfig" : {
     "schemaVersion" : 5,
     "version" : 7,
-    "pipelineId" : "Bahn3v1copy2b60aa63-c6e0-472f-9ea9-d6007755521e",
-    "title" : "Bahn3-v1b",
+    "pipelineId" : "BahnFacilities",
+    "title" : "BahnFacilities",
     "description" : "",
-    "uuid" : "fdb0f702-be36-4da7-b98c-3b8b8ecc81d9",
+    "uuid" : "216c7269-eee6-4c18-85ce-9b026d5aa56b",
     "configuration" : [ {
       "name" : "executionMode",
       "value" : "STANDALONE"
@@ -711,7 +711,7 @@
         "value" : null
       }, {
         "name" : "conf.metadataBrokerList",
-        "value" : "10.11.22.34:9092"
+        "value" : "kafka-broker-1:9092"
       }, {
         "name" : "conf.runtimeTopicResolution",
         "value" : false
@@ -770,7 +770,7 @@
       "stageVersion" : "4",
       "configuration" : [ {
         "name" : "hdfsTargetConfigBean.hdfsUri",
-        "value" : "hdfs://bdq-cassandra4.seeburger.de:8020/data"
+        "value" : "hdfs://hdfs-namenode:8020/data"
       }, {
         "name" : "hdfsTargetConfigBean.hdfsUser",
         "value" : null
@@ -992,22 +992,22 @@
       "services" : [ ]
     },
     "info" : {
-      "pipelineId" : "Bahn3-v1b",
-      "title" : "Bahn3-v1b",
+      "pipelineId" : "BahnFacilities",
+      "title" : "BahnFacilities",
       "description" : "",
-      "created" : 1510765020663,
-      "lastModified" : 1510910497616,
+      "created" : 1511886108446,
+      "lastModified" : 1512042268087,
       "creator" : "admin",
       "lastModifier" : "admin",
       "lastRev" : "0",
-      "uuid" : "fdb0f702-be36-4da7-b98c-3b8b8ecc81d9",
+      "uuid" : "216c7269-eee6-4c18-85ce-9b026d5aa56b",
       "valid" : true,
       "metadata" : {
         "labels" : [ ]
       },
-      "name" : "Bahn3-v1b",
+      "name" : "BahnFacilities",
       "sdcVersion" : "3.0.0.0",
-      "sdcId" : "e89e8a38-ca09-11e7-8721-0f26e77cbcc4"
+      "sdcId" : "d361bf42-d450-11e7-a3c6-5d61692cd1a1"
     },
     "metadata" : {
       "labels" : [ ]
@@ -1068,9 +1068,9 @@
     } ],
     "valid" : true,
     "issues" : {
-      "issueCount" : 0,
       "stageIssues" : { },
-      "pipelineIssues" : [ ]
+      "pipelineIssues" : [ ],
+      "issueCount" : 0
     },
     "previewable" : true
   },
@@ -1135,7 +1135,7 @@
     } ],
     "dataRuleDefinitions" : [ ],
     "driftRuleDefinitions" : [ ],
-    "uuid" : "626c47f4-aecf-40a2-85ac-309f0703138b",
+    "uuid" : "097b2e98-00bd-4002-a774-18ef3fc98a47",
     "configuration" : [ {
       "name" : "emailIDs",
       "value" : [ ]
