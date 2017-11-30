@@ -1,5 +1,7 @@
 graphiteHost:  graphite-host        
 graphitePort: 2003
+graphiteRetries: 20
+
   
 kafkaBootstrapServers: kafka-broker-1:9092
 kafkaTopic: facility
