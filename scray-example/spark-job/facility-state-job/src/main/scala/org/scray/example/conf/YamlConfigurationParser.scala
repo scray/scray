@@ -14,7 +14,7 @@ class YamlConfigurationParser extends LazyLogging {
     val confObject = new JobParameter
 
     try {
-      
+
       if(yamlData.get("graphiteHost") != null ) {
         confObject.graphiteHost = yamlData.get("graphiteHost")
       } else {
@@ -41,7 +41,7 @@ class YamlConfigurationParser extends LazyLogging {
       }
       
       if(yamlData.get("kafkaDataSchemaAsJsonExample") != null) {
-        confObject.kafkaTopic = yamlData.get("kafkaDataSchemaAsJsonExample")
+        confObject.kafkaDataSchemaAsJsonExample = yamlData.get("kafkaDataSchemaAsJsonExample")
       } else {
         logger.debug(s"kafkaDataSchemaAsJsonExample not defined use default: ${confObject.kafkaDataSchemaAsJsonExample}")
       }
@@ -49,10 +49,10 @@ class YamlConfigurationParser extends LazyLogging {
     } catch {
       case e: YAMLException => {
         logger.error(s"Invalid job parameter yaml:  ${e.getMessage}")
-        Some(confObject)
+         Some(new JobParameter)
       }
     }
 
-    Some(new JobParameter)
+    Some(confObject) 
   }
 }
