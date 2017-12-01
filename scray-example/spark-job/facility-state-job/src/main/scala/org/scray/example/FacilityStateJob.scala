@@ -20,6 +20,7 @@ import org.apache.spark.sql.SparkSession
 import org.scray.example.conf.ConfigurationReader
 import org.scray.example.conf.ConfigurationReader
 import org.scray.example.conf.JobParameter
+import org.scray.example.input.StartTimeReader
 
 object FacilityStateJob  {
   
@@ -98,10 +99,12 @@ object FacilityStateJob  {
     
     logger.info(s"Job configuration parameters: ${configuration}")
 
+    val startTime = new StartTimeReader(configuration.kafkaBootstrapServers, configuration.kafkaTopic).getRecordTimestamp 
+
 
     val job = new SparkSQLStreamingJob(spark, configuration)
     
-    job.run
+    job.run(System.currentTimeMillis())
 
     
       // prepare to checkpoint in order to use some state (updateStateByKey)

@@ -12,14 +12,20 @@ import scray.example.input.db.fasta.model.Facility
 import org.scray.example.output.GraphiteForeachWriter
 import org.apache.spark.sql.types.DataType
 import org.scray.example.conf.JobParameter
+import java.util.Calendar
 
 case class FacilityStateCounter(facilityType: String, state: String, count: Long)
 
 class SparkSQLStreamingJob(spark: SparkSession, conf: JobParameter) {
 
-  def run = {
+  def run(startTime: Long) = {
     import spark.implicits._
 
+    val calStartTime = Calendar.getInstance()
+    calStartTime.setTimeInMillis(startTime)
+    
+    println("ddddddddddddddddddddd")
+    
     val graphiteWriter = new GraphiteForeachWriter(conf.graphiteHost, conf.graphitePort, conf.graphiteRetries)
 
     // Connect to kafa stream
@@ -37,11 +43,13 @@ class SparkSQLStreamingJob(spark: SparkSession, conf: JobParameter) {
       .select("data.type", "data.state", "data.timestamp")
       .select(column("type").alias("facilityType"), $"state", to_timestamp(from_unixtime($"timestamp" / 1000L)) as "timestamp")
 
+      
+      
     // Aggregate data
     val aggregatedFacilityData = facilityElement.
       withWatermark("timestamp", conf.watermark).
       groupBy(
-        window(column("timestamp"), conf.windowDuration, conf.slideDuration),
+        window(column("timestamp"), conf.windowDuration, conf.slideDuration, calStartTime.get(Calendar.SECOND) + " seconds"),
         column("facilityType"),
         column("state")).count().
         select("facilityType", "state", "count")
