@@ -1,4 +1,4 @@
-package scray.hdfs.index.format
+package scray.hdfs.index.format.sequence
 
 import org.scalatest.WordSpec
 import org.apache.hadoop.fs.FileSystem
@@ -102,7 +102,7 @@ class SequenceFileWriterSpecs extends WordSpec with LazyLogging {
     }
     " print keys " taggedAs (RequiresHDFS) in {
 
-      val idxReader = new IdxReader("hdfs://10.11.22.41:8020/bdq-blob/.idx")
+      val idxReader = new IdxReader("hdfs://192.168.0.201:8020/bdq-blob/.idx")
 
       while (idxReader.hasNext) {
         val idx = idxReader.next()

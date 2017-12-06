@@ -78,6 +78,24 @@ class SequenceFileWriter(path: String, hdfsConf: Configuration = new Configurati
     dataWriter.append(key, new BytesWritable(data));
   }
   
+  def insert(id: String, updateTime: Long, data: String): Unit = {
+
+    if(dataWriter == null) { // scalastyle:off null
+      dataWriter =  initWriter(key, new BytesWritable(), fs.getOrElse(FileSystem.get(hdfsConf)), ".blob")
+    }
+    
+    if(idxWriter == null) { // scalastyle:off null
+      idxWriter = initWriter(key, idxValue, fs.getOrElse(FileSystem.get(hdfsConf)), ".idx")
+    }
+      
+    // Write idx
+    key.set(id) 
+    idxWriter.append(key, new IndexValue(key.toString(), updateTime, dataWriter.getLength))
+    
+    // Write data
+    dataWriter.append(key,  new BytesWritable(data.getBytes))
+  }
+  
   def close: Unit = {
     IOUtils.closeStream(dataWriter);
     IOUtils.closeStream(idxWriter);

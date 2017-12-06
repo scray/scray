@@ -31,7 +31,7 @@ import org.slf4j.LoggerFactory
 class ORCFileWriter(batchSize: Int = 10000) extends scray.hdfs.index.format.Writer {
 
   private var writer: Writer = null; // To write orc files to HDFS
-  val schema: TypeDescription = TypeDescription.fromString("struct<id:string,time:Int,data:binary>");
+  val schema: TypeDescription = TypeDescription.fromString("struct<id:string,time:bigint,data:binary>");
   private var batch: VectorizedRowBatch = null;
 
   val log = LoggerFactory.getLogger("scray.hdfs.index.format.orc.OrcWriter");
