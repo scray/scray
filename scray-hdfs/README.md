@@ -3,7 +3,7 @@
 Store to read key value pairs from SequenceFile
 
 ## Configuration parameters
-* `store.conf` File.  
+* `store.conf`  
    Defines URL to blob and idx data. 
 
    ```
@@ -12,14 +12,14 @@ Store to read key value pairs from SequenceFile
    }
    ```
 
-* `~/scray-conf/queryspace.scray` File
+* `~/scray-conf/queryspace.scray` File 
     Define queryspace with name 000
     ```
 	name 000 version 1
 	table { hdfscluster, "testblobs", "ExampleData" }
   ```  
     
-##Write Data
+## Write Data
 
 In this example we write 100 key value pairs in one SequenceFile.
 
@@ -40,7 +40,7 @@ object WriteExampleSequenceFile {
   }
 ```
 
-This example can be found in `scray-hdfs-writer/src/main/scala/scray/hdfs/index/format/example/WriteExampleSequenceFile.scala`
+This example can be found in `scray-hdfs-writer/src/main/scala/scray/hdfs/index/format/example/WriteExampleSequenceFile.scala` 
 To execute this example
 
 ```
@@ -52,7 +52,7 @@ java -cp "scray-loader/target/lib/*:scray-hdfs-writer/target/scray-hdfs-writer-0
 java -cp "scray-loader/target/lib/*:scray-loader/target/scray-loader-0.10.1-SNAPSHOT.jar" scray.loader.ScrayStandaloneService --config ~/scray-conf/store.conf
 ```
 
-## Query data 
+## Query data with CLI
 
 Query data with id 'key_42' from dataset ExampleData 
 
