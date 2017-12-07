@@ -18,5 +18,12 @@ case class JobParameter(
   var slideDuration: String   = "20 seconds",
   var watermark: String       = "0 milliseconds",
   
-  var kafkaDataSchemaAsJsonExample: String = """{"type":"struct","fields":[{"name":"type","type":"string","nullable":true,"metadata":{}},{"name":"state","type":"string","nullable":true,"metadata":{}},{"name":"timestamp","type":"long","nullable":true,"metadata":{}}]}"""
+  var kafkaDataSchemaAsJsonExample: String = """{"type":"struct","fields":[{"name":"type","type":"string","nullable":true,"metadata":{}},{"name":"state","type":"string","nullable":true,"metadata":{}},{"name":"timestamp","type":"long","nullable":true,"metadata":{}}]}""",
+
+  var checkpointPath: String        = "hdfs://hdfs-namenode:8020/checkpoints-facility-state-job/",
+  var sparkBatchSize: Int           = 20,
+  var numberOfBatchVersions: Int    = 2,
+  var numberOfOnlineVersions: Int   = 1
+  
+  
 )

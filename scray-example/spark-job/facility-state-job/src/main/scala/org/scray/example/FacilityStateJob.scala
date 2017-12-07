@@ -88,33 +88,26 @@ object FacilityStateJob  {
     
     //logger.error(s"Using HDFS-URL=${config.hdfsDStreamURL} and Kafka-URL=${config.kafkaDStreamURL}")
     //val syncTable = new OnlineBatchSyncCassandra(config.cassandraHost.getOrElse("127.0.0.1"))
-    //val jobInfo = new CassandraJobInfo("facility-state-job", config.numberOfBatchVersions, config.numberOfOnlineVersions)
+    val jobInfo = new CassandraJobInfo("facility-state-job", config.numberOfBatchVersions, config.numberOfOnlineVersions)
     //if(syncTable.startNextOnlineJob(jobInfo).isSuccess) {
-     // val ssc = StreamingContext.getOrCreate(config.checkpointPath, setupSparkStreamingConfig(config.master, config.seconds, jobInfo, config))
-     // ssc.checkpoint(config.checkpointPath)
-    
-    val spark = SparkSession.builder().appName(this.getClass.getName).getOrCreate()
+    val ssc = StreamingContext.getOrCreate(config.checkpointPath, setupSparkStreamingConfig(config.master, config.sparkBatchSize, jobInfo, config))
+    ssc.checkpoint(config.checkpointPath)
+    val streamingJob = new StreamingJob(ssc, jobInfo, config)
+    val dstream = streamSetup(ssc, streamingJob, config)
+    //val spark = SparkSession.builder().appName(this.getClass.getName).getOrCreate()
       
     val configuration = (new ConfigurationReader()).readConfFromHDFS
     
     logger.info(s"Job configuration parameters: ${configuration}")
 
-    val startTime = new StartTimeReader(configuration.kafkaBootstrapServers, configuration.kafkaTopic).getRecordTimestamp 
-
-
-    val job = new SparkSQLStreamingJob(spark, configuration)
-    
-    job.run(System.currentTimeMillis())
-
-    
       // prepare to checkpoint in order to use some state (updateStateByKey)
-      //ssc.start()
+      ssc.start()
       // TODO: write out zk information for closing this app  
       // log out random port to connect to
       // TODO: remove code to insert data
      // streamSomeBatches(ssc)
   
-      //ssc.awaitTermination()
+      ssc.awaitTermination()
     //} else {
     //  logger.error("Streaming table locked")
     //}
