@@ -12,7 +12,7 @@ Store to read key value pairs from SequenceFile
    }
    ```
 
-* `~/scray-conf/queryspace.scray` File 
+* `~/scray-conf/queryspace.scray` 
     Define queryspace with name 000
     ```
 	name 000 version 1
