@@ -7,8 +7,9 @@ import java.util.Timer
 import java.util.concurrent.locks.ReentrantLock
 import java.util.TimerTask
 import org.apache.hadoop.fs.LocatedFileStatus
+import com.typesafe.scalalogging.LazyLogging
 
-class IndexFilenameStructure(fs: FileSystem, directory: String, updateInterval: Long = 600000L) extends ScrayIndexFilesDirectoryStructure {
+class IndexFilenameStructure(fs: FileSystem, directory: String, updateInterval: Long = 600000L) extends ScrayIndexFilesDirectoryStructure with LazyLogging {
   import IndexFilenameStructure.FileTypes._
 
   val lock = new ReentrantLock
@@ -70,6 +71,7 @@ class IndexFilenameStructure(fs: FileSystem, directory: String, updateInterval: 
             case str: String if str.endsWith(INDEX.toString) => checkAndInsert(file, INDEX)
             case str: String if str.endsWith(BLOOM.toString) => checkAndInsert(file, BLOOM)
             case str: String if str.endsWith(BLOB.toString) => checkAndInsert(file, BLOB)
+            case str: String => logger.debug(s"Ignore non scray file: ${str}. Scray files use sufix .${INDEX}, .${BLOOM} or .${BLOB} ")
           }
         }
       }
