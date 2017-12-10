@@ -1,8 +1,10 @@
 package org.scray.example.cli
 
-import scopt.OptionParser
-import com.typesafe.scalalogging.LazyLogging
 import org.scray.example.conf.JobParameter
+
+import com.typesafe.scalalogging.LazyLogging
+
+import scopt.OptionParser
 
 /**
  * This class is designed to handle options coming from CLI
@@ -12,49 +14,26 @@ object Options extends LazyLogging {
   /**
    * Parser to parse CLI args
    */
-  val parser = new OptionParser[JobParameter]("facility-state-job") {
+  val parser = new OptionParser[CliParameters]("facility-state-job") {
     head("facility-state-job", "1.0-SNAPSHOT")
     opt[Unit]('b', "batch").optional() action { (x, c) =>
       c.copy(batch = true) } text("provide URL to Kafka Broker if sourcing from Kafka is desired")
-    opt[String]('t', "kafka-topics").optional() action { (x, c) =>
-      c.copy(kafkaTopic = x) } text("provide URL to Kafka Broker if sourcing from Kafka is desired")
-    opt[String]('m', "master").optional() required() action { (x, c) =>
-      c.copy(master = x) } text("provide URL to Spark master")
-    opt[String]('g', "graphite hostname").optional() action { (x, c) =>
-      c.copy(graphiteHost = x) } text("hostname of graphite data sink. E.g. 127.0.0.1 (default: None)")
+    opt[String]('m', "master").optional() action { (x, c) =>
+      c.copy(sparkMaster = x) } text("provide URL to Spark master")
+    opt[String]('c', "conf").optional() action { (x, c) =>
+      c.copy(confFilePath = Some(x)) } text("job configuration yaml")
   }
   
   /**
    * parse the arguments and return Config
    */
-  def parse(args: Array[String]): Option[JobParameter] = {
-//    val config = parser.parse(args, Config("master"))
-//    config.flatMap { conf => 
-//    val Config(master, batch) = conf
-//      if(!batch) {
-//        kafkaDStreamURL.flatMap { kafka => 
-//          if(kafkaTopic.isDefined) {
-//            config
-//          } else {
-//            println("No kafka topic defined")
-//            None
-//          }
-//        }.orElse {
-//          if(hdfsDStreamURL.isDefined) {
-//            config  
-//          } else {
-//            println("No hdfs url defined")
-//            None
-//          }
-//        }
-//      } else {
-//        println("Batch job")
-//        config
-//      }
-//    }
+  def parse(args: Array[String]): Option[CliParameters] = {
+    val config = parser.parse(args, CliParameters())
+    config.flatMap { conf => 
+    val CliParameters(batch, sparkMaster, checkpointPath) = conf
+      config
+    }
     
-//    config
-    
-    Some(JobParameter())
+    config
   }
 }

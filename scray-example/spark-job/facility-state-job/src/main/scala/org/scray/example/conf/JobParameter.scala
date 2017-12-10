@@ -4,7 +4,7 @@ package org.scray.example.conf
  * container class for command line arguments. Change this along with the command line parser.
  */
 case class JobParameter(
-  var master: String  = "yarn-cluster",                             // Spark master URL
+  var sparkMaster: String  = "yarn-cluster",                             // Spark master URL
   var batch: Boolean = false,
 
   var graphiteHost: String   =   "127.0.0.1",        
