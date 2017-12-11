@@ -1,4 +1,5 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
 	<artifactId>scray-querying</artifactId>
 	<name>Scray - Querying</name>
@@ -12,7 +13,6 @@
 	</parent>
 
 	<modelVersion>4.0.0</modelVersion>
-
 
 	<properties>
 		<maven-bundle-plugin.version>3.0.1</maven-bundle-plugin.version>
@@ -83,7 +83,7 @@
 		</dependency>
 		<dependency>
 			<groupId>com.chuusai</groupId>
-			<artifactId>shapeless_${scala.suffix}.4</artifactId>
+			<artifactId>shapeless_${scala.suffix}</artifactId>
 			<version>2.0.0</version>
 		</dependency>
 		<dependency>
@@ -100,6 +100,11 @@
 			<groupId>org.scalaz</groupId>
 			<artifactId>scalaz-core_${scala.suffix}</artifactId>
 			<version>7.2.2</version>
+		</dependency>
+		<dependency>
+			<groupId>org.yaml</groupId>
+			<artifactId>snakeyaml</artifactId>
+			<version>1.18</version>
 		</dependency>
 	</dependencies>
 

@@ -24,7 +24,7 @@ import scalax.collection.GraphEdge._
 import scray.querying.queries.{ DomainQuery, KeyedQuery }
 import scray.querying.caching.{ Cache, KeyValueCache }
 import scray.querying.caching.serialization.{ KeyValueCacheSerializer, RegisterRowCachingSerializers }
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 
 //
 ///**

@@ -14,17 +14,13 @@
 // limitations under the License.
 package scray.cassandra.util
 
-import scray.common.properties.ScrayProperties
-import scala.collection.JavaConverters.asScalaSetConverter
 import java.net.InetSocketAddress
-import scray.common.properties.Property
-import scray.common.properties.ScrayProperties.Phase
-import scray.common.properties.IntProperty
-import scray.common.properties.ScrayPropertyRegistration
-import scray.common.properties.predefined.CommonCassandraRegistrar
-import scray.common.properties.predefined.CommonCassandraLoader
-import scray.common.properties.predefined.PredefinedProperties
+
+import scray.common.properties.{Property, ScrayProperties, ScrayPropertyRegistration}
+import scray.common.properties.predefined.{CommonCassandraLoader, CommonCassandraRegistrar, PredefinedProperties}
 import scray.common.tools.ScrayCredentials
+
+import scala.collection.JavaConverters.asScalaSetConverter
 
 /**
  * utility functions for configurable Cassandra properties

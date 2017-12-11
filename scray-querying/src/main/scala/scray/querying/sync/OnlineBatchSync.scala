@@ -6,12 +6,13 @@ import java.util.{ Iterator => JIterator }
 import scala.annotation.tailrec
 import scala.util.Try
 
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 
 import scray.common.serialization.BatchID
 import scray.querying.description.TableIdentifier
 import scray.querying.sync.State.State
 import java.util.Calendar
+import scray.querying.sync.conf.SyncConfiguration
 
 trait OnlineBatchSyncWithTableIdentifier[Statement, InsertIn, Result] extends LazyLogging {
 
@@ -96,7 +97,10 @@ trait OnlineBatchSync[Statement, InsertIn, Result] extends LazyLogging {
   def setOnlineStartTime(job: JOB_INFO, time: Long): Try[Unit]
 }
 
-
+/**
+ * Some metadata to manage a job.
+ * This class should contain all informations to manage a job
+ */
 abstract class JobInfo[Statement, InsertIn, Result](
   val name: String,
   val numberOfBatchSlots: Int = 3,
@@ -105,7 +109,8 @@ abstract class JobInfo[Statement, InsertIn, Result](
   val startTime: Option[Long] = None, // This job is defined for a given time range. Default is the start time is end time of last batch job or current time.
   val endTime: Option[Long] = None, //Default is the current time when this job finished.
   val onlineStartTime: Long = 0,
-  val numberOfWorkers: Option[Long] = None
+  val numberOfWorkers: Option[Long] = None,
+  val syncConf: SyncConfiguration = new SyncConfiguration
   ) extends Serializable {
 
   @transient

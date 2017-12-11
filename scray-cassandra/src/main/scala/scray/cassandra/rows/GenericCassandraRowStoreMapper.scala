@@ -14,17 +14,17 @@
 // limitations under the License.
 package scray.cassandra.rows
 
-import com.datastax.driver.core.{Row => CassRow, ColumnDefinitions}
-import scray.querying.description.Row
-import com.websudos.phantom.CassandraPrimitive
-import scala.annotation.tailrec
-import scala.collection.mutable.{ArrayBuffer, ListBuffer}
-import scray.querying.description.{Column, RowColumn, SimpleRow, TableIdentifier}
-import scray.cassandra.extractors.CassandraExtractor
 import java.nio.ByteBuffer
-import scala.collection.JavaConverters._
-import scray.querying.queries.DomainQuery
+
+import com.datastax.driver.core.{ColumnDefinitions, Row => CassRow}
+import com.websudos.phantom.CassandraPrimitive
 import scray.cassandra.CassandraQueryableSource
+import scray.querying.description._
+import scray.querying.queries.DomainQuery
+
+import scala.annotation.tailrec
+import scala.collection.JavaConverters._
+import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 
 /**
  * a generic mapper to map cassandra rows emitted by CQLCassandraRowStore to scray rows 

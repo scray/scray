@@ -14,14 +14,16 @@
 // limitations under the License.
 package scray.cassandra.automation
 
+import com.datastax.driver.core.{Row => CassRow}
+import com.twitter.util.FuturePool
 import com.websudos.phantom.CassandraPrimitive
+import scray.cassandra.{CassandraQueryableSource, CassandraTableNonexistingException}
+import scray.cassandra.extractors.{CassandraExtractor, DomainToCQLQueryMapping}
+import scray.cassandra.rows.GenericCassandraRowStoreMapper
+import scray.cassandra.sync.CassandraDbSession
 import scray.cassandra.util.CassandraUtils
-import com.datastax.driver.core.{BatchStatement, ConsistencyLevel, Row => CassRow}
-import com.twitter.util.Duration
-import scala.collection.JavaConverters._
-import scray.querying.description.TableIdentifier
+import scray.querying.description.{Column, TableIdentifier}
 import scray.querying.queries.DomainQuery
-import scray.cassandra.CassandraQueryableSource
 import scray.querying.sync.DbSession
 import scray.cassandra.sync.CassandraDbSession
 import com.twitter.util.FuturePool
@@ -31,9 +33,9 @@ import scray.querying.description.Column
 import scray.querying.description.Row
 import scray.cassandra.rows.GenericCassandraRowStoreMapper
 import scray.cassandra.CassandraTableNonexistingException
-import com.typesafe.scalalogging.slf4j.LazyLogging
-
-
+import com.typesafe.scalalogging.LazyLogging
+import scray.querying.source.Splitter
+import scala.collection.JavaConverters._
 
 
 /**
@@ -65,7 +67,7 @@ object RowStoreFactory extends LazyLogging {
             allColumns,
             allColumns.map(col => 
               // TODO: ManualIndexConfiguration and Map of Splitter must be extracted from config
-              cassExtractor.getColumnConfiguration(cassSession, ti.dbId, ti.tableId, Column(col.columnName, ti), None, Map())),
+              cassExtractor.getColumnConfiguration(cassSession, ti.dbId, ti.tableId, Column(col.columnName, ti), None, Map[Column, Splitter[_]]())),
             cassSession.cassandraSession,
             new DomainToCQLQueryMapping[Q, CassandraQueryableSource[Q]](),
             futurePool,

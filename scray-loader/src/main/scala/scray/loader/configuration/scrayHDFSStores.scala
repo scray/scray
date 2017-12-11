@@ -27,7 +27,7 @@ import scala.collection.convert.decorateAsScala.asScalaSetConverter
 import scray.loader.configparser.ScrayConfiguration
 import scray.querying.sync.DbSession
 import scray.jdbc.sync.JDBCDbSession
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 
 /**
  * HDFS properties, needed to setup a HDFS connection

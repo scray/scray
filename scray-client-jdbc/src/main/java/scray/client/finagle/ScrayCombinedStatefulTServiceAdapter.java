@@ -14,14 +14,14 @@ import com.twitter.util.Future;
 
 public class ScrayCombinedStatefulTServiceAdapter implements ScrayTServiceAdapter {
 
-	private ScrayCombinedStatefulTService.FutureIface client;
+	private ScrayCombinedStatefulTService.Client client;
 	private String endpoint;
 
-	public ScrayCombinedStatefulTService.FutureIface getClient() {
+	public ScrayCombinedStatefulTService.Client getClient() {
 		// lazy init
 		if (client == null) {
-			client = Thrift.newIface(endpoint,
-					ScrayCombinedStatefulTService.FutureIface.class);
+			client = Thrift.client().newIface(endpoint,
+					ScrayCombinedStatefulTService.Client.class);
 		}
 		return client;
 	}
@@ -33,8 +33,7 @@ public class ScrayCombinedStatefulTServiceAdapter implements ScrayTServiceAdapte
 	public ScrayUUID query(ScrayTQuery query, int queryTimeout)
 			throws SQLException {
 		try {
-			Future<ScrayUUID> fuuid = getClient().query(query);
-			return Await.result(fuuid, Duration.fromSeconds(queryTimeout));
+			return getClient().query(query);
 		} catch (Exception e) {
 			throw new SQLException(e);
 		}
@@ -43,10 +42,7 @@ public class ScrayCombinedStatefulTServiceAdapter implements ScrayTServiceAdapte
 	public ScrayTResultFrame getResults(ScrayUUID queryId, int queryTimeout)
 			throws SQLException {
 		try {
-			Future<ScrayTResultFrame> fframe = getClient().getResults(queryId);
-			ScrayTResultFrame frame = Await.result(fframe,
-					Duration.fromSeconds(queryTimeout));
-			return frame;
+			return getClient().getResults(queryId);
 		} catch (Exception e) {
 			throw new SQLException(e);
 		}

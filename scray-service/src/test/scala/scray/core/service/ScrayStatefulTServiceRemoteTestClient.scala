@@ -44,14 +44,14 @@ object ScrayStatefulTServiceRemoteTestClient extends TQuerySamples {
     val queryObj : ScrayTQuery = TQuerySamples2.createTQuery(expr = "SELECT * FROM @BISMTOlsWf LIMIT 1 TIMEOUT 12s")
 
     // prepare client
-    val client = Thrift.newIface[ScrayStatefulTService.FutureIface](
+    val client = Thrift.client.newIface[ScrayStatefulTService.FutureIface](
         s"10.11.22.38:18181")
 
     //call service
     val res = client.query(queryObj) onFailure { e => throw e } onSuccess { r => println(s"Received '$r'.") }
 
     Await.result(res)
-    println(res.get)
+    println(Await.result(res))
   }
 }
 

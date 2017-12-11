@@ -14,12 +14,11 @@
 // limitations under the License.
 package scray.cassandra.configuration
 
-import scray.cassandra.util.CassandraUtils
-import scray.querying.description.{ Column, Row }
-import com.twitter.util.Try
-import scray.querying.description.TableIdentifier
 import com.datastax.driver.core.Session
+import com.twitter.util.Try
 import scray.cassandra.CassandraQueryableSource
+import scray.cassandra.util.CassandraUtils
+import scray.querying.description.{Column, Row, TableIdentifier}
 
 object CassandraTableConfiguration {
   

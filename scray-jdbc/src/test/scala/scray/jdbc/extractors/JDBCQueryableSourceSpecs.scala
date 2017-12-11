@@ -18,6 +18,8 @@ import scray.querying.description.Column
 import scala.collection.mutable.ArrayBuffer
 import com.twitter.util.Await
 import scray.querying.description.Row
+import com.zaxxer.hikari.HikariDataSource
+import java.sql.ResultSet
 
 // @RunWith(classOf[JUnitRunner])
 class JDBCQueryableSourceSpecs extends WordSpec {
@@ -29,15 +31,15 @@ class JDBCQueryableSourceSpecs extends WordSpec {
       val data = row :: row :: row :: row :: Nil
       
       val dataSpool = JDBCQueryableSource.toRowSpool(data.iterator)
-      val countRows = dataSpool.get.foldLeft(0)((acc: Int,row: Row) => (acc + 1))
+      val countRows = Await.result(dataSpool).foldLeft(0)((acc: Int,row: Row) => (acc + 1))
       
       assert(4 === Await.result(countRows))
     }
     " query database " in {
       
       val ti = TableIdentifier("oracle", "mytestspace", "mycf")     
-      val mapper = (row: JDBCRow) => SimpleRow(ArrayBuffer.empty[RowColumn[_]])
-      val connection = MockitoSugar.mock[Connection]
+      val mapper = (row: ResultSet) => SimpleRow(ArrayBuffer.empty[RowColumn[_]])
+      val connection = MockitoSugar.mock[HikariDataSource]
 
       val jdbcSource =  new JDBCQueryableSource(
           ti, 
@@ -49,7 +51,7 @@ class JDBCQueryableSourceSpecs extends WordSpec {
           new DomainToSQLQueryMapping[DomainQuery, JDBCQueryableSource[DomainQuery]], 
           FuturePool(Executors.newCachedThreadPool()), 
           mapper,
-          ScraySQLDialectFactory.getDialect(ScraySQLDialectFactory.ORACLE))
+          ScraySQLDialectFactory.getDialect("ORACLE"))
     }
 
   }

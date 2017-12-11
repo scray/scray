@@ -1,1 +1,1 @@
-"Barack":PLAIN:"Obama":test1,test2,test3,test4
+"Barack":PLAIN:"Obama":test1, test2, test3, test4
