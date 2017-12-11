@@ -38,7 +38,7 @@ class SequenceFileWriter(path: String, hdfsConf: Configuration = new Configurati
   var idxWriter:  SequenceFile.Writer = null; // scalastyle:off null
 
   val key = new Text();
-  val idxValue = new IndexValue // Block position in data file
+  val idxValue = new IndexValue("k1", 42, 42) // Block position in data file
 
   private def initWriter(
       key:  Writable, 

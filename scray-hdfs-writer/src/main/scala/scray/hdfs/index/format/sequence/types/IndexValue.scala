@@ -17,15 +17,19 @@ package scray.hdfs.index.format.sequence.types
 
 import org.apache.hadoop.io.Writable
 import org.apache.hadoop.io.LongWritable
-import scala.xml.Text
+import java.io.IOException
+import java.io.ObjectInputStream
+import java.io.ObjectOutputStream
+import org.apache.hadoop.io.Text
 
 class IndexValue(
     keyIn: String,
     updateTimeIn: Long, 
-    positionIn: Long) extends Writable {
-  private val key = new org.apache.hadoop.io.Text(keyIn)
-  private val updateTime = new LongWritable(updateTimeIn)
-  private val position = new LongWritable(positionIn)
+    positionIn: Long) extends Writable with Serializable {
+  
+  private var key = new Text(keyIn)
+  private var updateTime = new LongWritable(updateTimeIn)
+  private var position = new LongWritable(positionIn)
   
   def this() {
     this("42", 0L, 0)
@@ -53,6 +57,20 @@ class IndexValue(
   
   def getPosition: Long = {
     position.get
+  }
+  
+  @throws(classOf[IOException])
+  private def writeObject(out: ObjectOutputStream): Unit = {
+    out.writeUTF(key.toString())
+    out.writeLong(updateTime.get)
+    out.writeLong(position.get)
+  }
+
+  @throws(classOf[IOException])
+  private def readObject(in: ObjectInputStream): Unit =  {
+    key        = new Text(in.readUTF())
+    updateTime = new LongWritable(in.readLong())
+    position   = new LongWritable(in.readLong()) 
   }
   
   override def toString(): String = {

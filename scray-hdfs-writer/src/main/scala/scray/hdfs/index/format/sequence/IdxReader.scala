@@ -29,7 +29,7 @@ class IdxReader(path: String, hdfsConf: Configuration = new Configuration, fs: O
   val reader: SequenceFile.Reader = new SequenceFile.Reader(hdfsConf, Reader.file(new Path(path)), Reader.bufferSize(4096));
 
   val key = new Text();
-  val idxEntry = new IndexValue
+  val idxEntry = new IndexValue("k1", 42, 42)
 
   // Store state to
   var hasNextWasCalled = false
