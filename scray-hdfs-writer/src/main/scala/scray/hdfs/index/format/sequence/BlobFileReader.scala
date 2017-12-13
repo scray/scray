@@ -23,21 +23,27 @@ import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
 import scala.annotation.tailrec
 import org.apache.hadoop.io.BytesWritable
+import scray.hdfs.index.format.sequence.types.Blob
 
 class BlobFileReader(path: String, hdfsConf: Configuration = new Configuration, fs: Option[FileSystem] = None) {
 
   private val key = new Text();
   private val reader = new SequenceFile.Reader(hdfsConf, Reader.file(new Path(path)), Reader.bufferSize(4096));
-
+  val idxEntry = new Blob
+  
   def select(key: String): Array[Byte] = {
     Array("".toByte)
   }
   
   def get(keyIn: String, startPosition: Long): Option[Array[Byte]] = {
+    getBlob(keyIn, startPosition).map(_.getData)
+  }
+  
+  def getBlob(keyIn: String, startPosition: Long): Option[Blob] = {
     reader.seek(startPosition)
 
     val key = new Text
-    val value = new BytesWritable
+    val value = new Blob
     var valueFound = false
     
     var syncSeen = false
@@ -51,13 +57,9 @@ class BlobFileReader(path: String, hdfsConf: Configuration = new Configuration, 
 
     if(valueFound) {
       valueFound = false
-      Some(value.copyBytes()) // TODO test performance
+      Some(value) // TODO test performance
     } else {
       None
     }
-  }
-  
-  def close {
-    reader.close()
   }
 }

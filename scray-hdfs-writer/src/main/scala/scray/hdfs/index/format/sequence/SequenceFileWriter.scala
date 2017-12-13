@@ -31,6 +31,7 @@ import org.apache.hadoop.io.BytesWritable
 import org.apache.hadoop.io.Writable
 import org.apache.hadoop.io.LongWritable
 import scray.hdfs.index.format.sequence.types.IndexValue
+import scray.hdfs.index.format.sequence.types.Blob
 
 class SequenceFileWriter(path: String, hdfsConf: Configuration = new Configuration, fs: Option[FileSystem] = None) extends scray.hdfs.index.format.Writer {
 
@@ -63,7 +64,7 @@ class SequenceFileWriter(path: String, hdfsConf: Configuration = new Configurati
   override def insert(id: String, updateTime: Long, data: Array[Byte]): Unit = {
 
     if(dataWriter == null) { // scalastyle:off null
-      dataWriter =  initWriter(key, new BytesWritable(), fs.getOrElse(FileSystem.get(hdfsConf)), ".blob")
+      dataWriter =  initWriter(key, new Blob(), fs.getOrElse(FileSystem.get(hdfsConf)), ".blob")
     }
     
     if(idxWriter == null) { // scalastyle:off null
@@ -75,7 +76,7 @@ class SequenceFileWriter(path: String, hdfsConf: Configuration = new Configurati
     idxWriter.append(key, new IndexValue(key.toString(), updateTime, dataWriter.getLength))
     
     // Write data
-    dataWriter.append(key, new BytesWritable(data));
+    dataWriter.append(key, new Blob(updateTime, data));
   }
   
   def insert(id: String, updateTime: Long, data: String): Unit = {
@@ -93,7 +94,7 @@ class SequenceFileWriter(path: String, hdfsConf: Configuration = new Configurati
     idxWriter.append(key, new IndexValue(key.toString(), updateTime, dataWriter.getLength))
     
     // Write data
-    dataWriter.append(key,  new BytesWritable(data.getBytes))
+    dataWriter.append(key,  new Blob(updateTime, data.getBytes))
   }
   
   def close: Unit = {

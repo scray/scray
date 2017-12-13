@@ -23,58 +23,69 @@ import java.io.ObjectOutputStream
 import org.apache.hadoop.io.Text
 
 class IndexValue(
-    keyIn: String,
-    updateTimeIn: Long, 
-    positionIn: Long) extends Writable with Serializable {
-  
-  private var key = new Text(keyIn)
-  private var updateTime = new LongWritable(updateTimeIn)
-  private var position = new LongWritable(positionIn)
+    private var key: String,
+    private var updateTime: Long, 
+    private var position: Long) extends Writable with Serializable {
   
   def this() {
     this("42", 0L, 0)
   }
   
   def readFields(data: java.io.DataInput): Unit = {
-    key.set(data.readUTF())
-    updateTime.set(data.readLong)
-    position.set(data.readLong)
+    key = data.readUTF()
+    updateTime = data.readLong
+    position = data.readLong
   }
   
   def write(out: java.io.DataOutput): Unit = {
-    out.writeUTF(key.toString())
-    out.writeLong(updateTime.get)
-    out.writeLong(position.get)
+    out.writeUTF(key)
+    out.writeLong(updateTime)
+    out.writeLong(position)
   }
   
-  def getKey: org.apache.hadoop.io.Text = {
+  def getKey: String = {
     key
   }
   
   def getUpdateTime: Long = {
-    updateTime.get
+    updateTime
   }
   
   def getPosition: Long = {
-    position.get
+    position
+  }
+  
+  override def equals(that: Any): Boolean = {
+    that match {
+      case that: IndexValue => {
+        that.getKey == this.getKey && 
+        that.updateTime == this.updateTime &&
+        that.position == this.position
+      }
+      case _ => false
+    }
+  }
+
+  override def hashCode: Int = {
+    return (key.toString() + updateTime.toString()).hashCode()
   }
   
   @throws(classOf[IOException])
-  private def writeObject(out: ObjectOutputStream): Unit = {
+  private def writeObject(out: ObjectOutputStream): Unit = synchronized {
     out.writeUTF(key.toString())
-    out.writeLong(updateTime.get)
-    out.writeLong(position.get)
+    out.writeLong(updateTime)
+    out.writeLong(position)
   }
 
   @throws(classOf[IOException])
-  private def readObject(in: ObjectInputStream): Unit =  {
-    key        = new Text(in.readUTF())
-    updateTime = new LongWritable(in.readLong())
-    position   = new LongWritable(in.readLong()) 
+  private def readObject(in: ObjectInputStream): Unit = synchronized {
+    key      = in.readUTF()
+    updateTime = in.readLong()
+    position = in.readLong()
   }
   
   override def toString(): String = {
-    s"IndexValue{key: ${key}, updateTime: ${updateTime.get}, position: ${position.get}}"
+    s"IndexValue{key: ${key}, updateTime: ${updateTime}, position: ${position}}"
   }
 
 }

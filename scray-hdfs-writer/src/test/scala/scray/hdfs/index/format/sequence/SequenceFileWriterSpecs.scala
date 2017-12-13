@@ -9,6 +9,7 @@ import scray.hdfs.index.format.sequence.IdxReader
 import scray.hdfs.index.format.sequence.BlobFileReader
 import org.scalatest.Tag
 import com.typesafe.scalalogging.LazyLogging
+import scray.hdfs.index.format.sequence.types.IndexValue
 
 class SequenceFileWriterSpecs extends WordSpec with LazyLogging {
 
@@ -26,10 +27,10 @@ class SequenceFileWriterSpecs extends WordSpec with LazyLogging {
         writer.insert(getKey(i), 100000, getValue(i).getBytes)
       }
       writer.close
-
-      // Seek to sync-marker at byte 22497 and return next data element
+      
+      // Seek to sync-marker at byte 31816 and return next data element
       val reader = new BlobFileReader("target/SeqFilWriterTest.blob")
-      val data = reader.get(getKey(904), 22497L)
+      val data = reader.get(getKey(904), 31816L)
 
       Assert.assertTrue(data.isDefined)
       Assert.assertEquals(getValue(904), new String(data.get))
@@ -67,7 +68,6 @@ class SequenceFileWriterSpecs extends WordSpec with LazyLogging {
 
       for (i <- 0 to numDate) {
         val data = reader.next()
-
         Assert.assertTrue(data.isDefined)
         Assert.assertEquals(getKey(i), data.get.getKey.toString())
         Assert.assertEquals(i, data.get.getUpdateTime)
@@ -93,16 +93,26 @@ class SequenceFileWriterSpecs extends WordSpec with LazyLogging {
       Assert.assertEquals(idxReader.hasNext, true)
 
       for (i <- 0 to numDate) {
-        val idx = idxReader.next()
+        val idx  = idxReader.next()
         val data = blobReader.get(idx.get.getKey.toString(), idx.get.getPosition)
 
         Assert.assertTrue(data.isDefined)
         Assert.assertEquals(new String(data.get), getValue(i))
       }
     }
+    " be equals if two objects share same values " in {
+      val a = new IndexValue
+      val b = new IndexValue
+      val c = new IndexValue("k1", 123, 1)
+      
+      Assert.assertTrue(a.equals(b))
+      Assert.assertFalse(a.equals(c))
+      
+      Assert.assertEquals(a.hashCode(), a.hashCode())
+    }
     " print keys " taggedAs (RequiresHDFS) in {
 
-      val idxReader = new IdxReader("hdfs://192.168.0.201:8020/bdq-blob/.idx")
+      val idxReader = new IdxReader("hdfs://10.11.22.41:8020/bdq-blob/.idx")
 
       while (idxReader.hasNext) {
         val idx = idxReader.next()

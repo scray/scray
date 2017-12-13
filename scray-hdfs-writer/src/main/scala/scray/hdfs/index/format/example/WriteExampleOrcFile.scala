@@ -13,7 +13,7 @@ object WriteExampleOrcFile {
 
       val writer = new ORCFileWriter(s"${args(0)}/scray-data.orc}")
 
-      for (i <- 0 to 100) {
+      for (i <- 100 to 200) {
         val key = "key_" + i
         val value = "data_" + i
 
