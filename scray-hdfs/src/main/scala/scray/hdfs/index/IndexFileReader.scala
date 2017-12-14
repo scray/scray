@@ -54,7 +54,7 @@ object IndexFileReader extends LazyLogging {
           val origkey = indexRecord.getKey
           logger.debug("Load key: " + origkey + " to local index at position " + idxCount)
           val position = indexRecord.getPosition
-          val hashedKey = new ArrayBytes(HDFSBlobResolver.computeHash(origkey, ti))
+          val hashedKey = new ArrayBytes(HDFSBlobResolver.computeHash(new Text(origkey), ti))
             
           HDFSBlobResolver.putIntoIndexCache(hashedKey, blobfile, position)
           idxCount += 1L

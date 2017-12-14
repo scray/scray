@@ -62,4 +62,8 @@ class BlobFileReader(path: String, hdfsConf: Configuration = new Configuration, 
       None
     }
   }
+  
+  def close = {
+    reader.close()
+  }
 }
