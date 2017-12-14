@@ -27,6 +27,7 @@ import org.apache.orc.OrcFile
 import org.apache.orc.TypeDescription
 import org.apache.orc.Writer
 import org.slf4j.LoggerFactory
+import scray.hdfs.index.format.sequence.types.Blob
 
 class ORCFileWriter(batchSize: Int = 10000) extends scray.hdfs.index.format.Writer {
 
@@ -81,6 +82,9 @@ class ORCFileWriter(batchSize: Int = 10000) extends scray.hdfs.index.format.Writ
       batch.reset();
     }
   }
+  
+  override def insert(idBlob: Tuple2[String, Blob]) = ???
+
 
   def close {
     try {

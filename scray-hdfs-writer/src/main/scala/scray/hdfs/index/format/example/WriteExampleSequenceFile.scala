@@ -12,7 +12,7 @@ object WriteExampleSequenceFile {
 
       val writer = new SequenceFileWriter(s"${args(0)}/scray-data-${System.currentTimeMillis()}")
 
-      for (i <- 0 to 100) {
+      for (i <- 0 to 1000000) {
         val key = "key_" + i
         val value = "data_" + i
 
