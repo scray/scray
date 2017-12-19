@@ -17,7 +17,7 @@ package scray.hdfs.index.format
 
 import scray.hdfs.index.format.sequence.types.Blob
 
-trait Writer {
+trait Writer { 
   def insert(id: String, updateTime: Long, data: Array[Byte])
   def insert(idBlob: Tuple2[String, Blob])
 }
