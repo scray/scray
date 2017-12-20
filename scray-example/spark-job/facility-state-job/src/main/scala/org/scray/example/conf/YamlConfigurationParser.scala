@@ -52,6 +52,18 @@ class YamlConfigurationParser extends LazyLogging {
         logger.debug(s"graphiteRetries not defined use default: ${confObject.graphiteRetries}")
       }
 
+      if(yamlData.get("checkpointPath") != null) {
+        confObject.checkpointPath = yamlData.get("checkpointPath")
+      } else {
+        logger.debug(s"checkpointPath not defined use default: ${confObject.checkpointPath}")
+      }
+      
+      if(yamlData.get("sparkMaster") != null) {
+        confObject.sparkMaster = yamlData.get("sparkMaster")
+      } else {
+        logger.debug(s"sparkMaster not defined use default: ${confObject.sparkMaster}")
+      }
+
     } catch {
       case e: YAMLException => {
         logger.error(s"Invalid job parameter yaml:  ${e.getMessage}")

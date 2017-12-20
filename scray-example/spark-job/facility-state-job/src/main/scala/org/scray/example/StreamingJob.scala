@@ -32,7 +32,7 @@ class StreamingJob(@transient val ssc: StreamingContext, jobInfo: JobInfo[Statem
   lazy val outputOperation = new GraphiteWriter(conf.graphiteHost)
 
   def runTuple[T <: org.apache.spark.streaming.dstream.DStream[ConsumerRecord[String, String]]](dstream: T) = {
-    
+   
     // Parse input data and create K, V. K ::= Equipmentnumber, V ::= State counter
     val facilities = dstream.flatMap(facilitiesAsJson => {
       val parsedFacilities = jsonParser.jsonReader(facilitiesAsJson.value())
@@ -95,9 +95,9 @@ class StreamingJob(@transient val ssc: StreamingContext, jobInfo: JobInfo[Statem
     batchAvailibility.map( lastBatchResult => {
     state.update(
         (
-            activeCount + lastBatchResult.activeCounter,
-            inactiveCount + lastBatchResult.inactiveCounter, 
-            unknownCount + lastBatchResult.unknownCounter
+            activeCount   +  lastBatchResult.activeCounter,
+            inactiveCount +  lastBatchResult.inactiveCounter, 
+            unknownCount  +  lastBatchResult.unknownCounter
          )
        ) 
     })

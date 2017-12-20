@@ -1,12 +1,12 @@
 package org.scray.example.output
 
-import org.apache.spark.sql.ForeachWriter
-import java.io.DataOutputStream;
-import java.net.Socket;
 import java.io.PrintWriter
-import org.apache.log4j.Logger
+import java.net.Socket
+
+import org.apache.spark.sql.ForeachWriter
+
 import com.typesafe.scalalogging.LazyLogging
-import org.scray.example.FacilityStateCounter
+import org.scray.example.data.FacilityStateCounter
 
 /**
  * Write FacilityStateCounter to Graphite

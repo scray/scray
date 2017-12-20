@@ -1,0 +1,2 @@
+checkpointPath: file:///tmp/ff
+sparkMaster: spark://laptop:7077
