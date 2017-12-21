@@ -5,7 +5,7 @@
     "pipelineId" : "BahnFacilities",
     "title" : "BahnFacilities",
     "description" : "",
-    "uuid" : "216c7269-eee6-4c18-85ce-9b026d5aa56b",
+    "uuid" : "6103e444-908f-4f39-8f28-ad79a85d2c7d",
     "configuration" : [ {
       "name" : "executionMode",
       "value" : "STANDALONE"
@@ -101,7 +101,7 @@
       "stageVersion" : "14",
       "configuration" : [ {
         "name" : "conf.basic.maxBatchSize",
-        "value" : 1000
+        "value" : 4000
       }, {
         "name" : "conf.basic.maxWaitTime",
         "value" : 2000
@@ -508,7 +508,7 @@
         "description" : "",
         "label" : "Aufzüge",
         "xPos" : 67,
-        "yPos" : 53,
+        "yPos" : 54,
         "stageType" : "SOURCE"
       },
       "inputLanes" : [ ],
@@ -560,6 +560,47 @@
       "eventLanes" : [ ],
       "services" : [ ]
     }, {
+      "instanceName" : "FieldRenamer_01",
+      "library" : "streamsets-datacollector-basic-lib",
+      "stageName" : "com_streamsets_pipeline_stage_processor_fieldrenamer_FieldRenamerDProcessor",
+      "stageVersion" : "2",
+      "configuration" : [ {
+        "name" : "renameMapping",
+        "value" : [ {
+          "fromFieldExpression" : "/type",
+          "toFieldExpression" : "/facilitytype"
+        } ]
+      }, {
+        "name" : "errorHandler.nonExistingFromFieldHandling",
+        "value" : "TO_ERROR"
+      }, {
+        "name" : "errorHandler.existingToFieldHandling",
+        "value" : "TO_ERROR"
+      }, {
+        "name" : "errorHandler.multipleFromFieldsMatching",
+        "value" : "TO_ERROR"
+      }, {
+        "name" : "stageOnRecordError",
+        "value" : "TO_ERROR"
+      }, {
+        "name" : "stageRequiredFields",
+        "value" : [ ]
+      }, {
+        "name" : "stageRecordPreconditions",
+        "value" : [ ]
+      } ],
+      "uiInfo" : {
+        "description" : "",
+        "label" : "Field Renamer 1",
+        "xPos" : 499.76507568359375,
+        "yPos" : 47,
+        "stageType" : "PROCESSOR"
+      },
+      "inputLanes" : [ "FieldPivoter_01OutputLane15030504437490" ],
+      "outputLanes" : [ "FieldRenamer_01OutputLane15138642983810" ],
+      "eventLanes" : [ ],
+      "services" : [ ]
+    }, {
       "instanceName" : "ExpressionEvaluator_01",
       "library" : "streamsets-datacollector-basic-lib",
       "stageName" : "com_streamsets_pipeline_stage_processor_expression_ExpressionDProcessor",
@@ -591,11 +632,11 @@
       "uiInfo" : {
         "description" : "",
         "label" : "Expression Evaluator 1",
-        "xPos" : 542.7650756835938,
-        "yPos" : 53,
+        "xPos" : 693.7650756835938,
+        "yPos" : 43,
         "stageType" : "PROCESSOR"
       },
-      "inputLanes" : [ "FieldPivoter_01OutputLane15030504437490" ],
+      "inputLanes" : [ "FieldRenamer_01OutputLane15138642983810" ],
       "outputLanes" : [ "ExpressionEvaluator_01OutputLane15106729161460" ],
       "eventLanes" : [ ],
       "services" : [ ]
@@ -723,7 +764,7 @@
         "value" : "*"
       }, {
         "name" : "conf.topic",
-        "value" : "facility"
+        "value" : "Facilities"
       }, {
         "name" : "conf.partitionStrategy",
         "value" : "ROUND_ROBIN"
@@ -755,8 +796,8 @@
       "uiInfo" : {
         "description" : "",
         "label" : "Kafka Producer 1",
-        "xPos" : 756.7650756835938,
-        "yPos" : 52,
+        "xPos" : 935.7650756835938,
+        "yPos" : 39,
         "stageType" : "TARGET"
       },
       "inputLanes" : [ "ExpressionEvaluator_01OutputLane15106729161460" ],
@@ -964,8 +1005,8 @@
       "uiInfo" : {
         "description" : "",
         "label" : "Hadoop FS 1",
-        "xPos" : 758.7650756835938,
-        "yPos" : 192,
+        "xPos" : 933.7650756835938,
+        "yPos" : 203,
         "stageType" : "TARGET"
       },
       "inputLanes" : [ "ExpressionEvaluator_01OutputLane15106729161460" ],
@@ -995,12 +1036,12 @@
       "pipelineId" : "BahnFacilities",
       "title" : "BahnFacilities",
       "description" : "",
-      "created" : 1511886108446,
-      "lastModified" : 1512042268087,
+      "created" : 1512044134040,
+      "lastModified" : 1513867071776,
       "creator" : "admin",
       "lastModifier" : "admin",
       "lastRev" : "0",
-      "uuid" : "216c7269-eee6-4c18-85ce-9b026d5aa56b",
+      "uuid" : "6103e444-908f-4f39-8f28-ad79a85d2c7d",
       "valid" : true,
       "metadata" : {
         "labels" : [ ]
@@ -1069,8 +1110,8 @@
     "valid" : true,
     "issues" : {
       "stageIssues" : { },
-      "pipelineIssues" : [ ],
-      "issueCount" : 0
+      "issueCount" : 0,
+      "pipelineIssues" : [ ]
     },
     "previewable" : true
   },
@@ -1135,7 +1176,7 @@
     } ],
     "dataRuleDefinitions" : [ ],
     "driftRuleDefinitions" : [ ],
-    "uuid" : "097b2e98-00bd-4002-a774-18ef3fc98a47",
+    "uuid" : "b5685da6-d1d7-48b7-94ea-a29f06ccc4f3",
     "configuration" : [ {
       "name" : "emailIDs",
       "value" : [ ]
