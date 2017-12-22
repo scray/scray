@@ -10,7 +10,7 @@ class JsonFacilityParserSpecs extends WordSpec with LazyLogging {
     " pars arry with one facility element " in {
       val parser = new JsonFacilityParser
       
-      Assert.assertTrue(parser.jsonReader("[{\"equipmentnumber\":10216020,\"type\":\"ELEVATOR\",\"description\":\"zu Gleis 3/4 (S-Bahn)\",\"geocoordX\":13.2871746,\"geocoordY\":52.6697995,\"state\":\"INACTIVE\",\"stationnumber\":2832}]").isDefined)
+      Assert.assertTrue(parser.parse("[{\"equipmentnumber\":10216020,\"type\":\"ELEVATOR\",\"description\":\"zu Gleis 3/4 (S-Bahn)\",\"geocoordX\":13.2871746,\"geocoordY\":52.6697995,\"state\":\"INACTIVE\",\"stationnumber\":2832}]").isDefined)
     }
   }
   

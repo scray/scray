@@ -4,16 +4,12 @@ import java.util.Calendar
 
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.types.DataType
-import org.apache.spark.sql.types.StructType
 import org.scray.example.conf.JobParameter
+import org.scray.example.data.JsonFacilityParser
 import org.scray.example.output.GraphiteForeachWriter
+import org.scray.example.data.Facility
 import org.scray.example.data.FacilityStateCounter
 import java.sql.Timestamp
-import org.scray.example.data.JsonFacilityParser
-
-case class Facility[T](facilitytype: String, state: String, timestamp: T)
-
 
 class SparkSQLStreamingJob(spark: SparkSession, conf: JobParameter) extends Serializable {
 
@@ -45,6 +41,9 @@ class SparkSQLStreamingJob(spark: SparkSession, conf: JobParameter) extends Seri
         
       
     // Aggregate data
+        
+    // Group the facilities by type and state and compute the count of each group    
+    // For details https://spark.apache.org/docs/latest/structured-streaming-programming-guide.html
     val aggregatedFacilityData = preparedFacilityElement.
       withWatermark("timestamp", conf.watermark).
       groupBy(
@@ -52,7 +51,7 @@ class SparkSQLStreamingJob(spark: SparkSession, conf: JobParameter) extends Seri
         column("facilityType"),
         column("state")
       ).count()
-        .select("facilityType", "state", "count")
+      .select("facilityType", "state", "count")
 
     // Write data to graphite   
     aggregatedFacilityData.as[FacilityStateCounter]
