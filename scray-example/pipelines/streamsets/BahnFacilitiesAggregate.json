@@ -5,7 +5,7 @@
     "pipelineId" : "BahnFacilitiescopy7d5a54aa-f6df-46a4-b113-522bfcde38a9",
     "title" : "BahnFacilitiesAggregate",
     "description" : "",
-    "uuid" : "e39501a2-5a27-478f-97ce-b50fdd5acc59",
+    "uuid" : "3947ba5b-b03a-47ee-85d4-e0c9d3a23d60",
     "configuration" : [ {
       "name" : "executionMode",
       "value" : "STANDALONE"
@@ -85,7 +85,7 @@
     "uiInfo" : {
       "previewConfig" : {
         "previewSource" : "CONFIGURED_SOURCE",
-        "batchSize" : "1",
+        "batchSize" : "10",
         "timeout" : 10000,
         "writeToDestinations" : false,
         "executeLifecycleEvents" : false,
@@ -104,7 +104,7 @@
         "value" : 4000
       }, {
         "name" : "conf.basic.maxWaitTime",
-        "value" : 2000
+        "value" : 1
       }, {
         "name" : "conf.dataFormatConfig.compression",
         "value" : "NONE"
@@ -434,7 +434,7 @@
         "value" : "POLLING"
       }, {
         "name" : "conf.pollingInterval",
-        "value" : 20000
+        "value" : 60000
       }, {
         "name" : "conf.dataFormat",
         "value" : "JSON"
@@ -607,11 +607,23 @@
       "configuration" : [ {
         "name" : "lanePredicates",
         "value" : [ {
+          "outputLane" : "StreamSelector_01OutputLane1513879839827",
+          "predicate" : "${record:value('/type')=='ELEVATOR' && record:value('/state')=='UNKNOWN'}"
+        }, {
+          "outputLane" : "StreamSelector_01OutputLane1513879827049",
+          "predicate" : "${record:value('/type')=='ESCALATOR' && record:value('/state')=='UNKNOWN'}"
+        }, {
+          "outputLane" : "StreamSelector_01OutputLane1513874824753",
+          "predicate" : "${record:value('/type')=='ELEVATOR' && record:value('/state')=='ACTIVE'}"
+        }, {
+          "outputLane" : "StreamSelector_01OutputLane1513874822127",
+          "predicate" : "${record:value('/type')=='ELEVATOR' && record:value('/state')=='INACTIVE'}"
+        }, {
           "outputLane" : "StreamSelector_01OutputLane1513780332606",
-          "predicate" : "${record:value('/state')=='ACTIVE'}"
+          "predicate" : "${record:value('/type')=='ESCALATOR' && record:value('/state')=='ACTIVE'}"
         }, {
           "outputLane" : "StreamSelector_01OutputLane1513779140209",
-          "predicate" : "${record:value('/state')=='INACTIVE'}"
+          "predicate" : "${record:value('/type')=='ESCALATOR' && record:value('/state')=='INACTIVE'}"
         }, {
           "outputLane" : "StreamSelector_01OutputLane1513778727237",
           "predicate" : "default"
@@ -629,12 +641,12 @@
       "uiInfo" : {
         "description" : "",
         "label" : "Stream Selector 1",
-        "xPos" : 757.7650756835938,
-        "yPos" : 50,
+        "xPos" : 831.098388671875,
+        "yPos" : 38.888885498046875,
         "stageType" : "PROCESSOR"
       },
       "inputLanes" : [ "ExpressionEvaluator_01OutputLane15106729161460" ],
-      "outputLanes" : [ "StreamSelector_01OutputLane1513780332606", "StreamSelector_01OutputLane1513779140209", "StreamSelector_01OutputLane1513778727237" ],
+      "outputLanes" : [ "StreamSelector_01OutputLane1513879839827", "StreamSelector_01OutputLane1513879827049", "StreamSelector_01OutputLane1513874824753", "StreamSelector_01OutputLane1513874822127", "StreamSelector_01OutputLane1513780332606", "StreamSelector_01OutputLane1513779140209", "StreamSelector_01OutputLane1513778727237" ],
       "eventLanes" : [ ],
       "services" : [ ]
     }, {
@@ -644,7 +656,7 @@
       "stageVersion" : "1",
       "configuration" : [ {
         "name" : "config.windowType",
-        "value" : "ROLLING"
+        "value" : "SLIDING"
       }, {
         "name" : "config.timeWindow",
         "value" : "TW_10S"
@@ -664,7 +676,9 @@
           "filter" : false,
           "aggregationFunction" : "COUNT",
           "aggregationExpression" : "1",
-          "groupBy" : false
+          "groupBy" : false,
+          "groupByExpression" : "${record:value('/type')}",
+          "aggregationName" : "bahn.equipment.type.ELEVATOR.all.state.ACTIVE.count"
         } ]
       }, {
         "name" : "config.allAggregatorsEvent",
@@ -684,12 +698,12 @@
       } ],
       "uiInfo" : {
         "description" : "",
-        "label" : "ACTIVE",
-        "xPos" : 1013.7650756835938,
-        "yPos" : 167,
+        "label" : "ACTIVE Elevators",
+        "xPos" : 1119.7748413085938,
+        "yPos" : 113.93952941894531,
         "stageType" : "PROCESSOR"
       },
-      "inputLanes" : [ "StreamSelector_01OutputLane1513780332606" ],
+      "inputLanes" : [ "StreamSelector_01OutputLane1513874824753" ],
       "outputLanes" : [ "Aggregator_01OutputLane15137722863590" ],
       "eventLanes" : [ "Aggregator_01_EventLane" ],
       "services" : [ ]
@@ -700,7 +714,7 @@
       "stageVersion" : "1",
       "configuration" : [ {
         "name" : "config.windowType",
-        "value" : "ROLLING"
+        "value" : "SLIDING"
       }, {
         "name" : "config.timeWindow",
         "value" : "TW_10S"
@@ -720,7 +734,8 @@
           "filter" : false,
           "aggregationFunction" : "COUNT",
           "aggregationExpression" : "1",
-          "groupBy" : false
+          "groupBy" : false,
+          "aggregationName" : "bahn.equipment.type.ELEVATOR.all.state.INACTIVE.count"
         } ]
       }, {
         "name" : "config.allAggregatorsEvent",
@@ -740,158 +755,52 @@
       } ],
       "uiInfo" : {
         "description" : "",
-        "label" : "INACTIVE",
-        "xPos" : 1009.76513671875,
-        "yPos" : 319,
+        "label" : "INACTIVE Elevators",
+        "xPos" : 1118.2022705078125,
+        "yPos" : 229.5806121826172,
         "stageType" : "PROCESSOR"
       },
-      "inputLanes" : [ "StreamSelector_01OutputLane1513779140209" ],
+      "inputLanes" : [ "StreamSelector_01OutputLane1513874822127" ],
       "outputLanes" : [ "Aggregator_02OutputLane15137802882970" ],
       "eventLanes" : [ "Aggregator_02_EventLane" ],
       "services" : [ ]
     }, {
-      "instanceName" : "KafkaProducer_01",
-      "library" : "streamsets-datacollector-cdh_kafka_2_1-lib",
-      "stageName" : "com_streamsets_pipeline_stage_destination_kafka_KafkaDTarget",
-      "stageVersion" : "3",
+      "instanceName" : "Aggregator_03",
+      "library" : "streamsets-datacollector-basic-lib",
+      "stageName" : "com_streamsets_pipeline_stage_processor_aggregation_AggregationDProcessor",
+      "stageVersion" : "1",
       "configuration" : [ {
-        "name" : "conf.dataFormat",
-        "value" : "JSON"
+        "name" : "config.windowType",
+        "value" : "SLIDING"
       }, {
-        "name" : "conf.dataGeneratorFormatConfig.charset",
-        "value" : "UTF-8"
+        "name" : "config.timeWindow",
+        "value" : "TW_10S"
       }, {
-        "name" : "conf.dataGeneratorFormatConfig.csvFileFormat",
-        "value" : "CSV"
+        "name" : "config.windowLength",
+        "value" : "TW_1M"
       }, {
-        "name" : "conf.dataGeneratorFormatConfig.csvHeader",
-        "value" : "NO_HEADER"
+        "name" : "config.timeZoneID",
+        "value" : "UTC"
       }, {
-        "name" : "conf.dataGeneratorFormatConfig.csvReplaceNewLines",
+        "name" : "config.timeWindowsToRemember",
+        "value" : 3
+      }, {
+        "name" : "config.aggregatorConfigs",
+        "value" : [ {
+          "enabled" : true,
+          "filter" : false,
+          "aggregationFunction" : "COUNT",
+          "aggregationExpression" : "1",
+          "groupBy" : false,
+          "groupByExpression" : "${record:value('/type')}",
+          "aggregationName" : "bahn.equipment.type.ESCALATOR.all.state.ACTIVE.count"
+        } ]
+      }, {
+        "name" : "config.allAggregatorsEvent",
         "value" : true
       }, {
-        "name" : "conf.dataGeneratorFormatConfig.csvReplaceNewLinesString",
-        "value" : " "
-      }, {
-        "name" : "conf.dataGeneratorFormatConfig.csvCustomDelimiter",
-        "value" : "|"
-      }, {
-        "name" : "conf.dataGeneratorFormatConfig.csvCustomEscape",
-        "value" : "\\"
-      }, {
-        "name" : "conf.dataGeneratorFormatConfig.csvCustomQuote",
-        "value" : "\""
-      }, {
-        "name" : "conf.dataGeneratorFormatConfig.jsonMode",
-        "value" : "ARRAY_OBJECTS"
-      }, {
-        "name" : "conf.dataGeneratorFormatConfig.textFieldPath",
-        "value" : "/text"
-      }, {
-        "name" : "conf.dataGeneratorFormatConfig.textRecordSeparator",
-        "value" : "\\n"
-      }, {
-        "name" : "conf.dataGeneratorFormatConfig.textFieldMissingAction",
-        "value" : "ERROR"
-      }, {
-        "name" : "conf.dataGeneratorFormatConfig.textEmptyLineIfNull",
+        "name" : "config.perAggregatorEvents",
         "value" : false
-      }, {
-        "name" : "conf.dataGeneratorFormatConfig.avroSchemaSource",
-        "value" : null
-      }, {
-        "name" : "conf.dataGeneratorFormatConfig.avroSchema",
-        "value" : null
-      }, {
-        "name" : "conf.dataGeneratorFormatConfig.registerSchema",
-        "value" : false
-      }, {
-        "name" : "conf.dataGeneratorFormatConfig.schemaRegistryUrlsForRegistration",
-        "value" : [ ]
-      }, {
-        "name" : "conf.dataGeneratorFormatConfig.schemaRegistryUrls",
-        "value" : [ ]
-      }, {
-        "name" : "conf.dataGeneratorFormatConfig.schemaLookupMode",
-        "value" : "SUBJECT"
-      }, {
-        "name" : "conf.dataGeneratorFormatConfig.subject",
-        "value" : null
-      }, {
-        "name" : "conf.dataGeneratorFormatConfig.subjectToRegister",
-        "value" : null
-      }, {
-        "name" : "conf.dataGeneratorFormatConfig.schemaId",
-        "value" : null
-      }, {
-        "name" : "conf.dataGeneratorFormatConfig.includeSchema",
-        "value" : true
-      }, {
-        "name" : "conf.dataGeneratorFormatConfig.avroCompression",
-        "value" : "NULL"
-      }, {
-        "name" : "conf.dataGeneratorFormatConfig.binaryFieldPath",
-        "value" : "/"
-      }, {
-        "name" : "conf.dataGeneratorFormatConfig.protoDescriptorFile",
-        "value" : null
-      }, {
-        "name" : "conf.dataGeneratorFormatConfig.messageType",
-        "value" : null
-      }, {
-        "name" : "conf.dataGeneratorFormatConfig.fileNameEL",
-        "value" : null
-      }, {
-        "name" : "conf.dataGeneratorFormatConfig.wholeFileExistsAction",
-        "value" : "TO_ERROR"
-      }, {
-        "name" : "conf.dataGeneratorFormatConfig.includeChecksumInTheEvents",
-        "value" : false
-      }, {
-        "name" : "conf.dataGeneratorFormatConfig.checksumAlgorithm",
-        "value" : "MD5"
-      }, {
-        "name" : "conf.dataGeneratorFormatConfig.xmlPrettyPrint",
-        "value" : true
-      }, {
-        "name" : "conf.dataGeneratorFormatConfig.xmlValidateSchema",
-        "value" : false
-      }, {
-        "name" : "conf.dataGeneratorFormatConfig.xmlSchema",
-        "value" : null
-      }, {
-        "name" : "conf.metadataBrokerList",
-        "value" : "kafka-broker-1:9092"
-      }, {
-        "name" : "conf.runtimeTopicResolution",
-        "value" : false
-      }, {
-        "name" : "conf.topicExpression",
-        "value" : "${record:value('/topic')}"
-      }, {
-        "name" : "conf.topicWhiteList",
-        "value" : "*"
-      }, {
-        "name" : "conf.topic",
-        "value" : "count"
-      }, {
-        "name" : "conf.partitionStrategy",
-        "value" : "ROUND_ROBIN"
-      }, {
-        "name" : "conf.partition",
-        "value" : "${0}"
-      }, {
-        "name" : "conf.singleMessagePerBatch",
-        "value" : false
-      }, {
-        "name" : "conf.keySerializer",
-        "value" : "STRING"
-      }, {
-        "name" : "conf.valueSerializer",
-        "value" : "DEFAULT"
-      }, {
-        "name" : "conf.kafkaProducerConfigs",
-        "value" : [ ]
       }, {
         "name" : "stageOnRecordError",
         "value" : "TO_ERROR"
@@ -904,14 +813,187 @@
       } ],
       "uiInfo" : {
         "description" : "",
-        "label" : "Kafka Producer 1",
-        "xPos" : 1429.7650756835938,
-        "yPos" : 401,
-        "stageType" : "TARGET"
+        "label" : "ACTIVE Escalators",
+        "xPos" : 1117.4241333007812,
+        "yPos" : 345.4459533691406,
+        "stageType" : "PROCESSOR"
       },
-      "inputLanes" : [ "Aggregator_01_EventLane", "Aggregator_02_EventLane" ],
-      "outputLanes" : [ ],
-      "eventLanes" : [ ],
+      "inputLanes" : [ "StreamSelector_01OutputLane1513780332606" ],
+      "outputLanes" : [ "Aggregator_03OutputLane15138755209660" ],
+      "eventLanes" : [ "Aggregator_03_EventLane" ],
+      "services" : [ ]
+    }, {
+      "instanceName" : "Aggregator_04",
+      "library" : "streamsets-datacollector-basic-lib",
+      "stageName" : "com_streamsets_pipeline_stage_processor_aggregation_AggregationDProcessor",
+      "stageVersion" : "1",
+      "configuration" : [ {
+        "name" : "config.windowType",
+        "value" : "SLIDING"
+      }, {
+        "name" : "config.timeWindow",
+        "value" : "TW_10S"
+      }, {
+        "name" : "config.windowLength",
+        "value" : "TW_1M"
+      }, {
+        "name" : "config.timeZoneID",
+        "value" : "UTC"
+      }, {
+        "name" : "config.timeWindowsToRemember",
+        "value" : 3
+      }, {
+        "name" : "config.aggregatorConfigs",
+        "value" : [ {
+          "enabled" : true,
+          "filter" : false,
+          "aggregationFunction" : "COUNT",
+          "aggregationExpression" : "1",
+          "groupBy" : false,
+          "aggregationName" : "bahn.equipment.type.ESCALATOR.all.state.INACTIVE.count"
+        } ]
+      }, {
+        "name" : "config.allAggregatorsEvent",
+        "value" : true
+      }, {
+        "name" : "config.perAggregatorEvents",
+        "value" : false
+      }, {
+        "name" : "stageOnRecordError",
+        "value" : "TO_ERROR"
+      }, {
+        "name" : "stageRequiredFields",
+        "value" : [ ]
+      }, {
+        "name" : "stageRecordPreconditions",
+        "value" : [ ]
+      } ],
+      "uiInfo" : {
+        "description" : "",
+        "label" : "INACTIVE Escalators",
+        "xPos" : 1111.3409423828125,
+        "yPos" : 467.51438903808594,
+        "stageType" : "PROCESSOR"
+      },
+      "inputLanes" : [ "StreamSelector_01OutputLane1513779140209" ],
+      "outputLanes" : [ "Aggregator_04OutputLane15138757685510" ],
+      "eventLanes" : [ "Aggregator_04_EventLane" ],
+      "services" : [ ]
+    }, {
+      "instanceName" : "Aggregator_05",
+      "library" : "streamsets-datacollector-basic-lib",
+      "stageName" : "com_streamsets_pipeline_stage_processor_aggregation_AggregationDProcessor",
+      "stageVersion" : "1",
+      "configuration" : [ {
+        "name" : "config.windowType",
+        "value" : "SLIDING"
+      }, {
+        "name" : "config.timeWindow",
+        "value" : "TW_10S"
+      }, {
+        "name" : "config.windowLength",
+        "value" : "TW_1M"
+      }, {
+        "name" : "config.timeZoneID",
+        "value" : "UTC"
+      }, {
+        "name" : "config.timeWindowsToRemember",
+        "value" : 3
+      }, {
+        "name" : "config.aggregatorConfigs",
+        "value" : [ {
+          "enabled" : true,
+          "filter" : false,
+          "aggregationFunction" : "COUNT",
+          "aggregationExpression" : "1",
+          "groupBy" : false,
+          "groupByExpression" : "${record:value('/type')}",
+          "aggregationName" : "bahn.equipment.type.ELEVATOR.all.state.UNKNOWN.count"
+        } ]
+      }, {
+        "name" : "config.allAggregatorsEvent",
+        "value" : true
+      }, {
+        "name" : "config.perAggregatorEvents",
+        "value" : false
+      }, {
+        "name" : "stageOnRecordError",
+        "value" : "TO_ERROR"
+      }, {
+        "name" : "stageRequiredFields",
+        "value" : [ ]
+      }, {
+        "name" : "stageRecordPreconditions",
+        "value" : [ ]
+      } ],
+      "uiInfo" : {
+        "description" : "",
+        "label" : "UNKNOWN Elevators",
+        "xPos" : 1137.2724609375,
+        "yPos" : -116.55558776855469,
+        "stageType" : "PROCESSOR"
+      },
+      "inputLanes" : [ "StreamSelector_01OutputLane1513879839827" ],
+      "outputLanes" : [ "Aggregator_05OutputLane15138799918630" ],
+      "eventLanes" : [ "Aggregator_05_EventLane" ],
+      "services" : [ ]
+    }, {
+      "instanceName" : "Aggregator_06",
+      "library" : "streamsets-datacollector-basic-lib",
+      "stageName" : "com_streamsets_pipeline_stage_processor_aggregation_AggregationDProcessor",
+      "stageVersion" : "1",
+      "configuration" : [ {
+        "name" : "config.windowType",
+        "value" : "SLIDING"
+      }, {
+        "name" : "config.timeWindow",
+        "value" : "TW_10S"
+      }, {
+        "name" : "config.windowLength",
+        "value" : "TW_1M"
+      }, {
+        "name" : "config.timeZoneID",
+        "value" : "UTC"
+      }, {
+        "name" : "config.timeWindowsToRemember",
+        "value" : 3
+      }, {
+        "name" : "config.aggregatorConfigs",
+        "value" : [ {
+          "enabled" : true,
+          "filter" : false,
+          "aggregationFunction" : "COUNT",
+          "aggregationExpression" : "1",
+          "groupBy" : false,
+          "groupByExpression" : "${record:value('/type')}",
+          "aggregationName" : "bahn.equipment.type.ESCALATOR.all.state.UNKNOWN.count"
+        } ]
+      }, {
+        "name" : "config.allAggregatorsEvent",
+        "value" : true
+      }, {
+        "name" : "config.perAggregatorEvents",
+        "value" : false
+      }, {
+        "name" : "stageOnRecordError",
+        "value" : "TO_ERROR"
+      }, {
+        "name" : "stageRequiredFields",
+        "value" : [ ]
+      }, {
+        "name" : "stageRecordPreconditions",
+        "value" : [ ]
+      } ],
+      "uiInfo" : {
+        "description" : "",
+        "label" : "UNKNOWN Escalators",
+        "xPos" : 1132.2723999023438,
+        "yPos" : -1.4444580078125,
+        "stageType" : "PROCESSOR"
+      },
+      "inputLanes" : [ "StreamSelector_01OutputLane1513879827049" ],
+      "outputLanes" : [ "Aggregator_06OutputLane15138801957260" ],
+      "eventLanes" : [ "Aggregator_06_EventLane" ],
       "services" : [ ]
     }, {
       "instanceName" : "Trash_01",
@@ -922,11 +1004,49 @@
       "uiInfo" : {
         "description" : "",
         "label" : "Trash 1",
-        "xPos" : 1351.7650756835938,
-        "yPos" : 7,
+        "xPos" : 1783.9851684570312,
+        "yPos" : -15.605667114257812,
         "stageType" : "TARGET"
       },
-      "inputLanes" : [ "Aggregator_01OutputLane15137722863590", "StreamSelector_01OutputLane1513778727237", "Aggregator_02OutputLane15137802882970" ],
+      "inputLanes" : [ "Aggregator_01OutputLane15137722863590", "StreamSelector_01OutputLane1513778727237", "Aggregator_02OutputLane15137802882970", "Aggregator_03OutputLane15138755209660", "Aggregator_04OutputLane15138757685510", "Aggregator_05OutputLane15138799918630", "Aggregator_06OutputLane15138801957260" ],
+      "outputLanes" : [ ],
+      "eventLanes" : [ ],
+      "services" : [ ]
+    }, {
+      "instanceName" : "Shell_01",
+      "library" : "streamsets-datacollector-basic-lib",
+      "stageName" : "com_streamsets_pipeline_stage_executor_shell_ShellDExecutor",
+      "stageVersion" : "1",
+      "configuration" : [ {
+        "name" : "config.environmentVariables",
+        "value" : [ {
+          "key" : "event",
+          "value" : "${record:value(\"/\")}"
+        } ]
+      }, {
+        "name" : "config.timeout",
+        "value" : "1000"
+      }, {
+        "name" : "config.script",
+        "value" : "name=$(echo $event | awk '{split($0,a,\"name\\\":\"); print a[2]}' | cut -d',' -f1 | cut -d'\"' -f2)\ntime=$(echo $event | awk '{split($0,a,\"time\\\":\"); print a[2]}' | cut -d',' -f1 | sed 's/.\\{3\\}$//')\ncount=$(echo $event | awk '{split($0,a,\"count\\\":\"); print a[2]}' | cut -d',' -f1)\nif [ \"$count\" -ne \"0\" ]\nthen\n  echo \"$name $count $time\"  | nc localhost 2003\nfi"
+      }, {
+        "name" : "stageOnRecordError",
+        "value" : "TO_ERROR"
+      }, {
+        "name" : "stageRequiredFields",
+        "value" : [ ]
+      }, {
+        "name" : "stageRecordPreconditions",
+        "value" : [ ]
+      } ],
+      "uiInfo" : {
+        "description" : "",
+        "label" : "Graphite",
+        "xPos" : 1794.0503540039062,
+        "yPos" : 330.1192855834961,
+        "stageType" : "EXECUTOR"
+      },
+      "inputLanes" : [ "Aggregator_01_EventLane", "Aggregator_02_EventLane", "Aggregator_03_EventLane", "Aggregator_04_EventLane", "Aggregator_05_EventLane", "Aggregator_06_EventLane" ],
       "outputLanes" : [ ],
       "eventLanes" : [ ],
       "services" : [ ]
@@ -954,11 +1074,11 @@
       "title" : "BahnFacilitiesAggregate",
       "description" : "",
       "created" : 1513772228835,
-      "lastModified" : 1513781204482,
+      "lastModified" : 1513930635839,
       "creator" : "admin",
       "lastModifier" : "admin",
       "lastRev" : "0",
-      "uuid" : "e39501a2-5a27-478f-97ce-b50fdd5acc59",
+      "uuid" : "3947ba5b-b03a-47ee-85d4-e0c9d3a23d60",
       "valid" : true,
       "metadata" : {
         "labels" : [ ]
