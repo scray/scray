@@ -39,7 +39,7 @@ cd ~/git/scray/scray-example/spark-job/facility-state-job/
   Some HADOOP specific parameters are defined in ```conf/core-site.xml``` and ```yarn-site.xml```
 ```
 cd ~/git/scray/scray-example/spark-job/facility-state-job/
-./bin/submit-job.sh  yarn-cluster --total-executor-cores 3
+./bin/submit-job.sh  --total-executor-cores 10
     
 ```
 

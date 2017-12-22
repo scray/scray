@@ -71,7 +71,14 @@ if [ $LOCAL_MODE = true ]; then
 	target/facility-state-job-1.0-SNAPSHOT-jar-with-dependencies.jar \
 	-c file://$BASEDIR/conf/facility-state-job-local.yaml ${ARGUMENTS[@]}
 else
-  exec $SPARK_SUBMIT --packages org.apache.spark:spark-sql-kafka-0-10_2.11:2.2.0 --master yarn --driver-memory 512m --executor-memory 512m --total-executor-cores $CORES  --files $BASEDIR/../conf/log4j.properties,$BASEDIR/../conf/facility-state-job-local.yaml --class org.scray.example.FacilityStateJob target/facility-state-job-1.0-SNAPSHOT-jar-with-dependencies.jar ${ARGUMENTS[@]}
+  exec $SPARK_SUBMIT --packages org.apache.spark:spark-sql-kafka-0-10_2.11:2.2.0 \
+	--master yarn \
+	--deploy-mode cluster \
+	--driver-memory 512m \
+	--executor-memory 512m \
+	--total-executor-cores $CORES \
+	--files $BASEDIR/conf/log4j.properties,$BASEDIR/conf/facility-state-job.yaml \
+	--class org.scray.example.FacilityStateJob target/facility-state-job-1.0-SNAPSHOT-jar-with-dependencies.jar ${ARGUMENTS[@]}
 fi
 
 

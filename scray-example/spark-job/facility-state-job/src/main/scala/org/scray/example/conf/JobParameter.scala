@@ -19,9 +19,6 @@ case class JobParameter(
   var windowStartTime: Long         =  19999,       // Microsecond in sliding interval to start windows
   var watermark: String       = "0 milliseconds",
  
-  
-  var kafkaDataSchemaAsJsonExample: String = """{"type":"struct","fields":[{"name":"facilitytype","type":"string","nullable":true,"metadata":{}},{"name":"state","type":"string","nullable":true,"metadata":{}},{"name":"timestamp","type":"long","nullable":true,"metadata":{}}]}""",
-
   var checkpointPath: String        = "hdfs://hdfs-namenode:8020/checkpoints-facility-state-job/",
   var sparkBatchSize: Int           = 20,
   var numberOfBatchVersions: Int    = 2,
