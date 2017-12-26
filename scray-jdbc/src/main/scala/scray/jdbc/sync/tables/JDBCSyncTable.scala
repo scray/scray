@@ -11,11 +11,26 @@ import java.util.ArrayList
 import scala.collection.mutable.MutableList
 import scala.collection.mutable.ArrayBuffer
 import scala.collection.mutable.ListBuffer
+import slick.sql.FixedSqlStreamingAction
 
 
 trait DriverComponent {
   val driver: JdbcProfile
 }
+
+  case class JDBCSyncTable(
+    jobname: String,
+    slot: Int,
+    versions: Int,
+    dbSystem: String,
+    dbId: String,
+    tableID: String,
+    batchStartTime: Option[Long] = None,
+    batchEndTime: Option[Long] = None,
+    online: Boolean,
+    state: String,
+    mergeMode: Option[String] = None,
+    firstElementTime: Option[Long] = None)
 
 /** 
  *  SyncTableComponent provides database definitions for SyncTable table
@@ -28,23 +43,11 @@ trait DriverComponent {
 class SyncTableComponent(val driver: JdbcProfile, val dbSystemId: String = "BISDBADMIN", val tablename: String = "TBDQSYNCTABLE") {
   import driver.api._
 
-  case class JDBCSyncTable(
-    jobname: String,
-    slot: Int,
-    versions: Int,
-    dbId: String,
-    tableID: String,
-    batchStartTime: Option[Long] = None,
-    batchEndTime: Option[Long] = None,
-    online: Boolean,
-    state: String,
-    mergeMode: Option[String] = None,
-    firstElementTime: Option[Long] = None)
-    
   class SyncTableT(tag: Tag) extends Table[JDBCSyncTable](tag, tablename) {
     def jobname = column[String]("CJOBNAME")
     def slot = column[Int]("CSLOT")
     def versions = column[Int]("CVERSIONS")
+    def dbSystem = column[String]("CDBSYSTEM")
     def dbId = column[String]("CDBID")
     def tableID = column[String]("CTABLEID")
     def batchStartTime = column[Option[Long]]("CBATCHSTARTTIME")
@@ -54,7 +57,7 @@ class SyncTableComponent(val driver: JdbcProfile, val dbSystemId: String = "BISD
     def mergeMode = column[Option[String]]("CMERGEMODE")
     def firstElementTime = column[Option[Long]]("CFIRSTELEMENTTIME")
 
-    def * = (jobname, slot, versions, dbId, tableID, batchStartTime, batchEndTime, online, state, mergeMode, firstElementTime) <> (JDBCSyncTable.tupled, JDBCSyncTable.unapply)
+    def * = (jobname, slot, versions, dbSystem, dbId, tableID, batchStartTime, batchEndTime, online, state, mergeMode, firstElementTime) <> (JDBCSyncTable.tupled, JDBCSyncTable.unapply)
     def pk = primaryKey("pk_a", (jobname, online, slot))
   }
 
@@ -78,6 +81,7 @@ class SyncTableComponent(val driver: JdbcProfile, val dbSystemId: String = "BISD
           jobname = jobInfo.name,
           slot = slotIn,
           versions = jobInfo.numberOfBatchSlots,
+          dbSystem = jobInfo.dbSystem,
           dbId = dbSystemId,
           tableID = getBatchJobName(jobInfo.name, slotIn),
           online = false,
@@ -90,6 +94,7 @@ class SyncTableComponent(val driver: JdbcProfile, val dbSystemId: String = "BISD
           jobname = jobInfo.name,
           slot = slotIn,
           versions = jobInfo.numberOfOnlineSlots,
+          dbSystem = jobInfo.dbSystem,
           dbId = dbSystemId,
           tableID = getOnlineJobName(jobInfo.name, slotIn),
           online = true,
@@ -142,7 +147,7 @@ class SyncTableComponent(val driver: JdbcProfile, val dbSystemId: String = "BISD
     /**
    * Return batch job row with the newest time stamp
    */
-  def getLatestCompletedJobStatement(jobInfo: JobInfo[_, _, _], online: Boolean) = {
+  def getLatestCompletedJobStatement(jobInfo: JobInfo[_, _, _], online: Boolean): FixedSqlStreamingAction[Seq[JDBCSyncTable], JDBCSyncTable, Effect.Read] = {
     table.
       filter(_.jobname === jobInfo.name).
       filter(_.online === online).
