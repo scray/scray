@@ -34,11 +34,18 @@ import com.zaxxer.hikari.HikariConfig
 import scray.jdbc.extractors.ScraySQLDialect
 import scray.jdbc.extractors.ScraySQLDialectFactory
 import slick.jdbc.JdbcProfile
+import scray.jdbc.extractors.MariaDBDialect
+import slick.sql.FixedSqlAction
+import com.zaxxer.hikari.{HikariConfig, HikariDataSource}
+import scala.concurrent.duration.Duration
+import scala.concurrent.Await
 
 /**
  * Session implementation for JDBC datasources using a Hikari connection pool
  */
 class JDBCDbSession(val ds: HikariDataSource, val metadataConnection: Connection, val sqlDialiect: ScraySQLDialect) extends DbSession[PreparedStatement, PreparedStatement, ResultSet, JdbcProfile](ds.getJdbcUrl) with LazyLogging {
+  
+ 
   
   def this(ds: HikariDataSource, sqlDialiect: ScraySQLDialect) = this(ds, ds.getConnection, sqlDialiect)
   
@@ -54,9 +61,19 @@ class JDBCDbSession(val ds: HikariDataSource, val metadataConnection: Connection
     )
   }
   
+
+ lazy val db = this.getConnectionInformations.get.api.Database.forDataSource(ds, Some(20))
+  
+
   override def getConnectionInformations: Option[JdbcProfile] = {
+    sqlDialiect  match {
+      case MariaDBDialect => Some(slick.jdbc.MySQLProfile)
+      case _ => None
+    }
     
-    None
+
+  
+  
   }
   
   def this(jdbcURL: String, username: String, password: String) =
@@ -81,6 +98,26 @@ class JDBCDbSession(val ds: HikariDataSource, val metadataConnection: Connection
       }
     }
 
+
+    def execute[A, B <: slick.dbio.NoStream, C <: Nothing](statement: FixedSqlAction[A, B, C]) = {
+     import scala.concurrent.ExecutionContext.Implicits.global
+     
+     
+     
+      val fff = Await.result(db.run(statement), Duration("1 second")) 
+//      .onComplete(_ match {
+//        case Success(lines) => {
+//          println( "\nOK\n") 
+//          Some(lines)
+//        }
+//        case Failure(ex) => {
+//          println(s"\nUnable to execute statement ${ex}\n")
+//          None
+//        };
+//      })
+      
+      fff
+    }
   override def insert(statement: PreparedStatement): Try[ResultSet] = {
       try {
         logger.debug("Insert " + statement)

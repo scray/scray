@@ -14,7 +14,7 @@ object TiVersioningMain {
     val syncApi = new OnlineBatchSyncJDBC(connection)  
     val jobInfo = new JDBCJobInfo("job1")
     
-    syncApi.initJob(jobInfo)
+    //syncApi.initJob(jobInfo)
     
     syncApi.startNextBatchJob(jobInfo)
   
