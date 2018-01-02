@@ -41,7 +41,7 @@ trait DriverComponent {
  *  
  *   
  */
-class SyncTableComponent(val driver: JdbcProfile, val dbSystemId: String = "BISDBADMIN", val tablename: String = "TBDQSYNCTABLE") {
+class SyncTableComponent(val driver: JdbcProfile, val dbSystemId: String = "SCRAY", val tablename: String = "TSYNCTABLE") {
   import driver.api._
 
   class SyncTableT(tag: Tag) extends Table[JDBCSyncTable](tag, tablename) {
@@ -114,6 +114,17 @@ class SyncTableComponent(val driver: JdbcProfile, val dbSystemId: String = "BISD
     }
 
     statements
+  }
+  
+  def tableExists = {
+    table.exists.result
+  }
+  
+  def jobWasRegistered(jobInfo: JobInfo[_, _, _]) = {
+    table.
+    filter {_.jobname === jobInfo.name}
+    .exists
+    .result
   }
   
   

@@ -94,21 +94,7 @@ class JDBCDbSession(val ds: HikariDataSource, val metadataConnection: Connection
     def execute[A, B <: slick.dbio.NoStream, C <: Nothing](statement: FixedSqlAction[A, B, C]) = {
      import scala.concurrent.ExecutionContext.Implicits.global
      
-     
-     
-      val fff = Await.result(db.run(statement), Duration("1 second")) 
-//      .onComplete(_ match {
-//        case Success(lines) => {
-//          println( "\nOK\n") 
-//          Some(lines)
-//        }
-//        case Failure(ex) => {
-//          println(s"\nUnable to execute statement ${ex}\n")
-//          None
-//        };
-//      })
-      
-      fff
+      Await.result(db.run(statement), Duration("1 second")) 
     }
   override def insert(statement: PreparedStatement): Try[ResultSet] = {
       try {
