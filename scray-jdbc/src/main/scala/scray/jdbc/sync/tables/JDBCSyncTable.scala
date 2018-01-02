@@ -12,6 +12,7 @@ import scala.collection.mutable.MutableList
 import scala.collection.mutable.ArrayBuffer
 import scala.collection.mutable.ListBuffer
 import slick.sql.FixedSqlStreamingAction
+import scray.querying.sync.types.BatchMetadata
 
 
 trait DriverComponent {

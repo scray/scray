@@ -45,8 +45,6 @@ import scala.concurrent.Await
  */
 class JDBCDbSession(val ds: HikariDataSource, val metadataConnection: Connection, val sqlDialiect: ScraySQLDialect) extends DbSession[PreparedStatement, PreparedStatement, ResultSet, JdbcProfile](ds.getJdbcUrl) with LazyLogging {
   
- 
-  
   def this(ds: HikariDataSource, sqlDialiect: ScraySQLDialect) = this(ds, ds.getConnection, sqlDialiect)
   
   def this(jdbcURL: String, sqlDialect: ScraySQLDialect, username: String, password: String) = {
@@ -60,20 +58,14 @@ class JDBCDbSession(val ds: HikariDataSource, val metadataConnection: Connection
       }, sqlDialect
     )
   }
-  
 
  lazy val db = this.getConnectionInformations.get.api.Database.forDataSource(ds, Some(20))
-  
 
   override def getConnectionInformations: Option[JdbcProfile] = {
     sqlDialiect  match {
       case MariaDBDialect => Some(slick.jdbc.MySQLProfile)
       case _ => None
     }
-    
-
-  
-  
   }
   
   def this(jdbcURL: String, username: String, password: String) =
@@ -141,4 +133,14 @@ class JDBCDbSession(val ds: HikariDataSource, val metadataConnection: Connection
          case _                              => "It is currently not possible to execute : " + s
      }
    }
+}
+
+object JDBCDbSession {
+  def getNewJDBCDbSession(ds: HikariDataSource, sqlDialiect: ScraySQLDialect) = {
+    Try(new JDBCDbSession(ds, sqlDialiect))
+  }
+  
+  def getNewJDBCDbSession(jdbcURL: String, username: String, password: String) = {
+    Try(new JDBCDbSession(jdbcURL, username, password))
+  }
 }
