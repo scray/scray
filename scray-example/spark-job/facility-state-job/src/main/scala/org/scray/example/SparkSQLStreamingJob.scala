@@ -43,7 +43,7 @@ class SparkSQLStreamingJob(spark: SparkSession, conf: JobParameter) extends Seri
     // Aggregate data
         
     // Group the facilities by type and state and compute the count of each group    
-    // For details https://spark.apache.org/docs/latest/structured-streaming-programming-guide.html
+    // For details read https://spark.apache.org/docs/latest/structured-streaming-programming-guide.html
     val aggregatedFacilityData = preparedFacilityElement.
       withWatermark("timestamp", conf.watermark).
       groupBy(
