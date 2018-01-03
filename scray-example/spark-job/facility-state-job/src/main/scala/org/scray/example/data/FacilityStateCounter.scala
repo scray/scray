@@ -1,3 +1,3 @@
 package org.scray.example.data
 
-case class FacilityStateCounter(facilityType: String, state: String, count: Long)
+case class FacilityStateCounter(facilityType: String, state: String, count: Long, windowStartTime: Long)

@@ -21,8 +21,8 @@ class GraphiteForeachWriter(graphiteHostname: String, port: Int, numConnectionRe
   }
 
   def process(record: FacilityStateCounter) = {
-    
-    val dataIn = s"bahn.equipment.type.${record.facilityType}.all.state.${record.state}.count ${record.count} ${System.currentTimeMillis() / 1000}\n"
+
+    val dataIn = s"bahn.equipment.type.${record.facilityType}.all.state.${record.state}.count ${record.count} ${record.windowStartTime}\n"
     logger.debug(s"Write to graphite ${dataIn}")
     
     try {

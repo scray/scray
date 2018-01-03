@@ -4,7 +4,7 @@ sparkMaster: spark://127.0.0.1:7077
 kafkaBootstrapServers: kafka-broker-1:9092
 kafkaTopic: Facilities
 
-windowDuration: "40 seconds" 
+windowDuration: "20 seconds" 
 slideDuration: "20 seconds" 
 
 graphiteHost: graphite-host 
