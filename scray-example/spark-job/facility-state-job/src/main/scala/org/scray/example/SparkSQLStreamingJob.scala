@@ -55,7 +55,9 @@ class SparkSQLStreamingJob(spark: SparkSession, conf: JobParameter) extends Seri
 
     // Write data to graphite   
     aggregatedFacilityData.as[FacilityStateCounter]
-      .writeStream.foreach { graphiteWriter }
+      .writeStream
+      .option("checkpointLocation", conf.checkpointPath)
+      .foreach { graphiteWriter }
       .start()
       .awaitTermination()
 
