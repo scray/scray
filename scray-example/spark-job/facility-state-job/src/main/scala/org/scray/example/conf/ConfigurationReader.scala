@@ -71,7 +71,7 @@ class ConfigurationReader(confFile: String = "facility-state-job.yaml") extends 
   }
   
   private def readConfReadFromLocalFs(path: String): String = {
-        val configurationString = new StringBuilder
+    val configurationString = new StringBuilder
 
     val bufferedSource = Source.fromFile(path)
     for (line <- bufferedSource.getLines) {

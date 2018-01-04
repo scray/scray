@@ -1,4 +1,4 @@
-package scray.example.output
+package org.scray.example.output
 
 import java.io.DataOutputStream;
 import java.net.Socket;
@@ -19,8 +19,8 @@ class GraphiteWriter(graphiteIP: String) {
     val dataIn = s"bahn.equipment.type.ELEVATOR.all.state.INACTIVE.count ${countIn} ${System.currentTimeMillis() / 1000}\n"
     val dataAc = s"bahn.equipment.type.ELEVATOR.all.state.ACTIVE.count ${countAc} ${System.currentTimeMillis() / 1000}\n"
 
-    logger.info(s"Write to graphite ${dataAc}")
-    logger.info(s"Write to graphite ${dataIn}")
+    logger.debug(s"Write to graphite ${dataAc}")
+    logger.debug(s"Write to graphite ${dataIn}")
     
     out.printf(dataIn)
     out.printf(dataAc)

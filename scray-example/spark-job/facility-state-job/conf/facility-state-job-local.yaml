@@ -1,2 +1,10 @@
-checkpointPath: file:///tmp/ff
-sparkMaster: spark://laptop:7077
+checkpointPath: file:///tmp/
+sparkMaster: spark://127.0.0.1:7077
+
+kafkaBootstrapServers: kafka-broker-1:9092
+kafkaTopic: Facilities
+
+windowDuration: "40 seconds" 
+slideDuration: "20 seconds" 
+
+graphiteHost: graphite-host 

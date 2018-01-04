@@ -39,29 +39,41 @@ class YamlConfigurationParser extends LazyLogging {
       } else {
         logger.debug(s"kafkaTopic not defined use default: ${confObject.kafkaTopic}")
       }
-      
-      if(yamlData.get("kafkaDataSchemaAsJsonExample") != null) {
-        confObject.kafkaDataSchemaAsJsonExample = yamlData.get("kafkaDataSchemaAsJsonExample")
-      } else {
-        logger.debug(s"kafkaDataSchemaAsJsonExample not defined use default: ${confObject.kafkaDataSchemaAsJsonExample}")
-      }
-      
+            
       if(yamlData.get("graphiteRetries") != null) {
         confObject.graphiteRetries = yamlData.get("graphiteRetries").asInstanceOf[Integer]
       } else {
         logger.debug(s"graphiteRetries not defined use default: ${confObject.graphiteRetries}")
-      }
-
-      if(yamlData.get("checkpointPath") != null) {
-        confObject.checkpointPath = yamlData.get("checkpointPath")
-      } else {
-        logger.debug(s"checkpointPath not defined use default: ${confObject.checkpointPath}")
       }
       
       if(yamlData.get("sparkMaster") != null) {
         confObject.sparkMaster = yamlData.get("sparkMaster")
       } else {
         logger.debug(s"sparkMaster not defined use default: ${confObject.sparkMaster}")
+      }
+      
+      if(yamlData.get("checkpointPath") != null) {
+        confObject.checkpointPath = yamlData.get("checkpointPath")
+      } else {
+        logger.debug(s"checkpointPath not defined use default: ${confObject.checkpointPath}")
+      }
+      
+      if(yamlData.get("windowDuration") != null) {
+        confObject.windowDuration = yamlData.get("windowDuration")
+      } else {
+        logger.debug(s"windowDuration not defined use default: ${confObject.windowDuration}")
+      }
+      
+      if(yamlData.get("slideDuration") != null) {
+        confObject.slideDuration = yamlData.get("slideDuration")
+      } else {
+        logger.debug(s"slideDuration not defined use default: ${confObject.slideDuration}")
+      }
+      
+      if(yamlData.get("watermark") != null) {
+        confObject.watermark = yamlData.get("watermark")
+      } else {
+        logger.debug(s"slideDuration not defined use default: ${confObject.watermark}")
       }
 
     } catch {

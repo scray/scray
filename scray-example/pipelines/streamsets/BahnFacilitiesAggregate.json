@@ -5,7 +5,7 @@
     "pipelineId" : "BahnFacilitiescopy7d5a54aa-f6df-46a4-b113-522bfcde38a9",
     "title" : "BahnFacilitiesAggregate",
     "description" : "",
-    "uuid" : "ff9ba2dc-bdb1-44e4-b93d-5a78d23c45b9",
+    "uuid" : "3947ba5b-b03a-47ee-85d4-e0c9d3a23d60",
     "configuration" : [ {
       "name" : "executionMode",
       "value" : "STANDALONE"
@@ -104,7 +104,7 @@
         "value" : 4000
       }, {
         "name" : "conf.basic.maxWaitTime",
-        "value" : 2000
+        "value" : 1
       }, {
         "name" : "conf.dataFormatConfig.compression",
         "value" : "NONE"
@@ -434,7 +434,7 @@
         "value" : "POLLING"
       }, {
         "name" : "conf.pollingInterval",
-        "value" : 20000
+        "value" : 60000
       }, {
         "name" : "conf.dataFormat",
         "value" : "JSON"
@@ -656,7 +656,7 @@
       "stageVersion" : "1",
       "configuration" : [ {
         "name" : "config.windowType",
-        "value" : "ROLLING"
+        "value" : "SLIDING"
       }, {
         "name" : "config.timeWindow",
         "value" : "TW_10S"
@@ -714,7 +714,7 @@
       "stageVersion" : "1",
       "configuration" : [ {
         "name" : "config.windowType",
-        "value" : "ROLLING"
+        "value" : "SLIDING"
       }, {
         "name" : "config.timeWindow",
         "value" : "TW_10S"
@@ -771,7 +771,7 @@
       "stageVersion" : "1",
       "configuration" : [ {
         "name" : "config.windowType",
-        "value" : "ROLLING"
+        "value" : "SLIDING"
       }, {
         "name" : "config.timeWindow",
         "value" : "TW_10S"
@@ -829,7 +829,7 @@
       "stageVersion" : "1",
       "configuration" : [ {
         "name" : "config.windowType",
-        "value" : "ROLLING"
+        "value" : "SLIDING"
       }, {
         "name" : "config.timeWindow",
         "value" : "TW_10S"
@@ -886,7 +886,7 @@
       "stageVersion" : "1",
       "configuration" : [ {
         "name" : "config.windowType",
-        "value" : "ROLLING"
+        "value" : "SLIDING"
       }, {
         "name" : "config.timeWindow",
         "value" : "TW_10S"
@@ -944,7 +944,7 @@
       "stageVersion" : "1",
       "configuration" : [ {
         "name" : "config.windowType",
-        "value" : "ROLLING"
+        "value" : "SLIDING"
       }, {
         "name" : "config.timeWindow",
         "value" : "TW_10S"
@@ -1074,11 +1074,11 @@
       "title" : "BahnFacilitiesAggregate",
       "description" : "",
       "created" : 1513772228835,
-      "lastModified" : 1513880480156,
+      "lastModified" : 1513930635839,
       "creator" : "admin",
       "lastModifier" : "admin",
       "lastRev" : "0",
-      "uuid" : "ff9ba2dc-bdb1-44e4-b93d-5a78d23c45b9",
+      "uuid" : "3947ba5b-b03a-47ee-85d4-e0c9d3a23d60",
       "valid" : true,
       "metadata" : {
         "labels" : [ ]
