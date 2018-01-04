@@ -12,8 +12,7 @@ class JsonFacilityParser extends LazyLogging {
 
   def parse(json: String): Option[Facility[Long]] = {
     try {
-      // Return first element only! Arry schould contain one element
-      return Some(mapper.readValue(json, classOf[Array[Facility[Long]]]).toSeq.head)
+      return Some(mapper.readValue(json, classOf[Facility[Long]]))
     } catch {
       case e: Throwable => {
         println("Error")
