@@ -5,7 +5,7 @@
     "pipelineId" : "BahnFacilities",
     "title" : "BahnFacilities",
     "description" : "",
-    "uuid" : "6103e444-908f-4f39-8f28-ad79a85d2c7d",
+    "uuid" : "ed8f483f-28ff-4064-a0b0-84ac8e24a1e2",
     "configuration" : [ {
       "name" : "executionMode",
       "value" : "STANDALONE"
@@ -674,7 +674,7 @@
         "value" : "\""
       }, {
         "name" : "conf.dataGeneratorFormatConfig.jsonMode",
-        "value" : "ARRAY_OBJECTS"
+        "value" : "MULTIPLE_OBJECTS"
       }, {
         "name" : "conf.dataGeneratorFormatConfig.textFieldPath",
         "value" : "/text"
@@ -752,7 +752,7 @@
         "value" : null
       }, {
         "name" : "conf.metadataBrokerList",
-        "value" : "kafka-broker-1:9092"
+        "value" : "10.11.22.34:9092"
       }, {
         "name" : "conf.runtimeTopicResolution",
         "value" : false
@@ -826,7 +826,7 @@
         "value" : [ { } ]
       }, {
         "name" : "hdfsTargetConfigBean.uniquePrefix",
-        "value" : "facility_bahn"
+        "value" : "Facilities"
       }, {
         "name" : "hdfsTargetConfigBean.fileNameSuffix",
         "value" : "json"
@@ -847,7 +847,7 @@
         "value" : 0
       }, {
         "name" : "hdfsTargetConfigBean.maxFileSize",
-        "value" : 2000
+        "value" : 120
       }, {
         "name" : "hdfsTargetConfigBean.idleTimeout",
         "value" : "${1 * HOURS}"
@@ -919,7 +919,7 @@
         "value" : "\""
       }, {
         "name" : "hdfsTargetConfigBean.dataGeneratorFormatConfig.jsonMode",
-        "value" : "ARRAY_OBJECTS"
+        "value" : "MULTIPLE_OBJECTS"
       }, {
         "name" : "hdfsTargetConfigBean.dataGeneratorFormatConfig.textFieldPath",
         "value" : "/text"
@@ -934,7 +934,7 @@
         "value" : false
       }, {
         "name" : "hdfsTargetConfigBean.dataGeneratorFormatConfig.avroSchemaSource",
-        "value" : "INLINE"
+        "value" : null
       }, {
         "name" : "hdfsTargetConfigBean.dataGeneratorFormatConfig.avroSchema",
         "value" : null
@@ -1005,8 +1005,8 @@
       "uiInfo" : {
         "description" : "",
         "label" : "Hadoop FS 1",
-        "xPos" : 933.7650756835938,
-        "yPos" : 203,
+        "xPos" : 943.7650756835938,
+        "yPos" : 191,
         "stageType" : "TARGET"
       },
       "inputLanes" : [ "ExpressionEvaluator_01OutputLane15106729161460" ],
@@ -1036,19 +1036,19 @@
       "pipelineId" : "BahnFacilities",
       "title" : "BahnFacilities",
       "description" : "",
-      "created" : 1512044134040,
-      "lastModified" : 1513867071776,
+      "created" : 1513867656967,
+      "lastModified" : 1515078686168,
       "creator" : "admin",
       "lastModifier" : "admin",
       "lastRev" : "0",
-      "uuid" : "6103e444-908f-4f39-8f28-ad79a85d2c7d",
+      "uuid" : "ed8f483f-28ff-4064-a0b0-84ac8e24a1e2",
       "valid" : true,
       "metadata" : {
         "labels" : [ ]
       },
       "name" : "BahnFacilities",
       "sdcVersion" : "3.0.0.0",
-      "sdcId" : "d361bf42-d450-11e7-a3c6-5d61692cd1a1"
+      "sdcId" : "e89e8a38-ca09-11e7-8721-0f26e77cbcc4"
     },
     "metadata" : {
       "labels" : [ ]
@@ -1176,7 +1176,7 @@
     } ],
     "dataRuleDefinitions" : [ ],
     "driftRuleDefinitions" : [ ],
-    "uuid" : "b5685da6-d1d7-48b7-94ea-a29f06ccc4f3",
+    "uuid" : "77a2f02e-8aee-4885-a624-444024f01303",
     "configuration" : [ {
       "name" : "emailIDs",
       "value" : [ ]
