@@ -46,7 +46,7 @@ object RowStoreFactory extends LazyLogging {
   /**
    * create a row store object using metadata extraction of the datastax java driver
    */
-  def getRowStore[Q <: DomainQuery](ti: TableIdentifier, session: DbSession[_, _, _])(
+  def getRowStore[Q <: DomainQuery](ti: TableIdentifier, session: DbSession[_, _, _, _])(
                   implicit typeMap: Map[String, CassandraPrimitive[_]], futurePool: FuturePool): 
                     (Option[CassandraQueryableSource[Q]], List[(String, CassandraPrimitive[_])]) = {
     // retrieve table metadata

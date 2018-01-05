@@ -32,7 +32,7 @@
 		</dependency>
 		<dependency>
 			<groupId>com.github.scopt</groupId>
-			<artifactId>scopt_2.10</artifactId>
+			<artifactId>scopt_${scala.suffix}</artifactId>
 			<version>3.2.0</version>
 			<scope>test</scope>
 		</dependency>
@@ -52,6 +52,11 @@
 			<version>3.2.0</version>
 		</dependency>
 		<dependency>
+			<groupId>org.mariadb.jdbc</groupId>
+			<artifactId>mariadb-java-client</artifactId>
+			<version>2.1.2</version>
+		</dependency>
+		<dependency>
 			<groupId>com.h2database</groupId>
 			<artifactId>h2</artifactId>
 			<version>1.4.196</version>
@@ -69,8 +74,58 @@
 					<target>${maven.compiler.target}</target>
 				</configuration>
 			</plugin>
+			<plugin>
+				<groupId>org.scalatest</groupId>
+				<artifactId>scalatest-maven-plugin</artifactId>
+				<version>1.0</version>
+				<configuration>
+					<reportsDirectory>${project.build.directory}/surefire-reports</reportsDirectory>
+					<junitxml>.</junitxml>
+					<filereports>WDF TestSuite.txt</filereports>
+					<tagsToExclude>scray.jdbc.tags.RequiresMySQLServer</tagsToExclude>
+				</configuration>
+				<executions>
+					<execution>
+						<id>test</id>
+						<goals>
+							<goal>test</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
 		</plugins>
+
 	</build>
+
+	<profiles>
+		<profile>
+			<id>MySQLIntegrationTest</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.scalatest</groupId>
+						<artifactId>scalatest-maven-plugin</artifactId>
+						<version>1.0</version>
+						<configuration combine.self="override">
+							<reportsDirectory>${project.build.directory}/surefire-reports</reportsDirectory>
+							<junitxml>.</junitxml>
+							<filereports>WDF TestSuite.txt</filereports>
+							<tagsToExclude />
+							<tagsToInclude>scray.jdbc.tags.RequiresMySQLServer</tagsToInclude>
+						</configuration>
+						<executions>
+							<execution>
+								<id>test</id>
+								<goals>
+									<goal>test</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
 	<licenses>
 		<license>
 			<name>Apache License, Version 2.0</name>

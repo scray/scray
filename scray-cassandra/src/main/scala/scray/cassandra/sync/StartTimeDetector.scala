@@ -54,7 +54,7 @@ import scray.querying.sync.conf.SyncConfiguration
  * Also other ordinal attributes can be use.
  */
 class StartTimeDetector(job: JobInfo[Statement, Insert, ResultSet],
-                        dbSession: DbSession[Statement, Insert, ResultSet]) extends LazyLogging {
+                        dbSession: DbSession[Statement, Insert, ResultSet, _]) extends LazyLogging {
 
   val configSync: SyncConfiguration = SyncConfigurationLoader.loadConfig
   val startConsensusTable = new Table(configSync.dbSystem, "startconsensus", new StartConsensusRow)

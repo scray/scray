@@ -52,7 +52,7 @@ import com.typesafe.scalalogging.LazyLogging
 
 
 class CassandraSyncTableLock (job: JobInfo[Statement, Insert, ResultSet], jobLockTable: Table[SyncTableBasicClasses.JobLockTable], 
-  dbSession: DbSession[Statement, Insert, ResultSet], val timeOut: Int) extends LockApi[Statement, Insert, ResultSet](job, jobLockTable, dbSession) with LazyLogging {
+  dbSession: DbSession[Statement, Insert, ResultSet, _], val timeOut: Int) extends LockApi[Statement, Insert, ResultSet](job, jobLockTable, dbSession) with LazyLogging {
 
   
   val timeBetweenRetries = 100 // ms
@@ -64,7 +64,7 @@ class CassandraSyncTableLock (job: JobInfo[Statement, Insert, ResultSet], jobLoc
   lazy val unLockQuery = getUnlockQuery
   
    
-  class CassandraSessionBasedDBSession(cassandraSession: Session) extends DbSession[Statement, Insert, ResultSet](cassandraSession.getCluster.getMetadata.getAllHosts().iterator().next.getAddress.toString) {
+  class CassandraSessionBasedDBSession(cassandraSession: Session) extends DbSession[Statement, Insert, ResultSet, String](cassandraSession.getCluster.getMetadata.getAllHosts().iterator().next.getAddress.toString) {
 
     override def execute(statement: String): Try[ResultSet] = {
       try {
@@ -301,7 +301,7 @@ object CassandraSyncTableLock extends Serializable {
   def apply(
       job: JobInfo[Statement, Insert, ResultSet], 
       jobLockTable: Table[SyncTableBasicClasses.JobLockTable], 
-      dbSession: DbSession[Statement, Insert, ResultSet],
+      dbSession: DbSession[Statement, Insert, ResultSet, _],
       timeOut: Int) = {
     new CassandraSyncTableLock(job, jobLockTable, dbSession, timeOut)
   }

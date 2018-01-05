@@ -124,10 +124,11 @@ class Columns(
   override type ColumnType = Column[_]
 }
 
-abstract class DbSession[Statement, InsertIn, Result](val dbHostname: String) {
+abstract class DbSession[Statement, InsertIn, Result, ConnectionInformations](val dbHostname: String) {
   def execute(statement: Statement): Try[Result]
   def execute(statement: String): Try[Result]
   def insert(statement: InsertIn): Try[Result]
+  def getConnectionInformations: Option[ConnectionInformations] = None
 }
 
 object SyncTable {
@@ -250,9 +251,9 @@ object State extends Enumeration {
 abstract class LockApi[Statement, Insert, Result](
       val job: JobInfo[Statement, Insert, Result], 
       val jobLockTable: Table[SyncTableBasicClasses.JobLockTable], 
-      val dbSession: DbSession[Statement, Insert, Result]) extends Lock {
+      val dbSession: DbSession[Statement, Insert, Result, _]) extends Lock {
   
-  def this(job: JobInfo[Statement, Insert, Result], dbSession: DbSession[Statement, Insert, Result])(implicit 
+  def this(job: JobInfo[Statement, Insert, Result], dbSession: DbSession[Statement, Insert, Result, _])(implicit 
           colString: DBColumnImplementation[String],
           colBool: DBColumnImplementation[Boolean]) {
     this(job, JobLockTable("SILIDX", "jobLock"), dbSession)

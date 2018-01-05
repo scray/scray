@@ -153,7 +153,7 @@ class SyncTableComponent(val driver: JdbcProfile, val dbSystemId: String = "BISD
   }
 
   
-  private def getBatchJobName(jobname: String, nr: Int): String = { jobname + "_batch" + nr }
-  private def getOnlineJobName(jobname: String, nr: Int): String = { jobname + "_online" + nr }
+  def getBatchJobName(jobname: String, nr: Int): String = { jobname + "_batch" + nr }
+  def getOnlineJobName(jobname: String, nr: Int): String = { jobname + "_online" + nr }
 
 }

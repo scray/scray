@@ -56,7 +56,7 @@ class HDFSConfiguration(override protected val startconfig: HDFSProperties)
     // TODO: examine what tasks need to be done for JDBC...
   }
 
-  override def getSession: DbSession[_, _, _] = {
+  override def getSession: DbSession[_, _, _, _] = {
     // setup Hikari connection pool for this store by creating a JDBC Session
     // need to check how often this is called
     sessioncount += 1

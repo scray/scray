@@ -19,23 +19,30 @@ import scray.querying.description.TableIdentifier
 import scray.querying.description.QueryRange
 
 /**
- * H2 dialect for Scray
+ * MariaDB dialect for Scray
  */
-object ScrayH2Dialect extends ScraySQLDialect("H2") {
-  
-  /**
-   * H2 implements limits by limit and offset (if limit has been specified) or offset and fetch
+object MariaDBDialect extends ScraySQLDialect("MARIADB") {
+
+    /**
+   * MariaDB implements limits by LIMIT [<offset> ,] <limit>
    */
   override def getEnforcedLimit(rangeOpt: Option[QueryRange], where: List[Domain[_]]): (String, List[Domain[_]]) = rangeOpt.map { range =>
     val sbuf = new StringBuffer
     if(range.skip.isDefined || range.limit.isDefined) {
-      range.limit.map { limit =>
-        sbuf.append(s" LIMIT ${limit} ")
-        range.skip.foreach { skip =>
-          sbuf.append(s" OFFSET ${skip} ")
-        }
-      }.getOrElse {
-        sbuf.append(s" OFFSET ${range.skip.getOrElse(0L)} ROWS ")
+      sbuf.append(" LIMIT ")
+      range.skip.foreach { skip =>
+        // offsets / skips start from zero in mysql
+        sbuf.append(s"${skip}")
+      }
+      if(range.skip.isDefined && range.limit.isDefined) {
+        sbuf.append(", ")
+      }
+      if(range.skip.isDefined && !range.limit.isDefined) {
+        // according to mysql docu append large number to retrieve 
+        // all rows if skip will be defined only
+        sbuf.append("18446744073709551615")
+      } else {
+        sbuf.append(s"${range.limit.get}")
       }
     }
     (sbuf.toString, List())
@@ -43,13 +50,10 @@ object ScrayH2Dialect extends ScraySQLDialect("H2") {
 
   /**
    * we scan if the URL is of format:
-   * jdbc:h2:...
-   * 
-   * correct format according to H2 website is:
-   * jdbc:h2:tcp://<server>[:<port>]/[<path>]<databaseName>
+   * jdbc:mysql://...
    */
   override def isDialectJdbcURL(jdbcURL: String): Boolean =
-    jdbcURL.toUpperCase().startsWith("JDBC:H2:")
+    jdbcURL.toUpperCase().startsWith("JDBC:mariadb://")
   
-  override val DRIVER_CLASS_NAME = "org.h2.Driver"
+  override val DRIVER_CLASS_NAME = "org.mariadb.jdbc.Driver"
 }
