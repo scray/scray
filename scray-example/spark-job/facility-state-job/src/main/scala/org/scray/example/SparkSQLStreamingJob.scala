@@ -52,7 +52,7 @@ class SparkSQLStreamingJob(spark: SparkSession, conf: JobParameter) extends Seri
         column("state")
       ).count
       .select($"facilityType", $"state", $"count", $"window.start".alias("windowStartTime"))
-
+      
     // Write data to graphite   
     aggregatedFacilityData.as[FacilityStateCounter]
       .writeStream

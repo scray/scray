@@ -31,21 +31,31 @@ object FacilityStateJob {
    * execute batch function
    */
   def batch(config: CliParameters) = {
-    logger.error("Batch function is not implemented")
-  }
+    val conf = new SparkConf().setAppName("Batch_" + this.getClass.getName).setMaster(config.sparkMaster).set("spark.ui.port", "8088").set("hadoop.home.dir", "/tmp")
+    val sc = new SparkContext(conf)
 
-  /**
-   * execute streaming function
-   */
-  def stream(config: CliParameters) = {
-    
-    val spark = SparkSession.builder().appName(this.getClass.getName).getOrCreate()
     val configuration = config.confFilePath match {
       case Some(confFilePath) => (new ConfigurationReader(confFilePath)).readConfigruationFile
       case None               => (new ConfigurationReader).readConfigruationFile
     }
     logger.info(s"Job configuration parameters: ${configuration}")
 
+    val job = new BatchJob(sc, configuration)
+
+    job.run
+  }
+
+  /**
+   * execute streaming function
+   */
+  def stream(config: CliParameters) = {
+
+    val spark = SparkSession.builder().appName(this.getClass.getName).getOrCreate()
+    val configuration = config.confFilePath match {
+      case Some(confFilePath) => (new ConfigurationReader(confFilePath)).readConfigruationFile
+      case None               => (new ConfigurationReader).readConfigruationFile
+    }
+    logger.info(s"Job configuration parameters: ${configuration}")
 
     val job = new SparkSQLStreamingJob(spark, configuration)
     job.run(configuration.windowStartTime)

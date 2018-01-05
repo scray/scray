@@ -59,8 +59,9 @@ fi
 
 if [ $LOCAL_MODE = true ]; then
   export SPARK_MASTER_HOST="127.0.0.1"
+  export SPARK_LOCAL_IP="127.0.0.1"
   $SPARK_HOME/sbin/start-master.sh
-  $SPARK_HOME/sbin/start-slave.sh spark://127.0.0.1:7077 
+  $SPARK_HOME/sbin/start-slave.sh spark://127.0.0.1:7077 -h 127.0.0.1 
   exec $SPARK_SUBMIT --packages org.apache.spark:spark-sql-kafka-0-10_2.11:2.2.0 \
 	--master spark://127.0.0.1:7077 \
 	--driver-memory 512m \

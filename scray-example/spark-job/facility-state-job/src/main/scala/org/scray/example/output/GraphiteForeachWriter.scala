@@ -11,7 +11,7 @@ import org.scray.example.data.FacilityStateCounter
 /**
  * Write FacilityStateCounter to Graphite
  */
-class GraphiteForeachWriter(graphiteHostname: String, port: Int, numConnectionRetries: Int = 20) extends ForeachWriter[FacilityStateCounter] with LazyLogging {
+class GraphiteForeachWriter(graphiteHostname: String, port: Int = 2003, numConnectionRetries: Int = 20) extends ForeachWriter[FacilityStateCounter] with LazyLogging {
 
   var graphiteStream: PrintWriter = null
   var retriedNum = 0  // Number of executed retries
@@ -24,27 +24,27 @@ class GraphiteForeachWriter(graphiteHostname: String, port: Int, numConnectionRe
 
     val dataIn = s"bahn.equipment.type.${record.facilityType}.all.state.${record.state}.count ${record.count} ${record.windowStartTime}\n"
     logger.debug(s"Write to graphite ${dataIn}")
-    
-    try {
-      graphiteStream.printf(dataIn)
-      graphiteStream.flush()
-
-    } catch {
-      case e: Exception => {
-        logger.error(s"Error while writing to graphite: ${e.getMessage} ")
-        
-        if(numConnectionRetries >= retriedNum) {
-          val sleepTime = 10 // Time in seconds
-          logger.info(s"Try to connect to graphite ${graphiteHostname}:${port} in ${sleepTime}s. Retry ${retriedNum}/${numConnectionRetries}")
-          Thread.sleep(sleepTime *1000)
-          retriedNum += 1
-          initConnection
-        } else {
-          logger.error(s"Maximum number of retries reached ${numConnectionRetries}")
-          throw new RuntimeException(s"Unable to connect to graphite ${e.getMessage}")
-        }
-      }
-    }
+    println(dataIn)
+//    try {
+//      graphiteStream.printf(dataIn)
+//      graphiteStream.flush()
+//
+//    } catch {
+//      case e: Exception => {
+//        logger.error(s"Error while writing to graphite: ${e.getMessage}. Exception: ${e} ")
+//        
+//        if(numConnectionRetries >= retriedNum) {
+//          val sleepTime = 10 // Time in seconds
+//          logger.info(s"Try to connect to graphite ${graphiteHostname}:${port} in ${sleepTime}s. Retry ${retriedNum}/${numConnectionRetries}")
+//          Thread.sleep(sleepTime *1000)
+//          retriedNum += 1
+//          initConnection
+//        } else {
+//          logger.error(s"Maximum number of retries reached ${numConnectionRetries}")
+//          throw new RuntimeException(s"Unable to connect to graphite ${e.getMessage}")
+//        }
+//      }
+//    }
   }
 
   def close(errorOrNull: Throwable): Unit = {

@@ -4,8 +4,9 @@ package org.scray.example.conf
  * container class for command line arguments. Change this along with the command line parser.
  */
 case class JobParameter(
-  var sparkMaster: String  = "yarn-cluster",                             // Spark master URL
-  var batch: Boolean = false,
+  var sparkMaster: String    = "yarn",              // Spark master URL
+  var batch: Boolean         = false,
+  var batchFilePath: String = "hdfs://hdfs-namenode:8020/data/Facilities*",
 
   var graphiteHost: String   =   "127.0.0.1",        
   var graphitePort: Int      =   2003,
@@ -16,13 +17,11 @@ case class JobParameter(
   
   var windowDuration: String  = "20 seconds",
   var slideDuration: String   = "20 seconds",
-  var windowStartTime: Long         =  19999,       // Microsecond in sliding interval to start windows
+  var windowStartTime: Long   =  19999,           // Microsecond in sliding interval to start windows
   var watermark: String       = "0 milliseconds",
  
   var checkpointPath: String        = "hdfs://hdfs-namenode:8020/checkpoints-facility-state-job/",
   var sparkBatchSize: Int           = 20,
   var numberOfBatchVersions: Int    = 2,
   var numberOfOnlineVersions: Int   = 1
-  
-  
 )

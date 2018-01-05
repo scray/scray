@@ -75,6 +75,12 @@ class YamlConfigurationParser extends LazyLogging {
       } else {
         logger.debug(s"slideDuration not defined use default: ${confObject.watermark}")
       }
+      
+      if(yamlData.get("batchFilePath") != null) {
+        confObject.batchFilePath = yamlData.get("batchFilePath")
+      } else {
+        logger.debug(s"slideDuration not defined use default: ${confObject.batchFilePath}")
+      }
 
     } catch {
       case e: YAMLException => {

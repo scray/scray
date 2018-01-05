@@ -1,6 +1,8 @@
 checkpointPath: file:///tmp/
 sparkMaster: spark://127.0.0.1:7077
 
+batchFilePath: "file:///tmp/data/Facilities*"
+
 kafkaBootstrapServers: kafka-broker-1:9092
 kafkaTopic: Facilities
 

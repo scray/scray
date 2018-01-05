@@ -1,131 +1,78 @@
-//package org.scray.example
-//
-//import org.apache.spark.SparkContext
-//import com.datastax.spark.connector._
-//import org.apache.spark.SparkContext._
-//import org.apache.spark._
-//import scray.cassandra.sync.CassandraImplementation._
-//import scray.cassandra.sync.OnlineBatchSyncCassandra
-//import scray.querying.sync.JobInfo
-//import com.datastax.driver.core.querybuilder.Insert
-//import com.datastax.driver.core.ResultSet
-//import com.datastax.driver.core.Statement
-//import com.typesafe.scalalogging.LazyLogging
-//
-//import org.apache.spark.streaming.State
-//import org.apache.spark.streaming.StreamingContext
-//import org.apache.spark.streaming.Time
-//import org.apache.spark.streaming.dstream.DStream
-//import org.apache.spark.streaming.dstream.DStream.toPairDStreamFunctions
-//import org.scray.example.data.JsonFacilityParser
-//
-//import com.datastax.driver.core.ResultSet
-//import com.datastax.driver.core.Statement
-//import com.datastax.driver.core.querybuilder.Insert
-//
-//import scray.example.input.db.fasta.model.Facility
-//import scray.example.input.db.fasta.model.Facility.StateEnum
-//import scray.querying.sync.JobInfo
-//import org.apache.spark.streaming.StateSpec
-//import org.apache.kafka.clients.consumer.ConsumerRecord
-//import com.typesafe.scalalogging.LazyLogging
-//import scray.example.input.db.fasta.model.Facility.TypeEnum
-//import org.apache.spark.streaming.Seconds
-//import org.scray.example.conf.JobParameter
-//import org.scray.example.output.GraphiteWriter
-//
-///**
-// * Class containing all the batch stuff
-// */
-//class BatchJob(@transient val sc: SparkContext, jobInfo: JobInfo[Statement, Insert, ResultSet], conf: JobParameter) extends LazyLogging with Serializable {
-//  println(sc.getConf.get("spark.cassandra.connection.host"))
-//  val syncTable = new OnlineBatchSyncCassandra(sc.getConf.get("spark.cassandra.connection.host"))
-//
-//  /**
-//   * do the job
-//   */
-//  def batchAggregate() = {
-//
-//  }
-//    lazy val jsonParser = new JsonFacilityParser
-//  lazy val outputOperation = new GraphiteWriter(conf.graphiteHost)
-//
-//   def runTuple[T <: org.apache.spark.streaming.dstream.DStream[ConsumerRecord[String, String]]](dstream: T) = {
-//   
-//    // Parse input data and create K, V. K ::= Equipmentnumber, V ::= State counter
-//    val facilities = dstream.flatMap(facilitiesAsJson => {
-//      val parsedFacilities = jsonParser.jsonReader(facilitiesAsJson.value())
-//      parsedFacilities.map(facilities =>
-//        facilities.map(facility => {
-//          (facility.getType, mapStateToCount(facility))
-//        }))
-//    }).flatMap(x => x)
-//
-//    // Count all states of this batch
-//    val availibilityBatch = facilities.reduceByKey((a: Availability, b: Availability) => {
-//      Availability(
-//          a.activeCounter + b.activeCounter,
-//          a.inactiveCounter + b.inactiveCounter,
-//          a.unknownCounter + b.unknownCounter)
-//    })
-//    
-//    availibilityBatch.foreachRDD { rdd =>
-//      rdd.foreachPartition { availableHostsPartition =>
-//        availableHostsPartition.foreach { availibility =>
-//        
-//          val (facilityType, count) = availibility
-//          
-//          if(facilityType.equals(TypeEnum.ELEVATOR)) {
-//            if(count.inactiveCounter > 10 && count.activeCounter > 10) { 
-//              outputOperation.sentElevator(count.inactiveCounter, count.activeCounter)
-//            }
-//          }
-//          if(facilityType.equals(TypeEnum.ESCALATOR)) {
-//            if(count.inactiveCounter > 10 && count.activeCounter > 10) { 
-//              outputOperation.sentEscalator(count.inactiveCounter, count.activeCounter)
-//            }
-//          }
-//        }
-//      }
-//    }
-//  }
-//    
-//
-//  def mapStateToCount(fac: Facility): Availability = {
-//     if(fac.getState == StateEnum.ACTIVE) {
-//       Availability(1, 0, 0)
-//    } else if(fac.getState == StateEnum.INACTIVE) {
-//        Availability(0, 1, 0)
-//    } else {
-//        Availability(0, 0, 1)
-//    }
-//  }
-//  
-//  
-//  def addOldAvailibility(
-//     batchTime: Time, 
-//     facId: java.lang.Long,
-//     batchAvailibility: Option[Availability],
-//     state: State[Tuple3[Long, Long, Long]]
-//  ): Option[Tuple2[Long, Float]] = {
-//    
-//    val (activeCount, inactiveCount, unknownCount) = state.getOption().getOrElse((0L, 0L, 0L))
-//    
-//    batchAvailibility.map( lastBatchResult => {
-//    state.update(
-//        (
-//            activeCount   +  lastBatchResult.activeCounter,
-//            inactiveCount +  lastBatchResult.inactiveCounter, 
-//            unknownCount  +  lastBatchResult.unknownCounter
-//         )
-//       ) 
-//    })
-//    
-//    val (activeCountNew, inactiveCountNew, unknownCountNew) = state.get()
-//    val allValues = activeCountNew + inactiveCountNew
-//    val av = (activeCountNew * 1f)/ allValues
-//    
-//
-//    Some((facId, av)) 
-//  }
-//}
+package org.scray.example
+
+import org.apache.spark.SparkContext
+import com.datastax.spark.connector._
+import org.apache.spark.SparkContext._
+import org.apache.spark._
+import scray.cassandra.sync.CassandraImplementation._
+import scray.cassandra.sync.OnlineBatchSyncCassandra
+import scray.querying.sync.JobInfo
+import com.datastax.driver.core.querybuilder.Insert
+import com.datastax.driver.core.ResultSet
+import com.datastax.driver.core.Statement
+import com.typesafe.scalalogging.LazyLogging
+
+import org.apache.spark.streaming.State
+import org.apache.spark.streaming.StreamingContext
+import org.apache.spark.streaming.Time
+import org.apache.spark.streaming.dstream.DStream
+import org.apache.spark.streaming.dstream.DStream.toPairDStreamFunctions
+import org.scray.example.data.JsonFacilityParser
+
+import com.datastax.driver.core.ResultSet
+import com.datastax.driver.core.Statement
+import com.datastax.driver.core.querybuilder.Insert
+
+import scray.example.input.db.fasta.model.Facility.StateEnum
+import scray.querying.sync.JobInfo
+import org.apache.spark.streaming.StateSpec
+import org.apache.kafka.clients.consumer.ConsumerRecord
+import com.typesafe.scalalogging.LazyLogging
+import scray.example.input.db.fasta.model.Facility.TypeEnum
+import org.apache.spark.streaming.Seconds
+import org.scray.example.conf.JobParameter
+import org.scray.example.output.GraphiteWriter
+import org.spark_project.jetty.server.handler.ContextHandler.Availability
+import org.scray.example.data.Facility
+import java.util.Calendar
+import org.scray.example.output.GraphiteForeachWriter
+import org.scray.example.data.FacilityStateCounter
+
+/**
+ * Class containing all the batch stuff
+ */
+
+case class AggregationKey(facilityType: String, state: String, timeStamp: Long)
+class BatchJob(@transient val sc: SparkContext, conf: JobParameter) extends LazyLogging with Serializable {
+
+  @transient lazy val jsonParser = new JsonFacilityParser
+  @transient lazy val graphiteOutput = new GraphiteForeachWriter(conf.graphiteHost)
+  graphiteOutput.initConnection
+
+  def run = {
+    sc.textFile(conf.batchFilePath)
+      .map(jsonParser.parse)
+      .flatMap(x => x)
+      .map(facility => (createAggreationKey(facility, 20), 1))
+      .reduceByKey(_ + _).map(x => FacilityStateCounter(x._1.facilityType, x._1.state, x._2, x._1.timeStamp))
+
+      .foreachPartition { availableHostsPartition =>
+        {
+          availableHostsPartition.foreach(graphiteOutput.process)
+        }
+      }
+  }
+
+  val calendar = Calendar.getInstance
+
+  /**
+   * @param requestRate Seconds between two requests
+   */
+  def createAggreationKey(fac: Facility[Long], requestRate: Int): AggregationKey = {
+    calendar.setTimeInMillis(fac.timestamp)
+    calendar.set(Calendar.MILLISECOND, 0)
+    val secondInMinute = calendar.get(Calendar.SECOND) % (60 / requestRate)
+    calendar.set(Calendar.SECOND, secondInMinute)
+    AggregationKey(fac.facilitytype, fac.state, calendar.getTimeInMillis / 1000)
+  }
+}

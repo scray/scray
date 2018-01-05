@@ -15,7 +15,6 @@ class JsonFacilityParser extends LazyLogging {
       return Some(mapper.readValue(json, classOf[Facility[Long]]))
     } catch {
       case e: Throwable => {
-        println("Error")
         logger.error(s"Exception while parsing facility element ${json}. ${e.getMessage}")
         return None
       }
