@@ -86,26 +86,26 @@ cd ~/git/scray/scray-example/spark-job/facility-state-job/
 
     YARN hosts are configured in ```yarn-site.xml```  
     E.g.   
- ```
-<configuration>
-        <property>
-                <name>yarn.resourcemanager.resource-tracker.address</name>
-                <value>yarn.resourcemanager:8025</value>
-        </property>
-        <property>
-                <name>yarn.resourcemanager.scheduler.address</name>
-                <value>192.0.2.1:8030</value>
-        </property>
-        <property>
-                <name>yarn.resourcemanager.address</name>
-                <value>192.0.2.1:8032</value>
-        </property>
-        <property>
-                <name>yarn.resourcemanager.webapp.address</name>
-                <value>192.0.2.1:8089</value>
-        </property>
-</configuration>
-```
+     ```
+    <configuration>
+            <property>
+                    <name>yarn.resourcemanager.resource-tracker.address</name>
+                    <value>yarn.resourcemanager:8025</value>
+            </property>
+            <property>
+                    <name>yarn.resourcemanager.scheduler.address</name>
+                    <value>192.0.2.1:8030</value>
+            </property>
+            <property>
+                    <name>yarn.resourcemanager.address</name>
+                    <value>192.0.2.1:8032</value>
+            </property>
+            <property>
+                    <name>yarn.resourcemanager.webapp.address</name>
+                    <value>192.0.2.1:8089</value>
+            </property>
+    </configuration>
+    ```
 
 * **Data like runtime libraries and job definition are stored in HDFS** 
     HDFS hosts are configured in ```conf/core-site.xml```  
