@@ -95,6 +95,10 @@
 					<groupId>ch.qos.logback</groupId>
 					<artifactId>logback-core</artifactId>
 				</exclusion>
+				<exclusion>
+					<artifactId>cassandra-driver-core</artifactId>
+					<groupId>com.datastax.cassandra</groupId>
+				</exclusion>
 			</exclusions>
 		</dependency>
 		<dependency>
