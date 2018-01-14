@@ -1,4 +1,5 @@
 batchFilePath: "hdfs://hdfs-namenode:8020/data/Facilities*"
+sparkMaster: yarn
 
 graphiteHost:  graphite-host        
 graphitePort: 2003
