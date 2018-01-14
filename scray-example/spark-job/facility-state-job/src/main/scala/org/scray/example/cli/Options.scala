@@ -22,6 +22,8 @@ object Options extends LazyLogging {
       c.copy(sparkMaster = x) } text("provide URL to Spark master")
     opt[String]('c', "conf").optional() action { (x, c) =>
       c.copy(confFilePath = Some(x)) } text("job configuration yaml")
+    opt[String]('d', "cassandraSeed").optional() action { (x, c) =>
+      c.copy(confFilePath = Some(x)) } text("seed to cassandra host")
   }
   
   /**
@@ -30,7 +32,7 @@ object Options extends LazyLogging {
   def parse(args: Array[String]): Option[CliParameters] = {
     val config = parser.parse(args, CliParameters())
     config.flatMap { conf => 
-    val CliParameters(batch, sparkMaster, checkpointPath) = conf
+    val CliParameters(batch, sparkMaster, checkpointPath, cassandraSeed) = conf
       config
     }
     

@@ -7,6 +7,10 @@ case class JobParameter(
   var sparkMaster: String    = "yarn",              // Spark master URL
   var batch: Boolean         = false,
   var batchFilePath: String = "hdfs://hdfs-namenode:8020/data/Facilities*",
+  
+  var cassandraKeyspace: String  = "db",
+  var cassandraTable: String     = "facility",
+  
 
   var graphiteHost: String   =   "127.0.0.1",        
   var graphitePort: Int      =   2003,
