@@ -31,31 +31,25 @@ import com.typesafe.scalalogging.LazyLogging
 import scray.example.input.db.fasta.model.Facility.TypeEnum
 import org.apache.spark.streaming.Seconds
 import org.scray.example.conf.JobParameter
-import org.scray.example.output.GraphiteWriter
 import org.spark_project.jetty.server.handler.ContextHandler.Availability
 import org.scray.example.data.Facility
 import java.util.Calendar
 import org.scray.example.output.GraphiteForeachWriter
 import org.scray.example.data.FacilityStateCounter
+import org.scray.example.input.FacilityDataSources
+import org.apache.spark.rdd.RDD
 
-/**
- * Class containing all the batch stuff
- */
 
 case class AggregationKey(facilityType: String, state: String, timeStamp: Long)
-class BatchJob(@transient val sc: SparkContext, conf: JobParameter) extends LazyLogging with Serializable {
+class BatchJob(val facilityData: RDD[Facility[Long]], conf: JobParameter) extends LazyLogging with Serializable {
 
-  @transient lazy val jsonParser = new JsonFacilityParser
   @transient lazy val graphiteOutput = new GraphiteForeachWriter(conf.graphiteHost)
-  graphiteOutput.initConnection
 
   def run = {
-    sc.textFile(conf.batchFilePath)
-      .map(jsonParser.parse)
-      .flatMap(x => x)
-      .map(facility => (createAggreationKey(facility, 20), 1))
-      .reduceByKey(_ + _).map(x => FacilityStateCounter(x._1.facilityType, x._1.state, x._2, x._1.timeStamp))
-
+      facilityData   
+      .map(facility => (createAggreationKey(facility), 1))
+      .reduceByKey(_ + _)
+      .map{case (facilityKey, count) => FacilityStateCounter(facilityKey.facilityType, facilityKey.state, count, facilityKey.timeStamp)}
       .foreachPartition { availableHostsPartition =>
         {
           availableHostsPartition.foreach(graphiteOutput.process)
@@ -64,15 +58,8 @@ class BatchJob(@transient val sc: SparkContext, conf: JobParameter) extends Lazy
   }
 
   val calendar = Calendar.getInstance
-
-  /**
-   * @param requestRate Seconds between two requests
-   */
-  def createAggreationKey(fac: Facility[Long], requestRate: Int): AggregationKey = {
+  def createAggreationKey(fac: Facility[Long]): AggregationKey = {
     calendar.setTimeInMillis(fac.timestamp)
-    calendar.set(Calendar.MILLISECOND, 0)
-    val secondInMinute = calendar.get(Calendar.SECOND) % (60 / requestRate)
-    calendar.set(Calendar.SECOND, secondInMinute)
     AggregationKey(fac.facilitytype, fac.state, calendar.getTimeInMillis / 1000)
   }
 }

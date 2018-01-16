@@ -4,11 +4,14 @@ ORIGDIR=$(pwd)
 BASEDIR="$(dirname "$(readlink -e "$0")")"
 BASEDIR=${BASEDIR%/*} # Use parent of bin directory
 
+EXECUTOR_CORES=4
+
 function usage {
   echo -e "Usage: $0 <Options> <Job arguments>\n\
 Options:\n\
   --master <URL>                    specify spark master. Required!\n\
   --total-executor-cores <NUMBER>   number of cores to use. Required!\n\
+  --executor-cores <NUMBER>	    number of cores to use on each executor\n\
   --help                            display this usage information\n\
 "
 }
@@ -39,6 +42,9 @@ while [[ $# > 0 ]]; do
   elif [[ $1 == "--total-executor-cores" ]]; then
     CORES=$2
     shift 2
+  elif [[ $1 == "--executor-cores" ]]; then
+    EXECUTOR_CORES=$2
+    shift 2
   elif [[ $1 == "--local-mode" ]]; then
     LOCAL_MODE=true
     shift 1 
@@ -67,6 +73,7 @@ if [ $LOCAL_MODE = true ]; then
 	--driver-memory 512m \
 	--executor-memory 512m \
 	--total-executor-cores $CORES \
+	--executor-cores $EXECUTOR_CORES \
 	--files $BASEDIR/conf/log4j.properties,$BASEDIR/conf/facility-state-job-local.yaml \
 	--class org.scray.example.FacilityStateJob \
 	target/facility-state-job-1.0-SNAPSHOT-jar-with-dependencies.jar \
@@ -75,11 +82,12 @@ else
   exec $SPARK_SUBMIT --packages org.apache.spark:spark-sql-kafka-0-10_2.11:2.2.0 \
 	--master yarn \
 	--deploy-mode cluster \
-	--driver-memory 512m \
-	--executor-memory 512m \
+	--driver-memory 2048m \
+	--executor-memory 2048m \
 	--total-executor-cores $CORES \
+	--executor-cores $EXECUTOR_CORES \
 	--files $BASEDIR/conf/log4j.properties,$BASEDIR/conf/facility-state-job.yaml \
-	--class org.scray.example.FacilityStateJob target/facility-state-job-1.0-SNAPSHOT-jar-with-dependencies.jar ${ARGUMENTS[@]}
+	--class org.scray.example.FacilityStateJob target/facility-state-job-1.0-SNAPSHOT-jar-with-dependencies.jar ${ARGUMENTS[@]} -m yarn
 fi
 
 

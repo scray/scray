@@ -6,7 +6,8 @@ package org.scray.example.conf
 case class JobParameter(
   var sparkMaster: String    = "yarn",              // Spark master URL
   var batch: Boolean         = false,
-  var batchFilePath: String = "hdfs://hdfs-namenode:8020/data/Facilities*",
+  var batchFilePath: String  = "hdfs://hdfs-namenode:8020/data/Facilities*",
+  var batchDataSource: BatchDataSource = TEXT,             // TEXT, CASSANDRA              
   
   var cassandraKeyspace: String  = "db",
   var cassandraTable: String     = "facility",
@@ -29,3 +30,7 @@ case class JobParameter(
   var numberOfBatchVersions: Int    = 2,
   var numberOfOnlineVersions: Int   = 1
 )
+
+abstract class BatchDataSource
+case object TEXT extends BatchDataSource
+case object CASSANDRA extends BatchDataSource

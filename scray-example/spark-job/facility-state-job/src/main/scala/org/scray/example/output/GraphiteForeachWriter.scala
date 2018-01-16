@@ -16,14 +16,20 @@ class GraphiteForeachWriter(graphiteHostname: String, port: Int = 2003, numConne
   var graphiteStream: PrintWriter = null
   var retriedNum = 0  // Number of executed retries
 
-  def open(partitionId: Long, version: Long): Boolean = {
+  def open(partitionId: Long, version: Long): Boolean =  {
     initConnection
   }
 
-  def process(record: FacilityStateCounter) = {
+  def process(record: FacilityStateCounter) = synchronized {
 
     val dataIn = s"bahn.equipment.type.${record.facilityType}.all.state.${record.state}.count ${record.count} ${record.windowStartTime}\n"
+
     logger.debug(s"Write to graphite ${dataIn}")
+    
+    if(graphiteStream == null) {
+      this.initConnection
+    }
+    
     try {
       graphiteStream.printf(dataIn)
       graphiteStream.flush()
@@ -47,6 +53,7 @@ class GraphiteForeachWriter(graphiteHostname: String, port: Int = 2003, numConne
   }
 
   def close(errorOrNull: Throwable): Unit = {
+    graphiteStream.flush()
     graphiteStream.close()
   }
   

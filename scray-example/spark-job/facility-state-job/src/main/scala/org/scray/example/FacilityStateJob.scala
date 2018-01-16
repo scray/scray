@@ -22,6 +22,9 @@ import org.scray.example.conf.ConfigurationReader
 import org.scray.example.conf.JobParameter
 import org.scray.example.input.StartTimeReader
 import org.scray.example.cli.CliParameters
+import org.scray.example.input.FacilityDataSources
+import org.scray.example.conf.TEXT
+import org.scray.example.conf.CASSANDRA
 
 object FacilityStateJob {
 
@@ -31,17 +34,28 @@ object FacilityStateJob {
    * execute batch function
    */
   def batch(config: CliParameters) = {
-    val conf = new SparkConf().setAppName("Batch_" + this.getClass.getName).setMaster(config.sparkMaster).set("spark.ui.port", "8088").set("hadoop.home.dir", "/tmp")
+    val conf = new SparkConf()
+      .setAppName("Batch_" + this.getClass.getName)
+      .setMaster(config.sparkMaster)
+      .set("spark.ui.port", "8088")
+      .set("spark.cassandra.connection.host", config.cassandraSeed)
+      
     val sc = new SparkContext(conf)
 
+    // Read configuration file
     val configuration = config.confFilePath match {
       case Some(confFilePath) => (new ConfigurationReader(confFilePath)).readConfigruationFile
       case None               => (new ConfigurationReader).readConfigruationFile
     }
     logger.info(s"Job configuration parameters: ${configuration}")
 
-    val job = new BatchJob(sc, configuration)
+    // Get data source
+    val dataSource = configuration.batchDataSource match {
+      case TEXT =>  FacilityDataSources.getFacilityFromTextFile(sc, configuration.batchFilePath)
+      case CASSANDRA => FacilityDataSources.getFacilityFromCassandraDb(sc, configuration.cassandraKeyspace, configuration.cassandraTable)
+    }
 
+    val job = new BatchJob(dataSource, configuration)
     job.run
   }
 
