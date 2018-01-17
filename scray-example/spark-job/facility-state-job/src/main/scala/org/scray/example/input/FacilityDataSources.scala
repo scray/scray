@@ -9,6 +9,7 @@ import org.scray.example.data.JsonFacilityParser
 
 
 object FacilityDataSources {
+  
   def getFacilityFromCassandraDb(sc: SparkContext, keyspace: String, table: String): RDD[Facility[Long]] = {
     sc.cassandraTable(keyspace, table).map { row => {
         Facility(row.getString("type"), row.getString("state"), row.getLong("time"))
@@ -17,7 +18,6 @@ object FacilityDataSources {
   }
   
   @transient lazy val jsonParser = new JsonFacilityParser
-
   def getFacilityFromTextFile(sc: SparkContext, filePath: String): RDD[Facility[Long]] = {
     sc.textFile(filePath)
       .map(jsonParser.parse)

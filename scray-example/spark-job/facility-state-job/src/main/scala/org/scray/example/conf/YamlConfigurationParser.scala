@@ -88,6 +88,17 @@ class YamlConfigurationParser extends LazyLogging {
         logger.debug(s"sparkStreamingBatchSize not defined use default: ${confObject.sparkStreamingBatchSize}")
       }
       
+      if(yamlData.get("batchDataSource") != null) {
+        
+        if(yamlData.get("batchDataSource").equals("TEXT")) {
+          confObject.batchDataSource = TEXT
+        } else if (yamlData.get("batchDataSource").equals("CASSANDRA")) {
+          confObject.batchDataSource = CASSANDRA
+        } else {
+          logger.debug(s"batchDataSource not defined use default: ${confObject.batchDataSource}. Possible values are TEXT ore CASSANDRA")
+        }
+      }
+
     } catch {
       case e: YAMLException => {
         logger.error(s"Invalid job parameter yaml:  ${e.getMessage}")
