@@ -36,11 +36,13 @@ class StreamingJob(@transient val ssc: StreamingContext, conf: JobParameter) ext
       jsonParser.parse(facilitiesAsJson.value())           // Parse json data and create Facility objects
         .map(fac => (fac.facilitytype + fac.state, fac))   // Create key value pairs
     })
-      .mapWithState(StateSpec.function(createWindowKey _)) // Add window time stamp to key
+      .mapWithState(StateSpec.function(createWindowKey _)  // Add window time stamp to key
+          .timeout(Seconds(60))) 
       .map(facilityWindow => (facilityWindow, 1))
 
     facilities.reduceByKey(_ + _)                         // Count all elements in same window
-      .mapWithState(StateSpec.function(updateWindows _))  // Add counter from previous batch
+      .mapWithState(StateSpec.function(updateWindows _)   // Add counter from previous batch
+          .timeout(Seconds(60)))  
       .foreachRDD { rdd =>                                // Write counted data to graphite
         rdd.foreachPartition { availableHostsPartition =>
           {
@@ -83,6 +85,7 @@ class StreamingJob(@transient val ssc: StreamingContext, conf: JobParameter) ext
 
     val newCount = state.getOption().getOrElse(0) + count.getOrElse(0)
     state.update(newCount)
+
 
     Some(FacilityStateCounter(facilityGroup.facilityType, facilityGroup.state, newCount, facilityGroup.windowStartTime))
   }
