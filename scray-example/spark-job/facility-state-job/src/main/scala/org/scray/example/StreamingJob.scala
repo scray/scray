@@ -1,112 +1,89 @@
-//package org.scray.example
-//
-//import org.apache.spark.streaming.State
-//import org.apache.spark.streaming.StreamingContext
-//import org.apache.spark.streaming.Time
-//import org.apache.spark.streaming.dstream.DStream
-//import org.apache.spark.streaming.dstream.DStream.toPairDStreamFunctions
-//import org.scray.example.data.JsonFacilityParser
-//
-//import com.datastax.driver.core.ResultSet
-//import com.datastax.driver.core.Statement
-//import com.datastax.driver.core.querybuilder.Insert
-//
-//import scray.example.input.db.fasta.model.Facility
-//import scray.example.input.db.fasta.model.Facility.StateEnum
-//import scray.querying.sync.JobInfo
-//import org.apache.spark.streaming.StateSpec
-//import org.apache.kafka.clients.consumer.ConsumerRecord
-//import com.typesafe.scalalogging.LazyLogging
-//import scray.example.input.db.fasta.model.Facility.TypeEnum
-//import scray.example.output.GraphiteWriter
-//import org.apache.spark.streaming.Seconds
-//import org.scray.example.conf.JobParameter
-//
-//
-//case class Availability(activeCounter: Integer, inactiveCounter: Integer, unknownCounter: Integer)
-//
-//@SerialVersionUID(1000L)
-//class StreamingJob(@transient val ssc: StreamingContext, jobInfo: JobInfo[Statement, Insert, ResultSet], conf: JobParameter) extends LazyLogging with Serializable {
-//
-//  lazy val jsonParser = new JsonFacilityParser
-//  lazy val outputOperation = new GraphiteWriter(conf.graphiteHost)
-//
-//  def runTuple[T <: org.apache.spark.streaming.dstream.DStream[ConsumerRecord[String, String]]](dstream: T) = {
-//   
-//    // Parse input data and create K, V. K ::= Equipmentnumber, V ::= State counter
-//    val facilities = dstream.flatMap(facilitiesAsJson => {
-//      val parsedFacilities = jsonParser.jsonReader(facilitiesAsJson.value())
-//      parsedFacilities.map(facilities =>
-//        facilities.map(facility => {
-//          (facility.getType, mapStateToCount(facility))
-//        }))
-//    }).flatMap(x => x)
-//
-//    // Count all states of this batch
-//    val availibilityBatch = facilities.reduceByKey((a: Availability, b: Availability) => {
-//      Availability(
-//          a.activeCounter + b.activeCounter,
-//          a.inactiveCounter + b.inactiveCounter,
-//          a.unknownCounter + b.unknownCounter)
-//    })
-//    
-//    availibilityBatch.foreachRDD { rdd =>
-//      rdd.foreachPartition { availableHostsPartition =>
-//        availableHostsPartition.foreach { availibility =>
-//        
-//          val (facilityType, count) = availibility
-//          
-//          if(facilityType.equals(TypeEnum.ELEVATOR)) {
-//            if(count.inactiveCounter > 10 && count.activeCounter > 10) { 
-//              outputOperation.sentElevator(count.inactiveCounter, count.activeCounter)
-//            }
-//          }
-//          if(facilityType.equals(TypeEnum.ESCALATOR)) {
-//            if(count.inactiveCounter > 10 && count.activeCounter > 10) { 
-//              outputOperation.sentEscalator(count.inactiveCounter, count.activeCounter)
-//            }
-//          }
-//        }
-//      }
-//    }
-//  }
-//    
-//
-//  def mapStateToCount(fac: Facility): Availability = {
-//     if(fac.getState == StateEnum.ACTIVE) {
-//       Availability(1, 0, 0)
-//    } else if(fac.getState == StateEnum.INACTIVE) {
-//        Availability(0, 1, 0)
-//    } else {
-//        Availability(0, 0, 1)
-//    }
-//  }
-//  
-//  
-//  def addOldAvailibility(
-//     batchTime: Time, 
-//     facId: java.lang.Long,
-//     batchAvailibility: Option[Availability],
-//     state: State[Tuple3[Long, Long, Long]]
-//  ): Option[Tuple2[Long, Float]] = {
-//    
-//    val (activeCount, inactiveCount, unknownCount) = state.getOption().getOrElse((0L, 0L, 0L))
-//    
-//    batchAvailibility.map( lastBatchResult => {
-//    state.update(
-//        (
-//            activeCount   +  lastBatchResult.activeCounter,
-//            inactiveCount +  lastBatchResult.inactiveCounter, 
-//            unknownCount  +  lastBatchResult.unknownCounter
-//         )
-//       ) 
-//    })
-//    
-//    val (activeCountNew, inactiveCountNew, unknownCountNew) = state.get()
-//    val allValues = activeCountNew + inactiveCountNew
-//    val av = (activeCountNew * 1f)/ allValues
-//    
-//
-//    Some((facId, av)) 
-//  }
-//}
+package org.scray.example
+
+import org.apache.spark.streaming.State
+import org.apache.spark.streaming.StreamingContext
+import org.apache.spark.streaming.Time
+import org.apache.spark.streaming.dstream.DStream
+import org.apache.spark.streaming.dstream.DStream.toPairDStreamFunctions
+import org.scray.example.data.JsonFacilityParser
+
+import com.datastax.driver.core.ResultSet
+import com.datastax.driver.core.Statement
+import com.datastax.driver.core.querybuilder.Insert
+
+import scray.querying.sync.JobInfo
+import org.apache.spark.streaming.StateSpec
+import org.apache.kafka.clients.consumer.ConsumerRecord
+import com.typesafe.scalalogging.LazyLogging
+import org.apache.spark.streaming.Seconds
+import org.scray.example.conf.JobParameter
+import org.scray.example.output.GraphiteForeachWriter
+import org.scray.example.data.Facility
+import org.scray.example.data.FacilityStateCounter
+import scala.collection.mutable.HashMap
+
+case class FacilityInWindow(facilityType: String, state: String, windowStartTime: Long)
+
+@SerialVersionUID(1000L)
+class StreamingJob(@transient val ssc: StreamingContext, conf: JobParameter) extends LazyLogging with Serializable {
+
+  lazy val jsonParser = new JsonFacilityParser
+  lazy val graphiteWriter = new GraphiteForeachWriter(conf.graphiteHost)
+
+  def runTuple[T <: org.apache.spark.streaming.dstream.DStream[ConsumerRecord[String, String]]](dstream: T) = {
+
+    val facilities = dstream.flatMap(facilitiesAsJson => {
+      jsonParser.parse(facilitiesAsJson.value())           // Parse json data and create Facility objects
+        .map(fac => (fac.facilitytype + fac.state, fac))   // Create key value pairs
+    })
+      .mapWithState(StateSpec.function(createWindowKey _)) // Add window time stamp to key
+      .map(facilityWindow => (facilityWindow, 1))
+
+    facilities.reduceByKey(_ + _)                         // Count all elements in same window
+      .mapWithState(StateSpec.function(updateWindows _))  // Add counter from previous batch
+      .foreachRDD { rdd =>                                // Write counted data to graphite
+        rdd.foreachPartition { availableHostsPartition =>
+          {
+            availableHostsPartition.foreach(graphiteWriter.process)
+          }
+        }
+      }
+  }
+
+  /**
+   * Group all facilies together where distance < maxDistance
+   */
+  def createWindowKey(
+    batchTime: Time,
+    facilityKey: String,
+    facilityIn: Option[Facility[Long]],
+    state: State[Long]): Option[FacilityInWindow] = {
+
+    val facility = facilityIn.getOrElse(Facility("", "", 0L))
+    val windowStartTime = state.getOption().getOrElse(0L)
+
+    val distance = Math.abs(facility.timestamp - windowStartTime)
+
+    if (distance > conf.maxDistInWindow) {
+      state.update(facility.timestamp) // Start new window if distance is > maxDistInWindow
+    }
+
+    if (facility.timestamp == 0) {
+      None
+    } else {
+      Some(FacilityInWindow(facility.facilitytype, facility.state, windowStartTime / 1000))
+    }
+  }
+
+  def updateWindows(
+    batchTime: Time,
+    facilityGroup: FacilityInWindow,
+    count: Option[Int],
+    state: State[Int]): Option[FacilityStateCounter] = {
+
+    val newCount = state.getOption().getOrElse(0) + count.getOrElse(0)
+    state.update(newCount)
+
+    Some(FacilityStateCounter(facilityGroup.facilityType, facilityGroup.state, newCount, facilityGroup.windowStartTime))
+  }
+}
