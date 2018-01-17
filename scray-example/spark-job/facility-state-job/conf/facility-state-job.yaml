@@ -5,5 +5,12 @@ graphiteHost:  graphite-host
 graphitePort: 2003
 graphiteRetries: 20
 
+windowDuration: "20 seconds" 
+slideDuration: "20 seconds" 
+
+
+sparkStreamingBatchSize: 20
+maxDistInWindow: 6000       	# Max distance in ms 
+
 kafkaBootstrapServers: kafka-broker-1:9092
 kafkaTopic: Facilities 

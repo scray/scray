@@ -76,12 +76,18 @@ class YamlConfigurationParser extends LazyLogging {
         logger.debug(s"slideDuration not defined use default: ${confObject.watermark}")
       }
       
-      if(yamlData.get("batchFilePath") != null) {
-        confObject.batchFilePath = yamlData.get("batchFilePath")
+      if(yamlData.get("maxDistInWindow") != null) {
+        confObject.maxDistInWindow = yamlData.get("maxDistInWindow").asInstanceOf[Integer]
       } else {
-        logger.debug(s"slideDuration not defined use default: ${confObject.batchFilePath}")
+        logger.debug(s"maxDistInWindow not defined use default: ${confObject.maxDistInWindow}")
       }
 
+      if(yamlData.get("sparkStreamingBatchSize") != null) {
+        confObject.sparkStreamingBatchSize = yamlData.get("sparkStreamingBatchSize").asInstanceOf[Integer]
+      } else {
+        logger.debug(s"sparkStreamingBatchSize not defined use default: ${confObject.sparkStreamingBatchSize}")
+      }
+      
     } catch {
       case e: YAMLException => {
         logger.error(s"Invalid job parameter yaml:  ${e.getMessage}")

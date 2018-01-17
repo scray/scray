@@ -8,6 +8,8 @@ case class JobParameter(
   var batch: Boolean         = false,
   var batchFilePath: String = "hdfs://hdfs-namenode:8020/data/Facilities*",
   
+  var sparkStreamingBatchSize: Int = 20,
+  
   var cassandraKeyspace: String  = "db",
   var cassandraTable: String     = "facility",
   
@@ -23,6 +25,8 @@ case class JobParameter(
   var slideDuration: String   = "20 seconds",
   var windowStartTime: Long   =  19999,           // Microsecond in sliding interval to start windows
   var watermark: String       = "0 milliseconds",
+  
+  var maxDistInWindow: Int    = 5000,             // Max milliseconds between the first and last element in one time window. (Is used locally on one node)
  
   var checkpointPath: String        = "hdfs://hdfs-namenode:8020/checkpoints-facility-state-job/",
   var sparkBatchSize: Int           = 20,

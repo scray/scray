@@ -27,6 +27,22 @@ object FacilityStateJob {
 
   val logger = Logger("org.scray.example.FacilityStateJob")
 
+  def main(args: Array[String]): Unit = {
+    Options.parse(args) match {
+      case Some(config) => {
+
+        config.batch match {
+          case true  => batch(config)
+          case false => stream(config)
+        }
+      }
+      case None => {
+        println("Error while parsing command line parameters ")
+        Options.parse(args)
+      }
+    }
+  }
+
   /**
    * execute batch function
    */
@@ -48,33 +64,39 @@ object FacilityStateJob {
   /**
    * execute streaming function
    */
-  def stream(config: CliParameters) = {
+  def stream(cliParams: CliParameters) = {
 
-    val spark = SparkSession.builder().appName(this.getClass.getName).getOrCreate()
-    val configuration = config.confFilePath match {
+    val config = cliParams.confFilePath match {
       case Some(confFilePath) => (new ConfigurationReader(confFilePath)).readConfigruationFile
       case None               => (new ConfigurationReader).readConfigruationFile
     }
-    logger.info(s"Job configuration parameters: ${configuration}")
+    logger.info(s"Job configuration parameters: ${config}")
 
-    val job = new SparkSQLStreamingJob(spark, configuration)
-    job.run(configuration.windowStartTime)
-  }
-
-  def main(args: Array[String]): Unit = {
-    Options.parse(args) match {
-      case Some(config) => {
-
-        config.batch match {
-          case true  => batch(config)
-          case false => stream(config)
-        }
-      }
-      case None => {
-        println("Error while parsing command line parameters ")
-        Options.parse(args)
-      }
+    if (cliParams.useSparkSQLJob) {
+      val spark = SparkSession.builder().appName(this.getClass.getName).getOrCreate()
+      val job = new SparkSQLStreamingJob(spark, config)
+      job.run(config.windowStartTime)
+    } else {
+      this.startDistanceBasedAggregationJob(cliParams, config)
     }
   }
 
+  def startDistanceBasedAggregationJob(cliConf: CliParameters, config: JobParameter) = {
+
+    logger.info(s"Using HDFS-URL=${config.checkpointPath} and Kafka-URL=${config.kafkaBootstrapServers}")
+    val ssc = StreamingContext.getOrCreate(config.checkpointPath, setupSparkStreamingConfig(config.sparkMaster, config.sparkStreamingBatchSize))
+    ssc.checkpoint(config.checkpointPath + "_" + System.currentTimeMillis())
+    val dstream = StreamingDStreams.getKafkaStringSource(ssc, Some(config.kafkaBootstrapServers), Some(config.kafkaTopic))
+
+    val job = new StreamingJob(ssc, config)
+    job.runTuple(dstream.getOrElse(throw new RuntimeException("No stream to get data")))
+
+    ssc.start()
+    ssc.awaitTermination()
+  }
+
+  def setupSparkStreamingConfig(masterURL: String, seconds: Int): () => StreamingContext = () => {
+    val conf = new SparkConf().setAppName("Stream: " + this.getClass.getName).setMaster(masterURL)
+    new StreamingContext(conf, Seconds(seconds))
+  }
 }

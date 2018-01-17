@@ -55,7 +55,6 @@ class BatchJob(@transient val sc: SparkContext, conf: JobParameter) extends Lazy
       .flatMap(x => x)
       .map(facility => (createAggreationKey(facility, 20), 1))
       .reduceByKey(_ + _).map(x => FacilityStateCounter(x._1.facilityType, x._1.state, x._2, x._1.timeStamp))
-
       .foreachPartition { availableHostsPartition =>
         {
           availableHostsPartition.foreach(graphiteOutput.process)

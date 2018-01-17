@@ -23,7 +23,9 @@ object Options extends LazyLogging {
     opt[String]('c', "conf").optional() action { (x, c) =>
       c.copy(confFilePath = Some(x)) } text("job configuration yaml")
     opt[String]('d', "cassandraSeed").optional() action { (x, c) =>
-      c.copy(confFilePath = Some(x)) } text("seed to cassandra host")
+      c.copy(cassandraSeed = x) } text("seed to cassandra host")
+    opt[Unit]('s', "sqlStreamingJob").optional() action { (x, c) =>
+      c.copy(useSparkSQLJob = true) } text("start sql streaming job")
   }
   
   /**
@@ -32,7 +34,7 @@ object Options extends LazyLogging {
   def parse(args: Array[String]): Option[CliParameters] = {
     val config = parser.parse(args, CliParameters())
     config.flatMap { conf => 
-    val CliParameters(batch, sparkMaster, checkpointPath, cassandraSeed) = conf
+    val CliParameters(batch, sparkMaster, checkpointPath, cassandraSeed, useSparkSQLJob) = conf
       config
     }
     
