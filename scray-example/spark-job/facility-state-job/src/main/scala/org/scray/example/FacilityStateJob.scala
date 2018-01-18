@@ -55,7 +55,7 @@ object FacilityStateJob {
       .setMaster(config.sparkMaster)
       .set("spark.ui.port", "8088")
       .set("spark.cassandra.connection.host", config.cassandraSeed)
-      
+
     val sc = new SparkContext(conf)
 
     // Read configuration file
@@ -67,7 +67,7 @@ object FacilityStateJob {
 
     // Get data source
     val dataSource = configuration.batchDataSource match {
-      case TEXT =>  FacilityDataSources.getFacilityFromTextFile(sc, configuration.batchFilePath)
+      case TEXT      => FacilityDataSources.getFacilityFromTextFile(sc, configuration.batchFilePath)
       case CASSANDRA => FacilityDataSources.getFacilityFromCassandraDb(sc, configuration.cassandraKeyspace, configuration.cassandraTable)
     }
 
@@ -100,6 +100,7 @@ object FacilityStateJob {
     logger.info(s"Using HDFS-URL=${config.checkpointPath} and Kafka-URL=${config.kafkaBootstrapServers}")
     val ssc = StreamingContext.getOrCreate(config.checkpointPath, setupSparkStreamingConfig(config.sparkMaster, config.sparkStreamingBatchSize))
     ssc.checkpoint(config.checkpointPath + "_" + System.currentTimeMillis())
+
     val dstream = StreamingDStreams.getKafkaStringSource(ssc, Some(config.kafkaBootstrapServers), Some(config.kafkaTopic))
 
     val job = new StreamingJob(ssc, config)
@@ -110,7 +111,13 @@ object FacilityStateJob {
   }
 
   def setupSparkStreamingConfig(masterURL: String, seconds: Int): () => StreamingContext = () => {
-    val conf = new SparkConf().setAppName("Stream: " + this.getClass.getName).setMaster(masterURL)
-    new StreamingContext(conf, Seconds(seconds))
+    val sparkConf = new SparkConf()
+      .setAppName("Stream: " + this.getClass.getName)
+      .set("spark.streaming.backpressure.enabled", "true")
+      .set("spark.streaming.backpressure.initialRate",  "20000")
+      .set("spark.streaming.kafka.maxRatePerPartition", "20000")
+      .set("spark.streaming.receiver.maxRate", "20000")
+      .setMaster(masterURL)
+    new StreamingContext(sparkConf, Seconds(seconds))
   }
 }
