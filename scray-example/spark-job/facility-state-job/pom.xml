@@ -149,6 +149,11 @@
 			<artifactId>spark-sql-kafka-0-10_2.11</artifactId>
 			<version>2.2.0</version>
 		</dependency>
+		<dependency>
+			<groupId>org.mapdb</groupId>
+			<artifactId>mapdb</artifactId>
+			<version>1.0.6</version>
+		</dependency>
 	</dependencies>
 
 	<repositories>
@@ -188,14 +193,14 @@
 			<plugin>
 				<groupId>io.swagger</groupId>
 				<artifactId>swagger-codegen-maven-plugin</artifactId>
-				<version>2.3.0-SNAPSHOT</version>
+				<version>2.3.0</version>
 				<executions>
 					<execution>
 						<goals>
 							<goal>generate</goal>
 						</goals>
 						<configuration>
-							<inputSpec>https://developer.deutschebahn.com/store/api-docs/DBOpenData/FaSta-Station_Facilities_Status/v1</inputSpec>
+							<inputSpec>https://developer.deutschebahn.com/store/api-docs/DBOpenData/FaSta-Station_Facilities_Status/v2</inputSpec>
 							<language>java</language>
 							<generateModel>true</generateModel>
 							<modelsToGenerate>facility</modelsToGenerate>
