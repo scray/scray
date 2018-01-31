@@ -191,35 +191,6 @@
 				</executions>
 			</plugin>
 			<plugin>
-				<groupId>io.swagger</groupId>
-				<artifactId>swagger-codegen-maven-plugin</artifactId>
-				<version>2.3.0</version>
-				<executions>
-					<execution>
-						<goals>
-							<goal>generate</goal>
-						</goals>
-						<configuration>
-							<inputSpec>https://developer.deutschebahn.com/store/api-docs/DBOpenData/FaSta-Station_Facilities_Status/v2</inputSpec>
-							<language>java</language>
-							<generateModel>true</generateModel>
-							<modelsToGenerate>facility</modelsToGenerate>
-							<generateModelTests>false</generateModelTests>
-							<generateModelDocumentation>false</generateModelDocumentation>
-							<configHelp>false</configHelp>
-							<generateApis>false</generateApis>
-							<generateApiTests>false</generateApiTests>
-							<generateApiDocumentation>false</generateApiDocumentation>
-							<generateSupportingFiles>false</generateSupportingFiles>
-							<configOptions>
-								<serializableModel>true</serializableModel>
-								<modelPackage>${swagger.package}.model</modelPackage>
-							</configOptions>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
-			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>
 				<version>2.18.1</version>

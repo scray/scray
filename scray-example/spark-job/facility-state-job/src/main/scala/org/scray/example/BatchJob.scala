@@ -23,12 +23,10 @@ import com.datastax.driver.core.ResultSet
 import com.datastax.driver.core.Statement
 import com.datastax.driver.core.querybuilder.Insert
 
-import scray.example.input.db.fasta.model.Facility.StateEnum
 import scray.querying.sync.JobInfo
 import org.apache.spark.streaming.StateSpec
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import com.typesafe.scalalogging.LazyLogging
-import scray.example.input.db.fasta.model.Facility.TypeEnum
 import org.apache.spark.streaming.Seconds
 import org.scray.example.conf.JobParameter
 import org.spark_project.jetty.server.handler.ContextHandler.Availability
