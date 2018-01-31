@@ -23,6 +23,11 @@ import org.scray.example.data.FacilityStateCounter
 import scala.collection.mutable.HashMap
 import org.apache.spark.streaming.Minutes
 import java.util.Date
+import scala.collection.mutable.LinkedList
+import scala.collection.mutable.ListBuffer
+import org.mapdb.DBMaker
+import org.mapdb.HTreeMap
+import com.google.common.collect.EvictingQueue
 
 case class FacilityInWindow(facilityType: String, state: String, windowStartTime: Long)
 
@@ -35,15 +40,15 @@ class StreamingJob(@transient val ssc: StreamingContext, conf: JobParameter) ext
   def runTuple[T <: org.apache.spark.streaming.dstream.DStream[ConsumerRecord[String, String]]](dstream: T) = {
 
     val facilities = dstream.flatMap(facilitiesAsJson => {
-      jsonParser.parse(facilitiesAsJson.value())           // Parse json data and create Facility objects
-        .map(fac => (fac.facilitytype + fac.state, fac))   // Create key value pairs
+      jsonParser.parse(facilitiesAsJson.value()) // Parse json data and create Facility objects
+        .map(fac => (fac.facilitytype + fac.state, fac)) // Create key value pairs
     })
       .mapWithState(StateSpec.function(createWindowKey _)) // Add window time stamp to key
       .map(facilityWindow => (facilityWindow, 1))
 
-    facilities.reduceByKey(_ + _)                          // Count all elements in same window
-      .mapWithState(StateSpec.function(updateWindows _))    // Add counter from previous batch
-      .foreachRDD { rdd =>                                 // Write counted data to graphite
+    facilities.reduceByKey(_ + _) // Count all elements in same window
+      .mapWithState(StateSpec.function(updateWindows _)) // Add counter from previous batch
+      .foreachRDD { rdd => // Write counted data to graphite
         rdd.foreachPartition { availableHostsPartition =>
           {
             availableHostsPartition.foreach(graphiteWriter.process)
@@ -59,19 +64,46 @@ class StreamingJob(@transient val ssc: StreamingContext, conf: JobParameter) ext
     batchTime: Time,
     facilityKey: String,
     facilityIn: Option[Facility[Long]],
-    state: State[Long]): Option[FacilityInWindow] = {
+    state: State[EvictingQueue[Long]]): Option[FacilityInWindow] =  {
 
+    val windowState =  state.getOption().getOrElse({
+        val windowHistory =   EvictingQueue.create[Long](15000)    // Store some old windows to handle late events (locally)
+        windowHistory.add(0)
+        windowHistory
+      })
+      
     facilityIn.map(facility => {
-        val windowStartTime = state.getOption().getOrElse(0L)
-    
-        val distance = Math.abs(facility.timestamp - windowStartTime)
-    
-        if (distance > conf.maxDistInWindow) {
-          state.update(facility.timestamp) // Start new window if distance is > maxDistInWindow
-        }
-          FacilityInWindow(facility.facilitytype, facility.state, windowStartTime / 1000)
+      val window = getWindow(facility, windowState)
+      state.update(windowState)
+      
+      FacilityInWindow(facility.facilitytype, facility.state, window / 1000)
+    })
+  }
+
+  /**
+   * Return new or existing window depending on the distance between current facility and existing windows
+   */
+  def getWindow(facility: Facility[Long], state: EvictingQueue[Long]): Long = {
+
+    val oldWindowsIter = state.iterator()
+    var lastOldWindow: Option[Long] = None;
+
+    while (oldWindowsIter.hasNext()) {
+      val oldWindow = oldWindowsIter.next()
+      val distance = Math.abs(facility.timestamp - oldWindow)
+      
+      if (distance < conf.maxDistInWindow) {
+        lastOldWindow = Some(oldWindow)
       }
-    )
+    }
+
+    // If no window was found create a new one
+    lastOldWindow.getOrElse(
+        {
+          state.add(facility.timestamp)
+          facility.timestamp
+        }
+       )
   }
 
   def updateWindows(
@@ -80,9 +112,8 @@ class StreamingJob(@transient val ssc: StreamingContext, conf: JobParameter) ext
     count: Option[Int],
     state: State[Int]): Option[FacilityStateCounter] = {
 
-    val newCount = state.getOption().getOrElse(0) + count.getOrElse(0)
+    val newCount = count.getOrElse(0) + state.getOption().getOrElse(0)
     state.update(newCount)
-
 
     Some(FacilityStateCounter(facilityGroup.facilityType, facilityGroup.state, newCount, facilityGroup.windowStartTime))
   }

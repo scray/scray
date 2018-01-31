@@ -33,7 +33,8 @@ object StreamingDStreams {
         "bootstrap.servers" -> kafkaDStreamURL.get,
         "key.deserializer" -> "org.apache.kafka.common.serialization.StringDeserializer",
         "value.deserializer" -> "org.apache.kafka.common.serialization.StringDeserializer",
-        "group.id" -> KAFKA_CONSUMER_GROUP 
+        "group.id" -> KAFKA_CONSUMER_GROUP
+        //"auto.offset.reset" -> "earliest"
         )
         
     Some(KafkaUtils.createDirectStream(ssc, PreferConsistent, Subscribe[K, V](kafkaTopicsf, kafkaParams)))

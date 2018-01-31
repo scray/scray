@@ -4,7 +4,7 @@ ORIGDIR=$(pwd)
 BASEDIR="$(dirname "$(readlink -e "$0")")"
 BASEDIR=${BASEDIR%/*} # Use parent of bin directory
 
-EXECUTOR_CORES=4
+EXECUTOR_CORES=5
 
 function usage {
   echo -e "Usage: $0 <Options> <Job arguments>\n\
@@ -63,7 +63,7 @@ if [ -z "$CORES" ]; then
   exit 3
 fi
 
-if [ $LOCAL_MODE = true ]; then
+if [ $LOCAL_MODE == true ]; then
   export SPARK_MASTER_HOST="127.0.0.1"
   export SPARK_LOCAL_IP="127.0.0.1"
   $SPARK_HOME/sbin/start-master.sh
@@ -82,6 +82,7 @@ else
   exec $SPARK_SUBMIT --packages org.apache.spark:spark-sql-kafka-0-10_2.11:2.2.0 \
 	--master yarn \
 	--deploy-mode cluster \
+	--num-executors 5 \
 	--driver-memory 2048m \
 	--executor-memory 2048m \
 	--total-executor-cores $CORES \

@@ -9,4 +9,7 @@ kafkaTopic: Facilities
 windowDuration: "20 seconds" 
 slideDuration: "20 seconds" 
 
+maxDistInWindow: 12000        # Max distance in ms 
+
+
 graphiteHost: graphite-host 
