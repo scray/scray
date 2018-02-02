@@ -1,20 +1,14 @@
 package scray.jdbc.sync
 
-import org.scalatest.WordSpec
-import scray.jdbc.extractors.ScraySQLDialect
-import scray.jdbc.extractors.ScraySQLDialectFactory
-import scray.querying.sync.ColumnWithValue
-import scray.querying.sync.RowWithValue
-import scray.querying.sync.DBColumnImplementation
-import scray.querying.description.Row
-import scray.jdbc.sync.tables.SyncTableComponent
 import scala.util.Failure
 import scala.util.Success
 
-import org.scalatest.tagobjects.Slow
 import org.scalatest.Tag
-import slick.jdbc.meta.MTable
+import org.scalatest.WordSpec
+
 import junit.framework.Assert
+import scray.jdbc.extractors.ScraySQLDialectFactory
+import scray.jdbc.sync.tables.SyncTableComponent
 
 object RequiresMySQLServer extends Tag("scray.jdbc.tags.RequiresMySQLServer")
 

@@ -53,7 +53,7 @@ object MariaDBDialect extends ScraySQLDialect("MARIADB") {
    * jdbc:mysql://...
    */
   override def isDialectJdbcURL(jdbcURL: String): Boolean =
-    jdbcURL.toUpperCase().startsWith("JDBC:mariadb://")
+    jdbcURL.toUpperCase().startsWith("JDBC:MARIADB://")
   
   override val DRIVER_CLASS_NAME = "org.mariadb.jdbc.Driver"
 }

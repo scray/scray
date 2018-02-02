@@ -245,7 +245,7 @@ object SyncTableBasicClasses extends Serializable with LazyLogging {
 
 object State extends Enumeration {
   type State = Value
-  val NEW, RUNNING, COMPLETED, OBSOLETE, TRANSFER = Value
+  val NEW, RUNNING, COMPLETED, OBSOLETE, TRANSFER, FIND_START_TIME = Value
 }
 
 abstract class LockApi[Statement, Insert, Result](
