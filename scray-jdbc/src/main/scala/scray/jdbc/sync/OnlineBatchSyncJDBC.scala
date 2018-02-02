@@ -34,22 +34,28 @@ import scray.querying.description.TableIdentifier
 import scray.querying.sync.types.BatchMetadata
 import com.typesafe.scalalogging.LazyLogging
 import java.sql.SQLSyntaxErrorException
+import scray.jdbc.sync.tables.ScrayStreamingStartTimesIO
+import scray.jdbc.sync.tables.ScrayStreamingStartTimes
 
 class OnlineBatchSyncJDBC(dbSession: JDBCDbSession) extends OnlineBatchSync[PreparedStatement, PreparedStatement, ResultSet] with OnlineBatchSyncWithTableIdentifier[PreparedStatement, PreparedStatement, ResultSet] with StateMonitoringApi[PreparedStatement, PreparedStatement, ResultSet] with LazyLogging {
 
-  val comp = new SyncTableComponent(dbSession.getConnectionInformations.get)
-  import comp.SyncTableT
+  val syncTable = new SyncTableComponent(dbSession.getConnectionInformations.get)
+  val streamingStartTimeTable = new ScrayStreamingStartTimesIO(dbSession.getConnectionInformations.get)
+  import syncTable.SyncTableT
 
   def getLatestQueryableBatchData(jobInfo: JobInfo[PreparedStatement, PreparedStatement, ResultSet]): Option[scray.querying.description.TableIdentifier] = {
-
-    val completedJob = dbSession.execute(comp.getLatestCompletedJobStatement(jobInfo, false))
-
-    if (completedJob.size > 0) {
-      val latestCompletedJobs = completedJob.head
-      Some(TableIdentifier(latestCompletedJobs.dbSystem, latestCompletedJobs.dbId, latestCompletedJobs.tableID))
-    } else {
-      None
-    }
+    dbSession.execute(syncTable.getLatestCompletedJobStatement(jobInfo, false))
+      .map(completedJob => {
+        if (completedJob.size > 0) {
+          val latestCompletedJobs = completedJob.head
+          Some(TableIdentifier(latestCompletedJobs.dbSystem, latestCompletedJobs.dbId, latestCompletedJobs.tableID))
+        } else {
+          None
+        }
+      }) match {
+        case Success(ti) => ti
+        case Failure(e)  => logger.error(s"Unable to get latest queryable batch data. ${e}"); None
+      }
   }
 
   def getQueryableBatchData(jobInfo: JobInfo[PreparedStatement, PreparedStatement, ResultSet]): List[scray.querying.description.TableIdentifier] = {
@@ -57,40 +63,37 @@ class OnlineBatchSyncJDBC(dbSession: JDBCDbSession) extends OnlineBatchSync[Prep
   }
 
   def initJobIfNotExists[DataTableT <: ArbitrarylyTypedRows](job: JobInfo[PreparedStatement, PreparedStatement, ResultSet]): Try[Unit] = {
-    Try({
-      (
-        dbSession.execute(comp.tableExists),
-        dbSession.execute(comp.jobWasRegistered(job)))
-    }).map { case (tableExists, jobWasRegistered) => tableExists & jobWasRegistered }
-    match {
-      case Success(jobExists) => {  
-        if(!jobExists) {
-          this.initJob(job)
-        } else {
-          Try()
-        }
-      }
-      case Failure(e) => e match {
-        case e: SQLSyntaxErrorException => {
-          if(e.getMessage.contains("doesn't exist")) {
-            this.initJob(job)  
-          } else {
-            Failure(e)
+
+    dbSession.execute(syncTable.tableExists).map(tableExists =>
+      {
+        if (tableExists) {
+          dbSession.execute(syncTable.jobWasRegistered(job)) match {
+            case Failure(e) => e match {
+              case e: SQLSyntaxErrorException => {
+                if (e.getMessage.contains("doesn't exist")) {
+                  this.initJob(job)
+                } else {
+                  Failure(e)
+                }
+              }
+              case e: Throwable => Failure(e)
+            }
           }
+        } else {
+          this.initJob(job)
         }
-        case e: Throwable => Failure(e)
-      }
-    }
+      })
   }
 
   def initJob[DataTableT <: ArbitrarylyTypedRows](job: JobInfo[PreparedStatement, PreparedStatement, ResultSet]): Try[Unit] = {
 
     // Create sync tables 
-    val createdTable = Try(comp.create.statements.map { statement => dbSession.execute(statement) })
+    val createdTable = Try(syncTable.create.statements.map { statement => dbSession.execute(statement) })
+    dbSession.execute(streamingStartTimeTable.create)
 
     // Register job
     val registedJobs = createdTable.flatMap { _ =>
-      Try(comp.registerJobStatement(job).map(statement => dbSession.execute(statement)))
+      Try(syncTable.registerJobStatement(job).map(statement => dbSession.execute(statement)))
     }
 
     registedJobs match {
@@ -103,30 +106,63 @@ class OnlineBatchSyncJDBC(dbSession: JDBCDbSession) extends OnlineBatchSync[Prep
   }
 
   def getLatestBatchMetadata(job: JobInfo[PreparedStatement, PreparedStatement, ResultSet]): Option[BatchMetadata] = {
-    val completedJob = dbSession.execute(comp.getLatestCompletedJobStatement(job, false))
-
-    if (completedJob.size < 1) {
-      None
-    } else {
-      Some(completedJob.head).map { newestBatchRow => BatchMetadata(newestBatchRow.batchStartTime, newestBatchRow.batchEndTime) }
-    }
+    dbSession.execute(syncTable.getLatestCompletedJobStatement(job, false))
+    .map(completedJob =>
+      if (completedJob.size < 1) {
+        None
+      } else {
+        Some(completedJob.head).map { newestBatchRow => BatchMetadata(newestBatchRow.batchStartTime, newestBatchRow.batchEndTime) }
+      }
+    ) match {
+      case Success(metadata) => metadata
+      case Failure(ex) => {
+        logger.warn(s"Error while reading meatadata from db. Exception: ${ex.getMessage}\n ${ex.printStackTrace()}")
+        None
+      }
+    } 
   }
 
   def startNextBatchJob(job: JobInfo[PreparedStatement, PreparedStatement, ResultSet]): Try[Unit] = {
-    Try(dbSession.execute(comp.getLatestCompletedJobStatement(job, false)))
+    dbSession.execute(syncTable.getLatestCompletedJobStatement(job, false))
       .map { completedJob =>
 
         // If it is the first job start with slot 0
         if (completedJob.size < 1) {
-          Try(dbSession.execute(comp.startJobStatement(job, 0, false)))
+          Try(dbSession.execute(syncTable.startJobStatement(job, 0, false)))
         } else {
-          Try(dbSession.execute(comp.startJobStatement(job, (completedJob.head.slot + 1) % job.numberOfBatchSlots, false)))
+          Try(dbSession.execute(syncTable.startJobStatement(job, (completedJob.head.slot + 1) % job.numberOfBatchSlots, false)))
+        }
+      }
+  }
+
+  def startNextOnlineJob(job: JobInfo[PreparedStatement, PreparedStatement, ResultSet]): Try[Unit] = {
+    dbSession.execute(syncTable.getLatestCompletedJobStatement(job, true))
+      .map { completedJobs =>
+
+        // If it is the first job start with slot 0
+        if (completedJobs.size < 1) {
+          Try(dbSession.execute(syncTable.startJobStatement(job, 0, true)))
+        } else {
+          Try(dbSession.execute(syncTable.startJobStatement(job, (completedJobs.head.slot + 1) % job.numberOfOnlineSlots, true)))
         }
       }
   }
 
   def getRunningBatchJob(job: JobInfo[PreparedStatement, PreparedStatement, ResultSet]): Try[Option[Int]] = {
-    Try(dbSession.execute(comp.getRunningJobStatement(job, false)))
+    dbSession.execute(syncTable.getRunningJobStatement(job, false))
+      .map { runningJobs =>
+        {
+          if (runningJobs.size > 0) {
+            Some(runningJobs.head.slot)
+          } else {
+            None
+          }
+        }
+      }
+  }
+
+  def getRunningOnlineJob(job: JobInfo[PreparedStatement, PreparedStatement, ResultSet]): Try[Option[Int]] = {
+    dbSession.execute(syncTable.getRunningJobStatement(job, true))
       .map { runningJobs =>
         {
           if (runningJobs.size > 0) {
@@ -145,9 +181,33 @@ class OnlineBatchSyncJDBC(dbSession: JDBCDbSession) extends OnlineBatchSync[Prep
 
   def completeBatchJob(job: JobInfo[PreparedStatement, PreparedStatement, ResultSet], batchEndTime: Long = System.currentTimeMillis()): Try[Unit] = {
     this.getRunningBatchJob(job).map { slot =>
-      slot.map { slot => dbSession.execute(comp.completeJobStatement(job, slot, false, batchEndTime)) }
+      slot.map { slot => dbSession.execute(syncTable.completeJobStatement(job, slot, false, batchEndTime)) }
     }
   }
+
+  def completeOnlineJob(job: JobInfo[PreparedStatement, PreparedStatement, ResultSet]): Try[Unit] = {
+    this.getRunningOnlineJob(job).map { slot =>
+      slot.map { slot => dbSession.execute(syncTable.completeJobStatement(job, slot, true, System.currentTimeMillis())) }
+    }
+  }
+
+  def setOnlineStartTime(job: JobInfo[PreparedStatement, PreparedStatement, ResultSet], dataId: String, time: Long): Try[Unit] = {
+    dbSession.execute(syncTable.getRunningJobStatement(job, true))
+    .map{ runningOnlineJobs =>
+      if (runningOnlineJobs.size == 0) {
+        logger.error(s"No running online job exists")
+      }
+  
+      if (runningOnlineJobs.size == 1) {
+        dbSession.execute(streamingStartTimeTable.setStartTime(job, runningOnlineJobs.head.slot, dataId, time))
+      }
+    }
+  }
+
+  def getOnlineStartTimes(job: JobInfo[PreparedStatement, PreparedStatement, ResultSet], slot: Int): Seq[ScrayStreamingStartTimes] = {
+    dbSession.execute(streamingStartTimeTable.getSartTimes(job, slot))
+  }
+
   override def insertInBatchTable(job: JobInfo[PreparedStatement, PreparedStatement, ResultSet], data: RowWithValue): Try[Unit] = ???
   def getOnlineJobData[T <: RowWithValue](jobname: String, slot: Int, result: T): Option[List[RowWithValue]] = ???
   def getOnlineStartTime(job: JobInfo[PreparedStatement, PreparedStatement, ResultSet]): Option[Long] = ???
@@ -155,16 +215,13 @@ class OnlineBatchSyncJDBC(dbSession: JDBCDbSession) extends OnlineBatchSync[Prep
   def getBatchJobData[T <: RowWithValue, K](jobname: String, slot: Int, key: K, result: T): Option[RowWithValue] = ???
   def getBatchJobData[T <: RowWithValue](jobInfo: JobInfo[PreparedStatement, PreparedStatement, ResultSet], result: T): Option[List[RowWithValue]] = ???
   def getBatchJobData[T <: RowWithValue](jobname: String, slot: Int, result: T): Option[List[RowWithValue]] = ???
-  def setOnlineStartTime(job: JobInfo[PreparedStatement, PreparedStatement, ResultSet], time: Long): Try[Unit] = ???
   def startInicialBatch(job: JobInfo[PreparedStatement, PreparedStatement, ResultSet], batchID: scray.common.serialization.BatchID): Try[Unit] = ???
   def getLatestBatch(job: JobInfo[PreparedStatement, PreparedStatement, ResultSet]): Option[Int] = ???
-  def completeOnlineJob(job: JobInfo[PreparedStatement, PreparedStatement, ResultSet]): Try[Unit] = ???
   def getBatchVersion(job: JobInfo[PreparedStatement, PreparedStatement, ResultSet]): Option[scray.querying.description.TableIdentifier] = ???
   def getOnlineVersion(job: JobInfo[PreparedStatement, PreparedStatement, ResultSet]): Option[scray.querying.description.TableIdentifier] = ???
   def getQueryableTableIdentifiers: List[(String, scray.querying.description.TableIdentifier, Int)] = ???
   def getTableIdentifierOfRunningJob(job: JobInfo[PreparedStatement, PreparedStatement, ResultSet]): Option[scray.querying.description.TableIdentifier] = ???
   def startNextBatchJob(job: JobInfo[PreparedStatement, PreparedStatement, ResultSet], dataTable: scray.querying.description.TableIdentifier): Try[Unit] = ???
-  def startNextOnlineJob(job: JobInfo[PreparedStatement, PreparedStatement, ResultSet]): Try[Unit] = ???
 
   // Members declared in StateMonitoringApi
   def getBatchJobState(job: JobInfo[PreparedStatement, PreparedStatement, ResultSet], slot: Int): Option[State.State] = ???

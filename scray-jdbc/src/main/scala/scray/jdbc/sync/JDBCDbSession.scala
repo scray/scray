@@ -21,24 +21,25 @@ import java.sql.ResultSet
 import java.sql.SQLWarning
 import java.sql.Statement
 
+import scala.concurrent.Await
+import scala.concurrent.duration.Duration
 import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
 
 import com.typesafe.scalalogging.LazyLogging
+import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 
-import scray.querying.sync.DbSession
-import scray.querying.sync.StatementExecutionError
-import com.zaxxer.hikari.HikariConfig
+import scray.jdbc.extractors.MariaDBDialect
+import scray.jdbc.extractors.ScrayH2Dialect
 import scray.jdbc.extractors.ScraySQLDialect
 import scray.jdbc.extractors.ScraySQLDialectFactory
+import slick.dbio.DBIOAction
 import slick.jdbc.JdbcProfile
-import scray.jdbc.extractors.MariaDBDialect
 import slick.sql.FixedSqlAction
-import com.zaxxer.hikari.{HikariConfig, HikariDataSource}
-import scala.concurrent.duration.Duration
-import scala.concurrent.Await
+import scray.querying.sync.StatementExecutionError
+import scray.querying.sync.DbSession
 
 /**
  * Session implementation for JDBC datasources using a Hikari connection pool
@@ -54,6 +55,7 @@ class JDBCDbSession(val ds: HikariDataSource, val metadataConnection: Connection
         config.setJdbcUrl(jdbcURL)
         config.setUsername(username)
         config.setPassword(password)
+        config.setMaximumPoolSize(3)
         new HikariDataSource(config)
       }, sqlDialect
     )
@@ -64,7 +66,11 @@ class JDBCDbSession(val ds: HikariDataSource, val metadataConnection: Connection
   override def getConnectionInformations: Option[JdbcProfile] = {
     sqlDialiect  match {
       case MariaDBDialect => Some(slick.jdbc.MySQLProfile)
-      case _ => None
+      case ScrayH2Dialect => Some(slick.jdbc.H2Profile)
+      case _ => {
+        logger.warn(s"No JdbcProfile for ${sqlDialiect} found.")
+        None
+      }
     }
   }
   
@@ -91,11 +97,18 @@ class JDBCDbSession(val ds: HikariDataSource, val metadataConnection: Connection
     }
 
 
-    def execute[A, B <: slick.dbio.NoStream, C <: Nothing](statement: FixedSqlAction[A, B, C]) = {
-     import scala.concurrent.ExecutionContext.Implicits.global
-     
+    def execute[A, B <: slick.dbio.NoStream, C <: Nothing](statement: FixedSqlAction[A, B, C]): Try[A] = {
+     try {
+       Success(Await.result(db.run(statement), Duration("1 second"))) 
+     } catch {
+       case e: Exception => logger.error(s"Error while executing statement ${statement}" + e); Failure(e)
+     }
+    }
+    
+    def execute[A, S <: slick.dbio.NoStream, E <: slick.dbio.Effect](statement: DBIOAction[A, S, E]) = {
       Await.result(db.run(statement), Duration("1 second")) 
     }
+    
   override def insert(statement: PreparedStatement): Try[ResultSet] = {
       try {
         logger.debug("Insert " + statement)

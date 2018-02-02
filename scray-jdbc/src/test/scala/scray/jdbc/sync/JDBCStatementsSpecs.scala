@@ -49,6 +49,10 @@ class JDBCStatementsSpecs extends WordSpec with BeforeAndAfterAll with LazyLoggi
     val h2Url = "jdbc:h2:mem:test;MODE=MySql;DATABASE_TO_UPPER=true;DB_CLOSE_DELAY=-1"
     db = Database.forURL(url = h2Url, driver = "org.h2.Driver")
   }
+  
+  override def afterAll() = {
+    db.close()
+  }
 
   "JDBCStatementsSpecs " should {
     "register job in sync table " in {
@@ -81,25 +85,47 @@ class JDBCStatementsSpecs extends WordSpec with BeforeAndAfterAll with LazyLoggi
 
     }
 
-    " start batch job " in {
+//    " start batch job " in {
+//      val syncApi = new SyncTableComponent(slick.jdbc.MySQLProfile)
+//      val jobInfo = JDBCJobInfo("job1", 3, 2)
+//
+//      // Mark batch job on slot 0 as running
+//      db.run(syncApi.startJobStatement(jobInfo, 0, false)).onComplete(_ match {
+//        case Failure(ex) => {
+//          logger.error(s"Unable to execute statement ${ex}")
+//          fail(); 
+//        };
+//        case Success(x) =>
+//      })
+//
+//      // Check if job1_batch0 is marked as running
+//      val tableIdRows = Await.result(db.run(syncApi.getRunningJobStatement(jobInfo, false)), Duration("1 second"))
+//
+//      assert(tableIdRows.size == 1) // Only one job should be marked as running
+//      assert(tableIdRows.head.tableID == "job1_batch0")
+//
+//    }
+    " set start time " in {
       val syncApi = new SyncTableComponent(slick.jdbc.MySQLProfile)
       val jobInfo = JDBCJobInfo("job1", 3, 2)
-
-      // Mark batch job on slot 0 as running
-      db.run(syncApi.startJobStatement(jobInfo, 0, false)).onComplete(_ match {
+      
+      db.run(syncApi.startJobStatement(jobInfo, 0, true)).onComplete(_ match {
         case Failure(ex) => {
           logger.error(s"Unable to execute statement ${ex}")
           fail(); 
         };
-        case Success(x) =>
+        case Success(x) => 
       })
-
-      // Check if job1_batch0 is marked as running
-      val tableIdRows = Await.result(db.run(syncApi.getRunningJobStatement(jobInfo, false)), Duration("1 second"))
-
-      assert(tableIdRows.size == 1) // Only one job should be marked as running
-      assert(tableIdRows.head.tableID == "job1_batch0")
-
+      
+      db.run(syncApi.getRunningJobStatement(jobInfo, true)).onComplete(_ match {
+        case Failure(ex) => {
+          logger.error(s"Unable to execute statement ${ex}")
+          fail(); 
+        };
+        case Success(x) =>  println(s"Running job ${x}")
+      })
+      
+      
     }
 //    " start online job " in {
 //      val syncApi = new SyncTableComponent(slick.jdbc.MySQLProfile)
