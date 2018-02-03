@@ -83,7 +83,7 @@ class JDBCDbSession(val ds: HikariDataSource, val metadataConnection: Connection
         val result = prepStatement.executeQuery()
         Success(result)
       } catch {
-        case e: Exception => logger.error(s"Error while executing statement ${statement}" + e); Failure(e)
+        case e: Exception => logger.warn(s"Error while executing statement ${statement}" + e); Failure(e)
       }
     }
 
@@ -92,7 +92,7 @@ class JDBCDbSession(val ds: HikariDataSource, val metadataConnection: Connection
         val result = statement.executeQuery()
         Success(result)
       } catch {
-        case e: Exception => logger.error(s"Error while executing statement ${statement}" + e); Failure(e)
+        case e: Exception => logger.warn(s"Error while executing statement ${statement}" + e); Failure(e)
       }
     }
 
@@ -101,12 +101,16 @@ class JDBCDbSession(val ds: HikariDataSource, val metadataConnection: Connection
      try {
        Success(Await.result(db.run(statement), Duration("1 second"))) 
      } catch {
-       case e: Exception => logger.error(s"Error while executing statement ${statement}" + e); Failure(e)
+       case e: Exception => logger.warn(s"Error while executing statement ${statement}" + e); Failure(e)
      }
     }
     
     def execute[A, S <: slick.dbio.NoStream, E <: slick.dbio.Effect](statement: DBIOAction[A, S, E]) = {
-      Await.result(db.run(statement), Duration("1 second")) 
+      try {
+        Await.result(db.run(statement), Duration("1 second")) 
+      } catch {
+        case e: Exception => logger.warn(s"Error while executing statement ${statement}" + e); Failure(e)
+      }
     }
     
   override def insert(statement: PreparedStatement): Try[ResultSet] = {
@@ -119,7 +123,7 @@ class JDBCDbSession(val ds: HikariDataSource, val metadataConnection: Connection
          Failure(new StatementExecutionError(s"It was not possible to execute statement: ${statement}. Condition was false"))
        }
       } catch {
-        case e: Exception => logger.error(s"Error while executing statement ${statement}" + e); Failure(e)
+        case e: Exception => logger.warn(s"Error while executing statement ${statement}" + e); Failure(e)
       }
     }
 

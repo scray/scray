@@ -39,6 +39,7 @@ import slick.sql.FixedSqlStreamingAction
 import scray.querying.sync.types.BatchMetadata
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
+import org.junit.Assert
 
 class ScrayStreamingStartTimesSpecs extends WordSpec with BeforeAndAfterAll with LazyLogging {
 
@@ -51,7 +52,7 @@ class ScrayStreamingStartTimesSpecs extends WordSpec with BeforeAndAfterAll with
 
   "ScrayStreamingStartTimes " should {
     "create start time table " in {
-      val table = new ScrayStreamingStartTimesIO(slick.jdbc.MySQLProfile)
+      val table = new ScrayStreamingStartTimesIO(slick.jdbc.H2Profile)
       val jobInfo = JDBCJobInfo("job1", 3, 2)
       
       // Create table
@@ -73,11 +74,11 @@ class ScrayStreamingStartTimesSpecs extends WordSpec with BeforeAndAfterAll with
       })
     }
     " add some data to start time table " in {
-      val table = new ScrayStreamingStartTimesIO(slick.jdbc.MySQLProfile)
+      val table = new ScrayStreamingStartTimesIO(slick.jdbc.H2Profile)
       val jobInfo = JDBCJobInfo("job1", 3, 2)
       
       // Create table
-      db.run(table.setStartTime(jobInfo, 0, "data_1", 123L)).onComplete(_ match {
+      db.run(table.setStartTime(jobInfo, 0, 123L, "http://example.com/42")).onComplete(_ match {
         case Success(lines) => 
         case Failure(ex) => {
           logger.error(s"Unable to execute statement ${ex}")
@@ -87,11 +88,8 @@ class ScrayStreamingStartTimesSpecs extends WordSpec with BeforeAndAfterAll with
       
       // Check if data exists in database
       val startTimeValues =  Await.result(db.run(table.getSartTimes(jobInfo, 0)), Duration("1 second"))
-      if(startTimeValues.size == 1) {
-        assert(startTimeValues.head.dataId === "data_1")
-      } else {
-        fail()
-      }
+      Assert.assertEquals(1, startTimeValues.size)
+      Assert.assertEquals("http://example.com/42", startTimeValues.head.startPoint)
     }
   }
 

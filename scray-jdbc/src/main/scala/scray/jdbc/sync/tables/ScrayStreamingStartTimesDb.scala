@@ -28,25 +28,33 @@ import scala.collection.mutable.ListBuffer
 import slick.sql.FixedSqlStreamingAction
 import scray.querying.sync.types.BatchMetadata
 
-case class ScrayStreamingStartTimes(
+case class ScrayStreamingStartTimes[T](
   jobname: String,
   slot: Int,
-  insertTime: Long,
-  dataId: String, // Identifies one data element
-  firstElementTime: Long)
+  timestamp: Long,
+  startPoint: T) // Identifies one data element
 
-class ScrayStreamingStartTimesIO(val driver: JdbcProfile, val dbSystemId: String = "SCRAY", val tablename: String = "TSCRAYSTREAMINGSTARTTIMES") {
+
+case class ScrayStreamingStartTimesDb(
+  jobname: String,
+  slot: Int,
+  timestamp: Long,
+  startPoint: String, // Identifies one data element
+  dummy: Boolean //Column to fix slick issue https://github.com/slick/slick/issues/1728
+  )  
+
+class ScrayStreamingStartTimesIO(val driver: JdbcProfile, val dbSystemId: String = "SCRAY", val tablename: String = "TSCRAYSTREAMINGSTARTPOINTS") {
   import driver.api._
 
-  class ScrayStreamingStartTimesTable(tag: Tag) extends Table[ScrayStreamingStartTimes](tag, tablename) {
+  class ScrayStreamingStartTimesTable(tag: Tag) extends Table[ScrayStreamingStartTimesDb](tag, tablename) {
     def jobname = column[String]("CJOBNAME", O.Length(100))
     def slot = column[Int]("CSLOT")
-    def insertTime = column[Long]("CINSERTTIME")
-    def dataId = column[String]("CDATAID", O.Length(100))
-    def firstElementTime = column[Long]("CFIRSTELEMENTTIME")
+    def timestamp = column[Long]("CTIMESTAMP")
+    def startPoint = column[String]("CSTARTPOINT", O.Length(100))
+    def dummy = column[Boolean]("CDUMMY")
 
-    def * = (jobname, slot, insertTime, dataId, firstElementTime) <> (ScrayStreamingStartTimes.tupled, ScrayStreamingStartTimes.unapply)
-    def pk = primaryKey("pk_a", (jobname, slot, dataId, firstElementTime))
+    def * = (jobname, slot, timestamp, startPoint, dummy) <> (ScrayStreamingStartTimesDb.tupled, ScrayStreamingStartTimesDb.unapply)
+    def pk = primaryKey("pk_a", (jobname, slot, timestamp, startPoint))
   }
 
   val table = TableQuery[ScrayStreamingStartTimesTable]
@@ -64,16 +72,23 @@ class ScrayStreamingStartTimesIO(val driver: JdbcProfile, val dbSystemId: String
       exists.
       result
   }
+  
+  def truncateSlot(jobInfo: JobInfo[_, _, _], slot: Int) = {
+    table.
+    filter(_.jobname === jobInfo.name).
+    filter(_.slot === slot).
+    delete
+  }
 
-  def setStartTime(jobInfo: JobInfo[_, _, _], slot: Int, dataId: String, firstElementTime: Long) = {
+  def setStartTime(jobInfo: JobInfo[_, _, _], slot: Int, timestamp: Long = System.currentTimeMillis(), startPoint: String) = {
     table.
       insertOrUpdate(
-        ScrayStreamingStartTimes(
+        ScrayStreamingStartTimesDb(
           jobInfo.name,
           slot,
-          System.currentTimeMillis(),
-          dataId,
-          firstElementTime
+          timestamp,
+          startPoint,
+          true
         )
       )
   }
