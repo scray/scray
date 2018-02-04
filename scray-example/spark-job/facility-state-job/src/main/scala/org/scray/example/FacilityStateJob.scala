@@ -6,7 +6,6 @@ import org.apache.spark.streaming.Seconds
 import org.apache.spark.streaming.StreamingContext
 import org.scray.example.cli.Options
 
-import com.datastax.driver.core.ResultSet
 import com.datastax.driver.core.Statement
 import com.datastax.driver.core.querybuilder.Insert
 import com.typesafe.scalalogging.Logger
@@ -25,6 +24,18 @@ import org.scray.example.cli.CliParameters
 import org.scray.example.input.FacilityDataSources
 import org.scray.example.conf.TEXT
 import org.scray.example.conf.CASSANDRA
+import scray.jdbc.sync.JDBCJobInfo
+import scray.jdbc.sync.OnlineBatchSyncJDBC
+import scray.jdbc.sync.JDBCDbSession
+import java.sql.PreparedStatement
+import java.sql.ResultSet
+import org.scray.example.input.KafkaOffsetReader
+import org.apache.spark.streaming.kafka010.OffsetRange
+import org.apache.kafka.common.TopicPartition
+import scala.util.Try
+import org.apache.spark.storage.StorageLevel
+import scala.util.Success
+import scala.util.Failure
 
 object FacilityStateJob {
 
@@ -85,29 +96,37 @@ object FacilityStateJob {
       case None               => (new ConfigurationReader).readConfigruationFile
     }
     logger.info(s"Job configuration parameters: ${config}")
+    
+   val jobInfo = JDBCJobInfo(config.jobName, config.numberOfBatchVersions, config.numberOfBatchVersions)
+
+
+    
 
     if (cliParams.useSparkSQLJob) {
       val spark = SparkSession.builder().appName(this.getClass.getName).getOrCreate()
       val job = new SparkSQLStreamingJob(spark, config)
       job.run(config.windowStartTime)
     } else {
-      this.startDistanceBasedAggregationJob(cliParams, config)
+      this.startDistanceBasedAggregationJob(cliParams, config, jobInfo)
     }
   }
 
-  def startDistanceBasedAggregationJob(cliConf: CliParameters, config: JobParameter) = {
+  def startDistanceBasedAggregationJob(cliConf: CliParameters, config: JobParameter, jobInfo: JobInfo[PreparedStatement, PreparedStatement, ResultSet]) = {
 
     logger.info(s"Using HDFS-URL=${config.checkpointPath} and Kafka-URL=${config.kafkaBootstrapServers}")
     val ssc = StreamingContext.getOrCreate(config.checkpointPath, setupSparkStreamingConfig(config.sparkMaster, config.sparkStreamingBatchSize))
     ssc.checkpoint(config.checkpointPath + "_" + System.currentTimeMillis())
 
-    val dstream = StreamingDStreams.getKafkaStringSource(ssc, Some(config.kafkaBootstrapServers), Some(config.kafkaTopic))
-
-    val job = new StreamingJob(ssc, config)
-    job.runTuple(dstream.getOrElse(throw new RuntimeException("No stream to get data")))
-
-    ssc.start()
-    ssc.awaitTermination()
+    getAndPersistCurrentKafkaOffsets(jobInfo, config).map{kafkaOffsets => 
+      val dstream = StreamingDStreams.getKafkaStringSource(ssc, Some(config.kafkaBootstrapServers), Some(config.kafkaTopic), StorageLevel.MEMORY_ONLY, kafkaOffsets)
+  
+      val job = new StreamingJob(ssc, config)
+      job.runTuple(dstream.getOrElse(throw new RuntimeException("No stream to get data")))
+  
+    } match {
+      case Success(e) => ssc.start(); ssc.awaitTermination()
+      case Failure(ex) => logger.error(s"Error while preparing straming job. Exception: ${ex}\n ${ex.printStackTrace()}")
+    }
   }
 
   def setupSparkStreamingConfig(masterURL: String, seconds: Int): () => StreamingContext = () => {
@@ -119,5 +138,28 @@ object FacilityStateJob {
       .set("spark.streaming.receiver.maxRate", "20000")
       .setMaster(masterURL)
     new StreamingContext(sparkConf, Seconds(seconds))
+  }
+  
+  def getAndPersistCurrentKafkaOffsets(jobInfo:  JobInfo[PreparedStatement, PreparedStatement, ResultSet], config: JobParameter): Try[Map[TopicPartition, Long]] = {
+    
+    // Read and persist Kafka state
+    JDBCDbSession.getNewJDBCDbSession(config.sync_jdbc_url, config.sync_jdbc_usr, config.sync_jdbc_psw)
+      .map(new OnlineBatchSyncJDBC(_))
+      .map { syncApi =>
+
+        val offsetReader = new KafkaOffsetReader(config.kafkaBootstrapServers)
+        val kafkaOffsets = offsetReader.getCurrentKafkaOffsets(config.kafkaTopic)
+        
+        syncApi.initJobIfNotExists(jobInfo)
+        syncApi.startNextOnlineJob(jobInfo)
+        
+        val offsetRanges = kafkaOffsets.foldLeft(Map[TopicPartition,Long]()) { (offsetRanges, startPoint) =>  
+          
+          syncApi.setOnlineStartPoint(jobInfo, System.currentTimeMillis(), startPoint.toJsonString)  
+          offsetRanges + ((new TopicPartition(startPoint.topic, startPoint.partition), startPoint.offset))
+        }
+        
+        offsetRanges
+    }    
   }
 }

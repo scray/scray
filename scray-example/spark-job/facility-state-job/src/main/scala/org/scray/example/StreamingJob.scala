@@ -28,6 +28,21 @@ import scala.collection.mutable.ListBuffer
 import org.mapdb.DBMaker
 import org.mapdb.HTreeMap
 import com.google.common.collect.EvictingQueue
+import slick.jdbc.H2Profile.api._
+import scray.querying.sync.Column
+import scray.querying.sync.SyncTableBasicClasses
+import scray.querying.sync.Table
+import scray.querying.sync.SyncTable
+import scray.jdbc.sync.tables.DriverComponent
+import slick.jdbc.JdbcProfile
+import slick.jdbc.OracleProfile
+import scala.util.Success
+import scala.util.Failure
+import scala.collection.mutable.HashMap
+import scray.jdbc.sync.JDBCJobInfo
+import scray.jdbc.sync.OnlineBatchSyncJDBC
+import scray.jdbc.sync.JDBCDbSession
+
 
 case class FacilityInWindow(facilityType: String, state: String, windowStartTime: Long)
 
@@ -39,9 +54,12 @@ class StreamingJob(@transient val ssc: StreamingContext, conf: JobParameter) ext
 
   def runTuple[T <: org.apache.spark.streaming.dstream.DStream[ConsumerRecord[String, String]]](dstream: T) = {
 
-    val facilities = dstream.flatMap(facilitiesAsJson => {
+    var isFirstElement = true
+    val endTimes = new HashMap[String, Long]
+    
+    val facilities = dstream.flatMap(facilitiesAsJson => {    
       jsonParser.parse(facilitiesAsJson.value()) // Parse json data and create Facility objects
-        .map(fac => (fac.facilitytype + fac.state, fac)) // Create key value pairs
+      .map(fac => (fac.facilitytype + fac.state, fac)) // Create key value pairs
     })
       .mapWithState(StateSpec.function(createWindowKey _)) // Add window time stamp to key
       .map(facilityWindow => (facilityWindow, 1))
@@ -117,4 +135,66 @@ class StreamingJob(@transient val ssc: StreamingContext, conf: JobParameter) ext
 
     Some(FacilityStateCounter(facilityGroup.facilityType, facilityGroup.state, newCount, facilityGroup.windowStartTime))
   }
+  
+  @transient
+  lazy val syncDbConnection = JDBCDbSession.getNewJDBCDbSession("jdbc:mariadb://127.0.0.1:3306/scray", "scray", "scray")
+
+  def setFirstElementTime(id: String, time: Long) = {
+    
+//    val jobInfo = new JDBCJobInfo("FacilityStreamingJob")
+//          syncDbConnection    
+//          //JDBCDbSession.getNewJDBCDbSession("jdbc:h2:mem:test", "scray", "scray")
+//            .map(new OnlineBatchSyncJDBC(_))
+//            .map { syncTable => {
+//                syncTable.initJobIfNotExists(jobInfo)
+//                syncTable.startNextOnlineJob(jobInfo)
+//                syncTable.setOnlineStartPoint(jobInfo, time, id) 
+//                //syncTable.completeOnlineJob(jobInfo)
+//              } 
+//            }
+//          
+//          match {
+//              case Success(lines) => 
+//              case Failure(ex)    => println(s"Problem rendering URL content: ${ex.printStackTrace()}")
+//            }
+        }
+  @transient
+  lazy val connection =  JDBCDbSession.getNewJDBCDbSession("jdbc:mariadb://127.0.0.1:3306/scray", "scray", "scray")
+  
+  def getLastBatchElement(endTimes: HashMap[String, Long]) = {
+    
+        val jobInfo = new JDBCJobInfo("FacilityStreamingJob")
+      
+        connection
+        //JDBCDbSession.getNewJDBCDbSession("jdbc:h2:mem:test", "scray", "scray")
+        .map(new OnlineBatchSyncJDBC(_))
+        .map { syncTable =>
+          {
+//              val onlineSlot = syncTable.getRunningOnlineJob(jobInfo).get.get
+//              val data = syncTable.getOnlineStartPoint(jobInfo, onlineSlot)
+//              
+//              val iter = data.iterator
+    
+              
+//              while(iter.hasNext) {
+//                val nextStartPoint = iter.next()
+//                val existingStartpint = endTimes.get(nextStartPoint.jobname)
+//                
+//                if(existingStartpint.isDefined) {
+//                  if(existingStartpint.get > nextStartPoint.firstElementTime) {
+//                    endTimes.put(nextStartPoint.jobname, nextStartPoint.firstElementTime)
+//                  }
+//                } else {
+//                  endTimes.put(nextStartPoint.jobname, nextStartPoint.firstElementTime)
+//                }
+//                
+//              }               
+            
+            
+            
+          }
+          
+    }
+    endTimes
+    }
 }

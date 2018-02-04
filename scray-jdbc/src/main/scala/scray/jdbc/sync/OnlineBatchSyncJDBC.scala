@@ -89,7 +89,6 @@ class OnlineBatchSyncJDBC[StartPointT](dbSession: JDBCDbSession) extends OnlineB
       case Failure(e) => e match {
         case e: SQLSyntaxErrorException => {
           if (e.getMessage.contains("doesn't exist")) {
-            println("affe 1")
             this.initJob(job)
           } else {
             Failure(e)

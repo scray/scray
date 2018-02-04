@@ -50,11 +50,11 @@ class ScrayStreamingStartTimesIO(val driver: JdbcProfile, val dbSystemId: String
     def jobname = column[String]("CJOBNAME", O.Length(100))
     def slot = column[Int]("CSLOT")
     def timestamp = column[Long]("CTIMESTAMP")
-    def startPoint = column[String]("CSTARTPOINT", O.Length(100))
+    def startPoint = column[String]("CSTARTPOINT", O.Length(767))
     def dummy = column[Boolean]("CDUMMY")
 
     def * = (jobname, slot, timestamp, startPoint, dummy) <> (ScrayStreamingStartTimesDb.tupled, ScrayStreamingStartTimesDb.unapply)
-    def pk = primaryKey("pk_a", (jobname, slot, timestamp, startPoint))
+    def pk = primaryKey("pk_a", (jobname, slot, timestamp))
   }
 
   val table = TableQuery[ScrayStreamingStartTimesTable]

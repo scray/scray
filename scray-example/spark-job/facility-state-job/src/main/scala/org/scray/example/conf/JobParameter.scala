@@ -7,7 +7,7 @@ case class JobParameter(
   var sparkMaster: String    = "yarn",              // Spark master URL
   var batch: Boolean         = false,
   var batchFilePath: String  = "hdfs://hdfs-namenode:8020/data/Facilities*",
-  var batchDataSource: BatchDataSource = TEXT,             // TEXT, CASSANDRA              
+  var batchDataSource: BatchDataSource = TEXT,             // TEXT, CASSANDRA, KAFKA              
   
   var sparkStreamingBatchSize: Int = 20,
   
@@ -21,6 +21,7 @@ case class JobParameter(
   
   var kafkaBootstrapServers: String  =  "127.0.0.1:9092",
   var kafkaTopic: String             =  "Facilities",
+  var kafkaAutoOffsetReset: String   =  "earliest",
   
   var windowDuration: String  = "20 seconds",
   var slideDuration: String   = "20 seconds",
@@ -31,10 +32,16 @@ case class JobParameter(
  
   var checkpointPath: String        = "hdfs://hdfs-namenode:8020/checkpoints-facility-state-job/",
   var sparkBatchSize: Int           = 20,
+  
+  var jobName: String               = "FacilityStateJob",
   var numberOfBatchVersions: Int    = 2,
-  var numberOfOnlineVersions: Int   = 1
+  var numberOfOnlineVersions: Int   = 1,
+  var sync_jdbc_url: String         = "jdbc:mariadb://127.0.0.1:3306/scray",
+  var sync_jdbc_usr: String         = "scray",
+  var sync_jdbc_psw: String         = "scray" 
 )
 
 abstract class BatchDataSource
 case object TEXT extends BatchDataSource
 case object CASSANDRA extends BatchDataSource
+case object KAFKA extends BatchDataSource

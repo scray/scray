@@ -4,7 +4,7 @@ ORIGDIR=$(pwd)
 BASEDIR="$(dirname "$(readlink -e "$0")")"
 BASEDIR=${BASEDIR%/*} # Use parent of bin directory
 
-EXECUTOR_CORES=5
+EXECUTOR_CORES=1
 
 function usage {
   echo -e "Usage: $0 <Options> <Job arguments>\n\
@@ -82,7 +82,7 @@ else
   exec $SPARK_SUBMIT --packages org.apache.spark:spark-sql-kafka-0-10_2.11:2.2.0 \
 	--master yarn \
 	--deploy-mode cluster \
-	--num-executors 5 \
+	--num-executors 1 \
 	--driver-memory 2048m \
 	--executor-memory 2048m \
 	--total-executor-cores $CORES \

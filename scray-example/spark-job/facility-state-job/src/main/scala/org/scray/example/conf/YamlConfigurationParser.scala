@@ -94,6 +94,8 @@ class YamlConfigurationParser extends LazyLogging {
           confObject.batchDataSource = TEXT
         } else if (yamlData.get("batchDataSource").equals("CASSANDRA")) {
           confObject.batchDataSource = CASSANDRA
+        } else if (yamlData.get("batchDataSource").equals("KAFKA")) {
+          confObject.batchDataSource = KAFKA
         } else {
           logger.debug(s"batchDataSource not defined use default: ${confObject.batchDataSource}. Possible values are TEXT ore CASSANDRA")
         }
