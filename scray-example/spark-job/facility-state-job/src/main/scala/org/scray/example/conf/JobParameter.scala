@@ -36,9 +36,9 @@ case class JobParameter(
   var jobName: String               = "FacilityStateJob",
   var numberOfBatchVersions: Int    = 2,
   var numberOfOnlineVersions: Int   = 1,
-  var sync_jdbc_url: String         = "jdbc:mariadb://127.0.0.1:3306/scray",
-  var sync_jdbc_usr: String         = "scray",
-  var sync_jdbc_psw: String         = "scray" 
+  var syncJdbcURL: String           = "jdbc:mariadb://sync-db:3306/scray",
+  var syncJdbcUsr: String           = "scray",
+  var syncJdbcPw: String            = "scray" 
 )
 
 abstract class BatchDataSource

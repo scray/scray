@@ -143,7 +143,7 @@ object FacilityStateJob {
   def getAndPersistCurrentKafkaOffsets(jobInfo:  JobInfo[PreparedStatement, PreparedStatement, ResultSet], config: JobParameter): Try[Map[TopicPartition, Long]] = {
     
     // Read and persist Kafka state
-    JDBCDbSession.getNewJDBCDbSession(config.sync_jdbc_url, config.sync_jdbc_usr, config.sync_jdbc_psw)
+    JDBCDbSession.getNewJDBCDbSession(config.syncJdbcURL, config.syncJdbcUsr, config.syncJdbcPw)
       .map(new OnlineBatchSyncJDBC(_))
       .map { syncApi =>
 
@@ -155,6 +155,7 @@ object FacilityStateJob {
         
         val offsetRanges = kafkaOffsets.foldLeft(Map[TopicPartition,Long]()) { (offsetRanges, startPoint) =>  
           
+          logger.debug(s"Persist Kafka start point ${startPoint} for job ${jobInfo}")
           syncApi.setOnlineStartPoint(jobInfo, System.currentTimeMillis(), startPoint.toJsonString)  
           offsetRanges + ((new TopicPartition(startPoint.topic, startPoint.partition), startPoint.offset))
         }

@@ -88,6 +88,25 @@ class YamlConfigurationParser extends LazyLogging {
         logger.debug(s"sparkStreamingBatchSize not defined use default: ${confObject.sparkStreamingBatchSize}")
       }
       
+      if(yamlData.get("syncJdbcURL") != null) {
+        confObject.syncJdbcURL = yamlData.get("syncJdbcURL").asInstanceOf[String]
+      } else {
+        logger.debug(s"syncJdbcURL not defined use default: ${confObject.syncJdbcURL}")
+      }
+      
+      if(yamlData.get("syncJdbcUsr") != null) {
+        confObject.syncJdbcUsr = yamlData.get("syncJdbcUsr").asInstanceOf[String]
+      } else {
+        logger.debug(s"syncJdbcUsr not defined use default: ${confObject.syncJdbcUsr}")
+      }
+      
+      if(yamlData.get("syncJdbcPw") != null) {
+        confObject.syncJdbcPw = yamlData.get("syncJdbcPw").asInstanceOf[String]
+      } else {
+        logger.debug(s"syncJdbcPw not defined use default: ${confObject.syncJdbcPw}")
+      }
+      
+      
       if(yamlData.get("batchDataSource") != null) {
         
         if(yamlData.get("batchDataSource").equals("TEXT")) {
