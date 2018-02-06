@@ -12,13 +12,64 @@ import org.apache.kafka.common.TopicPartition
 import collection.JavaConverters._
 import java.util.LinkedList
 import java.util.ArrayList
+import com.fasterxml.jackson.databind.SerializationFeature
+import com.typesafe.scalalogging.Logger
+import scala.util.Failure
+import scala.util.Try
 
-case class KafkaStartPossition(topic: String, partition: Int, offset: Long) extends LazyLogging {
-  def toJsonString: String = {
+/**
+ * Represents highest offsets of all partitions for a given topic
+ */
+case class KafkaEndPossition(topic: String, partition: Int, offset: Long) { 
+  
+  @transient
+  val logger = Logger("org.scray.example.input.KafkaStartPossition")
+  
+  def toJsonString: Try[String] = {
     val mapper = new ObjectMapper()
     mapper.registerModule(DefaultScalaModule)
+    
+    try {
+      Try(mapper.writeValueAsString(this))
+    } catch {
+      case e: Exception => Failure(e) 
+    } 
+  }
 
-    mapper.writeValueAsString(this)
+  def fromJsonString(json: String): Option[KafkaEndPossition] = {
+    val mapper = new ObjectMapper()
+    mapper.registerModule(DefaultScalaModule)
+    mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+
+    try {
+      return Some(mapper.readValue(json, classOf[KafkaEndPossition]))
+    } catch {
+      case e: Throwable => {
+        logger.warn(s"Exception while parsing KafkaStartPossition ${json}. ${e.getMessage}")
+        return None
+      }
+    }
+    return None
+  }
+}
+
+/**
+ * Represents lowest offsets of all partitions for a given topic
+ */
+case class KafkaStartPossition(topic: String, partition: Int, offset: Long) { 
+  
+  @transient
+  val logger = Logger("org.scray.example.input.KafkaStartPossition")
+  
+  def toJsonString: Try[String] = {
+    val mapper = new ObjectMapper()
+    mapper.registerModule(DefaultScalaModule)
+    
+    try {
+      Try(mapper.writeValueAsString(this))
+    } catch {
+      case e: Exception => Failure(e) 
+    } 
   }
 
   def fromJsonString(json: String): Option[KafkaStartPossition] = {
@@ -30,7 +81,7 @@ case class KafkaStartPossition(topic: String, partition: Int, offset: Long) exte
       return Some(mapper.readValue(json, classOf[KafkaStartPossition]))
     } catch {
       case e: Throwable => {
-        logger.error(s"Exception while parsing KafkaStartPossition ${json}. ${e.getMessage}")
+        logger.warn(s"Exception while parsing KafkaStartPossition ${json}. ${e.getMessage}")
         return None
       }
     }
@@ -43,7 +94,7 @@ case class KafkaStartPossition(topic: String, partition: Int, offset: Long) exte
  */
 class KafkaOffsetReader(bootstrasServers: String) {
 
-  def getCurrentKafkaOffsets(topic: String): List[KafkaStartPossition] = {
+  def getCurrentKafkaHighestOffsets(topic: String): List[KafkaEndPossition] = {
     val props = new Properties();
     props.put("bootstrap.servers", bootstrasServers);
     props.put("group.id", "KafkaOffsetReader" + System.currentTimeMillis());
@@ -58,6 +109,36 @@ class KafkaOffsetReader(bootstrasServers: String) {
     val topicPartitions = getPartitions(consumer, topic)
 
     consumer.seekToEnd(topicPartitions)
+
+    val partitionOffsets = topicPartitions.
+      asScala.
+      map(topicPartition => {
+        val offset = consumer.position(topicPartition)
+
+        KafkaEndPossition(
+          topicPartition.topic(),
+          topicPartition.partition(),
+          offset)
+      })
+
+    partitionOffsets.toList
+  }
+  
+  def getCurrentKafkaLowestOffsets(topic: String): List[KafkaStartPossition] = {
+    val props = new Properties();
+    props.put("bootstrap.servers", bootstrasServers);
+    props.put("group.id", "KafkaOffsetReader" + System.currentTimeMillis());
+    props.put("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
+    props.put("value.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
+    val consumer = new KafkaConsumer[String, String](props);
+
+    val topics = topic :: Nil
+    consumer.subscribe(topics.asJava)
+    consumer.poll(100L)
+
+    val topicPartitions = getPartitions(consumer, topic)
+
+    consumer.seekToBeginning(topicPartitions)
 
     val partitionOffsets = topicPartitions.
       asScala.
