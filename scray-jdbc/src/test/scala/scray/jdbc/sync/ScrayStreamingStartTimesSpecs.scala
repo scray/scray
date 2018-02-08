@@ -46,7 +46,7 @@ class ScrayStreamingStartTimesSpecs extends WordSpec with BeforeAndAfterAll with
   var db: Database = null
 
   override def beforeAll() = {
-    val h2Url = "jdbc:h2:mem:test;MODE=MySql;DATABASE_TO_UPPER=true;DB_CLOSE_DELAY=-1"
+    val h2Url = "jdbc:h2:mem:test1;MODE=MySql;DATABASE_TO_UPPER=true;DB_CLOSE_DELAY=-1"
     db = Database.forURL(url = h2Url, driver = "org.h2.Driver")
   }
 

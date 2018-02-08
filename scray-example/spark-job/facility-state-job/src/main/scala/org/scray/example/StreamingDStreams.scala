@@ -16,6 +16,7 @@ import org.apache.spark.streaming.kafka010.KafkaUtils
 import org.apache.spark.streaming.kafka010.Assign
 import org.apache.spark.streaming.kafka010.ConsumerStrategies
 import org.apache.kafka.common.TopicPartition
+import org.apache.spark.streaming.kafka010.OffsetRange
 
 
 object StreamingDStreams {
@@ -60,9 +61,7 @@ object StreamingDStreams {
       ):Option[InputDStream[ConsumerRecord[String, String]]] = 
         
     getKafkaStreamSource[String, String, StringDecoder, StringDecoder](ssc, kafkaDStreamURL, kafkaTopic, storageLevel, fromOffsets)
-  
-
-          
+     
   /**
    * initializes distributed stream source for hdfs text files
    */

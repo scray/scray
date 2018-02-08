@@ -48,7 +48,20 @@ class CassandraDbSession(val cassandraSession: Session) extends DbSession[Statem
       }
     }
 
-    def execute(statement: Statement): Try[ResultSet] = {
+    override def execute(statement: Statement): Try[ResultSet] = {
+      try {
+        val result = cassandraSession.execute(statement)
+        if(result.wasApplied()) {
+         Success(result)
+       } else {
+         Failure(new StatementExecutionError(s"It was not possible to execute statement: ${statement}. Condition was false"))
+       }
+      } catch {
+        case e: Exception => logger.error(s"Error while executing statement ${statement}" + e); Failure(e)
+      }
+    }
+    
+    def executeQuery(statement: String): scala.util.Try[ResultSet] = {
       try {
         val result = cassandraSession.execute(statement)
         if(result.wasApplied()) {

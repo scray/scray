@@ -35,12 +35,12 @@ import scray.querying.sync.types.BatchMetadata
 import com.typesafe.scalalogging.LazyLogging
 import java.sql.SQLSyntaxErrorException
 import scray.jdbc.sync.tables.ScrayStreamingStartTimesIO
-import scray.jdbc.sync.tables.ScrayStreamingStartTimesDb
-import scray.jdbc.sync.tables.ScrayStreamingStartTimes
+import scray.jdbc.sync.tables.ScrayStreamingStartPointDb
+import scray.jdbc.sync.tables.ScrayStreamingStartPoints
 import java.util.LinkedList
 import scala.collection.JavaConverters._
 
-class OnlineBatchSyncJDBC[StartPointT](dbSession: JDBCDbSession) extends OnlineBatchSync[PreparedStatement, PreparedStatement, ResultSet] with OnlineBatchSyncWithTableIdentifier[PreparedStatement, PreparedStatement, ResultSet] with StateMonitoringApi[PreparedStatement, PreparedStatement, ResultSet] with LazyLogging {
+class OnlineBatchSyncJDBC(dbSession: JDBCDbSession) extends OnlineBatchSync[PreparedStatement, PreparedStatement, ResultSet] with OnlineBatchSyncWithTableIdentifier[PreparedStatement, PreparedStatement, ResultSet] with StateMonitoringApi[PreparedStatement, PreparedStatement, ResultSet] with LazyLogging {
 
   val syncTable = new SyncTableComponent(dbSession.getConnectionInformations.get)
   val streamingStartTimeTable = new ScrayStreamingStartTimesIO(dbSession.getConnectionInformations.get)
@@ -66,7 +66,6 @@ class OnlineBatchSyncJDBC[StartPointT](dbSession: JDBCDbSession) extends OnlineB
   }
 
   def initJobIfNotExists[DataTableT <: ArbitrarylyTypedRows](job: JobInfo[PreparedStatement, PreparedStatement, ResultSet]): Try[Unit] = {
-
     dbSession.execute(syncTable.tableExists).map(tableExists =>
       {
         if (tableExists) {
@@ -89,6 +88,13 @@ class OnlineBatchSyncJDBC[StartPointT](dbSession: JDBCDbSession) extends OnlineB
       case Failure(e) => e match {
         case e: SQLSyntaxErrorException => {
           if (e.getMessage.contains("doesn't exist")) {
+            this.initJob(job)
+          } else {
+            Failure(e)
+          }
+        }
+        case e: org.h2.jdbc.JdbcSQLException => {
+          if (e.getMessage.contains("not found")) {
             this.initJob(job)
           } else {
             Failure(e)
@@ -181,7 +187,7 @@ class OnlineBatchSyncJDBC[StartPointT](dbSession: JDBCDbSession) extends OnlineB
     dbSession.execute(syncTable.getRunningJobStatement(job, true))
       .map { runningJobs =>
         {
-          if (runningJobs.size > 0) {
+          if (runningJobs.size >=0) {
             Some(runningJobs.head.slot)
           } else {
             None
@@ -226,21 +232,20 @@ class OnlineBatchSyncJDBC[StartPointT](dbSession: JDBCDbSession) extends OnlineB
         if (runningOnlineJobs.size == 0) {
           logger.error(s"No running online job exists")
         }
-
         if (runningOnlineJobs.size == 1) {
           dbSession.execute(streamingStartTimeTable.setStartTime(job, runningOnlineJobs.head.slot, time, startPoint))
         }
       }
   }
 
-  def getOnlineStartPointAsInt(job: JobInfo[PreparedStatement, PreparedStatement, ResultSet], slot: Int): java.util.List[ScrayStreamingStartTimes[Int]] = {
-    ScrayStreamingStartTimes[Long]("", 1, 1L, 1L)
+  def getOnlineStartPointAsInt(job: JobInfo[PreparedStatement, PreparedStatement, ResultSet], slot: Int): java.util.List[ScrayStreamingStartPoints[Int]] = {
+    ScrayStreamingStartPoints[Long]("", 1, 1L, 1L)
     dbSession.execute(streamingStartTimeTable.getSartTimes(job, slot))
       .map { startPoint =>
 
-        startPoint.foldLeft(List[ScrayStreamingStartTimes[Int]]())(
+        startPoint.foldLeft(List[ScrayStreamingStartPoints[Int]]())(
           (acc, startPoint) => {
-            ScrayStreamingStartTimes[Int](startPoint.jobname, startPoint.slot, startPoint.timestamp, startPoint.startPoint.toInt) :: acc
+            ScrayStreamingStartPoints[Int](startPoint.jobname, startPoint.slot, startPoint.timestamp, startPoint.startPoint.toInt) :: acc
           })
       } match {
         case Success(startPoints) => startPoints.asJava
@@ -248,17 +253,17 @@ class OnlineBatchSyncJDBC[StartPointT](dbSession: JDBCDbSession) extends OnlineB
       }
   }
 
-  def getOnlineStartPointAsString(job: JobInfo[PreparedStatement, PreparedStatement, ResultSet], slot: Int): java.util.List[ScrayStreamingStartTimes[String]] = {
+  def getOnlineStartPointAsString(job: JobInfo[PreparedStatement, PreparedStatement, ResultSet], slot: Int): List[ScrayStreamingStartPoints[String]] = {
     dbSession.execute(streamingStartTimeTable.getSartTimes(job, slot))
       .map { startPoint =>
 
-        startPoint.foldLeft(List[ScrayStreamingStartTimes[String]]())(
+        startPoint.foldLeft(List[ScrayStreamingStartPoints[String]]())(
           (acc, startPoint) => {
-            ScrayStreamingStartTimes[String](startPoint.jobname, startPoint.slot, startPoint.timestamp, startPoint.startPoint) :: acc
+            ScrayStreamingStartPoints[String](startPoint.jobname, startPoint.slot, startPoint.timestamp, startPoint.startPoint) :: acc
           })
       } match {
-        case Success(startPoints) => startPoints.asJava
-        case Failure(e)           => new LinkedList()
+        case Success(startPoints) => startPoints
+        case Failure(e)           => List.empty[ScrayStreamingStartPoints[String]]
       }
   }
 

@@ -60,4 +60,5 @@ class BatchJob(val facilityData: RDD[Facility[Long]], conf: JobParameter) extend
     calendar.setTimeInMillis(fac.timestamp)
     AggregationKey(fac.facilitytype, fac.state, calendar.getTimeInMillis / 1000)
   }
+  
 }

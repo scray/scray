@@ -53,6 +53,24 @@ case class KafkaEndPossition(topic: String, partition: Int, offset: Long) {
   }
 }
 
+object KafkaEndPossition extends LazyLogging {
+  def fromJson(jsonString: String): Option[KafkaEndPossition] = {
+    val mapper = new ObjectMapper()
+    mapper.registerModule(DefaultScalaModule)
+    mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+
+    try {
+      return Some(mapper.readValue(jsonString, classOf[KafkaEndPossition]))
+    } catch {
+      case e: Throwable => {
+        logger.warn(s"Exception while parsing KafkaStartPossition ${jsonString}. ${e.getMessage}")
+        return None
+      }
+    }
+    return None
+  } 
+}
+
 /**
  * Represents lowest offsets of all partitions for a given topic
  */
@@ -161,7 +179,8 @@ class KafkaOffsetReader(bootstrasServers: String) {
     consumer.partitionsFor(topic).
       asScala.
       map(partitionInfo =>
-        topicPartitions.add(new TopicPartition(partitionInfo.topic(), partitionInfo.partition())))
+        topicPartitions.add(new TopicPartition(partitionInfo.topic(), partitionInfo.partition()))
+      )
 
     topicPartitions
   }

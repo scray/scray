@@ -36,6 +36,7 @@ import scala.util.Try
 import org.apache.spark.storage.StorageLevel
 import scala.util.Success
 import scala.util.Failure
+import org.scray.example.conf.KAFKA
 
 object FacilityStateJob {
 
@@ -76,14 +77,27 @@ object FacilityStateJob {
     }
     logger.info(s"Job configuration parameters: ${configuration}")
 
-    // Get data source
-    val dataSource = configuration.batchDataSource match {
-      case TEXT      => FacilityDataSources.getFacilityFromTextFile(sc, configuration.batchFilePath)
-      case CASSANDRA => FacilityDataSources.getFacilityFromCassandraDb(sc, configuration.cassandraKeyspace, configuration.cassandraTable)
-    }
+    val jobInfo = JDBCJobInfo(configuration.jobName, configuration.numberOfBatchVersions, configuration.numberOfBatchVersions)
 
-    val job = new BatchJob(dataSource, configuration)
-    job.run
+    JDBCDbSession.getNewJDBCDbSession(configuration.syncJdbcURL, configuration.syncJdbcUsr, configuration.syncJdbcPw)
+    .map(new OnlineBatchSyncJDBC(_))
+    .map { syncApi =>
+      syncApi.startNextBatchJob(jobInfo)
+
+      // Get data source
+      val dataSource = configuration.batchDataSource match {
+        case TEXT      => FacilityDataSources.getFacilityFromTextFile(sc, configuration.batchFilePath)
+        case CASSANDRA => FacilityDataSources.getFacilityFromCassandraDb(sc, configuration.cassandraKeyspace, configuration.cassandraTable)
+        case KAFKA     => FacilityDataSources.getKafkaFacilitySource(sc,  configuration.kafkaTopic, Array(), configuration.kafkaBootstrapServers, syncApi, jobInfo)
+      }
+  
+      if(dataSource.isDefined) {
+        val job = new BatchJob(dataSource.get, configuration)
+        job.run
+      } else {
+        logger.error("No valid data source found. Job will not be started")
+      }
+    }
   }
 
   /**
@@ -148,19 +162,30 @@ object FacilityStateJob {
       .map { syncApi =>
 
         val offsetReader = new KafkaOffsetReader(config.kafkaBootstrapServers)
-        val kafkaOffsets = offsetReader.getCurrentKafkaOffsets(config.kafkaTopic)
+        val kafkaOffsets = offsetReader.getCurrentKafkaHighestOffsets(config.kafkaTopic)
         
         syncApi.initJobIfNotExists(jobInfo)
         syncApi.startNextOnlineJob(jobInfo)
         
         val offsetRanges = kafkaOffsets.foldLeft(Map[TopicPartition,Long]()) { (offsetRanges, startPoint) =>  
           
-          logger.debug(s"Persist Kafka start point ${startPoint} for job ${jobInfo}")
-          syncApi.setOnlineStartPoint(jobInfo, System.currentTimeMillis(), startPoint.toJsonString)  
+          logger.error(s"Persist Kafka start point ${startPoint} for job ${jobInfo}")
+          startPoint.toJsonString.map{ startPoint =>
+            syncApi.setOnlineStartPoint(jobInfo, System.currentTimeMillis(), startPoint) 
+          }
+          .flatten match {
+            case Success(e) => logger.debug(s"Stored start possitions in database. Possition ${startPoint} for job ${jobInfo}")
+            case Failure(e) => logger.warn(s"Error while writing start points to database. Exception ${e}")
+          }
+          
           offsetRanges + ((new TopicPartition(startPoint.topic, startPoint.partition), startPoint.offset))
         }
         
         offsetRanges
     }    
+  }
+  
+  def getStremingKafkaStartOffset(jobInfo:  JobInfo[PreparedStatement, PreparedStatement, ResultSet], config: JobParameter) = {
+
   }
 }

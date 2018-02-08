@@ -126,7 +126,7 @@ class Columns(
 
 abstract class DbSession[Statement, InsertIn, Result, ConnectionInformations](val dbHostname: String) {
   def execute(statement: Statement): Try[Result]
-  def execute(statement: String): Try[Result]
+  def execute(statement: String): Try[_]
   def insert(statement: InsertIn): Try[Result]
   def getConnectionInformations: Option[ConnectionInformations] = None
 }
