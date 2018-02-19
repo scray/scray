@@ -15,12 +15,15 @@
 
 package scray.hdfs.index.format.sequence.types
 
+import com.typesafe.scalalogging.LazyLogging
 import java.io.InputStream
+import org.apache.commons.io.IOUtils
 
-class BlobStream extends Blob[InputStream] {
+class BlobStream extends Blob with LazyLogging {
   var updateTime: Long = -1
   var data: InputStream = null
   var dataHashcode: Int = 0
+  var dataSize: Long = -1L
   
   def this(updateTime: Long, data: InputStream, size: Long, dataHashcode: Int) = {
     this
@@ -35,8 +38,12 @@ class BlobStream extends Blob[InputStream] {
     updateTime
   }
   
-  override def getData: InputStream = {
+  def getDataAsInputStream: InputStream = {
     data
+  }
+  
+  override def getData: Array[Byte] = {
+   IOUtils.toByteArray(data);
   }
 
   override def write(out: java.io.DataOutput): Unit = {

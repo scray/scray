@@ -131,5 +131,6 @@ class SequenceFileWriterSpecs extends WordSpec with LazyLogging {
         println(idx.get.getKey)
       }
     }
+    
   }
 }

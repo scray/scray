@@ -117,6 +117,7 @@ class SequenceFileWriter(path: String, hdfsConf: Configuration = new Configurati
     dataWriter.append(key,  new Blob(updateTime, data.getBytes))
   }
   
+  
   def close: Unit = {
     IOUtils.closeStream(dataWriter);
     IOUtils.closeStream(idxWriter);
