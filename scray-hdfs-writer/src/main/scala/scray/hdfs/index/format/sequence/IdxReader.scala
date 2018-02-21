@@ -23,7 +23,7 @@ import scray.hdfs.index.format.sequence.types.IndexValue
 import org.apache.hadoop.io.Text
 import com.typesafe.scalalogging.LazyLogging
 
-class IdxReader(path: String, hdfsConf: Configuration = new Configuration, fs: Option[FileSystem] = None) extends LazyLogging {
+class IdxReader(path: String, hdfsConf: Configuration, fs: Option[FileSystem]) extends LazyLogging {
 
   logger.debug(s"Try to read from path ${path}")
   val reader: SequenceFile.Reader = new SequenceFile.Reader(hdfsConf, Reader.file(new Path(path)), Reader.bufferSize(4096));
@@ -34,6 +34,10 @@ class IdxReader(path: String, hdfsConf: Configuration = new Configuration, fs: O
   // Store state to
   var hasNextWasCalled = false
   var hasNextValue = false
+  
+  def this(path: String) = {
+    this(path, new Configuration, None)
+  }
 
   /**
    * Check if more elements exists

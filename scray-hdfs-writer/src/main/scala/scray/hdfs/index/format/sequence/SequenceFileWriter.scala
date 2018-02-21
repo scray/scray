@@ -33,7 +33,7 @@ import org.apache.hadoop.io.LongWritable
 import scray.hdfs.index.format.sequence.types.IndexValue
 import scray.hdfs.index.format.sequence.types.Blob
 
-class SequenceFileWriter(path: String, hdfsConf: Configuration = new Configuration, fs: Option[FileSystem] = None) extends scray.hdfs.index.format.Writer {
+class SequenceFileWriter(path: String, hdfsConf: Configuration, fs: Option[FileSystem]) extends scray.hdfs.index.format.Writer {
 
   var dataWriter: SequenceFile.Writer = null; // scalastyle:off null
   var idxWriter:  SequenceFile.Writer = null; // scalastyle:off null
@@ -41,6 +41,10 @@ class SequenceFileWriter(path: String, hdfsConf: Configuration = new Configurati
   val key = new Text();
   val idxValue = new IndexValue("k1", 42, 42) // Block position in data file
 
+  def this(path: String) = {
+    this(path, new Configuration, None)
+  }
+  
   private def initWriter(
       key:  Writable, 
       value: Writable, 

@@ -31,6 +31,10 @@ class BlobFileReader(path: String, hdfsConf: Configuration = new Configuration, 
   private val reader = new SequenceFile.Reader(hdfsConf, Reader.file(new Path(path)), Reader.bufferSize(4096));
   val idxEntry = new Blob
   
+  def this(path: String) = {
+    this(path, new Configuration,  None)
+  }
+  
   def select(key: String): Array[Byte] = {
     Array("".toByte)
   }
