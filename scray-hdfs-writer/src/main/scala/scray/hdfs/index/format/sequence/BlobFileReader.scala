@@ -24,6 +24,9 @@ import org.apache.hadoop.fs.Path
 import scala.annotation.tailrec
 import org.apache.hadoop.io.BytesWritable
 import scray.hdfs.index.format.sequence.types.Blob
+import java.io.InputStream
+import scray.hdfs.index.format.sequence.types.BlobKey
+import java.io.ByteArrayInputStream
 
 class BlobFileReader(path: String, hdfsConf: Configuration = new Configuration, fs: Option[FileSystem] = None) {
 
@@ -43,10 +46,34 @@ class BlobFileReader(path: String, hdfsConf: Configuration = new Configuration, 
     getBlob(keyIn, startPosition).map(_.getData)
   }
   
+  def getBlobAsStream(keyIn: String, startPosition: Long): Option[InputStream] = {
+    reader.seek(startPosition)
+
+    val key = new BlobKey()
+    val value = new Blob
+    var valueFound = false
+        
+    var syncSeen = false
+    while(!syncSeen && !valueFound && reader.next(key, value)) {
+      syncSeen = reader.syncSeen();
+
+      if(keyIn.equals(key.getId)) {
+        valueFound = true
+      }
+    }
+
+    if(valueFound) {
+      valueFound = false
+      Some(new ByteArrayInputStream(value.getData)) // FIXME Create continous stream over all offset s...
+    } else {
+      None
+    }
+  }
+  
   def getBlob(keyIn: String, startPosition: Long): Option[Blob] = {
     reader.seek(startPosition)
 
-    val key = new Text
+    val key = new BlobKey()
     val value = new Blob
     var valueFound = false
     

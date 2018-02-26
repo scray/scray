@@ -24,21 +24,35 @@ import org.apache.hadoop.io.Text
 
 class IndexValue(
     private var key: String,
+    private var blobSplits: Int,
+    private var splitSize: Int,
     private var updateTime: Long, 
     private var position: Long) extends Writable with Serializable {
   
+  def this(
+    key: String,
+    updateTime: Long,
+    position: Long
+  ) {
+    this(key, 0, 0, updateTime, position)
+  }
+  
   def this() {
-    this("42", 0L, 0)
+    this("42", 0, 0, 0L, 0)
   }
   
   def readFields(data: java.io.DataInput): Unit = {
     key = data.readUTF()
+    blobSplits = data.readInt()
+    splitSize = data.readInt()
     updateTime = data.readLong
     position = data.readLong
   }
   
   def write(out: java.io.DataOutput): Unit = {
     out.writeUTF(key)
+    out.writeInt(blobSplits)
+    out.writeInt(splitSize)
     out.writeLong(updateTime)
     out.writeLong(position)
   }
@@ -73,19 +87,23 @@ class IndexValue(
   @throws(classOf[IOException])
   private def writeObject(out: ObjectOutputStream): Unit = synchronized {
     out.writeUTF(key.toString())
+    out.writeInt(blobSplits)
+    out.writeInt(splitSize)
     out.writeLong(updateTime)
     out.writeLong(position)
   }
 
   @throws(classOf[IOException])
   private def readObject(in: ObjectInputStream): Unit = synchronized {
-    key      = in.readUTF()
+    key        = in.readUTF()
+    blobSplits = in.readInt()
+    splitSize  = in.readInt()
     updateTime = in.readLong()
-    position = in.readLong()
+    position   = in.readLong()
   }
   
   override def toString(): String = {
-    s"IndexValue{key: ${key}, updateTime: ${updateTime}, position: ${position}}"
+    s"IndexValue{key: ${key}, blobSplits: ${blobSplits}, updateTime: ${updateTime}, position: ${position}}"
   }
 
 }

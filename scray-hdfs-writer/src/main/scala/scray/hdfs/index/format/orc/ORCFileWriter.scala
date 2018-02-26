@@ -28,6 +28,7 @@ import org.apache.orc.TypeDescription
 import org.apache.orc.Writer
 import org.slf4j.LoggerFactory
 import scray.hdfs.index.format.sequence.types.Blob
+import java.io.InputStream
 
 class ORCFileWriter(batchSize: Int = 10000) extends scray.hdfs.index.format.Writer {
 
@@ -60,6 +61,8 @@ class ORCFileWriter(batchSize: Int = 10000) extends scray.hdfs.index.format.Writ
       }
     }
   }
+
+  def insert(id: String, updateTime: Long, data: InputStream, blobSplitSize: Int = 0xFFFFF): Unit = ???
 
   def insert(id: String, updateTime: Long, data: Array[Byte]) {
 

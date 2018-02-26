@@ -32,27 +32,31 @@ import org.apache.hadoop.io.Writable
 import org.apache.hadoop.io.LongWritable
 import scray.hdfs.index.format.sequence.types.IndexValue
 import scray.hdfs.index.format.sequence.types.Blob
+import java.io.InputStream
+import com.typesafe.scalalogging.LazyLogging
+import scray.hdfs.index.format.sequence.types.BlobKey
+import scray.hdfs.index.format.sequence.types.IndexValue
+import scray.hdfs.index.format.sequence.types.BlobKey
+import scray.hdfs.index.format.sequence.types.BlobKey
 
-class SequenceFileWriter(path: String, hdfsConf: Configuration, fs: Option[FileSystem]) extends scray.hdfs.index.format.Writer {
+class SequenceFileWriter(path: String, hdfsConf: Configuration, fs: Option[FileSystem]) extends scray.hdfs.index.format.Writer with LazyLogging {
 
   var dataWriter: SequenceFile.Writer = null; // scalastyle:off null
-  var idxWriter:  SequenceFile.Writer = null; // scalastyle:off null
+  var idxWriter: SequenceFile.Writer = null; // scalastyle:off null
 
-  val key = new Text();
   val idxValue = new IndexValue("k1", 42, 42) // Block position in data file
 
   def this(path: String) = {
     this(path, new Configuration, None)
   }
-  
-  private def initWriter(
-      key:  Writable, 
-      value: Writable, 
-      fs: FileSystem,
-      fileExtension: String
-    ) = {
 
-    val writer = SequenceFile.createWriter(hdfsConf, Writer.file(new Path(path + fileExtension )),
+  private def initWriter(
+    key: Writable,
+    value: Writable,
+    fs: FileSystem,
+    fileExtension: String) = {
+
+    val writer = SequenceFile.createWriter(hdfsConf, Writer.file(new Path(path + fileExtension)),
       Writer.keyClass(key.getClass()),
       Writer.valueClass(value.getClass()),
       Writer.bufferSize(fs.getConf().getInt("io.file.buffer.size", 4096)),
@@ -61,67 +65,95 @@ class SequenceFileWriter(path: String, hdfsConf: Configuration, fs: Option[FileS
       Writer.compression(SequenceFile.CompressionType.NONE),
       Writer.progressable(null),
       Writer.metadata(new Metadata()));
-    
+
     writer
   }
 
   override def insert(id: String, updateTime: Long, data: Array[Byte]): Unit = {
 
-    if(dataWriter == null) { // scalastyle:off null
-      dataWriter =  initWriter(key, new Blob(), fs.getOrElse(FileSystem.get(hdfsConf)), ".blob")
+    if (dataWriter == null) { // scalastyle:off null
+      dataWriter = initWriter(new BlobKey, new Blob(), fs.getOrElse(FileSystem.get(hdfsConf)), ".blob")
     }
-    
-    if(idxWriter == null) { // scalastyle:off null
-      idxWriter = initWriter(key, idxValue, fs.getOrElse(FileSystem.get(hdfsConf)), ".idx")
+
+    if (idxWriter == null) { // scalastyle:off null
+      idxWriter = initWriter(new Text(), idxValue, fs.getOrElse(FileSystem.get(hdfsConf)), ".idx")
     }
-      
+
     // Write idx
-    key.set(id) 
-    idxWriter.append(key, new IndexValue(key.toString(), updateTime, dataWriter.getLength))
-    
+    idxWriter.append(new Text(id), new IndexValue(id, updateTime, dataWriter.getLength))
+
     // Write data
-    dataWriter.append(key, new Blob(updateTime, data));
+    dataWriter.append(new BlobKey(id), new Blob(updateTime, data));
   }
-  
+
+  override def insert(id: String, updateTime: Long, data: InputStream, blobSplitSize: Int = 0xFFFFF): Unit = {
+
+    if (dataWriter == null) { // scalastyle:off null
+      dataWriter = initWriter(new BlobKey, new Blob, fs.getOrElse(FileSystem.get(hdfsConf)), ".blob")
+    }
+
+    if (idxWriter == null) { // scalastyle:off null
+      idxWriter = initWriter(new Text, idxValue, fs.getOrElse(FileSystem.get(hdfsConf)), ".idx")
+    }
+
+    val fileStartPossiton = dataWriter.getLength
+    var writtenBytes = 0L // Number of written bytes 
+    var blobCounter = 0
+
+    val buffer = new Array[Byte](blobSplitSize)
+    var readDataLen = data.read(buffer)
+
+    while (readDataLen != -1) {
+      blobCounter  += 1
+
+      logger.debug(s"Write next blob of size ${readDataLen}.")
+
+      val blob = new Blob(System.currentTimeMillis(), buffer)
+      dataWriter.append(new BlobKey(id, blobCounter), blob)
+
+      readDataLen = data.read(buffer)
+    }
+
+    // Write idx
+    idxWriter.append(new Text(id), new IndexValue(id, blobCounter, blobSplitSize, updateTime, fileStartPossiton))
+  }
+
   override def insert(idBlob: Tuple2[String, Blob]): Unit = {
-    
+
     val (id, blob) = idBlob
 
-    if(dataWriter == null) { // scalastyle:off null
-      dataWriter =  initWriter(key, new Blob(), fs.getOrElse(FileSystem.get(hdfsConf)), ".blob")
+    if (dataWriter == null) { // scalastyle:off null
+      dataWriter = initWriter(new BlobKey, new Blob(), fs.getOrElse(FileSystem.get(hdfsConf)), ".blob")
     }
-    
-    if(idxWriter == null) { // scalastyle:off null
-      idxWriter = initWriter(key, idxValue, fs.getOrElse(FileSystem.get(hdfsConf)), ".idx")
+
+    if (idxWriter == null) { // scalastyle:off null
+      idxWriter = initWriter(new Text, idxValue, fs.getOrElse(FileSystem.get(hdfsConf)), ".idx")
     }
-      
+
     // Write idx
-    key.set(id) 
-    idxWriter.append(key, new IndexValue(key.toString(), blob.getUpdateTime, dataWriter.getLength))
-    
+    idxWriter.append(new Text(id), new IndexValue(id, blob.getUpdateTime, dataWriter.getLength))
+
     // Write data
-    dataWriter.append(key, blob);
+    dataWriter.append(new Text(id), blob);
   }
-  
+
   def insert(id: String, updateTime: Long, data: String): Unit = {
 
-    if(dataWriter == null) { // scalastyle:off null
-      dataWriter =  initWriter(key, new BytesWritable(), fs.getOrElse(FileSystem.get(hdfsConf)), ".blob")
+    if (dataWriter == null) { // scalastyle:off null
+      dataWriter = initWriter(new BlobKey, new BytesWritable(), fs.getOrElse(FileSystem.get(hdfsConf)), ".blob")
     }
-    
-    if(idxWriter == null) { // scalastyle:off null
-      idxWriter = initWriter(key, idxValue, fs.getOrElse(FileSystem.get(hdfsConf)), ".idx")
+
+    if (idxWriter == null) { // scalastyle:off null
+      idxWriter = initWriter(new Text, idxValue, fs.getOrElse(FileSystem.get(hdfsConf)), ".idx")
     }
-      
+
     // Write idx
-    key.set(id) 
-    idxWriter.append(key, new IndexValue(key.toString(), updateTime, dataWriter.getLength))
-    
+    idxWriter.append(new Text(id), new IndexValue(id, updateTime, dataWriter.getLength))
+
     // Write data
-    dataWriter.append(key,  new Blob(updateTime, data.getBytes))
+    dataWriter.append(new BlobKey(id), new Blob(updateTime, data.getBytes))
   }
-  
-  
+
   def close: Unit = {
     IOUtils.closeStream(dataWriter);
     IOUtils.closeStream(idxWriter);
