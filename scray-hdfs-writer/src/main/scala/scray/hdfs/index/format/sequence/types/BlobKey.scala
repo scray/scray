@@ -33,6 +33,10 @@ class BlobKey(
     id
   }
   
+  def getOffset: Int = {
+    offset
+  }
+  
   def readFields(in: java.io.DataInput): Unit = {
     id     = in.readUTF()
     offset = in.readInt()
@@ -41,5 +45,9 @@ class BlobKey(
   def write(out: java.io.DataOutput): Unit = {
     out.writeUTF(id)
     out.writeInt(offset)
+  }
+  
+  override def toString: String = {
+    s"id: ${id}, offset: ${offset}"
   }
 }

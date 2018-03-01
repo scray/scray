@@ -43,7 +43,7 @@ class BlobFileReader(path: String, hdfsConf: Configuration = new Configuration, 
   }
   
   def get(keyIn: String, startPosition: Long): Option[Array[Byte]] = {
-    getBlob(keyIn, startPosition).map(_.getData)
+    getBlob(keyIn, 0, startPosition).map(_.getData)
   }
   
   def getBlobAsStream(keyIn: String, startPosition: Long): Option[InputStream] = {
@@ -70,7 +70,7 @@ class BlobFileReader(path: String, hdfsConf: Configuration = new Configuration, 
     }
   }
   
-  def getBlob(keyIn: String, startPosition: Long): Option[Blob] = {
+  def getBlob(keyIn: String, offset: Int, startPosition: Long): Option[Blob] = {
     reader.seek(startPosition)
 
     val key = new BlobKey()
@@ -79,9 +79,10 @@ class BlobFileReader(path: String, hdfsConf: Configuration = new Configuration, 
     
     var syncSeen = false
     while(!syncSeen && !valueFound && reader.next(key, value)) {
+
       syncSeen = reader.syncSeen();
 
-      if(keyIn.equals(key.toString())) {
+      if(keyIn.equals(key.getId) && offset == key.getOffset) {
         valueFound = true
       }
     }
@@ -91,6 +92,43 @@ class BlobFileReader(path: String, hdfsConf: Configuration = new Configuration, 
       Some(value) // TODO test performance
     } else {
       None
+    }
+  }
+  
+  def getNextBlob(keyIn: String, offset: Int, startPosition: Long): Option[Tuple2[Long, Blob]] = {
+    reader.seek(startPosition)
+
+    val key = new BlobKey()
+    val value = new Blob
+    var valueFound = false
+    
+    var syncSeen = false
+    while(!syncSeen && !valueFound && reader.next(key, value)) {
+
+    syncSeen = reader.syncSeen();
+
+      if(keyIn.equals(key.getId) && offset == key.getOffset) {
+        valueFound = true
+      }
+    }
+
+    if(valueFound) {
+      valueFound = false
+      Some(reader.getPosition, value) // TODO test performance
+    } else {
+      None
+    }
+  }
+  
+  def printBlobKeys(startPosition: Long): Unit = {
+    reader.seek(startPosition)
+
+    val key = new BlobKey()
+    val value = new Blob
+
+    while(reader.next(key, value)) {
+      reader.getPosition
+      println(s"Key: ${key}, possition: ${reader.getPosition}")
     }
   }
   

@@ -83,7 +83,7 @@ class SequenceFileWriter(path: String, hdfsConf: Configuration, fs: Option[FileS
     idxWriter.append(new Text(id), new IndexValue(id, updateTime, dataWriter.getLength))
 
     // Write data
-    dataWriter.append(new BlobKey(id), new Blob(updateTime, data));
+    dataWriter.append(new BlobKey(id), new Blob(updateTime, data, data.length));
   }
 
   override def insert(id: String, updateTime: Long, data: InputStream, blobSplitSize: Int = 0xFFFFF): Unit = {
@@ -106,9 +106,9 @@ class SequenceFileWriter(path: String, hdfsConf: Configuration, fs: Option[FileS
     while (readDataLen != -1) {
       blobCounter  += 1
 
-      logger.debug(s"Write next blob of size ${readDataLen}.")
+      logger.debug(s"Write next blob of size ${readDataLen} with offset nr ${blobCounter}.")
 
-      val blob = new Blob(System.currentTimeMillis(), buffer)
+      val blob = new Blob(System.currentTimeMillis(), buffer, readDataLen)
       dataWriter.append(new BlobKey(id, blobCounter), blob)
 
       readDataLen = data.read(buffer)
@@ -151,7 +151,7 @@ class SequenceFileWriter(path: String, hdfsConf: Configuration, fs: Option[FileS
     idxWriter.append(new Text(id), new IndexValue(id, updateTime, dataWriter.getLength))
 
     // Write data
-    dataWriter.append(new BlobKey(id), new Blob(updateTime, data.getBytes))
+    dataWriter.append(new BlobKey(id), new Blob(updateTime, data.getBytes, data.length()))
   }
 
   def close: Unit = {

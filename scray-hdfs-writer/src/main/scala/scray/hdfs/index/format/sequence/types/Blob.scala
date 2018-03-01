@@ -26,14 +26,19 @@ import java.util.Arrays
 
 class Blob(
   private var updateTime: Long,
-  private var data: Array[Byte]
+  private var data: Array[Byte],
+  private var dataLength: Int
 )  extends Writable with Serializable {
   
 
   def this() = {
-    this(-1L, Array.empty[Byte])
+    this(-1L, Array.empty[Byte], 0)
   }
   
+  def this(updateTime: Long, data: Array[Byte]) = {
+    this(updateTime, data, data.length)
+  }
+
   def getUpdateTime: Long = {
     updateTime
   }
@@ -44,15 +49,15 @@ class Blob(
 
   override def write(out: java.io.DataOutput): Unit = {
     out.writeLong(updateTime)
-    out.writeInt(data.length)
-    out.write(data)
+    out.writeInt(dataLength)
+    out.write(data, 0, dataLength)
   }
   
   override def readFields(in: java.io.DataInput): Unit = {
     updateTime = in.readLong()
-    val dataSize = in.readInt
-    data = new Array[Byte](dataSize)
-    in.readFully(data)
+    dataLength = in.readInt
+    data = new Array[Byte](dataLength)
+    in.readFully(data, 0, dataLength)
   }
   
   override def hashCode = {

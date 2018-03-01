@@ -69,6 +69,14 @@ class IndexValue(
     position
   }
   
+  def getBlobSplits: Int = {
+    blobSplits
+  }
+  
+  def getSplitSize: Int = {
+    splitSize
+  }
+  
   override def equals(that: Any): Boolean = {
     that match {
       case that: IndexValue => {
