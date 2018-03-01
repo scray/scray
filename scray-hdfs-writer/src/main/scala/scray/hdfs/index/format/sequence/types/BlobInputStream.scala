@@ -18,56 +18,63 @@ package scray.hdfs.index.format.sequence.types
 import java.io.InputStream
 import java.io.IOException
 import org.apache.hadoop.io.SequenceFile
+import scray.hdfs.index.format.sequence.BlobFileReader
 
-class BlobInputStream(reader: SequenceFile.Reader, numSplits: Int, splitSize: Int) extends InputStream {
-  var currentSplit = 0
-  var possitionInBuffer = 0
+class BlobInputStream(reader: BlobFileReader, index: IndexValue) extends InputStream {
+  var readPossitionInBffer = 0
   var dataBuffer: Array[Byte] = null
+  var latestOffset = 0
+  var latestPossition = 0L
 
-  
   override def read: Int = {
-    if(possitionInBuffer <= dataBuffer.size) {
-        possitionInBuffer = possitionInBuffer + 1
-        dataBuffer(possitionInBuffer)
-    } else {
-        this.updateBuffer
-        this.read
-    }
+    1
   }
-  
+
   override def read(b: Array[Byte]): Int = {
     this.read(b, 0, b.length)
   }
   override def read(b: Array[Byte], off: Int, len: Int): Int = {
-    
+
     0
   }
-  
+
   override def skip(n: Long): Long = {
     // FIXME 
     n
   }
-  
+
   override def available: Int = {
     0
   }
-  
+
   override def close = {
     reader.close
   }
   override def mark(readlimit: Int) = {
-    
+
   }
-  
+
   override def reset = {
     throw new IOException()
   }
-  
+
   override def markSupported: Boolean = {
     false
   }
-  
-  private def updateBuffer() = {
-    
+
+  private def updateBuffer(): Boolean = {
+
+    if (latestOffset <= index.getBlobSplits) {
+      reader.getNextBlob(index.getKey, latestOffset, latestPossition)
+        .map {
+          case (newPossiton, data) =>
+            latestOffset = latestOffset + 1
+            latestPossition = newPossiton
+            dataBuffer = data.getData
+        }
+      true
+    } else {
+      false
+    }
   }
 }
