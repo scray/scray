@@ -28,91 +28,94 @@ import java.io.InputStream
 import scray.hdfs.index.format.sequence.types.BlobKey
 import java.io.ByteArrayInputStream
 
-class BlobFileReader(path: String, hdfsConf: Configuration = new Configuration, fs: Option[FileSystem] = None) {
+class BlobFileReader(reader: SequenceFile.Reader) {
 
   private val key = new Text();
-  private val reader = new SequenceFile.Reader(hdfsConf, Reader.file(new Path(path)), Reader.bufferSize(4096));
   val idxEntry = new Blob
-  
-  def this(path: String) = {
-    this(path, new Configuration,  None)
+
+  def this(path: String, hdfsConf: Configuration = new Configuration, fs: Option[FileSystem] = None) = {
+    this( new SequenceFile.Reader(hdfsConf, Reader.file(new Path(path)), Reader.bufferSize(4096)))  
   }
   
+  def this(path: String) = {
+    this(path, new Configuration, None)
+  }
+
   def select(key: String): Array[Byte] = {
     Array("".toByte)
   }
-  
+
   def get(keyIn: String, startPosition: Long): Option[Array[Byte]] = {
     getBlob(keyIn, 0, startPosition).map(_.getData)
   }
-  
+
   def getBlobAsStream(keyIn: String, startPosition: Long): Option[InputStream] = {
     reader.seek(startPosition)
 
     val key = new BlobKey()
     val value = new Blob
     var valueFound = false
-        
+
     var syncSeen = false
-    while(!syncSeen && !valueFound && reader.next(key, value)) {
+    while (!syncSeen && !valueFound && reader.next(key, value)) {
       syncSeen = reader.syncSeen();
 
-      if(keyIn.equals(key.getId)) {
+      if (keyIn.equals(key.getId)) {
         valueFound = true
       }
     }
 
-    if(valueFound) {
+    if (valueFound) {
       valueFound = false
       Some(new ByteArrayInputStream(value.getData)) // FIXME Create continous stream over all offset s...
     } else {
       None
     }
   }
-  
+
   def getBlob(keyIn: String, offset: Int, startPosition: Long): Option[Blob] = {
     reader.seek(startPosition)
 
     val key = new BlobKey()
     val value = new Blob
     var valueFound = false
-    
+
     var syncSeen = false
-    while(!syncSeen && !valueFound && reader.next(key, value)) {
+    while (!syncSeen && !valueFound && reader.next(key, value)) {
 
       syncSeen = reader.syncSeen();
 
-      if(keyIn.equals(key.getId) && offset == key.getOffset) {
+      if (keyIn.equals(key.getId) && offset == key.getOffset) {
         valueFound = true
       }
     }
 
-    if(valueFound) {
+    if (valueFound) {
       valueFound = false
       Some(value) // TODO test performance
     } else {
       None
     }
   }
-  
+
   def getNextBlob(keyIn: String, offset: Int, startPosition: Long): Option[Tuple2[Long, Blob]] = {
     reader.seek(startPosition)
 
     val key = new BlobKey()
     val value = new Blob
     var valueFound = false
-    
+
     var syncSeen = false
-    while(!syncSeen && !valueFound && reader.next(key, value)) {
+    while (!syncSeen && !valueFound && reader.next(key, value)) {
 
-    syncSeen = reader.syncSeen();
+      syncSeen = reader.syncSeen();
 
-      if(keyIn.equals(key.getId) && offset == key.getOffset) {
+      if (keyIn.equals(key.getId) && offset == key.getOffset) {
         valueFound = true
       }
     }
 
-    if(valueFound) {
+    if (valueFound) {
       valueFound = false
       Some(reader.getPosition, value) // TODO test performance
     } else {
@@ -120,18 +123,43 @@ class BlobFileReader(path: String, hdfsConf: Configuration = new Configuration, 
     }
   }
   
+  def getNextBlobAsStream(keyIn: String, offset: Int, startPosition: Long): Option[Tuple2[Long, InputStream]] = {
+    reader.seek(startPosition)
+
+    val key = new BlobKey()
+    val value = new Blob
+    var valueFound = false
+
+    var syncSeen = false
+    while (!syncSeen && !valueFound && reader.next(key, value)) {
+
+      syncSeen = reader.syncSeen();
+
+      if (keyIn.equals(key.getId) && offset == key.getOffset) {
+        valueFound = true
+      }
+    }
+
+    if (valueFound) {
+      valueFound = false
+      Some(reader.getPosition, new ByteArrayInputStream(value.getData)) // TODO test performance
+    } else {
+      None
+    }
+  }
+
   def printBlobKeys(startPosition: Long): Unit = {
     reader.seek(startPosition)
 
     val key = new BlobKey()
     val value = new Blob
 
-    while(reader.next(key, value)) {
+    while (reader.next(key, value)) {
       reader.getPosition
       println(s"Key: ${key}, possition: ${reader.getPosition}")
     }
   }
-  
+
   def close = {
     reader.close()
   }

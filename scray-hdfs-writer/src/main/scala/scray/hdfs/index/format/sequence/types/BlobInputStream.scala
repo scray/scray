@@ -19,25 +19,107 @@ import java.io.InputStream
 import java.io.IOException
 import org.apache.hadoop.io.SequenceFile
 import scray.hdfs.index.format.sequence.BlobFileReader
+import java.util.Arrays
+import com.typesafe.scalalogging.LazyLogging
 
-class BlobInputStream(reader: BlobFileReader, index: IndexValue) extends InputStream {
-  var readPossitionInBffer = 0
+case class SplittetSequenceFilePossition(splittOffset: Int, possitionInFile: Long)
+
+class BlobInputStream(reader: BlobFileReader, index: IndexValue) extends InputStream with LazyLogging {
+  var readPossitionInBuffer = -1
   var dataBuffer: Array[Byte] = null
-  var latestOffset = 0
-  var latestPossition = 0L
+  var possitionInFile = SplittetSequenceFilePossition(0, 0L)
+  var eOFReached = false;
 
   override def read: Int = {
-    1
+
+    if (dataBuffer == null) {
+      updateState(updateBuffer(possitionInFile))
+    }
+
+    if ((readPossitionInBuffer + 1) < dataBuffer.size) {
+      readPossitionInBuffer = readPossitionInBuffer + 1
+
+      dataBuffer(readPossitionInBuffer)
+    } else {
+      this.updateState(updateBuffer(possitionInFile))
+
+      if (eOFReached) {
+        -1
+      } else {
+        readPossitionInBuffer = readPossitionInBuffer + 1
+        dataBuffer(readPossitionInBuffer)
+      }
+
+    }
   }
 
   override def read(b: Array[Byte]): Int = {
     this.read(b, 0, b.length)
   }
-  override def read(b: Array[Byte], off: Int, len: Int): Int = {
 
-    0
+  override def read(b: Array[Byte], off: Int, len: Int): Int = {
+    var writtenBytes = 0
+
+    if (dataBuffer == null) {
+      updateState(updateBuffer(possitionInFile))
+    }
+
+    if (dataBuffer.length == readPossitionInBuffer) {
+      updateState(updateBuffer(possitionInFile))
+    }
+
+    // Multiple blobs required to fill requested buffer
+    val numElementsInBuffer = (dataBuffer.length -1 ) - readPossitionInBuffer
+    var outputBytes = 0 // Number of bytes written to output buffer
+    var posInOutputBuffer = 0
+    if (numElementsInBuffer < len) {
+
+      while (outputBytes < len && !eOFReached) {
+
+        logger.debug(s"Multiple splits required to fill requested buffer")
+        readPossitionInBuffer = readPossitionInBuffer + numElementsInBuffer
+        writtenBytes = writtenBytes + numElementsInBuffer
+
+        println(s"Buffer ${dataBuffer.size} start pos ${readPossitionInBuffer} Try to read ${numElementsInBuffer}")
+        System.arraycopy(
+          dataBuffer,
+          readPossitionInBuffer,
+          b,
+          posInOutputBuffer,
+          numElementsInBuffer)
+          
+          posInOutputBuffer = posInOutputBuffer + 1
+
+        outputBytes = outputBytes + 1
+        logger.debug(s"Wrote ${outputBytes} bytes")
+          this.updateState(updateBuffer(possitionInFile))
+      }
+    }
+
+    if (dataBuffer.length == readPossitionInBuffer) {
+      updateState(updateBuffer(possitionInFile))
+    }
+
+    if(outputBytes == 0) {
+      -1
+    } else {
+      outputBytes
+    }
   }
 
+  def readTillInputStreamBufferIsFull(dataBuffer: Array[Byte], readPossitionInBuffer: Int, outputData: Array[Byte], readBytes: Int, len: Int) {
+
+    if (readBytes >= len) {
+      outputData
+    } else {
+      val numElementsInBuffer = (dataBuffer.size - readPossitionInBuffer)
+
+      System.arraycopy(dataBuffer, readPossitionInBuffer, outputData, readBytes, numElementsInBuffer)
+
+      updateState(updateBuffer(possitionInFile))
+      this.readTillInputStreamBufferIsFull(dataBuffer, readPossitionInBuffer, outputData, readBytes, len)
+    }
+  }
   override def skip(n: Long): Long = {
     // FIXME 
     n
@@ -62,19 +144,31 @@ class BlobInputStream(reader: BlobFileReader, index: IndexValue) extends InputSt
     false
   }
 
-  private def updateBuffer(): Boolean = {
-
-    if (latestOffset <= index.getBlobSplits) {
-      reader.getNextBlob(index.getKey, latestOffset, latestPossition)
+  private def updateBuffer(pos: SplittetSequenceFilePossition): Option[Tuple2[SplittetSequenceFilePossition, Array[Byte]]] = {
+    if (pos.splittOffset <= index.getBlobSplits) {
+      reader.getNextBlob(index.getKey, pos.splittOffset, pos.possitionInFile)
         .map {
           case (newPossiton, data) =>
-            latestOffset = latestOffset + 1
-            latestPossition = newPossiton
-            dataBuffer = data.getData
+            (SplittetSequenceFilePossition(pos.splittOffset + 1, newPossiton), data.getData)
         }
-      true
     } else {
-      false
+      None
+    }
+  }
+
+  private def updateState(data: Option[Tuple2[SplittetSequenceFilePossition, Array[Byte]]]) = {
+    data.map {
+      case (pos, data) =>
+        possitionInFile = pos
+        dataBuffer = data
+        readPossitionInBuffer = -1
+    }
+
+    if (!data.isDefined) {
+      possitionInFile = SplittetSequenceFilePossition(0, 0L)
+      dataBuffer = Array[Byte]()
+      readPossitionInBuffer = -1
+      this.eOFReached = true
     }
   }
 }
