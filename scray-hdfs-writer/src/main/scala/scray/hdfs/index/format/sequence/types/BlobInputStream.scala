@@ -27,7 +27,7 @@ case class SplittetSequenceFilePossition(splittOffset: Int, possitionInFile: Lon
 class BlobInputStream(reader: BlobFileReader, index: IndexValue) extends InputStream with LazyLogging {
   var readPossitionInBuffer = -1
   var dataBuffer: Array[Byte] = null
-  var possitionInFile = SplittetSequenceFilePossition(0, 0L)
+  var possitionInFile = SplittetSequenceFilePossition(0, index.getPosition)
   var eOFReached = false;
 
   override def read: Int = {
@@ -69,28 +69,29 @@ class BlobInputStream(reader: BlobFileReader, index: IndexValue) extends InputSt
     }
 
     // Multiple blobs required to fill requested buffer
-    val numElementsInBuffer = (dataBuffer.length -1 ) - readPossitionInBuffer
+    var numElementsInBuffer = (dataBuffer.length) - readPossitionInBuffer
     var outputBytes = 0 // Number of bytes written to output buffer
     var posInOutputBuffer = 0
+    
     if (numElementsInBuffer < len) {
+        logger.debug(s"Multiple splits required to fill requested buffer. Bytes in current buffer ${numElementsInBuffer}. Requested butes ${len}")
 
       while (outputBytes < len && !eOFReached) {
 
-        logger.debug(s"Multiple splits required to fill requested buffer")
-        readPossitionInBuffer = readPossitionInBuffer + numElementsInBuffer
+        numElementsInBuffer = (dataBuffer.length) - readPossitionInBuffer
+        readPossitionInBuffer = readPossitionInBuffer + 1
         writtenBytes = writtenBytes + numElementsInBuffer
 
-        println(s"Buffer ${dataBuffer.size} start pos ${readPossitionInBuffer} Try to read ${numElementsInBuffer}")
         System.arraycopy(
           dataBuffer,
           readPossitionInBuffer,
           b,
           posInOutputBuffer,
-          numElementsInBuffer)
+          (numElementsInBuffer -1))
           
-          posInOutputBuffer = posInOutputBuffer + 1
+          posInOutputBuffer = posInOutputBuffer + numElementsInBuffer -1
 
-        outputBytes = outputBytes + 1
+        outputBytes = outputBytes + numElementsInBuffer -1
         logger.debug(s"Wrote ${outputBytes} bytes")
           this.updateState(updateBuffer(possitionInFile))
       }

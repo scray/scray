@@ -34,11 +34,11 @@ class IndexValue(
     updateTime: Long,
     position: Long
   ) {
-    this(key, 0, 0, updateTime, position)
+    this(key, 1, 8192, updateTime, position)
   }
   
   def this() {
-    this("42", 0, 0, 0L, 0)
+    this("42", 1, 8192, 0L, 0)
   }
   
   def readFields(data: java.io.DataInput): Unit = {

@@ -30,67 +30,43 @@ import com.google.common.io.ByteStreams
 class BlobStreamSpecs extends WordSpec with LazyLogging {
 
   "BlobStream " should {
-        " read data byte by byte " in {
-          val testData = "abcdefghijklmnopqrstuvwxyz".getBytes
-          val reader = new TestBlobFileReader(testData, 1)
-    
-          val indexValue = new IndexValue("k1", 26, 1, System.currentTimeMillis(), 0)
-          val inputStream = new BlobInputStream(reader, indexValue)
-    
-          for (offset <- 0 to 25) {
-            Assert.assertEquals(inputStream.read(), testData(offset))
-          }
-        }
-        " fill array " in {
-          val testData = "abcdefghijklmnopqrstuvwxyz".getBytes
-          val reader = new TestBlobFileReader(testData, 1)
-    
-          val indexValue = new IndexValue("k1", 26, 1, System.currentTimeMillis(), 0)
-          val inputStream = new BlobInputStream(reader, indexValue)
-    
-          val readData = new Array[Byte](26)
-          inputStream.read(readData)
-           
-          Assert.assertEquals(new String(testData), new String(readData))
-        }
-        " read from stream with guava toByteArray method " in {
-          val testData = "abcdefghijklmnopqrstuvwxyz".getBytes
-          val reader = new TestBlobFileReader(testData, 1)
-    
-          val indexValue = new IndexValue("k1", 26, 1, System.currentTimeMillis(), 0)
-          val inputStream = new BlobInputStream(reader, indexValue)
-          
-          val bytes = ByteStreams.toByteArray(inputStream);
-          
-          Assert.assertArrayEquals(testData, bytes)
-        }
-        " read with scala.io.Source (splitSize 1) " in {
-          val testData = "abcdefghijklmnopqrstuvwxyz".getBytes
-          val reader = new TestBlobFileReader(testData, 1)
-    
-          val indexValue = new IndexValue("k1", 26, 1, System.currentTimeMillis(), 0)
-          val inputStream = new BlobInputStream(reader, indexValue)
-    
-          Assert.assertEquals(
-              new String(testData), 
-              Source.fromInputStream(inputStream).mkString
-          )
-        }
-        " read with scala.io.Source (splitSize 2) " in {
-          val testData = "abcdefghijklmnopqrstuvwxyz".getBytes
-          val reader = new TestBlobFileReader(testData, 2)
-    
-          val indexValue = new IndexValue("k1", 26, 1, System.currentTimeMillis(), 0)
-          val inputStream = new BlobInputStream(reader, indexValue)
-    
-          Assert.assertEquals(
-              new String(testData), 
-              Source.fromInputStream(inputStream).mkString
-          )
-        }
-    " read with scala.io.Source (splitSize 3) " in {
+    " read data byte by byte " in {
       val testData = "abcdefghijklmnopqrstuvwxyz".getBytes
-      val reader = new TestBlobFileReader(testData, 3)
+      val reader = new TestBlobFileReader(testData, 1)
+
+      val indexValue = new IndexValue("k1", 26, 1, System.currentTimeMillis(), 0)
+      val inputStream = new BlobInputStream(reader, indexValue)
+
+      for (offset <- 0 to 25) {
+        Assert.assertEquals(inputStream.read(), testData(offset))
+      }
+    }
+    " fill array " in {
+      val testData = "abcdefghijklmnopqrstuvwxyz".getBytes
+      val reader = new TestBlobFileReader(testData, 1)
+
+      val indexValue = new IndexValue("k1", 26, 1, System.currentTimeMillis(), 0)
+      val inputStream = new BlobInputStream(reader, indexValue)
+
+      val readData = new Array[Byte](26)
+      inputStream.read(readData)
+
+      Assert.assertEquals(new String(testData), new String(readData))
+    }
+    " read from stream with guava toByteArray method " in {
+      val testData = "abcdefghijklmnopqrstuvwxyz".getBytes
+      val reader = new TestBlobFileReader(testData, 1)
+
+      val indexValue = new IndexValue("k1", 26, 1, System.currentTimeMillis(), 0)
+      val inputStream = new BlobInputStream(reader, indexValue)
+
+      val bytes = ByteStreams.toByteArray(inputStream);
+
+      Assert.assertArrayEquals(testData, bytes)
+    }
+    " read with scala.io.Source (splitSize 1) " in {
+      val testData = "abcdefghijklmnopqrstuvwxyz".getBytes
+      val reader = new TestBlobFileReader(testData, 1)
 
       val indexValue = new IndexValue("k1", 26, 1, System.currentTimeMillis(), 0)
       val inputStream = new BlobInputStream(reader, indexValue)
@@ -99,18 +75,39 @@ class BlobStreamSpecs extends WordSpec with LazyLogging {
         new String(testData),
         Source.fromInputStream(inputStream).mkString)
     }
-        " read with scala.io.Source (splitSize 26) " in {
-          val testData = "abcdefghijklmnopqrstuvwxyz".getBytes
-          val reader = new TestBlobFileReader(testData, 26)
-    
-          val indexValue = new IndexValue("k1", 26, 1, System.currentTimeMillis(), 0)
-          val inputStream = new BlobInputStream(reader, indexValue)
-    
-          Assert.assertEquals(
-              new String(testData), 
-              Source.fromInputStream(inputStream).mkString
-          )
-        }
+    " read with scala.io.Source (splitSize 2) " in {
+      val testData = "abcdefghijklmnopqrstuvwxyz".getBytes
+      val reader = new TestBlobFileReader(testData, 2)
+
+      val indexValue = new IndexValue("k1", 26, 2, System.currentTimeMillis(), 0)
+      val inputStream = new BlobInputStream(reader, indexValue)
+
+      Assert.assertEquals(
+        new String(testData),
+        Source.fromInputStream(inputStream).mkString)
+    }
+    " read with scala.io.Source (splitSize 3) " in {
+      val testData = "abcdefghijklmnopqrstuvwxyz".getBytes
+      val reader = new TestBlobFileReader(testData, 3)
+
+      val indexValue = new IndexValue("k1", 26, 3, System.currentTimeMillis(), 0)
+      val inputStream = new BlobInputStream(reader, indexValue)
+
+      Assert.assertEquals(
+        new String(testData),
+        Source.fromInputStream(inputStream).mkString)
+    }
+    " read with scala.io.Source (splitSize 26) " in {
+      val testData = "abcdefghijklmnopqrstuvwxyz".getBytes
+      val reader = new TestBlobFileReader(testData, 26)
+
+      val indexValue = new IndexValue("k1", 26, 26, System.currentTimeMillis(), 0)
+      val inputStream = new BlobInputStream(reader, indexValue)
+
+      Assert.assertEquals(
+        new String(testData),
+        Source.fromInputStream(inputStream).mkString)
+    }
   }
 
 }
@@ -120,10 +117,9 @@ class TestBlobFileReader(data: Array[Byte], splitSize: Int) extends BlobFileRead
   override def getNextBlob(keyIn: String, offset: Int, startPosition: Long): Option[Tuple2[Long, Blob]] = {
     if ((offset * splitSize) < data.length) {
 
-      // Of one split is not full return rest
+      // If one split is not full return rest
       if (data.length < ((offset * splitSize) + splitSize)) {
         val dest = new Array[Byte](data.length - (offset * splitSize))
-              println("A: " + (offset * splitSize) + "\t B: " + data.length + "\t C: " + splitSize + "\t D: " + dest.size + "\t E: " + (data.length - (offset * splitSize)))
 
         System.arraycopy(data,
           (offset * splitSize),

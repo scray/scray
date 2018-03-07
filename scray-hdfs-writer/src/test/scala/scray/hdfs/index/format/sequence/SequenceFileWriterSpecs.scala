@@ -26,6 +26,8 @@ import java.io.ByteArrayInputStream
 import java.io.InputStream
 import java.nio.charset.StandardCharsets
 import org.apache.commons.io.IOUtils
+import scray.hdfs.index.format.sequence.types.BlobInputStream
+import scala.io.Source
 
 class SequenceFileWriterSpecs extends WordSpec with LazyLogging {
 
@@ -35,22 +37,6 @@ class SequenceFileWriterSpecs extends WordSpec with LazyLogging {
   def getValue(v: Integer) = "data_" + v
 
   "SequenceFileWriter " should {
-//    " write and read data file " in {
-//
-//      val writer = new SequenceFileWriter("target/SeqFilWriterTest")
-//
-//      for (i <- 0 to 1000) {
-//        writer.insert(getKey(i), 100000, getValue(i).getBytes)
-//      }
-//      writer.close
-//      
-//      // Seek to sync-marker at byte 31816 and return next data element
-//      val reader = new BlobFileReader("target/SeqFilWriterTest.blob")
-//      val data = reader.get(getKey(904), 31816L)
-//
-//      Assert.assertTrue(data.isDefined)
-//      Assert.assertEquals(getValue(904), new String(data.get))
-//    }
     " read idx" in {
 
       val writer = new SequenceFileWriter("target/SeqFilWriterTest")
@@ -109,11 +95,38 @@ class SequenceFileWriterSpecs extends WordSpec with LazyLogging {
       Assert.assertEquals(idxReader.hasNext, true)
 
       for (i <- 0 to numDate) {
-        val idx  = idxReader.next()
-        val data = blobReader.get(idx.get.getKey.toString(), idx.get.getPosition)
+        val idx  = idxReader.next().get
+        val data = blobReader.get(idx.getKey.toString(), idx.getPosition)
 
         Assert.assertTrue(data.isDefined)
         Assert.assertEquals(new String(data.get), getValue(i))
+      }
+    }
+    " get data for a given index entry as stream " in {
+      val conf = new Configuration
+      val fs = FileSystem.getLocal(conf)
+
+      val numDate = 1000 // Number of test data
+
+      val writer = new SequenceFileWriter("target/IdxReaderTest1")
+
+      for (i <- 0 to numDate) {
+        writer.insert(getKey(i), i, getValue(i).getBytes)
+      }
+      writer.close
+
+      val idxReader = new IdxReader("target/IdxReaderTest1.idx")
+      val blobReader = new BlobFileReader("target/IdxReaderTest1.blob")
+
+
+      // Read whole index file and check if corresponding data exists
+      Assert.assertEquals(idxReader.hasNext, true)
+
+      for (i <- 0 to numDate) {
+        val idx  = idxReader.next().get
+        val stream = new BlobInputStream(blobReader, idx)
+
+        Assert.assertEquals(Source.fromInputStream(stream).mkString, getValue(i))
       }
     }
 //    " read write data as InputStream " in {
