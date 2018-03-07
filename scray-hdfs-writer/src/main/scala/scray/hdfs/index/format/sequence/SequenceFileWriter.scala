@@ -98,7 +98,7 @@ class SequenceFileWriter(path: String, hdfsConf: Configuration, fs: Option[FileS
 
     val fileStartPossiton = dataWriter.getLength
     var writtenBytes = 0L // Number of written bytes 
-    var blobCounter = 0
+    var blobCounter = -1
 
     val buffer = new Array[Byte](blobSplitSize)
     var readDataLen = data.read(buffer)

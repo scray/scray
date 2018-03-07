@@ -109,7 +109,6 @@ class BlobStreamSpecs extends WordSpec with LazyLogging {
         Source.fromInputStream(inputStream).mkString)
     }
   }
-
 }
 
 class TestBlobFileReader(data: Array[Byte], splitSize: Int) extends BlobFileReader(null.asInstanceOf[SequenceFile.Reader]) {

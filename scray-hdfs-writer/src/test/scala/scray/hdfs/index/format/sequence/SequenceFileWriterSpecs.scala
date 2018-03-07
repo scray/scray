@@ -102,7 +102,7 @@ class SequenceFileWriterSpecs extends WordSpec with LazyLogging {
         Assert.assertEquals(new String(data.get), getValue(i))
       }
     }
-    " get data for a given index entry as stream " in {
+    " get data for a given index entry as input stream " in {
       val conf = new Configuration
       val fs = FileSystem.getLocal(conf)
 
@@ -129,42 +129,22 @@ class SequenceFileWriterSpecs extends WordSpec with LazyLogging {
         Assert.assertEquals(Source.fromInputStream(stream).mkString, getValue(i))
       }
     }
-//    " read write data as InputStream " in {
-//      val writer = new SequenceFileWriter("target/IoStreamRWTest")
-//      
-//      val inputData: InputStream = new ByteArrayInputStream(getValue(542).getBytes);
-//      
-//      writer.insert("17", System.currentTimeMillis(), inputData)
-//      writer.close
-//      
-//      val idxReader = new IdxReader("target/IoStreamRWTest.idx")
-//      val blobReader = new BlobFileReader("target/IoStreamRWTest.blob")
-////      
-////        val idx  = idxReader.next()
-////        val data = blobReader.getBlobAsStream(idx.get.getKey.toString(), idx.get.getPosition)
-////
-////        val dat = data.get
-////        val result = IOUtils.toString(dat, StandardCharsets.UTF_8);      
-//    }
-////    " be equals if two objects share same values " in {
-////      val a = new IndexValue
-////      val b = new IndexValue
-////      val c = new IndexValue("k1", 123, 1)
-////      
-////      Assert.assertTrue(a.equals(b))
-////      Assert.assertFalse(a.equals(c))
-////      
-////      Assert.assertEquals(a.hashCode(), a.hashCode())
-////    }
-////    " print keys " taggedAs (RequiresHDFS) in {
-////
-////      val idxReader = new IdxReader("hdfs://10.11.22.41:8020/bdq-blob/.idx")
-////
-////      while (idxReader.hasNext) {
-////        val idx = idxReader.next()
-////        println(idx.get.getKey)
-////      }
-////    }
-    
+    " read and write data as InputStream " in {
+      
+      val inputData: InputStream = new ByteArrayInputStream(getValue(542).getBytes);
+     
+      val writer = new SequenceFileWriter("target/IoStreamRWTest")
+      writer.insert(getKey(124), System.currentTimeMillis(), inputData)
+      writer.close
+      
+      val idxReader = new IdxReader("target/IoStreamRWTest.idx")
+      val blobReader = new BlobFileReader("target/IoStreamRWTest.blob")
+
+      val idx  = idxReader.next().get
+      val stream = new BlobInputStream(blobReader, idx)
+
+      Assert.assertEquals(getValue(542), Source.fromInputStream(stream).mkString)
+    }
+
   }
 }
