@@ -216,7 +216,7 @@
 					<instructions>
 						<Embed-Dependency>*</Embed-Dependency>
 						<Embed-Transitive>true</Embed-Transitive>
-						<Export-Package>scray.hdfs.index.format.sequence,scray.hdfs.index.format,scray.hdfs.index.format.sequence.types,scray.hdfs.index.format.orc</Export-Package>
+						<Export-Package>!scray.common.serialization.pool,scray.common.serialization,scray.client.jdbc,scray.service.qservice.thriftjava,scray.client.finagle,scray.service.qmodel.thriftjava</Export-Package>
 						<Import-Package>!*,javax.management</Import-Package>
 						<_exportcontents>com.esotericsoftware.kryo,
 							com.esotericsoftware.kryo.io,
