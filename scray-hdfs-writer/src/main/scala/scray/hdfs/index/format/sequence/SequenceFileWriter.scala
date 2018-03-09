@@ -49,6 +49,10 @@ class SequenceFileWriter(path: String, hdfsConf: Configuration, fs: Option[FileS
   def this(path: String) = {
     this(path, new Configuration, None)
   }
+  
+  def this(path: String, hdfsConf: Configuration) {
+    this(path, hdfsConf, None)
+  }
 
   private def initWriter(
     key: Writable,
@@ -56,6 +60,9 @@ class SequenceFileWriter(path: String, hdfsConf: Configuration, fs: Option[FileS
     fs: FileSystem,
     fileExtension: String) = {
 
+    hdfsConf.set("fs.hdfs.impl", "org.apache.hadoop.hdfs.DistributedFileSystem");
+    hdfsConf.set("fs.file.impl", "org.apache.hadoop.fs.LocalFileSystem");
+    
     val writer = SequenceFile.createWriter(hdfsConf, Writer.file(new Path(path + fileExtension)),
       Writer.keyClass(key.getClass()),
       Writer.valueClass(value.getClass()),

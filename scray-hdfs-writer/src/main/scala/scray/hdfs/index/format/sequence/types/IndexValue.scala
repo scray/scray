@@ -15,12 +15,11 @@
 
 package scray.hdfs.index.format.sequence.types
 
-import org.apache.hadoop.io.Writable
-import org.apache.hadoop.io.LongWritable
 import java.io.IOException
 import java.io.ObjectInputStream
 import java.io.ObjectOutputStream
-import org.apache.hadoop.io.Text
+
+import org.apache.hadoop.io.Writable
 
 class IndexValue(
     private var key: String,
