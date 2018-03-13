@@ -42,6 +42,7 @@ class ORCFileReader {
     this
 
     val hadoopConfig = new Configuration();
+
     hadoopConfig.set("fs.hdfs.impl", "org.apache.hadoop.hdfs.DistributedFileSystem");
     hadoopConfig.set("fs.file.impl", "org.apache.hadoop.fs.LocalFileSystem");
 

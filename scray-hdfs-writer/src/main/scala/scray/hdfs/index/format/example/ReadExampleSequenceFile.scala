@@ -12,7 +12,7 @@ object ReadExampleSequenceFile {
       println("No HDFS URL defined. E.g. hdfs://127.0.0.1/user/scray/scray-hdfs-data/")
     } else {
 
-     val idxReader = new IdxReader(  s"${args(0)}.idx")
+     val idxReader = new IdxReader(s"${args(0)}.idx")
      val blobReader = new BlobFileReader(s"${args(0)}.blob")
 
       while(idxReader.hasNext) {
