@@ -37,9 +37,9 @@
 			</exclusions>
 		</dependency>
 		<dependency>
-			<groupId>org.apache.hadoop</groupId>
-			<artifactId>hadoop-hdfs</artifactId>
-			<version>2.6.4</version>
+		<groupId>org.apache.hadoop</groupId>
+		<artifactId>hadoop-hdfs</artifactId>
+		<version>2.6.4</version>
 		</dependency>
 		<dependency>
 			<groupId>org.mapdb</groupId>
@@ -108,8 +108,7 @@
 						<Embed-Dependency>*</Embed-Dependency>
 						<Embed-Transitive>true</Embed-Transitive>
 						<Export-Package>scray.hdfs.index.format.sequence,scray.hdfs.index.format,scray.hdfs.index.format.sequence.types,scray.hdfs.index.format.orc</Export-Package>
-						<Import-Package>!*,javax.management</Import-Package>
-						<_exportcontents></_exportcontents>
+						<Import-Package>!*,javax.net,javax.management,javax.*,javax,javax.security.auth.login,javax.security.auth.spi,javax.security.auth.kerberos,javax.security.auth,javax.security.auth.callback</Import-Package>
 					</instructions>
 					
 					<archive>

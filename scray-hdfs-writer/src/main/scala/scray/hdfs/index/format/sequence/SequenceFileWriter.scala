@@ -15,29 +15,25 @@
 
 package scray.hdfs.index.format.sequence
 
-import scray.hdfs.index.format.Writer
-import org.apache.hadoop.io.IntWritable
-import org.apache.hadoop.fs.Path
+import java.io.InputStream
+
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.FileSystem
-import java.io.File
-import org.apache.hadoop.io.Text
-import org.apache.hadoop.io.SequenceFile
-import org.apache.hadoop.io.compress.DefaultCodec
-import org.apache.hadoop.io.SequenceFile.Writer
-import org.apache.hadoop.io.IOUtils
-import org.apache.hadoop.io.SequenceFile.Metadata
+import org.apache.hadoop.fs.Path
 import org.apache.hadoop.io.BytesWritable
+import org.apache.hadoop.io.IOUtils
+import org.apache.hadoop.io.SequenceFile
+import org.apache.hadoop.io.SequenceFile.Metadata
+import org.apache.hadoop.io.SequenceFile.Writer
+import org.apache.hadoop.io.Text
 import org.apache.hadoop.io.Writable
-import org.apache.hadoop.io.LongWritable
-import scray.hdfs.index.format.sequence.types.IndexValue
-import scray.hdfs.index.format.sequence.types.Blob
-import java.io.InputStream
+
 import com.typesafe.scalalogging.LazyLogging
+
+import scray.hdfs.index.format.Writer
+import scray.hdfs.index.format.sequence.types.Blob
 import scray.hdfs.index.format.sequence.types.BlobKey
 import scray.hdfs.index.format.sequence.types.IndexValue
-import scray.hdfs.index.format.sequence.types.BlobKey
-import scray.hdfs.index.format.sequence.types.BlobKey
 
 class SequenceFileWriter(path: String, hdfsConf: Configuration, fs: Option[FileSystem]) extends scray.hdfs.index.format.Writer with LazyLogging {
 
@@ -63,7 +59,7 @@ class SequenceFileWriter(path: String, hdfsConf: Configuration, fs: Option[FileS
     hdfsConf.set("fs.hdfs.impl", "org.apache.hadoop.hdfs.DistributedFileSystem");
     hdfsConf.set("fs.file.impl", "org.apache.hadoop.fs.LocalFileSystem");
     hdfsConf.set("dfs.client.use.datanode.hostname", "true");
-    
+
     val writer = SequenceFile.createWriter(hdfsConf, Writer.file(new Path(path + fileExtension)),
       Writer.keyClass(key.getClass()),
       Writer.valueClass(value.getClass()),
@@ -78,7 +74,9 @@ class SequenceFileWriter(path: String, hdfsConf: Configuration, fs: Option[FileS
   }
 
   override def insert(id: String, updateTime: Long, data: Array[Byte]): Unit = {
-
+    hdfsConf.set("fs.hdfs.impl", "org.apache.hadoop.hdfs.DistributedFileSystem");
+    hdfsConf.set("fs.file.impl", "org.apache.hadoop.fs.LocalFileSystem");
+    
     if (dataWriter == null) { // scalastyle:off null
       dataWriter = initWriter(new BlobKey, new Blob(), fs.getOrElse(FileSystem.get(hdfsConf)), ".blob")
     }
@@ -95,7 +93,9 @@ class SequenceFileWriter(path: String, hdfsConf: Configuration, fs: Option[FileS
   }
 
   override def insert(id: String, updateTime: Long, data: InputStream, blobSplitSize: Int = 0xFFFFF): Unit = {
-
+    hdfsConf.set("fs.hdfs.impl", "org.apache.hadoop.hdfs.DistributedFileSystem");
+    hdfsConf.set("fs.file.impl", "org.apache.hadoop.fs.LocalFileSystem");
+    
     if (dataWriter == null) { // scalastyle:off null
       dataWriter = initWriter(new BlobKey, new Blob, fs.getOrElse(FileSystem.get(hdfsConf)), ".blob")
     }
@@ -127,6 +127,8 @@ class SequenceFileWriter(path: String, hdfsConf: Configuration, fs: Option[FileS
   }
 
   override def insert(idBlob: Tuple2[String, Blob]): Unit = {
+    hdfsConf.set("fs.hdfs.impl", "org.apache.hadoop.hdfs.DistributedFileSystem");
+    hdfsConf.set("fs.file.impl", "org.apache.hadoop.fs.LocalFileSystem");
 
     val (id, blob) = idBlob
 
@@ -146,6 +148,8 @@ class SequenceFileWriter(path: String, hdfsConf: Configuration, fs: Option[FileS
   }
 
   def insert(id: String, updateTime: Long, data: String): Unit = {
+    hdfsConf.set("fs.hdfs.impl", "org.apache.hadoop.hdfs.DistributedFileSystem");
+    hdfsConf.set("fs.file.impl", "org.apache.hadoop.fs.LocalFileSystem");
 
     if (dataWriter == null) { // scalastyle:off null
       dataWriter = initWriter(new BlobKey, new BytesWritable(), fs.getOrElse(FileSystem.get(hdfsConf)), ".blob")
