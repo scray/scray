@@ -1,3 +1,18 @@
+// See the LICENCE.txt file distributed with this work for additional
+// information regarding copyright ownership.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package scray.hdfs.coordination
 
 import java.util.concurrent.atomic.AtomicInteger
@@ -7,84 +22,73 @@ import com.typesafe.scalalogging.LazyLogging
 import scala.collection.mutable.MutableList
 import scala.collection.mutable.ListBuffer
 import scala.collection.mutable.Buffer
+import scray.hdfs.index.format.sequence.SequenceFileWriter
+import scray.hdfs.index.format.Writer
+import java.util.UUID
 
 class CompactionState {}
-case object FFF extends CompactionState
+case object NEW extends CompactionState
 case object IsReadyForCompaction extends CompactionState
 case object CompactionIsStarted extends CompactionState
 case object IsCompacted extends CompactionState
 
 
-case class VersionPath(path: String, version: Int, compactionState: CompactionState = FFF) 
 
-class ReadWriteCoordinatorImpl(basePath: String, numVersions: Int = 3) extends ReadCoordinator with WriteCoordinator with LazyLogging {
-
-  private val writeDestinations = new HashMap[String, VersionPath]
-  private val readSource = new HashMap[String, Buffer[VersionPath]]
+class ReadWriteCoordinatorImpl extends ReadCoordinator with WriteCoordinator with LazyLogging {
   
-  private val availableForCompaction = new HashMap[String, Buffer[VersionPath]]
-  private val activeCompactions = new HashMap[String, Buffer[VersionPath]]
+  private val readSource = new HashMap[String, Buffer[Version]]
+  private val writeDestinations = new HashMap[WriteDestination, CoordinatedWriter]
+
+  private val availableForCompaction = new HashMap[String, Buffer[Version]]
+  private val activeCompactions = new HashMap[String, Buffer[Version]]
 
 
-  def registerNewWriteDestination(queryspace: String) = {
-    writeDestinations.put(queryspace, VersionPath(this.getPath(basePath, queryspace, 0), 0))
+  def getWriter(metadata: WriteDestination): Writer = {
+    this.getWriter(metadata.queryspace, metadata.path, metadata.fileFormat)
   }
 
-  def getWriteDestination(queryspace: String): Option[String] = {
-    writeDestinations.get(queryspace) match {
-      case Some(basePath) => Some(basePath.path)
-      case None => {
-        logger.error(s"No write destination for ${queryspace}")
-        None
+  def getWriter(queryspace: String, path: String, fileFormat: IHdfsWriterConstats.FileFormat): Writer = {
+    writeDestinations.get(WriteDestination(queryspace, path, fileFormat)) match {
+      case Some(writer) => {
+        if(writer.isClosed) {
+          createNewWriter(queryspace, path, fileFormat)
+        } else {
+          writer
+        }
       }
+      case None => createNewWriter(queryspace, path, fileFormat)
     }
   }
 
-  def switchToNextVersion(queryspace: String) = {
-    
-    this.writeDestinations.get(queryspace) match {
-      case Some(versionPath) => {
-        
-        // Move write version to read source
-        val readSources = readSource.getOrElse(queryspace, new ListBuffer[VersionPath])
-        
-        readSources += (VersionPath(versionPath.path, versionPath.version, IsReadyForCompaction))
-        readSource.put(queryspace, readSources)
-        
-        // Set new write destination
-        val newVersion = (versionPath.version + 1) % numVersions
-        writeDestinations.put(queryspace, VersionPath(this.getPath(basePath, queryspace, newVersion), newVersion))
-      }
-      case None => {
-        logger.error(s"No write destination for ${queryspace}")
-        None
-      }
-    }
+  def getNewWriter(metadata: WriteDestination): Writer = {
+    this.createNewWriter(metadata.queryspace, metadata.path, metadata.fileFormat)
   }
   
-  def getReadSources(queryspace: String): Option[List[VersionPath]] = {
-    readSource.get(queryspace) match {
-      case Some(sources) => Some(sources.toList)
-      case None => {
-        logger.error(s"No read source for queryspace ${queryspace} found")
-        None
+  private def createNewWriter(queryspace: String, path: String, fileFormat: IHdfsWriterConstats.FileFormat): Writer = {
+    fileFormat match {
+        case format: IHdfsWriterConstats.FileFormat => {
+          val metadata = WriteDestination(queryspace, path, format)
+          val filePath = this.getPath(path, queryspace, metadata.version.number)
+          val sWriter  = new SequenceFileWriter(filePath)
+          writeDestinations.put(
+            metadata,
+            new CoordinatedWriter(sWriter, metadata.maxFileSize, this, metadata)
+          )
+          this.getWriter(metadata)     
+        }
+        case _ => new SequenceFileWriter(s"${path}/${queryspace}/")
       }
-    }
   }
   
-  def getDestinationsReadyForCompaction(queryspace: String): Option[List[String]] = {
-    this.getReadSources(queryspace).map(_.filter(path => path.compactionState == IsReadyForCompaction).map(_.path))
-  }
-  
-  def startOneCompaction(queryspace: String) = {
-
-  }
-   
+  def registerNewWriteDestination(queryspace: String) = ???
+  def switchToNextVersion(queryspace: String) = ???
+  def getReadSources(queryspace: String): Option[List[Version]] = ???
+ 
   private def getPath(basePath: String, queryspace: String, version: Int): String = {
     if (basePath.endsWith("/")) {
-      s"${basePath}scray-data-${queryspace}-v${version}/"
+      s"${basePath}scray-data-${queryspace}-v${version}/${UUID.randomUUID()}"
     } else {
-      s"${basePath}/scray-data-${queryspace}-v${version}/"
+      s"${basePath}/scray-data-${queryspace}-v${version}/${UUID.randomUUID()}"
     }
   }
 }
