@@ -42,13 +42,6 @@
 		<version>2.6.4</version>
 		</dependency>
 		<dependency>
-			<groupId>jdk.tools</groupId>
-			<artifactId>jdk.tools</artifactId>
-			<scope>system</scope>
-			<version>1.6</version>
-			<systemPath>${JAVA_HOME}/lib/tools.jar</systemPath>
-		</dependency>
-		<dependency>
 			<groupId>org.mapdb</groupId>
 			<artifactId>mapdb</artifactId>
 			<version>1.0.6</version>
@@ -61,6 +54,20 @@
 	</dependencies>
 	<build>
 		<plugins>
+		<plugin>
+				<artifactId>maven-dependency-plugin</artifactId>
+				<executions>
+					<execution>
+						<phase>prepare-package</phase>
+						<goals>
+							<goal>copy-dependencies</goal>
+						</goals>
+						<configuration>
+							<outputDirectory>${project.build.directory}/lib</outputDirectory>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
@@ -68,6 +75,7 @@
 				<configuration>
 					<source>1.8</source>
 					<target>1.8</target>
+					
 				</configuration>
 			</plugin>
 			<plugin>
@@ -95,15 +103,64 @@
 				<version>2.4.0</version>
 				<extensions>true</extensions>
 				<configuration>
+				
 					<instructions>
 						<Embed-Dependency>*</Embed-Dependency>
 						<Embed-Transitive>true</Embed-Transitive>
 						<Export-Package>scray.hdfs.index.format.sequence,scray.hdfs.index.format,scray.hdfs.index.format.sequence.types,scray.hdfs.index.format.orc</Export-Package>
 						<Import-Package>!*,javax.net,javax.management,javax.*,javax,javax.security.auth.login,javax.security.auth.spi,javax.security.auth.kerberos,javax.security.auth,javax.security.auth.callback</Import-Package>
 					</instructions>
+					
+					<archive>
+                                <manifest>
+                                <addClasspath>true</addClasspath>
+                                    <addClasspath>true</addClasspath>
+                                    <mainClass>scray.hdfs.index.format.example.ReadExampleSequenceFile</mainClass>
+                                    <classpathPrefix>dependency-jars/</classpathPrefix>
+                                </manifest>
+                            </archive>
+					
 				</configuration>
 			</plugin>
 		</plugins>
+		<pluginManagement>
+			<plugins>
+				<!--This plugin's configuration is used to store Eclipse m2e settings 
+					only. It has no influence on the Maven build itself. -->
+				<plugin>
+					<groupId>org.eclipse.m2e</groupId>
+					<artifactId>lifecycle-mapping</artifactId>
+					<version>1.0.0</version>
+					<configuration>
+						<lifecycleMappingMetadata>
+							<pluginExecutions>
+								<pluginExecution>
+									<pluginExecutionFilter>
+										<groupId>
+											org.apache.maven.plugins
+										</groupId>
+										<artifactId>
+											maven-dependency-plugin
+										</artifactId>
+										<versionRange>
+											[2.1,)
+										</versionRange>
+										<goals>
+											<goal>
+												copy-dependencies
+											</goal>
+										</goals>
+									</pluginExecutionFilter>
+									<action>
+										<ignore />
+									</action>
+								</pluginExecution>
+							</pluginExecutions>
+						</lifecycleMappingMetadata>
+					</configuration>
+				</plugin>
+			</plugins>
+		</pluginManagement>
 	</build>
 	<profiles>
 		<profile>
