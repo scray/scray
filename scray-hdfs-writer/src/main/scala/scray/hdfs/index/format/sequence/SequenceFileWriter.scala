@@ -65,7 +65,7 @@ class SequenceFileWriter(path: String, hdfsConf: Configuration, fs: Option[FileS
       Writer.valueClass(value.getClass()),
       Writer.bufferSize(fs.getConf().getInt("io.file.buffer.size", 4096)),
       Writer.replication(fs.getDefaultReplication()),
-      Writer.blockSize(1073741824),
+      Writer.blockSize(536870912),
       Writer.compression(SequenceFile.CompressionType.NONE),
       Writer.progressable(null),
       Writer.metadata(new Metadata()));
@@ -94,7 +94,7 @@ class SequenceFileWriter(path: String, hdfsConf: Configuration, fs: Option[FileS
     dataWriter.getLength
   }
 
-  override def insert(id: String, updateTime: Long, data: InputStream, blobSplitSize: Int = 0xFFFFF): Unit = {
+  override def insert(id: String, updateTime: Long, data: InputStream, blobSplitSize: Int = 2048): Unit = {
     hdfsConf.set("fs.hdfs.impl", "org.apache.hadoop.hdfs.DistributedFileSystem");
     hdfsConf.set("fs.file.impl", "org.apache.hadoop.fs.LocalFileSystem");
     

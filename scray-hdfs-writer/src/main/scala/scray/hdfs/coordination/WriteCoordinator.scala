@@ -20,7 +20,7 @@ import scray.hdfs.index.format.Writer
 
 
 case class Version(number: Int, compactionState: CompactionState = NEW) 
-case class WriteDestination(queryspace: String, path: String, fileFormat: IHdfsWriterConstats.FileFormat, version: Version = Version(0), maxFileSize: Long = 0xFFFF)
+case class WriteDestination(queryspace: String, path: String, fileFormat: IHdfsWriterConstats.FileFormat, version: Version = Version(0), maxFileSize: Long = 512 * 1024 * 1024)
 
 trait WriteCoordinator {
 
