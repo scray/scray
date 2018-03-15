@@ -27,15 +27,22 @@ object WriteExampleSequenceFile {
 
       val writer = new SequenceFileWriter(s"${args(0)}/scray-data-${System.currentTimeMillis()}")
 
+      val insertStart = System.currentTimeMillis();
+      
       for (i <- 0 to 1000000) {
         val key = "key_" + i
         val value = "data_" + i
 
-        println(s"Write key value data. key=${key}, value=${value}")
+        //println(s"Write key value data. key=${key}, value=${value}")
 
         writer.insert(key, System.currentTimeMillis(), value.getBytes)
+        
       }
 
+      writer.flush()
+      val insertEnd = System.currentTimeMillis();
+      System.out.println(insertEnd - insertStart);
+      
       writer.close
     }
   }

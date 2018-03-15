@@ -73,7 +73,13 @@ class SequenceFileWriter(path: String, hdfsConf: Configuration, fs: Option[FileS
     writer
   }
 
+  def flush() = {
+    if (dataWriter != null)dataWriter.hflush() 
+    if (idxWriter != null)idxWriter.hflush() 
+  }
+  
   override def insert(id: String, updateTime: Long, data: Array[Byte]): Long = {
+
     hdfsConf.set("fs.hdfs.impl", "org.apache.hadoop.hdfs.DistributedFileSystem");
     hdfsConf.set("fs.file.impl", "org.apache.hadoop.fs.LocalFileSystem");
     

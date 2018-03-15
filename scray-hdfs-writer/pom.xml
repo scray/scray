@@ -104,6 +104,7 @@
 				<extensions>true</extensions>
 				<configuration>
 				
+				
 					<instructions>
 						<Embed-Dependency>*</Embed-Dependency>
 						<Embed-Transitive>true</Embed-Transitive>
