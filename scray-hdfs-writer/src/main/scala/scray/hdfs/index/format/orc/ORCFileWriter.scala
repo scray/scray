@@ -45,7 +45,9 @@ class ORCFileWriter(batchSize: Int = 10000) extends scray.hdfs.index.format.Writ
       val hadoopConfig = new Configuration();
       hadoopConfig.set("fs.hdfs.impl", "org.apache.hadoop.hdfs.DistributedFileSystem");
       hadoopConfig.set("fs.file.impl", "org.apache.hadoop.fs.LocalFileSystem");
+      hadoopConfig.set("dfs.client.use.datanode.hostname", "true");
 
+      
       writer = OrcFile.createWriter(new Path(path), OrcFile.writerOptions(hadoopConfig).setSchema(schema)
         .bloomFilterColumns("id").rowIndexStride(1000).compress(CompressionKind.NONE));
 
