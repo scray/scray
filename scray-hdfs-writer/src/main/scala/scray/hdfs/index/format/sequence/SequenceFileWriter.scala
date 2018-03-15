@@ -78,7 +78,8 @@ class SequenceFileWriter(path: String, hdfsConf: Configuration, fs: Option[FileS
     if (idxWriter != null)idxWriter.hflush() 
   }
   
-  override def insert(id: String, updateTime: Long, data: Array[Byte]): Unit = {
+  override def insert(id: String, updateTime: Long, data: Array[Byte]): Long = {
+
     hdfsConf.set("fs.hdfs.impl", "org.apache.hadoop.hdfs.DistributedFileSystem");
     hdfsConf.set("fs.file.impl", "org.apache.hadoop.fs.LocalFileSystem");
     
@@ -96,6 +97,7 @@ class SequenceFileWriter(path: String, hdfsConf: Configuration, fs: Option[FileS
     // Write data
     dataWriter.append(new BlobKey(id), new Blob(updateTime, data, data.length));
     
+    dataWriter.getLength
   }
 
   override def insert(id: String, updateTime: Long, data: InputStream, blobSplitSize: Int = 0xFFFFF): Unit = {
@@ -172,6 +174,14 @@ class SequenceFileWriter(path: String, hdfsConf: Configuration, fs: Option[FileS
     dataWriter.append(new BlobKey(id), new Blob(updateTime, data.getBytes, data.length()))
   }
 
+  def getBytesWritten: Long = {
+    if (dataWriter == null) { // scalastyle:off null
+      0
+    } else {
+      dataWriter.getLength
+    }
+  }
+  
   def close: Unit = {
     IOUtils.closeStream(dataWriter);
     IOUtils.closeStream(idxWriter);

@@ -13,21 +13,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package scray.hdfs.index.format
+package scray.hdfs.coordination;
 
-import scray.hdfs.index.format.sequence.types.Blob
-import java.io.InputStream
-
-trait Writer { 
-  var varIsClosed = false
-  
-  def insert(id: String, updateTime: Long, data: Array[Byte]): Long
-  def insert(id: String, updateTime: Long, data: InputStream, blobSplitSize: Int = 0xFFFFF): Unit
-  def insert(idBlob: Tuple2[String, Blob]): Unit
-  def getBytesWritten: Long
-  def close
-  
-  def isClosed = {
-    varIsClosed
-  }
+public class IHdfsWriterConstats {
+	public static enum FileFormat {
+		Avro,
+		SequenceFile,
+		ORC
+	}
 }

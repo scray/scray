@@ -13,21 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package scray.hdfs.index.format
+package scray.hdfs.exceptions
 
-import scray.hdfs.index.format.sequence.types.Blob
-import java.io.InputStream
-
-trait Writer { 
-  var varIsClosed = false
-  
-  def insert(id: String, updateTime: Long, data: Array[Byte]): Long
-  def insert(id: String, updateTime: Long, data: InputStream, blobSplitSize: Int = 0xFFFFF): Unit
-  def insert(idBlob: Tuple2[String, Blob]): Unit
-  def getBytesWritten: Long
-  def close
-  
-  def isClosed = {
-    varIsClosed
-  }
-}
+class WriteExceptions(message: String) extends Exception(message) 
+class MaxFileSizeReached(message: String) extends WriteExceptions(message)

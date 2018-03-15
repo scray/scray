@@ -66,7 +66,7 @@ class ORCFileWriter(batchSize: Int = 10000) extends scray.hdfs.index.format.Writ
 
   def insert(id: String, updateTime: Long, data: InputStream, blobSplitSize: Int = 0xFFFFF): Unit = ???
 
-  def insert(id: String, updateTime: Long, data: Array[Byte]) {
+  def insert(id: String, updateTime: Long, data: Array[Byte]): Long = {
 
     val idVector = batch.cols(0).asInstanceOf[BytesColumnVector]
     val timeVector = batch.cols(1).asInstanceOf[LongColumnVector]
@@ -86,10 +86,15 @@ class ORCFileWriter(batchSize: Int = 10000) extends scray.hdfs.index.format.Writ
       writer.addRowBatch(batch);
       batch.reset();
     }
+    
+    writer.getRawDataSize
   }
   
   override def insert(idBlob: Tuple2[String, Blob]) = ???
 
+  def getBytesWritten: Long = {
+    writer.getRawDataSize
+  }
 
   def close {
     try {
