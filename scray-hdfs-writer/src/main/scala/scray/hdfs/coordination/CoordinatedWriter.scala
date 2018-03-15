@@ -19,7 +19,6 @@ import scray.hdfs.index.format.sequence.SequenceFileWriter
 import java.util.UUID
 import com.typesafe.scalalogging.LazyLogging
 import scray.hdfs.index.format.Writer
-import scray.hdfs.exceptions.MaxFileSizeReached
 
 class CoordinatedWriter(private var writer: Writer, maxFileSize: Long, writeCoordinator: WriteCoordinator, metadata: WriteDestination) extends LazyLogging with Writer {
 
