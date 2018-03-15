@@ -62,7 +62,7 @@ class ORCFileWriter(batchSize: Int = 10000) extends scray.hdfs.index.format.Writ
     }
   }
 
-  def insert(id: String, updateTime: Long, data: InputStream, blobSplitSize: Int = 0xFFFFF): Unit = ???
+  def insert(id: String, updateTime: Long, data: InputStream, blobSplitSize: Int = 0xFFFFF): Long = ???
 
   def insert(id: String, updateTime: Long, data: Array[Byte]): Long = {
 
