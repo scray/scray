@@ -37,7 +37,8 @@ import scala.collection.mutable.HashMap
 /**
  * Example application to copy files from local file system to SequenceFile.
  */
-object Main {
+object CopyToSequenceFile {
+  
   def main(args: Array[String]) {
 
     if (args.length < 2) {
@@ -55,12 +56,14 @@ object Main {
       
       println(s"Write content of file ${sourceFile} to destination ${destination}.\n File can be queried with key ${filename}")
       
-      destWriter.insert(filename, System.currentTimeMillis(), sourceReader)
+      val startTime = System.currentTimeMillis() 
+      val writtenBytes = destWriter.insert(filename, System.currentTimeMillis(), sourceReader, 5 * 1024 * 1024)
       destWriter.close
       
       println("\n============================================================")
       println(s"  New files can be found in ${destination}")
       println(s"  Key to query content: ${filename}")
+      println(s"  ${writtenBytes/1024/1024}MB written in ${(System.currentTimeMillis() - startTime)/1000}s")
       println(  "============================================================")
     }
 

@@ -12,7 +12,7 @@ object CoordinatedWriterExample {
   def main(args: Array[String]) {
     val writerRegistry = new ReadWriteCoordinatorImpl
 
-    val metadata = WriteDestination("000", "hdfs://bdq-cassandra4.seeburger.de/bisTest/", IHdfsWriterConstats.FileFormat.SequenceFile, Version(0), 1024L)
+    val metadata = WriteDestination("000", "hdfs://bdq-cassandra4.seeburger.de/bisTest/", IHdfsWriterConstats.FileFormat.SequenceFile, Version(0), 64 * 1024 * 1024L)
     val writer = writerRegistry.getWriter(metadata)
     
     for(i <- 0 to 1000000) {

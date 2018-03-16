@@ -45,6 +45,6 @@ class CoordinatedWriter(private var writer: Writer, maxFileSize: Long, writeCoor
   }
   
   def insert(idBlob: (String, scray.hdfs.index.format.sequence.types.Blob)): Unit = ???
-  def insert(id: String,updateTime: Long,data: java.io.InputStream,blobSplitSize: Int): Unit = ???
+  def insert(id: String,updateTime: Long,data: java.io.InputStream,blobSplitSize: Int): Long = ???
   def insert(key: String, data: String) = ???
 }
