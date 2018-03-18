@@ -55,7 +55,7 @@ class SyncTableComponent(val driver: JdbcProfile, val dbSystemId: String = "SCRA
     def firstElementTime = column[Option[Long]]("CFIRSTELEMENTTIME")
 
     def * = (jobname, slot, versions, dbSystem, dbId, tableID, startTime, endTime, online, state, mergeMode, firstElementTime) <> (JDBCSyncTable.tupled, JDBCSyncTable.unapply)
-    def pk = primaryKey("pk_a", (jobname, online, slot))
+    def pk = primaryKey("pk_scray_sync_table", (jobname, online, slot))
   }
   
 

@@ -77,36 +77,49 @@ class JDBCDbSession(val ds: HikariDataSource, val metadataConnection: Connection
   def this(jdbcURL: String, username: String, password: String) =
     this(jdbcURL, ScraySQLDialectFactory.getDialectFromJdbcURL(jdbcURL), username, password)
   
-  override def execute(statement: String): Try[ResultSet] = {
+ def executeQuery(statement: String): Try[ResultSet] = {
       try {
         val prepStatement = metadataConnection.prepareStatement(statement)
         val result = prepStatement.executeQuery()
         Success(result)
       } catch {
-        case e: Exception => logger.error(s"Error while executing statement ${statement}" + e); Failure(e)
+        case e: Exception => logger.warn(s"Error while executing statement ${statement}" + e); Failure(e)
       }
     }
 
+    override def execute(statement: String) = {
+      try {
+        val prepStatement = metadataConnection.prepareStatement(statement)
+        Try(prepStatement.execute)
+      } catch {
+        case e: Exception => logger.warn(s"Error while executing statement ${statement}" + e); Failure(e)
+      }
+    }
+    
   override def execute(statement: PreparedStatement): Try[ResultSet] = {
       try {
         val result = statement.executeQuery()
         Success(result)
       } catch {
-        case e: Exception => logger.error(s"Error while executing statement ${statement}" + e); Failure(e)
+        case e: Exception => logger.warn(s"Error while executing statement ${statement}" + e); Failure(e)
       }
     }
 
 
     def execute[A, B <: slick.dbio.NoStream, C <: Nothing](statement: FixedSqlAction[A, B, C]): Try[A] = {
      try {
-       Success(Await.result(db.run(statement), Duration("1 second"))) 
+       Success(Await.result(db.run(statement), Duration("5 second"))) 
      } catch {
-       case e: Exception => logger.error(s"Error while executing statement ${statement}" + e); Failure(e)
+       case e: Exception => logger.warn(s"Error while executing statement ${statement}" + e); Failure(e)
      }
     }
     
     def execute[A, S <: slick.dbio.NoStream, E <: slick.dbio.Effect](statement: DBIOAction[A, S, E]) = {
-      Await.result(db.run(statement), Duration("1 second")) 
+      try {
+        Await.result(db.run(statement), Duration("5 second")) 
+      } catch {
+        case e: Exception => logger.warn(s"Error while executing statement ${statement}" + e); Failure(e)
+      }
     }
     
   override def insert(statement: PreparedStatement): Try[ResultSet] = {
@@ -119,7 +132,7 @@ class JDBCDbSession(val ds: HikariDataSource, val metadataConnection: Connection
          Failure(new StatementExecutionError(s"It was not possible to execute statement: ${statement}. Condition was false"))
        }
       } catch {
-        case e: Exception => logger.error(s"Error while executing statement ${statement}" + e); Failure(e)
+        case e: Exception => logger.warn(s"Error while executing statement ${statement}" + e); Failure(e)
       }
     }
 
