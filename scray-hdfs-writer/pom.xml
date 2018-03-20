@@ -109,7 +109,8 @@
 						<Embed-Dependency>*</Embed-Dependency>
 						<Embed-Transitive>true</Embed-Transitive>
 						<Export-Package>scray.hdfs.coordination,scray.hdfs.index.format.sequence,scray.hdfs.index.format,scray.hdfs.index.format.sequence.types,scray.hdfs.index.format.orc</Export-Package>
-						<Import-Package>!*,javax.net,javax.management,javax.*,javax,javax.security.auth.login,javax.security.auth.spi,javax.security.auth.kerberos,javax.security.auth,javax.security.auth.callback</Import-Package>
+						<Import-Package>!*,javax.management,javax.*,javax,javax.security.auth.login,javax.security.auth.spi,javax.security.auth.kerberos,javax.security.auth,javax.security.auth.callback</Import-Package>
+						<_exportcontents>org.apache.hadoop.*,org.apache.hadoop,org.apache.hadoop.security,org.apache.hadoop.security.*</_exportcontents>
 					</instructions>
 					
 					<archive>
