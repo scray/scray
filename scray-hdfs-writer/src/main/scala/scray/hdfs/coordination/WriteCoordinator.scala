@@ -15,19 +15,39 @@
 
 package scray.hdfs.coordination
 
-import scala.collection.mutable.HashMap
+
+
 import scray.hdfs.index.format.Writer
 
 
-case class Version(number: Int, compactionState: CompactionState = NEW) 
+case class Version(number: Int, compactionState: CompactionState = NEW) {
+  def this(number: Int) = {
+    this(number, NEW)
+  }
+}
+/**
+ * Parameters for WriteCoordinatr
+ * 
+ * @param id id of logical system
+ * @param path path to folder
+ * @param fileFormat format to store files e.g. ORC, SequenceFile
+ * @param version paths are versioned to handle them independently e.g. for compactions
+ * @param maxFileSize If maxFileSize is reached a new file will be used
+ * @param maxNumberOfInserts	If maxNumberOfInserts is reached a new file will be used.
+ */
 case class WriteDestination(
     queryspace: String, 
     path: String, 
     fileFormat: IHdfsWriterConstats.FileFormat, 
     version: Version = Version(0), 
     maxFileSize: Long = 512 * 1024 * 1024,
-    maxNumberOfInserts: Int = Integer.MAX_VALUE)
+    maxNumberOfInserts: Int = Integer.MAX_VALUE
+   ) 
 
+    /**
+     * Interface to manage where and how data should be stored
+     * 
+     */
 trait WriteCoordinator {
 
   /**
