@@ -1,23 +1,22 @@
 package scray.hdfs.index.format.example
 
 import scray.hdfs.coordination.CoordinatedWriter
+import scray.hdfs.coordination.ReadWriteCoordinatorImpl
+import scray.hdfs.coordination.IHdfsWriterConstats
+import scray.hdfs.coordination.WriteDestination
+import scray.hdfs.coordination.Version
 
 
 object CoordinatedWriterExample {
   
   def main(args: Array[String]) {
-    val writer = new CoordinatedWriter("/tmp/scray-hdfs", "000")
+    val writerRegistry = new ReadWriteCoordinatorImpl
+
+    val metadata = WriteDestination("000", "hdfs://bdq-cassandra4.seeburger.de/bisTest/", IHdfsWriterConstats.FileFormat.SequenceFile, Version(0), 64 * 1024 * 1024L)
+    val writer = writerRegistry.getWriter(metadata)
     
-    for(i <- 0 to 100) {
-      writer.write(s"k${i}", s"d${i}")
+    for(i <- 0 to 1000000) {
+      writer.insert(i + "", System.currentTimeMillis(), s"Hallo ${i}".getBytes)
     }
-    
-    writer.nextVersion
-    
-    for(i <- 0 to 100) {
-      writer.write(s"k${i}", s"d${i}")
-    }
-    
-    writer.nextVersion
   }
 }

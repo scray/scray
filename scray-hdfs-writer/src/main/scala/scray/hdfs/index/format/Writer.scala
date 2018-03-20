@@ -19,7 +19,16 @@ import scray.hdfs.index.format.sequence.types.Blob
 import java.io.InputStream
 
 trait Writer { 
-  def insert(id: String, updateTime: Long, data: Array[Byte]): Unit
-  def insert(id: String, updateTime: Long, data: InputStream, blobSplitSize: Int = 0xFFFFF): Unit
+  var varIsClosed = false
+  
+  def insert(id: String, updateTime: Long, data: Array[Byte]): Long
+  def insert(id: String, updateTime: Long, data: InputStream, blobSplitSize: Int = 5 * 1024 * 1024): Long
   def insert(idBlob: Tuple2[String, Blob]): Unit
+  def getBytesWritten: Long
+  def getNumberOfInserts: Int
+  def close
+  
+  def isClosed = {
+    varIsClosed
+  }
 }

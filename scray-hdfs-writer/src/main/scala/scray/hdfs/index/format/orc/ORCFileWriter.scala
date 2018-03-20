@@ -35,7 +35,8 @@ class ORCFileWriter(batchSize: Int = 10000) extends scray.hdfs.index.format.Writ
   private var writer: Writer = null; // To write orc files to HDFS
   val schema: TypeDescription = TypeDescription.fromString("struct<id:string,time:bigint,data:binary>");
   private var batch: VectorizedRowBatch = null;
-
+  private var numberOfInserts = 0
+  
   val log = LoggerFactory.getLogger("scray.hdfs.index.format.orc.OrcWriter");
 
   def this(path: String) {
@@ -45,7 +46,9 @@ class ORCFileWriter(batchSize: Int = 10000) extends scray.hdfs.index.format.Writ
       val hadoopConfig = new Configuration();
       hadoopConfig.set("fs.hdfs.impl", "org.apache.hadoop.hdfs.DistributedFileSystem");
       hadoopConfig.set("fs.file.impl", "org.apache.hadoop.fs.LocalFileSystem");
+      hadoopConfig.set("dfs.client.use.datanode.hostname", "true");
 
+      
       writer = OrcFile.createWriter(new Path(path), OrcFile.writerOptions(hadoopConfig).setSchema(schema)
         .bloomFilterColumns("id").rowIndexStride(1000).compress(CompressionKind.NONE));
 
@@ -60,11 +63,13 @@ class ORCFileWriter(batchSize: Int = 10000) extends scray.hdfs.index.format.Writ
         e.printStackTrace();
       }
     }
+    
+    numberOfInserts = numberOfInserts + 1
   }
 
-  def insert(id: String, updateTime: Long, data: InputStream, blobSplitSize: Int = 0xFFFFF): Unit = ???
+  def insert(id: String, updateTime: Long, data: InputStream, blobSplitSize: Int = 0xFFFFF): Long = ???
 
-  def insert(id: String, updateTime: Long, data: Array[Byte]) {
+  def insert(id: String, updateTime: Long, data: Array[Byte]): Long = {
 
     val idVector = batch.cols(0).asInstanceOf[BytesColumnVector]
     val timeVector = batch.cols(1).asInstanceOf[LongColumnVector]
@@ -84,10 +89,20 @@ class ORCFileWriter(batchSize: Int = 10000) extends scray.hdfs.index.format.Writ
       writer.addRowBatch(batch);
       batch.reset();
     }
+    
+    numberOfInserts = numberOfInserts + 1
+    writer.getRawDataSize
   }
   
   override def insert(idBlob: Tuple2[String, Blob]) = ???
 
+  def getBytesWritten: Long = {
+    writer.getRawDataSize
+  }
+  
+  def getNumberOfInserts: Int = {
+    numberOfInserts
+  }
 
   def close {
     try {

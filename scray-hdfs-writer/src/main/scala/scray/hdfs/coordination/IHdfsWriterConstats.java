@@ -13,8 +13,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package scray.hdfs.coordination
+package scray.hdfs.coordination;
 
-trait ReadCoordinator {
-
+public class IHdfsWriterConstats {
+	public static enum FileFormat {
+		Avro,
+		SequenceFile,
+		ORC
+	}
 }

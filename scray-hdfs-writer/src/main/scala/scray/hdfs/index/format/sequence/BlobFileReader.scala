@@ -106,12 +106,20 @@ class BlobFileReader(reader: SequenceFile.Reader) {
     var valueFound = false
 
     var syncSeen = false
+    try {
     while (!syncSeen && !valueFound && reader.next(key, value)) {
 
       syncSeen = reader.syncSeen();
 
       if (keyIn.equals(key.getId) && offset == key.getOffset) {
         valueFound = true
+      }
+    }
+    } catch {
+      case e: java.io.EOFException => {
+        print(s"No data for key ${keyIn}, offset ${offset}\n")
+        e.printStackTrace()
+        valueFound = false
       }
     }
 

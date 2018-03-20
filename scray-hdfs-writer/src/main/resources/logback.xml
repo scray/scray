@@ -9,8 +9,7 @@
 		</layout>
 	</appender>
 
-	<logger name="scray" level="debug"
-		additivity="false">
+	<logger name="scray" level="DEBUG">
 		<appender-ref ref="STDOUT" />
 	</logger>
 
