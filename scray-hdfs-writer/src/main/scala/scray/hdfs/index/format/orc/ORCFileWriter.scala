@@ -100,6 +100,9 @@ class ORCFileWriter(batchSize: Int = 10000) extends scray.hdfs.index.format.Writ
     writer.getRawDataSize
   }
   
+  def insert(id: String, updateTime: Long, data: InputStream, dataSize: Int, blobSplitSize: Int): Long = ???
+
+  
   def getNumberOfInserts: Int = {
     numberOfInserts
   }

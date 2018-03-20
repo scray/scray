@@ -161,6 +161,9 @@ class SequenceFileWriter(path: String, hdfsConf: Configuration, fs: Option[FileS
     
     numberOfInserts = numberOfInserts + 1
   }
+  
+  def insert(id: String, updateTime: Long, data: InputStream, dataSize: Int, blobSplitSize: Int): Long = ???
+
 
   def insert(id: String, updateTime: Long, data: String): Unit = {
     hdfsConf.set("fs.hdfs.impl", "org.apache.hadoop.hdfs.DistributedFileSystem");
