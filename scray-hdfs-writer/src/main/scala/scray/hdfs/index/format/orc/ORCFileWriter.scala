@@ -29,6 +29,7 @@ import org.apache.orc.Writer
 import org.slf4j.LoggerFactory
 import scray.hdfs.index.format.sequence.types.Blob
 import java.io.InputStream
+import java.math.BigInteger
 
 class ORCFileWriter(batchSize: Int = 10000) extends scray.hdfs.index.format.Writer {
 
@@ -100,7 +101,7 @@ class ORCFileWriter(batchSize: Int = 10000) extends scray.hdfs.index.format.Writ
     writer.getRawDataSize
   }
   
-  def insert(id: String, updateTime: Long, data: InputStream, dataSize: Int, blobSplitSize: Int): Long = ???
+  override def insert(id: String, updateTime: Long, data: InputStream, dataSize: BigInteger, blobSplitSize: Int): Long = ???
 
   
   def getNumberOfInserts: Int = {

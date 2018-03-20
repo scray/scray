@@ -20,6 +20,7 @@ import java.util.UUID
 import com.typesafe.scalalogging.LazyLogging
 import scray.hdfs.index.format.Writer
 import java.io.InputStream
+import java.math.BigInteger
 
 class CoordinatedWriter(private var writer: Writer, maxFileSize: Long, maxNumberOfInserts: Int, writeCoordinator: WriteCoordinator, metadata: WriteDestination) extends LazyLogging with Writer {
 
@@ -49,9 +50,9 @@ class CoordinatedWriter(private var writer: Writer, maxFileSize: Long, maxNumber
   }
   def insert(idBlob: (String, scray.hdfs.index.format.sequence.types.Blob)): Unit = ???
   
-  def insert(id: String,updateTime: Long,data: InputStream, dataSize: Int, blobSplitSize: Int): Long = {
+  override def insert(id: String, updateTime: Long,data: InputStream, dataSize: BigInteger, blobSplitSize: Int): Long = {
     // Check if file size limit is reached
-    if(writer.getBytesWritten + dataSize < maxFileSize) {
+    if(writer.getBytesWritten + dataSize.longValue() < maxFileSize) {
       writer.insert(id, updateTime, data)
     } else {
       writer.close

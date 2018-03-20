@@ -34,6 +34,7 @@ import scray.hdfs.index.format.Writer
 import scray.hdfs.index.format.sequence.types.Blob
 import scray.hdfs.index.format.sequence.types.BlobKey
 import scray.hdfs.index.format.sequence.types.IndexValue
+import java.math.BigInteger
 
 class SequenceFileWriter(path: String, hdfsConf: Configuration, fs: Option[FileSystem]) extends scray.hdfs.index.format.Writer with LazyLogging {
 
@@ -162,7 +163,7 @@ class SequenceFileWriter(path: String, hdfsConf: Configuration, fs: Option[FileS
     numberOfInserts = numberOfInserts + 1
   }
   
-  def insert(id: String, updateTime: Long, data: InputStream, dataSize: Int, blobSplitSize: Int): Long = ???
+  override def insert(id: String, updateTime: Long, data: InputStream, dataSize: BigInteger, blobSplitSize: Int): Long = ???
 
 
   def insert(id: String, updateTime: Long, data: String): Unit = {
