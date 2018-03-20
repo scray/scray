@@ -28,6 +28,7 @@ import java.nio.charset.StandardCharsets
 import org.apache.commons.io.IOUtils
 import scray.hdfs.index.format.sequence.types.BlobInputStream
 import scala.io.Source
+import scala.collection.mutable.ArrayBuffer
 
 class SequenceFileWriterSpecs extends WordSpec with LazyLogging {
 
@@ -99,7 +100,7 @@ class SequenceFileWriterSpecs extends WordSpec with LazyLogging {
         val data = blobReader.get(idx.getKey.toString(), idx.getPosition)
 
         Assert.assertTrue(data.isDefined)
-        Assert.assertEquals(new String(data.get), getValue(i))
+        Assert.assertEquals(getValue(i), new String(data.get))
       }
     }
     " get data for a given index entry as input stream " in {
@@ -126,7 +127,7 @@ class SequenceFileWriterSpecs extends WordSpec with LazyLogging {
         val idx  = idxReader.next().get
         val stream = new BlobInputStream(blobReader, idx)
 
-        Assert.assertEquals(Source.fromInputStream(stream).mkString, getValue(i))
+        Assert.assertEquals(getValue(i), Source.fromInputStream(stream).mkString)
       }
     }
     " read and write data as InputStream " in {
@@ -144,6 +145,58 @@ class SequenceFileWriterSpecs extends WordSpec with LazyLogging {
       val stream = new BlobInputStream(blobReader, idx)
 
       Assert.assertEquals(getValue(542), Source.fromInputStream(stream).mkString)
+    }
+    " use read method multiple times " in {
+      
+      // Write data
+      val inputData = new StringBuffer();
+      for(i <- 0 to 4000) {
+        inputData.append(s" ${i}")
+      }
+     
+      val writer = new SequenceFileWriter("target/IoStreamRWTest")
+      writer.insert(getKey(124), System.currentTimeMillis(), inputData.toString().getBytes)
+      writer.close
+
+      // Read data
+      val idxReader = new IdxReader("target/IoStreamRWTest.idx")
+      val blobReader = new BlobFileReader("target/IoStreamRWTest.blob")
+
+      val idx  = idxReader.next().get
+      // Use setream
+      val stream = new BlobInputStream(blobReader, idx)
+      
+      val buffer = new Array[Byte](5);
+
+      var bytesRead = 0;
+      val result =  new ArrayBuffer[Byte]
+      
+      while(bytesRead != -1) {
+        bytesRead = stream.read(buffer)  
+        if(bytesRead > 0) {
+          buffer.map(result += _) 
+        }
+      }
+      Assert.assertEquals(inputData.toString(), new String(result.toArray))
+    }
+    " read and write big files as InputStream " in {
+      
+      val inputData = new StringBuffer();
+      for(i <- 0 to 4000) {
+        inputData.append(s" ${i}")
+      }
+     
+      val writer = new SequenceFileWriter("target/IoStreamRWTest")
+      writer.insert(getKey(124), System.currentTimeMillis(), inputData.toString().getBytes)
+      writer.close
+      
+      val idxReader = new IdxReader("target/IoStreamRWTest.idx")
+      val blobReader = new BlobFileReader("target/IoStreamRWTest.blob")
+
+      val idx  = idxReader.next().get
+      val stream = new BlobInputStream(blobReader, idx)
+
+      Assert.assertEquals(inputData.toString(), Source.fromInputStream(stream).mkString)
     }
 
   }

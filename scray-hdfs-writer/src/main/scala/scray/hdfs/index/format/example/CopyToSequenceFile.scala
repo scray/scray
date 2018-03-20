@@ -57,7 +57,9 @@ object CopyToSequenceFile {
       println(s"Write content of file ${sourceFile} to destination ${destination}.\n File can be queried with key ${filename}")
       
       val startTime = System.currentTimeMillis() 
-      val writtenBytes = destWriter.insert(filename, System.currentTimeMillis(), sourceReader, 5 * 1024 * 1024)
+//      val writtenBytes = destWriter.insert(filename, System.currentTimeMillis(), sourceReader, 5 * 1024 * 1024)
+      val writtenBytes = destWriter.insert(filename, System.currentTimeMillis(), sourceReader)
+
       destWriter.close
       
       println("\n============================================================")

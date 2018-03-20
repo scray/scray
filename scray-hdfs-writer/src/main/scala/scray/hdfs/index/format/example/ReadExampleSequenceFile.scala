@@ -19,7 +19,7 @@ object ReadExampleSequenceFile {
         
         val idx = idxReader.next().get
         println("idx" + idx)
-        println("Data: \t" + new String(blobReader.get(idx.getKey, idx.getPosition).get))
+        println("Data: \t" + new String(blobReader.getNextBlob(idx.getKey, 1, idx.getPosition).get._2.getData))
         println("\n")
       }
       

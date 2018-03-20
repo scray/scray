@@ -39,6 +39,7 @@ class SequenceFileWriter(path: String, hdfsConf: Configuration, fs: Option[FileS
 
   var dataWriter: SequenceFile.Writer = null; // scalastyle:off null
   var idxWriter: SequenceFile.Writer = null; // scalastyle:off null
+  var numberOfInserts: Int = 0
 
   val idxValue = new IndexValue("k1", 42, 42) // Block position in data file
 
@@ -90,13 +91,14 @@ class SequenceFileWriter(path: String, hdfsConf: Configuration, fs: Option[FileS
     if (idxWriter == null) { // scalastyle:off null
       idxWriter = initWriter(new Text(), idxValue, fs.getOrElse(FileSystem.get(hdfsConf)), ".idx")
     }
-
+    
     // Write idx
     idxWriter.append(new Text(id), new IndexValue(id, updateTime, dataWriter.getLength))
 
     // Write data
     dataWriter.append(new BlobKey(id), new Blob(updateTime, data, data.length));
     
+    numberOfInserts = numberOfInserts + 1
     dataWriter.getLength
   }
 
@@ -111,7 +113,7 @@ class SequenceFileWriter(path: String, hdfsConf: Configuration, fs: Option[FileS
     if (idxWriter == null) { // scalastyle:off null
       idxWriter = initWriter(new Text, idxValue, fs.getOrElse(FileSystem.get(hdfsConf)), ".idx")
     }
-
+    
     val fileStartPossiton = dataWriter.getLength
     var writtenBytes = 0L // Number of written bytes 
     var blobCounter = -1
@@ -133,6 +135,7 @@ class SequenceFileWriter(path: String, hdfsConf: Configuration, fs: Option[FileS
     // Write idx
     idxWriter.append(new Text(id), new IndexValue(id, blobCounter, blobSplitSize, updateTime, fileStartPossiton))
     
+    numberOfInserts = numberOfInserts + 1
     dataWriter.getLength + idxWriter.getLength
   }
 
@@ -154,7 +157,9 @@ class SequenceFileWriter(path: String, hdfsConf: Configuration, fs: Option[FileS
     idxWriter.append(new Text(id), new IndexValue(id, blob.getUpdateTime, dataWriter.getLength))
 
     // Write data
-    dataWriter.append(new Text(id), blob);
+    dataWriter.append(new Text(id), blob)
+    
+    numberOfInserts = numberOfInserts + 1
   }
 
   def insert(id: String, updateTime: Long, data: String): Unit = {
@@ -174,6 +179,8 @@ class SequenceFileWriter(path: String, hdfsConf: Configuration, fs: Option[FileS
 
     // Write data
     dataWriter.append(new BlobKey(id), new Blob(updateTime, data.getBytes, data.length()))
+    
+    numberOfInserts = numberOfInserts + 1
   }
 
   def getBytesWritten: Long = {
@@ -182,6 +189,10 @@ class SequenceFileWriter(path: String, hdfsConf: Configuration, fs: Option[FileS
     } else {
       dataWriter.getLength
     }
+  }
+  
+  def getNumberOfInserts: Int = {
+    numberOfInserts
   }
   
   def close: Unit = {

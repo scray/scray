@@ -22,6 +22,7 @@ import scray.hdfs.index.format.sequence.IdxReader
 import scray.hdfs.index.format.sequence.types.BlobInputStream
 import java.io.File
 import org.apache.commons.io.FileUtils
+import scala.io.Source
 
 object CopyFromSequneceFile {
 
@@ -41,15 +42,16 @@ object CopyFromSequneceFile {
       if(idxReader.hasNext) {
         val idx = idxReader.next().get
         val stream = new BlobInputStream(blobReader, idx)
-        
+
         FileUtils.copyInputStreamToFile(stream, new File(destination));
+        
       }
 
       println(s"Write content of file ${sourceFile} to destination ${destination}.")
 
       println("\n============================================================")
       println(s"  New files can be found in ${destination}")
-      println("============================================================")
+      println(  "============================================================")
     }
 
   }

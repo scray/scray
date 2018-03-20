@@ -35,7 +35,8 @@ class ORCFileWriter(batchSize: Int = 10000) extends scray.hdfs.index.format.Writ
   private var writer: Writer = null; // To write orc files to HDFS
   val schema: TypeDescription = TypeDescription.fromString("struct<id:string,time:bigint,data:binary>");
   private var batch: VectorizedRowBatch = null;
-
+  private var numberOfInserts = 0
+  
   val log = LoggerFactory.getLogger("scray.hdfs.index.format.orc.OrcWriter");
 
   def this(path: String) {
@@ -62,6 +63,8 @@ class ORCFileWriter(batchSize: Int = 10000) extends scray.hdfs.index.format.Writ
         e.printStackTrace();
       }
     }
+    
+    numberOfInserts = numberOfInserts + 1
   }
 
   def insert(id: String, updateTime: Long, data: InputStream, blobSplitSize: Int = 0xFFFFF): Long = ???
@@ -87,6 +90,7 @@ class ORCFileWriter(batchSize: Int = 10000) extends scray.hdfs.index.format.Writ
       batch.reset();
     }
     
+    numberOfInserts = numberOfInserts + 1
     writer.getRawDataSize
   }
   
@@ -94,6 +98,10 @@ class ORCFileWriter(batchSize: Int = 10000) extends scray.hdfs.index.format.Writ
 
   def getBytesWritten: Long = {
     writer.getRawDataSize
+  }
+  
+  def getNumberOfInserts: Int = {
+    numberOfInserts
   }
 
   def close {

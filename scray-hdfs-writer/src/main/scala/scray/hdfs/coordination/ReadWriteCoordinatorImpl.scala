@@ -72,7 +72,7 @@ class ReadWriteCoordinatorImpl extends ReadCoordinator with WriteCoordinator wit
           val sWriter  = new SequenceFileWriter(filePath)
           writeDestinations.put(
             metadata,
-            new CoordinatedWriter(sWriter, metadata.maxFileSize, this, metadata)
+            new CoordinatedWriter(sWriter, metadata.maxFileSize, metadata.maxNumberOfInserts, this, metadata)
           )
           this.getWriter(metadata)     
         }
