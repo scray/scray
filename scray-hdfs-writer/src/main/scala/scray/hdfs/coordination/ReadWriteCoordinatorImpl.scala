@@ -32,58 +32,59 @@ case object IsReadyForCompaction extends CompactionState
 case object CompactionIsStarted extends CompactionState
 case object IsCompacted extends CompactionState
 
-
-
 class ReadWriteCoordinatorImpl extends ReadCoordinator with WriteCoordinator with LazyLogging {
-  
+
   private val readSource = new HashMap[String, Buffer[Version]]
   private val writeDestinations = new HashMap[WriteDestination, CoordinatedWriter]
 
   private val availableForCompaction = new HashMap[String, Buffer[Version]]
   private val activeCompactions = new HashMap[String, Buffer[Version]]
 
-
   def getWriter(metadata: WriteDestination): Writer = {
-    this.getWriter(metadata.queryspace, metadata.path, metadata.fileFormat)
-  }
-
-  def getWriter(queryspace: String, path: String, fileFormat: IHdfsWriterConstats.FileFormat): Writer = {
-    writeDestinations.get(WriteDestination(queryspace, path, fileFormat)) match {
+    writeDestinations.get(metadata) match {
       case Some(writer) => {
-        if(writer.isClosed) {
-          createNewWriter(queryspace, path, fileFormat)
+        if (writer.isClosed) {
+          createNewWriter(metadata)
         } else {
           writer
         }
       }
-      case None => createNewWriter(queryspace, path, fileFormat)
+      case None => createNewWriter(metadata)
     }
+  }
+
+  def getWriter(queryspace: String, path: String, fileFormat: IHdfsWriterConstats.FileFormat): Writer = {
+    this.getWriter(WriteDestination(queryspace, path, fileFormat))
   }
 
   def getNewWriter(metadata: WriteDestination): Writer = {
     this.createNewWriter(metadata.queryspace, metadata.path, metadata.fileFormat)
   }
-  
+
   private def createNewWriter(queryspace: String, path: String, fileFormat: IHdfsWriterConstats.FileFormat): Writer = {
-    fileFormat match {
-        case format: IHdfsWriterConstats.FileFormat => {
-          val metadata = WriteDestination(queryspace, path, format)
-          val filePath = this.getPath(path, queryspace, metadata.version.number)
-          val sWriter  = new SequenceFileWriter(filePath)
-          writeDestinations.put(
-            metadata,
-            new CoordinatedWriter(sWriter, metadata.maxFileSize, metadata.maxNumberOfInserts, this, metadata)
-          )
-          this.getWriter(metadata)     
-        }
-        case _ => new SequenceFileWriter(s"${path}/${queryspace}/")
+    this.createNewWriter(WriteDestination(queryspace, path, fileFormat))
+  }
+
+  private def createNewWriter(metadata: WriteDestination): Writer = {
+    metadata.fileFormat match {
+      case format: IHdfsWriterConstats.FileFormat => {
+        val filePath = this.getPath(metadata.path, metadata.queryspace, metadata.version.number)
+        val sWriter = new SequenceFileWriter(filePath)
+        writeDestinations.put(
+          metadata,
+          new CoordinatedWriter(sWriter, metadata.maxFileSize, this, metadata))
+        this.getWriter(metadata)
       }
+      case _ => new SequenceFileWriter(s"${metadata.path}/${metadata.queryspace}/")
+    }
   }
   
+
+
   def registerNewWriteDestination(queryspace: String) = ???
   def switchToNextVersion(queryspace: String) = ???
   def getReadSources(queryspace: String): Option[List[Version]] = ???
- 
+
   private def getPath(basePath: String, queryspace: String, version: Int): String = {
     if (basePath.endsWith("/")) {
       s"${basePath}scray-data-${queryspace}-v${version}/${UUID.randomUUID()}"
