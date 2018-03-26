@@ -81,7 +81,9 @@ class ReadWriteCoordinatorImpl extends ReadCoordinator with WriteCoordinator wit
   
 
 
-  def registerNewWriteDestination(queryspace: String) = ???
+  def registerNewWriteDestination(queryspace: String) = {
+    println("Otto 44 not implemented")
+  }
   def switchToNextVersion(queryspace: String) = ???
   def getReadSources(queryspace: String): Option[List[Version]] = ???
 

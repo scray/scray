@@ -5,6 +5,8 @@ import scray.hdfs.coordination.ReadWriteCoordinatorImpl
 import scray.hdfs.coordination.IHdfsWriterConstats
 import scray.hdfs.coordination.WriteDestination
 import scray.hdfs.coordination.Version
+import java.io.ByteArrayInputStream
+import java.math.BigInteger
 
 
 object CoordinatedWriterExample {
@@ -16,11 +18,12 @@ object CoordinatedWriterExample {
     println(metadata.maxNumberOfInserts)
     val writer = writerRegistry.getWriter(metadata)
     
-    for(i <- 0 to 1000000) {
-          val a = i + ""
-          val b = System.currentTimeMillis()
-          val c = s"Hallo ${i}".getBytes
-      writer.insert(a, b, c)
+    for(i <- 0 to 50) {
+          val id = i + ""
+          val time = System.currentTimeMillis()
+          val stream =  new ByteArrayInputStream(s"Hallo ${i}".getBytes)
+          val size = new BigInteger("12")
+      writer.insert(id, time, stream, size, 64 * 1024 * 1024)
     }
   }
 }

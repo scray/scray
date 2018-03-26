@@ -24,14 +24,12 @@ import java.math.BigInteger
 
 class CoordinatedWriter(private var writer: Writer, maxFileSize: Long, writeCoordinator: WriteCoordinator, metadata: WriteDestination) extends LazyLogging with Writer {
   private var numInserts = 0
-  
+
   def insert(id: String, updateTime: Long, data: Array[Byte]) = synchronized {
     // Check if file size limit is reached
-    if(
-        !maxFileSizeReached(writer.getBytesWritten + data.length, maxFileSize)
-        &&
-        !maxNumInsertsReached(numInserts, metadata.maxNumberOfInserts)
-    ) {
+    if (!maxFileSizeReached(writer.getBytesWritten + data.length, maxFileSize)
+      &&
+      !maxNumInsertsReached(numInserts, metadata.maxNumberOfInserts)) {
       numInserts = numInserts + 1
       println(numInserts + "\t F: " + metadata.maxNumberOfInserts)
       writer.insert(id, updateTime, data)
@@ -43,54 +41,77 @@ class CoordinatedWriter(private var writer: Writer, maxFileSize: Long, writeCoor
       this.insert(id, updateTime, data)
     }
   }
-  
-    private def createNewBasicWriter(metadata: WriteDestination): Writer = {
+
+  private def createNewBasicWriter(metadata: WriteDestination): Writer = {
     val filePath = this.getPath(metadata.path, metadata.queryspace, metadata.version.number)
     new SequenceFileWriter(filePath)
   }
-    
-      private def getPath(basePath: String, queryspace: String, version: Int): String = {
+
+  private def getPath(basePath: String, queryspace: String, version: Int): String = {
     if (basePath.endsWith("/")) {
       s"${basePath}scray-data-${queryspace}-v${version}/${UUID.randomUUID()}"
     } else {
       s"${basePath}/scray-data-${queryspace}-v${version}/${UUID.randomUUID()}"
     }
   }
- def maxFileSizeReached(writtenBytes: Long, maxSize: Long): Boolean = {
+  def maxFileSizeReached(writtenBytes: Long, maxSize: Long): Boolean = {
     writtenBytes >= maxSize
   }
- 
- def maxNumInsertsReached(numberInserts: Int, maxNumerInserts: Int): Boolean = {
-   numberInserts >= maxNumerInserts
- }
-  
+
+  def maxNumInsertsReached(numberInserts: Int, maxNumerInserts: Int): Boolean = {
+    numberInserts >= maxNumerInserts
+  }
+
   def close: Unit = synchronized {
     varIsClosed = true
     writer.close
   }
-  
+
   def getBytesWritten: Long = {
     writer.getBytesWritten
   }
-  
+
   def getNumberOfInserts: Int = {
     writer.getNumberOfInserts
   }
-  def insert(idBlob: (String, scray.hdfs.index.format.sequence.types.Blob)): Unit = ???
   
-  override def insert(id: String, updateTime: Long,data: InputStream, dataSize: BigInteger, blobSplitSize: Int): Long = {
+  def insert(idBlob: (String, scray.hdfs.index.format.sequence.types.Blob)): Unit = {
+    logger.error("Otto not implemented")
+  }
+
+  override def insert(id: String, updateTime: Long, data: InputStream, dataSize: BigInteger, blobSplitSize: Int): Long = {
+
     // Check if file size limit is reached
-    if(writer.getBytesWritten + dataSize.longValue() < maxFileSize) {
+    if (!maxFileSizeReached(writer.getBytesWritten + dataSize.longValue(), maxFileSize)
+      &&
+      !maxNumInsertsReached(numInserts, metadata.maxNumberOfInserts)) {
+      numInserts = numInserts + 1
+      println(numInserts + "\t F: " + metadata.maxNumberOfInserts)
       writer.insert(id, updateTime, data)
     } else {
       writer.close
-      logger.debug(s"Max file size reached. Max size ${maxFileSize}.")
-      writer = writeCoordinator.getNewWriter(metadata)
+      logger.debug(s"Create new file")
+      writer = createNewBasicWriter(metadata)
+      numInserts = 0
       this.insert(id, updateTime, data)
     }
   }
-  
-  def insert(id: String, updateTime: Long, data: InputStream, blobSplitSize: Int): Long = ???
 
-  def insert(key: String, data: String) = ???
+  def insert(id: String, updateTime: Long, data: InputStream, blobSplitSize: Int): Long = {
+    // Check if file size limit is reached
+    if (!maxNumInsertsReached(numInserts, metadata.maxNumberOfInserts)) {
+      numInserts = numInserts + 1
+      writer.insert(id, updateTime, data, blobSplitSize)
+    } else {
+      writer.close
+      logger.debug(s"Create new file")
+      writer = createNewBasicWriter(metadata)
+      numInserts = 0
+      this.insert(id, updateTime, data, blobSplitSize)
+    }
+  }
+
+  def insert(key: String, data: String) = {
+    logger.error("Otto 2 not implemented")
+  }
 }

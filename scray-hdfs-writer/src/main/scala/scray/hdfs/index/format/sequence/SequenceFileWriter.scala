@@ -40,10 +40,21 @@ class SequenceFileWriter(path: String, hdfsConf: Configuration, fs: Option[FileS
 
   var dataWriter: SequenceFile.Writer = null; // scalastyle:off null
   var idxWriter: SequenceFile.Writer = null; // scalastyle:off null
+
+  if(getClass.getClassLoader != null) {
+    hdfsConf.setClassLoader(getClass.getClassLoader)
+  }
+
   var numberOfInserts: Int = 0
 
   val idxValue = new IndexValue("k1", 42, 42) // Block position in data file
 
+      var loader = getClass().getClassLoader();
+    while (loader != null) {
+      System.out.println ("Esel2 HDFS" + loader.getClass().getName());
+      loader = loader.getParent();
+    }
+  
   def this(path: String) = {
     this(path, new Configuration, None)
   }
@@ -81,6 +92,12 @@ class SequenceFileWriter(path: String, hdfsConf: Configuration, fs: Option[FileS
   }
   
   override def insert(id: String, updateTime: Long, data: Array[Byte]): Long = {
+    
+    var loader = getClass().getClassLoader();
+    while (loader != null) {
+      System.out.println ("Esel HDFS" + loader.getClass().getName());
+      loader = loader.getParent();
+    }
 
     hdfsConf.set("fs.hdfs.impl", "org.apache.hadoop.hdfs.DistributedFileSystem");
     hdfsConf.set("fs.file.impl", "org.apache.hadoop.fs.LocalFileSystem");
@@ -106,7 +123,7 @@ class SequenceFileWriter(path: String, hdfsConf: Configuration, fs: Option[FileS
   override def insert(id: String, updateTime: Long, data: InputStream, blobSplitSize: Int = 5 * 1024 * 1024): Long = {
     hdfsConf.set("fs.hdfs.impl", "org.apache.hadoop.hdfs.DistributedFileSystem");
     hdfsConf.set("fs.file.impl", "org.apache.hadoop.fs.LocalFileSystem");
-    
+        
     if (dataWriter == null) { // scalastyle:off null
       dataWriter = initWriter(new BlobKey, new Blob, fs.getOrElse(FileSystem.get(hdfsConf)), ".blob")
     }
@@ -139,6 +156,10 @@ class SequenceFileWriter(path: String, hdfsConf: Configuration, fs: Option[FileS
     numberOfInserts = numberOfInserts + 1
     dataWriter.getLength + idxWriter.getLength
   }
+  
+  override def insert(id: String, updateTime: Long, data: InputStream, dataSize: BigInteger, blobSplitSize: Int): Long = {
+    this.insert(id, updateTime, data, blobSplitSize)
+  }
 
   override def insert(idBlob: Tuple2[String, Blob]): Unit = {
     hdfsConf.set("fs.hdfs.impl", "org.apache.hadoop.hdfs.DistributedFileSystem");
@@ -163,9 +184,6 @@ class SequenceFileWriter(path: String, hdfsConf: Configuration, fs: Option[FileS
     numberOfInserts = numberOfInserts + 1
   }
   
-  override def insert(id: String, updateTime: Long, data: InputStream, dataSize: BigInteger, blobSplitSize: Int): Long = ???
-
-
   def insert(id: String, updateTime: Long, data: String): Unit = {
     hdfsConf.set("fs.hdfs.impl", "org.apache.hadoop.hdfs.DistributedFileSystem");
     hdfsConf.set("fs.file.impl", "org.apache.hadoop.fs.LocalFileSystem");

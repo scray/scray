@@ -25,6 +25,10 @@ import com.typesafe.scalalogging.LazyLogging
 
 class IdxReader(path: String, hdfsConf: Configuration, fs: Option[FileSystem]) extends LazyLogging {
 
+      if(getClass.getClassLoader == null) {
+      hdfsConf.setClassLoader(getClass.getClassLoader)
+    }
+  
   logger.debug(s"Try to read from path ${path}")
   val reader: SequenceFile.Reader = new SequenceFile.Reader(hdfsConf, Reader.file(new Path(path)), Reader.bufferSize(4096));
 
