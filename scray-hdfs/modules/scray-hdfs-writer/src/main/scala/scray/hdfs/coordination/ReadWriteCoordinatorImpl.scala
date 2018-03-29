@@ -82,10 +82,18 @@ class ReadWriteCoordinatorImpl extends ReadCoordinator with WriteCoordinator wit
 
 
   def registerNewWriteDestination(queryspace: String) = {
-    println("Otto 44 not implemented")
+    val e = new RuntimeException("")
+    e.printStackTrace()
   }
-  def switchToNextVersion(queryspace: String) = ???
-  def getReadSources(queryspace: String): Option[List[Version]] = ???
+  def switchToNextVersion(queryspace: String) = {
+    val e = new RuntimeException("")
+    e.printStackTrace()
+  }
+  def getReadSources(queryspace: String): Option[List[Version]] = {
+    val e = new RuntimeException("")
+    e.printStackTrace();
+    None
+  }
 
   private def getPath(basePath: String, queryspace: String, version: Int): String = {
     if (basePath.endsWith("/")) {

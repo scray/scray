@@ -5,14 +5,14 @@
 		<groupId>org.scray</groupId>
 		<artifactId>scray-parent</artifactId>
 		<version>0.10.1-SNAPSHOT</version>
-		<relativePath>../pom.xml</relativePath>
+		<relativePath>../../../pom.xml</relativePath>
 	</parent>
 
 	<modelVersion>4.0.0</modelVersion>
-	<artifactId>scray-hdfs</artifactId>
-	<name>Scray - HDFS</name>
-	<description>scray adapter to read BLOBs from HDFS</description>
-	<packaging>pom</packaging>
+	<artifactId>scray-hdfs-service-adapter</artifactId>
+	<name>Scray - HDFS service adapter</name>
+	<description>Scray adapter to read BLOBs from HDFS</description>
+	<packaging>jar</packaging>
 
 	<distributionManagement>
 		<snapshotRepository>
@@ -24,12 +24,6 @@
 			<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
 		</repository>
 	</distributionManagement>
-
-	<modules>
-		<module>/modules/scray-hdfs-writer</module>
-		<module>/modules/scray-hdfs-service-adapter</module>
-	</modules>
-
 	<dependencies>
 		<dependency>
 			<groupId>org.scray</groupId>

@@ -71,7 +71,7 @@
 		</dependency>
 		<dependency>
 			<groupId>org.scray</groupId>
-			<artifactId>scray-hdfs</artifactId>
+			<artifactId>scray-hdfs-service-adapter</artifactId>
 			<version>0.10.1-SNAPSHOT</version>
 			<exclusions>
 				<exclusion>

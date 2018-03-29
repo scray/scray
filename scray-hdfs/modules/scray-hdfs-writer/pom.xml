@@ -10,7 +10,7 @@
 
 	<modelVersion>4.0.0</modelVersion>
 	<artifactId>scray-hdfs-writer</artifactId>
-	<name>Scray - HDFS-Writer</name>
+	<name>Scray - HDFS writer</name>
 	<description>scray adapter to write BLOBs to HDFS</description>
 
 	<distributionManagement>
@@ -37,9 +37,9 @@
 			</exclusions>
 		</dependency>
 		<dependency>
-		<groupId>org.apache.hadoop</groupId>
-		<artifactId>hadoop-hdfs</artifactId>
-		<version>2.6.4</version>
+			<groupId>org.apache.hadoop</groupId>
+			<artifactId>hadoop-hdfs</artifactId>
+			<version>2.6.4</version>
 		</dependency>
 		<dependency>
 			<groupId>org.mapdb</groupId>
@@ -54,7 +54,7 @@
 	</dependencies>
 	<build>
 		<plugins>
-		<plugin>
+			<plugin>
 				<artifactId>maven-dependency-plugin</artifactId>
 				<executions>
 					<execution>
@@ -75,7 +75,7 @@
 				<configuration>
 					<source>1.8</source>
 					<target>1.8</target>
-					
+
 				</configuration>
 			</plugin>
 			<plugin>
@@ -103,27 +103,16 @@
 				<version>2.4.0</version>
 				<extensions>true</extensions>
 				<configuration>
-				
-				
 					<instructions>
 						<Embed-Dependency>*</Embed-Dependency>
 						<Embed-Transitive>true</Embed-Transitive>
 						<Export-Package>org.apache.hadoop.fs,scray.hdfs.coordination,scray.hdfs.index.format.sequence,scray.hdfs.index.format,scray.hdfs.index.format.sequence.types,scray.hdfs.index.format.orc</Export-Package>
-<!-- 							<Import-Package>!*</Import-Package> -->
-	
+						<!-- <Import-Package>!*</Import-Package> -->
 						<Import-Package>!*,javax.management,javax.*,javax,javax.security.auth.login,javax.security.auth.spi,javax.security.auth.kerberos,javax.security.auth,javax.security.auth.callback,javax.net</Import-Package>
-						<_exportcontents>org.apache.hadoop.*,org.apache.hadoop,org.apache.hadoop.security,org.apache.hadoop.security.*</_exportcontents>
+						<_exportcontents>org.apache.hadoop.*,
+						org.apache.hadoop,org.apache.hadoop.security,
+						org.apache.hadoop.security.*</_exportcontents>
 					</instructions>
-					
-<!-- 					<archive> -->
-<!--                                 <manifest> -->
-<!--                                 <addClasspath>true</addClasspath> -->
-<!--                                     <addClasspath>true</addClasspath> -->
-<!--                                     <mainClass>scray.hdfs.index.format.example.ReadExampleSequenceFile</mainClass> -->
-<!--                                     <classpathPrefix>dependency-jars/</classpathPrefix> -->
-<!--                                 </manifest> -->
-<!--                             </archive> -->
-					
 				</configuration>
 			</plugin>
 		</plugins>
