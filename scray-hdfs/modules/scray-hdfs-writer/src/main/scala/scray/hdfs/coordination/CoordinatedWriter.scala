@@ -15,7 +15,7 @@
 
 package scray.hdfs.coordination
 
-import scray.hdfs.index.format.sequence.SequenceFileWriter
+import scray.hdfs.index.format.sequence.BinarySequenceFileWriter
 import java.util.UUID
 import com.typesafe.scalalogging.LazyLogging
 import scray.hdfs.index.format.Writer
@@ -44,7 +44,7 @@ class CoordinatedWriter(private var writer: Writer, maxFileSize: Long, writeCoor
 
   private def createNewBasicWriter(metadata: WriteDestination): Writer = {
     val filePath = this.getPath(metadata.path, metadata.queryspace, metadata.version.number)
-    new SequenceFileWriter(filePath)
+    new BinarySequenceFileWriter(filePath)
   }
 
   private def getPath(basePath: String, queryspace: String, version: Int): String = {

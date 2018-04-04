@@ -36,7 +36,7 @@ import scray.hdfs.index.format.sequence.types.BlobKey
 import scray.hdfs.index.format.sequence.types.IndexValue
 import java.math.BigInteger
 
-class SequenceFileWriter(path: String, hdfsConf: Configuration, fs: Option[FileSystem]) extends scray.hdfs.index.format.Writer with LazyLogging {
+class BinarySequenceFileWriter(path: String, hdfsConf: Configuration, fs: Option[FileSystem]) extends scray.hdfs.index.format.Writer with LazyLogging {
 
   var dataWriter: SequenceFile.Writer = null; // scalastyle:off null
   var idxWriter: SequenceFile.Writer = null; // scalastyle:off null

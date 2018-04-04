@@ -1,6 +1,6 @@
 package scray.hdfs.index.format.report
 
-import scray.hdfs.index.format.sequence.SequenceFileWriter
+import scray.hdfs.index.format.sequence.BinarySequenceFileWriter
 import scray.hdfs.index.format.orc.ORCFileWriter
 
 object Perf {
@@ -12,7 +12,7 @@ object Perf {
 		
 		format match {
 		  case "orc" => {writer = new ORCFileWriter(url.concat(".orc") ) }
-		  case "seq" => writer = new SequenceFileWriter(url)
+		  case "seq" => writer = new BinarySequenceFileWriter(url)
 		}
 		
 				val insertStart = System.currentTimeMillis();
