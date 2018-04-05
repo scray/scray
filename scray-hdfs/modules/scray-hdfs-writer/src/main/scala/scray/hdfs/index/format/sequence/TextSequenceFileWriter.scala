@@ -12,25 +12,17 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-package scray.hdfs.index.format.sequence.types
-
-import java.io.InputStream
+package scray.hdfs.index.format.sequence
 
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.FileSystem
 import org.apache.hadoop.fs.Path
-import org.apache.hadoop.io.BytesWritable
 import org.apache.hadoop.io.IOUtils
 import org.apache.hadoop.io.SequenceFile
 import org.apache.hadoop.io.SequenceFile.Metadata
 import org.apache.hadoop.io.SequenceFile.Writer
 import org.apache.hadoop.io.Text
-import org.apache.hadoop.io.Writable
-
 import com.typesafe.scalalogging.LazyLogging
-
-import scray.hdfs.index.format.Writer
-import java.math.BigInteger
 
 class TextSequenceFileWriter (path: String, hdfsConf: Configuration, fs: Option[FileSystem]) extends LazyLogging {
 
