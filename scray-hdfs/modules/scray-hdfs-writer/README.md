@@ -2,7 +2,7 @@
   * Store multiple key value pairs in one SequenceFile
   * Read and write data with java.io.InputStream
   * Api to store String and Array[Byte] data
-  * Store huge binary files (internally data are splitted and merged while reading)
+  * Store huge binary files (internally data are splitted and merged while writing/reading)
 
 ### Example: Write JSON data and query data with Apache Hive
   Create Hive table:
@@ -31,6 +31,7 @@
     writer.close
 
   Query data with Hive:
+  
     SELECT * FROM scray
     SELECT count(*) FROM scray
     SELECT count(*) FROM scray3 WHERE msg='msg1'
