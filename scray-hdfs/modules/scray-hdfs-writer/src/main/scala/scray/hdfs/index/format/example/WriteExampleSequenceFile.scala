@@ -15,7 +15,7 @@
 
 package scray.hdfs.index.format.example
 
-import scray.hdfs.index.format.sequence.SequenceFileWriter
+import scray.hdfs.index.format.sequence.BinarySequenceFileWriter
 
 object WriteExampleSequenceFile {
 
@@ -25,15 +25,13 @@ object WriteExampleSequenceFile {
       println("No HDFS URL defined. E.g. hdfs://127.0.0.1/user/scray/scray-hdfs-data/")
     } else {
 
-      val writer = new SequenceFileWriter(s"${args(0)}/scray-data-${System.currentTimeMillis()}")
+      val writer = new BinarySequenceFileWriter(s"hdfs://host1.scray.org/user/hive/warehouse/bisedi/ff2")
 
       val insertStart = System.currentTimeMillis();
       
       for (i <- 0 to 1000000) {
         val key = "key_" + i
         val value = "data_" + i
-
-        //println(s"Write key value data. key=${key}, value=${value}")
 
         writer.insert(key, System.currentTimeMillis(), value.getBytes)
         

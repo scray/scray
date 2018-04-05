@@ -36,7 +36,7 @@ import scray.hdfs.index.format.sequence.types.BlobKey
 import scray.hdfs.index.format.sequence.types.IndexValue
 import java.math.BigInteger
 
-class SequenceFileWriter(path: String, hdfsConf: Configuration, fs: Option[FileSystem]) extends scray.hdfs.index.format.Writer with LazyLogging {
+class BinarySequenceFileWriter(path: String, hdfsConf: Configuration, fs: Option[FileSystem]) extends scray.hdfs.index.format.Writer with LazyLogging {
 
   var dataWriter: SequenceFile.Writer = null; // scalastyle:off null
   var idxWriter: SequenceFile.Writer = null; // scalastyle:off null
@@ -48,12 +48,6 @@ class SequenceFileWriter(path: String, hdfsConf: Configuration, fs: Option[FileS
   var numberOfInserts: Int = 0
 
   val idxValue = new IndexValue("k1", 42, 42) // Block position in data file
-
-      var loader = getClass().getClassLoader();
-    while (loader != null) {
-      System.out.println ("Esel2 HDFS" + loader.getClass().getName());
-      loader = loader.getParent();
-    }
   
   def this(path: String) = {
     this(path, new Configuration, None)
@@ -90,14 +84,8 @@ class SequenceFileWriter(path: String, hdfsConf: Configuration, fs: Option[FileS
     if (dataWriter != null)dataWriter.hflush() 
     if (idxWriter != null)idxWriter.hflush() 
   }
-  
-  override def insert(id: String, updateTime: Long, data: Array[Byte]): Long = {
     
-    var loader = getClass().getClassLoader();
-    while (loader != null) {
-      System.out.println ("Esel HDFS" + loader.getClass().getName());
-      loader = loader.getParent();
-    }
+  override def insert(id: String, updateTime: Long, data: Array[Byte]): Long = {
 
     hdfsConf.set("fs.hdfs.impl", "org.apache.hadoop.hdfs.DistributedFileSystem");
     hdfsConf.set("fs.file.impl", "org.apache.hadoop.fs.LocalFileSystem");

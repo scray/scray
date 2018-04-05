@@ -29,7 +29,7 @@ import scray.hdfs.index.format.sequence.types.IndexValue
 import org.apache.hadoop.fs.FSDataOutputStream
 import java.io.FileOutputStream
 import scray.hdfs.index.format.sequence.types.Blob
-import scray.hdfs.index.format.sequence.SequenceFileWriter
+import scray.hdfs.index.format.sequence.BinarySequenceFileWriter
 import scray.hdfs.index.format.sequence.IdxReader
 import scray.hdfs.index.format.sequence.BlobFileReader
 import scala.collection.mutable.HashMap
@@ -49,7 +49,7 @@ object CopyToSequenceFile {
       val sourceFile = args(0)
       val destination = args(1)
 
-      val destWriter = new SequenceFileWriter(destination, new Configuration, None)
+      val destWriter = new BinarySequenceFileWriter(destination, new Configuration, None)
 
       val sourceReader = new FileInputStream(sourceFile)
       val filename = sourceFile.split(System.getProperty("file.separator")).last

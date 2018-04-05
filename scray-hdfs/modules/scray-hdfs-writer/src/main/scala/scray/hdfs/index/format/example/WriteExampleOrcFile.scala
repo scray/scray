@@ -15,7 +15,7 @@
 
 package scray.hdfs.index.format.example
 
-import scray.hdfs.index.format.sequence.SequenceFileWriter
+import scray.hdfs.index.format.sequence.BinarySequenceFileWriter
 import scray.hdfs.index.format.orc.ORCFileWriter
 
 object WriteExampleOrcFile {

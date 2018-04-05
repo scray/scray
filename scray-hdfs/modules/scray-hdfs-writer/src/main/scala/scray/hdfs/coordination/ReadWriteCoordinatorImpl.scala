@@ -22,7 +22,7 @@ import com.typesafe.scalalogging.LazyLogging
 import scala.collection.mutable.MutableList
 import scala.collection.mutable.ListBuffer
 import scala.collection.mutable.Buffer
-import scray.hdfs.index.format.sequence.SequenceFileWriter
+import scray.hdfs.index.format.sequence.BinarySequenceFileWriter
 import scray.hdfs.index.format.Writer
 import java.util.UUID
 
@@ -69,13 +69,13 @@ class ReadWriteCoordinatorImpl extends ReadCoordinator with WriteCoordinator wit
     metadata.fileFormat match {
       case format: IHdfsWriterConstats.FileFormat => {
         val filePath = this.getPath(metadata.path, metadata.queryspace, metadata.version.number)
-        val sWriter = new SequenceFileWriter(filePath)
+        val sWriter = new BinarySequenceFileWriter(filePath)
         writeDestinations.put(
           metadata,
           new CoordinatedWriter(sWriter, metadata.maxFileSize, this, metadata))
         this.getWriter(metadata)
       }
-      case _ => new SequenceFileWriter(s"${metadata.path}/${metadata.queryspace}/")
+      case _ => new BinarySequenceFileWriter(s"${metadata.path}/${metadata.queryspace}/")
     }
   }
   
