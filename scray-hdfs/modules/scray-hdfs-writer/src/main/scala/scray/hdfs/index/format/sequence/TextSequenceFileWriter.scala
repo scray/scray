@@ -23,6 +23,7 @@ import org.apache.hadoop.io.SequenceFile.Metadata
 import org.apache.hadoop.io.SequenceFile.Writer
 import org.apache.hadoop.io.Text
 import com.typesafe.scalalogging.LazyLogging
+import java.io.InputStream
 
 class TextSequenceFileWriter (path: String, hdfsConf: Configuration, fs: Option[FileSystem]) extends LazyLogging {
 
@@ -84,8 +85,7 @@ class TextSequenceFileWriter (path: String, hdfsConf: Configuration, fs: Option[
     numberOfInserts = numberOfInserts + 1
     dataWriter.getLength
   }
-
-
+  
   def getBytesWritten: Long = {
     if (dataWriter == null) { // scalastyle:off null
       0
