@@ -209,5 +209,4 @@ class BinarySequenceFileWriter(path: String, hdfsConf: Configuration, fs: Option
     IOUtils.closeStream(dataWriter);
     IOUtils.closeStream(idxWriter);
   }
-
 }
