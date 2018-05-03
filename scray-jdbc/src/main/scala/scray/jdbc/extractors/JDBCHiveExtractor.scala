@@ -206,7 +206,7 @@ class JDBCHiveExtractors[Q <: DomainQuery, S <: JDBCHiveQueryableSource[Q]](
   /**
    * returns the column configuration for a column
    */
-  override def getColumnConfiguration(session: DbSession[_, _, _],
+  override def getColumnConfiguration(session: DbSession[_, _, _, _],
       dbName: String,
       table: String,
       column: Column,
@@ -221,7 +221,7 @@ class JDBCHiveExtractors[Q <: DomainQuery, S <: JDBCHiveQueryableSource[Q]](
    * returns all column configurations
    */
   override def getColumnConfigurations(
-      session: DbSession[_, _, _],
+      session: DbSession[_, _, _, _],
       dbName: String,
       table: String,
       querySpace: QueryspaceConfiguration, 

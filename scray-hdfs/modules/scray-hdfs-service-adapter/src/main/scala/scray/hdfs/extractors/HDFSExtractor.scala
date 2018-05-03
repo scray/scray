@@ -38,7 +38,7 @@ class HDFSExtractor[Q <: DomainQuery, T <: org.apache.hadoop.io.Text, S <: HDFSQ
   }
   override def getDefaultDBSystem: String = "HDFS"
   override def getTableIdentifier(store: S, tableName: Option[String], dbSystem: Option[String]): TableIdentifier = ti
-  override def getColumnConfiguration(session: DbSession[_, _, _],
+  override def getColumnConfiguration(session: DbSession[_, _, _, _],
       dbName: String,
       table: String,
       column: Column,

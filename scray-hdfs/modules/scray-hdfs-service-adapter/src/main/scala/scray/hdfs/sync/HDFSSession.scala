@@ -12,7 +12,7 @@ import com.typesafe.scalalogging.LazyLogging
 /**
  * Session object used only for compatibility
  */
-class HDFSSession(val directory: String) extends DbSession[Nothing,Nothing,Nothing](directory) with LazyLogging{
+class HDFSSession(val directory: String) extends DbSession[Nothing,Nothing,Nothing, Nothing](directory) with LazyLogging{
   // ??? is by intention, as these methods have no meaning in the context of plain HDFS  
   def execute(statement: Nothing): Try[Nothing] = Try[Nothing] { ??? }
   def execute(statement: String): Try[Nothing] = Try[Nothing] { ??? }

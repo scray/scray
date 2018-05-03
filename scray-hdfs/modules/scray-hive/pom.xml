@@ -5,13 +5,13 @@
 		<groupId>org.scray</groupId>
 		<artifactId>scray-parent</artifactId>
 		<version>0.10.1-SNAPSHOT</version>
-		<relativePath>../../../pom.xml</relativePath>
+		<relativePath>../pom.xml</relativePath>
 	</parent>
 
 	<modelVersion>4.0.0</modelVersion>
-	<artifactId>scray-hdfs-writer</artifactId>
-	<name>Scray - HDFS writer</name>
-	<description>scray adapter to write BLOBs to HDFS</description>
+	<artifactId>scray-hive</artifactId>
+	<name>Scray - Hive table creator</name>
+	<description>Bundle to create Hive tables from XML, JSON example data</description>
 
 	<distributionManagement>
 		<snapshotRepository>
@@ -25,38 +25,6 @@
 	</distributionManagement>
 
 	<dependencies>
-		<dependency>
-			<groupId>org.apache.orc</groupId>
-			<artifactId>orc-core</artifactId>
-			<version>1.4.1</version>
-			<exclusions>
-				<exclusion>
-					<groupId>org.slf4j</groupId>
-					<artifactId>slf4j-log4j12</artifactId>
-				</exclusion>
-			</exclusions>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.hadoop</groupId>
-			<artifactId>hadoop-hdfs</artifactId>
-			<version>2.6.4</version>
-			<exclusions>
-				<exclusion>
-					<groupId>xml-apis</groupId>
-					<artifactId>xml-apis</artifactId>
-				</exclusion>
-			</exclusions>
-		</dependency>
-		<dependency>
-			<groupId>org.mapdb</groupId>
-			<artifactId>mapdb</artifactId>
-			<version>1.0.6</version>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.avro</groupId>
-			<artifactId>avro</artifactId>
-			<version>1.8.2</version>
-		</dependency>
 	</dependencies>
 	<build>
 		<plugins>
@@ -112,7 +80,7 @@
 					<instructions>
 						<Embed-Dependency>*</Embed-Dependency>
 						<Embed-Transitive>true</Embed-Transitive>
-						<Export-Package>org.apache.hadoop.fs,org.apache.hadoop.hdfs,scray.hdfs.coordination,scray.hdfs.index.format.sequence,scray.hdfs.index.format.raw,scray.hdfs.index.format,scray.hdfs.index.format.sequence.types,scray.hdfs.index.format.orc</Export-Package>
+						<Export-Package>org.apache.hadoop.fs,scray.hdfs.coordination,scray.hdfs.index.format.sequence,scray.hdfs.index.format,scray.hdfs.index.format.sequence.types,scray.hdfs.index.format.orc</Export-Package>
 						<Import-Package>
 							!*,
 							org.osgi.framework,
@@ -133,9 +101,7 @@
 							org.apache.hadoop.*,
 							org.apache.hadoop,
 							org.apache.hadoop.security,
-							org.apache.hadoop.security.*,
-							org.apache.hadoop.hdfs,
-							org.apache.hadoop.hdfs.*
+							org.apache.hadoop.security.*
 						</_exportcontents>
 					</instructions>
 				</configuration>
