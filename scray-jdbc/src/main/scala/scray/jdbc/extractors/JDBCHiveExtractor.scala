@@ -28,12 +28,12 @@ import scray.jdbc.sync.JDBCDbSession
 import scray.querying.description.AutoIndexConfiguration
 import scray.querying.description.IndexConfiguration
 import java.sql.Types
-import com.typesafe.scalalogging.slf4j.LazyLogging
 import scray.querying.description.internal.Domain
 import java.util.concurrent.locks.ReentrantLock
 import scala.collection.mutable.HashTable
 import scala.collection.mutable.HashMap
 import java.sql.DatabaseMetaData
+import com.typesafe.scalalogging.LazyLogging
 
 
 /**
@@ -145,13 +145,18 @@ class JDBCHiveExtractors[Q <: DomainQuery, S <: JDBCHiveQueryableSource[Q]](
         getColumns,
         getColumns.map(col => 
           // TODO: ManualIndexConfiguration and Map of Splitter must be extracted from config
-          getColumnConfiguration(jdbcSession, ti.dbId, ti.tableId, Column(col.columnName, ti), None, Map())),
+          getColumnConfiguration(jdbcSession,
+              ti.dbId, 
+              ti.tableId, 
+              Column(col.columnName, ti), 
+              None, 
+              Map.empty[Column, Splitter[_]])),
         hikari,
         new DomainToHiveSQLQueryMapping[Q, JDBCHiveQueryableSource[Q]](),
         futurePool,
         rowMapper.asInstanceOf[ResultSet => Row],
         sqlDialect)
-      )  
+      ) 
     TableConfiguration(
         ti, 
         None, 
@@ -201,11 +206,11 @@ class JDBCHiveExtractors[Q <: DomainQuery, S <: JDBCHiveQueryableSource[Q]](
   /**
    * returns the column configuration for a column
    */
-  def getColumnConfiguration(session: DbSession[_, _, _],
+  override def getColumnConfiguration(session: DbSession[_, _, _],
       dbName: String,
       table: String,
       column: Column,
-      index: Option[ManuallyIndexConfiguration[_, _, _, _, _]],
+      index: Option[ManuallyIndexConfiguration[_ <: DomainQuery, _ <: DomainQuery, _, _, _ <: DomainQuery]],
       splitters: Map[Column, Splitter[_]]): ColumnConfiguration = {
     
     logger.error(column.columnName)
@@ -215,11 +220,12 @@ class JDBCHiveExtractors[Q <: DomainQuery, S <: JDBCHiveQueryableSource[Q]](
   /**
    * returns all column configurations
    */
-  override def getColumnConfigurations(session: DbSession[_, _, _],
+  override def getColumnConfigurations(
+      session: DbSession[_, _, _],
       dbName: String,
       table: String,
       querySpace: QueryspaceConfiguration, 
-      indexes: Map[String, ManuallyIndexConfiguration[_, _, _, _, _]],
+      indexes: Map[String, ManuallyIndexConfiguration[_ <: DomainQuery, _ <: DomainQuery, _, _, _ <: DomainQuery]],
       splitters: Map[Column, Splitter[_]]): Set[ColumnConfiguration] = {
     
     logger.error(table)
@@ -233,7 +239,7 @@ class JDBCHiveExtractors[Q <: DomainQuery, S <: JDBCHiveQueryableSource[Q]](
       indexes: Map[_ <: (QueryableStoreSource[_ <: DomainQuery], String), _ <: (QueryableStoreSource[_ <: DomainQuery], String, 
           IndexConfig, Option[Function1[_, _]], Set[String])],
       mappers: Map[_ <: QueryableStoreSource[_], ((_) => Row, Option[String], Option[VersioningConfiguration[_, _]])]): 
-      Option[ManuallyIndexConfiguration[_, _, _, _, _]] = None
+      Option[ManuallyIndexConfiguration[_ <: DomainQuery, _ <: DomainQuery, _, _, _ <: DomainQuery]] = None
 
   private def getTableConfigurationFunction[Q <: DomainQuery, K <: DomainQuery, V](ti: TableIdentifier, space: String, version: Int): TableConfiguration[Q, K, V] = 
     Registry.getQuerySpaceTable(space, version, ti).get.asInstanceOf[TableConfiguration[Q, K, V]]

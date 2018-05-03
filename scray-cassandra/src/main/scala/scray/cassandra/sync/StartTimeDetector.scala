@@ -19,14 +19,33 @@ import java.util.concurrent.{Callable, Executors, TimeUnit, TimeoutException}
 
 import com.datastax.driver.core.{Cluster, ResultSet, Row, Statement}
 import com.datastax.driver.core.querybuilder.{Insert, QueryBuilder}
-import com.typesafe.scalalogging.slf4j.{LazyLogging, Logger}
 import org.slf4j.LoggerFactory
+
+import com.datastax.driver.core.Cluster
+import com.datastax.driver.core.ResultSet
+import com.datastax.driver.core.Row
+import com.datastax.driver.core.Statement
+import com.datastax.driver.core.querybuilder.Insert
+import com.datastax.driver.core.querybuilder.QueryBuilder
+import com.typesafe.scalalogging.LazyLogging
+
+import scray.cassandra.sync.CassandraImplementation.genericCassandraColumnImplicit
+import scray.cassandra.util.CassandraUtils
+import scray.querying.sync.ArbitrarylyTypedRows
+import scray.querying.sync.Column
+import scray.querying.sync.DBColumnImplementation
+import scray.querying.sync.DbSession
+import scray.querying.sync.JobInfo
+import scray.querying.sync.Table
+import shapeless.syntax.singleton._
+import com.typesafe.scalalogging.LazyLogging
 import scray.cassandra.sync.CassandraImplementation.genericCassandraColumnImplicit
 import scray.cassandra.util.CassandraUtils
 import scray.querying.sync._
-
 import scala.collection.JavaConverters._
 import scala.util.Try
+import scray.querying.sync.conf.SyncConfigurationLoader
+import scray.querying.sync.conf.SyncConfiguration
 
 /**
  * Find a consensus about the start time of a job.
@@ -37,7 +56,9 @@ import scala.util.Try
 class StartTimeDetector(job: JobInfo[Statement, Insert, ResultSet],
                         dbSession: DbSession[Statement, Insert, ResultSet]) extends LazyLogging {
 
-  val startConsensusTable = new Table("silidx", "startconsensus", new StartConsensusRow)
+  val configSync: SyncConfiguration = SyncConfigurationLoader.loadConfig
+  val startConsensusTable = new Table(configSync.dbSystem, "startconsensus", new StartConsensusRow)
+  
   var valueAlreadySet = false
 
   def this(job: JobInfo[Statement, Insert, ResultSet], dbHostname: String) {
@@ -49,7 +70,7 @@ class StartTimeDetector(job: JobInfo[Statement, Insert, ResultSet],
    */
   def init = {
     logger.debug("Init StartTimeDetector")
-    CassandraUtils.createKeyspaceCreationStatement(startConsensusTable).map { statement => dbSession.execute(statement) }
+    CassandraUtils.createKeyspaceCreationStatement(startConsensusTable, configSync.replicationSetting).map { statement => dbSession.execute(statement) }
     CassandraUtils.createTableStatement(startConsensusTable).map { statement => dbSession.execute(statement) }
   }
 
@@ -138,7 +159,6 @@ class StartTimeDetector(job: JobInfo[Statement, Insert, ResultSet],
 
     val pollingTask: Callable[Long]  = new Callable[Long] {
       
-      val logger = Logger(LoggerFactory.getLogger(this.getClass))
       val sleepTimeBetweenPolling = 5000 // ms
 
       def poll = {
@@ -150,7 +170,6 @@ class StartTimeDetector(job: JobInfo[Statement, Insert, ResultSet],
       
       def call(): Long =  {
         // poll db
-        println(poll)
         while (poll < 1) {
           logger.debug(s"No first element time found. Poll again in ${sleepTimeBetweenPolling}ms")
           Thread.sleep(sleepTimeBetweenPolling)

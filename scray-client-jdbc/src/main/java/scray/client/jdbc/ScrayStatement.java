@@ -17,8 +17,6 @@ import scray.service.qmodel.thriftjava.ScrayTTableInfo;
 import scray.service.qmodel.thriftjava.ScrayUUID;
 import scray.service.qservice.thriftjava.ScrayTResultFrame;
 
-import com.twitter.scrooge.Option;
-
 public class ScrayStatement implements java.sql.Statement {
 
 	private org.slf4j.Logger log = org.slf4j.LoggerFactory
@@ -122,9 +120,8 @@ public class ScrayStatement implements java.sql.Statement {
 		ScrayTTableInfo tinfo = new ScrayTTableInfo(url.getDbSystem(),
 				url.getDbId(), tableId);
 
-		ScrayTQueryInfo qinfo = new ScrayTQueryInfo(Option.<ScrayUUID> none(),
-				url.getQuerySpace(), tinfo, clist,
-				Option.make(true, fetchSize), Option.<Long> none());
+		ScrayTQueryInfo qinfo = new ScrayTQueryInfo(url.getQuerySpace(), tinfo, clist);
+		qinfo.setPagesize(fetchSize);
 
 		ScrayTQuery query = new ScrayTQuery(qinfo,
 				new HashMap<String, ByteBuffer>(), enrichedSql);

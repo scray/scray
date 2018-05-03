@@ -12,6 +12,7 @@
 	<artifactId>scray-hdfs</artifactId>
 	<name>Scray - HDFS</name>
 	<description>scray adapter to read BLOBs from HDFS</description>
+	<packaging>pom</packaging>
 
 	<distributionManagement>
 		<snapshotRepository>
@@ -23,6 +24,11 @@
 			<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
 		</repository>
 	</distributionManagement>
+
+	<modules>
+		<module>/modules/scray-hdfs-writer</module>
+		<module>/modules/scray-hdfs-service-adapter</module>
+	</modules>
 
 	<dependencies>
 		<dependency>
@@ -59,6 +65,11 @@
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-log4j12</artifactId>
 			<version>1.7.21</version>
+		</dependency>
+		<dependency>
+			<groupId>org.scray</groupId>
+			<artifactId>scray-hdfs-writer</artifactId>
+			<version>0.10.1-SNAPSHOT</version>
 		</dependency>
 	</dependencies>
 	<build>

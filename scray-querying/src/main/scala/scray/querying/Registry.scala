@@ -27,7 +27,7 @@ import com.twitter.util.Duration
 import com.twitter.util.JavaTimer
 import com.twitter.util.Time
 import com.twitter.util.Try
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 
 import scray.querying.caching.Cache
 import scray.querying.caching.MonitoringInfos

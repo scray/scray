@@ -15,32 +15,45 @@
 
 package scray.cassandra.sync
 
+import com.datastax.driver.core.Cluster
+import com.datastax.driver.core.ResultSet
+import com.datastax.driver.core.Statement
+import com.datastax.driver.core.querybuilder.Insert
+import com.datastax.driver.core.querybuilder.QueryBuilder
+import scala.collection.JavaConversions._
+import scray.querying.sync.JobLockTable
+import scray.querying.sync.DbSession
+import scray.common.serialization.BatchID
+import scray.querying.sync.JobInfo
+import com.typesafe.scalalogging.LazyLogging
+import scray.querying.sync.LockApi
 import com.datastax.driver.core.{Cluster, ResultSet, Statement}
 import com.datastax.driver.core.querybuilder.{Insert, QueryBuilder}
-import com.typesafe.scalalogging.slf4j.LazyLogging
 import scray.cassandra.util.CassandraUtils
 import scray.common.serialization.BatchID
+import scray.cassandra.sync.CassandraImplementation._
 import scray.querying.sync.{DbSession, JobInfo, JobLockTable, LockApi}
 import scray.querying.sync.conf.SyncConfiguration
-
+import scray.querying.sync.conf.SyncConfigurationLoader
 
 class CassandraJobInfo(
     override val name: String,
     numberOfBatchSlots: Int = 3,
     numberOfOnlineSlots: Int = 2,
+    dbSystem: String = "Cassandra",
     numberOfWorkersV: Option[Long] = None,
     lockTimeOut: Int = 500,
     syncConfV: SyncConfiguration = new SyncConfiguration) extends JobInfo[Statement, Insert, ResultSet](name, numberOfBatchSlots, numberOfOnlineSlots, numberOfWorkers = numberOfWorkersV, syncConf = syncConfV) with LazyLogging {
 
-  import CassandraImplementation.genericCassandraColumnImplicit
   
   val statementGenerator = CassandraUtils
 
   def getLock(dbSession: DbSession[Statement, Insert, ResultSet]): LockApi[Statement, Insert, ResultSet] = {
      this.lock = this.lock.orElse {
-      val table = JobLockTable("SILIDX", "JobSync")
+      val configSync: SyncConfiguration = SyncConfigurationLoader.loadConfig
+      val table = JobLockTable(configSync.dbSystem, "JobSync")
 
-      dbSession.execute(statementGenerator.createKeyspaceCreationStatement(table).get).
+      dbSession.execute(statementGenerator.createKeyspaceCreationStatement(table, configSync.replicationSetting).get).
         recover {
           case e => { logger.error(s"Synctable is unable to create keyspace ${table.keySpace} Message: ${e.getMessage}"); throw e }
         }.flatMap { _ =>

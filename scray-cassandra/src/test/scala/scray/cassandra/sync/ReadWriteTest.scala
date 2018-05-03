@@ -2,10 +2,12 @@ package scray.cassandra.sync
 
 import java.util.concurrent.atomic.AtomicInteger
 
-import com.typesafe.scalalogging.slf4j.LazyLogging
 import org.junit.runner.RunWith
 import org.scalatest.WordSpec
 import org.scalatest.junit.JUnitRunner
+import com.typesafe.scalalogging.LazyLogging
+
+import scray.cassandra.sync.CassandraImplementation._
 import scray.cassandra.sync.helpers.TestDbSession
 import scray.common.serialization.BatchID
 import scray.querying.sync.{ColumnWithValue, Merge, RowWithValue}

@@ -39,8 +39,8 @@
 		<url>https://github.com/scray</url>
 		<connection>scm:git:git://github.com/scray/scray.git</connection>
 		<developerConnection>scm:git:https://github.com/scray/scray.git</developerConnection>
-	  <tag>HEAD</tag>
-  </scm>
+		<tag>HEAD</tag>
+	</scm>
 
 	<distributionManagement>
 		<snapshotRepository>

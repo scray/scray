@@ -17,7 +17,14 @@ package scray.cassandra.sync
 
 import com.datastax.driver.core._
 import com.datastax.driver.core.querybuilder.Insert
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.datastax.driver.core.BatchStatement
+import scala.util.Try
+import scala.util.Failure
+import scala.util.Success
+import scray.querying.sync.DbSession
+import com.typesafe.scalalogging.LazyLogging
+import scray.querying.sync.StatementExecutionError
+import com.datastax.driver.core.Cluster
 import scray.querying.sync.{DbSession, StatementExecutionError}
 
 import scala.util.{Failure, Success, Try}

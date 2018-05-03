@@ -31,7 +31,7 @@ class JDBCQueryableSourceSpecs extends WordSpec {
       val data = row :: row :: row :: row :: Nil
       
       val dataSpool = JDBCQueryableSource.toRowSpool(data.iterator)
-      val countRows = dataSpool.get.foldLeft(0)((acc: Int,row: Row) => (acc + 1))
+      val countRows = Await.result(dataSpool).foldLeft(0)((acc: Int,row: Row) => (acc + 1))
       
       assert(4 === Await.result(countRows))
     }

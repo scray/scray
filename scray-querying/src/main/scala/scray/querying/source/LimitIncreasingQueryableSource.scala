@@ -29,7 +29,7 @@ import scray.querying.caching.NullCache
 import com.twitter.util.Await
 import scala.annotation.tailrec
 import LimitIncreasingQueryableSource.{ITERATOR_EXTENDER_FUNCTION, WrappingIteratorExtender, skipIteratorEntries}
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 import scray.querying.source.store.QueryableStoreSource
 import scray.querying.description.TableConfiguration
 import scray.querying.queries.KeyedQuery

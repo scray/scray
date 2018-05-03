@@ -1,7 +1,7 @@
 package scray.loader.tools
 
 import org.junit.runner.RunWith
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 import org.scalatest.WordSpec
 import org.scalatest.junit.JUnitRunner
 import scray.querying.description.TableIdentifier

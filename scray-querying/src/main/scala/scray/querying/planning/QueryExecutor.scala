@@ -27,7 +27,8 @@ import org.slf4j.LoggerFactory
 import scray.querying.Query
 import scray.querying.description.Row
 import scray.querying.description.internal.ExecutorShutdownException
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
+
 /**
  * daemon thread executing queries in a pool  */
 

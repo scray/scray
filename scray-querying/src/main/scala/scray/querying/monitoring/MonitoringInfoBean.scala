@@ -9,7 +9,7 @@ import scray.querying.Registry
 import scray.querying.caching.MonitoringInfos
 import scray.querying.caching.KeyValueCache
 import scray.querying.caching.Cache
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 
 
 class MonitoringInfoBean(name: String) extends DynamicMBean with LazyLogging {

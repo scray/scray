@@ -20,7 +20,9 @@ import scray.jdbc.rows.JDBCRowMapper
 import scray.jdbc.JDBCHiveQueryableSource
 import scray.jdbc.extractors.DomainToHiveSQLQueryMapping
 import scray.querying.description.Column
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import scray.querying.source.Splitter
+import scray.querying.description.ManuallyIndexConfiguration
+import com.typesafe.scalalogging.LazyLogging
 
 /**
  * store generator for JDBC
@@ -45,7 +47,14 @@ class JDBCStoreGenerators(hikari: HikariDataSource, metadataConnection: Connecti
 										extractor.getRowKeyColumns,
 										extractor.getClusteringKeyColumns,
 										extractor.getColumns,
-										extractor.getColumnConfigurations(null, table.dbId, table.tableId, null, Map(), Map()),
+										extractor.getColumnConfigurations(
+										    null, 
+										    table.dbId, 
+										    table.tableId, 
+										    null, 
+										    Map.empty[String, ManuallyIndexConfiguration[_ <: DomainQuery, _ <: DomainQuery, _, _, _ <: DomainQuery]],
+										    Map.empty[Column, Splitter[_]]
+										    ),
 										hikari,
 										new DomainToHiveSQLQueryMapping[Q, JDBCHiveQueryableSource[Q]](),
 										futurePool,

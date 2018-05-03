@@ -27,7 +27,7 @@ import scray.cassandra.extractors.CassandraExtractor
 import scala.collection.convert.decorateAsScala.asScalaSetConverter
 import scray.loader.configparser.ScrayConfiguration
 import com.datastax.driver.core.ConsistencyLevel
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 import com.twitter.util.Throw
 import scray.querying.sync.DbSession
 import scray.cassandra.sync.CassandraDbSession

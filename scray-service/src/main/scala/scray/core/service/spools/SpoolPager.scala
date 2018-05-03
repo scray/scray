@@ -29,7 +29,7 @@ import scray.service.qmodel.thrifscala.ScrayTColumn
 import scray.service.qmodel.thrifscala.ScrayTColumnInfo
 import scray.querying.Registry
 import java.util.UUID
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 import com.twitter.util.Time
 
 /**

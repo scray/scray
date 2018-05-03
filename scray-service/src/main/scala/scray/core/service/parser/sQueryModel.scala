@@ -71,7 +71,7 @@ case class _Query(components: Map[Class[_ <: _QueryComponent], _QueryComponent])
               s"Inconsistent columns (all columns need to be either references or specfications).")
           })
         // no duplicate columns allowed
-        if (cs.components.removeDuplicates.size == components.size) {
+        if (cs.components.distinct.size == components.size) {
           throw new ScrayServiceException(
             ExceptionIDs.PARSING_ERROR,
             s"Duplicated column names in FROM part.")

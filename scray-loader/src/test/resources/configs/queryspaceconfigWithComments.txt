@@ -1,0 +1,21 @@
+# Test comment1
+name WhateverYouLike version 1 # Test comment2
+
+# Test comment3
+sync table { test1, "IDX", "SyncTable" } # Test comment4
+
+# Test comment5
+# Test comment6
+table { test1, "BLA1", "SCHWAETZ1" } # Test comment7
+manualindex { type time, table { test1, "BLA1", "SCHWAETZ1" } indexedcolumn "indexedcol", index "myjobid" } # Test comment9 # Test comment10
+table { test1, "BLUBB2", "SCHWAETZ1" }
+table { test2, "BRUMM", "SCHWAETZ2" }
+# Test comment11
+#Test comment12
+manualindex { type time, table { test1, "BLUBB2", "SCHWAETZ1" } indexedcolumn "indexedcol2", index "myfobid", mapping UUID->TEXT }
+ 
+  
+
+
+ 
+  

@@ -15,8 +15,6 @@
 package scray.jdbc.extractors
 
 
-import com.typesafe.scalalogging.slf4j.LazyLogging
-
 import DomainToSQLQueryMapping.AND_LITERAL
 import DomainToSQLQueryMapping.DESC_LITERAL
 import DomainToSQLQueryMapping.EMPTY_LITERAL
@@ -33,6 +31,7 @@ import scray.querying.queries.DomainQuery
 import java.util.UUID
 import java.sql.PreparedStatement
 import scray.querying.description.internal.Bound
+import com.typesafe.scalalogging.LazyLogging
 
 
 /**

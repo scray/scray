@@ -36,20 +36,20 @@ import scray.service.qservice.thrifscala.ScrayMetaTService
 import scray.service.qservice.thrifscala.ScrayTServiceEndpoint
 import scray.core.service.properties.ScrayServicePropertiesRegistration
 import scray.service.qmodel.thrifscala.ScrayUUID
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 
 trait KryoPoolRegistration {
   def registerSerializers = RegisterRowCachingSerializers()
 }
 
 abstract class ScrayStatefulTServer extends AbstractScrayTServer {
-  val server = Thrift.serveIface(SCRAY_QUERY_LISTENING_ENDPOINT, ScrayStatefulTServiceImpl())
+  val server = Thrift.server.serveIface(SCRAY_QUERY_LISTENING_ENDPOINT, ScrayStatefulTServiceImpl())
   override def getQueryServer: ListeningServer = server
   override def getVersion: String = "1.8.2"
 }
 
 abstract class ScrayStatelessTServer extends AbstractScrayTServer {
-  val server = Thrift.serveIface(SCRAY_QUERY_LISTENING_ENDPOINT, ScrayStatelessTServiceImpl())
+  val server = Thrift.server.serveIface(SCRAY_QUERY_LISTENING_ENDPOINT, ScrayStatelessTServiceImpl())
   override def getQueryServer: ListeningServer = server
   override def getVersion: String = "0.9.2"
 }
@@ -71,7 +71,7 @@ abstract class AbstractScrayTServer extends KryoPoolRegistration with App with L
   initializeResources
 
   // the meta service is always part of the scray server
-  val metaServer: ListeningServer = Thrift.serveIface(SCRAY_META_LISTENING_ENDPOINT, ScrayMetaTServiceImpl)
+  val metaServer: ListeningServer = Thrift.server.serveIface(SCRAY_META_LISTENING_ENDPOINT, ScrayMetaTServiceImpl)
 
   // endpoint registration refresh timer
   private val refreshTimer = new JavaTimer(isDaemon = false)
@@ -90,7 +90,7 @@ abstract class AbstractScrayTServer extends KryoPoolRegistration with App with L
   // register this endpoint with all seeds and schedule regular refresh
   // the refresh loop keeps the server running
   SCRAY_SEEDS.map(inetAddr2EndpointString(_)).foreach { seedAddr =>
-    val client = Thrift.newIface[ScrayMetaTService.FutureIface](seedAddr)
+    val client = Thrift.client.newIface[ScrayMetaTService.FutureIface](seedAddr)
     if (Await.result(client.ping())) {
       logger.info(s"$addrStr adding local service endpoint ($endpoint) to $seedAddr.")
       val _ep = Await.result(client.addServiceEndpoint(endpoint))
@@ -106,7 +106,7 @@ abstract class AbstractScrayTServer extends KryoPoolRegistration with App with L
   def refresh(id: ScrayUUID): Unit = {
     SCRAY_SEEDS.map(inetAddr2EndpointString(_)).foreach { seedAddr =>
       try {
-        val client = Thrift.newIface[ScrayMetaTService.FutureIface](seedAddr)
+        val client = Thrift.client.newIface[ScrayMetaTService.FutureIface](seedAddr)
         if (Await.result(client.ping())) {
           logger.trace(s"$addrStr refreshing service endpoint ($id).")
           client.refreshServiceEndpoint(id)

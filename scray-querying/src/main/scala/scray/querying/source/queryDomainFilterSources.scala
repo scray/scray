@@ -35,7 +35,7 @@ import scray.querying.description.internal.{
 import java.math.{BigInteger => JBigInteger, BigDecimal => JBigDecimal}
 import com.twitter.util.Try
 import scray.querying.description.WildcardChecker
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 
 /**
  * Common code for domain checking

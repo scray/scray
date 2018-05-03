@@ -15,7 +15,7 @@
 package scray.querying.source
 
 import scray.querying.description.Row
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 import com.twitter.concurrent.Spool
 import com.twitter.util.Future
 

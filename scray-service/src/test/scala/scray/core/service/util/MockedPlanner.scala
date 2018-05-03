@@ -9,6 +9,7 @@ import scray.querying.description.Row
 import scray.core.service.ScrayStatefulTServiceImpl
 import scray.core.service.ScrayStatelessTServiceImpl
 import scray.core.service.spools.memcached.MemcachedPageRack
+import com.twitter.util.Await
 
 trait MockedPlanner extends SpoolSamples {
 
@@ -16,14 +17,14 @@ trait MockedPlanner extends SpoolSamples {
   object MockedSpoolRack extends TimedSpoolRack(planAndExecute = mockplanner)
   object MockedPageRack extends MemcachedPageRack(planAndExecute = mockplanner)
 
-  when(mockplanner(anyObject())).thenReturn(spoolOf8.get)
+  when(mockplanner(anyObject())).thenReturn(Await.result(spoolOf8))
 
   object StatefulTestService extends ScrayStatefulTServiceImpl(MockedSpoolRack)
   object StatelessTestService extends ScrayStatelessTServiceImpl(MockedPageRack)
 
   def createMockedPlanner(rows : Int, maxCols : Int, vals : Array[_]) : (Query) => Spool[Row] = {
     val genMockPlanner = mock(classOf[(Query) => Spool[Row]])
-    when(genMockPlanner(anyObject())).thenReturn(spoolGen(rows, maxCols, vals).get)
+    when(genMockPlanner(anyObject())).thenReturn(Await.result(spoolGen(rows, maxCols, vals)))
     genMockPlanner
   }
 

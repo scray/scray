@@ -30,7 +30,7 @@ import scray.querying.description.Row
 import scray.service.qmodel.thrifscala.ScrayUUID
 import scray.service.qmodel.thrifscala.ScrayTQueryInfo
 import scray.core.service._
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 
 /**
  * SpoolRack implementation offering some means to substitute the back end (query engine).

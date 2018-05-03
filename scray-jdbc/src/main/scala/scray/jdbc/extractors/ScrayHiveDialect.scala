@@ -3,7 +3,7 @@ package scray.jdbc.extractors
 import scray.querying.description.internal.Domain
 import scray.querying.description.TableIdentifier
 import scray.querying.description.QueryRange
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 
 /**
  * Hive Thrift Server dialect for Scray
