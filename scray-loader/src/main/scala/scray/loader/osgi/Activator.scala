@@ -189,7 +189,7 @@ class Activator extends KryoPoolRegistration with BundleActivator with LazyLoggi
         latch.countDown()
         // start update service
         while(Activator.keepRunning) {
-          logger.debug("Scray still keeps running for next 5s...")
+          // ****** logger.debug("Scray still keeps running for next 5s...")
           // scalastyle:off magic.number
           Thread.sleep(5000)
           // scalastyle:on magic.number

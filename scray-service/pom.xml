@@ -233,7 +233,6 @@
 			<comments>A business-friendly OSS license</comments>
 		</license>
 	</licenses>
-
 	<profiles>
 		<profile>
 			<id>IntegrationTest</id>

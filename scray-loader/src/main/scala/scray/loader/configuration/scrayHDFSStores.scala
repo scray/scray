@@ -26,6 +26,7 @@ import scray.loader.configparser.ReadableConfig
 import scala.collection.convert.decorateAsScala.asScalaSetConverter
 import scray.loader.configparser.ScrayConfiguration
 import scray.querying.sync.DbSession
+import scray.hdfs.sync.HDFSSession
 import scray.jdbc.sync.JDBCDbSession
 import com.typesafe.scalalogging.LazyLogging
 
@@ -53,16 +54,11 @@ class HDFSConfiguration(override protected val startconfig: HDFSProperties)
   private var sessioncount = 0
   
   override def performUpdateTasks(): Unit = {
-    // TODO: examine what tasks need to be done for JDBC...
+    // TODO: examine what tasks need to be done for HDFS...
   }
 
   override def getSession: DbSession[_, _, _] = {
-    // setup Hikari connection pool for this store by creating a JDBC Session
-    // need to check how often this is called
-    sessioncount += 1
-    logger.info(s"Started new JDBC Session, maybe count is ${sessioncount}")
-    new JDBCDbSession(startconfig.url, startconfig.credentials.getUsername, new String(startconfig.credentials.getPassword))
-    
+    new HDFSSession(startconfig.url)
   } 
 
   override def readConfig(config: ScrayConfiguration, old: HDFSProperties): Option[HDFSProperties] = 

@@ -78,7 +78,8 @@
 	<modules>
 		<module>scray-querying</module>
 		<module>scray-cassandra</module>
-		<module>scray-jdbc</module> 
+		<module>scray-jdbc</module>
+		<module>scray-hdfs</module>
 		<module>scray-service</module>
 		<module>scray-common</module>
 		<module>scray-client-jdbc</module> 
@@ -417,4 +418,3 @@
 	</profiles>
 
 </project>
-

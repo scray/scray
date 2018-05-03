@@ -170,7 +170,6 @@ class StartTimeDetector(job: JobInfo[Statement, Insert, ResultSet],
       
       def call(): Long =  {
         // poll db
-        println(poll)
         while (poll < 1) {
           logger.debug(s"No first element time found. Poll again in ${sleepTimeBetweenPolling}ms")
           Thread.sleep(sleepTimeBetweenPolling)

@@ -37,7 +37,6 @@ class CassandraLuceneIndexStatementGeneratorImplSpecs extends WordSpec with Lazy
 	        }'
         };"""
         
-println(configurationString)
       assert(configurationString.isDefined)
       assert(removePrettyPrintingChars(configurationString.getOrElse("")) == removePrettyPrintingChars(expectedResult))
 
