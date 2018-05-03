@@ -21,8 +21,9 @@ import java.net.URI
 import org.apache.hadoop.fs.Path
 import com.google.common.io.ByteStreams
 import java.io.InputStream
+import com.typesafe.scalalogging.LazyLogging
 
-class RawFileWriter(path: String, hdfsConf: Configuration) {
+class RawFileWriter(path: String, hdfsConf: Configuration) extends LazyLogging {
 
   var dataWriter: FileSystem = null; // scalastyle:off null
 
@@ -35,18 +36,22 @@ class RawFileWriter(path: String, hdfsConf: Configuration) {
   }
 
   def initWriter() = {
-    hdfsConf.set("fs.defaultFS", path);
     hdfsConf.set("fs.hdfs.impl", classOf[org.apache.hadoop.hdfs.DistributedFileSystem].getName);
     hdfsConf.set("fs.file.impl", classOf[org.apache.hadoop.fs.LocalFileSystem].getName);
+    hdfsConf.set("dfs.client.use.datanode.hostname", "true");
 
-    System.setProperty("HADOOP_USER_NAME", "hdfs");
-    System.setProperty("hadoop.home.dir", "/");
     dataWriter = FileSystem.get(URI.create(path), hdfsConf);
   }
   
   def write(fileName: String, data: InputStream) = {
-    val hdfswritepath = new Path("/tmp" + "/" + fileName);
+    val hdfswritepath = new Path(fileName);
 
+    if(dataWriter == null ) {
+      logger.debug("Writer was not initialized. Will do it now")
+      
+      initWriter()
+    }
+    
     val hdfsOutputStream = dataWriter.create(hdfswritepath);
 
     ByteStreams.copy(data, hdfsOutputStream);
@@ -54,5 +59,4 @@ class RawFileWriter(path: String, hdfsConf: Configuration) {
     hdfsOutputStream.close();
 
   }
-
 }
