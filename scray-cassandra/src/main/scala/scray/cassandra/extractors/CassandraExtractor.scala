@@ -132,7 +132,7 @@ class CassandraExtractor[Q <: DomainQuery](session: Session, table: TableIdentif
    * checks that a column has been indexed by Cassandra itself, so no manual indexing
    * if the table has not yet been created (the version must still be computed) we assume no indexing 
    */
-  def checkColumnCassandraAutoIndexed(session: DbSession[_ ,_ ,_], keyspace: String, tableName: String, column: Column, splitters: Map[Column, Splitter[_]]): (Boolean, Option[AutoIndexConfiguration[_]]) = {
+  def checkColumnCassandraAutoIndexed(session: DbSession[_ ,_ ,_, _], keyspace: String, tableName: String, column: Column, splitters: Map[Column, Splitter[_]]): (Boolean, Option[AutoIndexConfiguration[_]]) = {
     val metadata = session match {
       case cassSession: CassandraDbSession =>
         Option(CassandraUtils.getKeyspaceMetadata(cassSession.cassandraSession, keyspace))
@@ -160,7 +160,7 @@ class CassandraExtractor[Q <: DomainQuery](session: Session, table: TableIdentif
   /**
    * returns the column configuration for a Cassandra column
    */
-  override def getColumnConfiguration(session: DbSession[_, _, _],
+  override def getColumnConfiguration(session: DbSession[_, _, _, _],
       dbName: String,
       table: String,
       column: Column,

@@ -1,3 +1,17 @@
+// See the LICENCE.txt file distributed with this work for additional
+// information regarding copyright ownership.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 package scray.querying.storeabstraction
 
 import scray.querying.description.VersioningConfiguration
@@ -68,7 +82,7 @@ trait StoreExtractor[S <: QueryableStoreSource[_]] {
 //      index: Option[ManuallyIndexConfiguration[_, _, _, _, _]],
 //      splitters: Map[Column, Splitter[_]]): ColumnConfiguration
   
-  def getColumnConfiguration(session: DbSession[_, _, _],
+  def getColumnConfiguration(session: DbSession[_, _, _, _],
       dbName: String,
       table: String,
       column: Column,
@@ -78,7 +92,7 @@ trait StoreExtractor[S <: QueryableStoreSource[_]] {
   /**
    * returns all column configurations
    */
-  def getColumnConfigurations(session: DbSession[_, _, _],
+  def getColumnConfigurations(session: DbSession[_, _, _, _],
       dbName: String,
       table: String,
       querySpace: QueryspaceConfiguration, 

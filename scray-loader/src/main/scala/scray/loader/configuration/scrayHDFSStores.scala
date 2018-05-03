@@ -57,8 +57,12 @@ class HDFSConfiguration(override protected val startconfig: HDFSProperties)
     // TODO: examine what tasks need to be done for HDFS...
   }
 
-  override def getSession: DbSession[_, _, _] = {
-    new HDFSSession(startconfig.url)
+  override def getSession: DbSession[_, _, _, _] = {
+    // setup Hikari connection pool for this store by creating a JDBC Session
+    // need to check how often this is called
+    sessioncount += 1
+    logger.info(s"Started new JDBC Session, maybe count is ${sessioncount}")
+    new JDBCDbSession(startconfig.url, startconfig.credentials.getUsername, new String(startconfig.credentials.getPassword))
   } 
 
   override def readConfig(config: ScrayConfiguration, old: HDFSProperties): Option[HDFSProperties] = 

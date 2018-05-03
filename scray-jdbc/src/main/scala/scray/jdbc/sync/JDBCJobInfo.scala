@@ -12,7 +12,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-package scray.cassandra.sync
+package scray.jdbc.sync
 
 import scala.collection.JavaConversions._
 import scray.querying.sync.JobLockTable
@@ -37,7 +37,7 @@ class JDBCJobInfo(
     lockTimeOut: Int = 500) extends JobInfo[PreparedStatement, PreparedStatement, ResultSet](name, numberOfBatchSlots, numberOfOnlineSlots, numberOfWorkers = numberOfWorkersV) with LazyLogging {
 
   // Not required for JDBC
-  def getLock(dbSession: DbSession[PreparedStatement, PreparedStatement, ResultSet]): LockApi[PreparedStatement, PreparedStatement, ResultSet] = ???
+  def getLock(dbSession: DbSession[PreparedStatement, PreparedStatement, ResultSet, _]): LockApi[PreparedStatement, PreparedStatement, ResultSet] = ???
   def getLock(dbHostname: String): LockApi[PreparedStatement, PreparedStatement, ResultSet] = ???
 }
 

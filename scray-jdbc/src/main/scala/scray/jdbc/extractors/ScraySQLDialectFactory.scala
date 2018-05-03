@@ -15,7 +15,5 @@ object ScraySQLDialectFactory {
     knownDialects.find(_.getName == name.toUpperCase()).
       getOrElse(throw new AbstractMethodError(s"Scray SQL Dialect '${name}' is unknown")) 
   
-   // using only Hive so far not Spark   
-  //val knownDialects = List(ScrayOracleDialect, ScrayHanaDialect, ScrayMySQLDialect, ScrayMSSQLDialect, ScrayHiveDialect, ScraySparkDialect, ScrayH2Dialect)
-  val knownDialects = List(ScrayOracleDialect, ScrayHanaDialect, ScrayMySQLDialect, ScrayMSSQLDialect, ScrayHiveDialect, ScrayH2Dialect)
+  val knownDialects = List(ScrayOracleDialect, ScrayHanaDialect, ScrayMySQLDialect, MariaDBDialect, ScrayMSSQLDialect, ScraySparkDialect, ScrayH2Dialect)
 }

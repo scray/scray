@@ -54,10 +54,8 @@ class JDBCQueryableSource[Q <: DomainQuery](
       val connection = hikari.getConnection
       val prep = connection.prepareStatement(queryString._1)
       queryMapper.mapWhereClauseValues(prep, query.asInstanceOf[DomainQuery].domains ++ queryString._3)
-      logger.error(s" Executing QUERY NOW=" + queryString._1 + connection.toString())
+
       val resultSet = prep.executeQuery()
-      
-      logger.error(s" Fetching Iterator NOW")
       getIterator(resultSet, connection)
     }
   }
