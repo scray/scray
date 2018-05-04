@@ -1,4 +1,5 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<artifactId>scray-loader</artifactId>
 	<name>Scray - Loader</name>
@@ -38,10 +39,10 @@
 			<version>2.3.0</version>
 		</dependency>
 		<dependency>
-            <groupId>org.apache.felix</groupId>
-            <artifactId>org.osgi.core</artifactId>
-            <version>1.4.0</version>
-        </dependency>
+			<groupId>org.apache.felix</groupId>
+			<artifactId>org.osgi.core</artifactId>
+			<version>1.4.0</version>
+		</dependency>
 		<dependency>
 			<groupId>org.scray</groupId>
 			<artifactId>scray-querying</artifactId>
@@ -77,6 +78,10 @@
 				<exclusion>
 					<groupId>org.slf4j</groupId>
 					<artifactId>slf4j-log4j12</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.apache.hive</groupId>
+					<artifactId>hive-storage-api</artifactId>
 				</exclusion>
 			</exclusions>
 		</dependency>
@@ -121,10 +126,10 @@
 			<version>1.2.1</version>
 		</dependency>
 		<dependency>
-    <groupId>org.slf4j</groupId>
-    <artifactId>slf4j-log4j12</artifactId>
-    <version>1.7.25</version>
-</dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-log4j12</artifactId>
+			<version>1.7.25</version>
+		</dependency>
 	</dependencies>
 	<build>
 		<plugins>
@@ -188,7 +193,41 @@
 					</execution>
 				</executions>
 			</plugin>
-			
+			<plugin>
+				<groupId>org.apache.felix</groupId>
+				<artifactId>maven-bundle-plugin</artifactId>
+				<version>3.5.0</version>
+				<extensions>true</extensions>
+				<configuration>
+					<instructions>
+						<Embed-Dependency>*</Embed-Dependency>
+						<Embed-Transitive>true</Embed-Transitive>
+						<Export-Package>!*</Export-Package>
+						<Import-Package>
+							!*,
+							org.osgi.framework,
+							org.w3c.dom,
+							org.xml.sax,
+							javax.xml.parsers,
+							javax.xml.transform,
+							org.xml.sax.helpers,
+							javax.management,
+							javax.naming,
+							javax.script,
+							javax.security.auth,
+							javax.security.auth.login,
+							javax.security.auth.spi,
+							javax.security.auth.kerberos,
+							javax.security.auth.callback,
+							javax.sql,
+							javax.net,
+							javax.net.ssl,
+							javax.security.sasl
+						</Import-Package>
+						<Bundle-Activator>scray.loader.osgi.Activator</Bundle-Activator>
+					</instructions>
+				</configuration>
+			</plugin>
 		</plugins>
 		<pluginManagement>
 			<plugins>
@@ -244,4 +283,5 @@
 		<version>0.10.1-SNAPSHOT</version>
 		<relativePath>../pom.xml</relativePath>
 	</parent>
+	<packaging>bundle</packaging>
 </project>
