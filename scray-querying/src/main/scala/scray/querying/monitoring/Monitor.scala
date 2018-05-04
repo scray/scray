@@ -15,6 +15,7 @@ import scray.querying.description.TableIdentifier
 import java.util.concurrent.locks.ReentrantLock
 import com.typesafe.scalalogging.LazyLogging
 import scray.querying.queries.DomainQuery
+import javax.management.InstanceAlreadyExistsException
 
 /**
  * register a new MBean with JMX
@@ -48,7 +49,11 @@ class Monitor extends LazyLogging {
 
   def getCacheActive(): Boolean = Registry.getCachingEnabled
 
-  JMXHelpers.jmxRegister(new MonitoringBaseInfoBean(this), "Scray:name=Cache")
+  try {
+    JMXHelpers.jmxRegister(new MonitoringBaseInfoBean(this), "Scray:name=Cache")
+  } catch {
+    case e: InstanceAlreadyExistsException => logger.debug("Scray:name=Cache MBean already registered")
+  }
 
   /**
    * monitor caches and queries
