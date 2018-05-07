@@ -13,7 +13,8 @@
 	<description>scray remote query service interface</description>
 
 	<properties>
-		<scrooge.version>4.16.0</scrooge.version>
+		<scrooge.version>18.3.0</scrooge.version>
+		<finagle.version>18.3.0</finagle.version>
 	</properties>
 
 	<distributionManagement>
@@ -70,7 +71,7 @@
 		<dependency>
 			<groupId>org.apache.thrift</groupId>
 			<artifactId>libthrift</artifactId>
-			<version>0.8.0</version>
+			<version>0.9.3</version>
 		</dependency>
 		<dependency>
 			<groupId>com.twitter</groupId>
@@ -80,22 +81,22 @@
 		<dependency>
 			<groupId>com.twitter</groupId>
 			<artifactId>util-core_${scala.suffix}</artifactId>
-			<version>6.43.0</version>
+			<version>${finagle.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.twitter</groupId>
 			<artifactId>util-codec_${scala.suffix}</artifactId>
-			<version>6.43.0</version>
+			<version>${finagle.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.twitter</groupId>
 			<artifactId>finagle-core_${scala.suffix}</artifactId>
-			<version>6.44.0</version>
+			<version>${finagle.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.twitter</groupId>
 			<artifactId>finagle-thrift_${scala.suffix}</artifactId>
-			<version>6.44.0</version>
+			<version>${finagle.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.twitter</groupId>
@@ -140,7 +141,7 @@
 				<groupId>com.twitter</groupId>
 				<artifactId>scrooge-maven-plugin</artifactId>
 				<!-- this version must match the version from scrooge-gen.ivy.xml -->
-				<version>4.16.0</version>
+				<version>${scrooge.version}</version>
 				<configuration>
 					<language>scala</language>
 					<!-- default is scala, can also be java -->

@@ -57,6 +57,12 @@
 			<artifactId>avro</artifactId>
 			<version>1.8.2</version>
 		</dependency>
+		<dependency>
+			<groupId>org.osgi</groupId>
+			<artifactId>org.osgi.core</artifactId>
+			<version>4.3.0</version>
+			<scope>provided</scope>
+		</dependency>
 	</dependencies>
 	<build>
 		<plugins>
@@ -137,6 +143,7 @@
 							org.apache.hadoop.hdfs,
 							org.apache.hadoop.hdfs.*
 						</_exportcontents>
+						<Bundle-Activator>scray.hdfs.osgi.Activator</Bundle-Activator>	
 					</instructions>
 				</configuration>
 			</plugin>

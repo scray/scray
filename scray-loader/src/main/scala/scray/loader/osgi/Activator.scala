@@ -161,7 +161,7 @@ class Activator extends KryoPoolRegistration with BundleActivator with LazyLoggi
         
         
         // read config-file property
-        val filename = getFilename(context)
+        val filename = "/home/stefan/scray-conf/store.conf"//getFilename(context)
         
         // switch to config phase and load config file
         logger.info(s"Reading main configuration file $filename")

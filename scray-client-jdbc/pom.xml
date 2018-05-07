@@ -43,9 +43,9 @@
 		<maven.compiler.target>1.8</maven.compiler.target>
 		<encoding>UTF-8</encoding>
 		<scala.suffix>2.11</scala.suffix>
-		<scrooge.version>4.16.0</scrooge.version>
+		<scrooge.version>18.4.0</scrooge.version>
 		<libthrift.version>0.8.0</libthrift.version>
-		<finagle.version>6.44.0</finagle.version>
+		<finagle.version>18.3.0</finagle.version>
 		<snappy-java.version>1.1.1.6</snappy-java.version>
 	</properties>
 
@@ -91,7 +91,7 @@
 		<dependency>
 			<groupId>com.twitter</groupId>
 			<artifactId>scrooge-core_2.11</artifactId>
-			<version>4.16.0</version>
+			<version>${scrooge.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.scray</groupId>
@@ -125,6 +125,11 @@
 			<artifactId>commons-cli</artifactId>
 			<version>1.2</version>
 		</dependency>
+<dependency>
+    <groupId>commons-lang</groupId>
+    <artifactId>commons-lang</artifactId>
+    <version>2.6</version>
+</dependency>
 		<dependency>
 			<groupId>com.twitter</groupId>
 			<artifactId>chill-java</artifactId>

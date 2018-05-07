@@ -69,6 +69,12 @@
 			<groupId>org.scray</groupId>
 			<artifactId>scray-jdbc</artifactId>
 			<version>0.10.1-SNAPSHOT</version>
+			<exclusions>
+				<exclusion>
+					<groupId>org.apache.thrift</groupId>
+					<artifactId>libthrift</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>org.scray</groupId>
@@ -102,6 +108,14 @@
 				<exclusion>
 					<artifactId>slf4j-jdk14</artifactId>
 					<groupId>org.slf4j</groupId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.apache.thrift</groupId>
+					<artifactId>libthrift</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>com.twitter</groupId>
+					<artifactId>libthrift</artifactId>
 				</exclusion>
 			</exclusions>
 		</dependency>
