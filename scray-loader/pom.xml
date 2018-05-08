@@ -63,6 +63,10 @@
 					<artifactId>shapeless_${scala.suffix}.3</artifactId>
 					<groupId>com.chuusai</groupId>
 				</exclusion>
+				<exclusion>
+					<groupId>io.netty</groupId>
+					<artifactId>netty-buffer</artifactId>
+				</exclusion>
 			</exclusions>
 		</dependency>
 		<dependency>
@@ -117,6 +121,21 @@
 					<groupId>com.twitter</groupId>
 					<artifactId>libthrift</artifactId>
 				</exclusion>
+				<exclusion>
+					<groupId>com.twitter</groupId>
+					<artifactId>finagle-memcached_2.11</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>com.twitter</groupId>
+			<artifactId>finagle-memcached_2.11</artifactId>
+			<version>18.4.0</version>
+			<exclusions>
+				<exclusion>
+					<groupId>com.twitter</groupId>
+					<artifactId>libthrift</artifactId>
+				</exclusion>
 			</exclusions>
 		</dependency>
 		<dependency>
@@ -143,6 +162,11 @@
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-log4j12</artifactId>
 			<version>1.7.25</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.thrift</groupId>
+			<artifactId>libthrift</artifactId>
+			<version>0.10.0</version>
 		</dependency>
 	</dependencies>
 	<build>

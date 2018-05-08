@@ -40,6 +40,8 @@ import slick.jdbc.JdbcProfile
 import slick.sql.FixedSqlAction
 import scray.querying.sync.StatementExecutionError
 import scray.querying.sync.DbSession
+import scray.jdbc.extractors.ScrayHiveDialect
+import java.sql.DriverManager
 
 /**
  * Session implementation for JDBC datasources using a Hikari connection pool
@@ -49,16 +51,30 @@ class JDBCDbSession(val ds: HikariDataSource, val metadataConnection: Connection
   def this(ds: HikariDataSource, sqlDialiect: ScraySQLDialect) = this(ds, ds.getConnection, sqlDialiect)
   
   def this(jdbcURL: String, sqlDialect: ScraySQLDialect, username: String, password: String) = {
-    this({
+      this({
         val config = new HikariConfig()
         config.setDriverClassName(sqlDialect.DRIVER_CLASS_NAME)
         config.setJdbcUrl(jdbcURL)
         config.setUsername(username)
         config.setPassword(password)
         config.setMaximumPoolSize(3)
-        new HikariDataSource(config)
+
+        if(sqlDialect.getName.toUpperCase().startsWith(ScrayHiveDialect.name)) {
+          class HiveDataSource extends HikariDataSource {
+            override def getConnection = synchronized {
+              DriverManager.getConnection(jdbcURL, username, password)
+            }
+          }
+          
+          new HiveDataSource
+        } else {
+          new HikariDataSource(config)
+        } 
       }, sqlDialect
     )
+
+    
+
   }
 
  lazy val db = this.getConnectionInformations.get.api.Database.forDataSource(ds, Some(20))

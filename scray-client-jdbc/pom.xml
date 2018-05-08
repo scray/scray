@@ -45,7 +45,7 @@
 		<scala.suffix>2.11</scala.suffix>
 		<scrooge.version>18.4.0</scrooge.version>
 		<libthrift.version>0.8.0</libthrift.version>
-		<finagle.version>18.3.0</finagle.version>
+		<finagle.version>18.4.0</finagle.version>
 		<snappy-java.version>1.1.1.6</snappy-java.version>
 	</properties>
 
@@ -97,11 +97,6 @@
 			<groupId>org.scray</groupId>
 			<artifactId>scray-common</artifactId>
 			<version>0.10.1-SNAPSHOT</version>
-		</dependency>
-		<dependency>
-			<groupId>com.twitter</groupId>
-			<artifactId>scrooge-core_${scala.suffix}</artifactId>
-			<version>${scrooge.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>junit</groupId>
@@ -162,7 +157,7 @@
 			<plugin>
 				<groupId>com.twitter</groupId>
 				<artifactId>scrooge-maven-plugin</artifactId>
-				<version>4.16.0</version>
+				<version>${scrooge.version}</version>
 				<configuration>
 					<language>java</language>
 					<thriftOpts>

@@ -23,9 +23,12 @@ import scray.querying.description.RowColumn
 import scray.querying.description.SimpleRow
 import scala.collection.mutable.ArrayBuffer
 import scray.jdbc.extractors.ScraySQLDialect
-import com.zaxxer.hikari.HikariDataSource
 import scala.util.Try
 import com.typesafe.scalalogging.LazyLogging
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import com.zaxxer.hikari.HikariDataSource
 
 class JDBCHiveQueryableSource[Q <: DomainQuery](
     val ti: TableIdentifier,
@@ -53,7 +56,7 @@ class JDBCHiveQueryableSource[Q <: DomainQuery](
     futurePool {
       //val queryString = mappingFunction(query)
       val queryString = "SELECT * FROM `healthtable` WHERE  spending = 18 LIMIT 2"
-      val connection = hikari.getConnection
+      val connection = DriverManager.getConnection("jdbc:hive2://host1.scray.org:10000/", "", "")
       //val prep = connection.prepareStatement(queryString._1)
       val prep = connection.prepareStatement(queryString)
       

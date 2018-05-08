@@ -13,8 +13,8 @@
 	<description>scray remote query service interface</description>
 
 	<properties>
-		<scrooge.version>18.3.0</scrooge.version>
-		<finagle.version>18.3.0</finagle.version>
+		<scrooge.version>18.4.0</scrooge.version>
+		<finagle.version>18.4.0</finagle.version>
 	</properties>
 
 	<distributionManagement>
@@ -33,7 +33,6 @@
 			<groupId>org.scray</groupId>
 			<artifactId>scray-common</artifactId>
 			<version>0.10.1-SNAPSHOT</version>
-
 			<exclusions>
 				<exclusion>
 					<artifactId>slf4j-jdk14</artifactId>
@@ -67,11 +66,6 @@
 			<groupId>com.twitter</groupId>
 			<artifactId>scrooge-core_${scala.suffix}</artifactId>
 			<version>${scrooge.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.thrift</groupId>
-			<artifactId>libthrift</artifactId>
-			<version>0.9.3</version>
 		</dependency>
 		<dependency>
 			<groupId>com.twitter</groupId>

@@ -40,17 +40,23 @@
 			<groupId>org.scray</groupId>
 			<artifactId>scray-querying</artifactId>
 			<version>0.10.1-SNAPSHOT</version>
+			<exclusions>
+				<exclusion>
+					<groupId>com.twitter</groupId>
+					<artifactId>libthrift</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		<dependency>
-    <groupId>org.apache.hadoop</groupId>
-    <artifactId>hadoop-client</artifactId>
-    <version>3.1.0</version>
-</dependency>
-<dependency>
-    <groupId>org.apache.hive</groupId>
-    <artifactId>hive-jdbc</artifactId>
-    <version>2.3.3</version>
-</dependency>
+			<groupId>org.apache.hadoop</groupId>
+			<artifactId>hadoop-client</artifactId>
+			<version>3.1.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.hive</groupId>
+			<artifactId>hive-jdbc</artifactId>
+			<version>1.1.0</version>
+		</dependency>
 		<dependency>
 			<groupId>com.typesafe.slick</groupId>
 			<artifactId>slick_${scala.suffix}</artifactId>

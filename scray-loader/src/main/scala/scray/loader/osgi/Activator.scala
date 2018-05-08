@@ -51,12 +51,11 @@ import scray.core.service.spools.TSpoolRack
  * Can also be used without OSGI using FakeBundleContext.
  */
 class Activator extends KryoPoolRegistration with BundleActivator with LazyLogging {
-  
+  val a: com.twitter.util.Monitor = null
   /**
    * must be increased with each new version
    */
   def getVersion: String = VERSION
-
   
   // count-down-latch for synchronizing the shutdown process
   val finalizationLatch = new CountDownLatch(1)

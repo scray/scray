@@ -15,5 +15,5 @@ object ScraySQLDialectFactory {
     knownDialects.find(_.getName == name.toUpperCase()).
       getOrElse(throw new AbstractMethodError(s"Scray SQL Dialect '${name}' is unknown")) 
   
-  val knownDialects = List(ScrayOracleDialect, ScrayHanaDialect, ScrayMySQLDialect, MariaDBDialect, ScrayMSSQLDialect, ScraySparkDialect, ScrayH2Dialect)
+  val knownDialects = List(ScrayOracleDialect, ScrayHanaDialect, ScrayMySQLDialect, MariaDBDialect, ScrayMSSQLDialect, ScrayH2Dialect, ScrayHiveDialect)
 }

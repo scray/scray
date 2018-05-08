@@ -71,4 +71,5 @@ object ScrayHiveDialect extends ScraySQLDialect("HIVE") with LazyLogging {
   }
   
   override val DRIVER_CLASS_NAME = "org.apache.hive.jdbc.HiveDriver"
+
 }
