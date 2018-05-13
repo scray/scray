@@ -133,7 +133,8 @@
 							javax.security.auth.spi,
 							javax.security.auth.kerberos,
 							javax.security.auth.callback,
-							javax.net
+							javax.net,
+							scray.hdfs.index.format.sequence
 						</Import-Package>
 						<_exportcontents>
 							org.apache.hadoop.*,
