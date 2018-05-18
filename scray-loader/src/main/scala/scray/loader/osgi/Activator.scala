@@ -44,6 +44,8 @@ import java.util.concurrent.LinkedBlockingQueue
 import com.twitter.util.ExecutorServiceFuturePool
 import scray.service.qservice.thriftjava.ScrayStatefulTService
 import scray.core.service.spools.TSpoolRack
+import scray.jdbc.sync.JDBCDbSession
+import scray.jdbc.osgi.InstanceFactory
 
 
 /**
@@ -64,6 +66,8 @@ class Activator extends KryoPoolRegistration with BundleActivator with LazyLoggi
   private var statelessService = false
 
   private var futurePool: Option[FuturePool] = None 
+  
+  private var context: BundleContext = null
   
   /**
    * read main config filename from BundleContext or throw 
@@ -143,6 +147,7 @@ class Activator extends KryoPoolRegistration with BundleActivator with LazyLoggi
    * starts the scray service
    */
   override def start(context: BundleContext): Unit = {
+    this.context = context
     val latch = new CountDownLatch(1)
     new Thread("Scray Service Manager") {
       override def run(): Unit = {
@@ -168,7 +173,7 @@ class Activator extends KryoPoolRegistration with BundleActivator with LazyLoggi
         
         // setup connections
         logger.info(s"Preparing store instances")
-        Activator.scrayStores = Some(new ScrayStores(scrayConfiguration))
+        Activator.scrayStores = Some(new ScrayStores(scrayConfiguration, context))
         
         // read configs and start queryspace registration
         registerQuerySpaces(scrayConfiguration)

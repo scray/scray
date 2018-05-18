@@ -34,6 +34,7 @@ import scala.collection.mutable.HashTable
 import scala.collection.mutable.HashMap
 import java.sql.DatabaseMetaData
 import com.typesafe.scalalogging.LazyLogging
+import scray.jdbc.sync.JDBCDbSessionImpl
 
 
 /**
@@ -138,7 +139,7 @@ class JDBCHiveExtractors[Q <: DomainQuery, S <: JDBCHiveQueryableSource[Q]](
    * returns the table configuration for this specific store; implementors must override this
    */
   def getTableConfiguration(rowMapper: (_) => Row): TableConfiguration[_ <: DomainQuery, _ <: DomainQuery, _] = {
-    val jdbcSession = new JDBCDbSession(hikari, metadataConnection, sqlDialect)
+    val jdbcSession = new JDBCDbSessionImpl(hikari, metadataConnection, sqlDialect)
     val jdbcSource = Some(new JDBCHiveQueryableSource(ti,
         getRowKeyColumns, 
         getClusteringKeyColumns,

@@ -64,7 +64,7 @@ class CassandraSyncTableLock (job: JobInfo[Statement, Insert, ResultSet], jobLoc
   lazy val unLockQuery = getUnlockQuery
   
    
-  class CassandraSessionBasedDBSession(cassandraSession: Session) extends DbSession[Statement, Insert, ResultSet, String](cassandraSession.getCluster.getMetadata.getAllHosts().iterator().next.getAddress.toString) {
+  class CassandraSessionBasedDBSession(cassandraSession: Session) extends DbSession[Statement, Insert, ResultSet, String]() {
 
     override def execute(statement: String): Try[ResultSet] = {
       try {

@@ -25,7 +25,7 @@ class JDBCDbSessionSpecs  extends WordSpec {
     " create scray sync table " taggedAs(RequiresMySQLServer) in {
       
       // Establish connection
-      val session = new JDBCDbSession("jdbc:mariadb://127.0.0.1:3306/scray",ScraySQLDialectFactory.getDialect("mariadb"), "scray", "scray")
+      val session = new JDBCDbSessionImpl("jdbc:mariadb://127.0.0.1:3306/scray",ScraySQLDialectFactory.getDialect("mariadb"), "scray", "scray")
 
       val syncApi = new SyncTableComponent(slick.jdbc.MySQLProfile)
      

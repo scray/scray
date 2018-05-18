@@ -64,9 +64,9 @@
 		<!-- <finagle.version>6.12.2</finagle.version> -->
 		<!-- finagle 6.15 fixes a bug with AbstractMethod error for DefaultServer 
 			in bdq-scray-sil -->
-		<finagle.version>6.15.0</finagle.version>
+		<finagle.version>6.43.0</finagle.version>
 
-		<libthrift.version>0.9.1</libthrift.version>
+		<libthrift.version>0.10.0</libthrift.version>
 		<parboiled.version>2.1.2</parboiled.version>
 		<snappy-java.version>1.1.1.6</snappy-java.version>
 		<parboiled.version>2.0.1</parboiled.version>

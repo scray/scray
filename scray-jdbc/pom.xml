@@ -77,6 +77,11 @@
 			<artifactId>h2</artifactId>
 			<version>1.4.196</version>
 		</dependency>
+		<dependency>
+			<groupId>org.osgi</groupId>
+			<artifactId>org.osgi.core</artifactId>
+			<version>5.0.0</version>
+		</dependency>
 	</dependencies>
 	<build>
 		<plugins>
@@ -108,8 +113,42 @@
 					</execution>
 				</executions>
 			</plugin>
+						<plugin>
+				<groupId>org.apache.felix</groupId>
+				<artifactId>maven-bundle-plugin</artifactId>
+				<version>3.5.0</version>
+				<extensions>true</extensions>
+				<configuration>
+					<instructions>
+						<Embed-Dependency>*</Embed-Dependency>
+						<Embed-Transitive>true</Embed-Transitive>
+						<Export-Package>!*,scray.jdbc.osgi,scray.jdbc.sync</Export-Package>
+						<Import-Package>
+							!*,
+							org.osgi.framework,
+							org.w3c.dom,
+							org.xml.sax,
+							javax.xml.parsers,
+							javax.xml.transform,
+							org.xml.sax.helpers,
+							javax.management,
+							javax.naming,
+							javax.script,
+							javax.security.auth,
+							javax.security.auth.login,
+							javax.security.auth.spi,
+							javax.security.auth.kerberos,
+							javax.security.auth.callback,
+							javax.sql,
+							javax.net,
+							javax.net.ssl,
+							javax.security.sasl
+						</Import-Package>
+						<Bundle-Activator>scray.jdbc.osgi.Activator</Bundle-Activator>
+					</instructions>
+				</configuration>
+			</plugin>
 		</plugins>
-
 	</build>
 
 	<profiles>
@@ -149,4 +188,5 @@
 			<comments>A business-friendly OSS license</comments>
 		</license>
 	</licenses>
+	<packaging>bundle</packaging>
 </project>

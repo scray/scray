@@ -55,7 +55,7 @@ class ScrayLoaderQuerySpace(name: String, config: ScrayConfiguration, qsConfig: 
   storeConfig.addSessionChangeListener { (name, session) => generators -= name }
   
   val version = qsConfig.version
-  
+
   val materializedViews = qsConfig.materializedViews.map { view => 
     if(view.keyClass.equals("scray.common.key.OrderedStringKeyGenerator")) {
       new MaterializedView(view.table, OrderedStringKeyGenerator) 

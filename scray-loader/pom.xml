@@ -62,16 +62,9 @@
 					<groupId>io.netty</groupId>
 					<artifactId>netty-buffer</artifactId>
 				</exclusion>
-			</exclusions>
-		</dependency>
-		<dependency>
-			<groupId>org.scray</groupId>
-			<artifactId>scray-jdbc</artifactId>
-			<version>0.10.1-SNAPSHOT</version>
-			<exclusions>
 				<exclusion>
-					<groupId>org.apache.thrift</groupId>
-					<artifactId>libthrift</artifactId>
+					<groupId>io.netty</groupId>
+					<artifactId>netty-transport</artifactId>
 				</exclusion>
 			</exclusions>
 		</dependency>
@@ -131,6 +124,14 @@
 					<groupId>com.twitter</groupId>
 					<artifactId>libthrift</artifactId>
 				</exclusion>
+				<exclusion>
+					<groupId>net.java.dev.javacc</groupId>
+					<artifactId>javacc</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>io.netty</groupId>
+					<artifactId>netty-transport</artifactId>
+				</exclusion>
 			</exclusions>
 		</dependency>
 		<dependency>
@@ -162,6 +163,13 @@
 			<groupId>org.apache.thrift</groupId>
 			<artifactId>libthrift</artifactId>
 			<version>0.10.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.scray</groupId>
+			<artifactId>scray-jdbc</artifactId>
+			<version>0.10.1-SNAPSHOT</version>
+			<type>bundle</type>
+			<scope>provided</scope>
 		</dependency>
 	</dependencies>
 	<build>
@@ -238,6 +246,8 @@
 						<Export-Package>!*</Export-Package>
 						<Import-Package>
 							!*,
+							scray.jdbc.sync,
+							scray.jdbc.osgi,
 							org.osgi.framework,
 							org.w3c.dom,
 							org.xml.sax,

@@ -42,7 +42,7 @@ import scala.util.{Failure, Success, Try}
     override val indexes: Option[List[String]] = None
   }
 
-  class TestDbSession extends DbSession[Statement, Insert, ResultSet, String]("127.0.0.1") with LazyLogging {
+  class TestDbSession extends DbSession[Statement, Insert, ResultSet, String]() with LazyLogging {
     EmbeddedCassandraServerHelper.startEmbeddedCassandra(EmbeddedCassandraServerHelper.CASSANDRA_RNDPORT_YML_FILE)
     
     var cassandraSession = Cluster.builder().addContactPoint("127.0.0.1").withPort(EmbeddedCassandraServerHelper.getNativeTransportPort).build().connect()

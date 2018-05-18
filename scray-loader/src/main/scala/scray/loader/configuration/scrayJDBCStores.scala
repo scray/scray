@@ -28,6 +28,8 @@ import scray.loader.configparser.ScrayConfiguration
 import scray.querying.sync.DbSession
 import scray.jdbc.sync.JDBCDbSession
 import com.typesafe.scalalogging.LazyLogging
+import org.osgi.framework.BundleContext
+import scray.jdbc.osgi.InstanceFactory
 
 /**
  * JDBC properties, needed to setup a JDBC connection
@@ -46,7 +48,7 @@ case class JDBCCredentialsProperty(credentials: ScrayCredentials) extends JDBCPr
 /**
  * sets up and manages a Cassandra Cluster
  */
-class JDBCConfiguration(override protected val startconfig: JDBCProperties) 
+class JDBCConfiguration(override protected val startconfig: JDBCProperties, context: BundleContext) 
     extends DBMSConfiguration[JDBCProperties](startconfig) with LazyLogging {
 
   var currentURL: Option[String] = None
@@ -65,8 +67,33 @@ class JDBCConfiguration(override protected val startconfig: JDBCProperties)
     
     logger.error("!!!!!!!!! FIXME: use all parameters for JDBCDbSession")
     //new JDBCDbSession(startconfig.url, startconfig.credentials.getUsername, new String(startconfig.credentials.getPassword))
-    new JDBCDbSession(startconfig.url,"","")
-  } 
+    this.getJDBCConnection(startconfig.url, "", "", context)
+  }
+  
+  
+  
+    def getJDBCConnection(url: String, username: String, password: String, context: BundleContext): JDBCDbSession = {
+    logger.debug(s"Search ${classOf[InstanceFactory].getName} in registry")
+
+    val sr = context.getServiceReference(classOf[InstanceFactory].getName)
+    
+    val connection = () => {
+      if (sr != null) {
+        val service = context.getService(sr).asInstanceOf[InstanceFactory]  
+        if (service != null) {
+          Some(service.getJdbcSession(url, username, password))
+        } else {
+          logger.warn(s"Service instance is null ${classOf[InstanceFactory].getName}")
+          None
+        }
+      } else {
+        logger.warn(s"Service reference for ${classOf[InstanceFactory].getName} is null")
+        None
+      }
+    }
+
+    connection().get
+  }
 
   override def readConfig(config: ScrayConfiguration, old: JDBCProperties): Option[JDBCProperties] = 
     JDBCConfiguration.readConfig(config, old)

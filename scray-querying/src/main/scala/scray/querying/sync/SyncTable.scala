@@ -124,7 +124,7 @@ class Columns(
   override type ColumnType = Column[_]
 }
 
-abstract class DbSession[Statement, InsertIn, Result, ConnectionInformations](val dbHostname: String) {
+trait DbSession[Statement, InsertIn, Result, ConnectionInformations] {
   def execute(statement: Statement): Try[Result]
   def execute(statement: String): Try[_]
   def insert(statement: InsertIn): Try[Result]

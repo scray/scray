@@ -32,11 +32,14 @@ import scray.jdbc.sync.JDBCDbSession
 import scray.hdfs.automation.HDFSStoreGenerators
 import org.apache.hadoop.io.Text
 import scray.hdfs.sync.HDFSSession
+import org.osgi.framework.BundleContext
+import scray.jdbc.sync.JDBCDbSessionImpl
+import scray.jdbc.osgi.InstanceFactory
 
 /**
  * abstraction for the management of configuration of stores
  */
-class ScrayStores(startConfig: ScrayConfiguration) extends LazyLogging {
+class ScrayStores(startConfig: ScrayConfiguration, context: BundleContext) extends LazyLogging {
   
   type SessionChangeListener = (String, DbSession[_, _, _, _]) => Unit
   
@@ -76,8 +79,8 @@ class ScrayStores(startConfig: ScrayConfiguration) extends LazyLogging {
   def createDBMSConfigurationForProperties(properties: DBMSConfigProperties): DBMSConfiguration[_ <: DBMSConfigProperties] = {
     properties match {
       case cass: CassandraClusterProperties => new CassandraClusterConfiguration(cass)
-      case jdbc: JDBCProperties => new JDBCConfiguration(jdbc)
-      case hdfs: HDFSProperties => new HDFSConfiguration(hdfs)
+      case jdbc: JDBCProperties => new JDBCConfiguration(jdbc, context)
+      case hdfs: HDFSProperties => new HDFSConfiguration(hdfs, context)
     }
   }
   
@@ -94,15 +97,13 @@ class ScrayStores(startConfig: ScrayConfiguration) extends LazyLogging {
         val hdfsSession = session.asInstanceOf[HDFSSession]
         new HDFSStoreGenerators[Text](hdfsSession.directory, futurePool)
       case jdbcConfig: JDBCConfiguration =>
-        val jdbcSession = session.asInstanceOf[JDBCDbSession]
+        val jdbcSession = session.asInstanceOf[JDBCDbSessionImpl] // FIXME Stefan
         new JDBCStoreGenerators(jdbcSession.ds, jdbcSession.metadataConnection, jdbcSession.sqlDialiect, futurePool)
       case cassConfig: CassandraClusterConfiguration =>
         new CassandraStoreGenerators(dbId, session, cassandraSessionHandler, futurePool)
       case _ => throw new DBMSUndefinedException(dbId, queryspace)
     }}.getOrElse(throw new DBMSUndefinedException(dbId, queryspace))
   }
-  
-  
 }
 
 /**
