@@ -24,6 +24,7 @@ import org.apache.hadoop.io.SequenceFile.Writer
 import org.apache.hadoop.io.Text
 import com.typesafe.scalalogging.LazyLogging
 import java.io.InputStream
+import scala.io.Source
 
 class TextSequenceFileWriter (path: String, hdfsConf: Configuration, fs: Option[FileSystem]) extends LazyLogging {
 
@@ -68,6 +69,16 @@ class TextSequenceFileWriter (path: String, hdfsConf: Configuration, fs: Option[
 
   def flush() = {
     if (dataWriter != null)dataWriter.hflush() 
+  }
+  
+  /**
+   * Create string from given InputStream and add it to sequence file.
+   * Attention! Full InputStream is stored in memory
+   */
+  def insert(id: String, data: InputStream): Long = {
+    val steamAsString = Source.fromInputStream(data).mkString
+    
+    this.insert(id, steamAsString)
   }
     
   def insert(id: String, data: String): Long = {
