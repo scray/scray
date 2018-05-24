@@ -30,6 +30,11 @@ class RawFileWriter(path: String, hdfsConf: Configuration) extends LazyLogging {
   if (getClass.getClassLoader != null) {
     hdfsConf.setClassLoader(getClass.getClassLoader)
   }
+  
+  def this(path: String, username: String) {
+    this(path, new Configuration)
+    System.setProperty("HADOOP_USER_NAME", username)
+  }
 
   def this(path: String) = {
     this(path, new Configuration)
@@ -43,7 +48,7 @@ class RawFileWriter(path: String, hdfsConf: Configuration) extends LazyLogging {
     dataWriter = FileSystem.get(URI.create(path), hdfsConf);
   }
   
-  def write(fileName: String, data: InputStream) = {
+  def write(fileName: String, data: InputStream) = synchronized {
     val hdfswritepath = new Path(fileName);
 
     if(dataWriter == null ) {
