@@ -36,6 +36,11 @@ class TextSequenceFileWriter (path: String, hdfsConf: Configuration, fs: Option[
 
   var numberOfInserts: Int = 0
  
+  def this(path: String, hdfsUser: String) = {
+    this(path, new Configuration, None)
+        System.setProperty("HADOOP_USER_NAME", hdfsUser)
+  }
+  
   def this(path: String) = {
     this(path, new Configuration, None)
   }
