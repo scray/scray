@@ -108,7 +108,7 @@ class BinarySequenceFileWriter(path: String, hdfsConf: Configuration, fs: Option
     dataWriter.getLength
   }
 
-  override def insert(id: String, updateTime: Long, data: InputStream, blobSplitSize: Int = 5 * 1024 * 1024): Long = {
+  override def insert(id: String, updateTime: Long, data: InputStream, blobSplitSize: Int = 500 * 1024 * 1024): Long = {
     hdfsConf.set("fs.hdfs.impl", "org.apache.hadoop.hdfs.DistributedFileSystem");
     hdfsConf.set("fs.file.impl", "org.apache.hadoop.fs.LocalFileSystem");
         
@@ -127,15 +127,33 @@ class BinarySequenceFileWriter(path: String, hdfsConf: Configuration, fs: Option
     val buffer = new Array[Byte](blobSplitSize)
     var readDataLen = data.read(buffer)
 
+    var reachMaxSizeBufferWrittenBytes = 0
+    var reachMaxSizeBuffer = new Array[Byte](blobSplitSize)
+    
     while (readDataLen != -1) {
       blobCounter  += 1
+      
+      // Put files in buffer if spit size is not reached
+      if((reachMaxSizeBufferWrittenBytes + readDataLen) >= blobSplitSize) {
+        reachMaxSizeBuffer = reachMaxSizeBuffer ++ buffer
+        reachMaxSizeBufferWrittenBytes += readDataLen
+      } else {
+        logger.debug(s"Write next blob of size ${readDataLen} with offset nr ${blobCounter}.")
 
-      logger.debug(s"Write next blob of size ${readDataLen} with offset nr ${blobCounter}.")
-
-      val blob = new Blob(System.currentTimeMillis(), buffer, readDataLen)
-      dataWriter.append(new BlobKey(id, blobCounter), blob)
-
+        val blob = new Blob(System.currentTimeMillis(), reachMaxSizeBuffer, reachMaxSizeBufferWrittenBytes)
+        dataWriter.append(new BlobKey(id, blobCounter), blob)
+        reachMaxSizeBuffer = new Array[Byte](0)
+        reachMaxSizeBufferWrittenBytes = 0
+      }
       readDataLen = data.read(buffer)
+    }
+    
+    // Write missing data if inputstream terminated
+    if(reachMaxSizeBufferWrittenBytes > 0) {
+        val blob = new Blob(System.currentTimeMillis(), reachMaxSizeBuffer, reachMaxSizeBufferWrittenBytes)
+        dataWriter.append(new BlobKey(id, blobCounter), blob)
+        reachMaxSizeBuffer = new Array[Byte](0)
+        reachMaxSizeBufferWrittenBytes = 0
     }
 
     // Write idx
