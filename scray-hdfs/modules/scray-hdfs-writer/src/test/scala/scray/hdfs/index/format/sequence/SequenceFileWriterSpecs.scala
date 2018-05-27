@@ -130,22 +130,6 @@ class SequenceFileWriterSpecs extends WordSpec with LazyLogging {
         Assert.assertEquals(getValue(i), Source.fromInputStream(stream).mkString)
       }
     }
-    " read and write data as InputStream " in {
-      
-      val inputData: InputStream = new ByteArrayInputStream(getValue(542).getBytes);
-     
-      val writer = new BinarySequenceFileWriter("target/IoStreamRWTest")
-      writer.insert(getKey(124), System.currentTimeMillis(), inputData)
-      writer.close
-      
-      val idxReader = new IdxReader("target/IoStreamRWTest.idx")
-      val blobReader = new BlobFileReader("target/IoStreamRWTest.blob")
-
-      val idx  = idxReader.next().get
-      val stream = new BlobInputStream(blobReader, idx)
-
-      Assert.assertEquals(getValue(542), Source.fromInputStream(stream).mkString)
-    }
     " use read method multiple times " in {
       
       // Write data
