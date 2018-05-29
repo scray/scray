@@ -38,7 +38,7 @@ class TextSequenceFileWriter (path: String, hdfsConf: Configuration, fs: Option[
  
   def this(path: String, hdfsUser: String) = {
     this(path, new Configuration, None)
-        System.setProperty("HADOOP_USER_NAME", hdfsUser)
+    System.setProperty("HADOOP_USER_NAME", hdfsUser)
   }
   
   def this(path: String) = {
@@ -73,6 +73,9 @@ class TextSequenceFileWriter (path: String, hdfsConf: Configuration, fs: Option[
   }
 
   def flush() = {
+    
+    val ff: SequenceFile = null
+    
     if (dataWriter != null)dataWriter.hflush() 
   }
   
@@ -80,13 +83,13 @@ class TextSequenceFileWriter (path: String, hdfsConf: Configuration, fs: Option[
    * Create string from given InputStream and add it to sequence file.
    * Attention! Full InputStream is stored in memory
    */
-  def insert(id: String, data: InputStream): Long = {
+  def insert(id: String, data: InputStream): Long = synchronized {
     val steamAsString = Source.fromInputStream(data).mkString
     
     this.insert(id, steamAsString)
   }
     
-  def insert(id: String, data: String): Long = {
+  def insert(id: String, data: String): Long = synchronized {
 
     hdfsConf.set("fs.hdfs.impl", "org.apache.hadoop.hdfs.DistributedFileSystem");
     hdfsConf.set("fs.file.impl", "org.apache.hadoop.fs.LocalFileSystem");
