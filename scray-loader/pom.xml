@@ -166,12 +166,6 @@
 			<artifactId>scray-querying</artifactId>
 			<version>0.10.1-SNAPSHOT</version>
 		</dependency>
-		<dependency>
-			<groupId>org.scray</groupId>
-			<artifactId>scray-sync</artifactId>
-			<version>0.10.1-SNAPSHOT</version>
-			<scope>provided</scope>
-		</dependency>
 	</dependencies>
 	<build>
 		<plugins>
