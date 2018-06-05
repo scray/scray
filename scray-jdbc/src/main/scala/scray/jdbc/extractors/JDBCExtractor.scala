@@ -20,7 +20,7 @@ import scray.querying.queries.DomainQuery
 import scray.querying.source.Splitter
 import scray.querying.source.indexing.IndexConfig
 import scray.querying.storeabstraction.StoreExtractor
-import scray.querying.sync.DbSession
+import scray.querying.sync2.DbSession
 import com.zaxxer.hikari.HikariDataSource
 import scray.querying.source.store.QueryableStoreSource
 import com.twitter.util.FuturePool

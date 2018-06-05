@@ -24,6 +24,7 @@ import scala.util.Try
 import com.typesafe.scalalogging.LazyLogging
 import scray.querying.description.TableIdentifier
 import scala.collection.mutable.HashMap
+import scray.querying.sync2.DbSession
 
 class Table[T <: AbstractRow](val keySpace: String, val tableName: String, val columns: T, val replicationSettings: Option[String] = None) extends Serializable {
   val rows: ListBuffer[RowWithValue]= ListBuffer[RowWithValue]()
@@ -122,13 +123,6 @@ class Columns(
   override val indexes: Option[List[String]]) extends AbstractRow {
 
   override type ColumnType = Column[_]
-}
-
-trait DbSession[Statement, InsertIn, Result, ConnectionInformations] {
-  def execute(statement: Statement): Try[Result]
-  def execute(statement: String): Try[_]
-  def insert(statement: InsertIn): Try[Result]
-  def getConnectionInformations: Option[ConnectionInformations] = None
 }
 
 object SyncTable {

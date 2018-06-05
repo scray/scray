@@ -19,7 +19,7 @@
 //import com.typesafe.scalalogging.slf4j.LazyLogging
 //
 //import scray.querying.sync.JobInfo
-//import scray.querying.sync.DbSession
+//import scray.querying.sync2.DbSession
 //import scray.querying.sync.LockApi
 //import scray.querying.sync.SyncTableBasicClasses
 //import scray.querying.sync.Table

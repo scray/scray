@@ -21,11 +21,11 @@ import com.datastax.driver.core.BatchStatement
 import scala.util.Try
 import scala.util.Failure
 import scala.util.Success
-import scray.querying.sync.DbSession
+import scray.querying.sync2.DbSession
 import com.typesafe.scalalogging.LazyLogging
 import scray.querying.sync.StatementExecutionError
 import com.datastax.driver.core.Cluster
-import scray.querying.sync.{DbSession, StatementExecutionError}
+import scray.querying.sync.StatementExecutionError
 
 import scala.util.{Failure, Success, Try}
 

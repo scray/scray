@@ -20,12 +20,12 @@ import scray.querying.sync._
 import scray.cassandra.sync.CassandraImplementation._
 import scray.querying.sync.ArbitrarylyTypedRows
 import scray.querying.sync.Column
-import scray.querying.sync.DbSession
+import scray.querying.sync2.DbSession
 import shapeless.ops.hlist._
 import shapeless.syntax.singleton._
 import com.typesafe.scalalogging.LazyLogging
 import org.cassandraunit.utils.EmbeddedCassandraServerHelper
-import scray.querying.sync.{ArbitrarylyTypedRows, Column, DbSession, _}
+import scray.querying.sync.{ArbitrarylyTypedRows, Column, _}
 import scray.cassandra.sync.CassandraImplementation._
 
 import scala.util.{Failure, Success, Try}

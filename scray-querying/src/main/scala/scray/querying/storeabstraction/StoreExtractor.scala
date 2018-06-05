@@ -29,7 +29,7 @@ import scray.querying.description.Row
 import scray.querying.description.Column
 import scray.querying.source.Splitter
 import scray.querying.Registry
-import scray.querying.sync.DbSession
+import scray.querying.sync2.DbSession
 import scray.querying.source.store.QueryableStoreSource
 
 

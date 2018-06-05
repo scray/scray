@@ -25,7 +25,7 @@ import scray.querying.description.{Row, TableIdentifier, VersioningConfiguration
 import scray.querying.queries.DomainQuery
 import scray.querying.source.store.QueryableStoreSource
 import scray.querying.storeabstraction.{StoreExtractor, StoreGenerators}
-import scray.querying.sync.DbSession
+import scray.querying.sync2.DbSession
 
 /**
  * Generators for Scray store abstractions for Cassandra

@@ -14,7 +14,7 @@ import scray.querying.description.VersioningConfiguration
 import scray.querying.queries.DomainQuery
 import scray.querying.source.indexing.IndexConfig
 import scray.querying.storeabstraction.StoreExtractor
-import scray.querying.sync.DbSession
+import scray.querying.sync2.DbSession
 import scray.querying.source.store.QueryableStoreSource
 import org.apache.hadoop.io.Writable
 import scray.hdfs.index.HDFSBlobResolver

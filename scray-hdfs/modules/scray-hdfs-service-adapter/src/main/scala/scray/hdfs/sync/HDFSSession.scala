@@ -1,6 +1,6 @@
 package scray.hdfs.sync
 
-import scray.querying.sync.DbSession
+import scray.querying.sync2.DbSession
 import scray.querying.sync.StatementExecutionError
 import java.sql.PreparedStatement
 import scala.util.Failure

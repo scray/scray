@@ -21,7 +21,7 @@
 //import com.twitter.finagle.builder.Cluster
 //import shapeless.ops.zipper.Insert
 //import scray.querying.sync.StatementExecutionError
-//import scray.querying.sync.DbSession
+//import scray.querying.sync2.DbSession
 //import scray.querying.sync.Column
 //import java.sql.Statement
 //import java.sql.PreparedStatement

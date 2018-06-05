@@ -25,12 +25,13 @@ import org.osgi.framework.ServiceRegistration
 import org.osgi.framework.ServiceReference
 import org.osgi.framework.Filter
 import java.io.File
+import com.typesafe.scalalogging.LazyLogging
 
 /**
  * this class fakes a BundleContext in order to run Scray without
  * any OSGI container, but still conform to the OSGI way of doing things.
  */
-class FakeBundleContext(properties: Map[String, String]) extends BundleContext {
+class FakeBundleContext(properties: Map[String, String]) extends BundleContext with LazyLogging {
   def getProperty(name: String): String = properties.get(name).orNull
   def addBundleListener(x$1: org.osgi.framework.BundleListener): Unit = ???
   def addFrameworkListener(x$1: org.osgi.framework.FrameworkListener): Unit = ???
@@ -45,9 +46,18 @@ class FakeBundleContext(properties: Map[String, String]) extends BundleContext {
   def getBundles(): Array[org.osgi.framework.Bundle] = ???
   def getDataFile(x$1: String): java.io.File = ???
   def getService[S](x$1: org.osgi.framework.ServiceReference[S]): S = ???
-  def getServiceReference[S](x$1: Class[S]): org.osgi.framework.ServiceReference[S] 
-   = ???
-  def getServiceReference(x$1: String): org.osgi.framework.ServiceReference[_] = ???
+  def getServiceReference[S](x$1: Class[S]): org.osgi.framework.ServiceReference[S] = ???
+  def getServiceReference(x$1: String): org.osgi.framework.ServiceReference[_] = {
+    logger.info("Get fake service reference")
+    new org.osgi.framework.ServiceReference[String]  {
+      def compareTo(x$1: Object): Int = ??? 
+      def getBundle(): org.osgi.framework.Bundle = ???
+      def getProperty(x$1: String): Object = ??? 
+      def getPropertyKeys(): Array[String] = ??? 
+      def getUsingBundles(): Array[org.osgi.framework.Bundle] = ??? 
+      def isAssignableTo(x$1: org.osgi.framework.Bundle,x$2: String): Boolean = ???
+    }
+  }
   def getServiceReferences[S](x$1: Class[S],x$2: String): 
    java.util.Collection[org.osgi.framework.ServiceReference[S]] = ???
   def getServiceReferences(x$1: String,x$2: String): 

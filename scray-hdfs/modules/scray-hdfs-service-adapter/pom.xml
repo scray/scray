@@ -65,6 +65,11 @@
 			<artifactId>scray-hdfs-writer</artifactId>
 			<version>0.10.1-SNAPSHOT</version>
 		</dependency>
+		<dependency>
+			<groupId>org.scray</groupId>
+			<artifactId>scray-sync</artifactId>
+			<version>0.10.1-SNAPSHOT</version>
+		</dependency>
 	</dependencies>
 	<build>
 		<plugins>

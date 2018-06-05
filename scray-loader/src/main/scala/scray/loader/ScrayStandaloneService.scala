@@ -14,9 +14,10 @@
 // limitations under the License.
 package scray.loader
 
-import scray.loader.osgi.FakeBundleContext
-import scray.loader.osgi.Activator
 import com.typesafe.scalalogging.LazyLogging
+
+import scray.loader.osgi.Activator
+import scray.loader.osgi.FakeBundleContext
 
 
 /**

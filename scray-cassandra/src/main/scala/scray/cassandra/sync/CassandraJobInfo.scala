@@ -22,7 +22,7 @@ import com.datastax.driver.core.querybuilder.Insert
 import com.datastax.driver.core.querybuilder.QueryBuilder
 import scala.collection.JavaConversions._
 import scray.querying.sync.JobLockTable
-import scray.querying.sync.DbSession
+import scray.querying.sync2.DbSession
 import scray.common.serialization.BatchID
 import scray.querying.sync.JobInfo
 import com.typesafe.scalalogging.LazyLogging
@@ -32,7 +32,7 @@ import com.datastax.driver.core.querybuilder.{Insert, QueryBuilder}
 import scray.cassandra.util.CassandraUtils
 import scray.common.serialization.BatchID
 import scray.cassandra.sync.CassandraImplementation._
-import scray.querying.sync.{DbSession, JobInfo, JobLockTable, LockApi}
+import scray.querying.sync.{JobInfo, JobLockTable, LockApi}
 import scray.querying.sync.conf.SyncConfiguration
 import scray.querying.sync.conf.SyncConfigurationLoader
 

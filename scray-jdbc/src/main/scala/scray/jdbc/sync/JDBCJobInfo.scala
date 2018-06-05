@@ -16,7 +16,7 @@ package scray.jdbc.sync
 
 import scala.collection.JavaConversions._
 import scray.querying.sync.JobLockTable
-import scray.querying.sync.DbSession
+import scray.querying.sync2.DbSession
 import scray.common.serialization.BatchID
 import scray.querying.sync.JobInfo
 import scray.querying.sync.LockApi

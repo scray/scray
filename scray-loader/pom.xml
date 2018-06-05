@@ -23,6 +23,11 @@
 			<artifactId>org.osgi.core</artifactId>
 			<version>5.0.0</version>
 		</dependency>
+<!-- 		<dependency> -->
+<!-- 			<groupId>io.netty</groupId> -->
+<!-- 			<artifactId>netty-all</artifactId> -->
+<!-- 			<version>4.1.25.Final</version> -->
+<!-- 		</dependency> -->
 		<dependency>
 			<groupId>org.osgi</groupId>
 			<artifactId>org.osgi.compendium</artifactId>
@@ -37,17 +42,6 @@
 			<groupId>com.chuusai</groupId>
 			<artifactId>shapeless_${scala.suffix}</artifactId>
 			<version>2.3.0</version>
-		</dependency>
-		<dependency>
-			<groupId>org.scray</groupId>
-			<artifactId>scray-querying</artifactId>
-			<version>0.10.1-SNAPSHOT</version>
-			<exclusions>
-				<exclusion>
-					<artifactId>shapeless_${scala.suffix}.4</artifactId>
-					<groupId>com.chuusai</groupId>
-				</exclusion>
-			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>org.scray</groupId>
@@ -66,6 +60,14 @@
 					<groupId>io.netty</groupId>
 					<artifactId>netty-transport</artifactId>
 				</exclusion>
+				<exclusion>
+					<groupId>org.scray</groupId>
+					<artifactId>scray-querying</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>io.netty</groupId>
+					<artifactId>netty-handler</artifactId>
+				</exclusion>
 			</exclusions>
 		</dependency>
 		<dependency>
@@ -81,16 +83,16 @@
 					<groupId>org.apache.hive</groupId>
 					<artifactId>hive-storage-api</artifactId>
 				</exclusion>
+				<exclusion>
+					<groupId>org.scray</groupId>
+					<artifactId>scray-querying</artifactId>
+				</exclusion>
 			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>org.parboiled</groupId>
 			<artifactId>parboiled_${scala.suffix}</artifactId>
 			<version>${parboiled.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>com.twitter</groupId>
-			<artifactId>util-core_${scala.suffix}</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.scray</groupId>
@@ -102,35 +104,12 @@
 					<groupId>org.slf4j</groupId>
 				</exclusion>
 				<exclusion>
-					<groupId>org.apache.thrift</groupId>
-					<artifactId>libthrift</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>com.twitter</groupId>
-					<artifactId>libthrift</artifactId>
-				</exclusion>
-				<exclusion>
 					<groupId>com.twitter</groupId>
 					<artifactId>finagle-memcached_2.11</artifactId>
 				</exclusion>
-			</exclusions>
-		</dependency>
-		<dependency>
-			<groupId>com.twitter</groupId>
-			<artifactId>finagle-memcached_2.11</artifactId>
-			<version>18.4.0</version>
-			<exclusions>
 				<exclusion>
-					<groupId>com.twitter</groupId>
-					<artifactId>libthrift</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>net.java.dev.javacc</groupId>
-					<artifactId>javacc</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>io.netty</groupId>
-					<artifactId>netty-transport</artifactId>
+					<groupId>org.scray</groupId>
+					<artifactId>scray-querying</artifactId>
 				</exclusion>
 			</exclusions>
 		</dependency>
@@ -169,6 +148,28 @@
 			<artifactId>scray-jdbc</artifactId>
 			<version>0.10.1-SNAPSHOT</version>
 			<type>bundle</type>
+			<scope>provided</scope>
+			<exclusions>
+				<exclusion>
+					<groupId>org.scray</groupId>
+					<artifactId>scray-querying</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>org.objenesis</groupId>
+			<artifactId>objenesis</artifactId>
+			<version>2.1</version>
+		</dependency>
+		<dependency>
+			<groupId>org.scray</groupId>
+			<artifactId>scray-querying</artifactId>
+			<version>0.10.1-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>org.scray</groupId>
+			<artifactId>scray-sync</artifactId>
+			<version>0.10.1-SNAPSHOT</version>
 			<scope>provided</scope>
 		</dependency>
 	</dependencies>
@@ -241,13 +242,17 @@
 				<extensions>true</extensions>
 				<configuration>
 					<instructions>
-						<Embed-Dependency>*</Embed-Dependency>
+						<Embed-Dependency>*;scope=compile|runtime</Embed-Dependency>
 						<Embed-Transitive>true</Embed-Transitive>
 						<Export-Package>!*</Export-Package>
 						<Import-Package>
 							!*,
+							slick.jdbc.JdbcProfile,
+							scray.querying.sync2,
 							scray.jdbc.sync,
 							scray.jdbc.osgi,
+							scray.jdbc.automation,
+							scray.querying.storeabstraction,
 							org.osgi.framework,
 							org.w3c.dom,
 							org.xml.sax,
@@ -262,6 +267,7 @@
 							javax.security.auth.spi,
 							javax.security.auth.kerberos,
 							javax.security.auth.callback,
+							javax.security.cert,
 							javax.sql,
 							javax.net,
 							javax.net.ssl,
