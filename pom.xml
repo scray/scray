@@ -84,6 +84,7 @@
 		<module>scray-common</module>
 		<module>scray-client-jdbc</module> 
 		<module>scray-loader</module>
+		<module>scray-sync</module>
 	</modules>
 
 	<distributionManagement>
