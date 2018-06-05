@@ -17,7 +17,6 @@ package scray.loader.configuration
 import scala.collection.mutable.{ ArrayBuffer, HashMap }
 import scray.loader.configparser.{ ConfigProperties, ReadableConfig, ScrayConfiguration, UpdatetableConfiguration }
 import scray.querying.storeabstraction.StoreGenerators
-import scray.querying.sync.DbSession
 import scray.loader.DBMSUndefinedException
 import scray.cassandra.automation.{ CassandraSessionHandler, CassandraStoreGenerators }
 import scray.cassandra.extractors.CassandraExtractor
@@ -35,6 +34,7 @@ import scray.hdfs.sync.HDFSSession
 import org.osgi.framework.BundleContext
 import scray.jdbc.sync.JDBCDbSessionImpl
 import scray.jdbc.osgi.InstanceFactory
+import scray.querying.sync2.DbSession
 
 /**
  * abstraction for the management of configuration of stores
