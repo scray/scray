@@ -24,7 +24,7 @@ import scray.cassandra.sync.CassandraDbSession
 import scray.cassandra.util.CassandraUtils
 import scray.querying.description.{Column, TableIdentifier}
 import scray.querying.queries.DomainQuery
-import scray.querying.sync.DbSession
+import scray.querying.sync2.DbSession
 import scray.cassandra.sync.CassandraDbSession
 import com.twitter.util.FuturePool
 import scray.cassandra.extractors.CassandraExtractor

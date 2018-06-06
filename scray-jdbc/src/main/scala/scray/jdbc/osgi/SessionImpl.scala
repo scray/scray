@@ -13,7 +13,7 @@ import com.typesafe.scalalogging.LazyLogging
 
 import scray.jdbc.sync.JDBCDbSession
 import scray.jdbc.sync.JDBCDbSessionImpl
-import scray.querying.sync.DbSession
+import scray.querying.sync2.DbSession
 import slick.dbio.DBIOAction
 import slick.jdbc.JdbcProfile
 import slick.sql.FixedSqlAction

@@ -35,7 +35,7 @@ import com.datastax.driver.core.Statement
 import com.datastax.driver.core.querybuilder.Insert
 import com.datastax.driver.core.querybuilder.QueryBuilder
 import java.util.ArrayList
-import scray.querying.sync.DbSession
+import scray.querying.sync2.DbSession
 import scala.collection.mutable.ArrayBuffer
 import scray.querying.sync.OnlineBatchSync
 import scray.querying.sync.SyncTableBasicClasses.SyncTableRowEmpty

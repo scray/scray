@@ -76,6 +76,12 @@
 			<artifactId>logback-classic</artifactId>
 			<version>1.2.1</version>
 		</dependency>
+		<dependency>
+			<groupId>org.scray</groupId>
+			<artifactId>scray-sync</artifactId>
+			<version>0.10.1-SNAPSHOT</version>
+			<scope>provided</scope>
+		</dependency>
 	</dependencies>
 
 	<build>

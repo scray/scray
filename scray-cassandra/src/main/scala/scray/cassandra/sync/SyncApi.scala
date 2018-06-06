@@ -20,7 +20,7 @@ import scray.querying.description.TableIdentifier
 import scray.querying.sync.ArbitrarylyTypedRows
 import scray.querying.sync.JobInfo
 import scray.querying.sync.OnlineBatchSync
-import scray.querying.sync.DbSession
+import scray.querying.sync2.DbSession
 import scray.querying.sync.OnlineBatchSyncWithTableIdentifier
 
 object CassandraSyncApi extends SyncApi {

@@ -25,7 +25,7 @@ import scray.common.tools.ScrayCredentials
 import scray.loader.configparser.ReadableConfig
 import scala.collection.convert.decorateAsScala.asScalaSetConverter
 import scray.loader.configparser.ScrayConfiguration
-import scray.querying.sync.DbSession
+import scray.querying.sync2.DbSession
 import scray.jdbc.sync.JDBCDbSession
 import com.typesafe.scalalogging.LazyLogging
 import org.osgi.framework.BundleContext

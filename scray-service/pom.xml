@@ -106,6 +106,10 @@
 					<artifactId>finagle-core_2.11</artifactId>
 					<groupId>com.twitter</groupId>
 				</exclusion>
+				<exclusion>
+					<artifactId>io.netty</artifactId>
+					<groupId>netty</groupId>
+				</exclusion>
 			</exclusions>
 		</dependency>
 

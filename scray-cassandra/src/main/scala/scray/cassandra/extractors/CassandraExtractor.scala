@@ -31,7 +31,7 @@ import scray.querying.source.Splitter
 import scray.querying.source.indexing.IndexConfig
 import scray.querying.source.store.QueryableStoreSource
 import scray.querying.storeabstraction.StoreExtractor
-import scray.querying.sync.DbSession
+import scray.querying.sync2.DbSession
 
 /**
  * Helper class to create a configuration for a Cassandra table

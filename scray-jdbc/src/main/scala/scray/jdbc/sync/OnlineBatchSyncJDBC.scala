@@ -21,7 +21,7 @@ import scray.querying.sync.ArbitrarylyTypedRows
 import scray.querying.sync.RowWithValue
 import scray.querying.sync.JobInfo
 import scray.querying.sync.OnlineBatchSync
-import scray.querying.sync.DbSession
+import scray.querying.sync2.DbSession
 import scray.querying.sync.OnlineBatchSyncWithTableIdentifier
 import scray.querying.sync.State
 import java.sql.PreparedStatement

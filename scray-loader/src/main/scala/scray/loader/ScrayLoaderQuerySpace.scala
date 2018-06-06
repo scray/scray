@@ -25,7 +25,7 @@ import scray.loader.configparser.ScrayConfiguration
 import scray.loader.configuration.ScrayStores
 import scala.collection.mutable.HashMap
 import scray.querying.storeabstraction.StoreGenerators
-import scray.querying.sync.DbSession
+import scray.querying.sync2.DbSession
 import scray.querying.description.ColumnConfiguration
 import scray.querying.description.TableIdentifier
 import scray.querying.storeabstraction.StoreExtractor

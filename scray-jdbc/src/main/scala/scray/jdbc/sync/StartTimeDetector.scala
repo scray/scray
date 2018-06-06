@@ -27,7 +27,7 @@
 //import scray.querying.sync.ArbitrarylyTypedRows
 //import scray.querying.sync.Column
 //import scray.querying.sync.DBColumnImplementation
-//import scray.querying.sync.DbSession
+//import scray.querying.sync2.DbSession
 //import scray.querying.sync.JobInfo
 //import scray.querying.sync.Table
 //import shapeless.syntax.singleton._

@@ -1,9 +1,9 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
-	<artifactId>scray-querying</artifactId>
-	<name>Scray - Querying</name>
-	<description>query engine core source code</description>
+	<artifactId>scray-sync</artifactId>
+	<name>Scray - Synchonisation</name>
+	<description>Component to synchonize batch and streaming jobs</description>
 
 	<parent>
 		<groupId>org.scray</groupId>
@@ -105,11 +105,6 @@
 			<groupId>org.yaml</groupId>
 			<artifactId>snakeyaml</artifactId>
 			<version>1.18</version>
-		</dependency>
-		<dependency>
-			<groupId>org.scray</groupId>
-			<artifactId>scray-sync</artifactId>
-			<version>0.10.1-SNAPSHOT</version>
 		</dependency>
 	</dependencies>
 

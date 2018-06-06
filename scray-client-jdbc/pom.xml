@@ -71,12 +71,12 @@
 		<dependency>
 			<groupId>com.twitter</groupId>
 			<artifactId>util-core_2.11</artifactId>
-			<version>6.43.0</version>
+			<version>${finagle.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.twitter</groupId>
 			<artifactId>util-codec_2.11</artifactId>
-			<version>6.43.0</version>
+			<version>${finagle.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.twitter</groupId>

@@ -27,6 +27,7 @@ import scray.querying.description.TableIdentifier
 import scray.querying.sync.State.State
 import java.util.Calendar
 import scray.querying.sync.conf.SyncConfiguration
+import scray.querying.sync2.DbSession
 
 trait OnlineBatchSyncWithTableIdentifier[Statement, InsertIn, Result] extends LazyLogging {
 

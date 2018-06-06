@@ -29,7 +29,7 @@ import scray.loader.configparser.ScrayConfiguration
 import com.datastax.driver.core.ConsistencyLevel
 import com.typesafe.scalalogging.LazyLogging
 import com.twitter.util.Throw
-import scray.querying.sync.DbSession
+import scray.querying.sync2.DbSession
 import scray.cassandra.sync.CassandraDbSession
 import com.datastax.driver.core.Cluster
 import java.net.InetAddress

@@ -38,7 +38,7 @@ import slick.dbio.DBIOAction
 import slick.jdbc.JdbcProfile
 import slick.sql.FixedSqlAction
 import scray.querying.sync.StatementExecutionError
-import scray.querying.sync.DbSession
+import scray.querying.sync2.DbSession
 import scray.jdbc.extractors.ScrayHiveDialect
 import java.sql.DriverManager
 
