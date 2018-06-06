@@ -97,6 +97,7 @@ class SequenceFileWriterSpecs extends WordSpec with LazyLogging {
 
       for (i <- 0 to numDate) {
         val idx  = idxReader.next().get
+        println("Chicken\t" + idx)
         val data = blobReader.get(idx.getKey.toString(), idx.getPosition)
 
         Assert.assertTrue(data.isDefined)

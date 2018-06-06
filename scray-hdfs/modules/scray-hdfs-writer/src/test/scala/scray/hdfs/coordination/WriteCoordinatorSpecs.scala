@@ -16,9 +16,7 @@ class WriteCoordinatorSpecs extends WordSpec with LazyLogging {
       
       for(i <- 0 to 20) {
         writer.insert("${i}", System.currentTimeMillis(), new ByteArrayInputStream("${i}".getBytes))
-      }
-      
-      
+      } 
     }
   }
 }

@@ -132,7 +132,6 @@ class BinarySequenceFileWriter(path: String, hdfsConf: Configuration, fs: Option
     var reachMaxSizeBuffer = new Array[Byte](blobSplitSize)
 
     while (readDataLen != -1) {
-      blobCounter += 1
 
       // Put files in buffer if spit size is not reached
       if ((reachMaxSizeBufferWrittenBytes + readDataLen) < blobSplitSize) {
@@ -143,6 +142,7 @@ class BinarySequenceFileWriter(path: String, hdfsConf: Configuration, fs: Option
 
         }
       } else {
+        blobCounter += 1
         logger.debug(s"Write next blob of size ${readDataLen} with offset nr ${blobCounter}.")
 
         val blob = new Blob(System.currentTimeMillis(), reachMaxSizeBuffer, reachMaxSizeBufferWrittenBytes)
@@ -158,6 +158,7 @@ class BinarySequenceFileWriter(path: String, hdfsConf: Configuration, fs: Option
 
     // Write missing data if inputstream terminated
     if (reachMaxSizeBufferWrittenBytes > 0) {
+      blobCounter += 1
       val blob = new Blob(System.currentTimeMillis(), reachMaxSizeBuffer, reachMaxSizeBufferWrittenBytes)
       dataWriter.append(new BlobKey(id, blobCounter), blob)
      
