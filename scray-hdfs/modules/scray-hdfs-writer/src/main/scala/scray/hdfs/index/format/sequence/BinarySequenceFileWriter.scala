@@ -137,9 +137,8 @@ class BinarySequenceFileWriter(path: String, hdfsConf: Configuration, fs: Option
       if ((reachMaxSizeBufferWrittenBytes + readDataLen) < blobSplitSize) {
 
         for (i <- 0 to (readDataLen - 1)) {
-          reachMaxSizeBufferWrittenBytes += 1
           reachMaxSizeBuffer(reachMaxSizeBufferWrittenBytes) = buffer(i)
-
+          reachMaxSizeBufferWrittenBytes += 1
         }
       } else {
         blobCounter += 1
