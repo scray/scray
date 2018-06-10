@@ -34,6 +34,10 @@
 					<groupId>org.slf4j</groupId>
 					<artifactId>slf4j-log4j12</artifactId>
 				</exclusion>
+				<exclusion>
+					<groupId>log4j</groupId>
+					<artifactId>log4j</artifactId>
+				</exclusion>
 			</exclusions>
 		</dependency>
 		<dependency>
@@ -44,6 +48,10 @@
 				<exclusion>
 					<groupId>xml-apis</groupId>
 					<artifactId>xml-apis</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>log4j</groupId>
+					<artifactId>log4j</artifactId>
 				</exclusion>
 			</exclusions>
 		</dependency>
@@ -62,6 +70,11 @@
 			<artifactId>org.osgi.core</artifactId>
 			<version>4.3.0</version>
 			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>log4j-over-slf4j</artifactId>
+			<version>1.7.7</version>
 		</dependency>
 	</dependencies>
 	<build>
@@ -144,7 +157,7 @@
 							org.apache.hadoop.hdfs,
 							org.apache.hadoop.hdfs.*
 						</_exportcontents>
-						<Bundle-Activator>scray.hdfs.osgi.Activator</Bundle-Activator>	
+						<Bundle-Activator>scray.hdfs.osgi.Activator</Bundle-Activator>
 					</instructions>
 				</configuration>
 			</plugin>
