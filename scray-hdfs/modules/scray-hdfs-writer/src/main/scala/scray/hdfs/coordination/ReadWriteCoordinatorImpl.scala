@@ -66,6 +66,7 @@ class ReadWriteCoordinatorImpl extends ReadCoordinator with WriteCoordinator wit
   }
 
   private def createNewWriter(metadata: WriteDestination): Writer = {
+    logger.debug(s"Create new Writer ${metadata}")
     metadata.fileFormat match {
       case format: IHdfsWriterConstats.FileFormat => {
         val filePath = this.getPath(metadata.path, metadata.queryspace, metadata.version.number)
