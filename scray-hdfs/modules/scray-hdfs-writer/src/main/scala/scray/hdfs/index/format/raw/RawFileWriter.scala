@@ -22,6 +22,7 @@ import org.apache.hadoop.fs.Path
 import com.google.common.io.ByteStreams
 import java.io.InputStream
 import com.typesafe.scalalogging.LazyLogging
+import org.apache.hadoop.fs.CommonConfigurationKeysPublic
 
 class RawFileWriter(path: String, hdfsConf: Configuration) extends LazyLogging {
 
@@ -44,6 +45,8 @@ class RawFileWriter(path: String, hdfsConf: Configuration) extends LazyLogging {
     hdfsConf.set("fs.hdfs.impl", classOf[org.apache.hadoop.hdfs.DistributedFileSystem].getName);
     hdfsConf.set("fs.file.impl", classOf[org.apache.hadoop.fs.LocalFileSystem].getName);
     hdfsConf.set("dfs.client.use.datanode.hostname", "true");
+    hdfsConf.setInt(CommonConfigurationKeysPublic.IPC_CLIENT_CONNECT_MAX_RETRIES_ON_SOCKET_TIMEOUTS_KEY, 1);
+    
 
     dataWriter = FileSystem.get(URI.create(path), hdfsConf);
   }
