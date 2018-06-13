@@ -26,6 +26,7 @@ trait Writer {
   def insert(id: String, updateTime: Long, data: InputStream, blobSplitSize: Int = 5 * 1024 * 1024): Long
   def insert(id: String, updateTime: Long, data: InputStream, dataSize: BigInteger, blobSplitSize: Int): Long
   def insert(idBlob: Tuple2[String, Blob]): Unit
+  def getPath: String
   def getBytesWritten: Long
   def getNumberOfInserts: Int
   def close

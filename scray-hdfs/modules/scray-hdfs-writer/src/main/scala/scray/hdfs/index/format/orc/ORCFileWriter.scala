@@ -37,11 +37,14 @@ class ORCFileWriter(batchSize: Int = 10000) extends scray.hdfs.index.format.Writ
   val schema: TypeDescription = TypeDescription.fromString("struct<id:string,time:bigint,data:binary>");
   private var batch: VectorizedRowBatch = null;
   private var numberOfInserts = 0
+  private var path: String = ""
   
   val log = LoggerFactory.getLogger("scray.hdfs.index.format.orc.OrcWriter");
 
   def this(path: String) {
     this
+    this.path = path
+    
     try {
 
       val hadoopConfig = new Configuration();
@@ -114,6 +117,9 @@ class ORCFileWriter(batchSize: Int = 10000) extends scray.hdfs.index.format.Writ
         1L
   }
 
+  override def getPath: String = {
+    this.path
+  }
   
   def getNumberOfInserts: Int = {
     numberOfInserts

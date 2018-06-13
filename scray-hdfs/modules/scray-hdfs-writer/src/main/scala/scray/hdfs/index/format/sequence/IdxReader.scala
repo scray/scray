@@ -36,8 +36,8 @@ class IdxReader(path: String, hdfsConf: Configuration, fs: Option[FileSystem]) e
   val idxEntry = new IndexValue("k1", 42, 42)
 
   // Store state to
-  var hasNextWasCalled = false
-  var hasNextValue = false
+  private var hasNextWasCalled = false
+  private var hasNextValue = false
   
   def this(path: String) = {
     this(path, new Configuration, None)

@@ -34,9 +34,11 @@ class CoordinatedWriter(private var writer: Writer, maxFileSize: Long, writeCoor
       println(numInserts + "\t F: " + metadata.maxNumberOfInserts)
       writer.insert(id, updateTime, data)
     } else {
+      logger.debug(s"Close file ${writer.getPath}")
       writer.close
-      logger.debug(s"Create new file")
+      
       writer = createNewBasicWriter(metadata)
+      logger.debug(s"Create new file ${writer.getPath}")
       numInserts = 0
       this.insert(id, updateTime, data)
     }
@@ -67,6 +69,10 @@ class CoordinatedWriter(private var writer: Writer, maxFileSize: Long, writeCoor
     writer.close
   }
 
+  def getPath: String = {
+    this.writer.getPath  
+  }
+  
   def getBytesWritten: Long = {
     writer.getBytesWritten
   }
@@ -89,8 +95,10 @@ class CoordinatedWriter(private var writer: Writer, maxFileSize: Long, writeCoor
       println(numInserts + "\t F: " + metadata.maxNumberOfInserts)
       writer.insert(id, updateTime, data)
     } else {
+      logger.debug(s"Close file ${writer.getPath}")
       writer.close
-      logger.debug(s"Create new file")
+      
+      logger.debug(s"Create new file ${writer.getPath}")
       writer = createNewBasicWriter(metadata)
       numInserts = 0
       this.insert(id, updateTime, data)
@@ -103,9 +111,12 @@ class CoordinatedWriter(private var writer: Writer, maxFileSize: Long, writeCoor
       numInserts = numInserts + 1
       writer.insert(id, updateTime, data, blobSplitSize)
     } else {
+      logger.debug(s"Close file ${writer.getPath}")
       writer.close
-      logger.debug(s"Create new file")
+
       writer = createNewBasicWriter(metadata)
+      logger.debug(s"Create new file ${writer.getPath}")
+
       numInserts = 0
       this.insert(id, updateTime, data, blobSplitSize)
     }
