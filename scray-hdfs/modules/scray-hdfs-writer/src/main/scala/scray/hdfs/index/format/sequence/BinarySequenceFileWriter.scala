@@ -231,12 +231,13 @@ class BinarySequenceFileWriter(path: String, hdfsConf: Configuration, fs: Option
     numberOfInserts
   }
 
+  def getPath: String = {
+    this.path  
+  }
+  
   def close: Unit = {
     IOUtils.closeStream(dataWriter);
     IOUtils.closeStream(idxWriter);
   }
   
-  def getPath: String = {
-    this.path
-  }
 }
