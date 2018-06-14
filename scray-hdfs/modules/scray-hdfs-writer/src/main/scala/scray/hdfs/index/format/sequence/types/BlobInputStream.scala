@@ -124,7 +124,7 @@ class BlobInputStream(reader: BlobFileReader, index: IndexValue) extends InputSt
       logger.debug(s"Wrote ${outputBytes} bytes")
     }
 
-    if (dataBuffer.length == readPossitionInBuffer) {
+    if (dataBuffer.length == readPossitionInBuffer.getOrElse(0)) {
       updateState(updateBuffer(possitionInFile))
     }
 
