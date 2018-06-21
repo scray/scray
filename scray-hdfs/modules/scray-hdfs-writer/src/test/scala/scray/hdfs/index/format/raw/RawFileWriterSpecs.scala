@@ -27,26 +27,16 @@ import scala.io.Source
 class RawFileWriterSpecs extends WordSpec with LazyLogging {
 
   "RawFileWriter " should {
-    " write and read data to file " in {
-      val writer = new RawFileWriter("file://ff")
-
-      for (i <- 0 to 10) {
-        writer.write(s"/tmp/chickenR_${i}", new ByteArrayInputStream("ABC".getBytes));
-      }
-
-    }
-    " write to output stream " in {
+    " read and write with java.io stream " in {
       
       val dataToWrite = "Chicken42"
       
       val writer = new RawFileWriter("file://ff")
-      
       val outputStream = writer.write("rawFileWriterSpecs/useStream.raw")
       outputStream.write(dataToWrite.getBytes)
       outputStream.close();
       
       val reader = new RawFileReader("file://ff")
-      
       val inputStream = reader.read("rawFileWriterSpecs/useStream.raw")
       val readDate = Source.fromInputStream(inputStream).mkString
       
