@@ -15,64 +15,35 @@
 
 package scray.hdfs.index.format.raw
 
-import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.FileSystem
-import java.net.URI
-import org.apache.hadoop.fs.Path
-import com.google.common.io.ByteStreams
 import java.io.InputStream
 import com.typesafe.scalalogging.LazyLogging
-import java.io.OutputStream
+import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.fs.FileSystem
+import org.apache.hadoop.fs.Path
 
-class RawFileWriter(hdfsURL: String, hdfsConf: Configuration) extends LazyLogging {
+class RawFileReader(hdfsURL: String, hdfsConf: Configuration) extends LazyLogging {
+  
+   var dataReader: FileSystem = null; // scalastyle:off null
 
-  var dataWriter: FileSystem = null; // scalastyle:off null
-
-  if (getClass.getClassLoader != null) {
-    hdfsConf.setClassLoader(getClass.getClassLoader)
-  }
-
-  def this(hdfsUrl : String) = {
-    this(hdfsUrl, new Configuration)
-  }
-
-  def initWriter() = {
+   def this(hdfsURL: String) {
+       this(hdfsURL, new Configuration)
+   }
+   
+   def initReader() = {
     hdfsConf.set("fs.hdfs.impl", classOf[org.apache.hadoop.hdfs.DistributedFileSystem].getName);
     hdfsConf.set("fs.file.impl", classOf[org.apache.hadoop.fs.LocalFileSystem].getName);
     hdfsConf.set("dfs.client.use.datanode.hostname", "true");
     hdfsConf.set("fs.defaultFS", hdfsURL)
 
-    dataWriter = FileSystem.get(hdfsConf);
+    dataReader = FileSystem.get(hdfsConf);
   }
   
-  def write(fileName: String, data: InputStream) = synchronized {
-    val hdfswritepath = new Path(fileName);
-
-    if(dataWriter == null ) {
+  def read(path: String): InputStream = {
+   if(dataReader == null ) {
       logger.debug("Writer was not initialized. Will do it now")
-      
-      initWriter()
+      initReader()
     }
-    
-    dataWriter.create(new Path(fileName))
-    val hdfsOutputStream = dataWriter.create(hdfswritepath);
-
-    ByteStreams.copy(data, hdfsOutputStream);
-    data.close()
-    hdfsOutputStream.flush();
-  }
-  
-  def write(fileName: String): OutputStream = {
-    if(dataWriter == null ) {
-      logger.debug("Writer was not initialized. Will do it now")
-      
-      initWriter()
-    }
-        
-    dataWriter.create(new Path(fileName))
-  }
-  
-  def close = {
-    dataWriter.close()
+   
+    dataReader.open(new Path(path))
   }
 }

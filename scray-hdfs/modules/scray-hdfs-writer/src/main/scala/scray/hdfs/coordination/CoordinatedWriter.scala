@@ -56,6 +56,7 @@ class CoordinatedWriter(private var writer: Writer, maxFileSize: Long, writeCoor
       s"${basePath}/scray-data-${queryspace}-v${version}/${UUID.randomUUID()}"
     }
   }
+  
   def maxFileSizeReached(writtenBytes: Long, maxSize: Long): Boolean = {
     writtenBytes >= maxSize
   }
