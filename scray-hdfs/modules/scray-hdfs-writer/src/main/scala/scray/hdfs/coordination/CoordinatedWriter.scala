@@ -93,7 +93,6 @@ class CoordinatedWriter(private var writer: Writer, maxFileSize: Long, writeCoor
       &&
       !maxNumInsertsReached(numInserts, metadata.maxNumberOfInserts)) {
       numInserts = numInserts + 1
-      println(numInserts + "\t F: " + metadata.maxNumberOfInserts)
       writer.insert(id, updateTime, data)
     } else {
       logger.debug(s"Close file ${writer.getPath}")

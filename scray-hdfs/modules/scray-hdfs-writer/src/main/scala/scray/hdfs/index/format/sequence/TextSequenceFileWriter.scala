@@ -24,6 +24,7 @@ import org.apache.hadoop.io.SequenceFile.Writer
 import org.apache.hadoop.io.Text
 import com.typesafe.scalalogging.LazyLogging
 import java.io.InputStream
+import scala.io.Source
 
 class TextSequenceFileWriter (path: String, hdfsConf: Configuration, fs: Option[FileSystem]) extends LazyLogging {
 
@@ -81,6 +82,22 @@ class TextSequenceFileWriter (path: String, hdfsConf: Configuration, fs: Option[
 
     // Write data
     dataWriter.append(new Text(id), new Text(data));
+    
+    numberOfInserts = numberOfInserts + 1
+    dataWriter.getLength
+  }
+  
+    def insert(id: String, data: InputStream): Long = {
+
+    hdfsConf.set("fs.hdfs.impl", "org.apache.hadoop.hdfs.DistributedFileSystem");
+    hdfsConf.set("fs.file.impl", "org.apache.hadoop.fs.LocalFileSystem");
+    
+    if (dataWriter == null) { // scalastyle:off null
+      dataWriter = initWriter(new Text, new Text, fs.getOrElse(FileSystem.get(hdfsConf)), ".text.seq")
+    }
+
+    // Write data
+    dataWriter.append(new Text(id), new Text(Source.fromInputStream(data).mkString));
     
     numberOfInserts = numberOfInserts + 1
     dataWriter.getLength
