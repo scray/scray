@@ -131,7 +131,15 @@
 					<instructions>
 						<Embed-Dependency>*</Embed-Dependency>
 						<Embed-Transitive>true</Embed-Transitive>
-						<Export-Package>org.apache.hadoop.fs,org.apache.hadoop.hdfs,scray.hdfs.coordination,scray.hdfs.index.format.sequence,scray.hdfs.index.format.raw,scray.hdfs.index.format,scray.hdfs.index.format.sequence.types,scray.hdfs.index.format.orc</Export-Package>
+						<Export-Package>org.apache.hadoop.fs,
+							org.apache.hadoop.hdfs,
+							scray.hdfs.io.coordination,
+							scray.hdfs.io.index.format.sequence,
+							scray.hdfs.io.index.format.raw,
+							scray.hdfs.io.index.format,
+							scray.hdfs.io.index.format.sequence.types,
+							scray.hdfs.io.index.format.orc
+						</Export-Package>
 						<Import-Package>
 							!*,
 							org.osgi.framework,
@@ -157,7 +165,7 @@
 							org.apache.hadoop.hdfs,
 							org.apache.hadoop.hdfs.*
 						</_exportcontents>
-						<Bundle-Activator>scray.hdfs.osgi.Activator</Bundle-Activator>
+						<Bundle-Activator>scray.hdfs.io.osgi.Activator</Bundle-Activator>
 					</instructions>
 				</configuration>
 			</plugin>
