@@ -34,12 +34,12 @@ class RawFileWriterSpecs extends WordSpec with LazyLogging {
       val dataToWrite = "Chicken42"
       
       val writer = new RawFileWriter("file://ff")
-      val outputStream = writer.write("rawFileWriterSpecs/useStream.raw")
+      val outputStream = writer.write("target/rawFileWriterSpecs/useStream.raw")
       outputStream.write(dataToWrite.getBytes)
       outputStream.close();
       
       val reader = new RawFileReader("file://ff")
-      val inputStream = reader.read("rawFileWriterSpecs/useStream.raw")
+      val inputStream = reader.read("target/rawFileWriterSpecs/useStream.raw")
       val readDate = Source.fromInputStream(inputStream).mkString
       
       Assert.assertEquals(dataToWrite, readDate)

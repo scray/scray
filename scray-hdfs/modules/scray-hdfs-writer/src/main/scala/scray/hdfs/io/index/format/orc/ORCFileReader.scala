@@ -33,7 +33,7 @@ import org.apache.orc.RecordReader
 class ORCFileReader {
 
   private var reader: Reader = null;
-  val log = LoggerFactory.getLogger("scray.hdfs.index.format.orc.ORCFileReader");
+  val log = LoggerFactory.getLogger("scray.hdfs.io.index.format.orc.ORCFileReader");
 
   private final val ID_COLUMN = "id";
   private final val COLUMNS: Array[String] = Array("id");

@@ -39,7 +39,7 @@ class ORCFileWriter(batchSize: Int = 10000) extends scray.hdfs.io.index.format.W
   private var numberOfInserts = 0
   private var path: String = ""
   
-  val log = LoggerFactory.getLogger("scray.hdfs.index.format.orc.OrcWriter");
+  val log = LoggerFactory.getLogger("scray.hdfs.io.index.format.orc.OrcWriter");
 
   def this(path: String) {
     this
