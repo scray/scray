@@ -124,7 +124,7 @@ class BlobInputStream(reader: BlobFileReader, index: IndexValue) extends InputSt
       logger.debug(s"Wrote ${outputBytes} bytes")
     }
 
-    if (dataBuffer.length == readPossitionInBuffer) {
+    if (dataBuffer.length == readPossitionInBuffer.getOrElse(0)) {
       updateState(updateBuffer(possitionInFile))
     }
 
@@ -161,7 +161,7 @@ class BlobInputStream(reader: BlobFileReader, index: IndexValue) extends InputSt
     (newPosInOutputBuffer, newReadPossition)
   }
 
-  def readTillInputStreamBufferIsFull(dataBuffer: Array[Byte], readPossitionInBuffer: Int, outputData: Array[Byte], readBytes: Int, len: Int) {
+  def readTillInputStreamBufferIsFull(dataBuffer: Array[Byte], readPossitionInBuffer: Int, outputData: Array[Byte], readBytes: Int, len: Int):  Array[Byte]  = {
 
     if (readBytes >= len) {
       outputData
