@@ -14,6 +14,10 @@
 // limitations under the License.
 package scray.hdfs.io.index.format.sequence
 
+import java.io.InputStream
+
+import scala.io.Source
+
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.FileSystem
 import org.apache.hadoop.fs.Path
@@ -22,11 +26,11 @@ import org.apache.hadoop.io.SequenceFile
 import org.apache.hadoop.io.SequenceFile.Metadata
 import org.apache.hadoop.io.SequenceFile.Writer
 import org.apache.hadoop.io.Text
-import com.typesafe.scalalogging.LazyLogging
-import java.io.InputStream
-import scala.io.Source
 
-class TextSequenceFileWriter (path: String, hdfsConf: Configuration, fs: Option[FileSystem]) extends LazyLogging {
+import com.typesafe.scalalogging.LazyLogging
+
+
+class TextSequenceFileWriter (path: String, hdfsConf: Configuration, fs: Option[FileSystem]) extends scray.hdfs.io.index.format.Writer with LazyLogging {
 
   var dataWriter: SequenceFile.Writer = null; // scalastyle:off null
 
@@ -71,6 +75,12 @@ class TextSequenceFileWriter (path: String, hdfsConf: Configuration, fs: Option[
     if (dataWriter != null)dataWriter.hflush() 
   }
     
+  
+  def getPath: String = ???
+  def insert(id: String,updateTime: Long,data: java.io.InputStream,dataSize: java.math.BigInteger,blobSplitSize: Int): Long = ???
+  def insert(id: String,updateTime: Long,data: java.io.InputStream,blobSplitSize: Int): Long = ???
+  def insert(id: String,updateTime: Long,data: Array[Byte]): Long = ???
+  
   def insert(id: String, data: String): Long = {
 
     hdfsConf.set("fs.hdfs.impl", "org.apache.hadoop.hdfs.DistributedFileSystem");
