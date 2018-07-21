@@ -60,7 +60,8 @@ class RawFileWriter(hdfsURL: String, hdfsConf: Configuration) extends LazyLoggin
     ByteStreams.copy(data, hdfsOutputStream);
     data.close()
     hdfsOutputStream.hflush();
-    hdfsOutputStream.hsync();  
+    hdfsOutputStream.hsync(); 
+    hdfsOutputStream.close();
   }
   
   def write(fileName: String): OutputStream = {
