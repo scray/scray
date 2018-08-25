@@ -31,13 +31,11 @@ import org.apache.hadoop.io.Writable
 import com.typesafe.scalalogging.LazyLogging
 
 import scray.hdfs.io.index.format.Writer
-import scray.hdfs.io.index.format.sequence.types.Blob
-import scray.hdfs.io.index.format.sequence.types.BlobKey
-import scray.hdfs.io.index.format.sequence.types.IndexValue
 import java.math.BigInteger
 import org.apache.commons.lang.ArrayUtils
+import scray.hdfs.io.index.format.sequence.mapping.InputOutputTypeMapping
 
-class BinarySequenceFileWriter(path: String, hdfsConf: Configuration, fs: Option[FileSystem]) extends scray.hdfs.io.index.format.Writer with LazyLogging {
+class BinarySequenceFileWriter[IDXKEY <: Writable, IDXVALUE <: Writable, DATAKEY <: Writable, DATAVALUE <: Writable](path: String, hdfsConf: Configuration, fs: Option[FileSystem], outTypeMapping: InputOutputTypeMapping[IDXKEY, IDXVALUE, DATAKEY, DATAVALUE]) extends scray.hdfs.io.index.format.Writer with LazyLogging {
 
   var dataWriter: SequenceFile.Writer = null; // scalastyle:off null
   var idxWriter: SequenceFile.Writer = null; // scalastyle:off null
@@ -48,14 +46,12 @@ class BinarySequenceFileWriter(path: String, hdfsConf: Configuration, fs: Option
 
   var numberOfInserts: Int = 0
 
-  val idxValue = new IndexValue("k1", 42, 42) // Block position in data file
-
-  def this(path: String) = {
-    this(path, new Configuration, None)
+  def this(path: String, outTypeMapping: InputOutputTypeMapping[IDXKEY, IDXVALUE, DATAKEY, DATAVALUE]) = {
+    this(path, new Configuration, None, outTypeMapping)
   }
 
-  def this(path: String, hdfsConf: Configuration) {
-    this(path, hdfsConf, None)
+  def this(path: String, hdfsConf: Configuration, outTypeMapping: InputOutputTypeMapping[IDXKEY, IDXVALUE, DATAKEY, DATAVALUE]) {
+    this(path, hdfsConf, None, outTypeMapping)
   }
 
   private def initWriter(
@@ -80,6 +76,7 @@ class BinarySequenceFileWriter(path: String, hdfsConf: Configuration, fs: Option
 
     writer
   }
+  
 
   def flush() = {
     if (dataWriter != null) dataWriter.hflush()
@@ -92,18 +89,18 @@ class BinarySequenceFileWriter(path: String, hdfsConf: Configuration, fs: Option
     hdfsConf.set("fs.file.impl", "org.apache.hadoop.fs.LocalFileSystem");
 
     if (dataWriter == null) { // scalastyle:off null
-      dataWriter = initWriter(new BlobKey, new Blob(), fs.getOrElse(FileSystem.get(hdfsConf)), ".blob")
+      dataWriter = initWriter(outTypeMapping.getDataKey("42"), outTypeMapping.getDataValue("".getBytes), fs.getOrElse(FileSystem.get(hdfsConf)), ".blob")
     }
 
     if (idxWriter == null) { // scalastyle:off null
-      idxWriter = initWriter(new Text(), idxValue, fs.getOrElse(FileSystem.get(hdfsConf)), ".idx")
+      idxWriter = initWriter(outTypeMapping.getIdxKey("42"), outTypeMapping.getIdxValue("42", 42L, 2L), fs.getOrElse(FileSystem.get(hdfsConf)), ".idx")
     }
 
     // Write idx
-    idxWriter.append(new Text(id), new IndexValue(id, updateTime, dataWriter.getLength))
+    idxWriter.append(outTypeMapping.getIdxKey(id), outTypeMapping.getIdxValue(id, updateTime, dataWriter.getLength))
 
     // Write data
-    dataWriter.append(new BlobKey(id), new Blob(updateTime, data, data.length));
+    dataWriter.append(outTypeMapping.getDataKey(id), outTypeMapping.getDataValue(data));
 
     numberOfInserts = numberOfInserts + 1
     dataWriter.getLength
@@ -114,11 +111,11 @@ class BinarySequenceFileWriter(path: String, hdfsConf: Configuration, fs: Option
     hdfsConf.set("fs.file.impl", "org.apache.hadoop.fs.LocalFileSystem");
 
     if (dataWriter == null) { // scalastyle:off null
-      dataWriter = initWriter(new BlobKey, new Blob, fs.getOrElse(FileSystem.get(hdfsConf)), ".blob")
+      dataWriter = initWriter(outTypeMapping.getDataKey("42"), outTypeMapping.getDataValue("".getBytes, 0), fs.getOrElse(FileSystem.get(hdfsConf)), ".blob")
     }
 
     if (idxWriter == null) { // scalastyle:off null
-      idxWriter = initWriter(new Text, idxValue, fs.getOrElse(FileSystem.get(hdfsConf)), ".idx")
+      idxWriter = initWriter(outTypeMapping.getIdxKey("42"), outTypeMapping.getIdxValue("42", 42L, 2L), fs.getOrElse(FileSystem.get(hdfsConf)), ".idx")
     }
 
     val fileStartPossiton = dataWriter.getLength
@@ -144,11 +141,11 @@ class BinarySequenceFileWriter(path: String, hdfsConf: Configuration, fs: Option
         blobCounter += 1
         logger.debug(s"Write next blob of size ${readDataLen} with offset nr ${blobCounter}.")
 
-        val blob = new Blob(System.currentTimeMillis(), reachMaxSizeBuffer, reachMaxSizeBufferWrittenBytes)
-        dataWriter.append(new BlobKey(id, blobCounter), blob)
+        val blob = outTypeMapping.getDataValue(reachMaxSizeBuffer, reachMaxSizeBufferWrittenBytes)
+        dataWriter.append(outTypeMapping.getDataKey(id, blobCounter), blob)
         
         // Write idx
-        idxWriter.append(new Text(id), new IndexValue(id, blobCounter, reachMaxSizeBufferWrittenBytes, updateTime, fileStartPossiton))
+        idxWriter.append(new Text(id), outTypeMapping.getIdxValue(id, blobCounter, reachMaxSizeBufferWrittenBytes, updateTime, fileStartPossiton))
         reachMaxSizeBuffer = new Array[Byte](0)
         reachMaxSizeBufferWrittenBytes = 0
       }
@@ -158,11 +155,11 @@ class BinarySequenceFileWriter(path: String, hdfsConf: Configuration, fs: Option
     // Write missing data if inputstream terminated
     if (reachMaxSizeBufferWrittenBytes > 0) {
       blobCounter += 1
-      val blob = new Blob(System.currentTimeMillis(), reachMaxSizeBuffer, reachMaxSizeBufferWrittenBytes)
-      dataWriter.append(new BlobKey(id, blobCounter), blob)
+      val blob = outTypeMapping.getDataValue(reachMaxSizeBuffer, reachMaxSizeBufferWrittenBytes)
+      dataWriter.append(outTypeMapping.getDataKey(id, blobCounter), blob)
      
       // Write idx
-      idxWriter.append(new Text(id), new IndexValue(id, blobCounter, reachMaxSizeBufferWrittenBytes, updateTime, fileStartPossiton))
+      idxWriter.append(outTypeMapping.getIdxKey(id), outTypeMapping.getIdxValue(id, blobCounter, reachMaxSizeBufferWrittenBytes, updateTime, fileStartPossiton))
       reachMaxSizeBuffer = new Array[Byte](0)
       reachMaxSizeBufferWrittenBytes = 0
     }
@@ -175,46 +172,46 @@ class BinarySequenceFileWriter(path: String, hdfsConf: Configuration, fs: Option
     this.insert(id, updateTime, data, blobSplitSize)
   }
 
-  def insert(idBlob: Tuple2[String, Blob]): Unit = {
-    hdfsConf.set("fs.hdfs.impl", "org.apache.hadoop.hdfs.DistributedFileSystem");
-    hdfsConf.set("fs.file.impl", "org.apache.hadoop.fs.LocalFileSystem");
-
-    val (id, blob) = idBlob
-
-    if (dataWriter == null) { // scalastyle:off null
-      dataWriter = initWriter(new BlobKey, new Blob(), fs.getOrElse(FileSystem.get(hdfsConf)), ".blob")
-    }
-
-    if (idxWriter == null) { // scalastyle:off null
-      idxWriter = initWriter(new Text, idxValue, fs.getOrElse(FileSystem.get(hdfsConf)), ".idx")
-    }
-
-    // Write idx
-    idxWriter.append(new Text(id), new IndexValue(id, blob.getUpdateTime, dataWriter.getLength))
-
-    // Write data
-    dataWriter.append(new Text(id), blob)
-
-    numberOfInserts = numberOfInserts + 1
-  }
+//  def insert(idBlob: Tuple2[String, Blob]): Unit = {
+//    hdfsConf.set("fs.hdfs.impl", "org.apache.hadoop.hdfs.DistributedFileSystem");
+//    hdfsConf.set("fs.file.impl", "org.apache.hadoop.fs.LocalFileSystem");
+//
+//    val (id, blob) = idBlob
+//
+//    if (dataWriter == null) { // scalastyle:off null
+//      dataWriter = initWriter(new BlobKey, new Blob(), fs.getOrElse(FileSystem.get(hdfsConf)), ".blob")
+//    }
+//
+//    if (idxWriter == null) { // scalastyle:off null
+//      idxWriter = initWriter(new Text, idxValue, fs.getOrElse(FileSystem.get(hdfsConf)), ".idx")
+//    }
+//
+//    // Write idx
+//    idxWriter.append(new Text(id), new IndexValue(id, blob.getUpdateTime, dataWriter.getLength))
+//
+//    // Write data
+//    dataWriter.append(new Text(id), blob)
+//
+//    numberOfInserts = numberOfInserts + 1
+//  }
 
   def insert(id: String, updateTime: Long, data: String): Unit = {
     hdfsConf.set("fs.hdfs.impl", "org.apache.hadoop.hdfs.DistributedFileSystem");
     hdfsConf.set("fs.file.impl", "org.apache.hadoop.fs.LocalFileSystem");
 
     if (dataWriter == null) { // scalastyle:off null
-      dataWriter = initWriter(new BlobKey, new BytesWritable(), fs.getOrElse(FileSystem.get(hdfsConf)), ".blob")
+      dataWriter = initWriter(outTypeMapping.getDataKey("42"), outTypeMapping.getDataValue("".getBytes), fs.getOrElse(FileSystem.get(hdfsConf)), ".blob")
     }
 
     if (idxWriter == null) { // scalastyle:off null
-      idxWriter = initWriter(new Text, idxValue, fs.getOrElse(FileSystem.get(hdfsConf)), ".idx")
+      idxWriter = initWriter(outTypeMapping.getIdxKey("42"), outTypeMapping.getIdxValue("42", 42L, 2L), fs.getOrElse(FileSystem.get(hdfsConf)), ".idx")
     }
 
     // Write idx
-    idxWriter.append(new Text(id), new IndexValue(id, updateTime, dataWriter.getLength))
+    idxWriter.append(outTypeMapping.getIdxKey(id), outTypeMapping.getIdxValue(id, updateTime, dataWriter.getLength))
 
     // Write data
-    dataWriter.append(new BlobKey(id), new Blob(updateTime, data.getBytes, data.length()))
+    dataWriter.append(outTypeMapping.getDataKey(id), outTypeMapping.getDataValue(data.getBytes, data.length()))
 
     numberOfInserts = numberOfInserts + 1
   }
