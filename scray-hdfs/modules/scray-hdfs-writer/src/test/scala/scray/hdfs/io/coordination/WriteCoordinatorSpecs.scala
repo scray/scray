@@ -1,21 +1,21 @@
 package scray.hdfs.io.coordination
 
+import java.io.File
+
 import org.scalatest.WordSpec
 
 import com.typesafe.scalalogging.LazyLogging
-
-import java.io.ByteArrayInputStream
-import scray.hdfs.io.index.format.sequence.BlobFileReader
 import scray.hdfs.io.index.format.sequence.IdxReader
-import java.io.File
+import scray.hdfs.io.index.format.sequence.BlobFileReader
+import scray.hdfs.io.index.format.sequence.mapping.impl.OutputBlob
 import java.util.HashMap
-import org.junit.Assert
-
+import junit.framework.Assert
+import java.io.ByteArrayInputStream
 
 class WriteCoordinatorSpecs extends WordSpec with LazyLogging {
   "WriteCoordinator " should {
     " wrtite to new file if count limit is reached " in {
-      val coordinator = new ReadWriteCoordinatorImpl
+      val coordinator = new ReadWriteCoordinatorImpl(new OutputBlob)
       val outPath = "target/WriteCoordinatorSpecs/writeCoordinatorSpecsMaxCount/" + System.currentTimeMillis() + "/"
 
       val metadata = WriteDestination("000", outPath, IHdfsWriterConstats.FileFormat.SequenceFile, Version(0), 512 * 1024 * 1024L, 5)
@@ -33,7 +33,7 @@ class WriteCoordinatorSpecs extends WordSpec with LazyLogging {
       val fileName = getIndexFiles(outPath + "/scray-data-000-v0/")
         .map(fileName => {
           (
-            new IdxReader("file://" + fileName + ".idx"),
+            new IdxReader("file://" + fileName + ".idx", new OutputBlob),
             new BlobFileReader("file://" + fileName + ".blob"))
         })
         .map {

@@ -23,6 +23,8 @@ import scray.hdfs.io.index.format.sequence.types.BlobInputStream
 import java.io.File
 import org.apache.commons.io.FileUtils
 import scala.io.Source
+import scray.hdfs.io.index.format.sequence.mapping.impl.OutputTextBytesWritable
+import scray.hdfs.io.index.format.sequence.mapping.impl.OutputBlob
 
 object CopyFromSequneceFile {
 
@@ -38,7 +40,7 @@ object CopyFromSequneceFile {
 
       val blobReader = new BlobFileReader(s"${sourceFile}.blob")
       
-      val idxReader = new IdxReader(s"${sourceFile}.idx")
+      val idxReader = new IdxReader(s"${sourceFile}.idx", new OutputBlob)
       if(idxReader.hasNext) {
         val idx = idxReader.next().get
         val stream = new BlobInputStream(blobReader, idx)

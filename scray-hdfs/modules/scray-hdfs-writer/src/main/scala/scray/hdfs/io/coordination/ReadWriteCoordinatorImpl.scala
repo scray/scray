@@ -24,6 +24,8 @@ import com.typesafe.scalalogging.LazyLogging
 
 import scray.hdfs.io.index.format.Writer
 import scray.hdfs.io.index.format.sequence.BinarySequenceFileWriter
+import org.apache.hadoop.io.Writable
+import scray.hdfs.io.index.format.sequence.mapping.InputOutputTypeMapping
 
 class CompactionState {}
 case object NEW extends CompactionState
@@ -31,10 +33,10 @@ case object IsReadyForCompaction extends CompactionState
 case object CompactionIsStarted extends CompactionState
 case object IsCompacted extends CompactionState
 
-class ReadWriteCoordinatorImpl extends ReadCoordinator with WriteCoordinator with LazyLogging {
+class ReadWriteCoordinatorImpl[IDXKEY <: Writable, IDXVALUE <: Writable, DATAKEY <: Writable, DATAVALUE <: Writable](val outMapping: InputOutputTypeMapping[IDXKEY, IDXVALUE, DATAKEY, DATAVALUE]) extends ReadCoordinator with WriteCoordinator with LazyLogging {
 
   private val readSource = new HashMap[String, Buffer[Version]]
-  private val writeDestinations = new HashMap[WriteDestination, CoordinatedWriter]
+  private val writeDestinations = new HashMap[WriteDestination, CoordinatedWriter[Writable, Writable, Writable, Writable]]
 
   private val availableForCompaction = new HashMap[String, Buffer[Version]]
   private val activeCompactions = new HashMap[String, Buffer[Version]]
@@ -69,13 +71,13 @@ class ReadWriteCoordinatorImpl extends ReadCoordinator with WriteCoordinator wit
     metadata.fileFormat match {
       case format: IHdfsWriterConstats.FileFormat => {
         val filePath = this.getPath(metadata.path, metadata.queryspace, metadata.version.number)
-        val sWriter = new BinarySequenceFileWriter(filePath)
+        val sWriter = new BinarySequenceFileWriter(filePath, outMapping)
         writeDestinations.put(
           metadata,
-          new CoordinatedWriter(sWriter, metadata.maxFileSize, this, metadata))
+          new CoordinatedWriter(sWriter, metadata.maxFileSize, this, metadata, outMapping))
         this.getWriter(metadata)
       }
-      case _ => new BinarySequenceFileWriter(s"${metadata.path}/${metadata.queryspace}/")
+      case _ => new BinarySequenceFileWriter(s"${metadata.path}/${metadata.queryspace}/", outMapping)
     }
   }
   

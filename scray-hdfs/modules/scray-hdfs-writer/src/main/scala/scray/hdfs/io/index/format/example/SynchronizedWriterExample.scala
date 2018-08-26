@@ -7,12 +7,13 @@ import scray.hdfs.io.coordination.WriteDestination
 import scray.hdfs.io.coordination.Version
 import java.io.ByteArrayInputStream
 import java.math.BigInteger
+import scray.hdfs.io.index.format.sequence.mapping.impl.OutputTextBytesWritable
 
 
 object CoordinatedWriterExample {
   
   def main(args: Array[String]) {
-    val writerRegistry = new ReadWriteCoordinatorImpl
+    val writerRegistry = new ReadWriteCoordinatorImpl(new OutputTextBytesWritable)
 
     val metadata = WriteDestination("000", "hdfs://bdq-cassandra4.seeburger.de/bisTest/", IHdfsWriterConstats.FileFormat.SequenceFile, Version(0), 64 * 1024 * 1024L, 5)
     println(metadata.maxNumberOfInserts)

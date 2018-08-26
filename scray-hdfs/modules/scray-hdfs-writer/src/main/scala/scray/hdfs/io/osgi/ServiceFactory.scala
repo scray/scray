@@ -19,19 +19,22 @@ import scray.hdfs.io.index.format.sequence.BinarySequenceFileWriter
 import org.osgi.framework.ServiceRegistration
 import org.osgi.framework.Bundle
 import scray.hdfs.io.coordination.IHdfsWriterConstats
+import org.apache.hadoop.io.BytesWritable
+import org.apache.hadoop.io.Text
+import scray.hdfs.io.index.format.sequence.mapping.impl.OutputTextBytesWritable
 
-class ServiceFactory extends org.osgi.framework.ServiceFactory[BinarySequenceFileWriter] {
+class ServiceFactory extends org.osgi.framework.ServiceFactory[BinarySequenceFileWriter[Text, Text, Text, BytesWritable]] {
   
-  def getService(bundle: Bundle, reg: ServiceRegistration[BinarySequenceFileWriter]): BinarySequenceFileWriter = {
+  def getService(bundle: Bundle, reg: ServiceRegistration[BinarySequenceFileWriter[Text, Text, Text, BytesWritable]]): BinarySequenceFileWriter[Text, Text, Text, BytesWritable] = {
     val destinationPath = bundle.getBundleContext.getProperty(IHdfsWriterConstats.WriteParameter.destinationPath.toString)
     if(destinationPath.endsWith(java.io.File.separator)) {
-      new BinarySequenceFileWriter(destinationPath  + System.currentTimeMillis() + ".seq")
+      new BinarySequenceFileWriter(destinationPath  + System.currentTimeMillis() + ".seq", new OutputTextBytesWritable)
     } else {
-      new BinarySequenceFileWriter(destinationPath + java.io.File.separator + System.currentTimeMillis() + ".seq")
+      new BinarySequenceFileWriter(destinationPath + java.io.File.separator + System.currentTimeMillis() + ".seq", new OutputTextBytesWritable)
     }
   }
   
-  def ungetService(bundle: Bundle, reg: ServiceRegistration[BinarySequenceFileWriter], writer: BinarySequenceFileWriter): Unit = {
+  def ungetService(bundle: Bundle, reg: ServiceRegistration[BinarySequenceFileWriter[Text, Text, Text, BytesWritable]], writer: BinarySequenceFileWriter[Text, Text, Text, BytesWritable]): Unit = {
     writer.close 
   }
 }

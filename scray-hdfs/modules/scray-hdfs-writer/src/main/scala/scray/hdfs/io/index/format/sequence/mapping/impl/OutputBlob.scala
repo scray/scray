@@ -23,7 +23,7 @@ class OutputBlob extends InputOutputTypeMapping[Text, IndexValue, BlobKey, Blob]
   }
   
   def getDataKey(id: String, blobCount: Int = 0): BlobKey = {
-    new BlobKey(s"{id: ${id}, blobCount: ${blobCount}}")
+    new BlobKey(id, blobCount)
   }
   
   def getDataValue(data: Array[Byte], length: Int) = {
