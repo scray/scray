@@ -21,15 +21,15 @@ import scray.hdfs.io.index.format.sequence.BinarySequenceFileWriter
 import java.util.Hashtable
 
 class Activator extends BundleActivator {
-  
-   override def start(context: BundleContext): Unit = {
-     val fac = new ServiceFactory
-     println(s"Register service with name ${classOf[BinarySequenceFileWriter].getName} ")
-     context.registerService(classOf[BinarySequenceFileWriter].getName, fac, new Hashtable[String, String]())
-   }
-   
-    override def stop(context: BundleContext): Unit = {
 
-    }
-  
+  override def start(context: BundleContext): Unit = {
+    val fac = new ServiceFactory
+    println(s"Register service with name ${classOf[scray.hdfs.io.index.format.Writer].getName} ")
+    context.registerService(classOf[scray.hdfs.io.index.format.Writer].getName, fac, new Hashtable[String, String]())
+  }
+
+  override def stop(context: BundleContext): Unit = {
+
+  }
+
 }
