@@ -1,22 +1,24 @@
 package scray.hdfs.io.osgi
 
-import scray.hdfs.io.write.WriteService
-import java.math.BigInteger
-import java.util.UUID
 import java.io.InputStream
-import org.slf4j.LoggerFactory
-import scala.io.Source
-import scray.hdfs.io.write.WriteState
-import scray.hdfs.io.write.Success
+import java.math.BigInteger
 import java.util.HashMap
-import scray.hdfs.io.index.format.Writer
-import scray.hdfs.io.coordination.ReadWriteCoordinatorImpl
-import scray.hdfs.io.coordination.WriteDestination
+import java.util.UUID
+
+
+
+import org.slf4j.LoggerFactory
+
 import scray.hdfs.io.coordination.IHdfsWriterConstats
-import scray.hdfs.io.coordination.Version
-import scray.hdfs.io.coordination.WriteCoordinator
-import scray.hdfs.io.write.Failure
 import scray.hdfs.io.coordination.IHdfsWriterConstats.FileFormat
+import scray.hdfs.io.coordination.ReadWriteCoordinatorImpl
+import scray.hdfs.io.coordination.Version
+import scray.hdfs.io.coordination.WriteDestination
+import scray.hdfs.io.write.Failure
+import scray.hdfs.io.write.Success
+import scray.hdfs.io.write.WriteService
+import scray.hdfs.io.write.WriteState
+import scray.hdfs.io.index.format.raw.RawFileWriter
 
 class WriteServiceImpl extends WriteService {
 
@@ -24,7 +26,7 @@ class WriteServiceImpl extends WriteService {
   private val writersMetadata = new HashMap[UUID, WriteDestination];
   private val writeCoordinator = new ReadWriteCoordinatorImpl
 
-  def createWriter(path: String): UUID = {
+  def createWriter(path: String): UUID = synchronized {
     logger.debug(s"Create writer for path ${path}")
     val id = UUID.randomUUID()
 
@@ -36,7 +38,7 @@ class WriteServiceImpl extends WriteService {
     id
   }
   
-  def createWriter(path: String, format: FileFormat): UUID = {
+  def createWriter(path: String, format: FileFormat): UUID = synchronized {
     logger.debug(s"Create writer for path ${path}")
     val id = UUID.randomUUID()
 
@@ -48,7 +50,7 @@ class WriteServiceImpl extends WriteService {
     id
   }
   
-  def insert(resource: UUID, id: String, updateTime: Long, data: Array[Byte]): WriteState = {
+  def insert(resource: UUID, id: String, updateTime: Long, data: Array[Byte]): WriteState = synchronized {
     logger.debug(s"Insert data for resource ${resource}")
 
     try {
@@ -61,7 +63,7 @@ class WriteServiceImpl extends WriteService {
     }
   }
   
-  def insert(resource: UUID, id: String, updateTime: Long, data: InputStream, blobSplitSize: Int = 5 * 1024 * 1024): WriteState = {
+  def insert(resource: UUID, id: String, updateTime: Long, data: InputStream, blobSplitSize: Int = 5 * 1024 * 1024): WriteState = synchronized {
     logger.debug(s"Insert data for resource ${resource}")
 
     try {
@@ -73,7 +75,8 @@ class WriteServiceImpl extends WriteService {
       case e: Exception => new WriteState(true, new Failure(e))
     }
   }
-  def insert(resource: UUID, id: String, updateTime: Long, data: InputStream, dataSize: BigInteger, blobSplitSize: Int): WriteState = {
+  
+  def insert(resource: UUID, id: String, updateTime: Long, data: InputStream, dataSize: BigInteger, blobSplitSize: Int): WriteState = synchronized {
     logger.debug(s"Insert data for resource ${resource}")
 
     try {
@@ -86,6 +89,17 @@ class WriteServiceImpl extends WriteService {
     }
   }
 
+  def writeRawFile(path: String, data: InputStream): WriteState = synchronized {
+    try{
+      val writer =  new RawFileWriter(path)
+      writer.write(path, data)
+      writer.close
+      new WriteState(true, new Success)
+    } catch {
+      case e: Exception => new WriteState(true, new Failure(e))
+    }
+  }
+  
   def getPath(resource: UUID): String = {
     "42"
   }
@@ -97,7 +111,7 @@ class WriteServiceImpl extends WriteService {
     42
   }
 
-  def close(resource: UUID) = {
+  def close(resource: UUID) = synchronized {
     try {
       writeCoordinator.getWriter(writersMetadata.get(resource))
         .close
@@ -108,7 +122,7 @@ class WriteServiceImpl extends WriteService {
     }
   }
   
-  def isClosed(resource: UUID) = {
+  def isClosed(resource: UUID) = synchronized {
     try {
       writeCoordinator.getWriter(writersMetadata.get(resource))
         .isClosed

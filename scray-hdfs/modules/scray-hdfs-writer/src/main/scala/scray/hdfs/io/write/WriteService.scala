@@ -13,9 +13,13 @@ trait WriteService {
    */
   def createWriter(path: String): UUID 
   def createWriter(path: String, format: FileFormat): UUID
+  
   def insert(resource: UUID, id: String, updateTime: Long, data: Array[Byte]): WriteState
   def insert(resource: UUID, id: String, updateTime: Long, data: InputStream, blobSplitSize: Int = 5 * 1024 * 1024): WriteState
   def insert(resource: UUID, id: String, updateTime: Long, data: InputStream, dataSize: BigInteger, blobSplitSize: Int): WriteState
+  
+  def writeRawFile(path: String, data: InputStream): WriteState
+  
   def getPath(resource: UUID): String
   def getBytesWritten(resource: UUID): Long
   def getNumberOfInserts(resource: UUID): Int
