@@ -18,6 +18,7 @@ package scray.hdfs.io.index.format
 import scray.hdfs.io.index.format.sequence.types.Blob
 import java.io.InputStream
 import java.math.BigInteger
+import java.util.UUID
 
 trait Writer { 
   var varIsClosed = false

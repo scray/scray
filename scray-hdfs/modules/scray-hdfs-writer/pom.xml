@@ -68,7 +68,7 @@
 		<dependency>
 			<groupId>org.osgi</groupId>
 			<artifactId>org.osgi.core</artifactId>
-			<version>4.3.0</version>
+			<version>4.3.1</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
@@ -125,7 +125,7 @@
 			<plugin>
 				<groupId>org.apache.felix</groupId>
 				<artifactId>maven-bundle-plugin</artifactId>
-				<version>2.4.0</version>
+				<version>3.5.1</version>
 				<extensions>true</extensions>
 				<configuration>
 					<instructions>
@@ -138,7 +138,9 @@
 							scray.hdfs.io.index.format.raw,
 							scray.hdfs.io.index.format,
 							scray.hdfs.io.index.format.sequence.types,
-							scray.hdfs.io.index.format.orc
+							scray.hdfs.io.index.format.orc,
+							scray.hdfs.io.index.format,
+							scray.hdfs.io.write
 						</Export-Package>
 						<Import-Package>
 							!*,
@@ -154,15 +156,10 @@
 							javax.security.auth.spi,
 							javax.security.auth.kerberos,
 							javax.security.auth.callback,
-							javax.net
+							javax.net,
+							javax.naming
 						</Import-Package>
 						<_exportcontents>
-							org.apache.hadoop.*,
-							org.apache.hadoop,
-							org.apache.hadoop.security,
-							org.apache.hadoop.security.*,
-							org.apache.hadoop.hdfs,
-							org.apache.hadoop.hdfs.*
 						</_exportcontents>
 						<Bundle-Activator>scray.hdfs.io.osgi.Activator</Bundle-Activator>
 					</instructions>

@@ -23,18 +23,27 @@ import org.apache.hadoop.io.BytesWritable
 import org.apache.hadoop.io.Text
 import scray.hdfs.io.index.format.sequence.mapping.impl.OutputTextBytesWritable
 
-class ServiceFactory extends org.osgi.framework.ServiceFactory[BinarySequenceFileWriter[Text, Text, Text, BytesWritable]] {
+import scray.hdfs.io.index.format.Writer
+import scray.hdfs.io.write.WriteService
+
+class ServiceFactory extends org.osgi.framework.ServiceFactory[scray.hdfs.io.write.WriteService] {
   
-  def getService(bundle: Bundle, reg: ServiceRegistration[BinarySequenceFileWriter[Text, Text, Text, BytesWritable]]): BinarySequenceFileWriter[Text, Text, Text, BytesWritable] = {
+  def getService(bundle: Bundle, reg: ServiceRegistration[scray.hdfs.io.write.WriteService]): WriteService = {
+    println("Provide service")
+    
     val destinationPath = bundle.getBundleContext.getProperty(IHdfsWriterConstats.WriteParameter.destinationPath.toString)
-    if(destinationPath.endsWith(java.io.File.separator)) {
-      new BinarySequenceFileWriter(destinationPath  + System.currentTimeMillis() + ".seq", new OutputTextBytesWritable)
-    } else {
-      new BinarySequenceFileWriter(destinationPath + java.io.File.separator + System.currentTimeMillis() + ".seq", new OutputTextBytesWritable)
+    
+    var writer: WriteServiceImpl = null;
+    try {
+      writer = new WriteServiceImpl
+    } catch {
+      case e: Exception => println("Error while instanciatin writer " + e)
     }
+
+    writer
   }
   
-  def ungetService(bundle: Bundle, reg: ServiceRegistration[BinarySequenceFileWriter[Text, Text, Text, BytesWritable]], writer: BinarySequenceFileWriter[Text, Text, Text, BytesWritable]): Unit = {
-    writer.close 
+
+  def ungetService(bundle: Bundle, reg: ServiceRegistration[scray.hdfs.io.write.WriteService], writer: scray.hdfs.io.write.WriteService): Unit = {
   }
 }

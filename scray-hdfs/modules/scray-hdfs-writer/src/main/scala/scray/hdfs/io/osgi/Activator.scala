@@ -19,19 +19,20 @@ import org.osgi.framework.BundleActivator
 import org.osgi.framework.BundleContext
 import scray.hdfs.io.index.format.sequence.BinarySequenceFileWriter
 import java.util.Hashtable
+<<<<<<< HEAD
 import org.apache.hadoop.io.BytesWritable
 import org.apache.hadoop.io.Text
 
 class Activator extends BundleActivator {
-  
-   override def start(context: BundleContext): Unit = {
-     val fac = new ServiceFactory
-     println(s"Register service with name ${classOf[BinarySequenceFileWriter[Text, Text, Text, BytesWritable]].getName} ")
-     context.registerService(classOf[BinarySequenceFileWriter[Text, Text, Text, BytesWritable]].getName, fac, new Hashtable[String, String]())
-   }
-   
-    override def stop(context: BundleContext): Unit = {
 
-    }
-  
+  override def start(context: BundleContext): Unit = {
+    val fac = new ServiceFactory
+    println(s"Register service with name ${classOf[WriteService].getName} ")
+    context.registerService(classOf[WriteService].getName, fac, new Hashtable[String, String]())
+  }
+
+  override def stop(context: BundleContext): Unit = {
+
+  }
+
 }
