@@ -19,6 +19,7 @@ import scray.hdfs.io.write.Success
 import scray.hdfs.io.write.WriteService
 import scray.hdfs.io.write.WriteState
 import scray.hdfs.io.index.format.raw.RawFileWriter
+import java.io.OutputStream
 
 class WriteServiceImpl extends WriteService {
 
@@ -100,16 +101,11 @@ class WriteServiceImpl extends WriteService {
     }
   }
   
-  def getPath(resource: UUID): String = {
-    "42"
+  def writeRawFile(path: String): OutputStream = synchronized {
+      val writer =  new RawFileWriter(path)
+      writer.write(path)
   }
-
-  def getBytesWritten(resource: UUID): Long = {
-    42L
-  }
-  def getNumberOfInserts(resource: UUID): Int = {
-    42
-  }
+  
 
   def close(resource: UUID) = synchronized {
     try {
@@ -122,7 +118,7 @@ class WriteServiceImpl extends WriteService {
     }
   }
   
-  def isClosed(resource: UUID) = synchronized {
+  def isClosed(resource: UUID) = {
     try {
       writeCoordinator.getWriter(writersMetadata.get(resource))
         .isClosed

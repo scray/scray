@@ -4,6 +4,7 @@ import java.math.BigInteger
 import java.util.UUID
 import java.io.InputStream
 import scray.hdfs.io.coordination.IHdfsWriterConstats.FileFormat
+import java.io.OutputStream
 
 trait WriteService {
     /**
@@ -19,10 +20,8 @@ trait WriteService {
   def insert(resource: UUID, id: String, updateTime: Long, data: InputStream, dataSize: BigInteger, blobSplitSize: Int): WriteState
   
   def writeRawFile(path: String, data: InputStream): WriteState
+  def writeRawFile(path: String): OutputStream
   
-  def getPath(resource: UUID): String
-  def getBytesWritten(resource: UUID): Long
-  def getNumberOfInserts(resource: UUID): Int
   def close(resource: UUID)
   def isClosed(resource: UUID)
 }
