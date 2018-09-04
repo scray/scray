@@ -1,5 +1,9 @@
 package scray.hdfs.io.write
 
+import scray.hdfs.io.write.WriteResultType
+
 case class Success() extends WriteResult {
-  override val resultType = WriteResultType.SUCCESS
+  override def getWriteResultType(): WriteResultType = {
+    WriteResultType.SUCCESS
+  }
 }

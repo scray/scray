@@ -131,7 +131,9 @@
 					<instructions>
 						<Embed-Dependency>*</Embed-Dependency>
 						<Embed-Transitive>true</Embed-Transitive>
-						<Export-Package>org.apache.hadoop.fs,
+						<Export-Package>
+							scala,
+							org.apache.hadoop.fs,
 							org.apache.hadoop.hdfs,
 							scray.hdfs.io.coordination,
 							scray.hdfs.io.index.format.sequence,
