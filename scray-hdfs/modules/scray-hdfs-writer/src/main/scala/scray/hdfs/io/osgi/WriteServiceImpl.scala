@@ -14,12 +14,12 @@ import scray.hdfs.io.coordination.IHdfsWriterConstats.FileFormat
 import scray.hdfs.io.coordination.ReadWriteCoordinatorImpl
 import scray.hdfs.io.coordination.Version
 import scray.hdfs.io.coordination.WriteDestination
-import scray.hdfs.io.write.Failure
-import scray.hdfs.io.write.Success
 import scray.hdfs.io.write.WriteService
-import scray.hdfs.io.write.WriteState
 import scray.hdfs.io.index.format.raw.RawFileWriter
 import java.io.OutputStream
+import com.google.common.util.concurrent.SettableFuture
+import scray.hdfs.io.write.WriteResult
+import scray.hdfs.io.write.WriteResult
 
 class WriteServiceImpl extends WriteService {
 
@@ -51,53 +51,77 @@ class WriteServiceImpl extends WriteService {
     id
   }
   
-  def insert(resource: UUID, id: String, updateTime: Long, data: Array[Byte]): WriteState = synchronized {
+  def insert(resource: UUID, id: String, updateTime: Long, data: Array[Byte])= synchronized {
     logger.debug(s"Insert data for resource ${resource}")
 
     try {
       writeCoordinator.getWriter(writersMetadata.get(resource))
         .insert(id, updateTime, data)
 
-      new WriteState(true, new Success)
+      val result = SettableFuture.create[WriteResult]()
+      result.set(new WriteResult)
+      result
     } catch {
-      case e: Exception => new WriteState(true, new Failure(e))
+      case e: Exception => {
+        val result = SettableFuture.create[WriteResult]()
+        result.setException(e)
+        result
+      }
     }
   }
   
-  def insert(resource: UUID, id: String, updateTime: Long, data: InputStream, blobSplitSize: Int = 5 * 1024 * 1024): WriteState = synchronized {
+  def insert(resource: UUID, id: String, updateTime: Long, data: InputStream, blobSplitSize: Int = 5 * 1024 * 1024) = synchronized {
     logger.debug(s"Insert data for resource ${resource}")
 
     try {
       writeCoordinator.getWriter(writersMetadata.get(resource))
         .insert(id, updateTime, data)
 
-      new WriteState(true, new Success)
+           val result = SettableFuture.create[WriteResult]()
+      result.set(new WriteResult)
+      result
     } catch {
-      case e: Exception => new WriteState(true, new Failure(e))
+      case e: Exception => {
+        val result = SettableFuture.create[WriteResult]()
+        result.setException(e)
+        result
+      }
     }
   }
   
-  def insert(resource: UUID, id: String, updateTime: Long, data: InputStream, dataSize: BigInteger, blobSplitSize: Int): WriteState = synchronized {
+  def insert(resource: UUID, id: String, updateTime: Long, data: InputStream, dataSize: BigInteger, blobSplitSize: Int) = synchronized {
     logger.debug(s"Insert data for resource ${resource}")
 
     try {
       writeCoordinator.getWriter(writersMetadata.get(resource))
         .insert(id, updateTime, data)
 
-      new WriteState(true, new Success)
+           val result = SettableFuture.create[WriteResult]()
+      result.set(new WriteResult)
+      result
     } catch {
-      case e: Exception => new WriteState(true, new Failure(e))
+      case e: Exception => {
+        val result = SettableFuture.create[WriteResult]()
+        result.setException(e)
+        result
+      }
     }
   }
 
-  def writeRawFile(path: String, data: InputStream): WriteState = synchronized {
+  def writeRawFile(path: String, data: InputStream) = synchronized {
     try{
       val writer =  new RawFileWriter(path)
       writer.write(path, data)
       writer.close
-      new WriteState(true, new Success)
+           val result = SettableFuture.create[WriteResult]()
+      result.set(new WriteResult)
+      result
     } catch {
-      case e: Exception => new WriteState(true, new Failure(e))
+      case e: Exception => {
+        val result = SettableFuture.create[WriteResult]()
+        result.setException(e)
+        result
+      }
     }
   }
   
@@ -112,9 +136,15 @@ class WriteServiceImpl extends WriteService {
       writeCoordinator.getWriter(writersMetadata.get(resource))
         .close
 
-      new WriteState(true, new Success)
+         val result = SettableFuture.create[WriteResult]()
+      result.set(new WriteResult)
+      result
     } catch {
-      case e: Exception => new WriteState(true, new Failure(e))
+      case e: Exception => {
+        val result = SettableFuture.create[WriteResult]()
+        result.setException(e)
+        result
+      }
     }
   }
   
@@ -122,10 +152,15 @@ class WriteServiceImpl extends WriteService {
     try {
       writeCoordinator.getWriter(writersMetadata.get(resource))
         .isClosed
-
-      new WriteState(true, new Success)
+      val result = SettableFuture.create[WriteResult]()
+      result.set(new WriteResult)
+      result
     } catch {
-      case e: Exception => new WriteState(true, new Failure(e))
+      case e: Exception => {
+        val result = SettableFuture.create[WriteResult]()
+        result.setException(e)
+        result
+      }
     }
   }
 }

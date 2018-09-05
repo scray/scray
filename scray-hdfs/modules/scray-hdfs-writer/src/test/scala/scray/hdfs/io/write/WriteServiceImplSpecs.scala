@@ -11,6 +11,14 @@ import java.io.File
 import java.util.HashMap
 import org.junit.Assert
 import scray.hdfs.io.osgi.WriteServiceImpl
+import com.google.common.util.concurrent.ListenableFuture
+import com.google.common.util.concurrent.FutureCallback
+import com.google.common.util.concurrent.Futures
+import com.google.common.util.concurrent.AbstractFuture
+import com.google.common.util.concurrent.SettableFuture
+import java.util.concurrent.Executors
+import scala.util.Failure
+import java.io.IOException
 
 class WriteServiceImplSpecs extends WordSpec with LazyLogging {
   "WriteServiceImplSpecs " should {
@@ -52,6 +60,29 @@ class WriteServiceImplSpecs extends WordSpec with LazyLogging {
           }
         }
 
+    }
+    " handle wrote url error " in {
+      val service = new WriteServiceImpl
+
+      val outPath = "chicken://target/WriteServiceImplSpecs/creatRedrive/" + System.currentTimeMillis() + "/"
+      val writtenData = new HashMap[String, Array[Byte]]();
+
+      val writerId = service.createWriter(outPath)
+
+      val writeResult = service.insert(writerId, "42", System.currentTimeMillis(), new ByteArrayInputStream(s"ABCDEFG".getBytes))
+      
+      Futures.addCallback(writeResult,
+        new FutureCallback[WriteResult]() {
+        
+        // Should not happen
+        override def onSuccess(result: WriteResult) {
+          fail   
+        }
+ 
+        override def onFailure(t: Throwable) {
+           Assert.assertTrue(t.isInstanceOf[IOException])
+        }
+      });
     }
   }
 
