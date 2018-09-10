@@ -5,8 +5,6 @@ import java.math.BigInteger
 import java.util.HashMap
 import java.util.UUID
 
-
-
 import org.slf4j.LoggerFactory
 
 import scray.hdfs.io.coordination.IHdfsWriterConstats
@@ -20,6 +18,7 @@ import java.io.OutputStream
 import com.google.common.util.concurrent.SettableFuture
 import scray.hdfs.io.write.WriteResult
 import scray.hdfs.io.write.WriteResult
+import scray.hdfs.io.write.ScrayListenableFuture
 
 class WriteServiceImpl extends WriteService {
 
@@ -38,7 +37,7 @@ class WriteServiceImpl extends WriteService {
 
     id
   }
-  
+
   def createWriter(path: String, format: FileFormat): UUID = synchronized {
     logger.debug(s"Create writer for path ${path}")
     val id = UUID.randomUUID()
@@ -50,13 +49,78 @@ class WriteServiceImpl extends WriteService {
 
     id
   }
-  
-  def insert(resource: UUID, id: String, updateTime: Long, data: Array[Byte])= synchronized {
+
+  def insert(resource: UUID, id: String, updateTime: Long, data: Array[Byte]) = synchronized {
     logger.debug(s"Insert data for resource ${resource}")
 
     try {
       writeCoordinator.getWriter(writersMetadata.get(resource))
         .insert(id, updateTime, data)
+
+      new ScrayListenableFuture(new WriteResult)
+    } catch {
+      case e: Exception => {
+        new ScrayListenableFuture(e)
+      }
+    }
+  }
+
+  def insert(resource: UUID, id: String, updateTime: Long, data: InputStream, blobSplitSize: Int = 5 * 1024 * 1024) = synchronized {
+    logger.debug(s"Insert data for resource ${resource}")
+
+    try {
+      writeCoordinator.getWriter(writersMetadata.get(resource))
+        .insert(id, updateTime, data)
+
+    new ScrayListenableFuture(new WriteResult)
+    } catch {
+      case e: Exception => {
+        new ScrayListenableFuture(e)
+      }
+    }
+  }
+
+  def insert(resource: UUID, id: String, updateTime: Long, data: InputStream, dataSize: BigInteger, blobSplitSize: Int) = synchronized {
+    logger.debug(s"Insert data for resource ${resource}")
+
+    try {
+      writeCoordinator.getWriter(writersMetadata.get(resource))
+        .insert(id, updateTime, data)
+
+        new ScrayListenableFuture(new WriteResult)
+    } catch {
+      case e: Exception => {
+        new ScrayListenableFuture(e)
+      }
+    }
+  }
+
+  def writeRawFile(path: String, data: InputStream) = synchronized {
+    try {
+      val writer = new RawFileWriter(path)
+      writer.write(path, data)
+      
+      val result = SettableFuture.create[WriteResult]()
+      result.set(new WriteResult)
+      result
+    } catch {
+      case e: Exception => {
+        val result = SettableFuture.create[WriteResult]()
+        result.setException(e)
+        result
+      }
+    }
+  }
+
+  def writeRawFile(path: String): OutputStream = synchronized {
+    val writer = new RawFileWriter(path)
+    writer.write(path)
+  }
+
+  def close(resource: UUID) = synchronized {
+    try {
+      writeCoordinator.getWriter(writersMetadata.get(resource))
+        .close
 
       val result = SettableFuture.create[WriteResult]()
       result.set(new WriteResult)
@@ -69,85 +133,7 @@ class WriteServiceImpl extends WriteService {
       }
     }
   }
-  
-  def insert(resource: UUID, id: String, updateTime: Long, data: InputStream, blobSplitSize: Int = 5 * 1024 * 1024) = synchronized {
-    logger.debug(s"Insert data for resource ${resource}")
 
-    try {
-      writeCoordinator.getWriter(writersMetadata.get(resource))
-        .insert(id, updateTime, data)
-
-           val result = SettableFuture.create[WriteResult]()
-      result.set(new WriteResult)
-      result
-    } catch {
-      case e: Exception => {
-        val result = SettableFuture.create[WriteResult]()
-        result.setException(e)
-        result
-      }
-    }
-  }
-  
-  def insert(resource: UUID, id: String, updateTime: Long, data: InputStream, dataSize: BigInteger, blobSplitSize: Int) = synchronized {
-    logger.debug(s"Insert data for resource ${resource}")
-
-    try {
-      writeCoordinator.getWriter(writersMetadata.get(resource))
-        .insert(id, updateTime, data)
-
-           val result = SettableFuture.create[WriteResult]()
-      result.set(new WriteResult)
-      result
-    } catch {
-      case e: Exception => {
-        val result = SettableFuture.create[WriteResult]()
-        result.setException(e)
-        result
-      }
-    }
-  }
-
-  def writeRawFile(path: String, data: InputStream) = synchronized {
-    try{
-      val writer =  new RawFileWriter(path)
-      writer.write(path, data)
-      writer.close
-           val result = SettableFuture.create[WriteResult]()
-      result.set(new WriteResult)
-      result
-    } catch {
-      case e: Exception => {
-        val result = SettableFuture.create[WriteResult]()
-        result.setException(e)
-        result
-      }
-    }
-  }
-  
-  def writeRawFile(path: String): OutputStream = synchronized {
-      val writer =  new RawFileWriter(path)
-      writer.write(path)
-  }
-  
-
-  def close(resource: UUID) = synchronized {
-    try {
-      writeCoordinator.getWriter(writersMetadata.get(resource))
-        .close
-
-         val result = SettableFuture.create[WriteResult]()
-      result.set(new WriteResult)
-      result
-    } catch {
-      case e: Exception => {
-        val result = SettableFuture.create[WriteResult]()
-        result.setException(e)
-        result
-      }
-    }
-  }
-  
   def isClosed(resource: UUID) = {
     try {
       writeCoordinator.getWriter(writersMetadata.get(resource))

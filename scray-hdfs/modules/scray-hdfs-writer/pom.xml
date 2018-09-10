@@ -100,7 +100,6 @@
 				<configuration>
 					<source>1.8</source>
 					<target>1.8</target>
-
 				</configuration>
 			</plugin>
 			<plugin>
@@ -132,7 +131,6 @@
 						<Embed-Dependency>*</Embed-Dependency>
 						<Embed-Transitive>true</Embed-Transitive>
 						<Export-Package>
-							scala,
 							org.apache.hadoop.fs,
 							org.apache.hadoop.hdfs,
 							scray.hdfs.io.coordination,
@@ -142,7 +140,7 @@
 							scray.hdfs.io.index.format.sequence.types,
 							scray.hdfs.io.index.format.orc,
 							scray.hdfs.io.index.format,
-							scray.hdfs.io.write
+							scray.hdfs.io.write,
 						</Export-Package>
 						<Import-Package>
 							!*,
