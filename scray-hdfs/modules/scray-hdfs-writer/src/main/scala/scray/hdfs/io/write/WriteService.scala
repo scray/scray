@@ -22,7 +22,7 @@ trait WriteService {
   def insert(resource: UUID, id: String, updateTime: Long, data: InputStream, blobSplitSize: Int = 5 * 1024 * 1024): ScrayListenableFuture
   def insert(resource: UUID, id: String, updateTime: Long, data: InputStream, dataSize: BigInteger, blobSplitSize: Int): ScrayListenableFuture
   
-  def writeRawFile(path: String, data: InputStream): ListenableFuture[WriteResult]
+  def writeRawFile(path: String, data: InputStream): ScrayListenableFuture
   def writeRawFile(path: String): OutputStream
   
   def close(resource: UUID)

@@ -100,14 +100,10 @@ class WriteServiceImpl extends WriteService {
       val writer = new RawFileWriter(path)
       writer.write(path, data)
       
-      val result = SettableFuture.create[WriteResult]()
-      result.set(new WriteResult)
-      result
+      new ScrayListenableFuture(new WriteResult)
     } catch {
       case e: Exception => {
-        val result = SettableFuture.create[WriteResult]()
-        result.setException(e)
-        result
+        new ScrayListenableFuture(e)
       }
     }
   }
