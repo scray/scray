@@ -36,5 +36,6 @@
     SELECT count(*) FROM scray
     SELECT * FROM scray WHERE msg='msg1'
 
-  If **org.apache.hive.hcatalog.data.JsonSerDe** add is missing set *HIVE_AUX_JARS_PATH=/opt/local/hive/lib* 
-  and add hive-hcatalog-core-X.X.X.jar to /opt/local/hive/lib [See](https://www.cloudera.com/documentation/enterprise/5-3-x/topics/cm_mc_hive_udf.html)
+  If **org.apache.hive.hcatalog.data.JsonSerDe** is missing set *HIVE_AUX_JARS_PATH=/opt/local/hive/lib* 
+  and copy hive-hcatalog-core-X.X.X.jar to /opt/local/hive/lib [See](https://www.cloudera.com/documentation/enterprise/5-3-x/topics/cm_mc_hive_udf.html)
+

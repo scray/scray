@@ -5,7 +5,7 @@
 		<groupId>org.scray</groupId>
 		<artifactId>scray-parent</artifactId>
 		<version>0.10.1-SNAPSHOT</version>
-		<relativePath>../pom.xml</relativePath>
+		<relativePath>../../../pom.xml</relativePath>
 	</parent>
 
 	<modelVersion>4.0.0</modelVersion>
@@ -34,6 +34,10 @@
 					<groupId>org.slf4j</groupId>
 					<artifactId>slf4j-log4j12</artifactId>
 				</exclusion>
+				<exclusion>
+					<groupId>log4j</groupId>
+					<artifactId>log4j</artifactId>
+				</exclusion>
 			</exclusions>
 		</dependency>
 		<dependency>
@@ -44,6 +48,10 @@
 				<exclusion>
 					<groupId>xml-apis</groupId>
 					<artifactId>xml-apis</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>log4j</groupId>
+					<artifactId>log4j</artifactId>
 				</exclusion>
 			</exclusions>
 		</dependency>
@@ -56,6 +64,17 @@
 			<groupId>org.apache.avro</groupId>
 			<artifactId>avro</artifactId>
 			<version>1.8.2</version>
+		</dependency>
+		<dependency>
+			<groupId>org.osgi</groupId>
+			<artifactId>org.osgi.core</artifactId>
+			<version>4.3.1</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>log4j-over-slf4j</artifactId>
+			<version>1.7.7</version>
 		</dependency>
 	</dependencies>
 	<build>
@@ -81,7 +100,6 @@
 				<configuration>
 					<source>1.8</source>
 					<target>1.8</target>
-
 				</configuration>
 			</plugin>
 			<plugin>
@@ -106,13 +124,24 @@
 			<plugin>
 				<groupId>org.apache.felix</groupId>
 				<artifactId>maven-bundle-plugin</artifactId>
-				<version>2.4.0</version>
+				<version>3.5.1</version>
 				<extensions>true</extensions>
 				<configuration>
 					<instructions>
 						<Embed-Dependency>*</Embed-Dependency>
 						<Embed-Transitive>true</Embed-Transitive>
-						<Export-Package>org.apache.hadoop.fs,org.apache.hadoop.hdfs,scray.hdfs.coordination,scray.hdfs.index.format.sequence,scray.hdfs.index.format.raw,scray.hdfs.index.format,scray.hdfs.index.format.sequence.types,scray.hdfs.index.format.orc</Export-Package>
+						<Export-Package>
+							org.apache.hadoop.fs,
+							org.apache.hadoop.hdfs,
+							scray.hdfs.io.coordination,
+							scray.hdfs.io.index.format.sequence,
+							scray.hdfs.io.index.format.raw,
+							scray.hdfs.io.index.format,
+							scray.hdfs.io.index.format.sequence.types,
+							scray.hdfs.io.index.format.orc,
+							scray.hdfs.io.index.format,
+							scray.hdfs.io.write,
+						</Export-Package>
 						<Import-Package>
 							!*,
 							org.osgi.framework,
@@ -127,16 +156,12 @@
 							javax.security.auth.spi,
 							javax.security.auth.kerberos,
 							javax.security.auth.callback,
-							javax.net
+							javax.net,
+							javax.naming
 						</Import-Package>
 						<_exportcontents>
-							org.apache.hadoop.*,
-							org.apache.hadoop,
-							org.apache.hadoop.security,
-							org.apache.hadoop.security.*,
-							org.apache.hadoop.hdfs,
-							org.apache.hadoop.hdfs.*
 						</_exportcontents>
+						<Bundle-Activator>scray.hdfs.io.osgi.Activator</Bundle-Activator>
 					</instructions>
 				</configuration>
 			</plugin>

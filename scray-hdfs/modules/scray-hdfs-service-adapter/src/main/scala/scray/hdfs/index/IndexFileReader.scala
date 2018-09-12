@@ -10,7 +10,7 @@ import scray.querying.description.TableIdentifier
 import java.util.Arrays
 import scray.hdfs.index.format.IndexFile
 import scray.hdfs.index.HDFSBlobResolver
-import scray.hdfs.index.format.sequence.IdxReader
+import scray.hdfs.io.index.format.sequence.IdxReader
 import org.apache.hadoop.io.Text
 import com.typesafe.scalalogging.LazyLogging
 
