@@ -5,7 +5,7 @@
 	<groupId>org.scray</groupId>
 	<artifactId>scray-common</artifactId>
 	<name>Scray - Common</name>
-	<version>0.10.0</version>
+	<version>1.1.0</version>
 
 	<description>scray artefacts shared between scala and java components</description>
 	<url>http://scray.org</url>
@@ -39,8 +39,8 @@
 		<url>https://github.com/scray</url>
 		<connection>scm:git:git://github.com/scray/scray.git</connection>
 		<developerConnection>scm:git:https://github.com/scray/scray.git</developerConnection>
-	  <tag>org.scray-0.10.0</tag>
-  </scm>
+		<tag>org.scray-1.1.0</tag>
+	</scm>
 
 	<distributionManagement>
 		<snapshotRepository>
@@ -60,8 +60,8 @@
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>3.2</version>
 				<configuration>
-					<source>1.6</source>
-					<target>1.6</target>
+					<source>1.8</source>
+					<target>1.8</target>
 				</configuration>
 			</plugin>
 		</plugins>
@@ -120,15 +120,6 @@
 		</profile>
 	</profiles>
 
-	<licenses>
-		<license>
-			<name>Apache License, Version 2.0</name>
-			<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-			<distribution>repo</distribution>
-			<comments>A business-friendly OSS license</comments>
-		</license>
-	</licenses>
-
 	<dependencies>
 		<dependency>
 			<groupId>org.slf4j</groupId>
@@ -141,5 +132,14 @@
 			<version>3.0.3</version>
 		</dependency>
 	</dependencies>
+	
+	<licenses>
+		<license>
+			<name>Apache License, Version 2.0</name>
+			<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+			<distribution>repo</distribution>
+			<comments>A business-friendly OSS license</comments>
+		</license>
+	</licenses>
 
 </project>

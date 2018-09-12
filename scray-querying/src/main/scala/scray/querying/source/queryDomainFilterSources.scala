@@ -35,7 +35,7 @@ import scray.querying.description.internal.{
 import java.math.{BigInteger => JBigInteger, BigDecimal => JBigDecimal}
 import com.twitter.util.Try
 import scray.querying.description.WildcardChecker
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 
 /**
  * Common code for domain checking
@@ -53,7 +53,13 @@ object DomainFilterSource extends LazyLogging {
       } else if(single.isWildcard){
         !WildcardChecker.checkValueAgainstPredicate(single.value.asInstanceOf[String], value.asInstanceOf[String])
       } else {
-        !single.equiv.equiv(value, single.value)
+        if(value.getClass().isPrimitive() || value.getClass().isAssignableFrom(single.value.getClass)) {
+          !single.equiv.equiv(value, single.value)
+        } else {
+          converter.map { converter =>
+            val mapped = converter.mapDomain(domain).asInstanceOf[Option[SingleValueDomain[T]]]
+            mapped.map(svd => !svd.equiv.equiv(value, svd.value)).getOrElse(true)}.getOrElse(true)
+        }
       }
     }.getOrElse(converter.map{converter =>
       val mapped = converter.mapDomain(domain).asInstanceOf[Option[SingleValueDomain[T]]]

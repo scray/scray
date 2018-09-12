@@ -31,7 +31,7 @@ import scray.querying.description.EmptyRow
 import scray.querying.source.costs.QueryCosts
 import scray.querying.source.costs.QueryCostFunctionFactory
 import scray.querying.source.costs.LinearQueryCostFuntionFactory.defaultFactory
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 import scray.querying.description.RowColumn
 import scray.querying.queries.KeyedQuery
 

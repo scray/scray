@@ -27,7 +27,7 @@ import com.twitter.util.Duration
 import com.twitter.util.JavaTimer
 import com.twitter.util.Time
 import com.twitter.util.Try
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 
 import scray.querying.caching.Cache
 import scray.querying.caching.MonitoringInfos
@@ -377,7 +377,7 @@ object Registry extends LazyLogging with Registry {
     rwlock.readLock.lock
     try {
       val mv = materializedViews.get(space + version)
-      logger.trace(s"Search materialized view table with identifier ${ti} in dataset ${mv}")
+      logger.debug(s"Search materialized view table with identifier ${ti} in dataset ${mv}")
       mv.flatMap(_.get(ti))
     } finally {
       rwlock.readLock.unlock

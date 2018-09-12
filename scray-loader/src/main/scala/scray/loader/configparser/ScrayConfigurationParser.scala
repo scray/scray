@@ -16,7 +16,7 @@ package scray.loader.configparser
 
 import com.datastax.driver.core.ConsistencyLevel
 import com.twitter.util.Duration
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 import java.net.{ InetAddress, InetSocketAddress }
 import org.apache.commons.io.IOUtils
 // scalastyle:off underscore.import
@@ -33,6 +33,11 @@ import scray.loader.configuration.{ CassandraClusterConsistency, CassandraCluste
   ScrayServiceOption, ScrayServicePort, ScrayServiceWriteDot }
 import scray.core.service.properties.ScrayServicePropertiesRegistrar
 import ScrayConfigurationParser.SeqToOption
+import scray.loader.configuration.HDFSProperties
+import scray.loader.configuration.HDFSProperty
+import scray.loader.configuration.HDFSURLProperty
+import scray.loader.configuration.HDFSCredentialsProperty
+import scray.loader.HDFSURLUndefinedException
 
 /**
  * A syntax parser for scray configuration files.
@@ -48,11 +53,12 @@ import ScrayConfigurationParser.SeqToOption
  *   Port ::= "port" INT
  *   Host ::= "host" STRING
  *   Hosts ::= "hosts" "(" STRING ("," STRING)* ")"
- *   Datastores ::= "connection" (ID)? (Cassandra | JDBC)
+ *   Datastores ::= "connection" (ID)? (Cassandra | JDBC | HDFS)
  *   Cassandra ::= "cassandra" "{" (CassandraSetting ",")* CassandraSetting "}"
  *   CassandraSetting ::= "clustername" STRING | CassandraHostNames | "datacenter" STRING | Credentials
  *   CassandraHostNames ::= "hosts" "(" (STRING ",")* STRING ")"
  *   JDBC ::= "jdbc" "{" "url" STRING ("," Credentials)? "}"
+ *   HDFS ::= "hdfs" "{" "url" STRING ("," Credentials)? "}"
  *   Credentials ::= "credentials" STRING ":" STRING
  *   QueryspaceURLs ::= "queryspacelocations" "{" (QueryspaceURL ",")* QueryspaceURL "}"
  *   QueryspaceURL ::= "url" STRING ("reload" ("never" | "all" INT "seconds"))?
@@ -73,14 +79,14 @@ class ScrayConfigurationParser(override val input: ParserInput) extends ScrayGen
    */
   def InputLine: Rule1[ScrayConfiguration] = rule { ConfigModel ~ EOI }
 
-  def ConfigModel: Rule1[ScrayConfiguration] = rule { ServiceOptions ~ oneOrMore(Datastores) ~ ConfigurationLocations ~> { 
+  def ConfigModel: Rule1[ScrayConfiguration] = rule { zeroOrMore(Comment) ~ ServiceOptions ~ zeroOrMore(Comment) ~ oneOrMore(Datastores) ~ ConfigurationLocations ~> { 
     (serviceoptions: ScrayServiceOptions, stores: Seq[DBMSConfigProperties], urls: Seq[ScrayQueryspaceConfigurationURL]) => 
       ScrayConfiguration(serviceoptions, stores, urls) }}
   
-  def Datastores: Rule1[DBMSConfigProperties] = rule { "connection" ~ optional(Identifier) ~ StoreTypes ~> {
+  def Datastores: Rule1[DBMSConfigProperties] = rule { zeroOrMore(Comment) ~ "connection" ~ optional(Identifier) ~ StoreTypes ~ zeroOrMore(Comment) ~> {
     (name: Option[String], dbmsproperties: DBMSConfigProperties) => dbmsproperties.setName(name) }}
   
-  def StoreTypes: Rule1[DBMSConfigProperties] = rule {  CassandraStoreConnection | JDBCStoreConnection }
+  def StoreTypes: Rule1[DBMSConfigProperties] = rule {  CassandraStoreConnection | JDBCStoreConnection | HDFSStoreConnection }
   
   /* -------------------------------- Cassandra connection rules ----------------------------------- */ 
   
@@ -138,14 +144,31 @@ class ScrayConfigurationParser(override val input: ParserInput) extends ScrayGen
   
   def JDBCURL: Rule1[JDBCURLProperty] = rule { "url" ~ QuotedString ~> { (url: String) => JDBCURLProperty(url) }}
   def JDBCCredentials: Rule1[JDBCCredentialsProperty] = rule  { Credentials ~> {(creds: ScrayCredentials) => JDBCCredentialsProperty(creds)}}
+
+  /* -------------------------------- HDFS connection rules ----------------------------------- */
+  
+  def HDFSStoreConnection: Rule1[HDFSProperties] = rule { "hdfs" ~ BRACE_OPEN ~ oneOrMore(HDFSSetting).separatedBy(COMMA) ~ BRACE_CLOSE ~> {
+    (properties: Seq[HDFSProperty]) =>
+      val url = properties.find(_.isInstanceOf[HDFSURLProperty]).map(_.asInstanceOf[HDFSURLProperty]).getOrElse(throw new HDFSURLUndefinedException())
+      properties.foldLeft(HDFSProperties(url.url)) { (properties, entry) => entry match {
+        case creds: HDFSCredentialsProperty => properties.copy(credentials = creds.credentials)
+        case _ => properties
+      }}
+  }}
+  
+  def HDFSSetting: Rule1[HDFSProperty] = rule { HDFSURL | HDFSCredentials } 
+  
+  def HDFSURL: Rule1[HDFSURLProperty] = rule { "url" ~ QuotedString ~> { (url: String) => HDFSURLProperty(url) }}
+  def HDFSCredentials: Rule1[HDFSCredentialsProperty] = rule  { Credentials ~> {(creds: ScrayCredentials) => HDFSCredentialsProperty(creds)}}
+
   
   /* -------------------------------- Queryspaces configuration location rules ----------------------------------- */
   
-  def ConfigurationLocations: Rule1[Seq[ScrayQueryspaceConfigurationURL]] = rule { "queryspacelocations" ~ BRACE_OPEN ~ 
-    oneOrMore(ConfigurationLocationSetting).separatedBy(COMMA) ~ BRACE_CLOSE} 
+  def ConfigurationLocations: Rule1[Seq[ScrayQueryspaceConfigurationURL]] = rule { zeroOrMore(Comment) ~ "queryspacelocations" ~ BRACE_OPEN ~ 
+    oneOrMore(ConfigurationLocationSetting).separatedBy(COMMA) ~ BRACE_CLOSE ~ zeroOrMore(Comment)} 
 
   def ConfigurationLocationSetting: Rule1[ScrayQueryspaceConfigurationURL] =
-    rule { "url" ~ QuotedString ~ optional("reload" ~ ConfigurationLocationAutoreload) ~> { 
+    rule { zeroOrMore(Comment) ~ "url" ~ QuotedString ~ optional("reload" ~ ConfigurationLocationAutoreload) ~ zeroOrMore(Comment) ~> { 
       (url: String, autoreload: Option[ScrayQueryspaceConfigurationURLReload]) => 
           ScrayQueryspaceConfigurationURL(url, autoreload.getOrElse(ScrayQueryspaceConfigurationURLReload())) }}
   def ConfigurationLocationAutoreload: Rule1[ScrayQueryspaceConfigurationURLReload] = 
@@ -209,7 +232,7 @@ class ScrayConfigurationParser(override val input: ParserInput) extends ScrayGen
   def ServiceLifetime: Rule1[ScrayEndpointLifetime] = rule { "lifetime" ~ DurationRule ~> { (duration: Duration) => ScrayEndpointLifetime(duration) }}
   def ServiceWriteDot: Rule1[ScrayServiceWriteDot] = rule { "writeDot" ~ BooleanRule ~> { (bool: Boolean) => ScrayServiceWriteDot(bool) }}
 
-  def HostList: Rule1[Seq[String]] = rule { "hosts" ~ "(" ~ oneOrMore(QuotedString).separatedBy(COMMA) ~ ")" }
+  def HostList: Rule1[Seq[String]] = rule { "hosts" ~ "(" ~ oneOrMore(QuotedString).separatedBy(COMMA) ~ ")" ~ zeroOrMore(Comment) }
   def HostPort: Rule1[Int] = rule { "port" ~ IntNumber }
   def HostAddressList: Rule1[Seq[InetAddress]] = rule { HostList ~> { (hosts: Seq[String]) => 
     hosts.map(host => InetAddress.getByName(host)) }}
@@ -246,6 +269,7 @@ object ScrayConfigurationParser extends LazyLogging {
     logError match {
       case true => parseResult.recoverWith { case e: ParseError =>
         val msg = parser.formatError(e)
+        println(s"Parse error parsing configuration file. Message from parser is $msg", e)
         logger.error(s"Parse error parsing configuration file. Message from parser is $msg", e)
         Failure(e)
       }

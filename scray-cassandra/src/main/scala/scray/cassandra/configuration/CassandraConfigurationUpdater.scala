@@ -1,15 +1,14 @@
 package scray.cassandra.configuration
 
-import com.twitter.util.JavaTimer
-import com.twitter.util.Duration
 import java.util.concurrent.TimeUnit
-import scray.querying.Registry
+
+import com.twitter.util.{Duration, JavaTimer}
 import scray.cassandra.extractors.CassandraExtractor
-import scala.collection.mutable.HashMap
-import scray.querying.description.TableIdentifier
-import scray.querying.description.TableConfiguration
-import scray.querying.description.ColumnConfiguration
+import scray.querying.Registry
+import scray.querying.description.{ColumnConfiguration, TableConfiguration, TableIdentifier}
 import scray.querying.queries.DomainQuery
+
+import scala.collection.mutable.HashMap
 
 object CassandraConfigurationUpdater {
   

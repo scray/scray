@@ -1,5 +1,6 @@
 package scray.cassandra.example
 
+import scray.cassandra.sync.{CassandraJobInfo, OnlineBatchSyncCassandra}
 import scray.cassandra.sync.CassandraJobInfo
 import scray.cassandra.sync.OnlineBatchSyncCassandra
 import scray.querying.sync.ColumnWithValue
@@ -17,7 +18,6 @@ object BatchVersioningMain {
   def main(args: Array[String]) {
     
     if(args.length != 1) {
-      println("Hostname for cassandra cluster as parameter requiered")
       System.exit(0);
     } 
 
@@ -43,9 +43,7 @@ object BatchVersioningMain {
 
       // Complete job
       table.completeBatchJob(jobInfo)
-      
-      println(s"\n Writen batch data ${newCount} \n")
-      
+            
     }
 
   }

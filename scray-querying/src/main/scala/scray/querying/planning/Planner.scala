@@ -16,7 +16,7 @@ package scray.querying.planning
 
 import com.twitter.concurrent.Spool
 import com.twitter.util.{ Await, Future }
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 
 import java.util.UUID
 
@@ -48,9 +48,10 @@ object Planner extends LazyLogging {
    * plans the execution and starts it
    */
   def planAndExecute(query: Query): Spool[Row] = {
-    val (plans, queryInfo) = Planner.plan(query)
     
-    queryInfo.finishedPlanningTime.set(System.currentTimeMillis())
+    logger.info("plan:" + query.getTableIdentifier.toString())
+    
+    val (plans, queryInfo) = Planner.plan(query)
     
     // do we need to order?
     val ordering = plans.find((execution) => execution._1.isInstanceOf[OrderedComposablePlan[_, _]]).
@@ -69,6 +70,7 @@ object Planner extends LazyLogging {
     logger.info(s"qid is ${query.getQueryID}")
     val version = basicVerifyQuery(query)
 
+      
 
     // TODO: memoize query-plans if basicVerifyQuery has been successful
 
@@ -85,6 +87,7 @@ object Planner extends LazyLogging {
         
         val mv = Registry.getMaterializedView(query.getQueryspace, version, query.getTableIdentifier)
         if (mv.isDefined) {
+          logger.debug(s"Use materialized view for query ${query.getQueryID}")
           val mvDomains = Planner.qualifyPredicates(cQuery)
           createQueryDomains(query, version, List(Planner.getMvQuery(mvDomains, query, query.getTableIdentifier, mv.get.primaryKeyColumn, mv.get.keyGenerationClass)))
         } else {
@@ -131,7 +134,7 @@ object Planner extends LazyLogging {
    */
   @inline def basicVerifyQuery(query: Query): Int = {
     // then we can retrieve the latest version of this queryspace
-    val version = Registry.getLatestVersion(query.getQueryspace).getOrElse({logger.warn("No latest version found");throw new QueryspaceViolationException(query)})
+    val version = Registry.getLatestVersion(query.getQueryspace).getOrElse({logger.error("No latest version for queryspace found!");throw new NoQueryspaceRegistered(query)})
 
     // check that the queryspace is there
     Registry.getQuerySpace(query.getQueryspace, version).orElse({logger.warn("No queryspace found"); throw new QueryspaceViolationException(query)})
@@ -480,7 +483,12 @@ object Planner extends LazyLogging {
 //      }
 //    }.getOrElse {
     def getLimitIncreasingSource[Q <: DomainQuery, K <: DomainQuery, V](tableConf: TableConfiguration[Q, K, V], isOrdered: Boolean = false) = {
-      new LimitIncreasingQueryableSource(getQueryableStore(tableConf), tableConf, tableConf.table, isOrdered)
+      val storeSource = getQueryableStore(tableConf)
+      if(!storeSource.hasSkipAndLimit) {
+        new LimitIncreasingQueryableSource(storeSource, tableConf, tableConf.table, isOrdered)
+      } else {
+        storeSource
+      }
     }
     
       // construct plan using information on main table
@@ -649,6 +657,7 @@ object Planner extends LazyLogging {
    */
   @inline def transformQueryDomains(query: Query, version: Int): DomainQuery = {
     val domains = qualifyPredicates(query).getOrElse(List())
+    logger.info("transformQueryDomains" + domains.length)
     createQueryDomains(query, version, domains) 
   }
   

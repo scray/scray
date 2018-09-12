@@ -21,11 +21,12 @@ import scala.collection.mutable.ArrayBuffer
 import com.twitter.util.Await
 import scala.annotation.tailrec
 import scray.querying.description.QueryRange
+import com.typesafe.scalalogging.LazyLogging
 
 /**
  * used to combine query result sets or skip and limit
  */
-object MergingResultSpool {
+object MergingResultSpool extends LazyLogging {
 
   /**
    * Returns the first result available. 

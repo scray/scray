@@ -60,6 +60,7 @@ abstract class ScrayGenericParsingRules extends Parser {
   val QuotedValueChars = CharPredicate.Printable -- '\u0022'
   val SingleLineWhitespaceChars = CharPredicate.Empty ++ ' ' ++ "\t"
   val WhitespaceChars = CharPredicate.Empty ++ ' ' ++ "\r" ++ "\n" ++ "\t"
+  def Comment = rule {"#" ~ oneOrMore(CharPredicate.Printable) ~ LineBreak}
 }
 // scalastyle:on method.name
 

@@ -50,11 +50,6 @@ trait StoreExtractor[S <: QueryableStoreSource[_]] {
   def getTableConfiguration(rowMapper: (_) => Row): TableConfiguration[_ <: DomainQuery, _ <: DomainQuery, _]
 
   /**
-   * returns a query mapping
-   */
-  def getQueryMapping(store: S, tableName: Option[String]): DomainQuery => String
-
-  /**
    * DB-System is fixed
    */
   def getDefaultDBSystem: String
@@ -77,7 +72,7 @@ trait StoreExtractor[S <: QueryableStoreSource[_]] {
       dbName: String,
       table: String,
       column: Column,
-      index: Option[ManuallyIndexConfiguration[_, _, _, _, _]],
+      index: Option[ManuallyIndexConfiguration[_ <: DomainQuery, _ <: DomainQuery, _, _, _ <: DomainQuery]],
       splitters: Map[Column, Splitter[_]]): ColumnConfiguration
       
   /**
@@ -87,7 +82,7 @@ trait StoreExtractor[S <: QueryableStoreSource[_]] {
       dbName: String,
       table: String,
       querySpace: QueryspaceConfiguration, 
-      indexes: Map[String, ManuallyIndexConfiguration[_, _, _, _, _]],
+      indexes: Map[String, ManuallyIndexConfiguration[_ <: DomainQuery, _ <: DomainQuery, _, _, _ <: DomainQuery]],
       splitters: Map[Column, Splitter[_]]): Set[ColumnConfiguration] = {
     getColumns.map(col => getColumnConfiguration(session, dbName, table, col, indexes.get(col.columnName), splitters))
   }
@@ -99,7 +94,7 @@ trait StoreExtractor[S <: QueryableStoreSource[_]] {
       indexes: Map[_ <: (QueryableStoreSource[_ <: DomainQuery], String), _ <: (QueryableStoreSource[_ <: DomainQuery], String, 
               IndexConfig, Option[Function1[_,_]], Set[String])],
       mappers: Map[_ <: QueryableStoreSource[_], ((_) => Row, Option[String], Option[VersioningConfiguration[_, _]])]):
-        Option[ManuallyIndexConfiguration[_, _, _, _, _]]
+        Option[ManuallyIndexConfiguration[_ <: DomainQuery, _ <: DomainQuery, _, _, _ <: DomainQuery]]
   
   private def getTableConfigurationFunction[Q <: DomainQuery, K <: DomainQuery, V](ti: TableIdentifier, space: String, version: Int): TableConfiguration[Q, K, V] = 
     Registry.getQuerySpaceTable(space, version, ti).get.asInstanceOf[TableConfiguration[Q, K, V]]

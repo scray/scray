@@ -1,9 +1,8 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.scray</groupId>
 	<artifactId>scray-parent</artifactId>
-	<version>0.10.0</version>
+	<version>1.1.0</version>
 	<inceptionYear>2014</inceptionYear>
 	<packaging>pom</packaging>
 	<name>Scray</name>
@@ -48,16 +47,16 @@
 		<url>https://github.com/scray</url>
 		<connection>scm:git:git://github.com/scray/scray.git</connection>
 		<developerConnection>scm:git:https://github.com/scray/scray.git</developerConnection>
-		<tag>org.scray-0.10.0</tag>
+		<tag>org.scray-1.1.0</tag>
 	</scm>
 
 	<properties>
-		<maven.compiler.source>1.6</maven.compiler.source>
-		<maven.compiler.target>1.6</maven.compiler.target>
+		<maven.compiler.source>1.8</maven.compiler.source>
+		<maven.compiler.target>1.8</maven.compiler.target>
 		<encoding>UTF-8</encoding>
-		<scala.tools.version>2.10</scala.tools.version>
-		<scala.version>2.10.6</scala.version>
-		<scala.suffix>2.10</scala.suffix>
+		<scala.tools.version>2.11</scala.tools.version>
+		<scala.version>2.11.8</scala.version>
+		<scala.suffix>2.11</scala.suffix>
 
 		<!-- finagle 6.12 might be needed for scray stateless services because 
 			storehaus-memcached depends on it - need to test -->
@@ -78,9 +77,11 @@
 	<modules>
 		<module>scray-querying</module>
 		<module>scray-cassandra</module>
+		<module>scray-jdbc</module>
+		<module>scray-hdfs</module>
 		<module>scray-service</module>
 		<module>scray-common</module>
-		<module>scray-client-jdbc</module>
+		<module>scray-client-jdbc</module> 
 		<module>scray-loader</module>
 	</modules>
 
@@ -120,13 +121,13 @@
 		</dependency>
 		<dependency>
 			<groupId>com.typesafe.scala-logging</groupId>
-			<artifactId>scala-logging-api_${scala.suffix}</artifactId>
-			<version>2.1.2</version>
+			<artifactId>scala-logging_${scala.suffix}</artifactId>
+			<version>3.5.0</version>
 		</dependency>
 		<dependency>
-			<groupId>com.typesafe.scala-logging</groupId>
-			<artifactId>scala-logging-slf4j_${scala.suffix}</artifactId>
-			<version>2.1.2</version>
+			<groupId>ch.qos.logback</groupId>
+			<artifactId>logback-classic</artifactId>
+			<version>1.1.7</version>
 		</dependency>
 		<dependency>
 			<groupId>com.esotericsoftware</groupId>
@@ -139,7 +140,7 @@
 			<dependency>
 				<groupId>com.twitter</groupId>
 				<artifactId>util-core_${scala.suffix}</artifactId>
-				<version>6.22.0</version>
+				<version>6.43.0</version>
 			</dependency>
 			<dependency>
 				<groupId>com.google.code.findbugs</groupId>
@@ -402,6 +403,7 @@
 							<execution>
 								<goals>
 									<goal>compile</goal>
+                                                                        <goal>testCompile</goal>
 								</goals>
 							</execution>
 						</executions>
@@ -415,4 +417,3 @@
 	</profiles>
 
 </project>
-

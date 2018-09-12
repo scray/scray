@@ -45,7 +45,7 @@ public class JavaKryoRowSerializationTest {
 	    assertEquals(result.getColumns().get(0).getValue(), 1);
 	    assertEquals(result.getColumns().get(1).getValue(), "blubb");
 	}
-
+/*
 	@Test
 	public void testCompositeRowDeserializeScalaSerializedStuff() {
 		// this is a scala-generated binary file with a serialized row.
@@ -65,5 +65,5 @@ public class JavaKryoRowSerializationTest {
 	    assertEquals(row1.getColumns().get(0).getValue(), 1);
 	    assertTrue(row2.getColumns().get(1).getValue() instanceof UUID);
 	    assertEquals(row2.getColumns().get(2).getValue(), 2.3d);
-	}
+	} */
 }

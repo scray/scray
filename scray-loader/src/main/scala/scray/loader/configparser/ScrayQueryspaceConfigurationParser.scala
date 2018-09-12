@@ -14,7 +14,7 @@
 // limitations under the License.
 package scray.loader.configparser
 
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 import org.apache.commons.io.IOUtils
 // scalastyle:off underscore.import
 import org.parboiled2._
@@ -50,7 +50,7 @@ class ScrayQueryspaceConfigurationParser (override val input: ParserInput, val c
    */
   def InputLine: Rule1[ScrayQueryspaceConfiguration] = rule { QueryspaceConfigModel ~ EOI }
 
-  def QueryspaceConfigModel: Rule1[ScrayQueryspaceConfiguration] = rule { QueryspaceName ~ optional(SyncTable) ~ zeroOrMore(ConfigurationOptions) ~> {
+  def QueryspaceConfigModel: Rule1[ScrayQueryspaceConfiguration] = rule { zeroOrMore(Comment) ~ QueryspaceName ~ zeroOrMore(Comment) ~ optional(SyncTable) ~ zeroOrMore(Comment) ~ zeroOrMore(ConfigurationOptions) ~> {
     (name: (String, Long), syncTable: Option[TableIdentifier], options : Seq[QueryspaceOption]) =>
       val rowstores = options.collect {
         case row: QueryspaceRowstore => row.table
@@ -75,7 +75,7 @@ class ScrayQueryspaceConfigurationParser (override val input: ParserInput, val c
   
   def SyncTable: Rule1[TableIdentifier] = rule { "sync" ~ RowStore ~> { (table: QueryspaceRowstore) => table.table }}
   
-  def ConfigurationOptions: Rule1[QueryspaceOption] = rule { RowStore | IndexStore | MaterializedView}
+  def ConfigurationOptions: Rule1[QueryspaceOption] = rule {  zeroOrMore(Comment) ~ ( RowStore | IndexStore | MaterializedView) ~ zeroOrMore(Comment)}
   
   def RowStore: Rule1[QueryspaceRowstore] = rule { "table" ~ "{" ~ Identifier ~ COMMA ~ QuotedString ~ COMMA ~ QuotedString ~ "}" ~> { 
     (dbms: String, dbid: String, table: String) => 

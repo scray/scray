@@ -21,7 +21,7 @@ import scray.querying.caching.NullCache
 import scala.collection.mutable.HashSet
 import scala.collection.mutable.ArrayBuffer
 import scala.util.Try
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 
 object ColumnDispenserTransformer {
   def transformElement[Q <: DomainQuery](element: Row, query: Q, columns: HashSet[Column]): Row = {

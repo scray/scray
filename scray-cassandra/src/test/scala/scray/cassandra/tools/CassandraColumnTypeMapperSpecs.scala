@@ -1,13 +1,12 @@
 package scray.cassandra.tools
 
 import org.junit.runner.RunWith
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
+import com.datastax.driver.core.DataType
+import org.junit.runner.RunWith
 import org.scalatest.WordSpec
 import org.scalatest.junit.JUnitRunner
-import scray.querying.description.TableIdentifier
-import scray.cassandra.tools.types.CassandraColumnTypeMapper
-import com.datastax.driver.core.DataType
-import scray.cassandra.tools.types.ScrayColumnTypes
+import scray.cassandra.tools.types.{CassandraColumnTypeMapper, ScrayColumnTypes}
 
 @RunWith(classOf[JUnitRunner])
 class CassandraColumnTypeMapperSpecs extends WordSpec with LazyLogging {

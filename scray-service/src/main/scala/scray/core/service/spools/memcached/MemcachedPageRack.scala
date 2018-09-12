@@ -19,7 +19,9 @@ import scray.querying.Query
 import scray.querying.description.Row
 import scray.service.qmodel.thrifscala.ScrayTQueryInfo
 import scray.service.qmodel.thrifscala.ScrayUUID
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
+import com.twitter.util.Await
+import scala.concurrent.Await
 
 class MemcachedPageRack(planAndExecute: (Query) => Spool[Row], pageTTL: Duration = DEFAULT_TTL)
   extends PageRackImplBase(planAndExecute, pageTTL) {
@@ -49,7 +51,7 @@ class MemcachedPageRack(planAndExecute: (Query) => Spool[Row], pageTTL: Duration
 
   override def createPages(query: Query, tQueryInfo: ScrayTQueryInfo): ScrayTQueryInfo = {
     // exit if exists (first page)
-    if (pageStore.get(pidKeyEncoder(PageKey(query.getQueryID, 0))).get.isDefined) return tQueryInfo
+    if (com.twitter.util.Await.result(pageStore.get(pidKeyEncoder(PageKey(query.getQueryID, 0)))).isDefined) return tQueryInfo
 
     //update query info
     val updQI = tQueryInfo.copy(
@@ -65,7 +67,7 @@ class MemcachedPageRack(planAndExecute: (Query) => Spool[Row], pageTTL: Duration
     val snap2 = System.currentTimeMillis()
 
     // prepare paging (lazily)
-    val pages: Spool[Seq[Row]] = (new SpoolPager(ServiceSpool(resultSpool, updQI))).pageAll().get
+    val pages: Spool[Seq[Row]] = com.twitter.util.Await.result((new SpoolPager(ServiceSpool(resultSpool, updQI))).pageAll())
 
     logger.info(s"Paging of query ${updQI.queryId.get} finished in ${System.currentTimeMillis() - snap2} milis.")
     val snap3 = System.currentTimeMillis()
@@ -100,7 +102,7 @@ class MemcachedSpoolPager(pages: Future[Spool[Seq[Row]]], queryInfo: ScrayTQuery
     //      }.get._1)
 
     // alternative2: put pages to memcached sequentially (adds multiple network roundtrips but first page will be available fast)
-    pushPages(pages.get, 1) // indexing starts with second page (index=1)
+    pushPages(com.twitter.util.Await.result(pages), 1) // indexing starts with second page (index=1)
     logger.info(s"Putting pages of query ${queryInfo.queryId.get} to memcached finished in ${System.currentTimeMillis() - snap} milis.")
   }
 
@@ -109,7 +111,7 @@ class MemcachedSpoolPager(pages: Future[Spool[Seq[Row]]], queryInfo: ScrayTQuery
     // val snap = System.currentTimeMillis()
     store.put(pidKeyEncoder(PageKey(queryInfo.queryId.get, pageIdx)) -> Some(PageValue(pages.head, queryInfo)))
     // logger.info(s"Putting 1 page to memcached finished in ${System.currentTimeMillis() - snap} milis.")
-    pushPages(pages.tail.get, pageIdx + 1)
+    pushPages(com.twitter.util.Await.result(pages.tail), pageIdx + 1)
   }
 
 }

@@ -15,7 +15,7 @@
 package scray.loader.tools
 
 import scray.common.serialization.KryoPoolSerialization
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 import scray.common.serialization.BatchIDSerializer
 import scray.common.serialization.BatchID
 import scray.common.serialization.numbers.KryoSerializerNumber

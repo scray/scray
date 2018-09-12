@@ -2,7 +2,7 @@
 	<parent>
 		<groupId>org.scray</groupId>
 		<artifactId>scray-parent</artifactId>
-		<version>0.10.0</version>
+		<version>1.1.0</version>
 		<relativePath>../pom.xml</relativePath>
 	</parent>
 
@@ -10,6 +10,10 @@
 	<artifactId>scray-service</artifactId>
 	<name>Scray - Service</name>
 	<description>scray remote query service interface</description>
+
+	<properties>
+		<scrooge.version>4.16.0</scrooge.version>
+	</properties>
 
 	<distributionManagement>
 		<snapshotRepository>
@@ -21,11 +25,12 @@
 			<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
 		</repository>
 	</distributionManagement>
+
 	<dependencies>
 		<dependency>
 			<groupId>org.scray</groupId>
 			<artifactId>scray-common</artifactId>
-			<version>0.10.0</version>
+			<version>1.1.0</version>
 
 			<exclusions>
 				<exclusion>
@@ -37,17 +42,18 @@
 		<dependency>
 			<groupId>org.scray</groupId>
 			<artifactId>scray-querying</artifactId>
-			<version>0.10.0</version>
+			<version>1.1.0</version>
+			<exclusions>
+				<exclusion>
+					<groupId>com.twitter</groupId>
+					<artifactId>scrooge-runtime</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>org.parboiled</groupId>
 			<artifactId>parboiled_${scala.suffix}</artifactId>
 			<version>${parboiled.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.thrift</groupId>
-			<artifactId>libthrift</artifactId>
-			<version>${libthrift.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.scalatest</groupId>
@@ -57,29 +63,56 @@
 		</dependency>
 		<dependency>
 			<groupId>com.twitter</groupId>
-			<artifactId>finagle-thrift_${scala.suffix}</artifactId>
-			<version>${finagle.version}</version>
+			<artifactId>scrooge-core_${scala.suffix}</artifactId>
+			<version>${scrooge.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>com.twitter</groupId>
-			<artifactId>scrooge-core_${scala.suffix}</artifactId>
-			<version>3.17.0</version>
+			<groupId>org.apache.thrift</groupId>
+			<artifactId>libthrift</artifactId>
+			<version>0.8.0</version>
 		</dependency>
 		<dependency>
 			<groupId>com.twitter</groupId>
 			<artifactId>chill_${scala.suffix}</artifactId>
-			<version>0.4.0</version>
+			<version>0.8.0</version>
+		</dependency>
+		<dependency>
+			<groupId>com.twitter</groupId>
+			<artifactId>util-core_${scala.suffix}</artifactId>
+			<version>6.43.0</version>
+		</dependency>
+		<dependency>
+			<groupId>com.twitter</groupId>
+			<artifactId>util-codec_${scala.suffix}</artifactId>
+			<version>6.43.0</version>
+		</dependency>
+		<dependency>
+			<groupId>com.twitter</groupId>
+			<artifactId>finagle-core_${scala.suffix}</artifactId>
+			<version>6.44.0</version>
+		</dependency>
+		<dependency>
+			<groupId>com.twitter</groupId>
+			<artifactId>finagle-thrift_${scala.suffix}</artifactId>
+			<version>6.44.0</version>
 		</dependency>
 		<dependency>
 			<groupId>com.twitter</groupId>
 			<artifactId>chill-bijection_${scala.suffix}</artifactId>
-			<version>0.4.0</version>
+			<version>0.8.0</version>
 		</dependency>
 		<dependency>
 			<groupId>com.twitter</groupId>
 			<artifactId>storehaus-memcache_${scala.suffix}</artifactId>
-			<version>0.9.1</version>
+			<version>0.15.0</version>
+			<exclusions>
+				<exclusion>
+					<artifactId>finagle-core_2.11</artifactId>
+					<groupId>com.twitter</groupId>
+				</exclusion>
+			</exclusions>
 		</dependency>
+
 		<dependency>
 			<groupId>org.xerial.snappy</groupId>
 			<artifactId>snappy-java</artifactId>
@@ -94,8 +127,8 @@
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>2.5.1</version>
 				<configuration>
-					<source>1.6</source>
-					<target>1.6</target>
+					<source>${maven.compiler.source}</source>
+					<target>${maven.compiler.target}</target>
 					<fork>true</fork>
 					<meminitial>128m</meminitial>
 					<maxmem>512m</maxmem>
@@ -106,7 +139,7 @@
 				<groupId>com.twitter</groupId>
 				<artifactId>scrooge-maven-plugin</artifactId>
 				<!-- this version must match the version from scrooge-gen.ivy.xml -->
-				<version>3.17.0</version>
+				<version>4.16.0</version>
 				<configuration>
 					<language>scala</language>
 					<!-- default is scala, can also be java -->
@@ -138,6 +171,7 @@
 				<artifactId>scalatest-maven-plugin</artifactId>
 				<version>1.0</version>
 				<configuration>
+					<skipTests>true</skipTests>
 					<reportsDirectory>${project.build.directory}/surefire-reports</reportsDirectory>
 					<junitxml>.</junitxml>
 					<filereports>WDF TestSuite.txt</filereports>
@@ -198,7 +232,6 @@
 			<comments>A business-friendly OSS license</comments>
 		</license>
 	</licenses>
-
 	<profiles>
 		<profile>
 			<id>IntegrationTest</id>

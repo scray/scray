@@ -19,7 +19,7 @@ import com.twitter.chill.AllScalaRegistrar
 import com.esotericsoftware.kryo.Serializer
 import scala.collection.mutable.ArrayBuffer
 import com.esotericsoftware.kryo.Kryo
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 import com.esotericsoftware.kryo.util.DefaultClassResolver
 import com.esotericsoftware.kryo.util.IntMap
 import com.esotericsoftware.kryo.Registration
@@ -31,7 +31,7 @@ object KryoPoolSerialization {
 
   case class SerializerEntry[T](val cls: Class[T], ser: Serializer[T], num: Int)
   
-  val POOL_SIZE = 10;
+  val POOL_SIZE = 100;
   
   private val instantiator = new ScrayKryoInstantiator
   private val serializers = new ArrayBuffer[SerializerEntry[_]]
@@ -56,7 +56,7 @@ class ScrayKryoInstantiator extends ScalaKryoInstantiator with LazyLogging {
     reg(k)
     KryoPoolSerialization.getSerializers.foreach(ser => k.register(ser.cls, ser.ser, ser.num))
     // uncomment for displaying registrations (e.g. to compare with Java registrations), can be useful to debug compatibility issues
-    // printRegistrations(k)
+    printRegistrations(k)
     k
   }
   
