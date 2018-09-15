@@ -1,10 +1,9 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
 	<parent>
 		<groupId>org.scray</groupId>
 		<artifactId>scray-parent</artifactId>
-		<version>0.10.1-SNAPSHOT</version>
+		<version>1.1.2-SNAPSHOT</version>
 		<relativePath>../../../pom.xml</relativePath>
 	</parent>
 
@@ -56,11 +55,6 @@
 			</exclusions>
 		</dependency>
 		<dependency>
-			<groupId>org.mapdb</groupId>
-			<artifactId>mapdb</artifactId>
-			<version>1.0.6</version>
-		</dependency>
-		<dependency>
 			<groupId>org.apache.avro</groupId>
 			<artifactId>avro</artifactId>
 			<version>1.8.2</version>
@@ -100,7 +94,6 @@
 				<configuration>
 					<source>1.8</source>
 					<target>1.8</target>
-
 				</configuration>
 			</plugin>
 			<plugin>
@@ -131,7 +124,8 @@
 					<instructions>
 						<Embed-Dependency>*</Embed-Dependency>
 						<Embed-Transitive>true</Embed-Transitive>
-						<Export-Package>org.apache.hadoop.fs,
+						<Export-Package>
+							org.apache.hadoop.fs,
 							org.apache.hadoop.hdfs,
 							scray.hdfs.io.coordination,
 							scray.hdfs.io.index.format.sequence,
@@ -140,7 +134,7 @@
 							scray.hdfs.io.index.format.sequence.types,
 							scray.hdfs.io.index.format.orc,
 							scray.hdfs.io.index.format,
-							scray.hdfs.io.write
+							scray.hdfs.io.write,
 						</Export-Package>
 						<Import-Package>
 							!*,

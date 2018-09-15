@@ -19,7 +19,8 @@ public class IHdfsWriterConstats {
 	public static enum FileFormat {
 		Avro,
 		SequenceFile,
-		ORC
+		ORC,
+		RAW
 	}
 	
 	public static enum WriteParameter {
