@@ -19,9 +19,9 @@ import org.osgi.framework.BundleActivator
 import org.osgi.framework.BundleContext
 import scray.hdfs.io.index.format.sequence.BinarySequenceFileWriter
 import java.util.Hashtable
-<<<<<<< HEAD
 import org.apache.hadoop.io.BytesWritable
 import org.apache.hadoop.io.Text
+import scray.hdfs.io.write.WriteService
 
 class Activator extends BundleActivator {
 

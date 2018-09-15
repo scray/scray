@@ -19,12 +19,13 @@ import scray.hdfs.io.write.Success
 import scray.hdfs.io.write.WriteService
 import scray.hdfs.io.write.WriteState
 import scray.hdfs.io.index.format.raw.RawFileWriter
+import scray.hdfs.io.index.format.sequence.mapping.impl.OutputBlob
 
 class WriteServiceImpl extends WriteService {
 
   val logger = LoggerFactory.getLogger(classOf[WriteServiceImpl])
   private val writersMetadata = new HashMap[UUID, WriteDestination];
-  private val writeCoordinator = new ReadWriteCoordinatorImpl
+  private val writeCoordinator = new ReadWriteCoordinatorImpl(new OutputBlob)
 
   def createWriter(path: String): UUID = synchronized {
     logger.debug(s"Create writer for path ${path}")

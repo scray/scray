@@ -11,6 +11,7 @@ import java.io.File
 import java.util.HashMap
 import org.junit.Assert
 import scray.hdfs.io.osgi.WriteServiceImpl
+import scray.hdfs.io.index.format.sequence.mapping.impl.OutputBlob
 
 class WriteServiceImplSpecs extends WordSpec with LazyLogging {
   "WriteServiceImplSpecs " should {
@@ -39,7 +40,7 @@ class WriteServiceImplSpecs extends WordSpec with LazyLogging {
       getIndexFiles(outPath + "/scray-data-000-v0/")
         .map(fileName => {
           (
-            new IdxReader("file://" + fileName + ".idx"),
+            new IdxReader("file://" + fileName + ".idx", new OutputBlob),
             new BlobFileReader("file://" + fileName + ".blob"))
         })
         .map {
