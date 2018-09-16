@@ -34,4 +34,9 @@ class OutputBlob extends SequenceKeyValuePair[Text, IndexValue, BlobKey, Blob] {
     new Blob(data, data.length)
   }
   
+  def getDataValue(data: String) = {
+    val dataAsBytes = data.getBytes
+    new Blob(dataAsBytes, dataAsBytes.length)
+  }
+  
 }

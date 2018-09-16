@@ -83,6 +83,30 @@ class BinarySequenceFileWriter[IDXKEY <: Writable, IDXVALUE <: Writable, DATAKEY
     if (idxWriter != null) idxWriter.hflush()
   }
 
+  override def insert(id: String, data: String): Long = {
+    
+    hdfsConf.set("fs.hdfs.impl", "org.apache.hadoop.hdfs.DistributedFileSystem");
+    hdfsConf.set("fs.file.impl", "org.apache.hadoop.fs.LocalFileSystem");
+
+    if (dataWriter == null) { // scalastyle:off null
+      dataWriter = initWriter(outTypeMapping.getDataKey("42"), outTypeMapping.getDataValue("".getBytes), fs.getOrElse(FileSystem.get(hdfsConf)), ".blob")
+    }
+
+    if (idxWriter == null) { // scalastyle:off null
+      idxWriter = initWriter(outTypeMapping.getIdxKey("42"), outTypeMapping.getIdxValue("42", 42L, 2L), fs.getOrElse(FileSystem.get(hdfsConf)), ".idx")
+    }
+
+    // Write idx
+    idxWriter.append(outTypeMapping.getIdxKey(id), outTypeMapping.getIdxValue(id, System.currentTimeMillis(), dataWriter.getLength))
+
+    // Write data
+    dataWriter.append(outTypeMapping.getDataKey(id), outTypeMapping.getDataValue(data));
+
+    numberOfInserts = numberOfInserts + 1
+    dataWriter.getLength
+    
+  }
+
   override def insert(id: String, updateTime: Long, data: Array[Byte]): Long = {
 
     hdfsConf.set("fs.hdfs.impl", "org.apache.hadoop.hdfs.DistributedFileSystem");

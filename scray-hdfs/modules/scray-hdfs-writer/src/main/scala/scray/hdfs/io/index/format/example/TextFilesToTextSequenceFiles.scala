@@ -15,7 +15,8 @@
 
 package scray.hdfs.io.index.format.example
 
-import scray.hdfs.io.index.format.sequence.TextSequenceFileWriter
+import scray.hdfs.io.index.format.sequence.mapping.impl.OutputTextText
+import scray.hdfs.io.index.format.sequence.BinarySequenceFileWriter
 
 object TextToTextSequenceFiles {
   
@@ -26,7 +27,7 @@ object TextToTextSequenceFiles {
       println("Example parameters:\n  hdfs://10.0.0.1/SequenceTest/testFile /home/stefan/Downloads/testFile.pdf")
     } else {
       
-      val writer = new TextSequenceFileWriter(args(1))
+      val writer = new BinarySequenceFileWriter(args(1), new OutputTextText)
       
       writer.insert("id1", """{"msg_id": 1, "msg": "msg1"}""")
       writer.insert("id2", """{"msg_id": 2, "msg": "msg2"}""")

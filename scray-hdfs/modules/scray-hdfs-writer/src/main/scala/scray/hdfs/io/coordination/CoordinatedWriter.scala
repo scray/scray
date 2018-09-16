@@ -59,6 +59,7 @@ class CoordinatedWriter[+IDXKEY <: Writable, +IDXVALUE <: Writable, +DATAKEY <: 
   private def createNewBasicWriter(metadata: WriteDestination): Writer = {
     val filePath = this.getPath(metadata.path, metadata.queryspace, metadata.version.number)
     new BinarySequenceFileWriter(filePath, outTypeMapping)
+   
   }
 
   private def getPath(basePath: String, queryspace: String, version: Int): String = {
@@ -112,6 +113,25 @@ class CoordinatedWriter[+IDXKEY <: Writable, +IDXVALUE <: Writable, +DATAKEY <: 
       this.insert(id, updateTime, data)
     }
   }
+  
+  override def insert(id: String, data: String): Long = {
+        // Check if file size limit is reached
+    if (!maxFileSizeReached(writer.getBytesWritten + data.getBytes.length, maxFileSize)
+      &&
+      !maxNumInsertsReached(numInserts, metadata.maxNumberOfInserts)) {
+      numInserts = numInserts + 1
+      writer.insert(id, data)
+    } else {
+      logger.debug(s"Close file ${writer.getPath}")
+      writer.close
+      
+      logger.debug(s"Create new file ${writer.getPath}")
+      writer = createNewBasicWriter(metadata)
+      numInserts = 0
+      this.insert(id, data)
+    }
+  }
+
 
   def insert(id: String, updateTime: Long, data: InputStream, blobSplitSize: Int): Long = {
     // Check if file size limit is reached

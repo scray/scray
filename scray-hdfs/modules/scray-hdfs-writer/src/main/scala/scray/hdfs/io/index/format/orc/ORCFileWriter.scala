@@ -102,6 +102,10 @@ class ORCFileWriter(batchSize: Int = 10000) extends scray.hdfs.io.index.format.W
     writer.getRawDataSize
   }
   
+  override def insert(id: String, data: String): Long = {
+    this.insert(id, System.currentTimeMillis(), data.getBytes)
+  }
+  
   def insert(idBlob: Tuple2[String, Blob]) = {
         val e = new RuntimeException("")
     e.printStackTrace();

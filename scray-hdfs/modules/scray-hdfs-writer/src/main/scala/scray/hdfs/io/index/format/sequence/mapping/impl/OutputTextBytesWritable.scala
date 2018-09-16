@@ -31,4 +31,9 @@ class OutputTextBytesWritable extends SequenceKeyValuePair[Text, Text, Text, Byt
     new BytesWritable(data, data.length)
   }
   
+    def getDataValue(data: String) = {
+      new BytesWritable(data.getBytes)
+    }
+
+  
 }
