@@ -22,10 +22,10 @@ import org.apache.hadoop.io.SequenceFile.Reader
 import scray.hdfs.io.index.format.sequence.types.IndexValue
 import org.apache.hadoop.io.Text
 import com.typesafe.scalalogging.LazyLogging
-import scray.hdfs.io.index.format.sequence.mapping.InputOutputTypeMapping
+import scray.hdfs.io.index.format.sequence.mapping.SequenceKeyValuePair
 import org.apache.hadoop.io.Writable
 
-class IdxReader[IDXKEY <: Writable, IDXVALUE <: Writable, DATAKEY <: Writable, DATAVALUE <: Writable](path: String, hdfsConf: Configuration, fs: Option[FileSystem], outMapping: InputOutputTypeMapping[IDXKEY, IDXVALUE, DATAKEY, DATAVALUE]) extends LazyLogging {
+class IdxReader[IDXKEY <: Writable, IDXVALUE <: Writable, DATAKEY <: Writable, DATAVALUE <: Writable](path: String, hdfsConf: Configuration, fs: Option[FileSystem], outMapping: SequenceKeyValuePair[IDXKEY, IDXVALUE, DATAKEY, DATAVALUE]) extends LazyLogging {
 
   if(getClass.getClassLoader == null) {
     hdfsConf.setClassLoader(getClass.getClassLoader)
@@ -41,7 +41,7 @@ class IdxReader[IDXKEY <: Writable, IDXVALUE <: Writable, DATAKEY <: Writable, D
   private var hasNextWasCalled = false
   private var hasNextValue = false
   
-  def this(path: String, outMapping: InputOutputTypeMapping[IDXKEY, IDXVALUE, DATAKEY, DATAVALUE]) = {
+  def this(path: String, outMapping: SequenceKeyValuePair[IDXKEY, IDXVALUE, DATAKEY, DATAVALUE]) = {
     this(path, new Configuration, None, outMapping)
   }
 

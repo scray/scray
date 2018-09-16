@@ -22,7 +22,7 @@ import java.util.UUID
 import com.typesafe.scalalogging.LazyLogging
 
 import scray.hdfs.io.index.format.Writer
-import scray.hdfs.io.index.format.sequence.mapping.InputOutputTypeMapping
+import scray.hdfs.io.index.format.sequence.mapping.SequenceKeyValuePair
 import scray.hdfs.io.index.format.sequence.BinarySequenceFileWriter
 import org.apache.hadoop.io.Writable
 import scray.hdfs.io.index.format.sequence.types.BlobKey
@@ -30,7 +30,12 @@ import scray.hdfs.io.index.format.sequence.types.IndexValue
 import scray.hdfs.io.index.format.sequence.types.Blob
 import org.apache.hadoop.io.Text
 
-class CoordinatedWriter[+IDXKEY <: Writable, +IDXVALUE <: Writable, +DATAKEY <: Writable, +DATAVALUE <: Writable](private var writer: Writer, maxFileSize: Long, writeCoordinator: WriteCoordinator, metadata: WriteDestination, outTypeMapping: InputOutputTypeMapping[IDXKEY, IDXVALUE, DATAKEY, DATAVALUE]) extends LazyLogging with Writer {
+class CoordinatedWriter[+IDXKEY <: Writable, +IDXVALUE <: Writable, +DATAKEY <: Writable, +DATAVALUE <: Writable](
+    maxFileSize: Long = 8192, 
+    metadata: WriteDestination, 
+    outTypeMapping: SequenceKeyValuePair[IDXKEY, IDXVALUE, DATAKEY, DATAVALUE]) extends LazyLogging with Writer {
+  
+  private var writer: Writer = createNewBasicWriter(metadata)
   private var numInserts = 0
 
   def insert(id: String, updateTime: Long, data: Array[Byte]) = synchronized {

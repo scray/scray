@@ -33,9 +33,9 @@ import com.typesafe.scalalogging.LazyLogging
 import scray.hdfs.io.index.format.Writer
 import java.math.BigInteger
 import org.apache.commons.lang.ArrayUtils
-import scray.hdfs.io.index.format.sequence.mapping.InputOutputTypeMapping
+import scray.hdfs.io.index.format.sequence.mapping.SequenceKeyValuePair
 
-class BinarySequenceFileWriter[IDXKEY <: Writable, IDXVALUE <: Writable, DATAKEY <: Writable, DATAVALUE <: Writable](path: String, hdfsConf: Configuration, fs: Option[FileSystem], outTypeMapping: InputOutputTypeMapping[IDXKEY, IDXVALUE, DATAKEY, DATAVALUE]) extends scray.hdfs.io.index.format.Writer with LazyLogging {
+class BinarySequenceFileWriter[IDXKEY <: Writable, IDXVALUE <: Writable, DATAKEY <: Writable, DATAVALUE <: Writable](path: String, hdfsConf: Configuration, fs: Option[FileSystem], outTypeMapping: SequenceKeyValuePair[IDXKEY, IDXVALUE, DATAKEY, DATAVALUE]) extends scray.hdfs.io.index.format.Writer with LazyLogging {
 
   var dataWriter: SequenceFile.Writer = null; // scalastyle:off null
   var idxWriter: SequenceFile.Writer = null; // scalastyle:off null
@@ -46,11 +46,11 @@ class BinarySequenceFileWriter[IDXKEY <: Writable, IDXVALUE <: Writable, DATAKEY
 
   var numberOfInserts: Int = 0
 
-  def this(path: String, outTypeMapping: InputOutputTypeMapping[IDXKEY, IDXVALUE, DATAKEY, DATAVALUE]) = {
+  def this(path: String, outTypeMapping: SequenceKeyValuePair[IDXKEY, IDXVALUE, DATAKEY, DATAVALUE]) = {
     this(path, new Configuration, None, outTypeMapping)
   }
 
-  def this(path: String, hdfsConf: Configuration, outTypeMapping: InputOutputTypeMapping[IDXKEY, IDXVALUE, DATAKEY, DATAVALUE]) {
+  def this(path: String, hdfsConf: Configuration, outTypeMapping: SequenceKeyValuePair[IDXKEY, IDXVALUE, DATAKEY, DATAVALUE]) {
     this(path, hdfsConf, None, outTypeMapping)
   }
 

@@ -26,5 +26,5 @@ trait WriteService {
   def writeRawFile(path: String): OutputStream
   
   def close(resource: UUID)
-  def isClosed(resource: UUID)
+  def isClosed(resource: UUID): ScrayListenableFuture
 }

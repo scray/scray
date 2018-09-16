@@ -9,7 +9,6 @@ import org.slf4j.LoggerFactory
 
 import scray.hdfs.io.coordination.IHdfsWriterConstats
 import scray.hdfs.io.coordination.IHdfsWriterConstats.FileFormat
-import scray.hdfs.io.coordination.ReadWriteCoordinatorImpl
 import scray.hdfs.io.coordination.Version
 import scray.hdfs.io.coordination.WriteDestination
 import scray.hdfs.io.write.WriteService
@@ -19,21 +18,24 @@ import java.io.OutputStream
 import com.google.common.util.concurrent.SettableFuture
 import scray.hdfs.io.write.WriteResult
 import scray.hdfs.io.write.WriteResult
+import scray.hdfs.io.write.ScrayListenableFuture
+import scray.hdfs.io.write.ScrayListenableFuture
+import scray.hdfs.io.write.ScrayListenableFuture
+import scray.hdfs.io.coordination.CoordinatedWriter
+import org.apache.hadoop.io.Writable
 
 class WriteServiceImpl extends WriteService {
 
   val logger = LoggerFactory.getLogger(classOf[WriteServiceImpl])
-  private val writersMetadata = new HashMap[UUID, WriteDestination];
-  private val writeCoordinator = new ReadWriteCoordinatorImpl(new OutputBlob)
+  private val writersMetadata = new HashMap[UUID, CoordinatedWriter[Writable, Writable, Writable, Writable]];
 
   def createWriter(path: String): UUID = synchronized {
     logger.debug(s"Create writer for path ${path}")
     val id = UUID.randomUUID()
 
     val metadata = WriteDestination("000", path, IHdfsWriterConstats.FileFormat.SequenceFile, Version(0), 512 * 1024 * 1024L, 5)
-    writeCoordinator.getWriter(metadata)
 
-    writersMetadata.put(id, metadata)
+    writersMetadata.put(id,  new CoordinatedWriter(8192, metadata, new OutputBlob))
 
     id
   }
@@ -43,9 +45,8 @@ class WriteServiceImpl extends WriteService {
     val id = UUID.randomUUID()
 
     val metadata = WriteDestination("000", path, format, Version(0), 512 * 1024 * 1024L, 5)
-    writeCoordinator.getWriter(metadata)
 
-    writersMetadata.put(id, metadata)
+    writersMetadata.put(id,  new CoordinatedWriter(8192, metadata, new OutputBlob)) // Fix make OutputType configurarble
 
     id
   }
@@ -54,8 +55,7 @@ class WriteServiceImpl extends WriteService {
     logger.debug(s"Insert data for resource ${resource}")
 
     try {
-      writeCoordinator.getWriter(writersMetadata.get(resource))
-        .insert(id, updateTime, data)
+      writersMetadata.get(resource).insert(id, updateTime, data)
 
       new ScrayListenableFuture(new WriteResult)
     } catch {
@@ -69,8 +69,7 @@ class WriteServiceImpl extends WriteService {
     logger.debug(s"Insert data for resource ${resource}")
 
     try {
-      writeCoordinator.getWriter(writersMetadata.get(resource))
-        .insert(id, updateTime, data)
+      writersMetadata.get(resource).insert(id, updateTime, data)
 
     new ScrayListenableFuture(new WriteResult)
     } catch {
@@ -84,8 +83,7 @@ class WriteServiceImpl extends WriteService {
     logger.debug(s"Insert data for resource ${resource}")
 
     try {
-      writeCoordinator.getWriter(writersMetadata.get(resource))
-        .insert(id, updateTime, data)
+      writersMetadata.get(resource).insert(id, updateTime, data)
 
         new ScrayListenableFuture(new WriteResult)
     } catch {
@@ -115,8 +113,7 @@ class WriteServiceImpl extends WriteService {
 
   def close(resource: UUID) = synchronized {
     try {
-      writeCoordinator.getWriter(writersMetadata.get(resource))
-        .close
+      writersMetadata.get(resource).close
 
       val result = SettableFuture.create[WriteResult]()
       result.set(new WriteResult)
@@ -130,18 +127,13 @@ class WriteServiceImpl extends WriteService {
     }
   }
 
-  def isClosed(resource: UUID) = {
+  def isClosed(resource: UUID): ScrayListenableFuture = {
     try {
-      writeCoordinator.getWriter(writersMetadata.get(resource))
-        .isClosed
-      val result = SettableFuture.create[WriteResult]()
-      result.set(new WriteResult)
-      result
+      val isClosed = writersMetadata.get(resource).isClosed
+        new ScrayListenableFuture(new WriteResult(isClosed))
     } catch {
       case e: Exception => {
-        val result = SettableFuture.create[WriteResult]()
-        result.setException(e)
-        result
+        new ScrayListenableFuture(e)
       }
     }
   }

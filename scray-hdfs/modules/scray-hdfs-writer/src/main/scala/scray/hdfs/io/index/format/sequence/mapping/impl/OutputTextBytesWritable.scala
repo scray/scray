@@ -1,11 +1,11 @@
 package scray.hdfs.io.index.format.sequence.mapping.impl
 
-import scray.hdfs.io.index.format.sequence.mapping.InputOutputTypeMapping
+import scray.hdfs.io.index.format.sequence.mapping.SequenceKeyValuePair
 import org.apache.hadoop.io.ByteWritable
 import org.apache.hadoop.io.Text
 import org.apache.hadoop.io.BytesWritable
 
-class OutputTextBytesWritable extends InputOutputTypeMapping[Text, Text, Text, BytesWritable] {
+class OutputTextBytesWritable extends SequenceKeyValuePair[Text, Text, Text, BytesWritable] {
   
   def getIdxKey(id: String): Text = {
     new Text(s"{id: ${id}}")

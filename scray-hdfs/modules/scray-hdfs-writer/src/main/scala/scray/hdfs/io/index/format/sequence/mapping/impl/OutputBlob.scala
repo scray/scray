@@ -1,6 +1,6 @@
 package scray.hdfs.io.index.format.sequence.mapping.impl
 
-import scray.hdfs.io.index.format.sequence.mapping.InputOutputTypeMapping
+import scray.hdfs.io.index.format.sequence.mapping.SequenceKeyValuePair
 import org.apache.hadoop.io.ByteWritable
 import org.apache.hadoop.io.Text
 import org.apache.hadoop.io.BytesWritable
@@ -8,7 +8,7 @@ import scray.hdfs.io.index.format.sequence.types.IndexValue
 import scray.hdfs.io.index.format.sequence.types.BlobKey
 import scray.hdfs.io.index.format.sequence.types.Blob
 
-class OutputBlob extends InputOutputTypeMapping[Text, IndexValue, BlobKey, Blob] {
+class OutputBlob extends SequenceKeyValuePair[Text, IndexValue, BlobKey, Blob] {
   
   def getIdxKey(id: String): Text = {
     new Text(s"{id: ${id}}")

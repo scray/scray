@@ -14,13 +14,12 @@ import java.io.ByteArrayInputStream
 
 class WriteCoordinatorSpecs extends WordSpec with LazyLogging {
   "WriteCoordinator " should {
-    " wrtite to new file if count limit is reached " in {
-      val coordinator = new ReadWriteCoordinatorImpl(new OutputBlob)
+    " wrtite to new blob file until count limit is reached " in {
       val outPath = "target/WriteCoordinatorSpecs/writeCoordinatorSpecsMaxCount/" + System.currentTimeMillis() + "/"
 
       val metadata = WriteDestination("000", outPath, IHdfsWriterConstats.FileFormat.SequenceFile, Version(0), 512 * 1024 * 1024L, 5)
+      val writer = new CoordinatedWriter(512 * 1024 * 1024L, metadata, new OutputBlob)
 
-      val writer = coordinator.getWriter(metadata)
       val writtenData = new HashMap[String, Array[Byte]]();
 
       for (i <- 0 to 20) {

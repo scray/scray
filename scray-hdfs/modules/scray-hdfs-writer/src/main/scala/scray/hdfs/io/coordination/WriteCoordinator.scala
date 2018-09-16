@@ -43,18 +43,3 @@ case class WriteDestination(
     maxFileSize: Long = 512 * 1024 * 1024,
     maxNumberOfInserts: Int = Integer.MAX_VALUE
    ) 
-
-    /**
-     * Interface to manage where and how data should be stored
-     * 
-     */
-trait WriteCoordinator {
-
-  /**
-   * Destination where new data should be written.
-   */
-  def getWriter(queryspace: String, path: String, fileFormat: IHdfsWriterConstats.FileFormat): Writer
-  def getWriter(metadata: WriteDestination): Writer
-  def getNewWriter(metadata: WriteDestination): Writer
-
-}

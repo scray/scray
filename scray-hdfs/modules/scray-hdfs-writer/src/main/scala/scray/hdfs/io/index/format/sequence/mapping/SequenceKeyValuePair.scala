@@ -3,7 +3,7 @@ package scray.hdfs.io.index.format.sequence.mapping
 import org.apache.hadoop.io.Writable
 
 
-trait InputOutputTypeMapping[IDXKEY <: Writable, IDXVALUE <: Writable, DATAKEY <: Writable, DATAVALUE <: Writable] {
+trait SequenceKeyValuePair[IDXKEY <: Writable, IDXVALUE <: Writable, DATAKEY <: Writable, DATAVALUE <: Writable] {
   def getIdxKey(id: String): IDXKEY
   def getIdxValue(
       id: String, 
