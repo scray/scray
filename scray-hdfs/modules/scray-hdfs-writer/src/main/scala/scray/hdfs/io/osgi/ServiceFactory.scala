@@ -28,12 +28,13 @@ import scray.hdfs.io.write.WriteService
 
 class ServiceFactory extends org.osgi.framework.ServiceFactory[scray.hdfs.io.write.WriteService] {
   
+  var writer: WriteServiceImpl = null
+
   def getService(bundle: Bundle, reg: ServiceRegistration[scray.hdfs.io.write.WriteService]): WriteService = {
     println("Provide service")
     
     val destinationPath = bundle.getBundleContext.getProperty(IHdfsWriterConstats.WriteParameter.destinationPath.toString)
     
-    var writer: WriteServiceImpl = null;
     try {
       writer = new WriteServiceImpl
     } catch {
@@ -45,5 +46,10 @@ class ServiceFactory extends org.osgi.framework.ServiceFactory[scray.hdfs.io.wri
   
 
   def ungetService(bundle: Bundle, reg: ServiceRegistration[scray.hdfs.io.write.WriteService], writer: scray.hdfs.io.write.WriteService): Unit = {
+    this.writer.closeAll
+  }
+  
+  def close = {
+    writer.closeAll
   }
 }

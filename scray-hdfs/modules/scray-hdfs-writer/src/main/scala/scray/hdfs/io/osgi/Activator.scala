@@ -24,15 +24,15 @@ import org.apache.hadoop.io.Text
 import scray.hdfs.io.write.WriteService
 
 class Activator extends BundleActivator {
+  val fac = new ServiceFactory
 
   override def start(context: BundleContext): Unit = {
-    val fac = new ServiceFactory
     println(s"Register service with name ${classOf[WriteService].getName} ")
     context.registerService(classOf[WriteService].getName, fac, new Hashtable[String, String]())
   }
 
   override def stop(context: BundleContext): Unit = {
-
+    fac.close
   }
 
 }
