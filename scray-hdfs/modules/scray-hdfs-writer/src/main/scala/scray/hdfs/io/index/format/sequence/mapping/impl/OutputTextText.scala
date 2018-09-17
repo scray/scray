@@ -5,7 +5,8 @@ import org.apache.hadoop.io.Text
 import scray.hdfs.io.index.format.sequence.mapping.SequenceKeyValuePair
 
 class OutputTextText extends SequenceKeyValuePair[Text, Text, Text, Text] {
-    def getIdxKey(id: String): Text = {
+  
+  def getIdxKey(id: String): Text = {
     new Text(s"{id: ${id}}")
   }
   
@@ -17,19 +18,21 @@ class OutputTextText extends SequenceKeyValuePair[Text, Text, Text, Text] {
     this.getIdxValue(id, 1, 8192, updateTime, dataLength)
   }
   
-  def getDataKey(id: String, blobCount: Int = 0): Text = {
-    new Text(s"{id: ${id}, blobCount: ${blobCount}}")
+  def getDataKey(id: String, blobCount: Int): Text = {
+    //new Text(s"{id: ${id}, blobCount: ${blobCount}}")
+
+    new Text(s"{id: ${id}} ")
   }
   
-  def getDataValue(data: Array[Byte], length: Int) = {
+  def getDataValue(data: Array[Byte], length: Int): Text = {
     new Text(new String(data, length))
   }
   
-  def getDataValue(data: Array[Byte]) = {
+  def getDataValue(data: Array[Byte]): Text = {
     new Text(new String(data))
   }
   
-  def getDataValue(data: String) = {
+  def getDataValue(data: String): Text = {
     new Text(data)
   }
 }

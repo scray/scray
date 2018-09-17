@@ -100,8 +100,10 @@ class BinarySequenceFileWriter[IDXKEY <: Writable, IDXVALUE <: Writable, DATAKEY
     idxWriter.append(outTypeMapping.getIdxKey(id), outTypeMapping.getIdxValue(id, System.currentTimeMillis(), dataWriter.getLength))
 
     // Write data
+    //dataWriter.append(outTypeMapping.getDataKey(id), outTypeMapping.getDataValue(data));
     dataWriter.append(outTypeMapping.getDataKey(id), outTypeMapping.getDataValue(data));
 
+    
     numberOfInserts = numberOfInserts + 1
     dataWriter.getLength
     

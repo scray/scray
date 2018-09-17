@@ -19,22 +19,16 @@ import scray.hdfs.io.index.format.sequence.mapping.impl.OutputTextText
 import scray.hdfs.io.index.format.sequence.BinarySequenceFileWriter
 
 object TextToTextSequenceFiles {
-  
+
   def main(args: Array[String]) {
 
-    if (args.length < 2) {
-      println("Usage TextFilesToTextSequenceFiles SOURCE DEST")
-      println("Example parameters:\n  hdfs://10.0.0.1/SequenceTest/testFile /home/stefan/Downloads/testFile.pdf")
-    } else {
-      
-      val writer = new BinarySequenceFileWriter(args(1), new OutputTextText)
-      
-      writer.insert("id1", """{"msg_id": 1, "msg": "msg1"}""")
-      writer.insert("id2", """{"msg_id": 2, "msg": "msg2"}""")
-      writer.insert("id3", """{"msg_id": 3, "msg": "msg3"}""")
-      
-      writer.close
-      
-    }
+    val writer = new BinarySequenceFileWriter("target/textOutput123", new OutputTextText)
+
+    writer.insert("id1", """{"msg_id": 1, "msg": "msg1"}""")
+    writer.insert("id2", """{"msg_id": 2, "msg": "msg2"}""")
+    writer.insert("id3", """{"msg_id": 3, "msg": "msg3"}""")
+    
+    writer.close
+
   }
 }
