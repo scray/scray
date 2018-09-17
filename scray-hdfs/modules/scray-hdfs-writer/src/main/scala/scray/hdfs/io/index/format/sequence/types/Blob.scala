@@ -25,49 +25,43 @@ import org.apache.hadoop.io.BytesWritable
 import java.util.Arrays
 
 class Blob(
-  private var updateTime: Long,
   private var data: Array[Byte],
   private var dataLength: Int
 )  extends Writable with Serializable {
   
 
   def this() = {
-    this(-1L, Array.empty[Byte], 0)
+    this(Array.empty[Byte], 0)
   }
   
   def this(updateTime: Long, data: Array[Byte]) = {
-    this(updateTime, data, data.length)
+    this(data, data.length)
   }
 
-  def getUpdateTime: Long = {
-    updateTime
-  }
+
   
   def getData: Array[Byte] = {
     data
   }
 
   override def write(out: java.io.DataOutput): Unit = {
-    out.writeLong(updateTime)
     out.writeInt(dataLength)
     out.write(data, 0, dataLength)
   }
   
   override def readFields(in: java.io.DataInput): Unit = {
-    updateTime = in.readLong()
     dataLength = in.readInt
     data = new Array[Byte](dataLength)
     in.readFully(data, 0, dataLength)
   }
   
   override def hashCode = {
-    updateTime.hashCode() * 17 + data.hashCode()
+    data.hashCode()
   }
   
   override def equals(that: Any): Boolean = {
     that match {
       case that: Blob => {
-        that.updateTime == this.updateTime && 
         Arrays.equals(that.data, this.data)
       }
       case _ => false
@@ -75,6 +69,6 @@ class Blob(
   }
   
   override def toString(): String = {
-    updateTime + "\t" + data.toString()
+    data.toString()
   }
 }

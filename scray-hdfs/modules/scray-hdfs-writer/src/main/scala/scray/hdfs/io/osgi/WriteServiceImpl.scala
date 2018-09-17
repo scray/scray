@@ -1,3 +1,18 @@
+// See the LICENCE.txt file distributed with this work for additional
+// information regarding copyright ownership.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package scray.hdfs.io.osgi
 
 import java.io.InputStream
@@ -9,31 +24,33 @@ import org.slf4j.LoggerFactory
 
 import scray.hdfs.io.coordination.IHdfsWriterConstats
 import scray.hdfs.io.coordination.IHdfsWriterConstats.FileFormat
-import scray.hdfs.io.coordination.ReadWriteCoordinatorImpl
 import scray.hdfs.io.coordination.Version
 import scray.hdfs.io.coordination.WriteDestination
 import scray.hdfs.io.write.WriteService
 import scray.hdfs.io.index.format.raw.RawFileWriter
+import scray.hdfs.io.index.format.sequence.mapping.impl.OutputBlob
 import java.io.OutputStream
 import com.google.common.util.concurrent.SettableFuture
 import scray.hdfs.io.write.WriteResult
 import scray.hdfs.io.write.WriteResult
 import scray.hdfs.io.write.ScrayListenableFuture
+import scray.hdfs.io.write.ScrayListenableFuture
+import scray.hdfs.io.write.ScrayListenableFuture
+import scray.hdfs.io.coordination.CoordinatedWriter
+import org.apache.hadoop.io.Writable
 
 class WriteServiceImpl extends WriteService {
 
   val logger = LoggerFactory.getLogger(classOf[WriteServiceImpl])
-  private val writersMetadata = new HashMap[UUID, WriteDestination];
-  private val writeCoordinator = new ReadWriteCoordinatorImpl
+  private val writersMetadata = new HashMap[UUID, CoordinatedWriter[Writable, Writable, Writable, Writable]];
 
   def createWriter(path: String): UUID = synchronized {
     logger.debug(s"Create writer for path ${path}")
     val id = UUID.randomUUID()
 
     val metadata = WriteDestination("000", path, IHdfsWriterConstats.FileFormat.SequenceFile, Version(0), 512 * 1024 * 1024L, 5)
-    writeCoordinator.getWriter(metadata)
 
-    writersMetadata.put(id, metadata)
+    writersMetadata.put(id,  new CoordinatedWriter(8192, metadata, new OutputBlob))
 
     id
   }
@@ -43,9 +60,8 @@ class WriteServiceImpl extends WriteService {
     val id = UUID.randomUUID()
 
     val metadata = WriteDestination("000", path, format, Version(0), 512 * 1024 * 1024L, 5)
-    writeCoordinator.getWriter(metadata)
 
-    writersMetadata.put(id, metadata)
+    writersMetadata.put(id,  new CoordinatedWriter(8192, metadata, new OutputBlob)) // Fix make OutputType configurarble
 
     id
   }
@@ -54,8 +70,7 @@ class WriteServiceImpl extends WriteService {
     logger.debug(s"Insert data for resource ${resource}")
 
     try {
-      writeCoordinator.getWriter(writersMetadata.get(resource))
-        .insert(id, updateTime, data)
+      writersMetadata.get(resource).insert(id, updateTime, data)
 
       new ScrayListenableFuture(new WriteResult)
     } catch {
@@ -69,8 +84,7 @@ class WriteServiceImpl extends WriteService {
     logger.debug(s"Insert data for resource ${resource}")
 
     try {
-      writeCoordinator.getWriter(writersMetadata.get(resource))
-        .insert(id, updateTime, data)
+      writersMetadata.get(resource).insert(id, updateTime, data)
 
     new ScrayListenableFuture(new WriteResult)
     } catch {
@@ -84,8 +98,7 @@ class WriteServiceImpl extends WriteService {
     logger.debug(s"Insert data for resource ${resource}")
 
     try {
-      writeCoordinator.getWriter(writersMetadata.get(resource))
-        .insert(id, updateTime, data)
+      writersMetadata.get(resource).insert(id, updateTime, data)
 
         new ScrayListenableFuture(new WriteResult)
     } catch {
@@ -115,8 +128,7 @@ class WriteServiceImpl extends WriteService {
 
   def close(resource: UUID) = synchronized {
     try {
-      writeCoordinator.getWriter(writersMetadata.get(resource))
-        .close
+      writersMetadata.get(resource).close
 
       val result = SettableFuture.create[WriteResult]()
       result.set(new WriteResult)
@@ -129,19 +141,29 @@ class WriteServiceImpl extends WriteService {
       }
     }
   }
+  
+  def closeAll = synchronized {
+    val keysOfWriter = writersMetadata.keySet().iterator()
+    
+    while(keysOfWriter.hasNext()) {
+      val writer = writersMetadata.get(keysOfWriter.next())
 
-  def isClosed(resource: UUID) = {
+      try {
+        writer.close
+      } catch {
+        case e: Exception => logger.error(s"Error while closing writer ${writer}")
+      }
+      
+    }
+  }
+
+  def isClosed(resource: UUID): ScrayListenableFuture = {
     try {
-      writeCoordinator.getWriter(writersMetadata.get(resource))
-        .isClosed
-      val result = SettableFuture.create[WriteResult]()
-      result.set(new WriteResult)
-      result
+      val isClosed = writersMetadata.get(resource).isClosed
+        new ScrayListenableFuture(new WriteResult(isClosed))
     } catch {
       case e: Exception => {
-        val result = SettableFuture.create[WriteResult]()
-        result.setException(e)
-        result
+        new ScrayListenableFuture(e)
       }
     }
   }

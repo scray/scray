@@ -13,6 +13,7 @@ import scray.hdfs.index.HDFSBlobResolver
 import scray.hdfs.io.index.format.sequence.IdxReader
 import org.apache.hadoop.io.Text
 import com.typesafe.scalalogging.LazyLogging
+import scray.hdfs.io.index.format.sequence.mapping.impl.OutputBlob
 
 /**
  * reads an index file from HDFS
@@ -43,7 +44,7 @@ object IndexFileReader extends LazyLogging {
   def updateCache(fs: FileSystem, indexfile: String, ti: TableIdentifier) = {
     
     logger.debug(s"Load idx from file ${indexfile}")
-    val reader = new IdxReader(indexfile)
+    val reader = new IdxReader(indexfile, new OutputBlob)
     // create blobfile from indexfile
     val blobfile = indexfile.stripSuffix(INDEX.toString()) + BLOB.toString()
     // need to read the index to find this key

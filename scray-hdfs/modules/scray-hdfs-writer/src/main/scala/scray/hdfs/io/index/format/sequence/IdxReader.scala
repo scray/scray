@@ -22,25 +22,27 @@ import org.apache.hadoop.io.SequenceFile.Reader
 import scray.hdfs.io.index.format.sequence.types.IndexValue
 import org.apache.hadoop.io.Text
 import com.typesafe.scalalogging.LazyLogging
+import scray.hdfs.io.index.format.sequence.mapping.SequenceKeyValuePair
+import org.apache.hadoop.io.Writable
 
-class IdxReader(path: String, hdfsConf: Configuration, fs: Option[FileSystem]) extends LazyLogging {
+class IdxReader[IDXKEY <: Writable, IDXVALUE <: Writable, DATAKEY <: Writable, DATAVALUE <: Writable](path: String, hdfsConf: Configuration, fs: Option[FileSystem], outMapping: SequenceKeyValuePair[IDXKEY, IDXVALUE, DATAKEY, DATAVALUE]) extends LazyLogging {
 
-      if(getClass.getClassLoader == null) {
-      hdfsConf.setClassLoader(getClass.getClassLoader)
-    }
+  if(getClass.getClassLoader == null) {
+    hdfsConf.setClassLoader(getClass.getClassLoader)
+  }
   
   logger.debug(s"Try to read from path ${path}")
   val reader: SequenceFile.Reader = new SequenceFile.Reader(hdfsConf, Reader.file(new Path(path)), Reader.bufferSize(4096));
 
-  val key = new Text();
-  val idxEntry = new IndexValue("k1", 42, 42)
+  val key = outMapping.getIdxKey("")
+  val idxEntry = outMapping.getIdxValue("k1", 42, 42)
 
   // Store state to
   private var hasNextWasCalled = false
   private var hasNextValue = false
   
-  def this(path: String) = {
-    this(path, new Configuration, None)
+  def this(path: String, outMapping: SequenceKeyValuePair[IDXKEY, IDXVALUE, DATAKEY, DATAVALUE]) = {
+    this(path, new Configuration, None, outMapping)
   }
 
   /**
@@ -60,7 +62,7 @@ class IdxReader(path: String, hdfsConf: Configuration, fs: Option[FileSystem]) e
    * Return next IndexValue element.
    * If no elment exists return None
    */
-  def next(): Option[IndexValue] = {
+  def next(): Option[IDXVALUE] = {
     // return read data or request new data 
     if (hasNextWasCalled) {
       if (hasNextValue) {

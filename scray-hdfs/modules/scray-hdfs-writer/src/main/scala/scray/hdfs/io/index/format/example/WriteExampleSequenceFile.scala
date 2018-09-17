@@ -16,6 +16,7 @@
 package scray.hdfs.io.index.format.example
 
 import scray.hdfs.io.index.format.sequence.BinarySequenceFileWriter
+import scray.hdfs.io.index.format.sequence.mapping.impl.OutputTextBytesWritable
 
 object WriteExampleSequenceFile {
 
@@ -25,7 +26,7 @@ object WriteExampleSequenceFile {
       println("No HDFS URL defined. E.g. hdfs://127.0.0.1/user/scray/scray-hdfs-data/")
     } else {
 
-      val writer = new BinarySequenceFileWriter(s"hdfs://host1.scray.org/user/hive/warehouse/bisedi/ff2")
+      val writer = new BinarySequenceFileWriter(s"hdfs://host1.scray.org/user/hive/warehouse/bisedi/ff2", new OutputTextBytesWritable)
 
       val insertStart = System.currentTimeMillis();
       
