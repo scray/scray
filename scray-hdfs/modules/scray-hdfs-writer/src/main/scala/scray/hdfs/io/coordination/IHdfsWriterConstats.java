@@ -17,9 +17,7 @@ package scray.hdfs.io.coordination;
 
 public class IHdfsWriterConstats {
 	public static enum FileFormat {
-		Avro,
 		SequenceFile,
-		ORC,
 		RAW
 	}
 	
