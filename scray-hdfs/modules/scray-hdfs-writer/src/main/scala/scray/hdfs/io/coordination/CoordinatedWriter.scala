@@ -15,14 +15,27 @@
 
 package scray.hdfs.io.coordination
 
-import scray.hdfs.io.index.format.sequence.BinarySequenceFileWriter
-import java.util.UUID
-import com.typesafe.scalalogging.LazyLogging
-import scray.hdfs.io.index.format.Writer
 import java.io.InputStream
 import java.math.BigInteger
+import java.util.UUID
 
-class CoordinatedWriter(private var writer: Writer, maxFileSize: Long, writeCoordinator: WriteCoordinator, metadata: WriteDestination) extends LazyLogging with Writer {
+import com.typesafe.scalalogging.LazyLogging
+
+import scray.hdfs.io.index.format.Writer
+import scray.hdfs.io.index.format.sequence.mapping.SequenceKeyValuePair
+import scray.hdfs.io.index.format.sequence.BinarySequenceFileWriter
+import org.apache.hadoop.io.Writable
+import scray.hdfs.io.index.format.sequence.types.BlobKey
+import scray.hdfs.io.index.format.sequence.types.IndexValue
+import scray.hdfs.io.index.format.sequence.types.Blob
+import org.apache.hadoop.io.Text
+
+class CoordinatedWriter[+IDXKEY <: Writable, +IDXVALUE <: Writable, +DATAKEY <: Writable, +DATAVALUE <: Writable](
+    maxFileSize: Long = 8192, 
+    metadata: WriteDestination, 
+    outTypeMapping: SequenceKeyValuePair[IDXKEY, IDXVALUE, DATAKEY, DATAVALUE]) extends LazyLogging with Writer {
+  
+  private var writer: Writer = createNewBasicWriter(metadata)
   private var numInserts = 0
 
   def insert(id: String, updateTime: Long, data: Array[Byte]) = synchronized {
@@ -45,7 +58,8 @@ class CoordinatedWriter(private var writer: Writer, maxFileSize: Long, writeCoor
 
   private def createNewBasicWriter(metadata: WriteDestination): Writer = {
     val filePath = this.getPath(metadata.path, metadata.queryspace, metadata.version.number)
-    new BinarySequenceFileWriter(filePath)
+    new BinarySequenceFileWriter(filePath, outTypeMapping)
+   
   }
 
   private def getPath(basePath: String, queryspace: String, version: Int): String = {
@@ -99,6 +113,25 @@ class CoordinatedWriter(private var writer: Writer, maxFileSize: Long, writeCoor
       this.insert(id, updateTime, data)
     }
   }
+  
+  override def insert(id: String, data: String): Long = {
+        // Check if file size limit is reached
+    if (!maxFileSizeReached(writer.getBytesWritten + data.getBytes.length, maxFileSize)
+      &&
+      !maxNumInsertsReached(numInserts, metadata.maxNumberOfInserts)) {
+      numInserts = numInserts + 1
+      writer.insert(id, data)
+    } else {
+      logger.debug(s"Close file ${writer.getPath}")
+      writer.close
+      
+      logger.debug(s"Create new file ${writer.getPath}")
+      writer = createNewBasicWriter(metadata)
+      numInserts = 0
+      this.insert(id, data)
+    }
+  }
+
 
   def insert(id: String, updateTime: Long, data: InputStream, blobSplitSize: Int): Long = {
     // Check if file size limit is reached

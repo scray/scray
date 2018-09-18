@@ -24,6 +24,7 @@ trait Writer {
   var varIsClosed = false
   
   def insert(id: String, updateTime: Long, data: Array[Byte]): Long
+  def insert(id: String, data: String): Long
   def insert(id: String, updateTime: Long, data: InputStream, blobSplitSize: Int = 5 * 1024 * 1024): Long
   def insert(id: String, updateTime: Long, data: InputStream, dataSize: BigInteger, blobSplitSize: Int): Long
   def getPath: String
