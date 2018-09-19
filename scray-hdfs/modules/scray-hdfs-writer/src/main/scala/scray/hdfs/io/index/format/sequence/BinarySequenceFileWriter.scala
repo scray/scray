@@ -46,6 +46,7 @@ class BinarySequenceFileWriter[IDXKEY <: Writable, IDXVALUE <: Writable, DATAKEY
 
   var numberOfInserts: Int = 0
 
+  System.setProperty("HADOOP_USER_NAME", "hdfs");
   def this(path: String, outTypeMapping: SequenceKeyValuePair[IDXKEY, IDXVALUE, DATAKEY, DATAVALUE]) = {
     this(path, new Configuration, None, outTypeMapping)
   }
