@@ -22,7 +22,7 @@
   
   Write data to HDFS:
 
-    val writer = new TextSequenceFileWriter("hdfs://hdfs.scray.org/user/hive/warehouse/scray/json")
+    val writer = new SequenceFileWriter("hdfs://hdfs1.scray.org/user/hive/warehouse/scray/json", new OutputTextText)
       
     writer.insert("id1", """{"msg_id": 1, "msg": "msg1"}""")
     writer.insert("id2", """{"msg_id": 2, "msg": "msg2"}""")
