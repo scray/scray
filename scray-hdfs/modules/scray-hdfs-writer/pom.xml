@@ -149,7 +149,7 @@
 				<extensions>true</extensions>
 				<configuration>
 					<instructions>
-						<Embed-Dependency>*;scope=compile;artifactId=!servlet-api|jsp-api|jsr305|jets3t|hadoop-annotations|jsch|netty|xmlenc</Embed-Dependency>
+						<Embed-Dependency>*;scope=compile;artifactId=!servlet-api|jsp-api|jsr305|jets3t|hadoop-annotations|jsch|netty|xmlenc|logback-classic</Embed-Dependency>
 						<Embed-Transitive>true</Embed-Transitive>
 						<Export-Package>
 							scray.hdfs.io.write
@@ -169,7 +169,9 @@
 							javax.security.auth.kerberos,
 							javax.security.auth.callback,
 							javax.net,
-							javax.naming
+							javax.naming,
+							org.slf4j.Logger,
+							org.slf4j.LoggerFactory
 						</Import-Package>
 						<_exportcontents>
 						</_exportcontents>
