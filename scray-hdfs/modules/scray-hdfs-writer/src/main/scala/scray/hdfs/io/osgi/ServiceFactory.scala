@@ -15,7 +15,7 @@
 
 package scray.hdfs.io.osgi
 
-import scray.hdfs.io.index.format.sequence.BinarySequenceFileWriter
+import scray.hdfs.io.index.format.sequence.SequenceFileWriter
 import org.osgi.framework.ServiceRegistration
 import org.osgi.framework.Bundle
 import scray.hdfs.io.coordination.IHdfsWriterConstats

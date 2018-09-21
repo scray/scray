@@ -1,6 +1,6 @@
 package scray.hdfs.io.index.format.example
 
-import scray.hdfs.io.index.format.sequence.BinarySequenceFileWriter
+import scray.hdfs.io.index.format.sequence.SequenceFileWriter
 import scray.hdfs.io.index.format.sequence.IdxReader
 import scray.hdfs.io.index.format.sequence.BlobFileReader
 import scray.hdfs.io.index.format.sequence.mapping.impl.OutputBlob

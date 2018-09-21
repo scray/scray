@@ -23,7 +23,7 @@ import com.typesafe.scalalogging.LazyLogging
 
 import scray.hdfs.io.index.format.Writer
 import scray.hdfs.io.index.format.sequence.mapping.SequenceKeyValuePair
-import scray.hdfs.io.index.format.sequence.BinarySequenceFileWriter
+import scray.hdfs.io.index.format.sequence.SequenceFileWriter
 import org.apache.hadoop.io.Writable
 import scray.hdfs.io.index.format.sequence.types.BlobKey
 import scray.hdfs.io.index.format.sequence.types.IndexValue
@@ -58,7 +58,7 @@ class CoordinatedWriter[+IDXKEY <: Writable, +IDXVALUE <: Writable, +DATAKEY <: 
 
   private def createNewBasicWriter(metadata: WriteDestination): Writer = {
     val filePath = this.getPath(metadata.path, metadata.queryspace, metadata.version.number)
-    new BinarySequenceFileWriter(filePath, outTypeMapping)
+    new SequenceFileWriter(filePath, outTypeMapping)
    
   }
 

@@ -17,7 +17,7 @@ package scray.hdfs.io.osgi
 
 import org.osgi.framework.BundleActivator
 import org.osgi.framework.BundleContext
-import scray.hdfs.io.index.format.sequence.BinarySequenceFileWriter
+import scray.hdfs.io.index.format.sequence.SequenceFileWriter
 import java.util.Hashtable
 import org.apache.hadoop.io.BytesWritable
 import org.apache.hadoop.io.Text

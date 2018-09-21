@@ -16,13 +16,13 @@
 package scray.hdfs.io.index.format.example
 
 import scray.hdfs.io.index.format.sequence.mapping.impl.OutputTextText
-import scray.hdfs.io.index.format.sequence.BinarySequenceFileWriter
+import scray.hdfs.io.index.format.sequence.SequenceFileWriter
 
 object TextToTextSequenceFiles {
 
   def main(args: Array[String]) {
 
-    val writer = new BinarySequenceFileWriter("target/textOutput123", new OutputTextText)
+    val writer = new SequenceFileWriter("target/TextToTextSequenceFile", new OutputTextText)
 
     writer.insert("id1", """{"msg_id": 1, "msg": "msg1"}""")
     writer.insert("id2", """{"msg_id": 2, "msg": "msg2"}""")
