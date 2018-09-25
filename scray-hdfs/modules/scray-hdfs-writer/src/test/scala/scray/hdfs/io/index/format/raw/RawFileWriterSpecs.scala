@@ -25,9 +25,14 @@ import org.junit.Assert
 import scala.io.Source
 import scray.hdfs.io.index.format.raw.RawFileReader;
 import scray.hdfs.io.index.format.raw.RawFileWriter;
+import java.nio.file.Paths
 
 class RawFileWriterSpecs extends WordSpec with LazyLogging {
-
+  
+  val pathToWinutils = classOf[RawFileWriterSpecs].getClassLoader.getResource("HADOOP_HOME/bin/winutils.exe");
+  val hadoopHome = Paths.get(pathToWinutils.toURI()).toFile().toString().replace("\\bin\\winutils.exe", "")
+  System.setProperty("hadoop.home.dir", hadoopHome)
+      
   "RawFileWriter " should {
     " read and write with java.io stream " in {
       

@@ -33,9 +33,14 @@ import scala.collection.mutable.ArrayBuffer
 import scray.hdfs.io.index.format.sequence.mapping.impl.OutputTextBytesWritable
 import scray.hdfs.io.index.format.sequence.mapping.impl.OutputBlob
 import scray.hdfs.io.index.format.sequence.mapping.impl.OutputBlob
+import java.nio.file.Paths
 
 class SequenceFileWriterSpecs extends WordSpec with LazyLogging {
-
+  
+  val pathToWinutils = classOf[SequenceFileWriterSpecs].getClassLoader.getResource("HADOOP_HOME/bin/winutils.exe");
+  val hadoopHome = Paths.get(pathToWinutils.toURI()).toFile().toString().replace("\\bin\\winutils.exe", "")
+  System.setProperty("hadoop.home.dir", hadoopHome)
+  
   object RequiresHDFS extends Tag("scray.hdfs.tags.RequiresHDFS")
 
   def getKey(v: Integer) = "id_" + v

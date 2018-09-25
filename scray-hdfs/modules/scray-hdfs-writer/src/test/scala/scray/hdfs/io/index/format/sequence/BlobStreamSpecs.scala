@@ -27,9 +27,18 @@ import scray.hdfs.io.index.format.sequence.types.BlobInputStream
 import org.junit.Assert
 import scala.io.Source
 import com.google.common.io.ByteStreams
+import java.nio.file.Paths
+import scala.Int
+
+
+
 
 class BlobStreamSpecs extends WordSpec with LazyLogging {
-
+  
+  val pathToWinutils = classOf[BlobStreamSpecs].getClassLoader.getResource("HADOOP_HOME/bin/winutils.exe");
+  val hadoopHome = Paths.get(pathToWinutils.toURI()).toFile().toString().replace("\\bin\\winutils.exe", "")
+  System.setProperty("hadoop.home.dir", hadoopHome)
+  
   "BlobStream " should {
     " read data byte by byte " in {
       val testData = "abcdefghijklmnopqrstuvwxyz".getBytes

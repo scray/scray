@@ -43,7 +43,7 @@ class WriteServiceImpl extends WriteService {
 
   val logger = LoggerFactory.getLogger(classOf[WriteServiceImpl])
   private val writersMetadata = new HashMap[UUID, CoordinatedWriter[Writable, Writable, Writable, Writable]];
-
+  
   def createWriter(path: String): UUID = synchronized {
     logger.debug(s"Create writer for path ${path}")
     val id = UUID.randomUUID()
