@@ -23,6 +23,7 @@ import com.google.common.io.ByteStreams
 import java.io.InputStream
 import com.typesafe.scalalogging.LazyLogging
 import java.io.OutputStream
+import java.io.File
 
 class RawFileWriter(hdfsURL: String, hdfsConf: Configuration) extends LazyLogging {
 
@@ -36,13 +37,34 @@ class RawFileWriter(hdfsURL: String, hdfsConf: Configuration) extends LazyLoggin
     this(hdfsUrl, new Configuration)
   }
 
-  def initWriter() = {
+  def initWriter(path: String): Unit = {
     hdfsConf.set("fs.hdfs.impl", classOf[org.apache.hadoop.hdfs.DistributedFileSystem].getName);
     hdfsConf.set("fs.file.impl", classOf[org.apache.hadoop.fs.LocalFileSystem].getName);
     hdfsConf.set("dfs.client.use.datanode.hostname", "true");
     hdfsConf.set("fs.defaultFS", hdfsURL)
 
-    dataWriter = FileSystem.get(hdfsConf);
+    
+    try {
+      dataWriter = FileSystem.get(hdfsConf);
+    } catch {
+      case e: java.io.IOException => {
+        if(e.getMessage.contains("winutils binary in the hadoop binary path")) {
+          if(!path.toString().toLowerCase().trim().startsWith("hdfs://")) {
+            logger.error("No winutils.exe found. For details see https://wiki.apache.org/hadoop/WindowsProblems")
+            throw e
+          } else {
+            logger.debug("No WINUTILS.EXE found. But is not required for hdfs:// connections")
+            // Create dummy file if real WINUTILS.EXE is not required.
+             val dummyFile = new File(".");
+             System.getProperties().put("hadoop.home.dir", dummyFile.getAbsolutePath());
+             new File("./bin").mkdirs();
+             new File("./bin/winutils.exe").createNewFile();
+             
+             this.initWriter(path)
+          }
+        }
+      }
+    }
   }
   
   def write(fileName: String, data: InputStream) = synchronized {
@@ -51,7 +73,7 @@ class RawFileWriter(hdfsURL: String, hdfsConf: Configuration) extends LazyLoggin
     if(dataWriter == null ) {
       logger.debug("Writer was not initialized. Will do it now")
       
-      initWriter()
+      initWriter(fileName)
     }
     
     dataWriter.create(new Path(fileName))
@@ -68,7 +90,7 @@ class RawFileWriter(hdfsURL: String, hdfsConf: Configuration) extends LazyLoggin
     if(dataWriter == null ) {
       logger.debug("Writer was not initialized. Will do it now")
       
-      initWriter()
+      initWriter(fileName)
     }
         
     dataWriter.create(new Path(fileName))

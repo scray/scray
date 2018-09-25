@@ -16,11 +16,11 @@
 package scray.hdfs.io.index.format.sequence
 
 import java.io.InputStream
+import java.math.BigInteger
 
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.FileSystem
 import org.apache.hadoop.fs.Path
-import org.apache.hadoop.io.BytesWritable
 import org.apache.hadoop.io.IOUtils
 import org.apache.hadoop.io.SequenceFile
 import org.apache.hadoop.io.SequenceFile.Metadata
@@ -31,9 +31,8 @@ import org.apache.hadoop.io.Writable
 import com.typesafe.scalalogging.LazyLogging
 
 import scray.hdfs.io.index.format.Writer
-import java.math.BigInteger
-import org.apache.commons.lang.ArrayUtils
 import scray.hdfs.io.index.format.sequence.mapping.SequenceKeyValuePair
+import java.io.File
 
 class SequenceFileWriter[IDXKEY <: Writable, IDXVALUE <: Writable, DATAKEY <: Writable, DATAVALUE <: Writable](path: String, hdfsConf: Configuration, fs: Option[FileSystem], outTypeMapping: SequenceKeyValuePair[IDXKEY, IDXVALUE, DATAKEY, DATAVALUE]) extends scray.hdfs.io.index.format.Writer with LazyLogging {
 
@@ -59,13 +58,15 @@ class SequenceFileWriter[IDXKEY <: Writable, IDXVALUE <: Writable, DATAKEY <: Wr
     key:           Writable,
     value:         Writable,
     fs:            FileSystem,
-    fileExtension: String) = {
+    fileExtension: String): SequenceFile.Writer = {
 
     hdfsConf.set("fs.hdfs.impl", "org.apache.hadoop.hdfs.DistributedFileSystem");
     hdfsConf.set("fs.file.impl", "org.apache.hadoop.fs.LocalFileSystem");
     hdfsConf.set("dfs.client.use.datanode.hostname", "true");
-
-    val writer = SequenceFile.createWriter(hdfsConf, Writer.file(new Path(path + fileExtension)),
+    
+    var writer: SequenceFile.Writer = null;
+    try {
+    writer = SequenceFile.createWriter(hdfsConf, Writer.file(new Path(path + fileExtension)),
       Writer.keyClass(key.getClass()),
       Writer.valueClass(value.getClass()),
       Writer.bufferSize(fs.getConf().getInt("io.file.buffer.size", 4096)),
@@ -74,6 +75,25 @@ class SequenceFileWriter[IDXKEY <: Writable, IDXVALUE <: Writable, DATAKEY <: Wr
       Writer.compression(SequenceFile.CompressionType.NONE),
       Writer.progressable(null),
       Writer.metadata(new Metadata()));
+    } catch {
+      case e: java.io.IOException => {
+        if(e.getMessage.contains("winutils binary in the hadoop binary path")) {
+          if(!path.toString().toLowerCase().trim().startsWith("hdfs://")) {
+            logger.error("No winutils.exe found. For details see https://wiki.apache.org/hadoop/WindowsProblems")
+            throw e
+          } else {
+            logger.debug("No WINUTILS.EXE found. But is not required for hdfs:// connections")
+            // Create dummy file if real WINUTILS.EXE is not required.
+             val dummyFile = new File(".");
+             System.getProperties().put("hadoop.home.dir", dummyFile.getAbsolutePath());
+             new File("./bin").mkdirs();
+             new File("./bin/winutils.exe").createNewFile();
+             
+             this.initWriter(key, value, fs, fileExtension)
+          }
+        }
+      }
+    }
 
     writer
   }
