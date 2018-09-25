@@ -170,8 +170,7 @@
 							javax.security.auth.callback,
 							javax.net,
 							javax.naming,
-							org.slf4j.Logger,
-							org.slf4j.LoggerFactory
+							org.slf4j
 						</Import-Package>
 						<_exportcontents>
 						</_exportcontents>
