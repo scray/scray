@@ -38,12 +38,13 @@ import scray.hdfs.io.write.ScrayListenableFuture
 import scray.hdfs.io.write.ScrayListenableFuture
 import scray.hdfs.io.coordination.CoordinatedWriter
 import org.apache.hadoop.io.Writable
+import java.io.PrintWriter
 
 class WriteServiceImpl extends WriteService {
 
   val logger = LoggerFactory.getLogger(classOf[WriteServiceImpl])
   private val writersMetadata = new HashMap[UUID, CoordinatedWriter[Writable, Writable, Writable, Writable]];
-  
+    
   def createWriter(path: String): UUID = synchronized {
     logger.debug(s"Create writer for path ${path}")
     val id = UUID.randomUUID()
