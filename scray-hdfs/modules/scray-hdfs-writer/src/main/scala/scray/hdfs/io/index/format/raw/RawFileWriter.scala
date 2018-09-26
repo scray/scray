@@ -54,11 +54,14 @@ class RawFileWriter(hdfsURL: String, hdfsConf: Configuration) extends LazyLoggin
             throw e
           } else {
             logger.debug("No WINUTILS.EXE found. But is not required for hdfs:// connections")
-            // Create dummy file if real WINUTILS.EXE is not required.
-             val dummyFile = new File(".");
-             System.getProperties().put("hadoop.home.dir", dummyFile.getAbsolutePath());
-             new File("./bin").mkdirs();
-             new File("./bin/winutils.exe").createNewFile();
+            
+            val bisTmpFiles = System.getProperty("BISAS_TEMP")
+            
+            if(bisTmpFiles == null) {
+              this.createWinutilsDummy(".")
+            } else {
+              this.createWinutilsDummy(bisTmpFiles)
+            }
              
              this.initWriter(path)
           }
@@ -67,6 +70,14 @@ class RawFileWriter(hdfsURL: String, hdfsConf: Configuration) extends LazyLoggin
         }
       }
     }
+  }
+  
+  private def createWinutilsDummy(basepath: String) {
+     // Create dummy file if real WINUTILS.EXE is not required.
+     val dummyFile = new File(basepath + System.getProperty("file.separator") + "HADOOP_HOME");
+     System.getProperties().put("hadoop.home.dir", dummyFile.getAbsolutePath());
+     new File("./bin").mkdirs();
+     new File("./bin/winutils.exe").createNewFile();
   }
   
   def write(fileName: String, data: InputStream) = synchronized {
