@@ -89,7 +89,7 @@ class WriteServiceImplSpecs extends WordSpec with LazyLogging {
         }
  
         override def onFailure(t: Throwable) {
-           Assert.assertTrue(true)
+           Assert.assertTrue(t.isInstanceOf[IOException])
         }
       });
     }

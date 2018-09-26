@@ -62,6 +62,8 @@ class RawFileWriter(hdfsURL: String, hdfsConf: Configuration) extends LazyLoggin
              
              this.initWriter(path)
           }
+        } else {
+          throw e
         }
       }
     }

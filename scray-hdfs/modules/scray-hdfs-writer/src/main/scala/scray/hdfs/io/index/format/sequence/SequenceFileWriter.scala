@@ -91,6 +91,8 @@ class SequenceFileWriter[IDXKEY <: Writable, IDXVALUE <: Writable, DATAKEY <: Wr
              
              this.initWriter(key, value, fs, fileExtension)
           }
+        } else {
+          throw e
         }
       }
     }
