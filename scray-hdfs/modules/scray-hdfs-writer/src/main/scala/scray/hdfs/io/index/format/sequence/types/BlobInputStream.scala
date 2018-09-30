@@ -18,13 +18,14 @@ package scray.hdfs.io.index.format.sequence.types
 import java.io.InputStream
 import java.io.IOException
 import org.apache.hadoop.io.SequenceFile
-import scray.hdfs.io.index.format.sequence.BlobFileReader
+import scray.hdfs.io.index.format.sequence.ValueFileReader
 import java.util.Arrays
 import com.typesafe.scalalogging.LazyLogging
+import org.apache.hadoop.io.Writable
 
 case class SplittetSequenceFilePossition(splittOffset: Int, possitionInFile: Long)
 
-class BlobInputStream(reader: BlobFileReader, index: IndexValue) extends InputStream with LazyLogging {
+class BlobInputStream[DATAKEY <: Writable, DATAVALUE <: Writable](reader: ValueFileReader[DATAKEY, DATAVALUE], index: IndexValue) extends InputStream with LazyLogging {
   var readPossitionInBuffer: Option[Int] = None
   var dataBuffer: Array[Byte] = null
   var possitionInFile = SplittetSequenceFilePossition(0, index.getPosition)

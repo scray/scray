@@ -6,12 +6,13 @@ import org.scalatest.WordSpec
 
 import com.typesafe.scalalogging.LazyLogging
 import scray.hdfs.io.index.format.sequence.IdxReader
-import scray.hdfs.io.index.format.sequence.BlobFileReader
+import scray.hdfs.io.index.format.sequence.ValueFileReader
 import scray.hdfs.io.index.format.sequence.mapping.impl.OutputBlob
 import java.util.HashMap
 import junit.framework.Assert
 import java.io.ByteArrayInputStream
 import java.nio.file.Paths
+import scray.hdfs.io.coordination.WriteDestination
 
 class WriteCoordinatorSpecs extends WordSpec with LazyLogging {
 
@@ -41,10 +42,10 @@ class WriteCoordinatorSpecs extends WordSpec with LazyLogging {
           
               if(fileName.startsWith("/")) {
                 (new IdxReader("file://" + fileName + ".idx", new OutputBlob),
-                new BlobFileReader("file://" + fileName + ".blob"))
+                new ValueFileReader("file://" + fileName + ".blob", new OutputBlob))
               } else {
                 (new IdxReader("file:///" + fileName + ".idx", new OutputBlob),
-                new BlobFileReader("file:///" + fileName + ".blob"))
+                new ValueFileReader("file:///" + fileName + ".blob", new OutputBlob))
               }
         })
         .map {

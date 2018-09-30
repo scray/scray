@@ -31,7 +31,7 @@ import java.io.FileOutputStream
 import scray.hdfs.io.index.format.sequence.types.Blob
 import scray.hdfs.io.index.format.sequence.SequenceFileWriter
 import scray.hdfs.io.index.format.sequence.IdxReader
-import scray.hdfs.io.index.format.sequence.BlobFileReader
+import scray.hdfs.io.index.format.sequence.ValueFileReader
 import scala.collection.mutable.HashMap
 import scray.hdfs.io.index.format.sequence.mapping.impl.OutputTextBytesWritable
 

@@ -15,34 +15,40 @@
 
 package scray.hdfs.io.index.format.sequence
 
-import org.apache.hadoop.io.Text
+import java.io.ByteArrayInputStream
+import java.io.InputStream
+
+
+
+import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.fs.FileSystem
+import org.apache.hadoop.fs.Path
 import org.apache.hadoop.io.SequenceFile
 import org.apache.hadoop.io.SequenceFile.Reader
-import org.apache.hadoop.fs.FileSystem
-import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.Path
-import scala.annotation.tailrec
-import org.apache.hadoop.io.BytesWritable
-import scray.hdfs.io.index.format.sequence.types.Blob
-import java.io.InputStream
-import scray.hdfs.io.index.format.sequence.types.BlobKey
-import java.io.ByteArrayInputStream
+import org.apache.hadoop.io.Text
 
-class BlobFileReader(reader: SequenceFile.Reader) {
+import scray.hdfs.io.index.format.sequence.types.Blob
+import scray.hdfs.io.index.format.sequence.types.BlobKey
+import scray.hdfs.io.index.format.sequence.mapping.SequneceValue
+import org.apache.hadoop.io.Writable
+import scray.hdfs.io.index.format.sequence.mapping.impl.OutputBlob
+
+class ValueFileReader[DATAKEY <: Writable, DATAVALUE <: Writable](reader: SequenceFile.Reader, outMapping: SequneceValue[DATAKEY, DATAVALUE]) {
 
   private val key = new Text();
   val idxEntry = new Blob
 
-  def this(path: String, hdfsConf: Configuration = new Configuration, fs: Option[FileSystem] = None) = {
-    this( new SequenceFile.Reader(hdfsConf, Reader.file(new Path(path)), Reader.bufferSize(4096)))
+  def this(path: String, hdfsConf: Configuration = new Configuration, fs: Option[FileSystem] = None, outMapping: SequneceValue[DATAKEY, DATAVALUE]) = {
+    this( new SequenceFile.Reader(hdfsConf, Reader.file(new Path(path)), Reader.bufferSize(4096)), outMapping)
+    
     if(getClass.getClassLoader != null) {
       hdfsConf.setClassLoader(getClass.getClassLoader)
     }
 
   }
   
-  def this(path: String) = {
-    this(path, new Configuration, None)
+  def this(path: String, outMapping: SequneceValue[DATAKEY, DATAVALUE]) = {
+    this(path, new Configuration, None, outMapping: SequneceValue[DATAKEY, DATAVALUE])
   }
 
   def select(key: String): Array[Byte] = {

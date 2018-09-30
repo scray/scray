@@ -268,7 +268,7 @@ class SequenceFileWriter[IDXKEY <: Writable, IDXVALUE <: Writable, DATAKEY <: Wr
     idxWriter.append(outTypeMapping.getIdxKey(id), outTypeMapping.getIdxValue(id, updateTime, dataWriter.getLength))
 
     // Write data
-    dataWriter.append(outTypeMapping.getDataKey(id), outTypeMapping.getDataValue(data.getBytes, data.length()))
+    dataWriter.append(outTypeMapping.getDataKey(id), outTypeMapping.getDataValue(data))
 
     numberOfInserts = numberOfInserts + 1
   }

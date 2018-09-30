@@ -18,7 +18,7 @@ package scray.hdfs.io.index.format.sequence.mapping
 import org.apache.hadoop.io.Writable
 
 trait SequneceValue[DATAKEY <: Writable, DATAVALUE <: Writable] { 
-  def getDataKey(id: String, blobCount: Int = 0): DATAKEY
+  def getDataKey(id: String = "", blobCount: Int = 0): DATAKEY
   def getDataValue(data: Array[Byte]): DATAVALUE
   def getDataValue(data: Array[Byte], length: Int): DATAVALUE
   def getDataValue(data: String): DATAVALUE

@@ -24,8 +24,9 @@ import org.apache.hadoop.io.Text
 import com.typesafe.scalalogging.LazyLogging
 import scray.hdfs.io.index.format.sequence.mapping.SequenceKeyValuePair
 import org.apache.hadoop.io.Writable
+import scray.hdfs.io.index.format.sequence.mapping.SequenceKey
 
-class IdxReader[IDXKEY <: Writable, IDXVALUE <: Writable, DATAKEY <: Writable, DATAVALUE <: Writable](path: String, hdfsConf: Configuration, fs: Option[FileSystem], outMapping: SequenceKeyValuePair[IDXKEY, IDXVALUE, DATAKEY, DATAVALUE]) extends LazyLogging {
+class IdxReader[IDXKEY <: Writable, IDXVALUE <: Writable](path: String, hdfsConf: Configuration, fs: Option[FileSystem], outMapping: SequenceKey[IDXKEY, IDXVALUE]) extends LazyLogging {
 
   if(getClass.getClassLoader == null) {
     hdfsConf.setClassLoader(getClass.getClassLoader)
@@ -41,7 +42,7 @@ class IdxReader[IDXKEY <: Writable, IDXVALUE <: Writable, DATAKEY <: Writable, D
   private var hasNextWasCalled = false
   private var hasNextValue = false
   
-  def this(path: String, outMapping: SequenceKeyValuePair[IDXKEY, IDXVALUE, DATAKEY, DATAVALUE]) = {
+  def this(path: String, outMapping: SequenceKey[IDXKEY, IDXVALUE]) = {
     this(path, new Configuration, None, outMapping)
   }
 
@@ -60,7 +61,7 @@ class IdxReader[IDXKEY <: Writable, IDXVALUE <: Writable, DATAKEY <: Writable, D
 
   /**
    * Return next IndexValue element.
-   * If no elment exists return None
+   * If no element exists return None
    */
   def next(): Option[IDXVALUE] = {
     // return read data or request new data 
