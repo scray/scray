@@ -17,8 +17,9 @@ package scray.hdfs.io.index.format.sequence.mapping
 
 import org.apache.hadoop.io.Writable
 
-/**
- * Combine key-value pairs
- */
-trait SequenceKeyValuePair[IDXKEY <: Writable, IDXVALUE <: Writable, DATAKEY <: Writable, DATAVALUE <: Writable] extends SequenceKey[IDXKEY, IDXVALUE] with SequneceValue[DATAKEY, DATAVALUE] 
-{}
+trait SequneceValue[DATAKEY <: Writable, DATAVALUE <: Writable] { 
+  def getDataKey(id: String, blobCount: Int = 0): DATAKEY
+  def getDataValue(data: Array[Byte]): DATAVALUE
+  def getDataValue(data: Array[Byte], length: Int): DATAVALUE
+  def getDataValue(data: String): DATAVALUE
+}
