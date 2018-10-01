@@ -7,7 +7,7 @@ import java.util.UUID
 
 import com.google.common.util.concurrent.ListenableFuture
 
-import scray.hdfs.io.coordination.IHdfsWriterConstats.FileFormat
+import scray.hdfs.io.write.IHdfsWriterConstats.FileFormat;
 
 trait WriteService {
     /**

@@ -13,11 +13,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package scray.hdfs.io.coordination;
+package scray.hdfs.io.write;
 
 public class IHdfsWriterConstats {
 	public static enum FileFormat {
-		SequenceFile,
+		SequenceFile_IndexValue_Blob,
+		SequenceFile_Text_Text,
+		SequenceFile_Text_BytesWritable,
 		RAW
 	}
 	

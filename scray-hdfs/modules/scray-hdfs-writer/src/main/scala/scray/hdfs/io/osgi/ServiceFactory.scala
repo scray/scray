@@ -18,13 +18,13 @@ package scray.hdfs.io.osgi
 import scray.hdfs.io.index.format.sequence.SequenceFileWriter
 import org.osgi.framework.ServiceRegistration
 import org.osgi.framework.Bundle
-import scray.hdfs.io.coordination.IHdfsWriterConstats
 import org.apache.hadoop.io.BytesWritable
 import org.apache.hadoop.io.Text
 import scray.hdfs.io.index.format.sequence.mapping.impl.OutputTextBytesWritable
 
 import scray.hdfs.io.index.format.Writer
 import scray.hdfs.io.write.WriteService
+import scray.hdfs.io.write.IHdfsWriterConstats
 
 class ServiceFactory extends org.osgi.framework.ServiceFactory[scray.hdfs.io.write.WriteService] {
   

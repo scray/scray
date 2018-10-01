@@ -8,6 +8,8 @@ import com.typesafe.scalalogging.LazyLogging
 import scray.hdfs.io.index.format.sequence.IdxReader
 import scray.hdfs.io.index.format.sequence.BlobFileReader
 import scray.hdfs.io.index.format.sequence.mapping.impl.OutputBlob
+import scray.hdfs.io.write.IHdfsWriterConstats;
+
 import java.util.HashMap
 import junit.framework.Assert
 import java.io.ByteArrayInputStream
@@ -24,7 +26,7 @@ class WriteCoordinatorSpecs extends WordSpec with LazyLogging {
     " wrtite to new blob file until count limit is reached " in {
       val outPath = "target/WriteCoordinatorSpecs/writeCoordinatorSpecsMaxCount/" + System.currentTimeMillis() + "/"
 
-      val metadata = WriteDestination("000", outPath, IHdfsWriterConstats.FileFormat.SequenceFile, Version(0), 512 * 1024 * 1024L, 5)
+      val metadata = WriteDestination("000", outPath, IHdfsWriterConstats.FileFormat.SequenceFile_IndexValue_Blob, Version(0), 512 * 1024 * 1024L, 5)
       val writer = new CoordinatedWriter(512 * 1024 * 1024L, metadata, new OutputBlob)
 
       val writtenData = new HashMap[String, Array[Byte]]();

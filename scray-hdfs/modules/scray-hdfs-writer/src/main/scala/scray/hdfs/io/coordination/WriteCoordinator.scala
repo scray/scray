@@ -15,10 +15,7 @@
 
 package scray.hdfs.io.coordination
 
-
-
-import scray.hdfs.io.index.format.Writer
-
+import scray.hdfs.io.write.IHdfsWriterConstats
 
 case class Version(number: Int, compactionState: CompactionState = NEW) {
   def this(number: Int) = {
