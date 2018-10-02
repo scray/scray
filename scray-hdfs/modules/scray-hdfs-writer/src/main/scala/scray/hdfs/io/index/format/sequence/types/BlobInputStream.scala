@@ -75,7 +75,7 @@ class BlobInputStream[DATAKEY <: Writable, DATAVALUE <: Writable](reader: ValueF
 
     // Check if it is possible to fill requested buffer with current buffer. 
     if (numElementsInBuffer < len) {
-      logger.debug(s"Multiple splits required to fill requested buffer. Bytes in current buffer ${numElementsInBuffer}. Requested bytes ${len}")   
+      logger.trace(s"Multiple splits required to fill requested buffer. Bytes in current buffer ${numElementsInBuffer}. Requested bytes ${len}")   
       
       while (outputBytes < len && !eOFReached) {
 
@@ -114,7 +114,7 @@ class BlobInputStream[DATAKEY <: Writable, DATAVALUE <: Writable](reader: ValueF
           this.updateState(updateBuffer(possitionInFile))
         }
 
-        logger.debug(s"Wrote ${outputBytes} bytes")
+        logger.trace(s"Wrote ${outputBytes} bytes")
       }
     } else {
 
@@ -122,10 +122,10 @@ class BlobInputStream[DATAKEY <: Writable, DATAVALUE <: Writable](reader: ValueF
       outputBytes = outputBytes + bytesWritten
       readPossitionInBuffer = Some(newReadPos)
 
-      logger.debug(s"Wrote ${outputBytes} bytes")
+      logger.trace(s"Wrote ${outputBytes} bytes")
     }
 
-    if (dataBuffer.length == readPossitionInBuffer) { // FIXME Works because condition is always wrong
+    if (dataBuffer.length == readPossitionInBuffer) { 
       updateState(updateBuffer(possitionInFile))
     }
 

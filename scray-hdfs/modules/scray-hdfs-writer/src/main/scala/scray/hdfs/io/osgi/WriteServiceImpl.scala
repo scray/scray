@@ -25,7 +25,7 @@ import org.slf4j.LoggerFactory
 import scray.hdfs.io.coordination.Version
 import scray.hdfs.io.coordination.WriteDestination
 import scray.hdfs.io.write.WriteService
-import scray.hdfs.io.write.IHdfsWriterConstats.FileFormat;
+import scray.hdfs.io.write.IHdfsWriterConstats.SequenceKeyValueFormat
 import scray.hdfs.io.index.format.raw.RawFileWriter
 import scray.hdfs.io.index.format.sequence.mapping.impl.OutputBlob
 import java.io.OutputStream
@@ -52,27 +52,40 @@ class WriteServiceImpl extends WriteService {
     logger.debug(s"Create writer for path ${path}")
     val id = UUID.randomUUID()
 
-    val metadata = WriteDestination("000", path, IHdfsWriterConstats.FileFormat.SequenceFile_IndexValue_Blob, Version(0), 512 * 1024 * 1024L, 5)
+    val metadata = WriteDestination("000", path, IHdfsWriterConstats.SequenceKeyValueFormat.SequenceFile_IndexValue_Blob, Version(0), 512 * 1024 * 1024L, 5)
 
     writersMetadata.put(id,  new CoordinatedWriter(8192, metadata, new OutputBlob))
 
     id
   }
 
-  def createWriter(path: String, format: FileFormat): UUID = synchronized {
+  def createWriter(path: String, format: SequenceKeyValueFormat): UUID = synchronized {
     logger.debug(s"Create writer for path ${path}")
     val id = UUID.randomUUID()
 
-    val metadata = WriteDestination("000", path, format, Version(0), 512 * 1024 * 1024L, 5)
+    val metadata = WriteDestination("000", path, format, Version(0), 512 * 1024 * 2048L, 50)
 
-    
+    this.createWriter(format, metadata)
+  }
+  
+  def createWriter(path: String, format: SequenceKeyValueFormat, numberOpKeyValuePairs: Int): UUID = synchronized {
+    logger.debug(s"Create writer for path ${path}")
+    val id = UUID.randomUUID()
+
+    val metadata = WriteDestination("000", path, format, Version(0), 512 * 1024 * 2048L, numberOpKeyValuePairs)
+
+    this.createWriter(format, metadata)
+  }
+  
+  def createWriter(format: SequenceKeyValueFormat, metadata: WriteDestination): UUID = synchronized {
+    val id = UUID.randomUUID()
+
     format  match {
-      case FileFormat.SequenceFile_IndexValue_Blob =>     writersMetadata.put(id,  new CoordinatedWriter(8192, metadata, new OutputBlob))
-      case FileFormat.SequenceFile_Text_BytesWritable =>     writersMetadata.put(id,  new CoordinatedWriter(8192, metadata, new OutputTextBytesWritable))
-      case FileFormat.SequenceFile_Text_Text =>     writersMetadata.put(id,  new CoordinatedWriter(8192, metadata, new OutputTextText))
+      case SequenceKeyValueFormat.SequenceFile_IndexValue_Blob    =>  writersMetadata.put(id,  new CoordinatedWriter(8192, metadata, new OutputBlob))
+      case SequenceKeyValueFormat.SequenceFile_Text_BytesWritable =>  writersMetadata.put(id,  new CoordinatedWriter(8192, metadata, new OutputTextBytesWritable))
+      case SequenceKeyValueFormat.SequenceFile_Text_Text          =>  writersMetadata.put(id,  new CoordinatedWriter(8192, metadata, new OutputTextText))
     }
     
-
     id
   }
 
