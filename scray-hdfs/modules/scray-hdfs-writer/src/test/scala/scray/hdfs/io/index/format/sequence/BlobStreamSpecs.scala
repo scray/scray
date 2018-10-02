@@ -22,7 +22,6 @@ import org.apache.hadoop.io.SequenceFile
 import java.io.ByteArrayInputStream
 import java.io.InputStream
 import scray.hdfs.io.index.format.sequence.types.IndexValue
-import scray.hdfs.io.index.format.sequence.ValueFileReader;
 import scray.hdfs.io.index.format.sequence.types.BlobInputStream
 import org.junit.Assert
 import scala.io.Source

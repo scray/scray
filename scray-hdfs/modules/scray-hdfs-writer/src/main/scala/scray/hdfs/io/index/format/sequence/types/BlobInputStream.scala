@@ -125,9 +125,9 @@ class BlobInputStream[DATAKEY <: Writable, DATAVALUE <: Writable](reader: ValueF
       logger.trace(s"Wrote ${outputBytes} bytes")
     }
 
-    if (dataBuffer.length == readPossitionInBuffer) { 
-      updateState(updateBuffer(possitionInFile))
-    }
+//    if (dataBuffer.length == readPossitionInBuffer) { 
+//      updateState(updateBuffer(possitionInFile))
+//    }
 
     if (outputBytes == 0) {
       -1

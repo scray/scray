@@ -23,8 +23,6 @@ import com.typesafe.scalalogging.LazyLogging
 import java.io.ByteArrayInputStream
 import org.junit.Assert
 import scala.io.Source
-import scray.hdfs.io.index.format.raw.RawFileReader;
-import scray.hdfs.io.index.format.raw.RawFileWriter;
 import java.nio.file.Paths
 
 class RawFileWriterSpecs extends WordSpec with LazyLogging {

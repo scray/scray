@@ -14,7 +14,6 @@ import java.util.HashMap
 import junit.framework.Assert
 import java.io.ByteArrayInputStream
 import java.nio.file.Paths
-import scray.hdfs.io.coordination.WriteDestination
 
 class WriteCoordinatorSpecs extends WordSpec with LazyLogging {
 
