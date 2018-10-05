@@ -38,7 +38,7 @@ class ServiceFactory extends org.osgi.framework.ServiceFactory[scray.hdfs.io.wri
     try {
       writer = new WriteServiceImpl
     } catch {
-      case e: Exception => println("Error while instanciatin writer " + e)
+      case e: Exception => println("Error while creating writer " + e)
     }
 
     writer
