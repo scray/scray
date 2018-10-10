@@ -13,25 +13,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package scray.hdfs.io.index.format.example
+package scray.hdfs.io.index.format.sequence.mapping
 
-import scray.hdfs.io.index.format.orc.ORCFileReader
+import org.apache.hadoop.io.Writable
 
-object ReadExampleOrcFile {
-   def main(args: Array[String]) {
-
-    if (args.size == 0) {
-      println("No HDFS URL defined. E.g. hdfs://127.0.0.1/user/scray/scray-hdfs-data/")
-    } else {
-
-      val reader = new ORCFileReader(s"${args(0)}/scray-data.orc}")
-      
-      reader.get("key_42").map(data => {
-        println("===================================")
-        println("Received data for key_42: " + new String(data))
-        println("===================================")
-      })
-      
-    }
-   }
+trait SequneceValue[DATAKEY <: Writable, DATAVALUE <: Writable] { 
+  def getDataKey(id: String = "", blobCount: Int = 0): DATAKEY
+  def getDataValue(data: Array[Byte]): DATAVALUE
+  def getDataValue(data: Array[Byte], length: Int): DATAVALUE
+  def getDataValue(data: String): DATAVALUE
 }

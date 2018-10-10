@@ -15,10 +15,7 @@
 
 package scray.hdfs.io.coordination
 
-
-
-import scray.hdfs.io.index.format.Writer
-
+import scray.hdfs.io.write.IHdfsWriterConstats
 
 case class Version(number: Int, compactionState: CompactionState = NEW) {
   def this(number: Int) = {
@@ -38,7 +35,7 @@ case class Version(number: Int, compactionState: CompactionState = NEW) {
 case class WriteDestination(
     queryspace: String, 
     path: String, 
-    fileFormat: IHdfsWriterConstats.FileFormat, 
+    fileFormat: IHdfsWriterConstats.SequenceKeyValueFormat, 
     version: Version = Version(0), 
     maxFileSize: Long = 512 * 1024 * 1024,
     maxNumberOfInserts: Int = Integer.MAX_VALUE

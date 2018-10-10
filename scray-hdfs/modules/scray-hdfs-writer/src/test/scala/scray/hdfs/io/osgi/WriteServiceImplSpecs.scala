@@ -1,26 +1,25 @@
-package scray.hdfs.io.write
+package scray.hdfs.io.osgi
 
 import org.scalatest.WordSpec
-
 import com.typesafe.scalalogging.LazyLogging
-
 import java.io.ByteArrayInputStream
-import scray.hdfs.io.index.format.sequence.BlobFileReader
+import scray.hdfs.io.index.format.sequence.ValueFileReader
 import scray.hdfs.io.index.format.sequence.IdxReader
 import java.io.File
 import java.util.HashMap
 import org.junit.Assert
-import scray.hdfs.io.osgi.WriteServiceImpl
 import scray.hdfs.io.index.format.sequence.mapping.impl.OutputBlob
-import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.FutureCallback
 import com.google.common.util.concurrent.Futures
-import com.google.common.util.concurrent.AbstractFuture
-import com.google.common.util.concurrent.SettableFuture
-import java.util.concurrent.Executors
 import java.io.IOException
+import java.nio.file.Paths
+import scray.hdfs.io.write.WriteResult
 
 class WriteServiceImplSpecs extends WordSpec with LazyLogging {
+  val pathToWinutils = classOf[WriteServiceImplSpecs].getClassLoader.getResource("HADOOP_HOME/bin/winutils.exe");
+  val hadoopHome = Paths.get(pathToWinutils.toURI()).toFile().toString().replace("\\bin\\winutils.exe", "")
+  System.setProperty("hadoop.home.dir", hadoopHome)
+  
   "WriteServiceImplSpecs " should {
     " create and redrive writer " in {
       val service = new WriteServiceImpl
@@ -46,9 +45,13 @@ class WriteServiceImplSpecs extends WordSpec with LazyLogging {
 
       getIndexFiles(outPath + "/scray-data-000-v0/")
         .map(fileName => {
-          (
-            new IdxReader("file://" + fileName + ".idx", new OutputBlob),
-            new BlobFileReader("file://" + fileName + ".blob"))
+              if(fileName.startsWith("/")) {
+                (new IdxReader("file://" + fileName + ".idx", new OutputBlob),
+                new ValueFileReader("file://" + fileName + ".blob", new OutputBlob))
+              } else {
+                (new IdxReader("file:///" + fileName + ".idx", new OutputBlob),
+                new ValueFileReader("file:///" + fileName + ".blob", new OutputBlob))
+              }
         })
         .map {
           case (idxReader, blobReader) => {
@@ -80,7 +83,6 @@ class WriteServiceImplSpecs extends WordSpec with LazyLogging {
         }
  
         override def onFailure(t: Throwable) {
-          println(t.getClass.getName)
            Assert.assertTrue(t.isInstanceOf[IOException])
         }
       });

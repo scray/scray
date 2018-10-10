@@ -26,6 +26,8 @@ class OutputTextText extends SequenceKeyValuePair[Text, Text, Text, Text] {
   
   def getDataValue(data: Array[Byte], length: Int): Text = {
     new Text(new String(data, length))
+    println(new Text(new String(data, length)))
+    new Text(new String(data, length))
   }
   
   def getDataValue(data: Array[Byte]): Text = {

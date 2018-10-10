@@ -16,7 +16,8 @@ import org.apache.hadoop.fs.FileSystem
 import java.io.DataInputStream
 import scray.hdfs.index.HDFSBlobResolver
 import com.typesafe.scalalogging.LazyLogging
-import scray.hdfs.io.index.format.sequence.BlobFileReader
+import scray.hdfs.io.index.format.sequence.ValueFileReader
+import scray.hdfs.io.index.format.sequence.mapping.impl.OutputBlob
 
 object BlobFileReader extends LazyLogging {
   import HDFSBlobResolver.ArrayBytes
@@ -39,7 +40,7 @@ object BlobFileReader extends LazyLogging {
     logger.info(s"scanning file $blobfile for blob at position: $position")
     HDFSBlobResolver.getCachedBlob(key).orElse {
       // need to read the index to find this key
-      val blobReader = new BlobFileReader(blobfile)
+      val blobReader = new ValueFileReader(blobfile, new OutputBlob)
       try {
         blobReader.get(keyAsString, position).map(blob => {
           HDFSBlobResolver.putBlobIntoCache(key, blob)

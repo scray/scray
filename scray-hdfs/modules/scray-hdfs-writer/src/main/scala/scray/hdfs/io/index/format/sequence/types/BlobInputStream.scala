@@ -18,13 +18,14 @@ package scray.hdfs.io.index.format.sequence.types
 import java.io.InputStream
 import java.io.IOException
 import org.apache.hadoop.io.SequenceFile
-import scray.hdfs.io.index.format.sequence.BlobFileReader
+import scray.hdfs.io.index.format.sequence.ValueFileReader
 import java.util.Arrays
 import com.typesafe.scalalogging.LazyLogging
+import org.apache.hadoop.io.Writable
 
 case class SplittetSequenceFilePossition(splittOffset: Int, possitionInFile: Long)
 
-class BlobInputStream(reader: BlobFileReader, index: IndexValue) extends InputStream with LazyLogging {
+class BlobInputStream[DATAKEY <: Writable, DATAVALUE <: Writable](reader: ValueFileReader[DATAKEY, DATAVALUE], index: IndexValue) extends InputStream with LazyLogging {
   var readPossitionInBuffer: Option[Int] = None
   var dataBuffer: Array[Byte] = null
   var possitionInFile = SplittetSequenceFilePossition(0, index.getPosition)
@@ -74,7 +75,7 @@ class BlobInputStream(reader: BlobFileReader, index: IndexValue) extends InputSt
 
     // Check if it is possible to fill requested buffer with current buffer. 
     if (numElementsInBuffer < len) {
-      logger.debug(s"Multiple splits required to fill requested buffer. Bytes in current buffer ${numElementsInBuffer}. Requested bytes ${len}")   
+      logger.trace(s"Multiple splits required to fill requested buffer. Bytes in current buffer ${numElementsInBuffer}. Requested bytes ${len}")   
       
       while (outputBytes < len && !eOFReached) {
 
@@ -113,7 +114,7 @@ class BlobInputStream(reader: BlobFileReader, index: IndexValue) extends InputSt
           this.updateState(updateBuffer(possitionInFile))
         }
 
-        logger.debug(s"Wrote ${outputBytes} bytes")
+        logger.trace(s"Wrote ${outputBytes} bytes")
       }
     } else {
 
@@ -121,12 +122,12 @@ class BlobInputStream(reader: BlobFileReader, index: IndexValue) extends InputSt
       outputBytes = outputBytes + bytesWritten
       readPossitionInBuffer = Some(newReadPos)
 
-      logger.debug(s"Wrote ${outputBytes} bytes")
+      logger.trace(s"Wrote ${outputBytes} bytes")
     }
 
-    if (dataBuffer.length == readPossitionInBuffer) { // FIXME Works because condition is always wrong
-      updateState(updateBuffer(possitionInFile))
-    }
+//    if (dataBuffer.length == readPossitionInBuffer) { 
+//      updateState(updateBuffer(possitionInFile))
+//    }
 
     if (outputBytes == 0) {
       -1

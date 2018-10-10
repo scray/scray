@@ -6,8 +6,7 @@ import java.math.BigInteger
 import java.util.UUID
 
 import com.google.common.util.concurrent.ListenableFuture
-
-import scray.hdfs.io.coordination.IHdfsWriterConstats.FileFormat
+import scray.hdfs.io.write.IHdfsWriterConstats.SequenceKeyValueFormat
 
 trait WriteService {
     /**
@@ -16,7 +15,7 @@ trait WriteService {
    * @return id to identify resource
    */
   def createWriter(path: String): UUID 
-  def createWriter(path: String, format: FileFormat): UUID
+  def createWriter(path: String, format: SequenceKeyValueFormat): UUID
   
   def insert(resource: UUID, id: String, updateTime: Long, data: Array[Byte]): ScrayListenableFuture
   def insert(resource: UUID, id: String, updateTime: Long, data: InputStream, blobSplitSize: Int = 5 * 1024 * 1024): ScrayListenableFuture

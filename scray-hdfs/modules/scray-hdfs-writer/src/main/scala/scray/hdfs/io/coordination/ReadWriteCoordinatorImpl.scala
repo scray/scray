@@ -23,7 +23,7 @@ import scala.collection.mutable.HashMap
 import com.typesafe.scalalogging.LazyLogging
 
 import scray.hdfs.io.index.format.Writer
-import scray.hdfs.io.index.format.sequence.BinarySequenceFileWriter
+import scray.hdfs.io.index.format.sequence.SequenceFileWriter
 import org.apache.hadoop.io.Writable
 import scray.hdfs.io.index.format.sequence.mapping.SequenceKeyValuePair
 

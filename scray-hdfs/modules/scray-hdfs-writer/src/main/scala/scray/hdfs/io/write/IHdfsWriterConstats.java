@@ -13,22 +13,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package scray.hdfs.io.index.format.example
+package scray.hdfs.io.write;
 
-import scray.hdfs.io.index.format.sequence.mapping.impl.OutputTextText
-import scray.hdfs.io.index.format.sequence.SequenceFileWriter
-
-object TextToTextSequenceFiles {
-
-  def main(args: Array[String]) {
-
-    val writer = new SequenceFileWriter("target/TextToTextSequenceFile", new OutputTextText)
-
-    writer.insert("id1", """{"msg_id": 1, "msg": "msg1"}""")
-    writer.insert("id2", """{"msg_id": 2, "msg": "msg2"}""")
-    writer.insert("id3", """{"msg_id": 3, "msg": "msg3"}""")
-    
-    writer.close
-
-  }
+public class IHdfsWriterConstats {
+	public static enum SequenceKeyValueFormat {
+		SequenceFile_IndexValue_Blob,
+		SequenceFile_Text_Text,
+		SequenceFile_Text_BytesWritable
+	}
+	
+	public static enum WriteParameter {
+		destinationPath
+	}
 }

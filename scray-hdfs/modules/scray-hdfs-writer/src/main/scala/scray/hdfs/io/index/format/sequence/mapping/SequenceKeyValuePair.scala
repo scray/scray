@@ -1,24 +1,24 @@
+// See the LICENCE.txt file distributed with this work for additional
+// information regarding copyright ownership.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package scray.hdfs.io.index.format.sequence.mapping
 
 import org.apache.hadoop.io.Writable
 
-
-trait SequenceKeyValuePair[IDXKEY <: Writable, IDXVALUE <: Writable, DATAKEY <: Writable, DATAVALUE <: Writable] {
-  def getIdxKey(id: String): IDXKEY
-  def getIdxValue(
-      id: String, 
-      blobSplits: Int = 1, 
-      splitSize: Int = 8192, 
-      updateTime: Long, 
-      dataLength: Long): IDXVALUE
-  
-  def getIdxValue(
-      id: String, 
-      updateTime: Long, 
-      dataLength: Long): IDXVALUE
-      
-  def getDataKey(id: String, blobCount: Int = 0): DATAKEY
-  def getDataValue(data: Array[Byte]): DATAVALUE
-  def getDataValue(data: Array[Byte], length: Int): DATAVALUE
-  def getDataValue(data: String): DATAVALUE 
-}
+/**
+ * Combine key-value pairs
+ */
+trait SequenceKeyValuePair[IDXKEY <: Writable, IDXVALUE <: Writable, DATAKEY <: Writable, DATAVALUE <: Writable] extends SequenceKey[IDXKEY, IDXVALUE] with SequneceValue[DATAKEY, DATAVALUE] 
+{}
