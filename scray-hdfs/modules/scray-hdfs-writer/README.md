@@ -1,5 +1,6 @@
 ## Features
-  * Store multiple key value pairs in one SequenceFile
+  * Store multiple key value pairs in one SequenceFile. 
+    Values can be accessed by index 
   * Read and write data with java.io.InputStream
   * Api to store String and Array[Byte] data
   * Store huge binary files (internally data are splitted and merged while writing/reading)
