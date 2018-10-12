@@ -17,6 +17,12 @@ package scray.hdfs.io.coordination
 
 import scray.hdfs.io.write.IHdfsWriterConstats
 
+class CompactionState {}
+case object NEW extends CompactionState
+case object IsReadyForCompaction extends CompactionState
+case object CompactionIsStarted extends CompactionState
+case object IsCompacted extends CompactionState
+
 case class Version(number: Int, compactionState: CompactionState = NEW) {
   def this(number: Int) = {
     this(number, NEW)

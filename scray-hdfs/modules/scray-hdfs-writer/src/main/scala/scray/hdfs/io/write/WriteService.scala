@@ -18,7 +18,7 @@ trait WriteService {
   def createWriter(path: String, format: SequenceKeyValueFormat): UUID
   
   def insert(resource: UUID, id: String, updateTime: Long, data: Array[Byte]): ScrayListenableFuture
-  def insert(resource: UUID, id: String, updateTime: Long, data: InputStream, blobSplitSize: Int = 5 * 1024 * 1024): ScrayListenableFuture
+  def insert(resource: UUID, id: String, updateTime: Long, data: InputStream, blobSplitSize: Int = 5 * 2048): ScrayListenableFuture
   def insert(resource: UUID, id: String, updateTime: Long, data: InputStream, dataSize: BigInteger, blobSplitSize: Int): ScrayListenableFuture
   
   def writeRawFile(path: String, data: InputStream): ScrayListenableFuture
