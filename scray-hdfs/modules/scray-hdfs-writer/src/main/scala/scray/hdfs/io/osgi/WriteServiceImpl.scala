@@ -47,14 +47,14 @@ class WriteServiceImpl extends WriteService {
 
   val logger = LoggerFactory.getLogger(classOf[WriteServiceImpl])
   private val writersMetadata = new HashMap[UUID, CoordinatedWriter[Writable, Writable, Writable, Writable]];
-    
+
   def createWriter(path: String): UUID = synchronized {
     logger.debug(s"Create writer for path ${path}")
     val id = UUID.randomUUID()
 
     val metadata = WriteDestination("000", path, IHdfsWriterConstats.SequenceKeyValueFormat.SequenceFile_IndexValue_Blob, Version(0), 512 * 1024 * 1024L, 5)
 
-    writersMetadata.put(id,  new CoordinatedWriter(8192, metadata, new OutputBlob))
+    writersMetadata.put(id, new CoordinatedWriter(8192, metadata, new OutputBlob))
 
     id
   }
@@ -67,7 +67,7 @@ class WriteServiceImpl extends WriteService {
 
     this.createWriter(format, metadata)
   }
-  
+
   def createWriter(path: String, format: SequenceKeyValueFormat, numberOpKeyValuePairs: Int): UUID = synchronized {
     logger.debug(s"Create writer for path ${path}")
     val id = UUID.randomUUID()
@@ -76,25 +76,24 @@ class WriteServiceImpl extends WriteService {
 
     this.createWriter(format, metadata)
   }
-  
+
   def createWriter(format: SequenceKeyValueFormat, metadata: WriteDestination): UUID = synchronized {
     val id = UUID.randomUUID()
 
-    format  match {
-      case SequenceKeyValueFormat.SequenceFile_IndexValue_Blob    =>  writersMetadata.put(id,  new CoordinatedWriter(8192, metadata, new OutputBlob))
-      case SequenceKeyValueFormat.SequenceFile_Text_BytesWritable =>  writersMetadata.put(id,  new CoordinatedWriter(8192, metadata, new OutputTextBytesWritable))
-      case SequenceKeyValueFormat.SequenceFile_Text_Text          =>  writersMetadata.put(id,  new CoordinatedWriter(8192, metadata, new OutputTextText))
+    format match {
+      case SequenceKeyValueFormat.SequenceFile_IndexValue_Blob    => writersMetadata.put(id, new CoordinatedWriter(8192, metadata, new OutputBlob))
+      case SequenceKeyValueFormat.SequenceFile_Text_BytesWritable => writersMetadata.put(id, new CoordinatedWriter(8192, metadata, new OutputTextBytesWritable))
+      case SequenceKeyValueFormat.SequenceFile_Text_Text          => writersMetadata.put(id, new CoordinatedWriter(8192, metadata, new OutputTextText))
     }
-    
+
     id
   }
 
   def insert(resource: UUID, id: String, updateTime: Long, data: Array[Byte]) = synchronized {
-    logger.debug(s"Insert data for resource ${resource}")
+    logger.debug(s"Insert data for resource ${resource}.")
 
     try {
-      writersMetadata.get(resource).insert(id, updateTime, data)
-
+      this.getWriter(resource).insert(id, updateTime, data)
       new ScrayListenableFuture(new WriteResult)
     } catch {
       case e: Exception => {
@@ -107,9 +106,8 @@ class WriteServiceImpl extends WriteService {
     logger.debug(s"Insert data for resource ${resource}")
 
     try {
-      writersMetadata.get(resource).insert(id, updateTime, data)
-
-    new ScrayListenableFuture(new WriteResult)
+      this.getWriter(resource).insert(id, updateTime, data)
+      new ScrayListenableFuture(new WriteResult)
     } catch {
       case e: Exception => {
         new ScrayListenableFuture(e)
@@ -121,9 +119,8 @@ class WriteServiceImpl extends WriteService {
     logger.debug(s"Insert data for resource ${resource}")
 
     try {
-      writersMetadata.get(resource).insert(id, updateTime, data)
-
-        new ScrayListenableFuture(new WriteResult)
+      this.getWriter(resource).insert(id, updateTime, data)
+      new ScrayListenableFuture(new WriteResult)
     } catch {
       case e: Exception => {
         new ScrayListenableFuture(e)
@@ -135,7 +132,7 @@ class WriteServiceImpl extends WriteService {
     try {
       val writer = new RawFileWriter(path)
       writer.write(path, data)
-      
+
       new ScrayListenableFuture(new WriteResult)
     } catch {
       case e: Exception => {
@@ -164,11 +161,11 @@ class WriteServiceImpl extends WriteService {
       }
     }
   }
-  
+
   def closeAll = synchronized {
     val keysOfWriter = writersMetadata.keySet().iterator()
-    
-    while(keysOfWriter.hasNext()) {
+
+    while (keysOfWriter.hasNext()) {
       val writer = writersMetadata.get(keysOfWriter.next())
 
       try {
@@ -176,18 +173,27 @@ class WriteServiceImpl extends WriteService {
       } catch {
         case e: Exception => logger.error(s"Error while closing writer ${writer}")
       }
-      
+
     }
   }
 
   def isClosed(resource: UUID): ScrayListenableFuture = {
     try {
       val isClosed = writersMetadata.get(resource).isClosed
-        new ScrayListenableFuture(new WriteResult(isClosed))
+      new ScrayListenableFuture(new WriteResult(isClosed))
     } catch {
       case e: Exception => {
         new ScrayListenableFuture(e)
       }
+    }
+  }
+
+  private def getWriter(resource: UUID): CoordinatedWriter[Writable, Writable, Writable, Writable] = {
+    if (writersMetadata.get(resource) != null) {
+      writersMetadata.get(resource)
+    } else {
+      logger.error(s"No writer with id ${resource}. To create a writer call createWriter(...) first.")
+      throw new RuntimeException(s"No writer with id ${resource}. To create a writer call createWriter(...) first.")
     }
   }
 }
