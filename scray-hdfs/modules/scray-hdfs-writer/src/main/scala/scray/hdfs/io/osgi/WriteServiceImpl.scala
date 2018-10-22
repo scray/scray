@@ -77,7 +77,7 @@ class WriteServiceImpl extends WriteService {
     this.createWriter(format, metadata)
   }
 
-  override def createWriter(format: SequenceKeyValueFormat, metadata: WriteDestination): UUID = synchronized {
+  def createWriter(format: SequenceKeyValueFormat, metadata: WriteDestination): UUID = synchronized {
     val id = UUID.randomUUID()
 
     format match {
