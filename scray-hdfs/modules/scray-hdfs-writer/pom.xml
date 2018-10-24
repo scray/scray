@@ -325,13 +325,15 @@
 		<profile>
 			<id>MinimizedDependencies</id>
 			<build>
+<!-- 			<finalName>${artifactId}-${version}-minimized</finalName> -->
 				<plugins>
 					<plugin>
 						<groupId>org.apache.felix</groupId>
 						<artifactId>maven-bundle-plugin</artifactId>
 						<version>3.5.1</version>
-						<extensions>true</extensions>
+						<extensions>true</extensions>			
 						<configuration>
+							<classifier>minimized</classifier>	
 							<instructions>
 								<Embed-Dependency>scope=compile;artifactId=!servlet-api|jsp-api|jsr305|jets3t|hadoop-annotations|jsch|netty|xmlenc|logback-classic|jetty*|jasper*|curator*|commons-http*|httpclient*|snappy*|jackson*</Embed-Dependency>
 								<Embed-Transitive>true</Embed-Transitive>
@@ -356,8 +358,6 @@
 									javax.naming,
 									org.slf4j
 								</Import-Package>
-								<_exportcontents>
-								</_exportcontents>
 								<Bundle-Activator>scray.hdfs.io.osgi.Activator</Bundle-Activator>
 							</instructions>
 						</configuration>
