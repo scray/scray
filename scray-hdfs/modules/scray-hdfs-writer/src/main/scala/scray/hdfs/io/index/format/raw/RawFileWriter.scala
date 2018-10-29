@@ -38,11 +38,13 @@ class RawFileWriter(hdfsURL: String, hdfsConf: Configuration) extends LazyLoggin
   }
 
   def initWriter(path: String): Unit = {
+    
     hdfsConf.set("fs.hdfs.impl", classOf[org.apache.hadoop.hdfs.DistributedFileSystem].getName);
     hdfsConf.set("fs.file.impl", classOf[org.apache.hadoop.fs.LocalFileSystem].getName);
     hdfsConf.set("dfs.client.use.datanode.hostname", "true");
     hdfsConf.set("fs.defaultFS", hdfsURL)
 
+    logger.debug(s"Create writer for path ${path}")
     
     try {
       dataWriter = FileSystem.get(hdfsConf);
@@ -69,6 +71,7 @@ class RawFileWriter(hdfsURL: String, hdfsConf: Configuration) extends LazyLoggin
           throw e
         }
       }
+      case e: Exception => throw e
     }
   }
   
