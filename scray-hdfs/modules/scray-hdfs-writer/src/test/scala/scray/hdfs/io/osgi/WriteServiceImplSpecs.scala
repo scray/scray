@@ -19,7 +19,7 @@ class WriteServiceImplSpecs extends WordSpec with LazyLogging {
   val pathToWinutils = classOf[WriteServiceImplSpecs].getClassLoader.getResource("HADOOP_HOME/bin/winutils.exe");
   val hadoopHome = Paths.get(pathToWinutils.toURI()).toFile().toString().replace("\\bin\\winutils.exe", "")
   System.setProperty("hadoop.home.dir", hadoopHome)
-  
+
   "WriteServiceImplSpecs " should {
     " create and redrive writer " in {
       val service = new WriteServiceImpl
@@ -45,13 +45,13 @@ class WriteServiceImplSpecs extends WordSpec with LazyLogging {
 
       getIndexFiles(outPath + "/scray-data-000-v0/")
         .map(fileName => {
-              if(fileName.startsWith("/")) {
-                (new IdxReader("file://" + fileName + ".idx", new OutputBlob),
-                new ValueFileReader("file://" + fileName + ".blob", new OutputBlob))
-              } else {
-                (new IdxReader("file:///" + fileName + ".idx", new OutputBlob),
-                new ValueFileReader("file:///" + fileName + ".blob", new OutputBlob))
-              }
+          if (fileName.startsWith("/")) {
+            (new IdxReader("file://" + fileName + ".idx", new OutputBlob),
+              new ValueFileReader("file://" + fileName + ".blob", new OutputBlob))
+          } else {
+            (new IdxReader("file:///" + fileName + ".idx", new OutputBlob),
+              new ValueFileReader("file:///" + fileName + ".blob", new OutputBlob))
+          }
         })
         .map {
           case (idxReader, blobReader) => {
@@ -73,19 +73,20 @@ class WriteServiceImplSpecs extends WordSpec with LazyLogging {
       val writerId = service.createWriter(outPath)
 
       val writeResult = service.insert(writerId, "42", System.currentTimeMillis(), new ByteArrayInputStream(s"ABCDEFG".getBytes))
-      
-      Futures.addCallback(writeResult,
+
+      Futures.addCallback(
+        writeResult,
         new FutureCallback[WriteResult]() {
-        
-        // Should not happen
-        override def onSuccess(result: WriteResult) {
-          fail   
-        }
- 
-        override def onFailure(t: Throwable) {
-           Assert.assertTrue(t.isInstanceOf[IOException])
-        }
-      });
+
+          // Should not happen
+          override def onSuccess(result: WriteResult) {
+            fail
+          }
+
+          override def onFailure(t: Throwable) {
+            Assert.assertTrue(t.isInstanceOf[IOException])
+          }
+        });
     }
   }
 

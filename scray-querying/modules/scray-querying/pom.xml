@@ -1,9 +1,8 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
-	<artifactId>scray-querying-parent</artifactId>
-	<name>Scray - Querying parent</name>
-	<description>Parent for query engine core source code</description>
-	<packaging>pom</packaging>
+	<artifactId>scray-querying</artifactId>
+	<name>Scray - Querying</name>
+	<description>query engine core source code</description>
 
 	<parent>
 		<groupId>org.scray</groupId>
@@ -18,12 +17,6 @@
 		<maven-bundle-plugin.version>3.0.1</maven-bundle-plugin.version>
 	</properties>
 
-	
-	<modules>
-		<module>modules/scray-querying</module>
-		<module>/modules/scray-sync-api</module>
-		<module>/modules/scray-sync-cassandra</module>
-	</modules>
 
 	<distributionManagement>
 		<snapshotRepository>
