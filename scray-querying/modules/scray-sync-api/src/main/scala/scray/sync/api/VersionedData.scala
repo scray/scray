@@ -6,6 +6,7 @@ class VersionedData(
   val version: Long,       // Version of this data. E.g. time stamp
   val data: String         // String representation of the data to store
 ) {
+  
   def getDataAs[T](f: String => T): T = {
     f(data)
   }
