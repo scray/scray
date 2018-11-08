@@ -12,7 +12,7 @@ class OutputTextBytesWritable extends SequenceKeyValuePair[Text, Text, Text, Byt
   }
   
   def getIdxValue(id: String, blobSplits: Int, splitSize: Int, updateTime: Long, dataLength: Long): Text = {
-    new Text(s"{id: $id, blobSplits: ${blobSplits}, splitSize: ${splitSize}, updateTime: ${updateTime}, dataLength: ${dataLength}}")  
+    new Text(s"""{"id": "$id", "blobSplits": ${blobSplits}, "splitSize": ${splitSize}, "updateTime": ${updateTime}, "dataLength": ${dataLength}}""")  
   }
   
   def getIdxValue(id: String, updateTime: Long, dataLength: Long): Text = {
@@ -20,7 +20,7 @@ class OutputTextBytesWritable extends SequenceKeyValuePair[Text, Text, Text, Byt
   }
   
   def getDataKey(id: String, blobCount: Int = 0): Text = {
-    new Text(s"{id: ${id}, blobCount: ${blobCount}}")
+    new Text(s"""{"id": "${id}", "blobCount": ${blobCount}}""")
   }
   
   def getDataValue(data: Array[Byte], length: Int) = {

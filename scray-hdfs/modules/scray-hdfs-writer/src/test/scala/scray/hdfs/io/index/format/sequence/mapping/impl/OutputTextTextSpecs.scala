@@ -24,11 +24,10 @@ class OutputTextTextSpecs extends WordSpec with LazyLogging {
 
       val idxReader = new IdxReader("target/OutputTextTextSpecs/writeData.idx.seq", new OutputTextText)
 
-      Assert.assertTrue(idxReader.hasNext)
-      idxReader.next().map(idxEntry => Assert.assertEquals(idxEntry.toString(), "{id: id1, blobSplits: 1, splitSize: 8192, updateTime: 1, dataLength: 78}"))
+      idxReader.next().map(idxEntry => Assert.assertEquals(idxEntry.toString(), s"""{"id": "id1", "blobSplits": 1, "splitSize": 8192, "updateTime": 1, "dataLength": 78}"""))
       idxReader.next()
       idxReader.next()
-      idxReader.next().map(idxEntry => Assert.assertEquals(idxEntry.toString(), "{id: id4, blobSplits: 1, splitSize: 8192, updateTime: 4, dataLength: 153}"))
+      idxReader.next().map(idxEntry => Assert.assertEquals(idxEntry.toString(), s"""{"id": "id4", "blobSplits": 1, "splitSize": 8192, "updateTime": 4, "dataLength": 165}"""))
 
       val valueReader = new IdxReader("target/OutputTextTextSpecs/writeData.data.seq", new OutputTextText)
 

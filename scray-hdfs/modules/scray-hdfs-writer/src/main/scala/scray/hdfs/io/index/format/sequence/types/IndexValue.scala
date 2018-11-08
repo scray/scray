@@ -110,7 +110,7 @@ class IndexValue(
   }
   
   override def toString(): String = {
-    s"IndexValue{key: ${key}, blobSplits: ${blobSplits}, updateTime: ${updateTime}, position: ${position}}"
+    s"""IndexValue{"key": "${key}", "blobSplits": ${blobSplits}, "updateTime": ${updateTime}, "position": ${position}}"""
   }
 
 }
