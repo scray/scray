@@ -42,11 +42,11 @@ class WriteCoordinatorSpecs extends WordSpec with LazyLogging {
         .map(fileName => {
           
               if(fileName.startsWith("/")) {
-                (new IdxReader("file://" + fileName + ".idx", new OutputBlob),
-                new ValueFileReader("file://" + fileName + ".blob", new OutputBlob))
+                (new IdxReader("file://" + fileName + ".idx.seq", new OutputBlob),
+                new ValueFileReader("file://" + fileName + ".data.seq", new OutputBlob))
               } else {
-                (new IdxReader("file:///" + fileName + ".idx", new OutputBlob),
-                new ValueFileReader("file:///" + fileName + ".blob", new OutputBlob))
+                (new IdxReader("file:///" + fileName + ".idx.seq", new OutputBlob),
+                new ValueFileReader("file:///" + fileName + ".data.seq", new OutputBlob))
               }
         })
         .map {
@@ -66,8 +66,8 @@ class WriteCoordinatorSpecs extends WordSpec with LazyLogging {
 
     file.listFiles()
       .map(file => file.getAbsolutePath)
-      .filter(filename => filename.endsWith(".idx"))
-      .map(idxFile => idxFile.split(".idx")(0))
+      .filter(filename => filename.endsWith(".idx.seq"))
+      .map(idxFile => idxFile.split(".idx.seq")(0))
       .toList
   }
 }
