@@ -121,11 +121,11 @@ class SequenceFileWriter[IDXKEY <: Writable, IDXVALUE <: Writable, DATAKEY <: Wr
     hdfsConf.set("fs.file.impl", "org.apache.hadoop.fs.LocalFileSystem");
 
     if (dataWriter == null) { // scalastyle:off null
-      dataWriter = initWriter(outTypeMapping.getDataKey("42"), outTypeMapping.getDataValue("".getBytes), fs.getOrElse(FileSystem.get(hdfsConf)), ".blob")
+      dataWriter = initWriter(outTypeMapping.getDataKey("42"), outTypeMapping.getDataValue("".getBytes), fs.getOrElse(FileSystem.get(hdfsConf)), ".data.seq")
     }
 
     if (idxWriter == null) { // scalastyle:off null
-      idxWriter = initWriter(outTypeMapping.getIdxKey("42"), outTypeMapping.getIdxValue("42", 42L, 2L), fs.getOrElse(FileSystem.get(hdfsConf)), ".idx")
+      idxWriter = initWriter(outTypeMapping.getIdxKey("42"), outTypeMapping.getIdxValue("42", 42L, 2L), fs.getOrElse(FileSystem.get(hdfsConf)), ".idx.seq")
     }
 
     // Write idx
@@ -146,11 +146,11 @@ class SequenceFileWriter[IDXKEY <: Writable, IDXVALUE <: Writable, DATAKEY <: Wr
     hdfsConf.set("fs.file.impl", "org.apache.hadoop.fs.LocalFileSystem");
 
     if (dataWriter == null) { // scalastyle:off null
-      dataWriter = initWriter(outTypeMapping.getDataKey("42"), outTypeMapping.getDataValue("".getBytes), fs.getOrElse(FileSystem.get(hdfsConf)), ".blob")
+      dataWriter = initWriter(outTypeMapping.getDataKey("42"), outTypeMapping.getDataValue("".getBytes), fs.getOrElse(FileSystem.get(hdfsConf)), ".data.seq")
     }
 
     if (idxWriter == null) { // scalastyle:off null
-      idxWriter = initWriter(outTypeMapping.getIdxKey("42"), outTypeMapping.getIdxValue("42", 42L, 2L), fs.getOrElse(FileSystem.get(hdfsConf)), ".idx")
+      idxWriter = initWriter(outTypeMapping.getIdxKey("42"), outTypeMapping.getIdxValue("42", 42L, 2L), fs.getOrElse(FileSystem.get(hdfsConf)), ".idx.seq")
     }
 
     // Write idx
@@ -168,11 +168,11 @@ class SequenceFileWriter[IDXKEY <: Writable, IDXVALUE <: Writable, DATAKEY <: Wr
     hdfsConf.set("fs.file.impl", "org.apache.hadoop.fs.LocalFileSystem");
 
     if (dataWriter == null) { // scalastyle:off null
-      dataWriter = initWriter(outTypeMapping.getDataKey("42"), outTypeMapping.getDataValue("".getBytes, 0), fs.getOrElse(FileSystem.get(hdfsConf)), ".blob")
+      dataWriter = initWriter(outTypeMapping.getDataKey("42"), outTypeMapping.getDataValue("".getBytes, 0), fs.getOrElse(FileSystem.get(hdfsConf)), ".data.seq")
     }
 
     if (idxWriter == null) { // scalastyle:off null
-      idxWriter = initWriter(outTypeMapping.getIdxKey("42"), outTypeMapping.getIdxValue("42", 42L, 2L), fs.getOrElse(FileSystem.get(hdfsConf)), ".idx")
+      idxWriter = initWriter(outTypeMapping.getIdxKey("42"), outTypeMapping.getIdxValue("42", 42L, 2L), fs.getOrElse(FileSystem.get(hdfsConf)), ".idx.seq")
     }
 
     val fileStartPossiton = dataWriter.getLength
@@ -257,11 +257,11 @@ class SequenceFileWriter[IDXKEY <: Writable, IDXVALUE <: Writable, DATAKEY <: Wr
     hdfsConf.set("fs.file.impl", "org.apache.hadoop.fs.LocalFileSystem");
 
     if (dataWriter == null) { // scalastyle:off null
-      dataWriter = initWriter(outTypeMapping.getDataKey("42"), outTypeMapping.getDataValue("".getBytes), fs.getOrElse(FileSystem.get(hdfsConf)), ".blob")
+      dataWriter = initWriter(outTypeMapping.getDataKey("42"), outTypeMapping.getDataValue("".getBytes), fs.getOrElse(FileSystem.get(hdfsConf)), ".data.seq")
     }
 
     if (idxWriter == null) { // scalastyle:off null
-      idxWriter = initWriter(outTypeMapping.getIdxKey("42"), outTypeMapping.getIdxValue("42", 42L, 2L), fs.getOrElse(FileSystem.get(hdfsConf)), ".idx")
+      idxWriter = initWriter(outTypeMapping.getIdxKey("42"), outTypeMapping.getIdxValue("42", 42L, 2L), fs.getOrElse(FileSystem.get(hdfsConf)), ".idx.seq")
     }
 
     // Write idx
