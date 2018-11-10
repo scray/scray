@@ -44,5 +44,6 @@ case class WriteDestination(
     fileFormat: IHdfsWriterConstats.SequenceKeyValueFormat, 
     version: Version = Version(0), 
     maxFileSize: Long = 512 * 1024 * 1024,
-    maxNumberOfInserts: Int = Integer.MAX_VALUE
+    maxNumberOfInserts: Int = Integer.MAX_VALUE,
+    storeAsHiddenFileTillClosed: Boolean = false 
    ) 

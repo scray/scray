@@ -94,7 +94,7 @@ class WriteServiceImpl extends WriteService {
 
     try {
       this.getWriter(resource).insert(id, updateTime, data)
-      new ScrayListenableFuture(new WriteResult)
+      new ScrayListenableFuture(new WriteResult("Data inserted"))
     } catch {
       case e: Exception => {
         new ScrayListenableFuture(e)
@@ -107,7 +107,7 @@ class WriteServiceImpl extends WriteService {
 
     try {
       this.getWriter(resource).insert(id, updateTime, data)
-      new ScrayListenableFuture(new WriteResult)
+      new ScrayListenableFuture(new WriteResult("Data inserted"))
     } catch {
       case e: Exception => {
         new ScrayListenableFuture(e)
@@ -120,7 +120,7 @@ class WriteServiceImpl extends WriteService {
 
     try {
       this.getWriter(resource).insert(id, updateTime, data)
-      new ScrayListenableFuture(new WriteResult)
+      new ScrayListenableFuture(new WriteResult("Data inserted"))
     } catch {
       case e: Exception => {
         new ScrayListenableFuture(e)
@@ -133,7 +133,7 @@ class WriteServiceImpl extends WriteService {
       val writer = new RawFileWriter(path)
       writer.write(path, data)
 
-      new ScrayListenableFuture(new WriteResult)
+      new ScrayListenableFuture(new WriteResult("Data inserted"))
     } catch {
       case e: Exception => {
         new ScrayListenableFuture(e)
@@ -151,7 +151,7 @@ class WriteServiceImpl extends WriteService {
       writersMetadata.get(resource).close
 
       val result = SettableFuture.create[WriteResult]()
-      result.set(new WriteResult)
+      result.set(new WriteResult("Data inserted"))
       result
     } catch {
       case e: Exception => {
@@ -180,7 +180,7 @@ class WriteServiceImpl extends WriteService {
   def isClosed(resource: UUID): ScrayListenableFuture = {
     try {
       val isClosed = writersMetadata.get(resource).isClosed
-      new ScrayListenableFuture(new WriteResult(isClosed))
+      new ScrayListenableFuture(new WriteResult(isClosed, "File is closed"))
     } catch {
       case e: Exception => {
         new ScrayListenableFuture(e)

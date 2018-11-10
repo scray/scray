@@ -29,12 +29,15 @@ import scray.hdfs.io.index.format.sequence.types.BlobKey
 import scray.hdfs.io.index.format.sequence.types.IndexValue
 import scray.hdfs.io.index.format.sequence.types.Blob
 import org.apache.hadoop.io.Text
+import scray.hdfs.io.modify.Renamer
+import org.apache.hadoop.conf.Configuration
 
 class CoordinatedWriter[+IDXKEY <: Writable, +IDXVALUE <: Writable, +DATAKEY <: Writable, +DATAVALUE <: Writable](
     maxFileSize: Long = 8192, 
     metadata: WriteDestination, 
     outTypeMapping: SequenceKeyValuePair[IDXKEY, IDXVALUE, DATAKEY, DATAVALUE]) extends LazyLogging with Writer {
   
+  private var hdfsConf: Configuration = null; // Initialized when writer was created.
   private var writer: Writer = createNewBasicWriter(metadata)
   private var numInserts = 0
 
@@ -47,7 +50,7 @@ class CoordinatedWriter[+IDXKEY <: Writable, +IDXVALUE <: Writable, +DATAKEY <: 
       writer.insert(id, updateTime, data)
     } else {
       logger.debug(s"Close file ${writer.getPath}")
-      writer.close
+      this.close
       
       writer = createNewBasicWriter(metadata)
       logger.debug(s"Create new file ${writer.getPath}")
@@ -58,15 +61,26 @@ class CoordinatedWriter[+IDXKEY <: Writable, +IDXVALUE <: Writable, +DATAKEY <: 
 
   private def createNewBasicWriter(metadata: WriteDestination): Writer = {
     val filePath = this.getPath(metadata.path, metadata.queryspace, metadata.version.number)
-    new SequenceFileWriter(filePath, outTypeMapping)
-   
+    val writer = new SequenceFileWriter(filePath, outTypeMapping)
+    this.hdfsConf = writer.hdfsConf
+    
+    writer
   }
 
   private def getPath(basePath: String, queryspace: String, version: Int): String = {
-    if (basePath.endsWith("/")) {
-      s"${basePath}scray-data-${queryspace}-v${version}/${UUID.randomUUID()}"
+    
+    if(metadata.storeAsHiddenFileTillClosed) {
+      if (basePath.endsWith("/")) {
+        s"${basePath}scray-data-${queryspace}-v${version}/.${UUID.randomUUID()}"
+      } else {
+        s"${basePath}/scray-data-${queryspace}-v${version}/.${UUID.randomUUID()}"
+      }
     } else {
-      s"${basePath}/scray-data-${queryspace}-v${version}/${UUID.randomUUID()}"
+      if (basePath.endsWith("/")) {
+        s"${basePath}scray-data-${queryspace}-v${version}/${UUID.randomUUID()}"
+      } else {
+        s"${basePath}/scray-data-${queryspace}-v${version}/${UUID.randomUUID()}"
+      }
     }
   }
   
@@ -84,6 +98,15 @@ class CoordinatedWriter[+IDXKEY <: Writable, +IDXVALUE <: Writable, +DATAKEY <: 
   def close: Unit = synchronized {
     varIsClosed = true
     writer.close
+    
+    if(metadata.storeAsHiddenFileTillClosed) {
+      val renamer = new Renamer();
+    
+      val pathAndFilename = separateFilename(writer.getPath)
+      val newFilename = pathAndFilename._1 + pathAndFilename._2.replace(".", "")
+      renamer.rename(writer.getPath + ".data.seq", newFilename + ".data.seq", hdfsConf).get()
+      renamer.rename(writer.getPath + ".idx.seq", newFilename + ".idx.seq" , hdfsConf).get()
+    }
   }
 
   def getPath: String = {
@@ -108,7 +131,7 @@ class CoordinatedWriter[+IDXKEY <: Writable, +IDXVALUE <: Writable, +DATAKEY <: 
       writer.insert(id, updateTime, data)
     } else {
       logger.debug(s"Close file ${writer.getPath}")
-      writer.close
+      this.close
       
       logger.debug(s"Create new file ${writer.getPath}")
       writer = createNewBasicWriter(metadata)
@@ -126,7 +149,7 @@ class CoordinatedWriter[+IDXKEY <: Writable, +IDXVALUE <: Writable, +DATAKEY <: 
       writer.insert(id, data)
     } else {
       logger.debug(s"Close file ${writer.getPath}")
-      writer.close
+      this.close
       
       logger.debug(s"Create new file ${writer.getPath}")
       writer = createNewBasicWriter(metadata)
@@ -143,13 +166,20 @@ class CoordinatedWriter[+IDXKEY <: Writable, +IDXVALUE <: Writable, +DATAKEY <: 
       writer.insert(id, updateTime, data, blobSplitSize)
     } else {
       logger.debug(s"Close file ${writer.getPath}")
-      writer.close
-
+      this.close
+      
       writer = createNewBasicWriter(metadata)
       logger.debug(s"Create new file ${writer.getPath}")
 
       numInserts = 0
       this.insert(id, updateTime, data, blobSplitSize)
     }
+  }
+  
+  def separateFilename(path: String): Tuple2[String, String] = {
+    val splited = path.split("/")
+    val filename = splited(splited.length -1)
+    println("FFFFile " + filename)
+    (path.replace(filename, ""), filename)
   }
 }
