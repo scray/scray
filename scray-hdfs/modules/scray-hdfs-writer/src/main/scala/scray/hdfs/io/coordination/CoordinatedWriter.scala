@@ -61,7 +61,7 @@ class CoordinatedWriter[+IDXKEY <: Writable, +IDXVALUE <: Writable, +DATAKEY <: 
 
   private def createNewBasicWriter(metadata: WriteDestination): Writer = {
     val filePath = this.getPath(metadata.path, metadata.queryspace, metadata.version.number)
-    val writer = new SequenceFileWriter(filePath, outTypeMapping)
+    val writer = new SequenceFileWriter(filePath, outTypeMapping, metadata.createScrayIndexFile)
     this.hdfsConf = writer.hdfsConf
     
     writer
@@ -179,7 +179,6 @@ class CoordinatedWriter[+IDXKEY <: Writable, +IDXVALUE <: Writable, +DATAKEY <: 
   def separateFilename(path: String): Tuple2[String, String] = {
     val splited = path.split("/")
     val filename = splited(splited.length -1)
-    println("FFFFile " + filename)
     (path.replace(filename, ""), filename)
   }
 }

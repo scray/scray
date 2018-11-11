@@ -14,6 +14,7 @@ import java.util.HashMap
 import junit.framework.Assert
 import java.io.ByteArrayInputStream
 import java.nio.file.Paths
+import scray.hdfs.io.index.format.sequence.mapping.impl.OutputTextText
 
 class WriteCoordinatorSpecs extends WordSpec with LazyLogging {
 
@@ -60,24 +61,6 @@ class WriteCoordinatorSpecs extends WordSpec with LazyLogging {
         }
     }
   }
-
-  "write as hidden file till file is closed " in {
-    val outPath = "target/WriteCoordinatorSpecs/writeCoordinatorTmpHiddenFile/" + System.currentTimeMillis() + "/"
-
-    val metadata = WriteDestination("000", outPath, IHdfsWriterConstats.SequenceKeyValueFormat.SequenceFile_IndexValue_Blob, Version(0), 512 * 1024 * 1024L, 5, true)
-    val writer = new CoordinatedWriter(512 * 1024 * 1024L, metadata, new OutputBlob)
-    
-    writer.insert("1", "abc")
-    writer.insert("1", "abc")
-    writer.insert("1", "abc")
-    writer.insert("1", "abc")
-    writer.insert("1", "abc")
-    writer.insert("1", "abc")
-    writer.insert("1", "abc")
-    writer.insert("1", "abc")
-
-  }
-
   private def getIndexFiles(path: String): List[String] = {
     val file = new File(path)
 

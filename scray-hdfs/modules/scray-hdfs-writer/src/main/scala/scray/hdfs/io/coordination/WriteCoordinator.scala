@@ -45,5 +45,6 @@ case class WriteDestination(
     version: Version = Version(0), 
     maxFileSize: Long = 512 * 1024 * 1024,
     maxNumberOfInserts: Int = Integer.MAX_VALUE,
-    storeAsHiddenFileTillClosed: Boolean = false 
+    storeAsHiddenFileTillClosed: Boolean = false,
+    createScrayIndexFile: Boolean = false
    ) 

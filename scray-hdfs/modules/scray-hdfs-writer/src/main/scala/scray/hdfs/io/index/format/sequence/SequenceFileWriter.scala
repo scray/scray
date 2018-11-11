@@ -34,10 +34,10 @@ import scray.hdfs.io.index.format.Writer
 import scray.hdfs.io.index.format.sequence.mapping.SequenceKeyValuePair
 import java.io.File
 
-class SequenceFileWriter[IDXKEY <: Writable, IDXVALUE <: Writable, DATAKEY <: Writable, DATAVALUE <: Writable](path: String, val hdfsConf: Configuration, fs: Option[FileSystem], outTypeMapping: SequenceKeyValuePair[IDXKEY, IDXVALUE, DATAKEY, DATAVALUE]) extends scray.hdfs.io.index.format.Writer with LazyLogging {
+class SequenceFileWriter[IDXKEY <: Writable, IDXVALUE <: Writable, DATAKEY <: Writable, DATAVALUE <: Writable](path: String, val hdfsConf: Configuration, fs: Option[FileSystem], outTypeMapping: SequenceKeyValuePair[IDXKEY, IDXVALUE, DATAKEY, DATAVALUE], createIndex: Boolean) extends scray.hdfs.io.index.format.Writer with LazyLogging {
 
   var dataWriter: SequenceFile.Writer = null; // scalastyle:off null
-  var idxWriter: SequenceFile.Writer = null; // scalastyle:off null
+  var idxWriter: Option[SequenceFile.Writer] = None
 
   if (getClass.getClassLoader != null) {
     hdfsConf.setClassLoader(getClass.getClassLoader)
@@ -46,12 +46,12 @@ class SequenceFileWriter[IDXKEY <: Writable, IDXVALUE <: Writable, DATAKEY <: Wr
   var numberOfInserts: Int = 0
 
   System.setProperty("HADOOP_USER_NAME", "hdfs");
-  def this(path: String, outTypeMapping: SequenceKeyValuePair[IDXKEY, IDXVALUE, DATAKEY, DATAVALUE]) = {
-    this(path, new Configuration, None, outTypeMapping)
+  def this(path: String, outTypeMapping: SequenceKeyValuePair[IDXKEY, IDXVALUE, DATAKEY, DATAVALUE], createIndex: Boolean) = {
+    this(path, new Configuration, None, outTypeMapping, createIndex)
   }
 
-  def this(path: String, hdfsConf: Configuration, outTypeMapping: SequenceKeyValuePair[IDXKEY, IDXVALUE, DATAKEY, DATAVALUE]) {
-    this(path, hdfsConf, None, outTypeMapping)
+  def this(path: String, hdfsConf: Configuration, outTypeMapping: SequenceKeyValuePair[IDXKEY, IDXVALUE, DATAKEY, DATAVALUE], createIndex: Boolean) {
+    this(path, hdfsConf, None, outTypeMapping, createIndex)
   }
 
   private def initWriter(
@@ -112,7 +112,7 @@ class SequenceFileWriter[IDXKEY <: Writable, IDXVALUE <: Writable, DATAKEY <: Wr
 
   def flush() = {
     if (dataWriter != null) dataWriter.hflush()
-    if (idxWriter != null) idxWriter.hflush()
+    idxWriter.map(_.hflush())
   }
 
   override def insert(id: String, data: String): Long = {
@@ -124,12 +124,12 @@ class SequenceFileWriter[IDXKEY <: Writable, IDXVALUE <: Writable, DATAKEY <: Wr
       dataWriter = initWriter(outTypeMapping.getDataKey("42"), outTypeMapping.getDataValue("".getBytes), fs.getOrElse(FileSystem.get(hdfsConf)), ".data.seq")
     }
 
-    if (idxWriter == null) { // scalastyle:off null
-      idxWriter = initWriter(outTypeMapping.getIdxKey("42"), outTypeMapping.getIdxValue("42", 42L, 2L), fs.getOrElse(FileSystem.get(hdfsConf)), ".idx.seq")
+    if (this.createIndex && !idxWriter.isDefined) { // scalastyle:off null
+      idxWriter = Some(initWriter(outTypeMapping.getIdxKey("42"), outTypeMapping.getIdxValue("42", 42L, 2L), fs.getOrElse(FileSystem.get(hdfsConf)), ".idx.seq"))
     }
 
     // Write idx
-    idxWriter.append(outTypeMapping.getIdxKey(id), outTypeMapping.getIdxValue(id, System.currentTimeMillis(), dataWriter.getLength))
+    idxWriter.map(_.append(outTypeMapping.getIdxKey(id), outTypeMapping.getIdxValue(id, System.currentTimeMillis(), dataWriter.getLength)))
 
     // Write data
     //dataWriter.append(outTypeMapping.getDataKey(id), outTypeMapping.getDataValue(data));
@@ -149,12 +149,12 @@ class SequenceFileWriter[IDXKEY <: Writable, IDXVALUE <: Writable, DATAKEY <: Wr
       dataWriter = initWriter(outTypeMapping.getDataKey("42"), outTypeMapping.getDataValue("".getBytes), fs.getOrElse(FileSystem.get(hdfsConf)), ".data.seq")
     }
 
-    if (idxWriter == null) { // scalastyle:off null
-      idxWriter = initWriter(outTypeMapping.getIdxKey("42"), outTypeMapping.getIdxValue("42", 42L, 2L), fs.getOrElse(FileSystem.get(hdfsConf)), ".idx.seq")
+    if (this.createIndex && idxWriter == null) { // scalastyle:off null
+      idxWriter = Some(initWriter(outTypeMapping.getIdxKey("42"), outTypeMapping.getIdxValue("42", 42L, 2L), fs.getOrElse(FileSystem.get(hdfsConf)), ".idx.seq"))
     }
 
     // Write idx
-    idxWriter.append(outTypeMapping.getIdxKey(id), outTypeMapping.getIdxValue(id, updateTime, dataWriter.getLength))
+    idxWriter.map(_.append(outTypeMapping.getIdxKey(id), outTypeMapping.getIdxValue(id, updateTime, dataWriter.getLength)))
 
     // Write data
     dataWriter.append(outTypeMapping.getDataKey(id), outTypeMapping.getDataValue(data));
@@ -171,8 +171,8 @@ class SequenceFileWriter[IDXKEY <: Writable, IDXVALUE <: Writable, DATAKEY <: Wr
       dataWriter = initWriter(outTypeMapping.getDataKey("42"), outTypeMapping.getDataValue("".getBytes, 0), fs.getOrElse(FileSystem.get(hdfsConf)), ".data.seq")
     }
 
-    if (idxWriter == null) { // scalastyle:off null
-      idxWriter = initWriter(outTypeMapping.getIdxKey("42"), outTypeMapping.getIdxValue("42", 42L, 2L), fs.getOrElse(FileSystem.get(hdfsConf)), ".idx.seq")
+    if (this.createIndex && idxWriter == null) { // scalastyle:off null
+      idxWriter = Some(initWriter(outTypeMapping.getIdxKey("42"), outTypeMapping.getIdxValue("42", 42L, 2L), fs.getOrElse(FileSystem.get(hdfsConf)), ".idx.seq"))
     }
 
     val fileStartPossiton = dataWriter.getLength
@@ -202,7 +202,7 @@ class SequenceFileWriter[IDXKEY <: Writable, IDXVALUE <: Writable, DATAKEY <: Wr
         dataWriter.append(outTypeMapping.getDataKey(id, blobCounter), blob)
 
         // Write idx
-        idxWriter.append(new Text(id), outTypeMapping.getIdxValue(id, blobCounter, reachMaxSizeBufferWrittenBytes, updateTime, fileStartPossiton))
+        idxWriter.map(_.append(new Text(id), outTypeMapping.getIdxValue(id, blobCounter, reachMaxSizeBufferWrittenBytes, updateTime, fileStartPossiton)))
         reachMaxSizeBuffer = new Array[Byte](0)
         reachMaxSizeBufferWrittenBytes = 0
       }
@@ -216,13 +216,13 @@ class SequenceFileWriter[IDXKEY <: Writable, IDXVALUE <: Writable, DATAKEY <: Wr
       dataWriter.append(outTypeMapping.getDataKey(id, blobCounter), blob)
 
       // Write idx
-      idxWriter.append(outTypeMapping.getIdxKey(id), outTypeMapping.getIdxValue(id, blobCounter, reachMaxSizeBufferWrittenBytes, updateTime, fileStartPossiton))
+      idxWriter.map(_.append(outTypeMapping.getIdxKey(id), outTypeMapping.getIdxValue(id, blobCounter, reachMaxSizeBufferWrittenBytes, updateTime, fileStartPossiton)))
       reachMaxSizeBuffer = new Array[Byte](0)
       reachMaxSizeBufferWrittenBytes = 0
     }
 
     numberOfInserts = numberOfInserts + 1
-    dataWriter.getLength + idxWriter.getLength
+    dataWriter.getLength + idxWriter.map(_.getLength).getOrElse(0L)
   }
 
   override def insert(id: String, updateTime: Long, data: InputStream, dataSize: BigInteger, blobSplitSize: Int): Long = {
@@ -260,12 +260,12 @@ class SequenceFileWriter[IDXKEY <: Writable, IDXVALUE <: Writable, DATAKEY <: Wr
       dataWriter = initWriter(outTypeMapping.getDataKey("42"), outTypeMapping.getDataValue("".getBytes), fs.getOrElse(FileSystem.get(hdfsConf)), ".data.seq")
     }
 
-    if (idxWriter == null) { // scalastyle:off null
-      idxWriter = initWriter(outTypeMapping.getIdxKey("42"), outTypeMapping.getIdxValue("42", 42L, 2L), fs.getOrElse(FileSystem.get(hdfsConf)), ".idx.seq")
+    if (this.createIndex && !idxWriter.isDefined) { // scalastyle:off null
+      idxWriter = Some(initWriter(outTypeMapping.getIdxKey("42"), outTypeMapping.getIdxValue("42", 42L, 2L), fs.getOrElse(FileSystem.get(hdfsConf)), ".idx.seq"))
     }
 
     // Write idx
-    idxWriter.append(outTypeMapping.getIdxKey(id), outTypeMapping.getIdxValue(id, updateTime, dataWriter.getLength))
+    idxWriter.map(_.append(outTypeMapping.getIdxKey(id), outTypeMapping.getIdxValue(id, updateTime, dataWriter.getLength)))
 
     // Write data
     dataWriter.append(outTypeMapping.getDataKey(id), outTypeMapping.getDataValue(data))
@@ -291,6 +291,7 @@ class SequenceFileWriter[IDXKEY <: Writable, IDXVALUE <: Writable, DATAKEY <: Wr
 
   def close: Unit = {
     IOUtils.closeStream(dataWriter);
-    IOUtils.closeStream(idxWriter);
+    
+    idxWriter.map(idxWriter => IOUtils.closeStream(idxWriter))
   }
 }
