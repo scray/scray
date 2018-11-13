@@ -42,6 +42,8 @@ import scray.hdfs.io.write.IHdfsWriterConstats
 import scray.hdfs.io.index.format.sequence.mapping.impl.OutputBlob
 import scray.hdfs.io.index.format.sequence.mapping.impl.OutputTextBytesWritable
 import scray.hdfs.io.index.format.sequence.mapping.impl.OutputTextText
+import scray.hdfs.io.write.ScrayOutputStream
+import scray.hdfs.io.coordination.WriteDestination
 
 class WriteServiceImpl extends WriteService {
 
@@ -141,9 +143,14 @@ class WriteServiceImpl extends WriteService {
     }
   }
 
-  def writeRawFile(path: String): OutputStream = synchronized {
+  def writeRawFile(path: String, writeAndRename: Boolean): ScrayOutputStream = synchronized {
     val writer = new RawFileWriter(path)
-    writer.write(path)
+    new ScrayOutputStream(writer.write(path))
+  }
+  
+  def writeRawFile(path: String): ScrayOutputStream = synchronized {
+    val writer = new RawFileWriter(path)
+    new ScrayOutputStream(writer.write(path))
   }
 
   def close(resource: UUID) = synchronized {

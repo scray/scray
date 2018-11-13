@@ -15,11 +15,27 @@
 
 package scray.hdfs.io.write
 
-class WriteResult(
-   val isClosed: Boolean,
-   val message: String) {
-  
-  def this(message: String) {
-    this(false, message)
-  }
+import java.io.OutputStream
+
+class ScrayOutputStream(stream: OutputStream) extends OutputStream {
+
+    override def write(b: Int): Unit = {
+      stream.write(b)
+    }
+
+    override def write(b: Array[Byte]): Unit = {
+       stream.write(b)
+    }
+
+    override def write(b: Array[Byte], off: Int, len: Int): Unit = {
+      stream.write(b, off, len)
+    }
+
+    override def flush(): Unit = {
+      stream.flush()
+    }
+
+    override def close(): Unit = {
+      stream.close()
+    }
 }
