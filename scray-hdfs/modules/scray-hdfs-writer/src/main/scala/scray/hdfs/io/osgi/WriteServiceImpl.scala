@@ -44,6 +44,7 @@ import scray.hdfs.io.index.format.sequence.mapping.impl.OutputTextBytesWritable
 import scray.hdfs.io.index.format.sequence.mapping.impl.OutputTextText
 import scray.hdfs.io.write.ScrayOutputStream
 import scray.hdfs.io.coordination.WriteDestination
+import scray.hdfs.io.modify.Renamer
 
 class WriteServiceImpl extends WriteService {
 
@@ -144,8 +145,18 @@ class WriteServiceImpl extends WriteService {
   }
 
   def writeRawFile(path: String, writeAndRename: Boolean): ScrayOutputStream = synchronized {
-    val writer = new RawFileWriter(path)
-    new ScrayOutputStream(writer.write(path))
+    
+    if(writeAndRename) {
+      val writer = new RawFileWriter(path)
+      val renamer = new Renamer
+      
+      val pathAndFilename = renamer.separateFilename(path)
+      val newFilename = pathAndFilename._1 + pathAndFilename._2.replace(".", "")
+      new ScrayOutputStream(writer.write(path), path, newFilename) 
+    } else {
+      val writer = new RawFileWriter(path)
+      new ScrayOutputStream(writer.write(path)) 
+    }
   }
   
   def writeRawFile(path: String): ScrayOutputStream = synchronized {

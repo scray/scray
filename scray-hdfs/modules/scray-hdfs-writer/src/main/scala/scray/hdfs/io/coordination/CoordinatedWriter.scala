@@ -102,7 +102,7 @@ class CoordinatedWriter[+IDXKEY <: Writable, +IDXVALUE <: Writable, +DATAKEY <: 
     if(metadata.storeAsHiddenFileTillClosed) {
       val renamer = new Renamer();
     
-      val pathAndFilename = separateFilename(writer.getPath)
+      val pathAndFilename = renamer.separateFilename(writer.getPath)
       val newFilename = pathAndFilename._1 + pathAndFilename._2.replace(".", "")
       renamer.rename(writer.getPath + ".data.seq", newFilename + ".data.seq", hdfsConf).get()
       renamer.rename(writer.getPath + ".idx.seq", newFilename + ".idx.seq" , hdfsConf).get()
@@ -174,11 +174,5 @@ class CoordinatedWriter[+IDXKEY <: Writable, +IDXVALUE <: Writable, +DATAKEY <: 
       numInserts = 0
       this.insert(id, updateTime, data, blobSplitSize)
     }
-  }
-  
-  def separateFilename(path: String): Tuple2[String, String] = {
-    val splited = path.split("/")
-    val filename = splited(splited.length -1)
-    (path.replace(filename, ""), filename)
   }
 }

@@ -16,26 +16,38 @@
 package scray.hdfs.io.write
 
 import java.io.OutputStream
+import scray.hdfs.io.modify.Renamer
 
-class ScrayOutputStream(stream: OutputStream) extends OutputStream {
+class ScrayOutputStream(stream: OutputStream, filename: String, nameAfterClose: String) extends OutputStream {
 
-    override def write(b: Int): Unit = {
-      stream.write(b)
-    }
+  def this(stream: OutputStream) = {
+    this(stream, null, null)
+  }
+  
+  override def write(b: Int): Unit = {
+    stream.write(b)
+  }
 
-    override def write(b: Array[Byte]): Unit = {
-       stream.write(b)
-    }
+  override def write(b: Array[Byte]): Unit = {
+    stream.write(b)
+  }
 
-    override def write(b: Array[Byte], off: Int, len: Int): Unit = {
-      stream.write(b, off, len)
-    }
+  override def write(b: Array[Byte], off: Int, len: Int): Unit = {
+    stream.write(b, off, len)
+  }
 
-    override def flush(): Unit = {
-      stream.flush()
-    }
+  override def flush(): Unit = {
+    stream.flush()
+  }
 
-    override def close(): Unit = {
+  override def close(): Unit = {
+    if(nameAfterClose != null && filename != null) {
+      val renamer = new Renamer
+      stream.close()
+      
+      renamer.rename(filename, nameAfterClose).get 
+    } else {
       stream.close()
     }
+  }
 }

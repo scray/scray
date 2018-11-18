@@ -36,4 +36,10 @@ class Renamer {
       }
     }
   }
+  
+  def separateFilename(path: String): Tuple2[String, String] = {
+    val splited = path.split("/")
+    val filename = splited(splited.length -1)
+    (path.replace(filename, ""), filename)
+  }
 }
