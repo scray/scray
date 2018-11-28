@@ -152,7 +152,7 @@ class WriteServiceImpl extends WriteService {
       
       val pathAndFilename = renamer.separateFilename(path)
       val newFilename = pathAndFilename._1 + pathAndFilename._2.replace(".", "")
-      new ScrayOutputStream(writer.write(path), path, newFilename) 
+      new ScrayOutputStream(writer.write(pathAndFilename._1 + "." + pathAndFilename._2), path, newFilename) 
     } else {
       val writer = new RawFileWriter(path)
       new ScrayOutputStream(writer.write(path)) 
