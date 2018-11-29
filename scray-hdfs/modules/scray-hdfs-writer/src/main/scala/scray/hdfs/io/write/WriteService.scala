@@ -22,6 +22,7 @@ import java.util.UUID
 
 import com.google.common.util.concurrent.ListenableFuture
 import scray.hdfs.io.write.IHdfsWriterConstats.SequenceKeyValueFormat
+import org.apache.hadoop.conf.Configuration
 
 trait WriteService {
     /**
@@ -44,8 +45,9 @@ trait WriteService {
    */
   def writeRawFile(path: String, writeAndRename: Boolean): ScrayOutputStream
   def writeRawFile(path: String): ScrayOutputStream
-
   
+  def rename(source: String, destination: String, conf: Configuration): ScrayListenableFuture
+
   def close(resource: UUID)
   def isClosed(resource: UUID): ScrayListenableFuture
 }

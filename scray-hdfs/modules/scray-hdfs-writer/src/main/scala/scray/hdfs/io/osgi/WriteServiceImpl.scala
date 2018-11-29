@@ -45,6 +45,7 @@ import scray.hdfs.io.index.format.sequence.mapping.impl.OutputTextText
 import scray.hdfs.io.write.ScrayOutputStream
 import scray.hdfs.io.coordination.WriteDestination
 import scray.hdfs.io.modify.Renamer
+import org.apache.hadoop.conf.Configuration
 
 class WriteServiceImpl extends WriteService {
 
@@ -152,7 +153,8 @@ class WriteServiceImpl extends WriteService {
       
       val pathAndFilename = renamer.separateFilename(path)
       val newFilename = pathAndFilename._1 + pathAndFilename._2.replace(".", "")
-      new ScrayOutputStream(writer.write(pathAndFilename._1 + "." + pathAndFilename._2), path, newFilename) 
+      val hiddenFile = pathAndFilename._1 + "." + pathAndFilename._2
+      new ScrayOutputStream(writer.write(hiddenFile), hiddenFile, newFilename) 
     } else {
       val writer = new RawFileWriter(path)
       new ScrayOutputStream(writer.write(path)) 
@@ -180,6 +182,10 @@ class WriteServiceImpl extends WriteService {
     }
   }
 
+   override def rename(source: String, destination: String, conf: Configuration): ScrayListenableFuture = {
+     new ScrayListenableFuture
+   }
+  
   def closeAll = synchronized {
     val keysOfWriter = writersMetadata.keySet().iterator()
 
