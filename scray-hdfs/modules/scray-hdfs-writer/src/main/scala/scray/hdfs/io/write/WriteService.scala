@@ -43,7 +43,7 @@ trait WriteService {
   /**
    * @param writeAndRename A dot will be set at the first character of the filename while writing. File will be renamed after stream was closed.
    */
-  def writeRawFile(path: String, writeAndRename: Boolean): ScrayOutputStream
+  //def writeRawFile(path: String, writeAndRename: Boolean): ScrayOutputStream
   def writeRawFile(path: String): ScrayOutputStream
   
   def rename(source: String, destination: String, conf: Configuration): ScrayListenableFuture

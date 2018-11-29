@@ -71,7 +71,7 @@ class WriteServiceImpl extends WriteService {
 
     this.createWriter(format, metadata)
   }
-  
+
   override def createWriter(path: String, format: SequenceKeyValueFormat, numberOpKeyValuePairs: Int): UUID = synchronized {
     logger.debug(s"Create writer for path ${path}")
     val id = UUID.randomUUID()
@@ -145,22 +145,22 @@ class WriteServiceImpl extends WriteService {
     }
   }
 
-  def writeRawFile(path: String, writeAndRename: Boolean): ScrayOutputStream = synchronized {
-    
-    if(writeAndRename) {
-      val writer = new RawFileWriter(path)
-      val renamer = new Renamer
-      
-      val pathAndFilename = renamer.separateFilename(path)
-      val newFilename = pathAndFilename._1 + pathAndFilename._2.replace(".", "")
-      val hiddenFile = pathAndFilename._1 + "." + pathAndFilename._2
-      new ScrayOutputStream(writer.write(hiddenFile), hiddenFile, newFilename) 
-    } else {
-      val writer = new RawFileWriter(path)
-      new ScrayOutputStream(writer.write(path)) 
-    }
-  }
-  
+//  def writeRawFile(path: String, writeAndRename: Boolean): ScrayOutputStream = synchronized {
+//
+//    if (writeAndRename) {
+//      val writer = new RawFileWriter(path)
+//      val renamer = new Renamer
+//
+//      val pathAndFilename = renamer.separateFilename(path)
+//      val newFilename = pathAndFilename._1 + pathAndFilename._2.replace(".", "")
+//      val hiddenFile = pathAndFilename._1 + "." + pathAndFilename._2
+//      new ScrayOutputStream(writer.write(hiddenFile), hiddenFile, newFilename)
+//    } else {
+//      val writer = new RawFileWriter(path)
+//      new ScrayOutputStream(writer.write(path))
+//    }
+//  }
+
   def writeRawFile(path: String): ScrayOutputStream = synchronized {
     val writer = new RawFileWriter(path)
     new ScrayOutputStream(writer.write(path))
@@ -182,12 +182,12 @@ class WriteServiceImpl extends WriteService {
     }
   }
 
-   override def rename(source: String, destination: String, conf: Configuration): ScrayListenableFuture = {
-     logger.debug(s"Rename file from ${source} to ${destination}")
-     val renamer = new Renamer
-     renamer.rename(source, destination, conf)
-   }
-  
+  override def rename(source: String, destination: String, conf: Configuration): ScrayListenableFuture = {
+    logger.debug(s"Rename file from ${source} to ${destination}")
+    val renamer = new Renamer
+    renamer.rename(source, destination, conf)
+  }
+
   def closeAll = synchronized {
     val keysOfWriter = writersMetadata.keySet().iterator()
 
