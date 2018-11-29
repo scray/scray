@@ -183,7 +183,9 @@ class WriteServiceImpl extends WriteService {
   }
 
    override def rename(source: String, destination: String, conf: Configuration): ScrayListenableFuture = {
-     new ScrayListenableFuture
+     logger.debug(s"Rename file from ${source} to ${destination}")
+     val renamer = new Renamer
+     renamer.rename(source, destination, conf)
    }
   
   def closeAll = synchronized {
