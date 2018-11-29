@@ -41,13 +41,6 @@ class ScrayOutputStream(stream: OutputStream, filename: String, nameAfterClose: 
   }
 
   override def close(): Unit = {
-    if(nameAfterClose != null && filename != null) {
-      val renamer = new Renamer
       stream.close()
-      
-      renamer.rename(filename, nameAfterClose).get 
-    } else {
-      stream.close()
-    }
   }
 }
