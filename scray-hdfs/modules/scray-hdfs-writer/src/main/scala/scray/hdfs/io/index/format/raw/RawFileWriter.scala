@@ -72,6 +72,7 @@ class RawFileWriter(hdfsURL: String, hdfsConf: Configuration) extends LazyLoggin
         }
       }
       case e: Exception => throw e
+      case e: Throwable => throw e
     }
   }
   

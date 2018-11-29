@@ -145,22 +145,6 @@ class WriteServiceImpl extends WriteService {
     }
   }
 
-//  def writeRawFile(path: String, writeAndRename: Boolean): ScrayOutputStream = synchronized {
-//
-//    if (writeAndRename) {
-//      val writer = new RawFileWriter(path)
-//      val renamer = new Renamer
-//
-//      val pathAndFilename = renamer.separateFilename(path)
-//      val newFilename = pathAndFilename._1 + pathAndFilename._2.replace(".", "")
-//      val hiddenFile = pathAndFilename._1 + "." + pathAndFilename._2
-//      new ScrayOutputStream(writer.write(hiddenFile), hiddenFile, newFilename)
-//    } else {
-//      val writer = new RawFileWriter(path)
-//      new ScrayOutputStream(writer.write(path))
-//    }
-//  }
-
   def writeRawFile(path: String): ScrayOutputStream = synchronized {
     val writer = new RawFileWriter(path)
     new ScrayOutputStream(writer.write(path))
@@ -182,10 +166,10 @@ class WriteServiceImpl extends WriteService {
     }
   }
 
-  override def rename(source: String, destination: String, conf: Configuration): ScrayListenableFuture = {
+  override def rename(source: String, destination: String): ScrayListenableFuture = {
     logger.debug(s"Rename file from ${source} to ${destination}")
     val renamer = new Renamer
-    renamer.rename(source, destination, conf)
+    renamer.rename(source, destination)
   }
 
   def closeAll = synchronized {

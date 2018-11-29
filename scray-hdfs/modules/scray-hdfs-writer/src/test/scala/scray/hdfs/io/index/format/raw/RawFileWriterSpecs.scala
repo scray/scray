@@ -15,8 +15,6 @@
 
 package scray.hdfs.io.index.format.raw
 
-
-
 import org.scalatest.WordSpec
 
 import com.typesafe.scalalogging.LazyLogging
