@@ -20,27 +20,27 @@ import scray.hdfs.io.modify.Renamer
 
 class ScrayOutputStream(stream: OutputStream, filename: String, nameAfterClose: String) extends OutputStream {
 
-  def this(stream: OutputStream) = {
+  def this(stream: OutputStream) =  {
     this(stream, null, null)
   }
   
-  override def write(b: Int): Unit = {
+  override def write(b: Int): Unit = this.synchronized {
     stream.write(b)
   }
 
-  override def write(b: Array[Byte]): Unit = {
+  override def write(b: Array[Byte]): Unit = this.synchronized {
     stream.write(b)
   }
 
-  override def write(b: Array[Byte], off: Int, len: Int): Unit = {
+  override def write(b: Array[Byte], off: Int, len: Int): Unit = this.synchronized {
     stream.write(b, off, len)
   }
 
-  override def flush(): Unit = {
+  override def flush(): Unit = this.synchronized {
     stream.flush()
   }
 
-  override def close(): Unit = {
+  override def close(): Unit = this.synchronized {
       stream.close()
   }
 }
