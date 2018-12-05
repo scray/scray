@@ -12,12 +12,15 @@ jobs:
                 - stage: build-with-tests
                   install:
                           mvn --settings .maven.xml install -B 
-                  if: NOT branch = develop  
                 - stage: build-profil-MinimizedDependencies
                   install:
                           mvn clean install --settings .maven.xml -B -PMinimizedDependencies
-                  if: true
                 - stage: deploy-develop-branch
                   install:
                         mvn clean deploy --settings .maven.xml -B -PMinimizedDependencies
-                  if: branch = develop 
+
+stages:
+  - build-with-tests 
+  - build-profil-MinimizedDependencies 
+  - name: deploy-develop-branch 
+    if: branch = develop 
