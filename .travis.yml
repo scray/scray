@@ -19,5 +19,4 @@ jobs:
                   install:
                         mvn clean deploy --settings .maven.xml -B
                         mvn clean deploy --settings .maven.xml -B -PMinimizedDependencies
-                  on:
-                        branch: develop 
+                  if: branch: develop 
