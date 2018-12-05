@@ -153,6 +153,7 @@
 						</goals>
 						<configuration>
 							<descriptor>scray-loader-dependencies.xml</descriptor>
+							<attach>false</attach>
 						</configuration>
 					</execution>
 				</executions>
