@@ -12,11 +12,12 @@ jobs:
                 - stage: build-with-tests
                   install:
                           mvn --settings .maven.xml install -B 
-                - stage: build-with-minimized-libs
+                - stage: build-profil-MinimizedDependencies
                   install:
-                          mvn clean deploy --settings .maven.xml -B -PMinimizedDependencies
+                          mvn clean install --settings .maven.xml -B -PMinimizedDependencies
                 - stage: deploy-develop-branch
                   install:
                         mvn clean deploy --settings .maven.xml -B
+                        mvn clean deploy --settings .maven.xml -B -PMinimizedDependencies
                   on:
                         branch: develop 
