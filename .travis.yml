@@ -4,7 +4,9 @@ jdk:
     - oraclejdk8
 
 install:
-    mvn --settings .maven.xml install -DskipTests=true -Dgpg.skip -Dmaven.javadoc.skip=true -B -V 
+    mvn --settings .maven.xml install -B 
 
 script:
-    mvn clean deploy --settings .maven.xml -DskipTests=true -B -U
+    mvn clean deploy --settings .maven.xml -B
+    on:
+            branch: develop 
