@@ -15,12 +15,17 @@ jobs:
                 - stage: build-profil-MinimizedDependencies
                   install:
                           mvn clean install --settings .maven.xml -B -PMinimizedDependencies
-                - stage: deploy-develop-branch
+                - stage: deploy-develop-with-profil-MinimizedDependencies
                   install:
                         mvn clean deploy --settings .maven.xml -B -PMinimizedDependencies
+                - stage: deploy-develop
+                  install:
+                        mvn clean deploy --settings .maven.xml -B
 
 stages:
   - build-with-tests 
   - build-profil-MinimizedDependencies 
-  - name: deploy-develop-branch 
+  - name: deploy-develop-with-profil-MinimizedDependencies 
     if: branch = develop 
+  - name: deploy-develop
+    if: branch = develop
