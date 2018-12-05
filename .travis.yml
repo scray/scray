@@ -3,10 +3,16 @@ language: java
 jdk:
     - oraclejdk8
 
-install:
-    mvn --settings .maven.xml install -B 
-
-script:
-    mvn clean deploy --settings .maven.xml -B
-    on:
-            branch: develop 
+jobs:
+        include:
+                - stage: build-with-tests
+                  install:
+                          mvn --settings .maven.xml install -B 
+                - stage: build-with-minimized-libs
+                  install:
+                          mvn clean deploy --settings .maven.xml -B -PMinimizedDependencies
+                - stage: deploy-develop-branch
+                  install:
+                        mvn clean deploy --settings .maven.xml -B
+                  on:
+                        branch: develop 
