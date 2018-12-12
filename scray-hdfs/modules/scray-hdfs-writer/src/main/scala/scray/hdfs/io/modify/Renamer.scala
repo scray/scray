@@ -23,12 +23,13 @@ import scray.hdfs.io.write.ScrayListenableFuture
 import scray.hdfs.io.write.WriteResult
 
 class Renamer {
-  
+
   def rename(source: String, destination: String, conf: Configuration = new Configuration()): ScrayListenableFuture = {
     try {
+      
       val fs = FileSystem.get(URI.create(source), conf);
+
       fs.rename(new Path(source), new Path(destination));
-      fs.close()
       new ScrayListenableFuture(new WriteResult(true, s"File ${source} renamed to ${destination}"))
     } catch {
       case e: Exception => {
@@ -36,10 +37,10 @@ class Renamer {
       }
     }
   }
-  
+
   def separateFilename(path: String): Tuple2[String, String] = {
     val splited = path.split("/")
-    val filename = splited(splited.length -1)
+    val filename = splited(splited.length - 1)
     (path.replace(filename, ""), filename)
   }
 }
