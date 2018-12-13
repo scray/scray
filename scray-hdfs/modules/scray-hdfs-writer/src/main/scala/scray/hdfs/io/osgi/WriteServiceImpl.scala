@@ -56,7 +56,7 @@ class WriteServiceImpl extends WriteService {
     logger.debug(s"Create writer for path ${path}")
     val id = UUID.randomUUID()
 
-    val metadata = WriteDestination("000", path, IHdfsWriterConstats.SequenceKeyValueFormat.SequenceFile_IndexValue_Blob, Version(0), 512 * 1024 * 1024L, 5)
+    val metadata = WriteDestination("000", path, IHdfsWriterConstats.SequenceKeyValueFormat.SequenceFile_IndexValue_Blob, Version(0), 512 * 1024 * 1024L, 5, true, false)
 
     writersMetadata.put(id, new CoordinatedWriter(8192, metadata, new OutputBlob))
 
@@ -76,7 +76,7 @@ class WriteServiceImpl extends WriteService {
     logger.debug(s"Create writer for path ${path}")
     val id = UUID.randomUUID()
 
-    val metadata = WriteDestination("000", path, format, Version(0), 512 * 1024 * 2048L, numberOpKeyValuePairs)
+    val metadata = WriteDestination("000", path, format, Version(0), 512 * 1024 * 2048L, numberOpKeyValuePairs, true, false)
 
     this.createWriter(format, metadata)
   }
