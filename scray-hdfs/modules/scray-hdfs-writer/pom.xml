@@ -305,7 +305,7 @@
 								</goals>
 								<configuration>
 									<packaging>jar</packaging>
-									<file>target/${artifactId}-${version}-${minimizedLibsClassifier}.jar</file>
+									<file>target/${project.artifactId}-${project.version}-${minimizedLibsClassifier}.jar</file>
 								</configuration>
 							</execution>
 						</executions>

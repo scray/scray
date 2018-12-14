@@ -18,11 +18,11 @@ package scray.hdfs.io.write
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.SettableFuture
 
-class ScrayListenableFuture extends ListenableFuture[WriteResult] {
+class ScrayListenableFuture[T] extends ListenableFuture[T] {
  
-  val future = SettableFuture.create[WriteResult]();
+  val future = SettableFuture.create[T]();
   
-  def this(succesResult: WriteResult) {
+  def this(succesResult: T) {
     this
     this.future.set(succesResult)
   }
@@ -34,8 +34,8 @@ class ScrayListenableFuture extends ListenableFuture[WriteResult] {
   
   def cancel(x: Boolean): Boolean = future.cancel(x)
   def addListener(x1: Runnable, x2: java.util.concurrent.Executor): Unit = future.addListener(x1, x2)
-  def get(x1: Long,x2: java.util.concurrent.TimeUnit): scray.hdfs.io.write.WriteResult = future.get(x1, x2)
-  def get(): scray.hdfs.io.write.WriteResult = future.get
+  def get(x1: Long,x2: java.util.concurrent.TimeUnit): T = future.get(x1, x2)
+  def get(): T = future.get
   def isCancelled(): Boolean = future.isCancelled()
   def isDone(): Boolean = future.isDone()
 }

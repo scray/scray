@@ -26,6 +26,9 @@ import java.io.OutputStream
 import java.io.File
 import java.nio.file.Paths
 import scray.hdfs.io.environment.WindowsHadoopLibs
+import com.google.common.util.concurrent.ListenableFuture
+import com.google.common.util.concurrent.SettableFuture
+import java.util.ArrayList
 
 class RawFileWriter(hdfsURL: String, hdfsConf: Configuration) extends LazyLogging {
 
@@ -81,7 +84,8 @@ class RawFileWriter(hdfsURL: String, hdfsConf: Configuration) extends LazyLoggin
 
     dataWriter.create(new Path(fileName))
   }
-
+  
+ 
   def close = {
     dataWriter.close()
   }

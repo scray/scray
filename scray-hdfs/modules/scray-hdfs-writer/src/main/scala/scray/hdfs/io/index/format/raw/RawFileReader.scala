@@ -20,6 +20,9 @@ import com.typesafe.scalalogging.LazyLogging
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.FileSystem
 import org.apache.hadoop.fs.Path
+import com.google.common.util.concurrent.SettableFuture
+import com.google.common.util.concurrent.ListenableFuture
+import java.util.ArrayList
 
 class RawFileReader(hdfsURL: String, hdfsConf: Configuration) extends LazyLogging {
   
@@ -41,9 +44,39 @@ class RawFileReader(hdfsURL: String, hdfsConf: Configuration) extends LazyLoggin
   def read(path: String): InputStream = {
    if(dataReader == null ) {
       logger.debug("Writer was not initialized. Will do it now")
-      initReader()
+      initReader
     }
    
     dataReader.open(new Path(path))
+  }
+  
+  def getFileList(path: String): ListenableFuture[java.util.List[String]] = {
+    val fileList = SettableFuture.create[java.util.List[String]]();
+    
+    if(dataReader == null) {
+      initReader
+    }
+    
+    try {
+      val fileIter = dataReader.listFiles(new Path(path), false)
+      val files: java.util.List[String ] = new ArrayList[String](100)
+      
+      while(fileIter.hasNext()) {
+        files.add(
+            fileIter
+            .next()
+            .getPath
+            .getName
+         )  
+      }
+      fileList.set(files)
+    } catch {
+      case e: Throwable => {
+        logger.error("Unable to get filelist")
+        fileList.setException(e);
+      }
+    }
+    
+    return fileList;
   }
 }
