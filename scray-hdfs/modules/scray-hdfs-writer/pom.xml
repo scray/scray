@@ -266,7 +266,8 @@
 										<Embed-Dependency>scope=compile;artifactId=!servlet-api|jsp-api|jsr305|jets3t|hadoop-annotations|jsch|netty|xmlenc|logback-classic|jetty*|jasper*|curator*|commons-http*|httpclient*|snappy*|jackson*</Embed-Dependency>
 										<Embed-Transitive>true</Embed-Transitive>
 										<Export-Package>
-											scray.hdfs.io.write
+											scray.hdfs.io.write,
+											scray.hdfs.io.read
 										</Export-Package>
 										<Import-Package>
 											!*,
