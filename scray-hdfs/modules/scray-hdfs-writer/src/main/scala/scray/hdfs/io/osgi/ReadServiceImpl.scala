@@ -17,14 +17,17 @@ class ReadServiceImpl extends ReadService {
       val result = reader.get(this.getAuthority(path)).getFileList(path).get
       return new ScrayListenableFuture[java.util.List[String]](result)
     } catch {
-      case e: Throwable => return new ScrayListenableFuture[java.util.List[String]](e)
+      case e: Throwable => {
+        e.printStackTrace()
+        new ScrayListenableFuture[java.util.List[String]](e)
+      }
     }
 
   }
   def getInputStream(path: String): ScrayListenableFuture[java.io.InputStream] = {
     try {
       if (reader.get(this.getAuthority(path)) == null) {
-        reader.put(path, new RawFileReader(path))
+        reader.put(getAuthority(path), new RawFileReader(path))
       }
 
       val stream = reader
@@ -32,15 +35,34 @@ class ReadServiceImpl extends ReadService {
         .read(path)
       new ScrayListenableFuture(stream)
     } catch {
-      case e: Throwable => new ScrayListenableFuture(e)
+      case e: Throwable => {
+        e.printStackTrace()
+        new ScrayListenableFuture(e)
+      }
     }
   }
 
+  override def deleteFile(path: String): ScrayListenableFuture[Unit] = {
+    try {
+      if (reader.get(this.getAuthority(path)) == null) {
+        reader.put(getAuthority(path), new RawFileReader(path))
+      }
+
+      val stream = reader
+        .get(getAuthority(path))
+        .deleteFile(path)
+        new ScrayListenableFuture(Unit)
+    } catch {
+      case e: Throwable => {
+        e.printStackTrace()
+        new ScrayListenableFuture(e)
+      }
+    }
+
+  }
   private def getAuthority(path: String): String = {
     val uri = new URI(path)
     println(uri.getAuthority)
     uri.getAuthority
   }
-
-  def deleteFile(path: String) {}
 }
