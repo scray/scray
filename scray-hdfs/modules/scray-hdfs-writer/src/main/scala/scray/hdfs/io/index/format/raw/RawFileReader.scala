@@ -17,6 +17,9 @@ package scray.hdfs.io.index.format.raw
 
 import java.io.InputStream
 import com.typesafe.scalalogging.LazyLogging
+
+import scray.hdfs.io.read.FileParameter;
+
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.FileSystem
 import org.apache.hadoop.fs.Path
@@ -59,8 +62,8 @@ class RawFileReader(hdfsURL: String, hdfsConf: Configuration) extends LazyLoggin
     dataReader.delete(new Path(path), true)
   }
 
-  def getFileList(path: String): ListenableFuture[java.util.List[String]] = {
-    val fileList = SettableFuture.create[java.util.List[String]]();
+  def getFileList(path: String): ListenableFuture[java.util.List[FileParameter]] = {
+    val fileList = SettableFuture.create[java.util.List[FileParameter]]();
 
     if (dataReader == null) {
       initReader
@@ -68,16 +71,15 @@ class RawFileReader(hdfsURL: String, hdfsConf: Configuration) extends LazyLoggin
 
     try {
       val fileIter = dataReader.listFiles(new Path(path), false)
-      val files: java.util.List[String] = new ArrayList[String](100)
+      val fileParameters: java.util.List[FileParameter] = new ArrayList[FileParameter](100)
 
       while (fileIter.hasNext()) {
-        files.add(
-          fileIter
-            .next()
-            .getPath
-            .getName)
+        val currentFile = fileIter.next()
+
+        val fileParamteter = new FileParameter(currentFile.getLen, path, currentFile.getPath.getName)
+        fileParameters.add(fileParamteter)
       }
-      fileList.set(files)
+      fileList.set(fileParameters)
     } catch {
       case e: Throwable => {
         logger.error("Unable to get filelist")

@@ -5,6 +5,6 @@ import scray.hdfs.io.write.ScrayListenableFuture
 
 trait ReadService {
   def getInputStream(path: String): ScrayListenableFuture[InputStream]
-  def getFileList(path: String): ScrayListenableFuture[java.util.List[String]]
+  def getFileList(path: String): ScrayListenableFuture[java.util.List[FileParameter]]
   def deleteFile(path: String): ScrayListenableFuture[Unit]
 }

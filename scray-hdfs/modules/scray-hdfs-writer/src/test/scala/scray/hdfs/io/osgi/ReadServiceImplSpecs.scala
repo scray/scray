@@ -54,7 +54,7 @@ class ReadServiceImplSpecs extends WordSpec with BeforeAndAfter with LazyLogging
       val files = reader.getFileList(exampleFile).get()
 
       Assert.assertTrue(files.size() == 1);
-      Assert.assertTrue(files.get(0) == "file1.txt");
+      Assert.assertTrue(files.get(0).getFileName == "file1.txt");
     }
     " read file " in {
       val reader = new ReadServiceImpl

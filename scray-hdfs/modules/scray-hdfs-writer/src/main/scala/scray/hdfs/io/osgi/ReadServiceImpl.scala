@@ -5,21 +5,22 @@ import scray.hdfs.io.index.format.raw.RawFileReader
 import java.util.HashMap
 import java.net.URI
 import scray.hdfs.io.write.ScrayListenableFuture
+import scray.hdfs.io.read.FileParameter
 
 class ReadServiceImpl extends ReadService {
   val reader = new HashMap[String, RawFileReader]()
 
-  def getFileList(path: String): ScrayListenableFuture[java.util.List[String]] = {
+  def getFileList(path: String): ScrayListenableFuture[java.util.List[FileParameter]] = {
     try {
       if (reader.get(this.getAuthority(path)) == null) {
         reader.put(this.getAuthority(path), new RawFileReader(path))
       }
       val result = reader.get(this.getAuthority(path)).getFileList(path).get
-      return new ScrayListenableFuture[java.util.List[String]](result)
+      return new ScrayListenableFuture[java.util.List[FileParameter]](result)
     } catch {
       case e: Throwable => {
         e.printStackTrace()
-        new ScrayListenableFuture[java.util.List[String]](e)
+        new ScrayListenableFuture[java.util.List[FileParameter]](e)
       }
     }
 
