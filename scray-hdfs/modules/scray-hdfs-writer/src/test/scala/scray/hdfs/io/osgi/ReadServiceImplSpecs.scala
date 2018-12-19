@@ -32,13 +32,14 @@ import collection.JavaConverters._
 import java.util.UUID
 import org.scalatest.BeforeAndAfter
 import org.apache.commons.io.IOUtils
+import java.net.URL
 
 class ReadServiceImplSpecs extends WordSpec with BeforeAndAfter with LazyLogging {
   val pathToWinutils = classOf[ReadServiceImplSpecs].getClassLoader.getResource("HADOOP_HOME/bin/winutils.exe");
   val hadoopHome = Paths.get(pathToWinutils.toURI()).toFile().toString().replace("\\bin\\winutils.exe", "")
   System.setProperty("hadoop.home.dir", hadoopHome)
 
-  val exampleFile = s"file:///${System.getProperty("user.dir")}/target/ReadServiceImplSpecs/listFiles/${UUID.randomUUID()}/file1.txt"
+  val exampleFile = s"${new URL("file:///" + System.getProperty("user.dir"))}" + s"/target/ReadServiceImplSpecs/listFiles/${UUID.randomUUID()}/file1.txt"
 
   // Write a test file
   before {
@@ -62,22 +63,26 @@ class ReadServiceImplSpecs extends WordSpec with BeforeAndAfter with LazyLogging
       Assert.assertEquals("ABCDEFG", fileContent);
     }
    " delete file " in {
-     // Create example file
-     val exampleFile = s"file:///${System.getProperty("user.dir")}/target/ReadServiceImplSpecs/listFiles/${UUID.randomUUID()}/file2.txt"
-     val service = new WriteServiceImpl
-     service.writeRawFile(exampleFile, new ByteArrayInputStream(s"ABCDEFG".getBytes))
- 
-     val reader = new ReadServiceImpl
-     
-     // Check if file exits
-     val files = reader.getFileList(exampleFile).get()
-     Assert.assertTrue(files.size() == 1);
-     
-     // Delete file
-     reader.deleteFile(exampleFile).get
-     
-     // Check if file was removed
-     Assert.assertTrue(reader.getFileList(exampleFile.replace("file2.txt", "")).get().size() == 0);      
+     if(!System.getProperty("os.name").toUpperCase().contains("WINDOWS")) {
+       // Create example file
+       val exampleFile =s"${new URL("file:///" + System.getProperty("user.dir"))}" + s"/target/ReadServiceImplSpecs/listFiles/${UUID.randomUUID()}/file2.txt"
+       val service = new WriteServiceImpl
+       service.writeRawFile(exampleFile, new ByteArrayInputStream(s"ABCDEFG".getBytes))
+   
+       val reader = new ReadServiceImpl
+       
+       // Check if file exits
+       val files = reader.getFileList(exampleFile).get()
+       Assert.assertTrue(files.size() == 1);
+       
+       // Delete file
+       reader.deleteFile(exampleFile).get
+       
+       // Check if file was removed
+       Assert.assertEquals(0, reader.getFileList(exampleFile.replace("file2.txt", "")).get().size());    
+     } else {
+       logger.warn("Delete test was skipped because deleting files on windows is currently not supported")
+     }
    }
   }
 }
