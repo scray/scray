@@ -24,7 +24,7 @@ import scray.hdfs.io.write.WriteResult
 
 class Renamer {
 
-  def rename(source: String, destination: String, conf: Configuration = new Configuration()): ScrayListenableFuture = {
+  def rename(source: String, destination: String, conf: Configuration = new Configuration()):  ScrayListenableFuture[WriteResult] = {
     try {
       
       val fs = FileSystem.get(URI.create(source), conf);

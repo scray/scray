@@ -93,7 +93,7 @@ class WriteServiceImpl extends WriteService {
     id
   }
 
-  def insert(resource: UUID, id: String, updateTime: Long, data: Array[Byte]) = synchronized {
+  def insert(resource: UUID, id: String, updateTime: Long, data: Array[Byte]):  ScrayListenableFuture[WriteResult] = synchronized {
     logger.debug(s"Insert data for resource ${resource}.")
 
     try {
@@ -101,12 +101,12 @@ class WriteServiceImpl extends WriteService {
       new ScrayListenableFuture(new WriteResult("Data inserted"))
     } catch {
       case e: Exception => {
-        new ScrayListenableFuture(e)
+        new ScrayListenableFuture[WriteResult](e)
       }
     }
   }
 
-  def insert(resource: UUID, id: String, updateTime: Long, data: InputStream, blobSplitSize: Int = 5 * 1024 * 1024) = synchronized {
+  def insert(resource: UUID, id: String, updateTime: Long, data: InputStream, blobSplitSize: Int = 5 * 1024 * 1024):  ScrayListenableFuture[WriteResult] = synchronized {
     logger.debug(s"Insert data for resource ${resource}")
 
     try {
@@ -119,7 +119,7 @@ class WriteServiceImpl extends WriteService {
     }
   }
 
-  def insert(resource: UUID, id: String, updateTime: Long, data: InputStream, dataSize: BigInteger, blobSplitSize: Int) = synchronized {
+  def insert(resource: UUID, id: String, updateTime: Long, data: InputStream, dataSize: BigInteger, blobSplitSize: Int):  ScrayListenableFuture[WriteResult] = synchronized {
     logger.debug(s"Insert data for resource ${resource}")
 
     try {
@@ -132,7 +132,7 @@ class WriteServiceImpl extends WriteService {
     }
   }
 
-  def writeRawFile(path: String, data: InputStream) = synchronized {
+  def writeRawFile(path: String, data: InputStream):  ScrayListenableFuture[WriteResult] = synchronized {
     try {
       val writer = new RawFileWriter(path)
       writer.write(path, data)
@@ -166,7 +166,7 @@ class WriteServiceImpl extends WriteService {
     }
   }
 
-  override def rename(source: String, destination: String): ScrayListenableFuture = {
+  override def rename(source: String, destination: String):  ScrayListenableFuture[WriteResult] = {
     logger.debug(s"Rename file from ${source} to ${destination}")
     val renamer = new Renamer
     renamer.rename(source, destination)
@@ -187,7 +187,7 @@ class WriteServiceImpl extends WriteService {
     }
   }
 
-  def isClosed(resource: UUID): ScrayListenableFuture = {
+  def isClosed(resource: UUID):  ScrayListenableFuture[WriteResult] = {
     try {
       val isClosed = writersMetadata.get(resource).isClosed
       new ScrayListenableFuture(new WriteResult(isClosed, "File is closed"))

@@ -25,35 +25,29 @@ import scray.hdfs.io.index.format.sequence.mapping.impl.OutputTextBytesWritable
 import scray.hdfs.io.index.format.Writer
 import scray.hdfs.io.write.WriteService
 import scray.hdfs.io.write.IHdfsWriterConstats
+import scray.hdfs.io.read.ReadService
 
-class ServiceFactory extends org.osgi.framework.ServiceFactory[scray.hdfs.io.write.WriteService] {
-  
-  var writer: WriteServiceImpl = null
+class ReadServiceFactory extends org.osgi.framework.ServiceFactory[ReadService] {
+    var reader: ReadServiceImpl = null
 
-  def getService(bundle: Bundle, reg: ServiceRegistration[scray.hdfs.io.write.WriteService]): WriteService = {
+  def getService(bundle: Bundle, reg: ServiceRegistration[ReadService]): ReadService = {
     println("Provide service")
     
     val destinationPath = bundle.getBundleContext.getProperty(IHdfsWriterConstats.WriteParameter.destinationPath.toString)
     
     try {
-      writer = new WriteServiceImpl
+      reader = new ReadServiceImpl
     } catch {
-      case e: Exception => println("Error while creating writer " + e)
+      case e: Exception => println("Error while creating reader " + e)
     }
 
-    writer
+    reader
   }
   
 
-  def ungetService(bundle: Bundle, reg: ServiceRegistration[scray.hdfs.io.write.WriteService], writer: scray.hdfs.io.write.WriteService): Unit = {
-    if(this.writer != null) {
-      this.writer.closeAll
-    }
+  def ungetService(bundle: Bundle, reg: ServiceRegistration[ReadService], writer: ReadService): Unit = {
   }
   
   def close = {
-    if(this.writer != null) {
-      writer.closeAll
-    }
   }
 }
