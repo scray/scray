@@ -43,7 +43,7 @@ case class WriteDestination(
     path: String, 
     fileFormat: IHdfsWriterConstats.SequenceKeyValueFormat, 
     version: Version = Version(0), 
-    maxFileSize: Long = 512 * 1024 * 1024,
+    maxFileSize: Long = Long.MaxValue,
     maxNumberOfInserts: Int = Integer.MAX_VALUE,
     storeAsHiddenFileTillClosed: Boolean = false,
     createScrayIndexFile: Boolean = false

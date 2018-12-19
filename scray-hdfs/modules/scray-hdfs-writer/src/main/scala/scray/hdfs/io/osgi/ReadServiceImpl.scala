@@ -43,7 +43,7 @@ class ReadServiceImpl extends ReadService {
     }
   }
 
-  override def deleteFile(path: String): ScrayListenableFuture[Unit] = {
+  def deleteFile(path: String): ScrayListenableFuture[Unit] = {
     try {
       if (reader.get(this.getAuthority(path)) == null) {
         reader.put(getAuthority(path), new RawFileReader(path))

@@ -33,7 +33,7 @@ import scray.hdfs.io.modify.Renamer
 import org.apache.hadoop.conf.Configuration
 
 class CoordinatedWriter[+IDXKEY <: Writable, +IDXVALUE <: Writable, +DATAKEY <: Writable, +DATAVALUE <: Writable](
-    maxFileSize: Long = 8192, 
+    maxFileSize: Long = Long.MaxValue, 
     metadata: WriteDestination, 
     outTypeMapping: SequenceKeyValuePair[IDXKEY, IDXVALUE, DATAKEY, DATAVALUE]) extends LazyLogging with Writer {
   
