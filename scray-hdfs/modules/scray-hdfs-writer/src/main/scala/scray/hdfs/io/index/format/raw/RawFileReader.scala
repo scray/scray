@@ -75,7 +75,6 @@ class RawFileReader(hdfsURL: String, hdfsConf: Configuration) extends LazyLoggin
 
       while (fileIter.hasNext()) {
         val currentFile = fileIter.next()
-
         val fileParamteter = new FileParameter(currentFile.getLen, path, currentFile.getPath.getName)
         fileParameters.add(fileParamteter)
       }

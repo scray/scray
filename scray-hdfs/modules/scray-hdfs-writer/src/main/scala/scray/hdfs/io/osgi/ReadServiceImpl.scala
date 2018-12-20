@@ -63,7 +63,6 @@ class ReadServiceImpl extends ReadService {
   }
   private def getAuthority(path: String): String = {
     val uri = new URI(path)
-    println(uri.getAuthority)
     uri.getAuthority
   }
 }
