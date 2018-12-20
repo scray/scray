@@ -257,6 +257,7 @@
 				<version>2.5.3</version>
 				<configuration>
 					<useReleaseProfile>false</useReleaseProfile>
+					<pushChanges>false</pushChanges>
 				</configuration>
 			</plugin>
 			<plugin>
