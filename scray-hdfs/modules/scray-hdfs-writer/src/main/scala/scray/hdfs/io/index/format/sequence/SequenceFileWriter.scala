@@ -290,8 +290,8 @@ class SequenceFileWriter[IDXKEY <: Writable, IDXVALUE <: Writable, DATAKEY <: Wr
   }
 
   def close: Unit = {
-    IOUtils.closeStream(dataWriter);
-    
+    IOUtils.closeStream(dataWriter)
     idxWriter.map(idxWriter => IOUtils.closeStream(idxWriter))
+    varIsClosed = true
   }
 }

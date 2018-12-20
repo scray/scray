@@ -42,21 +42,27 @@ class CoordinatedWriter[+IDXKEY <: Writable, +IDXVALUE <: Writable, +DATAKEY <: 
   private var numInserts = 0
 
   def insert(id: String, updateTime: Long, data: Array[Byte]) = synchronized {
+    
+    // Limit was reached last time.
+    if(writer.isClosed) {
+      writer = createNewBasicWriter(metadata)
+      logger.debug(s"Create new file ${writer.getPath}")
+    }
+    
+    numInserts = numInserts + 1
+    val writtenBytes = writer.insert(id, updateTime, data)
+    
     // Check if file size limit is reached
-    if (!maxFileSizeReached(writer.getBytesWritten + data.length, maxFileSize)
-      &&
-      !maxNumInsertsReached(numInserts, metadata.maxNumberOfInserts)) {
-      numInserts = numInserts + 1
-      writer.insert(id, updateTime, data)
-    } else {
+    if (maxFileSizeReached(writer.getBytesWritten + data.length, maxFileSize)
+      ||
+      maxNumInsertsReached(numInserts, metadata.maxNumberOfInserts)) {
       logger.debug(s"Close file ${writer.getPath}")
       this.close
       
-      writer = createNewBasicWriter(metadata)
-      logger.debug(s"Create new file ${writer.getPath}")
       numInserts = 0
-      this.insert(id, updateTime, data)
     }
+    
+    writtenBytes
   }
 
   private def createNewBasicWriter(metadata: WriteDestination): Writer = {
@@ -123,56 +129,72 @@ class CoordinatedWriter[+IDXKEY <: Writable, +IDXVALUE <: Writable, +DATAKEY <: 
   
   override def insert(id: String, updateTime: Long, data: InputStream, dataSize: BigInteger, blobSplitSize: Int): Long = {
 
+    // Limit was reached last time.
+    if(writer.isClosed) {
+      writer = createNewBasicWriter(metadata)
+      logger.debug(s"Create new file ${writer.getPath}")
+    }
+    
+    numInserts = numInserts + 1
+    val writtenBytes = writer.insert(id, updateTime, data)
+    
     // Check if file size limit is reached
-    if (!maxFileSizeReached(writer.getBytesWritten + dataSize.longValue(), maxFileSize)
-      &&
-      !maxNumInsertsReached(numInserts, metadata.maxNumberOfInserts)) {
-      numInserts = numInserts + 1
-      writer.insert(id, updateTime, data)
-    } else {
+    if (maxFileSizeReached(writer.getBytesWritten + dataSize.longValue(), maxFileSize)
+      ||
+      maxNumInsertsReached(numInserts, metadata.maxNumberOfInserts)) {
       logger.debug(s"Close file ${writer.getPath}")
       this.close
       
-      logger.debug(s"Create new file ${writer.getPath}")
-      writer = createNewBasicWriter(metadata)
       numInserts = 0
-      this.insert(id, updateTime, data)
     }
+    
+    writtenBytes
   }
   
   override def insert(id: String, data: String): Long = {
-        // Check if file size limit is reached
-    if (!maxFileSizeReached(writer.getBytesWritten + data.getBytes.length, maxFileSize)
-      &&
-      !maxNumInsertsReached(numInserts, metadata.maxNumberOfInserts)) {
-      numInserts = numInserts + 1
-      writer.insert(id, data)
-    } else {
+    
+    // Limit was reached last time.
+    if(writer.isClosed) {
+      writer = createNewBasicWriter(metadata)
+      logger.debug(s"Create new file ${writer.getPath}")
+    }
+    
+    numInserts = numInserts + 1
+    val writtenBytes = writer.insert(id, data)
+    
+    // Check if file size limit is reached
+    if (maxFileSizeReached(writer.getBytesWritten + data.getBytes.length, maxFileSize)
+      ||
+      maxNumInsertsReached(numInserts, metadata.maxNumberOfInserts)) {
       logger.debug(s"Close file ${writer.getPath}")
       this.close
       
-      logger.debug(s"Create new file ${writer.getPath}")
-      writer = createNewBasicWriter(metadata)
       numInserts = 0
-      this.insert(id, data)
     }
+    
+    writtenBytes  
   }
 
 
   def insert(id: String, updateTime: Long, data: InputStream, blobSplitSize: Int): Long = {
+    
+    // Limit was reached last time.
+    if(writer.isClosed) {
+      writer = createNewBasicWriter(metadata)
+      logger.debug(s"Create new file ${writer.getPath}")
+    }
+    
+    numInserts = numInserts + 1
+    val writtenBrytes = writer.insert(id, updateTime, data, blobSplitSize)
+    
     // Check if file size limit is reached
-    if (!maxNumInsertsReached(numInserts, metadata.maxNumberOfInserts)) {
-      numInserts = numInserts + 1
-      writer.insert(id, updateTime, data, blobSplitSize)
-    } else {
+    if (maxNumInsertsReached(numInserts, metadata.maxNumberOfInserts)) {
       logger.debug(s"Close file ${writer.getPath}")
       this.close
       
-      writer = createNewBasicWriter(metadata)
-      logger.debug(s"Create new file ${writer.getPath}")
-
       numInserts = 0
-      this.insert(id, updateTime, data, blobSplitSize)
     }
+    
+    writtenBrytes
   }
 }
