@@ -26,7 +26,7 @@ import scray.hdfs.io.index.format.Writer
 import scray.hdfs.io.write.WriteService
 import scray.hdfs.io.write.IHdfsWriterConstats
 
-class ServiceFactory extends org.osgi.framework.ServiceFactory[scray.hdfs.io.write.WriteService] {
+class WriteServiceFactory extends org.osgi.framework.ServiceFactory[scray.hdfs.io.write.WriteService] {
   
   var writer: WriteServiceImpl = null
 

@@ -151,7 +151,8 @@
 						<Embed-Dependency>scope=compile;artifactId=!logback-classic</Embed-Dependency>
 						<Embed-Transitive>true</Embed-Transitive>
 						<Export-Package>
-							scray.hdfs.io.write
+							scray.hdfs.io.write,
+							scray.hdfs.io.read	
 						</Export-Package>
 						<Import-Package>
 							!*,

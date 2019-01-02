@@ -35,6 +35,10 @@ class RawFileReader(hdfsURL: String, hdfsConf: Configuration) extends LazyLoggin
     this(hdfsURL, new Configuration)
   }
 
+  if (getClass.getClassLoader != null) {
+    hdfsConf.setClassLoader(getClass.getClassLoader)
+  }
+  
   def initReader() = {
     hdfsConf.set("fs.hdfs.impl", classOf[org.apache.hadoop.hdfs.DistributedFileSystem].getName);
     hdfsConf.set("fs.file.impl", classOf[org.apache.hadoop.fs.LocalFileSystem].getName);
