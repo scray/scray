@@ -43,7 +43,7 @@ class ReadServiceImpl extends ReadService {
     }
   }
 
-  def deleteFile(path: String): ScrayListenableFuture[Unit] = {
+  def deleteFile(path: String): ScrayListenableFuture[String] = {
     try {
       if (reader.get(this.getAuthority(path)) == null) {
         reader.put(getAuthority(path), new RawFileReader(path))
@@ -52,7 +52,7 @@ class ReadServiceImpl extends ReadService {
       val stream = reader
         .get(getAuthority(path))
         .deleteFile(path)
-        new ScrayListenableFuture(Unit)
+        new ScrayListenableFuture(path)
     } catch {
       case e: Throwable => {
         e.printStackTrace()
