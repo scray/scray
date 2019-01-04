@@ -9,7 +9,7 @@
 
 	<modelVersion>4.0.0</modelVersion>
 	<artifactId>scray-hdfs-writer</artifactId>
-  <version>1.2.2-SNAPSHOT</version>
+  <version>1.2.3-SNAPSHOT</version>
 	<name>Scray - HDFS writer</name>
 	<description>scray adapter to write BLOBs to HDFS</description>
 	<packaging>bundle</packaging>
