@@ -58,7 +58,7 @@ class WriteServiceImplSpecs extends WordSpec with LazyLogging {
 
       service.close(writerId)
 
-      getIndexFiles(outPath + "/scray-data-000-v0/")
+      getIndexFiles(outPath + "/")
         .map(fileName => {
               if(fileName.startsWith("/")) {
                 (new IdxReader("file://" + fileName + ".idx", new OutputBlob),
@@ -106,7 +106,7 @@ class WriteServiceImplSpecs extends WordSpec with LazyLogging {
 
   private def getIndexFiles(path: String): List[String] = {
     val file = new File(path)
-
+println(path)
     file.listFiles()
       .map(file => file.getAbsolutePath)
       .filter(filename => filename.endsWith(".idx"))
