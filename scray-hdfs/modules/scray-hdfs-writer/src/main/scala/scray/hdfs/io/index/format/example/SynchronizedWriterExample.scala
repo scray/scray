@@ -15,7 +15,7 @@ object CoordinatedWriterExample {
   
   def main(args: Array[String]) {
 
-    val metadata = WriteDestination("000", "target/CoordinateWriteExample", IHdfsWriterConstats.SequenceKeyValueFormat.SequenceFile_Text_BytesWritable, Version(0), false, 64 * 1024 * 1024L, 5)
+    val metadata = WriteDestination("000", "target/CoordinateWriteExample", None, IHdfsWriterConstats.SequenceKeyValueFormat.SequenceFile_Text_BytesWritable, Version(0), false, 64 * 1024 * 1024L, 5)
     val writer = new CoordinatedWriter(8192, metadata, new OutputTextBytesWritable)
 
     println(metadata.maxNumberOfInserts)

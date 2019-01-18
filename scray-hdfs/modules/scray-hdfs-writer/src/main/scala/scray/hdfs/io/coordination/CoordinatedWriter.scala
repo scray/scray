@@ -66,42 +66,52 @@ class CoordinatedWriter[+IDXKEY <: Writable, +IDXVALUE <: Writable, +DATAKEY <: 
   }
 
   private def createNewBasicWriter(metadata: WriteDestination): Writer = {
-    val filePath = this.getPath(metadata.path, metadata.queryspace, metadata.version.number, metadata.writeVersioned)
+    val filePath = this.getPath(metadata.path, metadata.queryspace, metadata.version.number, metadata.writeVersioned, metadata.customFileName)
     val writer = new SequenceFileWriter(filePath, outTypeMapping, metadata.createScrayIndexFile)
     this.hdfsConf = writer.hdfsConf
 
     writer
   }
 
-  private def getPath(basePath: String, queryspace: String, version: Int, writeVersioned: Boolean): String = {
+  private def getPath(basePath: String, queryspace: String, version: Int, writeVersioned: Boolean, customFileName: Option[String]): String = {
     if (writeVersioned) {
       if (metadata.storeAsHiddenFileTillClosed) {
         if (basePath.endsWith("/")) {
-          s"${basePath}scray-data-${queryspace}-v${version}/.${UUID.randomUUID()}"
+          s"${basePath}scray-data-${queryspace}-v${version}/.${customFileName.getOrElse(UUID.randomUUID + ".seq")}"
         } else {
-          s"${basePath}/scray-data-${queryspace}-v${version}/.${UUID.randomUUID()}"
+          s"${basePath}/scray-data-${queryspace}-v${version}/.${customFileName.getOrElse(UUID.randomUUID + ".seq")}"
         }
       } else {
         if (basePath.endsWith("/")) {
-          s"${basePath}scray-data-${queryspace}-v${version}/${UUID.randomUUID()}"
+          s"${basePath}scray-data-${queryspace}-v${version}/${customFileName.getOrElse(UUID.randomUUID + ".seq")}"
         } else {
-          s"${basePath}/scray-data-${queryspace}-v${version}/${UUID.randomUUID()}"
+          s"${basePath}/scray-data-${queryspace}-v${version}/${customFileName.getOrElse(UUID.randomUUID + ".seq")}"
         }
       }
     } else {
-      s"${basePath}/${UUID.randomUUID()}"
+      s"${basePath}/${customFileName.getOrElse(UUID.randomUUID() + ".seq")}"
     }
   }
 
   def maxFileSizeReached(writtenBytes: Long, maxSize: Long): Boolean = {
-    logger.debug(s"Inserted bytes ${writtenBytes} of max ${maxSize} bytes")
-
-    writtenBytes >= maxSize
+    if(maxSize !=  0) { 
+     logger.debug(s"Inserted bytes ${writtenBytes} of max ${maxSize} bytes")
+      writtenBytes >= maxSize
+    } else {
+      logger.debug(s"Inserted bytes ${writtenBytes} to sequence file.")
+      false
+    }
   }
 
   def maxNumInsertsReached(numberInserts: Int, maxNumerInserts: Int): Boolean = {
-    logger.debug(s"Insert ${numberInserts}/${maxNumerInserts}")
-    numberInserts >= maxNumerInserts
+    
+    if(maxNumerInserts != 0) {
+      logger.debug(s"Insert ${numberInserts}/${maxNumerInserts}")
+      numberInserts >= maxNumerInserts
+    } else {
+      logger.debug(s"Inserted ${numberInserts} key/value pairs to sequence file.")
+      false
+    }
   }
 
   def close: Unit = synchronized {
@@ -113,8 +123,17 @@ class CoordinatedWriter[+IDXKEY <: Writable, +IDXVALUE <: Writable, +DATAKEY <: 
 
       val pathAndFilename = renamer.separateFilename(writer.getPath)
       val newFilename = pathAndFilename._1 + pathAndFilename._2.replace(".", "")
-      renamer.rename(writer.getPath + ".data.seq", newFilename + ".data.seq", hdfsConf).get()
-      renamer.rename(writer.getPath + ".idx.seq", newFilename + ".idx.seq", hdfsConf).get()
+      
+      if(metadata.createScrayIndexFile) {
+        renamer.rename(writer.getPath + ".data.seq", newFilename + ".data.seq", hdfsConf).get()
+        renamer.rename(writer.getPath + ".idx.seq", newFilename + ".idx.seq", hdfsConf).get()
+      } else { 
+        if(metadata.customFileName.isDefined) {
+          renamer.rename(writer.getPath, newFilename, hdfsConf).get()
+        } else {
+          renamer.rename(writer.getPath + ".seq", newFilename + ".seq", hdfsConf).get()
+        }
+      }
     }
   }
 

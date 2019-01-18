@@ -32,7 +32,7 @@ trait WriteService {
    */
   def createWriter(path: String): UUID 
   def createWriter(path: String, format: SequenceKeyValueFormat): UUID
-  def createWriter(path: String, format: SequenceKeyValueFormat, numberOpKeyValuePairs: Int): UUID
+  def createWriter(path: String, format: SequenceKeyValueFormat, numberOpKeyValuePairs: Int, customName: String): UUID
   
   
   def insert(resource: UUID, id: String, updateTime: Long, data: Array[Byte]):  ScrayListenableFuture[WriteResult]

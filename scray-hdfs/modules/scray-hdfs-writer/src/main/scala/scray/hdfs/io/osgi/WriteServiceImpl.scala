@@ -56,7 +56,7 @@ class WriteServiceImpl extends WriteService {
     logger.debug(s"Create writer for path ${path}")
     val id = UUID.randomUUID()
 
-    val metadata = WriteDestination("000", path, IHdfsWriterConstats.SequenceKeyValueFormat.SequenceFile_IndexValue_Blob, Version(0), false, 512 * 1024 * 1024L, 5, true, false)
+    val metadata = WriteDestination("000", path, None, IHdfsWriterConstats.SequenceKeyValueFormat.SequenceFile_IndexValue_Blob, Version(0), false, 512 * 1024 * 1024L, 5, true, false)
 
     writersMetadata.put(id, new CoordinatedWriter(8192, metadata, new OutputBlob))
 
@@ -67,16 +67,16 @@ class WriteServiceImpl extends WriteService {
     logger.debug(s"Create writer for path ${path}")
     val id = UUID.randomUUID()
 
-    val metadata = WriteDestination("000", path, format, Version(0), false, 512 * 1024 * 2048L, 50)
+    val metadata = WriteDestination("000", path, None, format, Version(0), false, 512 * 1024 * 2048L, 50)
 
     this.createWriter(format, metadata)
   }
 
-  override def createWriter(path: String, format: SequenceKeyValueFormat, numberOpKeyValuePairs: Int): UUID = synchronized {
+  override def createWriter(path: String, format: SequenceKeyValueFormat, numberOpKeyValuePairs: Int, customName: String): UUID = synchronized {
     logger.debug(s"Create writer for path ${path}")
     val id = UUID.randomUUID()
 
-    val metadata = WriteDestination("000", path, format, Version(0), false, 512 * 1024 * 2048L, numberOpKeyValuePairs, true, false)
+    val metadata = WriteDestination("000", path, Some(customName), format, Version(0), false, 512 * 1024 * 2048L, numberOpKeyValuePairs, true, false)
 
     this.createWriter(format, metadata)
   }
@@ -85,9 +85,9 @@ class WriteServiceImpl extends WriteService {
     val id = UUID.randomUUID()
 
     format match {
-      case SequenceKeyValueFormat.SequenceFile_IndexValue_Blob    => writersMetadata.put(id, new CoordinatedWriter(8192, metadata, new OutputBlob))
-      case SequenceKeyValueFormat.SequenceFile_Text_BytesWritable => writersMetadata.put(id, new CoordinatedWriter(8192, metadata, new OutputTextBytesWritable))
-      case SequenceKeyValueFormat.SequenceFile_Text_Text          => writersMetadata.put(id, new CoordinatedWriter(8192, metadata, new OutputTextText))
+      case SequenceKeyValueFormat.SequenceFile_IndexValue_Blob    => writersMetadata.put(id, new CoordinatedWriter(0, metadata, new OutputBlob))
+      case SequenceKeyValueFormat.SequenceFile_Text_BytesWritable => writersMetadata.put(id, new CoordinatedWriter(0, metadata, new OutputTextBytesWritable))
+      case SequenceKeyValueFormat.SequenceFile_Text_Text          => writersMetadata.put(id, new CoordinatedWriter(0, metadata, new OutputTextText))
     }
 
     id

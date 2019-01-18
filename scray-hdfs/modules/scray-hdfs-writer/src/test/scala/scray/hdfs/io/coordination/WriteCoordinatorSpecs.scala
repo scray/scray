@@ -27,7 +27,7 @@ class WriteCoordinatorSpecs extends WordSpec with LazyLogging {
     " wrtite to new blob file until count limit is reached " in {
       val outPath = "target/WriteCoordinatorSpecs/writeCoordinatorSpecsMaxCount/" + System.currentTimeMillis() + "/"
 
-      val metadata = WriteDestination("000", outPath, IHdfsWriterConstats.SequenceKeyValueFormat.SequenceFile_IndexValue_Blob, Version(0), true, 512 * 1024 * 1024L, 5, true, true)
+      val metadata = WriteDestination("000", outPath, None, IHdfsWriterConstats.SequenceKeyValueFormat.SequenceFile_IndexValue_Blob, Version(0), true, 512 * 1024 * 1024L, 5, true, true)
       val writer = new CoordinatedWriter(512 * 1024 * 1024L, metadata, new OutputBlob)
 
       val writtenData = new HashMap[String, Array[Byte]]();

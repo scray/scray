@@ -33,6 +33,7 @@ case class Version(number: Int, compactionState: CompactionState = NEW) {
  * 
  * @param id id of logical system
  * @param path path to folder
+ * @param customFileName defines a file name. If not defined a random UUID will be used
  * @param fileFormat format to store files e.g. ORC, SequenceFile
  * @param version paths are versioned to handle them independently e.g. for compactions
  * @param maxFileSize If maxFileSize is reached a new file will be used
@@ -40,7 +41,8 @@ case class Version(number: Int, compactionState: CompactionState = NEW) {
  */
 case class WriteDestination(
     queryspace: String, 
-    path: String, 
+    path: String,
+    customFileName: Option[String] = None,
     fileFormat: IHdfsWriterConstats.SequenceKeyValueFormat, 
     version: Version = Version(0),
     writeVersioned: Boolean = false,
