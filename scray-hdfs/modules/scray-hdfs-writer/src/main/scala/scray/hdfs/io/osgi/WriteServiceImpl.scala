@@ -98,7 +98,8 @@ class WriteServiceImpl extends WriteService {
 
     try {
       this.getWriter(resource).insert(id, updateTime, data)
-      new ScrayListenableFuture(new WriteResult("Data inserted"))
+      val metadata = writersMetadata.get(resource)
+      new ScrayListenableFuture(new WriteResult(metadata.isClosed, "Data inserted", metadata.getBytesWritten))
     } catch {
       case e: Exception => {
         new ScrayListenableFuture[WriteResult](e)
@@ -111,7 +112,8 @@ class WriteServiceImpl extends WriteService {
 
     try {
       this.getWriter(resource).insert(id, updateTime, data)
-      new ScrayListenableFuture(new WriteResult("Data inserted"))
+      val metadata = writersMetadata.get(resource)
+      new ScrayListenableFuture(new WriteResult(metadata.isClosed, "Data inserted", metadata.getBytesWritten))
     } catch {
       case e: Exception => {
         new ScrayListenableFuture(e)
@@ -124,7 +126,8 @@ class WriteServiceImpl extends WriteService {
 
     try {
       this.getWriter(resource).insert(id, updateTime, data)
-      new ScrayListenableFuture(new WriteResult("Data inserted"))
+      val metadata = writersMetadata.get(resource)
+      new ScrayListenableFuture(new WriteResult(metadata.isClosed, "Data inserted", metadata.getBytesWritten))
     } catch {
       case e: Exception => {
         new ScrayListenableFuture(e)
@@ -190,7 +193,7 @@ class WriteServiceImpl extends WriteService {
   def isClosed(resource: UUID):  ScrayListenableFuture[WriteResult] = {
     try {
       val isClosed = writersMetadata.get(resource).isClosed
-      new ScrayListenableFuture(new WriteResult(isClosed, "File is closed"))
+      new ScrayListenableFuture(new WriteResult(isClosed, "File is closed", writersMetadata.get(resource).getBytesWritten))
     } catch {
       case e: Exception => {
         new ScrayListenableFuture(e)

@@ -11,7 +11,7 @@ object ServiceApiExample {
     val writeId = writeService.createWriter("hdfs://host1.scray.org/ra", SequenceKeyValueFormat.SequenceFile_Text_Text, 0, "ggga.txt")
 
     for (i <- 0 to 10) {
-      writeService.insert(writeId, "id42", System.currentTimeMillis(), createDataElement.getBytes).get
+      println(writeService.insert(writeId, "id42", System.currentTimeMillis(), createDataElement.getBytes).get.getBytesInserted())
     }
     writeService.close(writeId)
   }

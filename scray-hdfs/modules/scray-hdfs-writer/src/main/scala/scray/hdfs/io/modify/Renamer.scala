@@ -30,7 +30,7 @@ class Renamer {
       val fs = FileSystem.get(URI.create(source), conf);
 
       fs.rename(new Path(source), new Path(destination));
-      new ScrayListenableFuture(new WriteResult(true, s"File ${source} renamed to ${destination}"))
+      new ScrayListenableFuture(new WriteResult(true, s"File ${source} renamed to ${destination}", -1L))
     } catch {
       case e: Exception => {
         new ScrayListenableFuture(e)

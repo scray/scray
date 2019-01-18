@@ -17,9 +17,14 @@ package scray.hdfs.io.write
 
 class WriteResult(
    val isClosed: Boolean,
-   val message: String) {
+   val message: String,
+   val bytesInserted: Long) {
   
   def this(message: String) {
-    this(false, message)
+    this(false, message, -1L)
+  }
+  
+  def getBytesInserted(): Long = {
+    bytesInserted
   }
 }
