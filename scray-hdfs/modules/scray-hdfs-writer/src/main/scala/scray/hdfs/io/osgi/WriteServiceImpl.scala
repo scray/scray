@@ -76,7 +76,7 @@ class WriteServiceImpl extends WriteService {
     logger.debug(s"Create writer for path ${path}")
     val id = UUID.randomUUID()
 
-    val metadata = WriteDestination("000", path, Some(customName), format, Version(0), false, 512 * 1024 * 2048L, numberOpKeyValuePairs, true, false)
+    val metadata = WriteDestination("000", path, Some(customName), format, Version(0), false, 512 * 1024 * 2048L, numberOpKeyValuePairs, false, false)
 
     this.createWriter(format, metadata)
   }
