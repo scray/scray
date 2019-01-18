@@ -50,4 +50,32 @@ case class WriteDestination(
     maxNumberOfInserts: Int = Integer.MAX_VALUE,
     storeAsHiddenFileTillClosed: Boolean = false,
     createScrayIndexFile: Boolean = false
-   ) 
+   )
+   
+object WriteDestination {
+  class Builder {
+    var queryspace: String = null
+    var path: String = null
+    var customFileName: Option[String] = None
+    var fileFormat: IHdfsWriterConstats.SequenceKeyValueFormat = null
+    var version: Version = Version(0)
+    var writeVersioned: Boolean = false
+    var maxFileSize: Long = Long.MaxValue
+    var maxNumberOfInserts: Int = Integer.MAX_VALUE
+    var storeAsHiddenFileTillClosed: Boolean = false
+    var createScrayIndexFile: Boolean = false
+    
+    def setQueryspace(queryspace: String): Builder = {
+      this.queryspace = queryspace
+      this
+    }
+    
+    def setPath(path: String): Builder = {
+      this.path = path
+      this
+    }
+    def createConfiguration: WriteDestination = {
+      WriteDestination("000", path, None, null, Version(0), false, 512 * 1024 * 2048L, 50)
+    }
+  }
+}
