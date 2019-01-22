@@ -186,6 +186,10 @@ class SequenceFileWriter[IDXKEY <: Writable, IDXVALUE <: Writable, DATAKEY <: Wr
     if (this.createIndex && !idxWriter.isDefined) {
       idxWriter = Some(initWriter(outTypeMapping.getIdxKey("42"), outTypeMapping.getIdxValue("42", 42L, 2L), fs.getOrElse(FileSystem.get(hdfsConf)), ".idx.seq"))
     }
+    
+    if(blobSplitSize < 1) {
+      logger.error(s"BlobSlitSize schould be at least 1byte. Used value ${blobSplitSize}") 
+    }
 
     val fileStartPossiton = dataWriter.getLength
     var writtenBytes = 0L // Number of written bytes
