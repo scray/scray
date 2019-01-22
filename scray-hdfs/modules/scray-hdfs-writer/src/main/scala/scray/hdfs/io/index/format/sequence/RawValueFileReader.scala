@@ -34,6 +34,7 @@ class RawValueFileReader[DATAKEY <: Writable, DATAVALUE <: Writable](path: Strin
   }
   
   logger.trace(s"Try to read from path ${path}")
+  hdfsConf.set("dfs.client.use.datanode.hostname", "true")
   val reader: SequenceFile.Reader = new SequenceFile.Reader(hdfsConf, Reader.file(new Path(path)), Reader.bufferSize(4096));
 
   val key = outMapping.getDataKey("", 1)
