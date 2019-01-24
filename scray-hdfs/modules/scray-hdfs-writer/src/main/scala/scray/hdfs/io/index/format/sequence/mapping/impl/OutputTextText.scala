@@ -4,7 +4,7 @@ import org.apache.hadoop.io.Text
 
 import scray.hdfs.io.index.format.sequence.mapping.SequenceKeyValuePair
 
-class OutputTextText extends SequenceKeyValuePair[Text, Text, Text, Text] {
+case class OutputTextText() extends SequenceKeyValuePair[Text, Text, Text, Text] {
   
   def getIdxKey(id: String): Text = {
     new Text(s"{id: ${id}}")

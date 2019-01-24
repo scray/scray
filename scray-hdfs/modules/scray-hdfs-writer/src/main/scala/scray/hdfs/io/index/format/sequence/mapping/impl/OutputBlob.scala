@@ -8,7 +8,7 @@ import scray.hdfs.io.index.format.sequence.types.IndexValue
 import scray.hdfs.io.index.format.sequence.types.BlobKey
 import scray.hdfs.io.index.format.sequence.types.Blob
 
-class OutputBlob extends SequenceKeyValuePair[Text, IndexValue, BlobKey, Blob] {
+case class OutputBlob() extends SequenceKeyValuePair[Text, IndexValue, BlobKey, Blob] {
   
   def getIdxKey(id: String): Text = {
     new Text(s"{id: ${id}}")
