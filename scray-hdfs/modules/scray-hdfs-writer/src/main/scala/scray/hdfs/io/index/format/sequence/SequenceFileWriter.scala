@@ -44,8 +44,6 @@ class SequenceFileWriter[IDXKEY <: Writable, IDXVALUE <: Writable, DATAKEY <: Wr
   }
 
   var numberOfInserts: Int = 0
-
-  System.setProperty("HADOOP_USER_NAME", "hdfs");
   def this(path: String, outTypeMapping: SequenceKeyValuePair[IDXKEY, IDXVALUE, DATAKEY, DATAVALUE], createIndex: Boolean) = {
     this(path, new Configuration, None, outTypeMapping, createIndex)
   }
