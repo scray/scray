@@ -132,7 +132,7 @@ class ReadServiceImpl extends ReadService {
 
             result = new ScrayListenableFuture(new AbstractMap.SimpleEntry[String, Array[Byte]](
               key,
-              kv._2.asInstanceOf[Text].copyBytes()))
+              kv._2.asInstanceOf[Text].toString().getBytes))
 
           } else {
             val errorMessage = s"Unkonwn class for SequenceFile value ${kv._2.getClass.getName}. " +

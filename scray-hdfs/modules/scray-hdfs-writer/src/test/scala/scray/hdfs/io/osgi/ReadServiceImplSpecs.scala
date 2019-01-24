@@ -56,7 +56,7 @@ class ReadServiceImplSpecs extends WordSpec with BeforeAndAfter with LazyLogging
     service.close(writerId1)
     
     val writerId2 = service.createWriter(sequenceBytesWritableExampleFile, SequenceKeyValueFormat.SequenceFile_Text_Text, 12, "fileText.seq")
-    service.insert(writerId2, "Key42", System.currentTimeMillis(), new ByteArrayInputStream(s"ABCDEFG".getBytes))
+    service.insert(writerId2, "Key42", System.currentTimeMillis(), "ABCDEFG".getBytes)
     service.close(writerId2)
     
   }
@@ -85,10 +85,22 @@ class ReadServiceImplSpecs extends WordSpec with BeforeAndAfter with LazyLogging
        val readData = reader.getNextSequenceFilePair(id).get
        Assert.assertEquals("ABCDEFG", new String(readData.getValue))
        Assert.assertTrue(new String(readData.getKey).contains("\"id\": \"Key42\","))
-       println(reader.hasNextSequenceFilePair(id).get)
        Assert.assertFalse(reader.hasNextSequenceFilePair(id).get)  
        Assert.assertTrue(null == reader.getNextSequenceFilePair(id))
-    }   
+    }
+    " read sequence Text file" in {
+       val reader = new ReadServiceImpl
+       
+       val id = reader.readFullSequenceFile(sequenceBytesWritableExampleFile + "/fileText.seq", SequenceKeyValueFormat.SequenceFile_Text_Text)
+      
+       Assert.assertTrue(reader.hasNextSequenceFilePair(id).get)   
+       val readData = reader.getNextSequenceFilePair(id).get
+       Assert.assertEquals("ABCDEFG", new String(readData.getValue))
+       Assert.assertTrue(new String(readData.getKey).contains("\"id\": \"Key42\""))
+       
+       Assert.assertFalse(reader.hasNextSequenceFilePair(id).get)  
+       Assert.assertTrue(null == reader.getNextSequenceFilePair(id))
+    } 
    " delete file " in {
      if(!System.getProperty("os.name").toUpperCase().contains("WINDOWS")) {
        // Create example file
