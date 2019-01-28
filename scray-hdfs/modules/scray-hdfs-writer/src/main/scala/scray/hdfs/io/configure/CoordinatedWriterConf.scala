@@ -13,9 +13,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package scray.hdfs.io.coordination
+package scray.hdfs.io.configure
 
 import scray.hdfs.io.write.IHdfsWriterConstats
+import java.util.Optional
+import scray.hdfs.io.configure.WriteDestionationConstats.WriteMode
 
 class CompactionState {}
 case object NEW extends CompactionState
@@ -39,10 +41,10 @@ case class Version(number: Int, compactionState: CompactionState = NEW) {
  * @param maxFileSize If maxFileSize is reached a new file will be used
  * @param maxNumberOfInserts	If maxNumberOfInserts is reached a new file will be used.
  */
-case class WriteDestination(
+case class WriteParameter(
     queryspace: String, 
     path: String,
-    customFileName: Option[String] = None,
+    customFileName: Optional[String] = Optional.empty(),
     fileFormat: IHdfsWriterConstats.SequenceKeyValueFormat, 
     version: Version = Version(0),
     writeVersioned: Boolean = false,
@@ -52,16 +54,18 @@ case class WriteDestination(
     createScrayIndexFile: Boolean = false
    )
    
-object WriteDestination {
+object WriteParameter {
   class Builder {
     var queryspace: String = null
     var path: String = null
-    var customFileName: Option[String] = None
+    var customFileName: Optional[String] = Optional.empty()
     var fileFormat: IHdfsWriterConstats.SequenceKeyValueFormat = null
     var version: Version = Version(0)
     var writeVersioned: Boolean = false
     var maxFileSize: Long = Long.MaxValue
     var maxNumberOfInserts: Int = Integer.MAX_VALUE
+    var timeLimit: Int = Integer.MAX_VALUE
+    var writeMode: WriteMode = WriteMode.WriteBack
     var storeAsHiddenFileTillClosed: Boolean = false
     var createScrayIndexFile: Boolean = false
     
@@ -74,8 +78,68 @@ object WriteDestination {
       this.path = path
       this
     }
-    def createConfiguration: WriteDestination = {
-      WriteDestination("000", path, None, null, Version(0), false, 512 * 1024 * 2048L, 50)
+
+    def setCustomFileName(fileName: String): Builder = {
+      this.customFileName = Optional.of(fileName);
+      this
+    }
+    
+    def setFileFormat(kvFormat: IHdfsWriterConstats.SequenceKeyValueFormat): Builder = {
+      this.fileFormat = kvFormat
+      this
+    }
+    
+    def setVersion(version: Version): Builder = {
+      this.version = version
+      this
+    }
+    
+    def setWriteVersioned(writeVersioned: Boolean): Builder = {
+      this.writeVersioned = writeVersioned
+      this
+    }
+
+    def setMaxFileSize(maxFileSize: Long): Builder = {
+      this.maxFileSize = maxFileSize
+      this
+    }
+
+    def setMaxNumberOfInserts(maxNumberOfInserts: Int): Builder = {
+      this.maxNumberOfInserts = maxNumberOfInserts
+      this
+    }
+
+    def setTimeLimit(seconds: Int): Builder = {
+      this.timeLimit = seconds
+      this
+    }
+    
+    def setWriteMode(mode: WriteMode): Builder = {
+      this.writeMode = mode 
+      this
+    }
+    
+    def setStoreAsHiddenFileTillClosed(storeAsHiddenFileTillClosed: Boolean): Builder = {
+      this.storeAsHiddenFileTillClosed = storeAsHiddenFileTillClosed
+      this
+    }
+
+    def setCreateScrayIndexFile(createScrayIndexFile: Boolean): Builder = {
+      this.createScrayIndexFile = createScrayIndexFile
+      this
+    }
+
+    def createConfiguration: WriteParameter = {
+      WriteParameter(queryspace,
+          path,
+          customFileName,
+          fileFormat,
+          version,
+          writeVersioned,
+          maxFileSize, 
+          maxNumberOfInserts,
+          storeAsHiddenFileTillClosed,
+          createScrayIndexFile)
     }
   }
 }

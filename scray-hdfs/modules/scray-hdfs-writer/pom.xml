@@ -152,7 +152,8 @@
 						<Embed-Transitive>true</Embed-Transitive>
 						<Export-Package>
 							scray.hdfs.io.write,
-							scray.hdfs.io.read	
+							scray.hdfs.io.read,
+							scray.hdfs.io.configure	
 						</Export-Package>
 						<Import-Package>
 							!*,
