@@ -33,25 +33,39 @@ import java.util.UUID
 import org.scalatest.BeforeAndAfter
 import org.apache.commons.io.IOUtils
 import java.net.URL
+import scray.hdfs.io.write.IHdfsWriterConstats.SequenceKeyValueFormat
 
 class ReadServiceImplSpecs extends WordSpec with BeforeAndAfter with LazyLogging {
   val pathToWinutils = classOf[ReadServiceImplSpecs].getClassLoader.getResource("HADOOP_HOME/bin/winutils.exe");
   val hadoopHome = Paths.get(pathToWinutils.toURI()).toFile().toString().replace("\\bin\\winutils.exe", "")
   System.setProperty("hadoop.home.dir", hadoopHome)
 
-  val exampleFile = s"${new URL("file:///" + System.getProperty("user.dir"))}" + s"/target/ReadServiceImplSpecs/listFiles/${UUID.randomUUID()}/file1.txt"
+  val rawExampleFile = s"${new URL("file:///" + System.getProperty("user.dir"))}" + s"/target/ReadServiceImplSpecs/listFiles/${UUID.randomUUID()}/file1.txt"
+  val sequenceBytesWritableExampleFile = s"${new URL("file:///" + System.getProperty("user.dir"))}" + s"/target/ReadServiceImplSpecs/readFiles/${UUID.randomUUID()}/"
+  val sequenceTextExampleFile = s"${new URL("file:///" + System.getProperty("user.dir"))}" + s"/target/ReadServiceImplSpecs/readFiles/${UUID.randomUUID()}/"
+
+
 
   // Write a test file
   before {
     val service = new WriteServiceImpl
-    service.writeRawFile(exampleFile, new ByteArrayInputStream(s"ABCDEFG".getBytes))
+    service.writeRawFile(rawExampleFile, new ByteArrayInputStream(s"ABCDEFG".getBytes))
+    
+    val writerId1 = service.createWriter(sequenceBytesWritableExampleFile, SequenceKeyValueFormat.SequenceFile_Text_BytesWritable, 12, "fileBytesWritable.seq")
+    service.insert(writerId1, "Key42", System.currentTimeMillis(), new ByteArrayInputStream(s"ABCDEFG".getBytes))
+    service.close(writerId1)
+    
+    val writerId2 = service.createWriter(sequenceBytesWritableExampleFile, SequenceKeyValueFormat.SequenceFile_Text_Text, 12, "fileText.seq")
+    service.insert(writerId2, "Key42", System.currentTimeMillis(), "ABCDEFG".getBytes)
+    service.close(writerId2)
+    
   }
 
   "ReadServiceImplSpecs " should {
     " list files in folder " in {
       val reader = new ReadServiceImpl
 
-      val files = reader.getFileList(exampleFile).get()
+      val files = reader.getFileList(rawExampleFile).get()
 
       Assert.assertEquals(1, files.size());
       Assert.assertEquals("file1.txt", files.get(0).getFileName);
@@ -59,9 +73,34 @@ class ReadServiceImplSpecs extends WordSpec with BeforeAndAfter with LazyLogging
     " read file " in {
       val reader = new ReadServiceImpl
 
-      val fileContent = IOUtils.toString(reader.getInputStream(exampleFile).get)
+      val fileContent = IOUtils.toString(reader.getInputStream(rawExampleFile).get)
       Assert.assertEquals("ABCDEFG", fileContent);
     }
+    " read sequence BytesWritable file" in {
+       val reader = new ReadServiceImpl
+       
+       val id = reader.readFullSequenceFile(sequenceBytesWritableExampleFile + "/fileBytesWritable.seq", SequenceKeyValueFormat.SequenceFile_Text_BytesWritable)
+      
+       Assert.assertTrue(reader.hasNextSequenceFilePair(id).get)   
+       val readData = reader.getNextSequenceFilePair(id).get
+       Assert.assertEquals("ABCDEFG", new String(readData.getValue))
+       Assert.assertTrue(new String(readData.getKey).contains("\"id\": \"Key42\","))
+       Assert.assertFalse(reader.hasNextSequenceFilePair(id).get)  
+       Assert.assertTrue(null == reader.getNextSequenceFilePair(id))
+    }
+    " read sequence Text file" in {
+       val reader = new ReadServiceImpl
+       
+       val id = reader.readFullSequenceFile(sequenceBytesWritableExampleFile + "/fileText.seq", SequenceKeyValueFormat.SequenceFile_Text_Text)
+      
+       Assert.assertTrue(reader.hasNextSequenceFilePair(id).get)   
+       val readData = reader.getNextSequenceFilePair(id).get
+       Assert.assertEquals("ABCDEFG", new String(readData.getValue))
+       Assert.assertTrue(new String(readData.getKey).contains("\"id\": \"Key42\""))
+       
+       Assert.assertFalse(reader.hasNextSequenceFilePair(id).get)  
+       Assert.assertTrue(null == reader.getNextSequenceFilePair(id))
+    } 
    " delete file " in {
      if(!System.getProperty("os.name").toUpperCase().contains("WINDOWS")) {
        // Create example file

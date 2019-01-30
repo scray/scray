@@ -33,6 +33,7 @@ class IdxReader[IDXKEY <: Writable, IDXVALUE <: Writable](path: String, hdfsConf
   }
   
   logger.trace(s"Try to read from path ${path}")
+  hdfsConf.set("dfs.client.use.datanode.hostname", "true")
   val reader: SequenceFile.Reader = new SequenceFile.Reader(hdfsConf, Reader.file(new Path(path)), Reader.bufferSize(4096));
 
   val key = outMapping.getIdxKey("")
