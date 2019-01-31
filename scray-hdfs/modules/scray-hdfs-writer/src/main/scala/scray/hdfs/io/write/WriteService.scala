@@ -23,6 +23,7 @@ import java.util.UUID
 import com.google.common.util.concurrent.ListenableFuture
 import scray.hdfs.io.write.IHdfsWriterConstats.SequenceKeyValueFormat
 import org.apache.hadoop.conf.Configuration
+import scray.hdfs.io.configure.WriteParameter
 
 trait WriteService {
     /**
@@ -31,6 +32,7 @@ trait WriteService {
    * @return id to identify resource
    */
   def createWriter(path: String): UUID 
+  def createWriter(path: WriteParameter): UUID 
   def createWriter(path: String, format: SequenceKeyValueFormat): UUID
   def createWriter(path: String, format: SequenceKeyValueFormat, numberOpKeyValuePairs: Int, customName: String): UUID
   
