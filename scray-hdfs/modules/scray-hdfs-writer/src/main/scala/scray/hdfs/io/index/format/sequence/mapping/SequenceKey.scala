@@ -13,17 +13,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package scray.hdfs.io.coordination;
+package scray.hdfs.io.index.format.sequence.mapping
 
-public class IHdfsWriterConstats {
-	public static enum FileFormat {
-		Avro,
-		SequenceFile,
-		ORC,
-		RAW
-	}
-	
-	public static enum WriteParameter {
-		destinationPath
-	}
+import org.apache.hadoop.io.Writable
+
+trait SequenceKey[IDXKEY <: Writable, IDXVALUE <: Writable] {
+
+  def getIdxKey(id: String): IDXKEY
+  def getIdxValue(
+    id:         String,
+    blobSplits: Int    = 1,
+    splitSize:  Int    = 8192,
+    updateTime: Long,
+    dataLength: Long): IDXVALUE
+
+  def getIdxValue(
+    id:         String,
+    updateTime: Long,
+    dataLength: Long): IDXVALUE
 }

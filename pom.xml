@@ -2,7 +2,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.scray</groupId>
 	<artifactId>scray-parent</artifactId>
-	<version>1.1.2-SNAPSHOT</version>
+	<version>1.1.2</version>
 	<inceptionYear>2014</inceptionYear>
 	<packaging>pom</packaging>
 	<name>Scray</name>
@@ -47,16 +47,19 @@
 		<url>https://github.com/scray</url>
 		<connection>scm:git:git://github.com/scray/scray.git</connection>
 		<developerConnection>scm:git:https://github.com/scray/scray.git</developerConnection>
-		<tag>HEAD</tag>
+		<tag>hdfs-writer-1.3.0</tag>
 	</scm>
 
 	<properties>
 		<maven.compiler.source>1.8</maven.compiler.source>
 		<maven.compiler.target>1.8</maven.compiler.target>
 		<encoding>UTF-8</encoding>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<scala.tools.version>2.11</scala.tools.version>
 		<scala.version>2.11.8</scala.version>
 		<scala.suffix>2.11</scala.suffix>
+		
+		<dependency.locations.enabled>false</dependency.locations.enabled>
 
 		<!-- finagle 6.12 might be needed for scray stateless services because 
 			storehaus-memcached depends on it - need to test -->
@@ -71,7 +74,6 @@
 		<parboiled.version>2.0.1</parboiled.version>
 
 		<scoverage.plugin.version>1.3.0</scoverage.plugin.version>
-		<scoverage.scalacPluginVersion>1.3.0</scoverage.scalacPluginVersion>
 	</properties>
 
 	<modules>
@@ -81,7 +83,7 @@
 		<module>scray-hdfs</module>
 		<module>scray-service</module>
 		<module>scray-common</module>
-		<module>scray-client-jdbc</module> 
+		<module>scray-client-jdbc</module>
 		<module>scray-loader</module>
 	</modules>
 
@@ -127,11 +129,7 @@
 		<dependency>
 			<groupId>ch.qos.logback</groupId>
 			<artifactId>logback-classic</artifactId>
-			<version>1.1.7</version>
-		</dependency>
-		<dependency>
-			<groupId>com.esotericsoftware</groupId>
-			<artifactId>kryo</artifactId>
+			<version>1.2.0</version>
 		</dependency>
 	</dependencies>
 
@@ -259,20 +257,23 @@
 				<version>2.5.3</version>
 				<configuration>
 					<useReleaseProfile>false</useReleaseProfile>
+					<pushChanges>false</pushChanges>
 				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-site-plugin</artifactId>
+				<version>3.7.1</version>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-project-info-reports-plugin</artifactId>
+				<version>2.9</version>
 			</plugin>
 		</plugins>
 	</build>
 	<reporting>
 		<plugins>
-			<plugin>
-				<groupId>net.alchim31.maven</groupId>
-				<artifactId>scala-maven-plugin</artifactId>
-				<version>3.2.1</version>
-				<configuration>
-					<scalaVersion>${scala.version}</scalaVersion>
-				</configuration>
-			</plugin>
 			<plugin>
 				<groupId>org.scoverage</groupId>
 				<artifactId>scoverage-maven-plugin</artifactId>
@@ -403,7 +404,7 @@
 							<execution>
 								<goals>
 									<goal>compile</goal>
-                                                                        <goal>testCompile</goal>
+									<goal>testCompile</goal>
 								</goals>
 							</execution>
 						</executions>

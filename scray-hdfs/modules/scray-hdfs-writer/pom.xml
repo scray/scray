@@ -3,15 +3,20 @@
 	<parent>
 		<groupId>org.scray</groupId>
 		<artifactId>scray-parent</artifactId>
-		<version>1.1.2-SNAPSHOT</version>
+		<version>1.1.2</version>
 		<relativePath>../../../pom.xml</relativePath>
 	</parent>
 
 	<modelVersion>4.0.0</modelVersion>
 	<artifactId>scray-hdfs-writer</artifactId>
+  <version>1.3.0</version>
 	<name>Scray - HDFS writer</name>
 	<description>scray adapter to write BLOBs to HDFS</description>
+	<packaging>bundle</packaging>
 
+	<properties>
+		<minimizedLibsClassifier>minimizedlibs</minimizedLibsClassifier>
+	</properties>
 	<distributionManagement>
 		<snapshotRepository>
 			<id>ossrh</id>
@@ -25,17 +30,37 @@
 
 	<dependencies>
 		<dependency>
-			<groupId>org.apache.orc</groupId>
-			<artifactId>orc-core</artifactId>
-			<version>1.4.1</version>
+			<groupId>org.apache.hadoop</groupId>
+			<artifactId>hadoop-common</artifactId>
+			<version>2.6.4</version>
 			<exclusions>
+				<exclusion>
+					<groupId>log4j</groupId>
+					<artifactId>log4j</artifactId>
+				</exclusion>
 				<exclusion>
 					<groupId>org.slf4j</groupId>
 					<artifactId>slf4j-log4j12</artifactId>
 				</exclusion>
 				<exclusion>
-					<groupId>log4j</groupId>
-					<artifactId>log4j</artifactId>
+					<groupId>org.codehaus.jackson</groupId>
+					<artifactId>jackson-core-asl</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.codehaus.jackson</groupId>
+					<artifactId>jackson-mapper-asl</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.xerial.snappy</groupId>
+					<artifactId>snappy-java</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.apache.httpcomponents</groupId>
+					<artifactId>httpclient</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>commons-httpclient</groupId>
+					<artifactId>commons-httpclient</artifactId>
 				</exclusion>
 			</exclusions>
 		</dependency>
@@ -45,19 +70,31 @@
 			<version>2.6.4</version>
 			<exclusions>
 				<exclusion>
-					<groupId>xml-apis</groupId>
-					<artifactId>xml-apis</artifactId>
-				</exclusion>
-				<exclusion>
 					<groupId>log4j</groupId>
 					<artifactId>log4j</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>com.sun.jersey</groupId>
+					<artifactId>jersey-server</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>com.sun.jersey</groupId>
+					<artifactId>jersey-core</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.codehaus.jackson</groupId>
+					<artifactId>jackson-core-asl</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.codehaus.jackson</groupId>
+					<artifactId>jackson-mapper-asl</artifactId>
 				</exclusion>
 			</exclusions>
 		</dependency>
 		<dependency>
-			<groupId>org.apache.avro</groupId>
-			<artifactId>avro</artifactId>
-			<version>1.8.2</version>
+			<groupId>org.slf4j</groupId>
+			<artifactId>jcl-over-slf4j</artifactId>
+			<version>1.7.25</version>
 		</dependency>
 		<dependency>
 			<groupId>org.osgi</groupId>
@@ -75,17 +112,6 @@
 		<plugins>
 			<plugin>
 				<artifactId>maven-dependency-plugin</artifactId>
-				<executions>
-					<execution>
-						<phase>prepare-package</phase>
-						<goals>
-							<goal>copy-dependencies</goal>
-						</goals>
-						<configuration>
-							<outputDirectory>${project.build.directory}/lib</outputDirectory>
-						</configuration>
-					</execution>
-				</executions>
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
@@ -122,19 +148,12 @@
 				<extensions>true</extensions>
 				<configuration>
 					<instructions>
-						<Embed-Dependency>*</Embed-Dependency>
+						<Embed-Dependency>scope=compile;artifactId=!logback-classic</Embed-Dependency>
 						<Embed-Transitive>true</Embed-Transitive>
 						<Export-Package>
-							org.apache.hadoop.fs,
-							org.apache.hadoop.hdfs,
-							scray.hdfs.io.coordination,
-							scray.hdfs.io.index.format.sequence,
-							scray.hdfs.io.index.format.raw,
-							scray.hdfs.io.index.format,
-							scray.hdfs.io.index.format.sequence.types,
-							scray.hdfs.io.index.format.orc,
-							scray.hdfs.io.index.format,
 							scray.hdfs.io.write,
+							scray.hdfs.io.read,
+							scray.hdfs.io.configure	
 						</Export-Package>
 						<Import-Package>
 							!*,
@@ -151,7 +170,8 @@
 							javax.security.auth.kerberos,
 							javax.security.auth.callback,
 							javax.net,
-							javax.naming
+							javax.naming,
+							org.slf4j
 						</Import-Package>
 						<_exportcontents>
 						</_exportcontents>
@@ -227,6 +247,237 @@
 				</plugins>
 			</build>
 		</profile>
+		<profile>
+			<id>MinimizedDependencies</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.felix</groupId>
+						<artifactId>maven-bundle-plugin</artifactId>
+						<version>4.0.0</version>
+						<extensions>true</extensions>
+						<executions>
+							<execution>
+								<id>default-install</id>
+								<phase>package</phase>
+								<goals>
+									<goal>bundle</goal>
+								</goals>
+								<configuration>
+									<classifier>${minimizedLibsClassifier}</classifier>
+									<instructions>
+										<Embed-Dependency>scope=compile;artifactId=!servlet-api|jsp-api|jsr305|jets3t|hadoop-annotations|jsch|netty|xmlenc|logback-classic|jetty*|jasper*|curator*|commons-http*|httpclient*|snappy*|jackson*</Embed-Dependency>
+										<Embed-Transitive>true</Embed-Transitive>
+										<Export-Package>
+											scray.hdfs.io.write,
+											scray.hdfs.io.read,
+											scray.hdfs.io.configure
+										</Export-Package>
+										<Import-Package>
+											!*,
+											org.osgi.framework,
+											org.w3c.dom,
+											org.xml.sax,
+											javax.xml.parsers,
+											javax.xml.transform,
+											org.xml.sax.helpers,
+											javax.management,
+											javax.security.auth,
+											javax.security.auth.login,
+											javax.security.auth.spi,
+											javax.security.auth.kerberos,
+											javax.security.auth.callback,
+											javax.net,
+											javax.naming,
+											org.slf4j
+										</Import-Package>
+										<Bundle-Activator>scray.hdfs.io.osgi.Activator</Bundle-Activator>
+									</instructions>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-install-plugin</artifactId>
+						<version>2.5.2</version>
+						<executions>
+							<execution>
+								<id>install-component</id>
+								<phase>package</phase>
+								<goals>
+									<goal>install-file</goal>
+								</goals>
+								<configuration>
+									<packaging>jar</packaging>
+									<file>target/${project.artifactId}-${project.version}-${minimizedLibsClassifier}.jar</file>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+			<dependencies>
+				<dependency>
+					<groupId>org.apache.hadoop</groupId>
+					<artifactId>hadoop-common</artifactId>
+					<version>2.6.4</version>
+					<exclusions>
+						<exclusion>
+							<groupId>org.tukaani</groupId>
+							<artifactId>xz</artifactId>
+						</exclusion>
+						<exclusion>
+							<groupId>org.apache.zookeeper</groupId>
+							<artifactId>zookeeper</artifactId>
+						</exclusion>
+						<exclusion>
+							<groupId>org.apache.directory.server</groupId>
+							<artifactId>apacheds-kerberos-codec</artifactId>
+						</exclusion>
+						<exclusion>
+							<groupId>com.sun.jersey</groupId>
+							<artifactId>jersey-server</artifactId>
+						</exclusion>
+						<exclusion>
+							<groupId>com.sun.jersey</groupId>
+							<artifactId>jersey-core</artifactId>
+						</exclusion>
+						<exclusion>
+							<groupId>com.sun.jersey</groupId>
+							<artifactId>jersey-json</artifactId>
+						</exclusion>
+						<exclusion>
+							<groupId>log4j</groupId>
+							<artifactId>log4j</artifactId>
+						</exclusion>
+						<exclusion>
+							<groupId>org.slf4j</groupId>
+							<artifactId>slf4j-log4j12</artifactId>
+						</exclusion>
+						<exclusion>
+							<groupId>commons-logging</groupId>
+							<artifactId>commons-logging</artifactId>
+						</exclusion>
+						<exclusion>
+							<groupId>javax.servlet</groupId>
+							<artifactId>servlet-api</artifactId>
+						</exclusion>
+						<exclusion>
+							<groupId>javax.servlet.jsp</groupId>
+							<artifactId>jsp-api</artifactId>
+						</exclusion>
+						<exclusion>
+							<groupId>com.google.code.findbugs</groupId>
+							<artifactId>jsr305</artifactId>
+						</exclusion>
+						<exclusion>
+							<groupId>net.java.dev.jets3t</groupId>
+							<artifactId>jets3t</artifactId>
+						</exclusion>
+						<exclusion>
+							<groupId>org.apache.hadoop</groupId>
+							<artifactId>hadoop-annotations</artifactId>
+						</exclusion>
+						<exclusion>
+							<groupId>com.jcraft</groupId>
+							<artifactId>jsch</artifactId>
+						</exclusion>
+						<exclusion>
+							<groupId>org.mortbay.jetty</groupId>
+							<artifactId>jetty</artifactId>
+						</exclusion>
+						<exclusion>
+							<groupId>tomcat</groupId>
+							<artifactId>jasper-runtime</artifactId>
+						</exclusion>
+						<exclusion>
+							<groupId>org.apache.curator</groupId>
+							<artifactId>curator-framework</artifactId>
+						</exclusion>
+						<exclusion>
+							<groupId>org.apache.curator</groupId>
+							<artifactId>curator-client</artifactId>
+						</exclusion>
+						<exclusion>
+							<groupId>org.apache.curator</groupId>
+							<artifactId>curator-recipes</artifactId>
+						</exclusion>
+					</exclusions>
+				</dependency>
+				<dependency>
+					<groupId>org.apache.hadoop</groupId>
+					<artifactId>hadoop-hdfs</artifactId>
+					<version>2.6.4</version>
+					<exclusions>
+						<exclusion>
+							<groupId>log4j</groupId>
+							<artifactId>log4j</artifactId>
+						</exclusion>
+						<exclusion>
+							<groupId>com.sun.jersey</groupId>
+							<artifactId>jersey-server</artifactId>
+						</exclusion>
+						<exclusion>
+							<groupId>com.sun.jersey</groupId>
+							<artifactId>jersey-core</artifactId>
+						</exclusion>
+						<exclusion>
+							<groupId>commons-logging</groupId>
+							<artifactId>commons-logging</artifactId>
+						</exclusion>
+						<exclusion>
+							<groupId>javax.servlet</groupId>
+							<artifactId>servlet-api</artifactId>
+						</exclusion>
+						<exclusion>
+							<groupId>javax.servlet.jsp</groupId>
+							<artifactId>jsp-api</artifactId>
+						</exclusion>
+						<exclusion>
+							<groupId>io.netty</groupId>
+							<artifactId>netty</artifactId>
+						</exclusion>
+						<exclusion>
+							<groupId>org.mortbay.jetty</groupId>
+							<artifactId>jetty</artifactId>
+						</exclusion>
+						<exclusion>
+							<groupId>tomcat</groupId>
+							<artifactId>jasper-runtime</artifactId>
+						</exclusion>
+						<exclusion>
+							<groupId>org.apache.curator</groupId>
+							<artifactId>curator-framework</artifactId>
+						</exclusion>
+						<exclusion>
+							<groupId>org.apache.curator</groupId>
+							<artifactId>curator-client</artifactId>
+						</exclusion>
+						<exclusion>
+							<groupId>org.apache.curator</groupId>
+							<artifactId>curator-recipes</artifactId>
+						</exclusion>
+					</exclusions>
+				</dependency>
+				<dependency>
+					<groupId>org.slf4j</groupId>
+					<artifactId>jcl-over-slf4j</artifactId>
+					<version>1.7.25</version>
+				</dependency>
+				<dependency>
+					<groupId>org.osgi</groupId>
+					<artifactId>org.osgi.core</artifactId>
+					<version>4.3.1</version>
+					<scope>provided</scope>
+				</dependency>
+				<dependency>
+					<groupId>org.slf4j</groupId>
+					<artifactId>log4j-over-slf4j</artifactId>
+					<version>1.7.7</version>
+				</dependency>
+			</dependencies>
+		</profile>
 	</profiles>
 	<licenses>
 		<license>
@@ -236,5 +487,4 @@
 			<comments>A business-friendly OSS license</comments>
 		</license>
 	</licenses>
-	<packaging>bundle</packaging>
 </project>

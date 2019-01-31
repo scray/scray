@@ -17,7 +17,7 @@ package scray.hdfs.io.index.format.example
 
 import java.nio.file.Files
 
-import scray.hdfs.io.index.format.sequence.BlobFileReader
+import scray.hdfs.io.index.format.sequence.ValueFileReader
 import scray.hdfs.io.index.format.sequence.IdxReader
 import scray.hdfs.io.index.format.sequence.types.BlobInputStream
 import java.io.File
@@ -25,6 +25,8 @@ import org.apache.commons.io.FileUtils
 import scala.io.Source
 import scray.hdfs.io.index.format.sequence.mapping.impl.OutputTextBytesWritable
 import scray.hdfs.io.index.format.sequence.mapping.impl.OutputBlob
+import scray.hdfs.io.index.format.sequence.types.Blob
+import org.apache.hadoop.io.Text
 
 object CopyFromSequneceFile {
 
@@ -38,7 +40,7 @@ object CopyFromSequneceFile {
       val sourceFile = args(0)
       val destination = args(1)
 
-      val blobReader = new BlobFileReader(s"${sourceFile}.blob")
+      val blobReader = new ValueFileReader(s"${sourceFile}.blob", new OutputBlob)
       
       val idxReader = new IdxReader(s"${sourceFile}.idx", new OutputBlob)
       if(idxReader.hasNext) {

@@ -17,19 +17,29 @@ package scray.hdfs.io.index.format.raw
 
 import java.io.InputStream
 import com.typesafe.scalalogging.LazyLogging
+
+import scray.hdfs.io.read.FileParameter;
+
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.FileSystem
 import org.apache.hadoop.fs.Path
+import com.google.common.util.concurrent.SettableFuture
+import com.google.common.util.concurrent.ListenableFuture
+import java.util.ArrayList
 
 class RawFileReader(hdfsURL: String, hdfsConf: Configuration) extends LazyLogging {
-  
-   var dataReader: FileSystem = null; // scalastyle:off null
 
-   def this(hdfsURL: String) {
-       this(hdfsURL, new Configuration)
-   }
-   
-   def initReader() = {
+  var dataReader: FileSystem = null; // scalastyle:off null
+
+  def this(hdfsURL: String) {
+    this(hdfsURL, new Configuration)
+  }
+
+  if (getClass.getClassLoader != null) {
+    hdfsConf.setClassLoader(getClass.getClassLoader)
+  }
+  
+  def initReader() = {
     hdfsConf.set("fs.hdfs.impl", classOf[org.apache.hadoop.hdfs.DistributedFileSystem].getName);
     hdfsConf.set("fs.file.impl", classOf[org.apache.hadoop.fs.LocalFileSystem].getName);
     hdfsConf.set("dfs.client.use.datanode.hostname", "true");
@@ -37,13 +47,49 @@ class RawFileReader(hdfsURL: String, hdfsConf: Configuration) extends LazyLoggin
 
     dataReader = FileSystem.get(hdfsConf);
   }
-  
+
   def read(path: String): InputStream = {
-   if(dataReader == null ) {
-      logger.debug("Writer was not initialized. Will do it now")
-      initReader()
+    if (dataReader == null) {
+      logger.debug(s"Reader for path ${path} was not initialized. Will do it now")
+      initReader
     }
-   
+
     dataReader.open(new Path(path))
+  }
+
+  def deleteFile(path: String) {
+    if (dataReader == null) {
+      logger.debug(s"Reader for path ${path} was not initialized. Will do it now")
+      initReader
+    }
+
+    dataReader.delete(new Path(path), true)
+  }
+
+  def getFileList(path: String): ListenableFuture[java.util.List[FileParameter]] = {
+    val fileList = SettableFuture.create[java.util.List[FileParameter]]();
+
+    if (dataReader == null) {
+      initReader
+    }
+
+    try {
+      val fileIter = dataReader.listFiles(new Path(path), false)
+      val fileParameters: java.util.List[FileParameter] = new ArrayList[FileParameter](100)
+
+      while (fileIter.hasNext()) {
+        val currentFile = fileIter.next()
+        val fileParamteter = new FileParameter(currentFile.getLen, path, currentFile.getPath.getName)
+        fileParameters.add(fileParamteter)
+      }
+      fileList.set(fileParameters)
+    } catch {
+      case e: Throwable => {
+        logger.error("Unable to get filelist")
+        fileList.setException(e);
+      }
+    }
+
+    return fileList;
   }
 }

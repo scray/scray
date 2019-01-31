@@ -8,7 +8,7 @@ import scray.hdfs.io.index.format.sequence.types.IndexValue
 import scray.hdfs.io.index.format.sequence.types.BlobKey
 import scray.hdfs.io.index.format.sequence.types.Blob
 
-class OutputBlob extends SequenceKeyValuePair[Text, IndexValue, BlobKey, Blob] {
+case class OutputBlob() extends SequenceKeyValuePair[Text, IndexValue, BlobKey, Blob] {
   
   def getIdxKey(id: String): Text = {
     new Text(s"{id: ${id}}")
@@ -22,19 +22,19 @@ class OutputBlob extends SequenceKeyValuePair[Text, IndexValue, BlobKey, Blob] {
     this.getIdxValue(id, 1, 8192, updateTime, dataLength)
   }
   
-  def getDataKey(id: String, blobCount: Int = 0): BlobKey = {
+  override def getDataKey(id: String, blobCount: Int = 0): BlobKey = {
     new BlobKey(id, blobCount)
   }
   
-  def getDataValue(data: Array[Byte], length: Int) = {
+  override def getDataValue(data: Array[Byte], length: Int) = {
     new Blob(data, length)
   }
   
-  def getDataValue(data: Array[Byte]) = {
+  override def getDataValue(data: Array[Byte]) = {
     new Blob(data, data.length)
   }
   
-  def getDataValue(data: String) = {
+  override def getDataValue(data: String) = {
     val dataAsBytes = data.getBytes
     new Blob(dataAsBytes, dataAsBytes.length)
   }

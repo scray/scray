@@ -13,7 +13,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package scray.hdfs.io.exceptions
+package scray.hdfs.io.index.format.sequence.mapping
 
-class WriteExceptions(message: String) extends Exception(message) 
-class MaxFileSizeReached(message: String) extends WriteExceptions(message)
+import org.apache.hadoop.io.Writable
+
+trait SequneceValue[+DATAKEY <: Writable, +DATAVALUE <: Writable] { 
+  def getDataKey(id: String = "", blobCount: Int = 0): DATAKEY
+  def getDataValue(data: Array[Byte]): DATAVALUE
+  def getDataValue(data: Array[Byte], length: Int): DATAVALUE
+  def getDataValue(data: String): DATAVALUE
+//  def getDataKeyAsString: String
+//  def getDataValueAsBytes: Array[Byte]
+}

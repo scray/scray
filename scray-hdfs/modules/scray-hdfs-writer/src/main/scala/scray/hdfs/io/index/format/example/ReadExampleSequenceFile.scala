@@ -1,8 +1,8 @@
 package scray.hdfs.io.index.format.example
 
-import scray.hdfs.io.index.format.sequence.BinarySequenceFileWriter
+import scray.hdfs.io.index.format.sequence.SequenceFileWriter
 import scray.hdfs.io.index.format.sequence.IdxReader
-import scray.hdfs.io.index.format.sequence.BlobFileReader
+import scray.hdfs.io.index.format.sequence.ValueFileReader
 import scray.hdfs.io.index.format.sequence.mapping.impl.OutputBlob
 
 object ReadExampleSequenceFile {
@@ -14,7 +14,7 @@ object ReadExampleSequenceFile {
     } else {
 
      val idxReader = new IdxReader(s"${args(0)}.idx", new OutputBlob)
-     val blobReader = new BlobFileReader(s"${args(0)}.blob")
+     val blobReader = new ValueFileReader(s"${args(0)}.blob", new OutputBlob)
 
       while(idxReader.hasNext) {
         

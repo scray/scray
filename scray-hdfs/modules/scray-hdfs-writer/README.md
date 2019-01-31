@@ -1,5 +1,8 @@
 ## Features
-  * Store multiple key value pairs in one SequenceFile
+  * Store multiple key value pairs in one SequenceFile.  
+     * Values can be accessed by index. 
+     * File size limits are managed transparently. 
+     * Max number of key value pairs in one file can be configured. (A new file will be created if limit is reached) 
   * Read and write data with java.io.InputStream
   * Api to store String and Array[Byte] data
   * Store huge binary files (internally data are splitted and merged while writing/reading)
@@ -22,7 +25,7 @@
   
   Write data to HDFS:
 
-    val writer = new TextSequenceFileWriter("hdfs://hdfs.scray.org/user/hive/warehouse/scray/json")
+    val writer = new SequenceFileWriter("hdfs://hdfs1.scray.org/user/hive/warehouse/scray/json", new OutputTextText)
       
     writer.insert("id1", """{"msg_id": 1, "msg": "msg1"}""")
     writer.insert("id2", """{"msg_id": 2, "msg": "msg2"}""")

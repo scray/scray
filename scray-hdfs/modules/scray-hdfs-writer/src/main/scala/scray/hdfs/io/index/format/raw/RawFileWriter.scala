@@ -23,6 +23,12 @@ import com.google.common.io.ByteStreams
 import java.io.InputStream
 import com.typesafe.scalalogging.LazyLogging
 import java.io.OutputStream
+import java.io.File
+import java.nio.file.Paths
+import scray.hdfs.io.environment.WindowsHadoopLibs
+import com.google.common.util.concurrent.ListenableFuture
+import com.google.common.util.concurrent.SettableFuture
+import java.util.ArrayList
 
 class RawFileWriter(hdfsURL: String, hdfsConf: Configuration) extends LazyLogging {
 
@@ -32,48 +38,54 @@ class RawFileWriter(hdfsURL: String, hdfsConf: Configuration) extends LazyLoggin
     hdfsConf.setClassLoader(getClass.getClassLoader)
   }
 
-  def this(hdfsUrl : String) = {
+  def this(hdfsUrl: String) = {
     this(hdfsUrl, new Configuration)
   }
 
-  def initWriter() = {
+  def initWriter(path: String): Unit = {
+
     hdfsConf.set("fs.hdfs.impl", classOf[org.apache.hadoop.hdfs.DistributedFileSystem].getName);
     hdfsConf.set("fs.file.impl", classOf[org.apache.hadoop.fs.LocalFileSystem].getName);
     hdfsConf.set("dfs.client.use.datanode.hostname", "true");
     hdfsConf.set("fs.defaultFS", hdfsURL)
 
+    logger.debug(s"Create writer for path ${path}")
+    
     dataWriter = FileSystem.get(hdfsConf);
   }
-  
+
+
+
   def write(fileName: String, data: InputStream) = synchronized {
     val hdfswritepath = new Path(fileName);
 
-    if(dataWriter == null ) {
+    if (dataWriter == null) {
       logger.debug("Writer was not initialized. Will do it now")
-      
-      initWriter()
+
+      initWriter(fileName)
     }
-    
+
     dataWriter.create(new Path(fileName))
     val hdfsOutputStream = dataWriter.create(hdfswritepath);
 
     ByteStreams.copy(data, hdfsOutputStream);
     data.close()
     hdfsOutputStream.hflush();
-    hdfsOutputStream.hsync(); 
+    hdfsOutputStream.hsync();
     hdfsOutputStream.close();
   }
-  
+
   def write(fileName: String): OutputStream = {
-    if(dataWriter == null ) {
+    if (dataWriter == null) {
       logger.debug("Writer was not initialized. Will do it now")
-      
-      initWriter()
+
+      initWriter(fileName)
     }
-        
+
     dataWriter.create(new Path(fileName))
   }
   
+ 
   def close = {
     dataWriter.close()
   }
