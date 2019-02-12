@@ -51,7 +51,7 @@ class RawFileWriter(hdfsURL: String, hdfsConf: Configuration) extends LazyLoggin
 
     logger.debug(s"Create writer for path ${path}")
     
-    dataWriter = FileSystem.get(hdfsConf);
+    dataWriter = FileSystem.get(hdfsConf)   
   }
 
 
