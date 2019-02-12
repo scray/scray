@@ -56,7 +56,7 @@
 		<encoding>UTF-8</encoding>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<scala.tools.version>2.11</scala.tools.version>
-		<scala.version>2.11.8</scala.version>
+		<scala.version>2.11.12</scala.version>
 		<scala.suffix>2.11</scala.suffix>
 		
 		<dependency.locations.enabled>false</dependency.locations.enabled>
