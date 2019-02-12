@@ -203,7 +203,7 @@ class SequenceFileWriter[IDXKEY <: Writable, IDXVALUE <: Writable, DATAKEY <: Wr
 
       // Put files in buffer if spit size is not reached
       if ((reachMaxSizeBufferWrittenBytes + readDataLen) < blobSplitSize) {
-
+        
         for (i <- 0 to (readDataLen - 1)) {
           reachMaxSizeBuffer(reachMaxSizeBufferWrittenBytes) = buffer(i)
           reachMaxSizeBufferWrittenBytes += 1

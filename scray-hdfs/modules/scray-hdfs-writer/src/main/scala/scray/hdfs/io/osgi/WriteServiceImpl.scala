@@ -18,34 +18,28 @@ package scray.hdfs.io.osgi
 import java.io.InputStream
 import java.math.BigInteger
 import java.util.HashMap
+import java.util.Optional
 import java.util.UUID
 
+import org.apache.hadoop.io.Writable
 import org.slf4j.LoggerFactory
 
-import scray.hdfs.io.coordination.Version
-import scray.hdfs.io.coordination.WriteDestination
-import scray.hdfs.io.write.WriteService
-import scray.hdfs.io.write.IHdfsWriterConstats.SequenceKeyValueFormat
-import scray.hdfs.io.index.format.raw.RawFileWriter
-import scray.hdfs.io.index.format.sequence.mapping.impl.OutputBlob
-import java.io.OutputStream
 import com.google.common.util.concurrent.SettableFuture
-import scray.hdfs.io.write.WriteResult
-import scray.hdfs.io.write.WriteResult
-import scray.hdfs.io.write.ScrayListenableFuture
-import scray.hdfs.io.write.ScrayListenableFuture
-import scray.hdfs.io.write.ScrayListenableFuture
+
+import scray.hdfs.io.configure.Version
+import scray.hdfs.io.configure.WriteParameter
 import scray.hdfs.io.coordination.CoordinatedWriter
-import org.apache.hadoop.io.Writable
-import java.io.PrintWriter
-import scray.hdfs.io.write.IHdfsWriterConstats
-import scray.hdfs.io.index.format.sequence.mapping.impl.OutputBlob
-import scray.hdfs.io.index.format.sequence.mapping.impl.OutputTextBytesWritable
-import scray.hdfs.io.index.format.sequence.mapping.impl.OutputTextText
-import scray.hdfs.io.write.ScrayOutputStream
-import scray.hdfs.io.coordination.WriteDestination
+import scray.hdfs.io.index.format.raw.RawFileWriter
 import scray.hdfs.io.modify.Renamer
-import org.apache.hadoop.conf.Configuration
+import scray.hdfs.io.write.IHdfsWriterConstats
+import scray.hdfs.io.write.IHdfsWriterConstats.SequenceKeyValueFormat
+import scray.hdfs.io.write.ScrayListenableFuture
+import scray.hdfs.io.write.ScrayOutputStream
+import scray.hdfs.io.write.WriteResult
+import scray.hdfs.io.write.WriteService
+import scray.hdfs.io.index.format.sequence.mapping.impl.OutputTextBytesWritable
+import scray.hdfs.io.index.format.sequence.mapping.impl.OutputBlob
+import scray.hdfs.io.index.format.sequence.mapping.impl.OutputTextText
 
 class WriteServiceImpl extends WriteService {
 
@@ -56,9 +50,18 @@ class WriteServiceImpl extends WriteService {
     logger.debug(s"Create writer for path ${path}")
     val id = UUID.randomUUID()
 
-    val metadata = WriteDestination("000", path, None, IHdfsWriterConstats.SequenceKeyValueFormat.SequenceFile_IndexValue_Blob, Version(0), false, 512 * 1024 * 1024L, 5, true, false)
+    val metadata = WriteParameter("000", path, Optional.empty(), IHdfsWriterConstats.SequenceKeyValueFormat.SequenceFile_IndexValue_Blob, Version(0), false, 512 * 1024 * 1024L, 5, true, false)
 
     writersMetadata.put(id, new CoordinatedWriter(8192, metadata, new OutputBlob))
+
+    id
+  }
+  
+  override def createWriter(conf: WriteParameter): UUID = synchronized {
+    val id = UUID.randomUUID()
+
+
+    writersMetadata.put(id, new CoordinatedWriter(8192, conf, new OutputBlob))
 
     id
   }
@@ -67,7 +70,7 @@ class WriteServiceImpl extends WriteService {
     logger.debug(s"Create writer for path ${path}")
     val id = UUID.randomUUID()
 
-    val metadata = WriteDestination("000", path, None, format, Version(0), false, 512 * 1024 * 2048L, 50)
+    val metadata = WriteParameter("000", path, Optional.empty(), format, Version(0), false, 512 * 1024 * 2048L, 50)
 
     this.createWriter(format, metadata)
   }
@@ -76,12 +79,12 @@ class WriteServiceImpl extends WriteService {
     logger.debug(s"Create writer for path ${path}")
     val id = UUID.randomUUID()
 
-    val metadata = WriteDestination("000", path, Some(customName), format, Version(0), false, 512 * 1024 * 2048L, numberOpKeyValuePairs, false, false)
+    val metadata = WriteParameter("000", path, Optional.of(customName), format, Version(0), false, 512 * 1024 * 2048L, numberOpKeyValuePairs, false, false)
 
     this.createWriter(format, metadata)
   }
 
-  def createWriter(format: SequenceKeyValueFormat, metadata: WriteDestination): UUID = synchronized {
+  def createWriter(format: SequenceKeyValueFormat, metadata: WriteParameter): UUID = synchronized {
     val id = UUID.randomUUID()
 
     format match {
@@ -97,9 +100,9 @@ class WriteServiceImpl extends WriteService {
     logger.debug(s"Insert data for resource ${resource}.")
 
     try {
-      this.getWriter(resource).insert(id, updateTime, data)
-      val metadata = writersMetadata.get(resource)
-      new ScrayListenableFuture(new WriteResult(metadata.isClosed, "Data inserted", metadata.getBytesWritten))
+      val writer = this.getWriter(resource)
+      val bytesWritten = writer.insert(id, updateTime, data)
+      new ScrayListenableFuture(new WriteResult(writer.isClosed, "Data inserted", bytesWritten))
     } catch {
       case e: Exception => {
         new ScrayListenableFuture[WriteResult](e)
@@ -111,9 +114,9 @@ class WriteServiceImpl extends WriteService {
     logger.debug(s"Insert data for resource ${resource}")
 
     try {
-      this.getWriter(resource).insert(id, updateTime, data)
-      val metadata = writersMetadata.get(resource)
-      new ScrayListenableFuture(new WriteResult(metadata.isClosed, "Data inserted", metadata.getBytesWritten))
+      val writer = this.getWriter(resource)
+      val bytesWritten = writer.insert(id, updateTime, data)
+      new ScrayListenableFuture(new WriteResult(writer.isClosed, "Data inserted", bytesWritten))
     } catch {
       case e: Exception => {
         new ScrayListenableFuture(e)
@@ -125,9 +128,9 @@ class WriteServiceImpl extends WriteService {
     logger.debug(s"Insert data for resource ${resource}")
 
     try {
-      this.getWriter(resource).insert(id, updateTime, data)
-      val metadata = writersMetadata.get(resource)
-      new ScrayListenableFuture(new WriteResult(metadata.isClosed, "Data inserted", metadata.getBytesWritten))
+      val writer = this.getWriter(resource)
+      val bytesWritten = writer.insert(id, updateTime, data)
+      new ScrayListenableFuture(new WriteResult(writer.isClosed, "Data inserted", bytesWritten))
     } catch {
       case e: Exception => {
         new ScrayListenableFuture(e)

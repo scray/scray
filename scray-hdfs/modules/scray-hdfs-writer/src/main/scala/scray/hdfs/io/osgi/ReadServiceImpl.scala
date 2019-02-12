@@ -4,6 +4,7 @@ import java.net.URI
 import java.util.HashMap
 import java.util.UUID
 import java.util.Map
+import java.lang.Boolean
 
 import org.apache.hadoop.io.Writable
 import org.slf4j.LoggerFactory

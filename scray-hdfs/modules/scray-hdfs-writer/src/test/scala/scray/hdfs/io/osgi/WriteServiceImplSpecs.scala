@@ -29,12 +29,15 @@ import com.google.common.util.concurrent.Futures
 import java.io.IOException
 import java.nio.file.Paths
 import scray.hdfs.io.write.WriteResult
+import scray.hdfs.io.write.IHdfsWriterConstats.SequenceKeyValueFormat
+import scray.hdfs.io.configure.WriteParameter
+import java.math.BigInteger
 
 class WriteServiceImplSpecs extends WordSpec with LazyLogging {
   val pathToWinutils = classOf[WriteServiceImplSpecs].getClassLoader.getResource("HADOOP_HOME/bin/winutils.exe");
   val hadoopHome = Paths.get(pathToWinutils.toURI()).toFile().toString().replace("\\bin\\winutils.exe", "")
   System.setProperty("hadoop.home.dir", hadoopHome)
-  
+
   "WriteServiceImplSpecs " should {
     " create and redrive writer " in {
       val service = new WriteServiceImpl
@@ -60,13 +63,13 @@ class WriteServiceImplSpecs extends WordSpec with LazyLogging {
 
       getIndexFiles(outPath + "/")
         .map(fileName => {
-              if(fileName.startsWith("/")) {
-                (new IdxReader("file://" + fileName + ".idx", new OutputBlob),
-                new ValueFileReader("file://" + fileName + ".blob", new OutputBlob))
-              } else {
-                (new IdxReader("file:///" + fileName + ".idx", new OutputBlob),
-                new ValueFileReader("file:///" + fileName + ".blob", new OutputBlob))
-              }
+          if (fileName.startsWith("/")) {
+            (new IdxReader("file://" + fileName + ".idx", new OutputBlob),
+              new ValueFileReader("file://" + fileName + ".blob", new OutputBlob))
+          } else {
+            (new IdxReader("file:///" + fileName + ".idx", new OutputBlob),
+              new ValueFileReader("file:///" + fileName + ".blob", new OutputBlob))
+          }
         })
         .map {
           case (idxReader, blobReader) => {
@@ -79,7 +82,7 @@ class WriteServiceImplSpecs extends WordSpec with LazyLogging {
         }
 
     }
-    " handle wrote url error " in {
+    " handle write url error " in {
       val service = new WriteServiceImpl
 
       val outPath = "chicken://target/WriteServiceImplSpecs/creatRedrive/" + System.currentTimeMillis() + "/"
@@ -88,25 +91,49 @@ class WriteServiceImplSpecs extends WordSpec with LazyLogging {
       val writerId = service.createWriter(outPath)
 
       val writeResult = service.insert(writerId, "42", System.currentTimeMillis(), new ByteArrayInputStream(s"ABCDEFG".getBytes))
-      
-      Futures.addCallback(writeResult,
+
+      Futures.addCallback(
+        writeResult,
         new FutureCallback[WriteResult]() {
-        
-        // Should not happen
-        override def onSuccess(result: WriteResult) {
-          fail   
-        }
- 
-        override def onFailure(t: Throwable) {
-           Assert.assertTrue(t.isInstanceOf[IOException])
-        }
-      });
+
+          // Should not happen
+          override def onSuccess(result: WriteResult) {
+            fail
+          }
+
+          override def onFailure(t: Throwable) {
+            Assert.assertTrue(t.isInstanceOf[IOException])
+          }
+        });
+    }
+    "check written bytes value " in {
+      val writeService = new WriteServiceImpl();
+
+      val config = new (WriteParameter.Builder)
+        .setPath("target/WriteServiceImplSpecs/")
+        .setFileFormat(SequenceKeyValueFormat.SequenceFile_Text_Text)
+        .setMaxNumberOfInserts(3)
+        .createConfiguration
+
+      val writerId = writeService.createWriter(SequenceKeyValueFormat.SequenceFile_Text_Text, config);
+
+      Assert.assertEquals(102, writeService.insert(writerId, "k1", System.currentTimeMillis(), "A".getBytes).get.bytesInserted)
+      Assert.assertEquals(126, writeService.insert(writerId, "k1", System.currentTimeMillis(), "A".getBytes).get.bytesInserted)
+      Assert.assertEquals(150, writeService.insert(writerId, "k1", System.currentTimeMillis(), "A".getBytes).get.bytesInserted)
+            
+      Assert.assertEquals(102, writeService.insert(writerId, "k1", System.currentTimeMillis(), new ByteArrayInputStream("A".getBytes), 2048).get.bytesInserted)
+      Assert.assertEquals(126, writeService.insert(writerId, "k1", System.currentTimeMillis(), new ByteArrayInputStream("A".getBytes), 2048).get.bytesInserted)
+      Assert.assertEquals(150, writeService.insert(writerId, "k1", System.currentTimeMillis(), new ByteArrayInputStream("A".getBytes), 2048).get.bytesInserted)
+      
+      Assert.assertEquals(102, writeService.insert(writerId, "k1", System.currentTimeMillis(), new ByteArrayInputStream("A".getBytes), new BigInteger("2048"), 2048).get.bytesInserted)
+      Assert.assertEquals(126, writeService.insert(writerId, "k1", System.currentTimeMillis(), new ByteArrayInputStream("A".getBytes), new BigInteger("2048"), 2048).get.bytesInserted)
+      Assert.assertEquals(150, writeService.insert(writerId, "k1", System.currentTimeMillis(), new ByteArrayInputStream("A".getBytes), new BigInteger("2048"), 2048).get.bytesInserted) 
     }
   }
 
   private def getIndexFiles(path: String): List[String] = {
     val file = new File(path)
-println(path)
+    println(path)
     file.listFiles()
       .map(file => file.getAbsolutePath)
       .filter(filename => filename.endsWith(".idx"))
