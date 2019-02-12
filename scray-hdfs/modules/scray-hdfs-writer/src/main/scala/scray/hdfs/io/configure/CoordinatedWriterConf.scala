@@ -41,18 +41,18 @@ case class Version(number: Int, compactionState: CompactionState = NEW) {
  * @param maxFileSize If maxFileSize is reached a new file will be used
  * @param maxNumberOfInserts	If maxNumberOfInserts is reached a new file will be used.
  */
-case class WriteParameter(
-    queryspace: String, 
-    path: String,
-    customFileName: Optional[String] = Optional.empty(),
-    fileFormat: IHdfsWriterConstats.SequenceKeyValueFormat, 
-    version: Version = Version(0),
-    writeVersioned: Boolean = false,
-    maxFileSize: Long = Long.MaxValue,
-    maxNumberOfInserts: Int = Integer.MAX_VALUE,
-    storeAsHiddenFileTillClosed: Boolean = false,
-    createScrayIndexFile: Boolean = false
-   )
+class WriteParameter(
+    var queryspace: String, 
+    var path: String,
+    var customFileName: Optional[String] = Optional.empty(),
+    var fileFormat: IHdfsWriterConstats.SequenceKeyValueFormat, 
+    var version: Version = Version(0),
+    var writeVersioned: Boolean = false,
+    var maxFileSize: Long = Long.MaxValue,
+    var maxNumberOfInserts: Int = Integer.MAX_VALUE,
+    var storeAsHiddenFileTillClosed: Boolean = false,
+    var createScrayIndexFile: Boolean = false
+   ){}
    
 object WriteParameter {
   class Builder {
@@ -130,7 +130,7 @@ object WriteParameter {
     }
 
     def createConfiguration: WriteParameter = {
-      WriteParameter(queryspace,
+      new WriteParameter(queryspace,
           path,
           customFileName,
           fileFormat,
