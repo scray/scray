@@ -50,29 +50,25 @@ class WriteServiceImpl extends WriteService {
     logger.debug(s"Create writer for path ${path}")
     val id = UUID.randomUUID()
 
-    val metadata = new WriteParameter("000", path, Optional.empty(), IHdfsWriterConstats.SequenceKeyValueFormat.SequenceFile_IndexValue_Blob, Version(0), false, 512 * 1024 * 1024L, 5, true, false)
+        val config = new (WriteParameter.Builder)
+    .setPath(path)
+     .createConfiguration
 
-    writersMetadata.put(id, new CoordinatedWriter(8192, metadata, new OutputBlob))
-
-    id
-  }
-  
-  override def createWriter(conf: WriteParameter, username: String, password: Array[Byte]): UUID = synchronized {
-    val id = UUID.randomUUID()
-
-    this.createWriter(conf)
+    writersMetadata.put(id, new CoordinatedWriter(8192, config, new OutputBlob))
 
     id
   }
-  
 
   def createWriter(path: String, format: SequenceKeyValueFormat): UUID = synchronized {
     logger.debug(s"Create writer for path ${path}")
     val id = UUID.randomUUID()
 
-    val metadata = new WriteParameter("000", path, Optional.empty(), format, Version(0), false, 512 * 1024 * 2048L, 50)
+    val config = new (WriteParameter.Builder)
+    .setPath(path)
+     .setFileFormat(format)
+     .createConfiguration
 
-    this.createWriter(metadata)
+    this.createWriter(config)
   }
 
   def createWriter(metadata: WriteParameter): UUID = synchronized {
@@ -87,7 +83,7 @@ class WriteServiceImpl extends WriteService {
     id
   }
 
-  def insert(resource: UUID, id: String, updateTime: Long, data: Array[Byte]):  ScrayListenableFuture[WriteResult] = synchronized {
+  def insert(resource: UUID, id: String, updateTime: Long, data: Array[Byte]): ScrayListenableFuture[WriteResult] = synchronized {
     logger.debug(s"Insert data for resource ${resource}.")
 
     try {
@@ -101,7 +97,7 @@ class WriteServiceImpl extends WriteService {
     }
   }
 
-  def insert(resource: UUID, id: String, updateTime: Long, data: InputStream, blobSplitSize: Int = 5 * 1024 * 1024):  ScrayListenableFuture[WriteResult] = synchronized {
+  def insert(resource: UUID, id: String, updateTime: Long, data: InputStream, blobSplitSize: Int = 5 * 1024 * 1024): ScrayListenableFuture[WriteResult] = synchronized {
     logger.debug(s"Insert data for resource ${resource}")
 
     try {
@@ -115,7 +111,7 @@ class WriteServiceImpl extends WriteService {
     }
   }
 
-  def insert(resource: UUID, id: String, updateTime: Long, data: InputStream, dataSize: BigInteger, blobSplitSize: Int):  ScrayListenableFuture[WriteResult] = synchronized {
+  def insert(resource: UUID, id: String, updateTime: Long, data: InputStream, dataSize: BigInteger, blobSplitSize: Int): ScrayListenableFuture[WriteResult] = synchronized {
     logger.debug(s"Insert data for resource ${resource}")
 
     try {
@@ -129,9 +125,10 @@ class WriteServiceImpl extends WriteService {
     }
   }
 
-  def writeRawFile(path: String, data: InputStream):  ScrayListenableFuture[WriteResult] = synchronized {
+  def writeRawFile(path: String, user: String, data: InputStream): ScrayListenableFuture[WriteResult] = synchronized {
     try {
-      val writer = new RawFileWriter(path)
+
+      val writer = new RawFileWriter(path, user)
       writer.write(path, data)
 
       new ScrayListenableFuture(new WriteResult("Data inserted"))
@@ -142,8 +139,10 @@ class WriteServiceImpl extends WriteService {
     }
   }
 
-  def writeRawFile(path: String): ScrayOutputStream = synchronized {
-    val writer = new RawFileWriter(path)
+  def writeRawFile(path: String, user: String): ScrayOutputStream = synchronized {
+
+    val writer = new RawFileWriter(path, user)
+
     new ScrayOutputStream(writer.write(path))
   }
 
@@ -163,7 +162,7 @@ class WriteServiceImpl extends WriteService {
     }
   }
 
-  override def rename(source: String, destination: String):  ScrayListenableFuture[WriteResult] = {
+  override def rename(source: String, destination: String): ScrayListenableFuture[WriteResult] = {
     logger.debug(s"Rename file from ${source} to ${destination}")
     val renamer = new Renamer
     renamer.rename(source, destination)
@@ -184,7 +183,7 @@ class WriteServiceImpl extends WriteService {
     }
   }
 
-  def isClosed(resource: UUID):  ScrayListenableFuture[WriteResult] = {
+  def isClosed(resource: UUID): ScrayListenableFuture[WriteResult] = {
     try {
       val isClosed = writersMetadata.get(resource).isClosed
       new ScrayListenableFuture(new WriteResult(isClosed, "File is closed", writersMetadata.get(resource).getBytesWritten))

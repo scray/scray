@@ -33,17 +33,16 @@ trait WriteService {
    */
   def createWriter(path: String): UUID 
   def createWriter(path: WriteParameter): UUID 
-  def createWriter(path: WriteParameter, username: String, password: Array[Byte]): UUID 
 
   def insert(resource: UUID, id: String, updateTime: Long, data: Array[Byte]):  ScrayListenableFuture[WriteResult]
   def insert(resource: UUID, id: String, updateTime: Long, data: InputStream, blobSplitSize: Int = 5 * 2048):  ScrayListenableFuture[WriteResult]
   def insert(resource: UUID, id: String, updateTime: Long, data: InputStream, dataSize: BigInteger, blobSplitSize: Int):  ScrayListenableFuture[WriteResult]
   
-  def writeRawFile(path: String, data: InputStream): ScrayListenableFuture[WriteResult]
+  def writeRawFile(path: String, user: String, data: InputStream): ScrayListenableFuture[WriteResult]
   /**
    * @param writeAndRename A dot will be set at the first character of the filename while writing. File will be renamed after stream was closed.
    */
-  def writeRawFile(path: String): ScrayOutputStream
+  def writeRawFile(path: String, user: String): ScrayOutputStream
   
   def rename(source: String, destination: String): ScrayListenableFuture[WriteResult]
 

@@ -14,7 +14,7 @@ class RawFileReaderSpecs extends WordSpec with LazyLogging {
 
   "RawFileReader " should {
     " list files " in {
-      val writer = new RawFileWriter("file://ff")
+      val writer = new RawFileWriter("file://ff", "stefan")
       writer.write("target/rawFileReaderSpecs/file1.raw").close()
       writer.write("target/rawFileReaderSpecs/file2.raw").close()
       writer.write("target/rawFileReaderSpecs/file3.raw").close()
