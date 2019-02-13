@@ -50,47 +50,38 @@ class WriteServiceImpl extends WriteService {
     logger.debug(s"Create writer for path ${path}")
     val id = UUID.randomUUID()
 
-    val metadata = WriteParameter("000", path, Optional.empty(), IHdfsWriterConstats.SequenceKeyValueFormat.SequenceFile_IndexValue_Blob, Version(0), false, 512 * 1024 * 1024L, 5, true, false)
+    val metadata = new WriteParameter("000", path, Optional.empty(), IHdfsWriterConstats.SequenceKeyValueFormat.SequenceFile_IndexValue_Blob, Version(0), false, 512 * 1024 * 1024L, 5, true, false)
 
     writersMetadata.put(id, new CoordinatedWriter(8192, metadata, new OutputBlob))
 
     id
   }
   
-  override def createWriter(conf: WriteParameter): UUID = synchronized {
+  override def createWriter(conf: WriteParameter, username: String, password: Array[Byte]): UUID = synchronized {
     val id = UUID.randomUUID()
 
-
-    writersMetadata.put(id, new CoordinatedWriter(8192, conf, new OutputBlob))
+    this.createWriter(conf)
 
     id
   }
+  
 
   def createWriter(path: String, format: SequenceKeyValueFormat): UUID = synchronized {
     logger.debug(s"Create writer for path ${path}")
     val id = UUID.randomUUID()
 
-    val metadata = WriteParameter("000", path, Optional.empty(), format, Version(0), false, 512 * 1024 * 2048L, 50)
+    val metadata = new WriteParameter("000", path, Optional.empty(), format, Version(0), false, 512 * 1024 * 2048L, 50)
 
-    this.createWriter(format, metadata)
+    this.createWriter(metadata)
   }
 
-  override def createWriter(path: String, format: SequenceKeyValueFormat, numberOpKeyValuePairs: Int, customName: String): UUID = synchronized {
-    logger.debug(s"Create writer for path ${path}")
+  def createWriter(metadata: WriteParameter): UUID = synchronized {
     val id = UUID.randomUUID()
 
-    val metadata = WriteParameter("000", path, Optional.of(customName), format, Version(0), false, 512 * 1024 * 2048L, numberOpKeyValuePairs, false, false)
-
-    this.createWriter(format, metadata)
-  }
-
-  def createWriter(format: SequenceKeyValueFormat, metadata: WriteParameter): UUID = synchronized {
-    val id = UUID.randomUUID()
-
-    format match {
-      case SequenceKeyValueFormat.SequenceFile_IndexValue_Blob    => writersMetadata.put(id, new CoordinatedWriter(0, metadata, new OutputBlob))
-      case SequenceKeyValueFormat.SequenceFile_Text_BytesWritable => writersMetadata.put(id, new CoordinatedWriter(0, metadata, new OutputTextBytesWritable))
-      case SequenceKeyValueFormat.SequenceFile_Text_Text          => writersMetadata.put(id, new CoordinatedWriter(0, metadata, new OutputTextText))
+    metadata.fileFormat match {
+      case SequenceKeyValueFormat.SequenceFile_IndexValue_Blob    => writersMetadata.put(id, new CoordinatedWriter(metadata.maxFileSize, metadata, new OutputBlob))
+      case SequenceKeyValueFormat.SequenceFile_Text_BytesWritable => writersMetadata.put(id, new CoordinatedWriter(metadata.maxFileSize, metadata, new OutputTextBytesWritable))
+      case SequenceKeyValueFormat.SequenceFile_Text_Text          => writersMetadata.put(id, new CoordinatedWriter(metadata.maxFileSize, metadata, new OutputTextText))
     }
 
     id

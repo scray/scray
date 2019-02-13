@@ -115,7 +115,7 @@ class WriteServiceImplSpecs extends WordSpec with LazyLogging {
         .setMaxNumberOfInserts(3)
         .createConfiguration
 
-      val writerId = writeService.createWriter(SequenceKeyValueFormat.SequenceFile_Text_Text, config);
+      val writerId = writeService.createWriter(config);
 
       Assert.assertEquals(102, writeService.insert(writerId, "k1", System.currentTimeMillis(), "A".getBytes).get.bytesInserted)
       Assert.assertEquals(126, writeService.insert(writerId, "k1", System.currentTimeMillis(), "A".getBytes).get.bytesInserted)
