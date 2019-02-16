@@ -42,21 +42,25 @@ case class Version(number: Int, compactionState: CompactionState = NEW) {
  * @param maxNumberOfInserts	If maxNumberOfInserts is reached a new file will be used.
  */
 class WriteParameter(
-    var queryspace: String, 
-    var path: String,
-    var customFileName: Optional[String] = Optional.empty(),
-    var fileFormat: IHdfsWriterConstats.SequenceKeyValueFormat, 
-    var version: Version = Version(0),
-    var writeVersioned: Boolean = false,
-    var maxFileSize: Long = Long.MaxValue,
-    var maxNumberOfInserts: Int = Integer.MAX_VALUE,
-    var storeAsHiddenFileTillClosed: Boolean = false,
-    var createScrayIndexFile: Boolean = false
+    val queryspace: String, 
+    val path: String,
+    val user: String,
+    val password: Array[Byte],
+    val customFileName: Optional[String] = Optional.empty(),
+    val fileFormat: IHdfsWriterConstats.SequenceKeyValueFormat, 
+    val version: Version = Version(0),
+    val writeVersioned: Boolean = false,
+    val maxFileSize: Long = Long.MaxValue,
+    val maxNumberOfInserts: Int = Integer.MAX_VALUE,
+    val storeAsHiddenFileTillClosed: Boolean = false,
+    val createScrayIndexFile: Boolean = false
    ){}
    
 object WriteParameter {
   class Builder {
     var queryspace: String = null
+    var user: String = System.getProperty("user.name")
+    var password: Array[Byte] = new Array[Byte](0)
     var path: String = null
     var customFileName: Optional[String] = Optional.empty()
     var fileFormat: IHdfsWriterConstats.SequenceKeyValueFormat = null
@@ -79,6 +83,16 @@ object WriteParameter {
       this
     }
 
+    def setUser(user: String): Builder = {
+      this.user = user;
+      this
+    }
+    
+    def setPassword(password: Array[Byte]) = {
+      this.password = password
+      this
+    }
+    
     def setCustomFileName(fileName: String): Builder = {
       this.customFileName = Optional.of(fileName);
       this
@@ -132,6 +146,8 @@ object WriteParameter {
     def createConfiguration: WriteParameter = {
       new WriteParameter(queryspace,
           path,
+          user,
+          password,
           customFileName,
           fileFormat,
           version,

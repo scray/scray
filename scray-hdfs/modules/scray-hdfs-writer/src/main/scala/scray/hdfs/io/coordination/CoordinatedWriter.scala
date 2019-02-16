@@ -37,7 +37,8 @@ import scray.hdfs.io.configure.WriteParameter
 class CoordinatedWriter[+IDXKEY <: Writable, +IDXVALUE <: Writable, +DATAKEY <: Writable, +DATAVALUE <: Writable](
   maxFileSize:    Long                                                       = Long.MaxValue,
   metadata:       WriteParameter,
-  outTypeMapping: SequenceKeyValuePair[IDXKEY, IDXVALUE, DATAKEY, DATAVALUE]) extends LazyLogging with Writer {
+  outTypeMapping: SequenceKeyValuePair[IDXKEY, IDXVALUE, DATAKEY, DATAVALUE]
+  ) extends LazyLogging with Writer {
 
   private var hdfsConf: Configuration = null; // Initialized when writer was created.
   private var writer: Writer = createNewBasicWriter(metadata)
@@ -69,7 +70,7 @@ class CoordinatedWriter[+IDXKEY <: Writable, +IDXVALUE <: Writable, +DATAKEY <: 
 
   private def createNewBasicWriter(metadata: WriteParameter): Writer = {
     val filePath = this.getPath(metadata.path, metadata.queryspace, metadata.version.number, metadata.writeVersioned, metadata.customFileName)
-    val writer = new SequenceFileWriter(filePath, outTypeMapping, metadata.createScrayIndexFile)
+    val writer = new SequenceFileWriter(filePath, outTypeMapping, metadata.createScrayIndexFile, metadata.user)
     this.hdfsConf = writer.hdfsConf
 
     writer
