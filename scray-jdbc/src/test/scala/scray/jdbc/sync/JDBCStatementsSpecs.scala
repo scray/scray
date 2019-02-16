@@ -53,18 +53,25 @@ class JDBCStatementsSpecs extends WordSpec with BeforeAndAfterAll with LazyLoggi
 
   "JDBCStatementsSpecs " should {
     "register job in sync table " in {
-
       val syncApi = new SyncTableComponent(slick.jdbc.MySQLProfile)
       val jobInfo = JDBCJobInfo("job1", 3, 2)
 
+     val createTableResult = db.run(syncApi.create);
+      
       // Create table
-      db.run(syncApi.create).onComplete(_ match {
+      createTableResult.onComplete(_ match {
         case Success(lines) => ""
         case Failure(ex) => {
           logger.error(s"Unable to execute statement ${ex}")
-          fail();
+          fail()          
         };
       })
+
+      try {
+        Await.result(createTableResult, Duration("3 second"))
+      } catch {
+        case e: Exception => println(e) // FIXME fail in case of a exception
+      }
       // 5 statements schould be generatd. 3 batch versions and 2 online versions
       assert(syncApi.registerJobStatement(jobInfo).size === 5)
 
@@ -76,12 +83,13 @@ class JDBCStatementsSpecs extends WordSpec with BeforeAndAfterAll with LazyLoggi
           fail();
         };
       }))
-
+      
+println("BB")
     }
     " start batch job " in {
       val syncApi = new SyncTableComponent(slick.jdbc.MySQLProfile)
       val jobInfo = JDBCJobInfo("job1", 3, 2)
-
+println("CC")
       // Mark batch job on slot 0 as running
       db.run(syncApi.startJobStatement(jobInfo, 0, false)).onComplete(_ match {
         case Failure(ex) => {
