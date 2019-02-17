@@ -42,7 +42,7 @@ class SyncTableComponent(val driver: JdbcProfile, val dbSystemId: String = "BISD
     firstElementTime: Option[Long] = None)
     
   class SyncTableT(tag: Tag) extends Table[JDBCSyncTable](tag, tablename) {
-    def jobname = column[String]("CJOBNAME")
+    def jobname = column[String]("CJOBNAME", O.SqlType("varchar(100)"))
     def slot = column[Int]("CSLOT")
     def versions = column[Int]("CVERSIONS")
     def dbId = column[String]("CDBID")
