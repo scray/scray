@@ -65,13 +65,14 @@ class SequenceFileWriter[IDXKEY <: Writable, IDXVALUE <: Writable, DATAKEY <: Wr
 
     var writer: SequenceFile.Writer = null;
     try {
-      writer = SequenceFile.createWriter(hdfsConf, Writer.file(new Path(path + fileExtension)),
+      writer = SequenceFile.createWriter(hdfsConf, 
+        Writer.file(new Path(path + fileExtension)),
         Writer.keyClass(key.getClass()),
         Writer.valueClass(value.getClass()),
         Writer.bufferSize(fs.getConf().getInt("io.file.buffer.size", 4096)),
         Writer.replication(fs.getDefaultReplication()),
         Writer.blockSize(536870912),
-        Writer.compression(SequenceFile.CompressionType.NONE),
+        Writer.compression(SequenceFile.CompressionType.RECORD),
         Writer.progressable(null),
         Writer.metadata(new Metadata()));
     } catch {
