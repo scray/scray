@@ -44,7 +44,7 @@ case class Version(number: Int, compactionState: CompactionState = NEW) {
 class WriteParameter(
     var queryspace: String, 
     var path: String,
-    var customFileName: Optional[String] = Optional.empty(),
+    var fileNameCreator: Optional[FilenameCreator] = Optional.empty(),
     var fileFormat: IHdfsWriterConstats.SequenceKeyValueFormat, 
     var version: Version = Version(0),
     var writeVersioned: Boolean = false,
@@ -58,7 +58,7 @@ object WriteParameter {
   class Builder {
     var queryspace: String = null
     var path: String = null
-    var customFileName: Optional[String] = Optional.empty()
+    var fileNameCreator: Optional[FilenameCreator] = Optional.empty()
     var fileFormat: IHdfsWriterConstats.SequenceKeyValueFormat = null
     var version: Version = Version(0)
     var writeVersioned: Boolean = false
@@ -79,8 +79,8 @@ object WriteParameter {
       this
     }
 
-    def setCustomFileName(fileName: String): Builder = {
-      this.customFileName = Optional.of(fileName);
+    def setFileNameCreator(fileName: FilenameCreator): Builder = {
+      this.fileNameCreator = Optional.of(fileName);
       this
     }
     
@@ -132,7 +132,7 @@ object WriteParameter {
     def createConfiguration: WriteParameter = {
       new WriteParameter(queryspace,
           path,
-          customFileName,
+          fileNameCreator,
           fileFormat,
           version,
           writeVersioned,

@@ -25,9 +25,10 @@ class CoordinatedWriterConfSpecs extends WordSpec with BeforeAndAfter with LazyL
     " create configuration object " in {
       
       val builder = new WriteParameter.Builder
-      val config: WriteParameter = builder.setCustomFileName("file1").createConfiguration
       
-      Assert.assertEquals("file1", config.customFileName.get)
+      val config: WriteParameter = builder.setFileNameCreator(new FixNameCreator("file1")).createConfiguration
+      
+      Assert.assertEquals("file1", new FixNameCreator("file1").getNextFilename)
     }
    }
 }

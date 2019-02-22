@@ -33,6 +33,8 @@ import scray.hdfs.io.modify.Renamer
 import org.apache.hadoop.conf.Configuration
 import java.util.Optional
 import scray.hdfs.io.configure.WriteParameter
+import scray.hdfs.io.configure.FilenameCreator
+import scray.hdfs.io.configure.RandomUUIDFilenameCreator
 
 class CoordinatedWriter[+IDXKEY <: Writable, +IDXVALUE <: Writable, +DATAKEY <: Writable, +DATAVALUE <: Writable](
   maxFileSize:    Long                                                       = Long.MaxValue,
@@ -68,30 +70,30 @@ class CoordinatedWriter[+IDXKEY <: Writable, +IDXVALUE <: Writable, +DATAKEY <: 
   }
 
   private def createNewBasicWriter(metadata: WriteParameter): Writer = {
-    val filePath = this.getPath(metadata.path, metadata.queryspace, metadata.version.number, metadata.writeVersioned, metadata.customFileName)
+    val filePath = this.getPath(metadata.path, metadata.queryspace, metadata.version.number, metadata.writeVersioned, metadata.fileNameCreator)
     val writer = new SequenceFileWriter(filePath, outTypeMapping, metadata.createScrayIndexFile)
     this.hdfsConf = writer.hdfsConf
 
     writer
   }
 
-  private def getPath(basePath: String, queryspace: String, version: Int, writeVersioned: Boolean, customFileName: Optional[String]): String = {
+  private def getPath(basePath: String, queryspace: String, version: Int, writeVersioned: Boolean, customFileName: Optional[FilenameCreator]): String = {
     if (writeVersioned) {
       if (metadata.storeAsHiddenFileTillClosed) {
         if (basePath.endsWith("/")) {
-          s"${basePath}scray-data-${queryspace}-v${version}/.${customFileName.orElse(UUID.randomUUID + ".seq")}"
+          s"${basePath}scray-data-${queryspace}-v${version}/.${customFileName.orElse(new RandomUUIDFilenameCreator).getNextFilename}"
         } else {
-          s"${basePath}/scray-data-${queryspace}-v${version}/.${customFileName.orElse(UUID.randomUUID + ".seq")}"
+          s"${basePath}/scray-data-${queryspace}-v${version}/.${customFileName.orElse(new RandomUUIDFilenameCreator).getNextFilename}"
         }
       } else {
         if (basePath.endsWith("/")) {
-          s"${basePath}scray-data-${queryspace}-v${version}/${customFileName.orElse(UUID.randomUUID + ".seq")}"
+          s"${basePath}scray-data-${queryspace}-v${version}/${customFileName.orElse(new RandomUUIDFilenameCreator).getNextFilename}"
         } else {
-          s"${basePath}/scray-data-${queryspace}-v${version}/${customFileName.orElse(UUID.randomUUID + ".seq")}"
+          s"${basePath}/scray-data-${queryspace}-v${version}/${customFileName.orElse(new RandomUUIDFilenameCreator).getNextFilename}"
         }
       }
     } else {
-      s"${basePath}/${customFileName.orElse(UUID.randomUUID() + ".seq")}"
+      s"${basePath}/${customFileName.orElse(new RandomUUIDFilenameCreator).getNextFilename}"
     }
   }
 
@@ -130,7 +132,7 @@ class CoordinatedWriter[+IDXKEY <: Writable, +IDXVALUE <: Writable, +DATAKEY <: 
         renamer.rename(writer.getPath + ".data.seq", newFilename + ".data.seq", hdfsConf).get()
         renamer.rename(writer.getPath + ".idx.seq", newFilename + ".idx.seq", hdfsConf).get()
       } else { 
-        if(metadata.customFileName.isPresent()) {
+        if(metadata.fileNameCreator.isPresent()) {
           renamer.rename(writer.getPath, newFilename, hdfsConf).get()
         } else {
           renamer.rename(writer.getPath + ".seq", newFilename + ".seq", hdfsConf).get()

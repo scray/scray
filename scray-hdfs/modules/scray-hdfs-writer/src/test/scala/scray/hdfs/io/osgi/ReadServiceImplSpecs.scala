@@ -35,6 +35,7 @@ import org.apache.commons.io.IOUtils
 import java.net.URL
 import scray.hdfs.io.write.IHdfsWriterConstats.SequenceKeyValueFormat
 import scray.hdfs.io.configure.WriteParameter
+import scray.hdfs.io.configure.FixNameCreator
 
 class ReadServiceImplSpecs extends WordSpec with BeforeAndAfter with LazyLogging {
   val pathToWinutils = classOf[ReadServiceImplSpecs].getClassLoader.getResource("HADOOP_HOME/bin/winutils.exe");
@@ -56,7 +57,7 @@ class ReadServiceImplSpecs extends WordSpec with BeforeAndAfter with LazyLogging
       .setPath(sequenceBytesWritableExampleFile)
       .setFileFormat(SequenceKeyValueFormat.SequenceFile_Text_BytesWritable)
       .setMaxNumberOfInserts(12)
-      .setCustomFileName("fileBytesWritable.seq")
+      .setFileNameCreator(new FixNameCreator("fileBytesWritable.seq"))
       .createConfiguration
     val writerId1 = service.createWriter(config)
     service.insert(writerId1, "Key42", System.currentTimeMillis(), new ByteArrayInputStream(s"ABCDEFG".getBytes))
@@ -66,7 +67,7 @@ class ReadServiceImplSpecs extends WordSpec with BeforeAndAfter with LazyLogging
       .setPath(sequenceBytesWritableExampleFile)
       .setFileFormat(SequenceKeyValueFormat.SequenceFile_Text_Text)
       .setMaxNumberOfInserts(12)
-      .setCustomFileName("fileText.seq")
+      .setFileNameCreator(new FixNameCreator("fileText.seq"))
       .createConfiguration
       
     val writerId2 = service.createWriter(config2)
