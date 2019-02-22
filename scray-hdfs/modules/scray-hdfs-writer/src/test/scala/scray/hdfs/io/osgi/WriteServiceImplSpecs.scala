@@ -32,6 +32,7 @@ import scray.hdfs.io.write.WriteResult
 import scray.hdfs.io.write.IHdfsWriterConstats.SequenceKeyValueFormat
 import scray.hdfs.io.configure.WriteParameter
 import java.math.BigInteger
+import java.security.PrivilegedActionException
 
 class WriteServiceImplSpecs extends WordSpec with LazyLogging {
   val pathToWinutils = classOf[WriteServiceImplSpecs].getClassLoader.getResource("HADOOP_HOME/bin/winutils.exe");
@@ -102,7 +103,8 @@ class WriteServiceImplSpecs extends WordSpec with LazyLogging {
           }
 
           override def onFailure(t: Throwable) {
-            Assert.assertTrue(t.isInstanceOf[IOException])
+            println(t)
+            Assert.assertTrue(t.isInstanceOf[PrivilegedActionException])
           }
         });
     }

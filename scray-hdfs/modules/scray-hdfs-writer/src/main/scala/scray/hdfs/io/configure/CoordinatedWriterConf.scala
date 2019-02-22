@@ -42,7 +42,9 @@ case class Version(number: Int, compactionState: CompactionState = NEW) {
  * @param maxNumberOfInserts	If maxNumberOfInserts is reached a new file will be used.
  */
 class WriteParameter(
-    var queryspace: String, 
+    var queryspace: String,
+    val user: String,
+    val password: Array[Byte],
     var path: String,
     var fileNameCreator: Optional[FilenameCreator] = Optional.empty(),
     var fileFormat: IHdfsWriterConstats.SequenceKeyValueFormat, 
@@ -57,6 +59,8 @@ class WriteParameter(
 object WriteParameter {
   class Builder {
     var queryspace: String = null
+    var user: String = System.getProperty("user.name")
+    var password: Array[Byte] = new Array[Byte](0)
     var path: String = null
     var fileNameCreator: Optional[FilenameCreator] = Optional.empty()
     var fileFormat: IHdfsWriterConstats.SequenceKeyValueFormat = null
@@ -81,9 +85,19 @@ object WriteParameter {
 
     def setFileNameCreator(fileName: FilenameCreator): Builder = {
       this.fileNameCreator = Optional.of(fileName);
+      this     
+    }
+
+    def setUser(user: String): Builder = {
+      this.user = user;
       this
     }
     
+    def setPassword(password: Array[Byte]) = {
+      this.password = password
+      this
+    }
+        
     def setFileFormat(kvFormat: IHdfsWriterConstats.SequenceKeyValueFormat): Builder = {
       this.fileFormat = kvFormat
       this
@@ -130,7 +144,10 @@ object WriteParameter {
     }
 
     def createConfiguration: WriteParameter = {
-      new WriteParameter(queryspace,
+      new WriteParameter(
+          queryspace,
+          user,
+          password,
           path,
           fileNameCreator,
           fileFormat,

@@ -22,7 +22,7 @@ object TextToTextSequenceFiles {
 
   def main(args: Array[String]) {
 
-    val writer = new SequenceFileWriter("hdfs://127.0.0.1/123/TdextToTextSequenceFile", new OutputTextText, true)
+    val writer = new SequenceFileWriter("hdfs://127.0.0.1/123/TdextToTextSequenceFile", new OutputTextText, true, System.getProperty("user.name"))
 
     writer.insert("id1", """{"msg_id": 1, "msg": "msg1"}""")
     writer.insert("id2", """{"msg_id": 2, "msg": "msg2"}""")

@@ -43,17 +43,17 @@
 		<dependency>
 			<groupId>com.typesafe.slick</groupId>
 			<artifactId>slick_${scala.suffix}</artifactId>
-			<version>3.2.0</version>
+			<version>3.3.0</version>
 		</dependency>
 		<dependency>
 			<groupId>com.typesafe.slick</groupId>
 			<artifactId>slick-hikaricp_${scala.suffix}</artifactId>
-			<version>3.2.0</version>
+			<version>3.3.0</version>
 		</dependency>
 		<dependency>
 			<groupId>com.h2database</groupId>
 			<artifactId>h2</artifactId>
-			<version>1.4.196</version>
+			<version>1.4.197</version>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
