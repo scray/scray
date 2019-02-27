@@ -15,15 +15,19 @@
 package scray.hdfs.io.read;
 
 public class FileParameter {
-	Long fileSize = null;
-	String filePath = null;
-	String fileName = null;
+	Long fileSize    = null;
+	String filePath  = null;
+	String fileName  = null;
+	boolean isFile   = false;
+	long modificationTime = 0L;
 
-	public FileParameter(Long fileSize, String filePath, String fileName) {
+	public FileParameter(Long fileSize, String filePath, String fileName, long modificationTime, boolean isFile) {
 		super();
+		this.isFile   = isFile;
 		this.fileSize = fileSize;
 		this.filePath = filePath;
 		this.fileName = fileName;
+		this.modificationTime = modificationTime;
 	}
 
 	public Long getFileSize() {
@@ -36,5 +40,17 @@ public class FileParameter {
 
 	public String getFileName() {
 		return fileName;
+	}
+	
+	public long getModificationTime() {
+		return this.modificationTime;
+	}
+	
+	public boolean isDirectory() {
+		return !this.isFile;
+	}
+	
+	public boolean isFile() {
+		return this.isFile;
 	}
 }
