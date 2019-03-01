@@ -55,7 +55,7 @@ class ReadServiceImplSpecs extends WordSpec with BeforeAndAfter with LazyLogging
     
     val config = new WriteParameter.Builder()
       .setPath(sequenceBytesWritableExampleFile)
-      .setFileFormat(SequenceKeyValueFormat.SequenceFile_Text_BytesWritable)
+      .setFileFormat(SequenceKeyValueFormat.SEQUENCEFILE_TEXT_BYTESWRITABLE)
       .setMaxNumberOfInserts(12)
       .setFileNameCreator(new FixNameCreator("fileBytesWritable.seq"))
       .createConfiguration
@@ -65,7 +65,7 @@ class ReadServiceImplSpecs extends WordSpec with BeforeAndAfter with LazyLogging
     
     val config2 = new WriteParameter.Builder()
       .setPath(sequenceBytesWritableExampleFile)
-      .setFileFormat(SequenceKeyValueFormat.SequenceFile_Text_Text)
+      .setFileFormat(SequenceKeyValueFormat.SEQUENCEFILE_TEXT_TEXT)
       .setMaxNumberOfInserts(12)
       .setFileNameCreator(new FixNameCreator("fileText.seq"))
       .createConfiguration
@@ -94,7 +94,7 @@ class ReadServiceImplSpecs extends WordSpec with BeforeAndAfter with LazyLogging
     " read sequence BytesWritable file" in {
        val reader = new ReadServiceImpl
        
-       val id = reader.readFullSequenceFile(sequenceBytesWritableExampleFile + "/fileBytesWritable.seq", SequenceKeyValueFormat.SequenceFile_Text_BytesWritable)
+       val id = reader.readFullSequenceFile(sequenceBytesWritableExampleFile + "/fileBytesWritable.seq", SequenceKeyValueFormat.SEQUENCEFILE_TEXT_BYTESWRITABLE)
       
        Assert.assertTrue(reader.hasNextSequenceFilePair(id).get)   
        val readData = reader.getNextSequenceFilePair(id).get
@@ -106,7 +106,7 @@ class ReadServiceImplSpecs extends WordSpec with BeforeAndAfter with LazyLogging
     " read sequence Text file" in {
        val reader = new ReadServiceImpl
        
-       val id = reader.readFullSequenceFile(sequenceBytesWritableExampleFile + "/fileText.seq", SequenceKeyValueFormat.SequenceFile_Text_Text)
+       val id = reader.readFullSequenceFile(sequenceBytesWritableExampleFile + "/fileText.seq", SequenceKeyValueFormat.SEQUENCEFILE_TEXT_TEXT)
       
        Assert.assertTrue(reader.hasNextSequenceFilePair(id).get)   
        val readData = reader.getNextSequenceFilePair(id).get

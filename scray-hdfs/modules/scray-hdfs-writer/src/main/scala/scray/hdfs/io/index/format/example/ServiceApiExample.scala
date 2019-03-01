@@ -15,7 +15,7 @@ object ServiceApiExample {
     
     val config = new WriteParameter.Builder()
     .setPath("hdfs://host1.scray.org/tmp/customFile/")
-    .setFileFormat(SequenceKeyValueFormat.SequenceFile_Text_Text)
+    .setFileFormat(SequenceKeyValueFormat.SEQUENCEFILE_TEXT_TEXT)
     .setFileNameCreator(new RandomUUIDFilenameCreator())
     .createConfiguration
 

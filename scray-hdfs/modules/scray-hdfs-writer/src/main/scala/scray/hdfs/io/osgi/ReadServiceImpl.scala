@@ -91,9 +91,9 @@ class ReadServiceImpl extends ReadService {
   def readFullSequenceFile(path: String, format: SequenceKeyValueFormat): UUID = {
     val id = UUID.randomUUID()
     format match {
-      case SequenceKeyValueFormat.SequenceFile_IndexValue_Blob    => sequenceFileReaderMetadata.put(id, new SequenceKeyValueFileReader(path, new OutputBlob))
-      case SequenceKeyValueFormat.SequenceFile_Text_BytesWritable => sequenceFileReaderMetadata.put(id, new SequenceKeyValueFileReader(path, new OutputTextBytesWritable))
-      case SequenceKeyValueFormat.SequenceFile_Text_Text          => sequenceFileReaderMetadata.put(id, new SequenceKeyValueFileReader(path, new OutputTextText))
+      case SequenceKeyValueFormat.SEQUENCEFILE_INDEXVALUE_BLOB    => sequenceFileReaderMetadata.put(id, new SequenceKeyValueFileReader(path, new OutputBlob))
+      case SequenceKeyValueFormat.SEQUENCEFILE_TEXT_BYTESWRITABLE => sequenceFileReaderMetadata.put(id, new SequenceKeyValueFileReader(path, new OutputTextBytesWritable))
+      case SequenceKeyValueFormat.SEQUENCEFILE_TEXT_TEXT          => sequenceFileReaderMetadata.put(id, new SequenceKeyValueFileReader(path, new OutputTextText))
     }
 
     id

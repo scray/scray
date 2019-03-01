@@ -75,9 +75,9 @@ class WriteServiceImpl extends WriteService {
     val id = UUID.randomUUID()
 
     metadata.fileFormat match {
-      case SequenceKeyValueFormat.SequenceFile_IndexValue_Blob    => writersMetadata.put(id, new CoordinatedWriter(metadata.maxFileSize, metadata, new OutputBlob))
-      case SequenceKeyValueFormat.SequenceFile_Text_BytesWritable => writersMetadata.put(id, new CoordinatedWriter(metadata.maxFileSize, metadata, new OutputTextBytesWritable))
-      case SequenceKeyValueFormat.SequenceFile_Text_Text          => writersMetadata.put(id, new CoordinatedWriter(metadata.maxFileSize, metadata, new OutputTextText))
+      case SequenceKeyValueFormat.SEQUENCEFILE_INDEXVALUE_BLOB    => writersMetadata.put(id, new CoordinatedWriter(metadata.maxFileSize, metadata, new OutputBlob))
+      case SequenceKeyValueFormat.SEQUENCEFILE_TEXT_BYTESWRITABLE => writersMetadata.put(id, new CoordinatedWriter(metadata.maxFileSize, metadata, new OutputTextBytesWritable))
+      case SequenceKeyValueFormat.SEQUENCEFILE_TEXT_TEXT        => writersMetadata.put(id, new CoordinatedWriter(metadata.maxFileSize, metadata, new OutputTextText))
     }
 
     id

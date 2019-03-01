@@ -33,7 +33,7 @@ class WriteCoordinatorSpecs extends WordSpec with LazyLogging {
       val metadata = new (WriteParameter.Builder)
       .setPath(outPath)
       .setQueryspace("000")
-      .setFileFormat(IHdfsWriterConstats.SequenceKeyValueFormat.SequenceFile_IndexValue_Blob)
+      .setFileFormat(IHdfsWriterConstats.SequenceKeyValueFormat.SEQUENCEFILE_INDEXVALUE_BLOB)
       .setMaxNumberOfInserts(20)
       .setCreateScrayIndexFile(true)
       .setWriteVersioned(true)

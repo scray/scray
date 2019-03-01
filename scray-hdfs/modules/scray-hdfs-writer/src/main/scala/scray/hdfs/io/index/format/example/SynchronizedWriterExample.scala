@@ -18,7 +18,7 @@ object CoordinatedWriterExample {
 
     val conf = new (WriteParameter.Builder)
     .setPath("target/CoordinateWriteExample")
-    .setFileFormat(IHdfsWriterConstats.SequenceKeyValueFormat.SequenceFile_Text_BytesWritable)
+    .setFileFormat(IHdfsWriterConstats.SequenceKeyValueFormat.SEQUENCEFILE_TEXT_BYTESWRITABLE)
     .setMaxNumberOfInserts(5)
     .createConfiguration
     val writer = new CoordinatedWriter(8192, conf, new OutputTextBytesWritable)

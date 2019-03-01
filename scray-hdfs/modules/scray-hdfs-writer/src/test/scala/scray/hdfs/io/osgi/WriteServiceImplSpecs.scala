@@ -113,7 +113,7 @@ class WriteServiceImplSpecs extends WordSpec with LazyLogging {
 
       val config = new (WriteParameter.Builder)
         .setPath("target/WriteServiceImplSpecs/")
-        .setFileFormat(SequenceKeyValueFormat.SequenceFile_Text_Text)
+        .setFileFormat(SequenceKeyValueFormat.SEQUENCEFILE_TEXT_TEXT)
         .setMaxNumberOfInserts(3)
         .createConfiguration
 

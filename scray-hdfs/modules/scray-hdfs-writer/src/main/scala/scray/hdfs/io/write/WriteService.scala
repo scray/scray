@@ -16,13 +16,13 @@
 package scray.hdfs.io.write
 
 import java.io.InputStream
-import java.io.OutputStream
 import java.math.BigInteger
 import java.util.UUID
 
-import com.google.common.util.concurrent.ListenableFuture
-import scray.hdfs.io.write.IHdfsWriterConstats.SequenceKeyValueFormat
-import org.apache.hadoop.conf.Configuration
+
+
+
+
 import scray.hdfs.io.configure.WriteParameter
 
 trait WriteService {
