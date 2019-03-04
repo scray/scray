@@ -13,24 +13,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package scray.hdfs.io.configure
+package scray.hdfs.io.coordination
 
-import org.scalatest.BeforeAndAfter
+import java.util.TimerTask
+
 import com.typesafe.scalalogging.LazyLogging
-import org.scalatest.WordSpec
-import org.junit.Assert
-import scray.hdfs.io.coordination.CloseFileTimer
-import java.util.Timer
 
-class CoordinatedWriterConfSpecs extends WordSpec with BeforeAndAfter with LazyLogging {
-   "CoordinatedWriterConf " should {
-    " create configuration object " in {
-      
-      val builder = new WriteParameter.Builder
-      
-      val config: WriteParameter = builder.setFileNameCreator(new FixNameCreator("file1")).createConfiguration
-      
-      Assert.assertEquals("file1", new FixNameCreator("file1").getNextFilename)
-    }
-   }
+class CloseFileTimer(writer: CoordinatedWriter[_, _, _, _]) extends TimerTask with LazyLogging {
+  
+  def run() = {
+    logger.debug("Try to close writer")
+    writer.close
+    logger.debug("Writer closed")
+  }
+  
 }
