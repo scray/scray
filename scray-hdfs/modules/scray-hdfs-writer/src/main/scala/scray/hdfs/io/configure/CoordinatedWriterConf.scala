@@ -173,7 +173,7 @@ object WriteParameter {
     }
 
     def setTimeLimit(seconds: Int): Builder = {
-      this.timeLimit = seconds
+      this.timeLimit = seconds * 1000
       this
     }
 
