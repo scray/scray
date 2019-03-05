@@ -53,6 +53,7 @@ class WriteParameter(
   var writeVersioned:              Boolean                                    = false,
   var maxFileSize:                 Long                                       = Long.MaxValue,
   var maxNumberOfInserts:          Int                                        = Integer.MAX_VALUE,
+  var timeLimit:                   Int                                        = -1,
   var storeAsHiddenFileTillClosed: Boolean                                    = false,
   var createScrayIndexFile:        Boolean                                    = false) {
 
@@ -103,7 +104,7 @@ class WriteParameter(
     }
   }
 }
-
+   
 object WriteParameter {
   class Builder {
     var queryspace: String = null
@@ -116,7 +117,7 @@ object WriteParameter {
     var writeVersioned: Boolean = false
     var maxFileSize: Long = Long.MaxValue
     var maxNumberOfInserts: Int = Integer.MAX_VALUE
-    var timeLimit: Int = Integer.MAX_VALUE
+    var timeLimit: Int = -1
     var writeMode: WriteMode = WriteMode.WriteBack
     var storeAsHiddenFileTillClosed: Boolean = false
     var createScrayIndexFile: Boolean = false
@@ -203,6 +204,7 @@ object WriteParameter {
         writeVersioned,
         maxFileSize,
         maxNumberOfInserts,
+        timeLimit,
         storeAsHiddenFileTillClosed,
         createScrayIndexFile)
     }

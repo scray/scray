@@ -20,6 +20,8 @@ import com.typesafe.scalalogging.LazyLogging
 import org.scalatest.WordSpec
 import org.junit.Assert
 import java.util.Arrays
+import scray.hdfs.io.coordination.CloseFileTimer
+import java.util.Timer
 
 class CoordinatedWriterConfSpecs extends WordSpec with BeforeAndAfter with LazyLogging {
   "CoordinatedWriterConf " should {
