@@ -6,7 +6,7 @@ public class RandomUUIDFilenameCreator implements FilenameCreator {
 
     @Override
     public String getNextFilename() {
-        return UUID.randomUUID().toString();
+        return UUID.randomUUID().toString() + ".seq";
     }
 
     @Override

@@ -39,7 +39,7 @@ class RawFileWriterSpecs extends WordSpec with LazyLogging {
       outputStream.write(dataToWrite.getBytes)
       outputStream.close();
       
-      val reader = new RawFileReader("file://f")
+      val reader = new RawFileReader("file://f", System.getProperty("user.name"))
       val inputStream = reader.read("target/rawFileWriterSpecs/useStream.raw")
       val readDate = Source.fromInputStream(inputStream).mkString
       

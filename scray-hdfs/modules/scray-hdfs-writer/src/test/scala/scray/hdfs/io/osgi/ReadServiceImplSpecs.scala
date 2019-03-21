@@ -80,7 +80,7 @@ class ReadServiceImplSpecs extends WordSpec with BeforeAndAfter with LazyLogging
     " list files in folder " in {
       val reader = new ReadServiceImpl
 
-      val files = reader.getFileList(rawExampleFile).get()
+      val files = reader.getFileList(rawExampleFile, System.getProperty("user.name"), "".getBytes).get()
 
       Assert.assertEquals(1, files.size());
       Assert.assertEquals("file1.txt", files.get(0).getFileName);
@@ -88,13 +88,13 @@ class ReadServiceImplSpecs extends WordSpec with BeforeAndAfter with LazyLogging
     " read file " in {
       val reader = new ReadServiceImpl
 
-      val fileContent = IOUtils.toString(reader.getInputStream(rawExampleFile).get)
+      val fileContent = IOUtils.toString(reader.getInputStream(rawExampleFile, System.getProperty("user.name"), "".getBytes).get)
       Assert.assertEquals("ABCDEFG", fileContent);
     }
     " read sequence BytesWritable file" in {
        val reader = new ReadServiceImpl
        
-       val id = reader.readFullSequenceFile(sequenceBytesWritableExampleFile + "/fileBytesWritable.seq", SequenceKeyValueFormat.SEQUENCEFILE_TEXT_BYTESWRITABLE)
+       val id = reader.readFullSequenceFile(sequenceBytesWritableExampleFile + "/fileBytesWritable.seq", SequenceKeyValueFormat.SEQUENCEFILE_TEXT_BYTESWRITABLE, System.getProperty("user.name"), "".getBytes)
       
        Assert.assertTrue(reader.hasNextSequenceFilePair(id).get)   
        val readData = reader.getNextSequenceFilePair(id).get
@@ -106,7 +106,7 @@ class ReadServiceImplSpecs extends WordSpec with BeforeAndAfter with LazyLogging
     " read sequence Text file" in {
        val reader = new ReadServiceImpl
        
-       val id = reader.readFullSequenceFile(sequenceBytesWritableExampleFile + "/fileText.seq", SequenceKeyValueFormat.SEQUENCEFILE_TEXT_TEXT)
+       val id = reader.readFullSequenceFile(sequenceBytesWritableExampleFile + "/fileText.seq", SequenceKeyValueFormat.SEQUENCEFILE_TEXT_TEXT, System.getProperty("user.name"), "".getBytes)
       
        Assert.assertTrue(reader.hasNextSequenceFilePair(id).get)   
        val readData = reader.getNextSequenceFilePair(id).get
@@ -126,14 +126,14 @@ class ReadServiceImplSpecs extends WordSpec with BeforeAndAfter with LazyLogging
        val reader = new ReadServiceImpl
        
        // Check if file exits
-       val files = reader.getFileList(exampleFile).get()
+       val files = reader.getFileList(exampleFile, System.getProperty("user.name"), "".getBytes).get()
        Assert.assertTrue(files.size() == 1);
        
        // Delete file
-       reader.deleteFile(exampleFile).get
+       reader.deleteFile(exampleFile, "hdfs", "".getBytes).get
        
        // Check if file was removed
-       Assert.assertEquals(0, reader.getFileList(exampleFile.replace("file2.txt", "")).get().size());    
+       Assert.assertEquals(0, reader.getFileList(exampleFile.replace("file2.txt", ""), System.getProperty("user.name"), "".getBytes).get().size());    
      } else {
        logger.warn("Delete test was skipped because deleting files on windows is currently not supported")
      }

@@ -98,7 +98,7 @@ class CoordinatedWriter[+IDXKEY <: Writable, +IDXVALUE <: Writable, +DATAKEY <: 
         }
       }
     } else {
-      s"${basePath}/${customFileName.orElse(new RandomUUIDFilenameCreator).getNextFilename}"
+      s"${basePath}${customFileName.orElse(new RandomUUIDFilenameCreator).getNextFilename}"
     }
   }
 
