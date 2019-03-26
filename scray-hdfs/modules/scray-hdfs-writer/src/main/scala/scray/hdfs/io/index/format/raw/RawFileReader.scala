@@ -26,26 +26,33 @@ import org.apache.hadoop.fs.Path
 import com.google.common.util.concurrent.SettableFuture
 import com.google.common.util.concurrent.ListenableFuture
 import java.util.ArrayList
+import org.apache.hadoop.security.UserGroupInformation
+import java.security.PrivilegedAction
 
-class RawFileReader(hdfsURL: String, hdfsConf: Configuration) extends LazyLogging {
+class RawFileReader(hdfsURL: String, hdfsConf: Configuration, user: String) extends LazyLogging {
 
   var dataReader: FileSystem = null; // scalastyle:off null
+  val remoteUser: UserGroupInformation = UserGroupInformation.createRemoteUser(user)
 
-  def this(hdfsURL: String) {
-    this(hdfsURL, new Configuration)
+  def this(hdfsURL: String, user: String) {
+    this(hdfsURL, new Configuration, user)
   }
 
   if (getClass.getClassLoader != null) {
     hdfsConf.setClassLoader(getClass.getClassLoader)
   }
-  
+
   def initReader() = {
+
     hdfsConf.set("fs.hdfs.impl", classOf[org.apache.hadoop.hdfs.DistributedFileSystem].getName);
     hdfsConf.set("fs.file.impl", classOf[org.apache.hadoop.fs.LocalFileSystem].getName);
     hdfsConf.set("dfs.client.use.datanode.hostname", "true");
     hdfsConf.set("fs.defaultFS", hdfsURL)
-
+ remoteUser.doAs(new PrivilegedAction[Unit] {
+      def run(): Unit = {
     dataReader = FileSystem.get(hdfsConf);
+      }
+ })
   }
 
   def read(path: String): InputStream = {
@@ -53,8 +60,24 @@ class RawFileReader(hdfsURL: String, hdfsConf: Configuration) extends LazyLoggin
       logger.debug(s"Reader for path ${path} was not initialized. Will do it now")
       initReader
     }
+    remoteUser.doAs(new PrivilegedAction[InputStream] {
+      def run(): InputStream = {
+        return dataReader.open(new Path(path))
+      }
+    })
+  }
 
-    dataReader.open(new Path(path))
+  def deleteFile(path: String) {
+    if (dataReader == null) {
+      logger.debug(s"Reader for path ${path} was not initialized. Will do it now")
+      initReader
+    }
+
+    remoteUser.doAs(new PrivilegedAction[Unit] {
+      def run(): Unit = {
+        dataReader.delete(new Path(path), true)
+      }
+    })
   }
 
   def getFileList(path: String): ListenableFuture[java.util.List[FileParameter]] = {

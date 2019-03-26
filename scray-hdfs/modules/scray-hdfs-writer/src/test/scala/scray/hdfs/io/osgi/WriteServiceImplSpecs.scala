@@ -35,6 +35,7 @@ import java.math.BigInteger
 import java.security.PrivilegedActionException
 import java.util.UUID
 import java.net.URL
+import scala.sys.SystemProperties
 
 class WriteServiceImplSpecs extends WordSpec with LazyLogging {
   val pathToWinutils = classOf[WriteServiceImplSpecs].getClassLoader.getResource("HADOOP_HOME/bin/winutils.exe");
@@ -142,14 +143,14 @@ class WriteServiceImplSpecs extends WordSpec with LazyLogging {
        val reader = new ReadServiceImpl
        
        // Check if file exits
-       val files = reader.getFileList(exampleFile).get()
+       val files = reader.getFileList(exampleFile, System.getProperty("user.name"), "".getBytes).get()
        Assert.assertTrue(files.size() == 1);
        
        // Delete file
        service.deleteFile(exampleFile, System.getProperty("user.name")).get
        
        // Check if file was removed
-       Assert.assertEquals(0, reader.getFileList(exampleFile.replace("file2.txt", "")).get().size());    
+       Assert.assertEquals(0, reader.getFileList(exampleFile.replace("file2.txt", ""), System.getProperty("user.name"), "".getBytes).get().size());    
      } else {
        logger.warn("Delete test was skipped because deleting files on windows is currently not supported")
      }

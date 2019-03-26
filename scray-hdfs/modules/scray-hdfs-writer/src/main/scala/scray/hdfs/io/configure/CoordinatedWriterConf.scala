@@ -18,6 +18,7 @@ package scray.hdfs.io.configure
 import scray.hdfs.io.write.IHdfsWriterConstats
 import java.util.Optional
 import scray.hdfs.io.configure.WriteDestionationConstats.WriteMode
+import java.util.Arrays
 
 class CompactionState {}
 case object NEW extends CompactionState
@@ -32,7 +33,7 @@ case class Version(number: Int, compactionState: CompactionState = NEW) {
 }
 /**
  * Parameters for WriteCoordinatr
- * 
+ *
  * @param id id of logical system
  * @param path path to folder
  * @param customFileName defines a file name. If not defined a random UUID will be used
@@ -42,20 +43,67 @@ case class Version(number: Int, compactionState: CompactionState = NEW) {
  * @param maxNumberOfInserts	If maxNumberOfInserts is reached a new file will be used.
  */
 class WriteParameter(
-    var queryspace: String,
-    val user: String,
-    val password: Array[Byte],
-    var path: String,
-    var fileNameCreator: Optional[FilenameCreator] = Optional.empty(),
-    var fileFormat: IHdfsWriterConstats.SequenceKeyValueFormat, 
-    var version: Version = Version(0),
-    var writeVersioned: Boolean = false,
-    var maxFileSize: Long = Long.MaxValue,
-    var maxNumberOfInserts: Int = Integer.MAX_VALUE,
-    var timeLimit: Int,
-    var storeAsHiddenFileTillClosed: Boolean = false,
-    var createScrayIndexFile: Boolean = false
-   ){}
+  var queryspace:                  String,
+  val user:                        String,
+  val password:                    Array[Byte],
+  var path:                        String,
+  var fileNameCreator:             Optional[FilenameCreator]                  = Optional.empty(),
+  var fileFormat:                  IHdfsWriterConstats.SequenceKeyValueFormat,
+  var version:                     Version                                    = Version(0),
+  var writeVersioned:              Boolean                                    = false,
+  var maxFileSize:                 Long                                       = Long.MaxValue,
+  var maxNumberOfInserts:          Int                                        = Integer.MAX_VALUE,
+  var timeLimit:                   Int                                        = -1,
+  var storeAsHiddenFileTillClosed: Boolean                                    = false,
+  var createScrayIndexFile:        Boolean                                    = false) {
+
+  override def equals(that: Any): Boolean = {
+    that match {
+      case that: WriteParameter => {
+        (this.user == that.user
+          && Arrays.equals(this.password, that.password)
+          && this.path == that.path
+          && this.fileNameCreator == that.fileNameCreator      
+          && this.fileFormat == that.fileFormat
+          && this.version == that.version
+          && this.writeVersioned == that.writeVersioned
+          && this.maxFileSize == that.maxFileSize
+          && this.maxNumberOfInserts == that.maxNumberOfInserts
+          && this.storeAsHiddenFileTillClosed == this.storeAsHiddenFileTillClosed
+          && this.createScrayIndexFile == this.createScrayIndexFile)
+      }
+      case _ => false
+    }
+  }
+
+  override def hashCode: Int = {
+    val prime = 31
+    val result = 1
+
+    (
+      prime
+      * getHashCodeOrZero(queryspace)
+      + getHashCodeOrZero(user)
+      + getHashCodeOrZero(password)
+      + getHashCodeOrZero(path)
+      + getHashCodeOrZero(fileNameCreator)
+      + getHashCodeOrZero(fileFormat)
+      + getHashCodeOrZero(version)
+      + getHashCodeOrZero(writeVersioned)
+      + getHashCodeOrZero(maxFileSize)
+      + getHashCodeOrZero(maxNumberOfInserts)
+      + getHashCodeOrZero(storeAsHiddenFileTillClosed)
+      + getHashCodeOrZero(createScrayIndexFile))
+  }
+
+  private def getHashCodeOrZero(value: Any): Int = {
+    if (value == null) {
+      0
+    } else {
+      value.hashCode()
+    }
+  }
+}
    
 object WriteParameter {
   class Builder {
@@ -73,12 +121,12 @@ object WriteParameter {
     var writeMode: WriteMode = WriteMode.WriteBack
     var storeAsHiddenFileTillClosed: Boolean = false
     var createScrayIndexFile: Boolean = false
-    
+
     def setQueryspace(queryspace: String): Builder = {
       this.queryspace = queryspace
       this
     }
-    
+
     def setPath(path: String): Builder = {
       this.path = path
       this
@@ -86,29 +134,29 @@ object WriteParameter {
 
     def setFileNameCreator(fileName: FilenameCreator): Builder = {
       this.fileNameCreator = Optional.of(fileName);
-      this     
+      this
     }
 
     def setUser(user: String): Builder = {
       this.user = user;
       this
     }
-    
+
     def setPassword(password: Array[Byte]) = {
       this.password = password
       this
     }
-        
+
     def setFileFormat(kvFormat: IHdfsWriterConstats.SequenceKeyValueFormat): Builder = {
       this.fileFormat = kvFormat
       this
     }
-    
+
     def setVersion(version: Version): Builder = {
       this.version = version
       this
     }
-    
+
     def setWriteVersioned(writeVersioned: Boolean): Builder = {
       this.writeVersioned = writeVersioned
       this
@@ -125,15 +173,15 @@ object WriteParameter {
     }
 
     def setTimeLimit(seconds: Int): Builder = {
-      this.timeLimit = seconds
+      this.timeLimit = seconds * 1000
       this
     }
-    
+
     def setWriteMode(mode: WriteMode): Builder = {
-      this.writeMode = mode 
+      this.writeMode = mode
       this
     }
-    
+
     def setStoreAsHiddenFileTillClosed(storeAsHiddenFileTillClosed: Boolean): Builder = {
       this.storeAsHiddenFileTillClosed = storeAsHiddenFileTillClosed
       this
@@ -146,19 +194,19 @@ object WriteParameter {
 
     def createConfiguration: WriteParameter = {
       new WriteParameter(
-          queryspace,
-          user,
-          password,
-          path,
-          fileNameCreator,
-          fileFormat,
-          version,
-          writeVersioned,
-          maxFileSize, 
-          maxNumberOfInserts,
-          timeLimit,
-          storeAsHiddenFileTillClosed,
-          createScrayIndexFile)
+        queryspace,
+        user,
+        password,
+        path,
+        fileNameCreator,
+        fileFormat,
+        version,
+        writeVersioned,
+        maxFileSize,
+        maxNumberOfInserts,
+        timeLimit,
+        storeAsHiddenFileTillClosed,
+        createScrayIndexFile)
     }
   }
 }

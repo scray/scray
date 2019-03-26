@@ -10,5 +10,6 @@ public interface FilenameCreator {
 	 * 
 	 * @return filename for next file.
 	 */
-	public String getNextFilename();
+	public  String getNextFilename();
+
 }

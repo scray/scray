@@ -52,7 +52,8 @@ class CoordinatedWriter[+IDXKEY <: Writable, +IDXVALUE <: Writable, +DATAKEY <: 
     // Limit was reached last time.
     if (writer.isClosed) {
       writer = createNewBasicWriter(metadata)
-      startTimer
+      this.startTimer
+      
       logger.debug(s"Create new file ${writer.getPath}")
     }
 
@@ -76,7 +77,8 @@ class CoordinatedWriter[+IDXKEY <: Writable, +IDXVALUE <: Writable, +DATAKEY <: 
     val filePath = this.getPath(metadata.path, metadata.queryspace, metadata.version.number, metadata.writeVersioned, metadata.fileNameCreator)
     val writer = new SequenceFileWriter(filePath, outTypeMapping, metadata.createScrayIndexFile, metadata.user)
     this.hdfsConf = writer.hdfsConf
-
+    this.startTimer
+    
     writer
   }
 
@@ -96,7 +98,7 @@ class CoordinatedWriter[+IDXKEY <: Writable, +IDXVALUE <: Writable, +DATAKEY <: 
         }
       }
     } else {
-      s"${basePath}/${customFileName.orElse(new RandomUUIDFilenameCreator).getNextFilename}"
+      s"${basePath}${customFileName.orElse(new RandomUUIDFilenameCreator).getNextFilename}"
     }
   }
 
@@ -212,7 +214,7 @@ class CoordinatedWriter[+IDXKEY <: Writable, +IDXVALUE <: Writable, +DATAKEY <: 
     // Limit was reached last time.
     if (writer.isClosed) {
       writer = createNewBasicWriter(metadata)
-      startTimer
+      this.startTimer
       logger.debug(s"Create new file ${writer.getPath}")
     }
 

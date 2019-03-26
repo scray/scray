@@ -11,5 +11,21 @@ public class FixNameCreator implements FilenameCreator {
 	public String getNextFilename() {
 		return this.filename; 
 	}
+	
+	@Override
+	public boolean equals(Object o) {
+	    if (this == o)
+	        return true;
+	   
+	    if (o == null)
+	        return false;
+	   
+	    
+	    if (getClass() != o.getClass())
+	        return false;
+	    FixNameCreator otherCreator = (FixNameCreator) o;
+
+	    return this.filename.equals(otherCreator.filename);
+	}
 
 }

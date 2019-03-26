@@ -9,11 +9,12 @@ import scray.hdfs.io.write.ScrayListenableFuture
 import scray.hdfs.io.write.IHdfsWriterConstats.SequenceKeyValueFormat
 
 trait ReadService {
-  def getInputStream(path: String): ScrayListenableFuture[InputStream]
+  def getInputStream(path: String, user: String, password: Array[Byte]): ScrayListenableFuture[InputStream]
   
-  def readFullSequenceFile(path: String, format: SequenceKeyValueFormat):  UUID
+  def readFullSequenceFile(path: String, format: SequenceKeyValueFormat, user: String, password: Array[Byte]):  UUID
   def hasNextSequenceFilePair(id: UUID):  ScrayListenableFuture[java.lang.Boolean]
   def getNextSequenceFilePair(id: UUID): ScrayListenableFuture[Map.Entry[String, Array[Byte]]]
   
-  def getFileList(path: String): ScrayListenableFuture[java.util.List[FileParameter]]
+  def getFileList(path: String, user: String, password: Array[Byte]): ScrayListenableFuture[java.util.List[FileParameter]]
+  def deleteFile(path: String, user: String, password: Array[Byte]): ScrayListenableFuture[String]
 }
