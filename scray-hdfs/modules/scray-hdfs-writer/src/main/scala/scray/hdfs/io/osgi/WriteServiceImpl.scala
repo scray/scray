@@ -167,6 +167,21 @@ class WriteServiceImpl extends WriteService {
     val renamer = new Renamer
     renamer.rename(source, destination)
   }
+  
+    def deleteFile(path: String, user: String): ScrayListenableFuture[String] = {
+    try {
+
+      val writer = new RawFileWriter(path, user)
+
+      writer.deleteFile(path)
+      new ScrayListenableFuture(path)
+    } catch {
+      case e: Throwable => {
+        e.printStackTrace()
+        new ScrayListenableFuture(e)
+      }
+    }
+  }
 
   def closeAll = synchronized {
     val keysOfWriter = writersMetadata.keySet().iterator()

@@ -45,6 +45,7 @@ trait WriteService {
   def writeRawFile(path: String, user: String): ScrayOutputStream
   
   def rename(source: String, destination: String): ScrayListenableFuture[WriteResult]
+  def deleteFile(path: String, user: String): ScrayListenableFuture[String]
 
   def close(resource: UUID)
   def isClosed(resource: UUID): ScrayListenableFuture[WriteResult]

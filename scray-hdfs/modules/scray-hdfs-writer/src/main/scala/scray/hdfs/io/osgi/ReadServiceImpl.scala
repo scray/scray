@@ -70,25 +70,7 @@ class ReadServiceImpl extends ReadService {
     }
   }
 
-  def deleteFile(path: String): ScrayListenableFuture[String] = {
-    try {
-      if (reader.get(this.getAuthority(path)) == null) {
-        reader.put(getAuthority(path), new RawFileReader(path))
-      }
-
-      val stream = reader
-        .get(getAuthority(path))
-        .deleteFile(path)
-      new ScrayListenableFuture(path)
-    } catch {
-      case e: Throwable => {
-        e.printStackTrace()
-        new ScrayListenableFuture(e)
-      }
-    }
-  }
-
-  def readFullSequenceFile(path: String, format: SequenceKeyValueFormat): UUID = {
+ def readFullSequenceFile(path: String, format: SequenceKeyValueFormat): UUID = {
     val id = UUID.randomUUID()
     format match {
       case SequenceKeyValueFormat.SEQUENCEFILE_INDEXVALUE_BLOB    => sequenceFileReaderMetadata.put(id, new SequenceKeyValueFileReader(path, new OutputBlob))

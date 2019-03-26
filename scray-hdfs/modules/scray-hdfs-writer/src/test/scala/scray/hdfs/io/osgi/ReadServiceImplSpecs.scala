@@ -116,27 +116,5 @@ class ReadServiceImplSpecs extends WordSpec with BeforeAndAfter with LazyLogging
        Assert.assertFalse(reader.hasNextSequenceFilePair(id).get)  
        Assert.assertTrue(null == reader.getNextSequenceFilePair(id))
     } 
-   " delete file " in {
-     if(!System.getProperty("os.name").toUpperCase().contains("WINDOWS")) {
-       // Create example file
-       val exampleFile =s"${new URL("file:///" + System.getProperty("user.dir"))}" + s"/target/ReadServiceImplSpecs/listFiles/${UUID.randomUUID()}/file2.txt"
-       val service = new WriteServiceImpl
-       service.writeRawFile(exampleFile, System.getProperty("user.name"), new ByteArrayInputStream(s"ABCDEFG".getBytes))
-   
-       val reader = new ReadServiceImpl
-       
-       // Check if file exits
-       val files = reader.getFileList(exampleFile).get()
-       Assert.assertTrue(files.size() == 1);
-       
-       // Delete file
-       reader.deleteFile(exampleFile).get
-       
-       // Check if file was removed
-       Assert.assertEquals(0, reader.getFileList(exampleFile.replace("file2.txt", "")).get().size());    
-     } else {
-       logger.warn("Delete test was skipped because deleting files on windows is currently not supported")
-     }
-   }
   }
 }

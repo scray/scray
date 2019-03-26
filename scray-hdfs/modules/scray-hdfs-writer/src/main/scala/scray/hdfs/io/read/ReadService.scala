@@ -16,5 +16,4 @@ trait ReadService {
   def getNextSequenceFilePair(id: UUID): ScrayListenableFuture[Map.Entry[String, Array[Byte]]]
   
   def getFileList(path: String): ScrayListenableFuture[java.util.List[FileParameter]]
-  def deleteFile(path: String): ScrayListenableFuture[String]
 }

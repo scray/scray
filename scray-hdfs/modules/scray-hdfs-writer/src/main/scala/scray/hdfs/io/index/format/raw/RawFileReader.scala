@@ -57,15 +57,6 @@ class RawFileReader(hdfsURL: String, hdfsConf: Configuration) extends LazyLoggin
     dataReader.open(new Path(path))
   }
 
-  def deleteFile(path: String) {
-    if (dataReader == null) {
-      logger.debug(s"Reader for path ${path} was not initialized. Will do it now")
-      initReader
-    }
-
-    dataReader.delete(new Path(path), true)
-  }
-
   def getFileList(path: String): ListenableFuture[java.util.List[FileParameter]] = {
     val fileList = SettableFuture.create[java.util.List[FileParameter]]();
 

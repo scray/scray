@@ -53,11 +53,11 @@ class RawFileWriter(hdfsURL: String, hdfsConf: Configuration, user: String) exte
     hdfsConf.set("fs.defaultFS", hdfsURL)
 
     logger.debug(s"Create writer for path ${path}")
-      remoteUser.doAs(new PrivilegedAction[Unit] {
-        def run(): Unit = {
-          dataWriter = FileSystem.get(hdfsConf)
-        }
-      })
+    remoteUser.doAs(new PrivilegedAction[Unit] {
+      def run(): Unit = {
+        dataWriter = FileSystem.get(hdfsConf)
+      }
+    })
   }
 
   def write(fileName: String, data: InputStream) = synchronized {
@@ -69,18 +69,18 @@ class RawFileWriter(hdfsURL: String, hdfsConf: Configuration, user: String) exte
       initWriter(fileName)
     }
 
-      remoteUser.doAs(new PrivilegedAction[Unit] {
-        def run(): Unit = {
-          dataWriter.create(new Path(fileName))
-          val hdfsOutputStream = dataWriter.create(hdfswritepath);
+    remoteUser.doAs(new PrivilegedAction[Unit] {
+      def run(): Unit = {
+        dataWriter.create(new Path(fileName))
+        val hdfsOutputStream = dataWriter.create(hdfswritepath);
 
-          ByteStreams.copy(data, hdfsOutputStream);
-          data.close()
-          hdfsOutputStream.hflush();
-          hdfsOutputStream.hsync();
-          hdfsOutputStream.close();
-        }
-      })
+        ByteStreams.copy(data, hdfsOutputStream);
+        data.close()
+        hdfsOutputStream.hflush();
+        hdfsOutputStream.hsync();
+        hdfsOutputStream.close();
+      }
+    })
 
   }
 
@@ -91,22 +91,33 @@ class RawFileWriter(hdfsURL: String, hdfsConf: Configuration, user: String) exte
       initWriter(fileName)
     }
 
-      remoteUser.doAs(new PrivilegedAction[OutputStream] {
-        def run(): OutputStream = {
-          dataWriter.create(new Path(fileName))
-        }
-      })
+    remoteUser.doAs(new PrivilegedAction[OutputStream] {
+      def run(): OutputStream = {
+        dataWriter.create(new Path(fileName))
+      }
+    })
+  }
 
+  def deleteFile(path: String) {
+    if (dataWriter == null) {
+      logger.debug("Writer was not initialized. Will do it now")
 
+      initWriter(path)
+    }
+    remoteUser.doAs(new PrivilegedAction[Unit] {
+      def run(): Unit = {
+        dataWriter.delete(new Path(path), true)
+      }
+    })
   }
 
   def close = {
 
-      remoteUser.doAs(new PrivilegedAction[Unit] {
-        def run(): Unit = {
-          dataWriter.close()
-        }
-      })
+    remoteUser.doAs(new PrivilegedAction[Unit] {
+      def run(): Unit = {
+        dataWriter.close()
+      }
+    })
 
   }
 
