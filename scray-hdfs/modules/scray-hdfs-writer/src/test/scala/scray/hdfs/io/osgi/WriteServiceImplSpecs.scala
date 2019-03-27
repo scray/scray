@@ -124,37 +124,37 @@ class WriteServiceImplSpecs extends WordSpec with LazyLogging {
       Assert.assertEquals(153, writeService.insert(writerId, "k1", System.currentTimeMillis(), "A".getBytes).get.bytesInserted)
       Assert.assertEquals(185, writeService.insert(writerId, "k1", System.currentTimeMillis(), "A".getBytes).get.bytesInserted)
       Assert.assertEquals(217, writeService.insert(writerId, "k1", System.currentTimeMillis(), "A".getBytes).get.bytesInserted)
-            
+
       Assert.assertEquals(153, writeService.insert(writerId, "k1", System.currentTimeMillis(), new ByteArrayInputStream("A".getBytes), 2048).get.bytesInserted)
       Assert.assertEquals(185, writeService.insert(writerId, "k1", System.currentTimeMillis(), new ByteArrayInputStream("A".getBytes), 2048).get.bytesInserted)
       Assert.assertEquals(217, writeService.insert(writerId, "k1", System.currentTimeMillis(), new ByteArrayInputStream("A".getBytes), 2048).get.bytesInserted)
-      
+
       Assert.assertEquals(153, writeService.insert(writerId, "k1", System.currentTimeMillis(), new ByteArrayInputStream("A".getBytes), new BigInteger("2048"), 2048).get.bytesInserted)
       Assert.assertEquals(185, writeService.insert(writerId, "k1", System.currentTimeMillis(), new ByteArrayInputStream("A".getBytes), new BigInteger("2048"), 2048).get.bytesInserted)
-      Assert.assertEquals(217, writeService.insert(writerId, "k1", System.currentTimeMillis(), new ByteArrayInputStream("A".getBytes), new BigInteger("2048"), 2048).get.bytesInserted) 
+      Assert.assertEquals(217, writeService.insert(writerId, "k1", System.currentTimeMillis(), new ByteArrayInputStream("A".getBytes), new BigInteger("2048"), 2048).get.bytesInserted)
     }
-       " delete file " in {
-     if(!System.getProperty("os.name").toUpperCase().contains("WINDOWS")) {
-       // Create example file
-       val exampleFile =s"${new URL("file:///" + System.getProperty("user.dir"))}" + s"/target/ReadServiceImplSpecs/listFiles/${UUID.randomUUID()}/file2.txt"
-       val service = new WriteServiceImpl
-       service.writeRawFile(exampleFile, System.getProperty("user.name"), new ByteArrayInputStream(s"ABCDEFG".getBytes))
-   
-       val reader = new ReadServiceImpl
-       
-       // Check if file exits
-       val files = reader.getFileList(exampleFile, System.getProperty("user.name"), "".getBytes).get()
-       Assert.assertTrue(files.size() == 1);
-       
-       // Delete file
-       service.deleteFile(exampleFile, System.getProperty("user.name")).get
-       
-       // Check if file was removed
-       Assert.assertEquals(0, reader.getFileList(exampleFile.replace("file2.txt", ""), System.getProperty("user.name"), "".getBytes).get().size());    
-     } else {
-       logger.warn("Delete test was skipped because deleting files on windows is currently not supported")
-     }
-   }
+    " delete file " in {
+      if (!System.getProperty("os.name").toUpperCase().contains("WINDOWS")) {
+        // Create example file
+        val exampleFile = s"${new URL("file:///" + System.getProperty("user.dir"))}" + s"/target/ReadServiceImplSpecs/listFiles/${UUID.randomUUID()}/file2.txt"
+        val service = new WriteServiceImpl
+        service.writeRawFile(exampleFile, System.getProperty("user.name"), new ByteArrayInputStream(s"ABCDEFG".getBytes))
+
+        val reader = new ReadServiceImpl
+
+        // Check if file exits
+        val files = reader.getFileList(exampleFile, System.getProperty("user.name"), "".getBytes).get()
+        Assert.assertTrue(files.size() == 1);
+
+        // Delete file
+        service.deleteFile(exampleFile, System.getProperty("user.name")).get
+
+        // Check if file was removed
+        Assert.assertEquals(0, reader.getFileList(exampleFile.replace("file2.txt", ""), System.getProperty("user.name"), "".getBytes).get().size());
+      } else {
+        logger.warn("Delete test was skipped because deleting files on windows is currently not supported")
+      }
+    }
   }
 
   private def getIndexFiles(path: String): List[String] = {

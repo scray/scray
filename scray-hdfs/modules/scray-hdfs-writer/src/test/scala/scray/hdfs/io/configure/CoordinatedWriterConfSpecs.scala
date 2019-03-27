@@ -43,22 +43,35 @@ class CoordinatedWriterConfSpecs extends WordSpec with BeforeAndAfter with LazyL
       
       config1.setMaxFileSize(1024)
       Assert.assertFalse(config1.createConfiguration == config2.createConfiguration)
+      Assert.assertFalse(config1.createConfiguration.hashCode() === config2.createConfiguration.hashCode())
+
       
-      config2.setMaxFileSize(1024)
+      config2.setMaxFileSize(1024)      
       Assert.assertTrue(config1.createConfiguration == config2.createConfiguration)
+      Assert.assertTrue(config1.createConfiguration.hashCode() === config2.createConfiguration.hashCode())
+
       
       config1.setFileNameCreator(new FixNameCreator("file1"))
       Assert.assertFalse(config1.createConfiguration == config2.createConfiguration)
-      
+      Assert.assertFalse(config1.createConfiguration.hashCode() === config2.createConfiguration.hashCode())
+
+
       config2.setFileNameCreator(new FixNameCreator("file1"))
       Assert.assertTrue(config1.createConfiguration == config2.createConfiguration)
-      
+      Assert.assertTrue(config1.createConfiguration.hashCode() === config2.createConfiguration.hashCode())
+
+
       config2.setFileNameCreator(new FixNameCreator("file2"))
       Assert.assertFalse(config1.createConfiguration == config2.createConfiguration)
-      
-      config2.setStoreAsHiddenFileTillClosed(true)
+      Assert.assertFalse(config1.createConfiguration.hashCode() === config2.createConfiguration.hashCode())
+
       config1.setFileNameCreator(new FixNameCreator("file2"))
       Assert.assertTrue(config1.createConfiguration == config2.createConfiguration)
+      Assert.assertTrue(config1.createConfiguration.hashCode() === config2.createConfiguration.hashCode())
+      
+      config2.setStoreAsHiddenFileTillClosed(true)
+      Assert.assertFalse(config1.createConfiguration == config2.createConfiguration)
+      Assert.assertFalse(config1.createConfiguration.hashCode() === config2.createConfiguration.hashCode())
     }
   }
 }

@@ -45,7 +45,7 @@ case class Version(number: Int, compactionState: CompactionState = NEW) {
 class WriteParameter(
   var queryspace:                  String,
   val user:                        String,
-  val password:                    Array[Byte],
+  val password:                    Array[Byte]                                = null,
   var path:                        String,
   var fileNameCreator:             Optional[FilenameCreator]                  = Optional.empty(),
   var fileFormat:                  IHdfsWriterConstats.SequenceKeyValueFormat,
@@ -63,39 +63,51 @@ class WriteParameter(
         (this.user == that.user
           && Arrays.equals(this.password, that.password)
           && this.path == that.path
-          && this.fileNameCreator == that.fileNameCreator      
+          && this.fileNameCreator == that.fileNameCreator
           && this.fileFormat == that.fileFormat
           && this.version == that.version
           && this.writeVersioned == that.writeVersioned
           && this.maxFileSize == that.maxFileSize
           && this.maxNumberOfInserts == that.maxNumberOfInserts
-          && this.storeAsHiddenFileTillClosed == this.storeAsHiddenFileTillClosed
-          && this.createScrayIndexFile == this.createScrayIndexFile)
+          && (this.storeAsHiddenFileTillClosed == that.storeAsHiddenFileTillClosed)
+          && (this.createScrayIndexFile == that.createScrayIndexFile))
       }
       case _ => false
     }
   }
 
   override def hashCode: Int = {
-    val prime = 31
     val result = 1
 
-    (
-      prime
-      * getHashCodeOrZero(queryspace)
-      + getHashCodeOrZero(user)
-      + getHashCodeOrZero(password)
-      + getHashCodeOrZero(path)
-      + getHashCodeOrZero(fileNameCreator)
-      + getHashCodeOrZero(fileFormat)
-      + getHashCodeOrZero(version)
-      + getHashCodeOrZero(writeVersioned)
-      + getHashCodeOrZero(maxFileSize)
-      + getHashCodeOrZero(maxNumberOfInserts)
-      + getHashCodeOrZero(storeAsHiddenFileTillClosed)
-      + getHashCodeOrZero(createScrayIndexFile))
+    (composeAttributes(result) _)
+      .andThen(composeAttributes(getHashCodeOrZero(queryspace)))
+      .andThen(composeAttributes(getHashCodeOrZero(user)))
+      .andThen(composeAttributes(getHashCodeOrZeroOfArray(password)))
+      .andThen(composeAttributes(getHashCodeOrZero(path)))
+      .andThen(composeAttributes(getHashCodeOrZero(fileNameCreator)))
+      .andThen(composeAttributes(getHashCodeOrZero(fileFormat)))
+      .andThen(composeAttributes(getHashCodeOrZero(version)))
+      .andThen(composeAttributes(getHashCodeOrZero(writeVersioned)))
+      .andThen(composeAttributes(getHashCodeOrZero(maxFileSize)))
+      .andThen(composeAttributes(getHashCodeOrZero(maxNumberOfInserts)))
+      .andThen(composeAttributes(getHashCodeOrZero(storeAsHiddenFileTillClosed)))
+      .apply(getHashCodeOrZero(createScrayIndexFile))
+
   }
 
+  def composeAttributes(prev: Int)(next: Int): Int = {
+    val prime = 31
+    prime * prev + next
+  }
+
+  private def getHashCodeOrZeroOfArray(value: Array[Byte]): Int = {
+    if (value == null) {
+      0
+    } else {
+      Arrays.hashCode(value)
+    }
+  }
+  
   private def getHashCodeOrZero(value: Any): Int = {
     if (value == null) {
       0
@@ -104,12 +116,12 @@ class WriteParameter(
     }
   }
 }
-   
+
 object WriteParameter {
   class Builder {
     var queryspace: String = null
     var user: String = System.getProperty("user.name")
-    var password: Array[Byte] = new Array[Byte](0)
+    var password: Array[Byte] = null
     var path: String = null
     var fileNameCreator: Optional[FilenameCreator] = Optional.empty()
     var fileFormat: IHdfsWriterConstats.SequenceKeyValueFormat = null

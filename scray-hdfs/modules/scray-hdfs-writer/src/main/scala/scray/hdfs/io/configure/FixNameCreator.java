@@ -27,5 +27,10 @@ public class FixNameCreator implements FilenameCreator {
 
 	    return this.filename.equals(otherCreator.filename);
 	}
+	
+	@Override
+	public int hashCode() {
+		return filename.hashCode();	
+	}
 
 }
