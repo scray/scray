@@ -3,13 +3,13 @@
 	<parent>
 		<groupId>org.scray</groupId>
 		<artifactId>scray-parent</artifactId>
-		<version>1.1.3</version>
+		<version>1.1.4-SNAPSHOT</version>
 		<relativePath>../pom.xml</relativePath>
 	</parent>
 
 	<modelVersion>4.0.0</modelVersion>
 	<artifactId>scray-jdbc</artifactId>
-  <version>1.1.2</version>
+  <version>1.1.3-SNAPSHOT</version>
 	<name>Scray - JDBC</name>
 	<description>scray adapter to r/w JDBC tables</description>
 
@@ -39,7 +39,7 @@
 		<dependency>
 			<groupId>org.scray</groupId>
 			<artifactId>scray-querying</artifactId>
-			<version>1.1.2</version>
+			<version>1.1.3-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>com.typesafe.slick</groupId>
