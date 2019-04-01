@@ -1,7 +1,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<artifactId>scray-loader</artifactId>
-  <version>1.1.3-SNAPSHOT</version>
+  <version>1.1.2</version>
 	<name>Scray - Loader</name>
 	<description>Loads and starts a scray query service</description>
 
@@ -46,7 +46,7 @@
 		<dependency>
 			<groupId>org.scray</groupId>
 			<artifactId>scray-querying</artifactId>
-			<version>1.1.3-SNAPSHOT</version>
+			<version>1.1.2</version>
 			<exclusions>
 				<exclusion>
 					<artifactId>shapeless_${scala.suffix}.4</artifactId>
@@ -57,7 +57,7 @@
 		<dependency>
 			<groupId>org.scray</groupId>
 			<artifactId>scray-cassandra</artifactId>
-			<version>1.1.3-SNAPSHOT</version>
+			<version>1.1.2</version>
 			<exclusions>
 				<exclusion>
 					<artifactId>shapeless_${scala.suffix}.3</artifactId>
@@ -68,12 +68,12 @@
 		<dependency>
 			<groupId>org.scray</groupId>
 			<artifactId>scray-jdbc</artifactId>
-			<version>1.1.3-SNAPSHOT</version>
+			<version>1.1.2</version>
 		</dependency>
 		<dependency>
 			<groupId>org.scray</groupId>
 			<artifactId>scray-hdfs-service-adapter</artifactId>
-			<version>1.1.3-SNAPSHOT</version>
+			<version>1.1.2</version>
 			<exclusions>
 				<exclusion>
 					<groupId>org.slf4j</groupId>
@@ -93,7 +93,7 @@
 		<dependency>
 			<groupId>org.scray</groupId>
 			<artifactId>scray-service</artifactId>
-			<version>1.1.3-SNAPSHOT</version>
+			<version>1.1.2</version>
 			<exclusions>
 				<exclusion>
 					<artifactId>slf4j-jdk14</artifactId>
@@ -243,7 +243,7 @@
 	<parent>
 		<groupId>org.scray</groupId>
 		<artifactId>scray-parent</artifactId>
-		<version>1.1.4-SNAPSHOT</version>
+		<version>1.1.3</version>
 		<relativePath>../pom.xml</relativePath>
 	</parent>
 </project>
