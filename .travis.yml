@@ -26,6 +26,6 @@ stages:
   - build-with-tests 
   - build-profil-MinimizedDependencies 
   - name: deploy-develop-with-profil-MinimizedDependencies 
-    if: branch = develop 
+    if: branch = develop AND type != pull_request AND sender IN (obermeier)
   - name: deploy-develop
-    if: branch = develop
+    if: branch = develop AND type != pull_request AND sender IN (obermeier)
