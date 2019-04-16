@@ -138,7 +138,7 @@ class WriteServiceImplSpecs extends WordSpec with LazyLogging {
         // Create example file
         val exampleFile = s"${new URL("file:///" + System.getProperty("user.dir"))}" + s"/target/ReadServiceImplSpecs/listFiles/${UUID.randomUUID()}/file2.txt"
         val service = new WriteServiceImpl
-        service.writeRawFile(exampleFile, System.getProperty("user.name"), new ByteArrayInputStream(s"ABCDEFG".getBytes))
+        service.writeRawFile(exampleFile, new ByteArrayInputStream(s"ABCDEFG".getBytes), System.getProperty("user.name"), "".getBytes)
 
         val reader = new ReadServiceImpl
 
@@ -147,7 +147,7 @@ class WriteServiceImplSpecs extends WordSpec with LazyLogging {
         Assert.assertTrue(files.size() == 1);
 
         // Delete file
-        service.deleteFile(exampleFile, System.getProperty("user.name")).get
+        service.deleteFile(exampleFile, System.getProperty("user.name"), "".getBytes).get
 
         // Check if file was removed
         Assert.assertEquals(0, reader.getFileList(exampleFile.replace("file2.txt", ""), System.getProperty("user.name"), "".getBytes).get().size());
