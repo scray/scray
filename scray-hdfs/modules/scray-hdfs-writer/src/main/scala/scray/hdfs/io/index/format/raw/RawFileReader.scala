@@ -17,33 +17,95 @@ package scray.hdfs.io.index.format.raw
 
 import java.io.InputStream
 import com.typesafe.scalalogging.LazyLogging
+
+import scray.hdfs.io.read.FileParameter;
+
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.FileSystem
 import org.apache.hadoop.fs.Path
+import com.google.common.util.concurrent.SettableFuture
+import com.google.common.util.concurrent.ListenableFuture
+import java.util.ArrayList
+import org.apache.hadoop.security.UserGroupInformation
+import java.security.PrivilegedAction
 
-class RawFileReader(hdfsURL: String, hdfsConf: Configuration) extends LazyLogging {
-  
-   var dataReader: FileSystem = null; // scalastyle:off null
+class RawFileReader(hdfsURL: String, hdfsConf: Configuration, user: String) extends LazyLogging {
 
-   def this(hdfsURL: String) {
-       this(hdfsURL, new Configuration)
-   }
-   
-   def initReader() = {
+  var dataReader: FileSystem = null; // scalastyle:off null
+  val remoteUser: UserGroupInformation = UserGroupInformation.createRemoteUser(user)
+
+  def this(hdfsURL: String, user: String) {
+    this(hdfsURL, new Configuration, user)
+  }
+
+  if (getClass.getClassLoader != null) {
+    hdfsConf.setClassLoader(getClass.getClassLoader)
+  }
+
+  def initReader() = {
+
     hdfsConf.set("fs.hdfs.impl", classOf[org.apache.hadoop.hdfs.DistributedFileSystem].getName);
     hdfsConf.set("fs.file.impl", classOf[org.apache.hadoop.fs.LocalFileSystem].getName);
     hdfsConf.set("dfs.client.use.datanode.hostname", "true");
     hdfsConf.set("fs.defaultFS", hdfsURL)
-
+ remoteUser.doAs(new PrivilegedAction[Unit] {
+      def run(): Unit = {
     dataReader = FileSystem.get(hdfsConf);
+      }
+ })
   }
-  
+
   def read(path: String): InputStream = {
-   if(dataReader == null ) {
-      logger.debug("Writer was not initialized. Will do it now")
-      initReader()
+    if (dataReader == null) {
+      logger.debug(s"Reader for path ${path} was not initialized. Will do it now")
+      initReader
     }
-   
-    dataReader.open(new Path(path))
+    remoteUser.doAs(new PrivilegedAction[InputStream] {
+      def run(): InputStream = {
+        return dataReader.open(new Path(path))
+      }
+    })
+  }
+
+  def deleteFile(path: String) {
+    if (dataReader == null) {
+      logger.debug(s"Reader for path ${path} was not initialized. Will do it now")
+      initReader
+    }
+
+    remoteUser.doAs(new PrivilegedAction[Unit] {
+      def run(): Unit = {
+        dataReader.delete(new Path(path), true)
+      }
+    })
+  }
+
+  def getFileList(path: String): ListenableFuture[java.util.List[FileParameter]] = {
+    val fileList = SettableFuture.create[java.util.List[FileParameter]]();
+
+    if (dataReader == null) {
+      initReader
+    }
+
+    try {
+      val fileIter = dataReader.listStatus(new Path(path)).iterator
+      val fileParameters: java.util.List[FileParameter] = new ArrayList[FileParameter](100)
+
+      while (fileIter.hasNext) {
+        val currentFile = fileIter.next()
+
+        currentFile.isDirectory()
+        val fileParamteter = new FileParameter(currentFile.getLen, path, currentFile.getPath.getName, currentFile.getModificationTime, currentFile.isFile())
+        fileParameters.add(fileParamteter)
+      }
+      fileList.set(fileParameters)
+    } catch {
+      case e: Throwable => {
+        logger.error("Unable to get filelist")
+        fileList.setException(e);
+      }
+    }
+
+    return fileList;
   }
 }

@@ -49,7 +49,7 @@ class SequenceFileWriterSpecs extends WordSpec with LazyLogging {
   "SequenceFileWriterTextBytes " should {
     " read idx" in {
 
-      val writer = new SequenceFileWriter("target/SeqFilWriterTest", new OutputBlob)
+      val writer = new SequenceFileWriter("target/SeqFilWriterTest", new OutputBlob, true, System.getProperty("user.name"))
 
       for (i <- 0 to 1000) {
         writer.insert(getKey(i), 100000, getValue(i).getBytes)
@@ -57,7 +57,7 @@ class SequenceFileWriterSpecs extends WordSpec with LazyLogging {
       writer.close
 
       // Seek to sync-marker at byte 22497 and return next data element
-      val reader = new IdxReader("target/SeqFilWriterTest.idx", new OutputBlob)
+      val reader = new IdxReader("target/SeqFilWriterTest.idx.seq", new OutputBlob)
 
       Assert.assertEquals(reader.hasNext, true)
       Assert.assertEquals(reader.next.isDefined, true)
@@ -67,7 +67,7 @@ class SequenceFileWriterSpecs extends WordSpec with LazyLogging {
     " read all index entries " in {
       val numDate = 1000 // Number of test data
 
-      val writer = new SequenceFileWriter("target/IdxReaderTest", new OutputBlob)
+      val writer = new SequenceFileWriter("target/IdxReaderTest", new OutputBlob, true, System.getProperty("user.name"))
 
       for (i <- 0 to numDate) {
         writer.insert(getKey(i), i, getValue(i).getBytes)
@@ -75,7 +75,7 @@ class SequenceFileWriterSpecs extends WordSpec with LazyLogging {
       writer.close
 
       // Seek to sync-marker at byte 22497 and return next data element
-      val reader = new IdxReader("target/IdxReaderTest.idx", new OutputBlob)
+      val reader = new IdxReader("target/IdxReaderTest.idx.seq", new OutputBlob)
 
       Assert.assertEquals(reader.hasNext, true)
 
@@ -92,15 +92,15 @@ class SequenceFileWriterSpecs extends WordSpec with LazyLogging {
 
       val numDate = 1000 // Number of test data
 
-      val writer = new SequenceFileWriter("target/IdxReaderTest", new OutputBlob)
+      val writer = new SequenceFileWriter("target/IdxReaderTest", new OutputBlob, true, System.getProperty("user.name"))
 
       for (i <- 0 to numDate) {
         writer.insert(getKey(i), i, getValue(i).getBytes)
       }
       writer.close
 
-      val idxReader = new IdxReader("target/IdxReaderTest.idx", new OutputBlob)
-      val blobReader = new ValueFileReader("target/IdxReaderTest.blob", new OutputBlob)
+      val idxReader = new IdxReader("target/IdxReaderTest.idx.seq", new OutputBlob)
+      val blobReader = new ValueFileReader("target/IdxReaderTest.data.seq", new OutputBlob)
 
       // Read whole index file and check if corresponding data exists
       Assert.assertEquals(idxReader.hasNext, true)
@@ -119,15 +119,15 @@ class SequenceFileWriterSpecs extends WordSpec with LazyLogging {
 
       val numDate = 1000 // Number of test data
 
-      val writer = new SequenceFileWriter("target/IdxReaderTest1", new OutputBlob)
+      val writer = new SequenceFileWriter("target/IdxReaderTest1", new OutputBlob, true, System.getProperty("user.name"))
 
       for (i <- 0 to numDate) {
         writer.insert(getKey(i), i, getValue(i).getBytes)
       }
       writer.close
 
-      val idxReader = new IdxReader("target/IdxReaderTest1.idx", new OutputBlob)
-      val blobReader = new ValueFileReader("target/IdxReaderTest1.blob", new OutputBlob)
+      val idxReader = new IdxReader("target/IdxReaderTest1.idx.seq", new OutputBlob)
+      val blobReader = new ValueFileReader("target/IdxReaderTest1.data.seq", new OutputBlob)
 
 
       // Read whole index file and check if corresponding data exists
@@ -148,13 +148,13 @@ class SequenceFileWriterSpecs extends WordSpec with LazyLogging {
         inputData.append(s" ${i}")
       }
      
-      val writer = new SequenceFileWriter("target/IoStreamRWTest", new OutputBlob)
+      val writer = new SequenceFileWriter("target/IoStreamRWTest", new OutputBlob, true, System.getProperty("user.name"))
       writer.insert(getKey(124), System.currentTimeMillis(), inputData.toString().getBytes)
       writer.close
 
       // Read data
-      val idxReader = new IdxReader("target/IoStreamRWTest.idx", new OutputBlob)
-      val blobReader = new ValueFileReader("target/IoStreamRWTest.blob", new OutputBlob)
+      val idxReader = new IdxReader("target/IoStreamRWTest.idx.seq", new OutputBlob)
+      val blobReader = new ValueFileReader("target/IoStreamRWTest.data.seq", new OutputBlob)
 
       val idx  = idxReader.next().get
       // Use setream
@@ -180,12 +180,12 @@ class SequenceFileWriterSpecs extends WordSpec with LazyLogging {
         inputData.append(s" ${i}")
       }
      
-      val writer = new SequenceFileWriter("target/IoStreamRWTest", new OutputBlob)
+      val writer = new SequenceFileWriter("target/IoStreamRWTest", new OutputBlob, true, System.getProperty("user.name"))
       writer.insert(getKey(124), System.currentTimeMillis(), inputData.toString().getBytes)
       writer.close
       
-      val idxReader = new IdxReader("target/IoStreamRWTest.idx", new OutputBlob)
-      val blobReader = new ValueFileReader("target/IoStreamRWTest.blob", new OutputBlob)
+      val idxReader = new IdxReader("target/IoStreamRWTest.idx.seq", new OutputBlob)
+      val blobReader = new ValueFileReader("target/IoStreamRWTest.data.seq", new OutputBlob)
 
       val idx  = idxReader.next().get
       val stream = new BlobInputStream(blobReader, idx)

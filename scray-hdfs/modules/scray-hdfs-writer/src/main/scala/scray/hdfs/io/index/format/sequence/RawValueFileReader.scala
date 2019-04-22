@@ -27,13 +27,14 @@ import scray.hdfs.io.index.format.sequence.mapping.SequenceKeyValuePair
 import org.apache.hadoop.io.Writable
 import scray.hdfs.io.index.format.sequence.mapping.SequneceValue
 
-class RawValueFileReader[DATAKEY <: Writable, DATAVALUE <: Writable](path: String, hdfsConf: Configuration, fs: Option[FileSystem], outMapping: SequneceValue[DATAKEY, DATAVALUE]) extends LazyLogging {
+class RawValueFileReader[+DATAKEY <: Writable, +DATAVALUE <: Writable](path: String, hdfsConf: Configuration, fs: Option[FileSystem], val outMapping: SequneceValue[DATAKEY, DATAVALUE]) extends LazyLogging {
 
   if(getClass.getClassLoader == null) {
     hdfsConf.setClassLoader(getClass.getClassLoader)
   }
   
   logger.trace(s"Try to read from path ${path}")
+  hdfsConf.set("dfs.client.use.datanode.hostname", "true")
   val reader: SequenceFile.Reader = new SequenceFile.Reader(hdfsConf, Reader.file(new Path(path)), Reader.bufferSize(4096));
 
   val key = outMapping.getDataKey("", 1)

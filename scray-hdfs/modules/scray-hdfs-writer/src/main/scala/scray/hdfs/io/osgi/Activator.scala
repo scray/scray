@@ -22,17 +22,23 @@ import java.util.Hashtable
 import org.apache.hadoop.io.BytesWritable
 import org.apache.hadoop.io.Text
 import scray.hdfs.io.write.WriteService
+import scray.hdfs.io.read.ReadService
 
 class Activator extends BundleActivator {
-  val fac = new ServiceFactory
+  val writeServiceFactory = new WriteServiceFactory
+  val readServiceFactory = new ReadServiceFactory
+  
 
   override def start(context: BundleContext): Unit = {
-    println(s"Register service with name ${classOf[WriteService].getName} ")
-    context.registerService(classOf[WriteService].getName, fac, new Hashtable[String, String]())
+    println(s"Register service ${classOf[WriteService].getName} ")
+    context.registerService(classOf[WriteService].getName, writeServiceFactory, new Hashtable[String, String]())
+    
+    println(s"Register service ${classOf[ReadService].getName} ")
+    context.registerService(classOf[ReadService].getName, readServiceFactory, new Hashtable[String, String]())
   }
 
   override def stop(context: BundleContext): Unit = {
-    fac.close
+    writeServiceFactory.close
   }
 
 }

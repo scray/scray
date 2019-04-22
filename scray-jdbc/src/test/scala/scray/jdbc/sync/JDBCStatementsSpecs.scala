@@ -53,29 +53,28 @@ class JDBCStatementsSpecs extends WordSpec with BeforeAndAfterAll with LazyLoggi
 
   "JDBCStatementsSpecs " should {
     "register job in sync table " in {
-
       val syncApi = new SyncTableComponent(slick.jdbc.MySQLProfile)
       val jobInfo = JDBCJobInfo("job1", 3, 2)
 
+     val createTableResult = db.run(syncApi.create);
+      
       // Create table
-      db.run(syncApi.create).onComplete(_ match {
+      createTableResult.onComplete(_ match {
         case Success(lines) => ""
         case Failure(ex) => {
           logger.error(s"Unable to execute statement ${ex}")
-          fail();
+          fail()          
         };
       })
+
+      Await.result(createTableResult, Duration("3 second"))
+
       // 5 statements schould be generatd. 3 batch versions and 2 online versions
       assert(syncApi.registerJobStatement(jobInfo).size === 5)
 
       // Register job
-      syncApi.registerJobStatement(jobInfo).map(db.run(_).onComplete(_ match {
-        case Success(lines) => ""
-        case Failure(ex) => {
-          logger.error(s"Unable to execute statement ${ex}")
-          fail();
-        };
-      }))
+      syncApi.registerJobStatement(jobInfo).map(info => Await.result(db.run(info), Duration("1 second")))
+
 
     }
     " start batch job " in {
@@ -83,13 +82,7 @@ class JDBCStatementsSpecs extends WordSpec with BeforeAndAfterAll with LazyLoggi
       val jobInfo = JDBCJobInfo("job1", 3, 2)
 
       // Mark batch job on slot 0 as running
-      db.run(syncApi.startJobStatement(jobInfo, 0, false)).onComplete(_ match {
-        case Failure(ex) => {
-          logger.error(s"Unable to execute statement ${ex}")
-          fail();
-        };
-        case Success(x) =>
-      })
+      Await.result(db.run(syncApi.startJobStatement(jobInfo, 0, false)), Duration("1 second"))
 
       // Check if job1_batch0 is marked as running
       val tableIdRows = Await.result(db.run(syncApi.getRunningJobStatement(jobInfo, false)), Duration("1 second"))
@@ -103,7 +96,8 @@ class JDBCStatementsSpecs extends WordSpec with BeforeAndAfterAll with LazyLoggi
       val jobInfo = JDBCJobInfo("job1", 3, 2)
 
       // Mark batch job on slot 0 as running
-      db.run(syncApi.startJobStatement(jobInfo, 0, true)).onComplete(_ match {
+      val startJobStatementResult = db.run(syncApi.startJobStatement(jobInfo, 0, true))
+      startJobStatementResult.onComplete(_ match {
         case Failure(ex) => {
           logger.error(s"Unable to execute statement ${ex}")
           fail();
@@ -111,6 +105,8 @@ class JDBCStatementsSpecs extends WordSpec with BeforeAndAfterAll with LazyLoggi
         case Success(x) =>
       })
 
+      Await.result(startJobStatementResult,Duration("1 second"))
+      
       // Check if job1_online0 is marked as running
       val tableIdRows = Await.result(db.run(syncApi.getRunningJobStatement(jobInfo, true)), Duration("1 second"))
 
@@ -123,7 +119,8 @@ class JDBCStatementsSpecs extends WordSpec with BeforeAndAfterAll with LazyLoggi
       val jobInfo = JDBCJobInfo("job1", 3, 2)
 
       // Mark batch job on slot 0 as completed
-      db.run(syncApi.completeJobStatement(jobInfo, 0, false, 1500649303L)).onComplete(_ match {
+      val markJobAsCompleted = db.run(syncApi.completeJobStatement(jobInfo, 0, false, 1500649303L))
+      markJobAsCompleted.onComplete(_ match {
         case Failure(ex) => {
           logger.error(s"Unable to execute statement ${ex}")
           fail();
@@ -131,6 +128,8 @@ class JDBCStatementsSpecs extends WordSpec with BeforeAndAfterAll with LazyLoggi
         case Success(x) =>
       })
 
+      Await.result(markJobAsCompleted, Duration("1 second"))
+      
       // Check if job1_batch0 is marked as completed
       val tableIdRows = Await.result(db.run(syncApi.getLatestCompletedJobStatement(jobInfo, false)), Duration("1 second"))
 
@@ -142,13 +141,7 @@ class JDBCStatementsSpecs extends WordSpec with BeforeAndAfterAll with LazyLoggi
       val jobInfo = JDBCJobInfo("job1", 3, 2)
 
       // Mark batch job on slot 0 as completed
-      db.run(syncApi.completeJobStatement(jobInfo, 0, true, 1500649303L)).onComplete(_ match {
-        case Failure(ex) => {
-          logger.error(s"Unable to execute statement ${ex}")
-          fail();
-        };
-        case Success(x) =>
-      })
+      Await.result(db.run(syncApi.completeJobStatement(jobInfo, 0, true, 1500649303L)), Duration("1 second"))
 
       // Check if job1_batch0 is marked as completed
       val tableIdRows = Await.result(db.run(syncApi.getLatestCompletedJobStatement(jobInfo, true)), Duration("1 second"))
@@ -164,13 +157,7 @@ class JDBCStatementsSpecs extends WordSpec with BeforeAndAfterAll with LazyLoggi
       val BATCH_END_TIME = 1500649399L
 
       // Mark batch job on slot 0 as completed
-      db.run(syncApi.completeJobStatement(jobInfo, 0, false, BATCH_END_TIME)).onComplete(_ match {
-        case Failure(ex) => {
-          logger.error(s"Unable to execute statement ${ex}")
-          fail();
-        };
-        case Success(x) =>
-      })
+      Await.result(db.run(syncApi.completeJobStatement(jobInfo, 0, false, BATCH_END_TIME)), Duration("1 second"))
 
       // Check if job1_batch0 is marked as completed
       val tableIdRows = Await.result(db.run(syncApi.getLatestCompletedJobStatement(jobInfo, false)), Duration("1 second"))

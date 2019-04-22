@@ -29,67 +29,128 @@ import scray.hdfs.io.index.format.sequence.types.BlobKey
 import scray.hdfs.io.index.format.sequence.types.IndexValue
 import scray.hdfs.io.index.format.sequence.types.Blob
 import org.apache.hadoop.io.Text
+import scray.hdfs.io.modify.Renamer
+import org.apache.hadoop.conf.Configuration
+import java.util.Optional
+import scray.hdfs.io.configure.WriteParameter
+import scray.hdfs.io.configure.FilenameCreator
+import scray.hdfs.io.configure.RandomUUIDFilenameCreator
+import java.util.Timer
 
 class CoordinatedWriter[+IDXKEY <: Writable, +IDXVALUE <: Writable, +DATAKEY <: Writable, +DATAVALUE <: Writable](
-    maxFileSize: Long = 8192, 
-    metadata: WriteDestination, 
-    outTypeMapping: SequenceKeyValuePair[IDXKEY, IDXVALUE, DATAKEY, DATAVALUE]) extends LazyLogging with Writer {
-  
+  maxFileSize:    Long                                                       = Long.MaxValue,
+  metadata:       WriteParameter,
+  outTypeMapping: SequenceKeyValuePair[IDXKEY, IDXVALUE, DATAKEY, DATAVALUE]) extends LazyLogging with Writer {
+
+  private var hdfsConf: Configuration = null; // Initialized when writer was created.
   private var writer: Writer = createNewBasicWriter(metadata)
   private var numInserts = 0
+  private var timer = new Timer(true)
 
   def insert(id: String, updateTime: Long, data: Array[Byte]) = synchronized {
-    // Check if file size limit is reached
-    if (!maxFileSizeReached(writer.getBytesWritten + data.length, maxFileSize)
-      &&
-      !maxNumInsertsReached(numInserts, metadata.maxNumberOfInserts)) {
-      numInserts = numInserts + 1
-      writer.insert(id, updateTime, data)
-    } else {
-      logger.debug(s"Close file ${writer.getPath}")
-      writer.close
-      
+
+    // Limit was reached last time.
+    if (writer.isClosed) {
       writer = createNewBasicWriter(metadata)
+      this.startTimer
+      
       logger.debug(s"Create new file ${writer.getPath}")
+    }
+
+    numInserts = numInserts + 1
+    val writtenBytes = writer.insert(id, updateTime, data)
+
+    // Check if file size limit is reached
+    if (maxFileSizeReached(writer.getBytesWritten + data.length, maxFileSize)
+      ||
+      maxNumInsertsReached(numInserts, metadata.maxNumberOfInserts)) {
+      logger.debug(s"Close file ${writer.getPath}")
+      this.close
+
       numInserts = 0
-      this.insert(id, updateTime, data)
     }
+
+    writtenBytes
   }
 
-  private def createNewBasicWriter(metadata: WriteDestination): Writer = {
-    val filePath = this.getPath(metadata.path, metadata.queryspace, metadata.version.number)
-    new SequenceFileWriter(filePath, outTypeMapping)
-   
+  private def createNewBasicWriter(metadata: WriteParameter): Writer = {
+    val filePath = this.getPath(metadata.path, metadata.queryspace, metadata.version.number, metadata.writeVersioned, metadata.fileNameCreator)
+    val writer = new SequenceFileWriter(filePath, outTypeMapping, metadata.createScrayIndexFile, metadata.user)
+    this.hdfsConf = writer.hdfsConf
+    this.startTimer
+    
+    writer
   }
 
-  private def getPath(basePath: String, queryspace: String, version: Int): String = {
-    if (basePath.endsWith("/")) {
-      s"${basePath}scray-data-${queryspace}-v${version}/${UUID.randomUUID()}"
+  private def getPath(basePath: String, queryspace: String, version: Int, writeVersioned: Boolean, customFileName: Optional[FilenameCreator]): String = {
+    if (writeVersioned) {
+      if (metadata.storeAsHiddenFileTillClosed) {
+        if (basePath.endsWith("/")) {
+          s"${basePath}scray-data-${queryspace}-v${version}/.${customFileName.orElse(new RandomUUIDFilenameCreator).getNextFilename}"
+        } else {
+          s"${basePath}/scray-data-${queryspace}-v${version}/.${customFileName.orElse(new RandomUUIDFilenameCreator).getNextFilename}"
+        }
+      } else {
+        if (basePath.endsWith("/")) {
+          s"${basePath}scray-data-${queryspace}-v${version}/${customFileName.orElse(new RandomUUIDFilenameCreator).getNextFilename}"
+        } else {
+          s"${basePath}/scray-data-${queryspace}-v${version}/${customFileName.orElse(new RandomUUIDFilenameCreator).getNextFilename}"
+        }
+      }
     } else {
-      s"${basePath}/scray-data-${queryspace}-v${version}/${UUID.randomUUID()}"
+      s"${basePath}${customFileName.orElse(new RandomUUIDFilenameCreator).getNextFilename}"
     }
   }
-  
-  def maxFileSizeReached(writtenBytes: Long, maxSize: Long): Boolean = {
-    logger.debug(s"Inserted bytes ${writtenBytes} of max ${maxSize} bytes")
 
-    writtenBytes >= maxSize
+  def maxFileSizeReached(writtenBytes: Long, maxSize: Long): Boolean = {
+    if (maxSize != 0) {
+      logger.debug(s"Inserted bytes ${writtenBytes} of max ${maxSize} bytes")
+      writtenBytes >= maxSize
+    } else {
+      logger.debug(s"Inserted bytes ${writtenBytes} to sequence file.")
+      false
+    }
   }
 
   def maxNumInsertsReached(numberInserts: Int, maxNumerInserts: Int): Boolean = {
-    logger.debug(s"Insert ${numberInserts}/${maxNumerInserts}")
-    numberInserts >= maxNumerInserts
+
+    if (maxNumerInserts != 0) {
+      logger.debug(s"Insert ${numberInserts}/${maxNumerInserts}")
+      numberInserts >= maxNumerInserts
+    } else {
+      logger.debug(s"Inserted ${numberInserts} key/value pairs to sequence file.")
+      false
+    }
   }
 
   def close: Unit = synchronized {
     varIsClosed = true
     writer.close
+    timer.cancel()
+
+    if (metadata.storeAsHiddenFileTillClosed) {
+      val renamer = new Renamer();
+
+      val pathAndFilename = renamer.separateFilename(writer.getPath)
+      val newFilename = pathAndFilename._1 + pathAndFilename._2.replace(".", "")
+
+      if (metadata.createScrayIndexFile) {
+        renamer.rename(writer.getPath + ".data.seq", newFilename + ".data.seq", hdfsConf).get()
+        renamer.rename(writer.getPath + ".idx.seq", newFilename + ".idx.seq", hdfsConf).get()
+      } else {
+        if (metadata.fileNameCreator.isPresent()) {
+          renamer.rename(writer.getPath, newFilename, hdfsConf).get()
+        } else {
+          renamer.rename(writer.getPath + ".seq", newFilename + ".seq", hdfsConf).get()
+        }
+      }
+    }
   }
 
   def getPath: String = {
-    this.writer.getPath  
+    this.writer.getPath
   }
-  
+
   def getBytesWritten: Long = {
     writer.getBytesWritten
   }
@@ -97,59 +158,85 @@ class CoordinatedWriter[+IDXKEY <: Writable, +IDXVALUE <: Writable, +DATAKEY <: 
   def getNumberOfInserts: Int = {
     writer.getNumberOfInserts
   }
-  
-  override def insert(id: String, updateTime: Long, data: InputStream, dataSize: BigInteger, blobSplitSize: Int): Long = {
+
+  override def insert(id: String, updateTime: Long, data: InputStream, dataSize: BigInteger, blobSplitSize: Int): Long = synchronized {
+
+    // Limit was reached last time.
+    if (writer.isClosed) {
+      writer = createNewBasicWriter(metadata)
+      startTimer
+      logger.debug(s"Create new file ${writer.getPath}")
+    }
+
+    numInserts = numInserts + 1
+    val writtenBytes = writer.insert(id, updateTime, data)
 
     // Check if file size limit is reached
-    if (!maxFileSizeReached(writer.getBytesWritten + dataSize.longValue(), maxFileSize)
-      &&
-      !maxNumInsertsReached(numInserts, metadata.maxNumberOfInserts)) {
-      numInserts = numInserts + 1
-      writer.insert(id, updateTime, data)
-    } else {
+    if (maxFileSizeReached(writer.getBytesWritten + dataSize.longValue(), maxFileSize)
+      ||
+      maxNumInsertsReached(numInserts, metadata.maxNumberOfInserts)) {
       logger.debug(s"Close file ${writer.getPath}")
-      writer.close
-      
-      logger.debug(s"Create new file ${writer.getPath}")
-      writer = createNewBasicWriter(metadata)
+      this.close
+
       numInserts = 0
-      this.insert(id, updateTime, data)
     }
-  }
-  
-  override def insert(id: String, data: String): Long = {
-        // Check if file size limit is reached
-    if (!maxFileSizeReached(writer.getBytesWritten + data.getBytes.length, maxFileSize)
-      &&
-      !maxNumInsertsReached(numInserts, metadata.maxNumberOfInserts)) {
-      numInserts = numInserts + 1
-      writer.insert(id, data)
-    } else {
-      logger.debug(s"Close file ${writer.getPath}")
-      writer.close
-      
-      logger.debug(s"Create new file ${writer.getPath}")
-      writer = createNewBasicWriter(metadata)
-      numInserts = 0
-      this.insert(id, data)
-    }
+
+    writtenBytes
   }
 
+  override def insert(id: String, data: String): Long = synchronized {
 
-  def insert(id: String, updateTime: Long, data: InputStream, blobSplitSize: Int): Long = {
+    // Limit was reached last time.
+    if (writer.isClosed) {
+      writer = createNewBasicWriter(metadata)
+      startTimer
+      logger.debug(s"Create new file ${writer.getPath}")
+    }
+
+    numInserts = numInserts + 1
+    val writtenBytes = writer.insert(id, data)
+
     // Check if file size limit is reached
-    if (!maxNumInsertsReached(numInserts, metadata.maxNumberOfInserts)) {
-      numInserts = numInserts + 1
-      writer.insert(id, updateTime, data, blobSplitSize)
-    } else {
+    if (maxFileSizeReached(writer.getBytesWritten + data.getBytes.length, maxFileSize)
+      ||
+      maxNumInsertsReached(numInserts, metadata.maxNumberOfInserts)) {
       logger.debug(s"Close file ${writer.getPath}")
-      writer.close
-
-      writer = createNewBasicWriter(metadata)
-      logger.debug(s"Create new file ${writer.getPath}")
+      this.close
 
       numInserts = 0
-      this.insert(id, updateTime, data, blobSplitSize)
+    }
+
+    writtenBytes
+  }
+
+  def insert(id: String, updateTime: Long, data: InputStream, blobSplitSize: Int): Long = synchronized {
+
+    // Limit was reached last time.
+    if (writer.isClosed) {
+      writer = createNewBasicWriter(metadata)
+      this.startTimer
+      logger.debug(s"Create new file ${writer.getPath}")
+    }
+
+    numInserts = numInserts + 1
+    val writtenBrytes = writer.insert(id, updateTime, data, blobSplitSize)
+
+    // Check if file size limit is reached
+    if (maxNumInsertsReached(numInserts, metadata.maxNumberOfInserts)) {
+      logger.debug(s"Close file ${writer.getPath}")
+      this.close
+
+      numInserts = 0
+    }
+
+    writtenBrytes
+  }
+
+  private def startTimer: Unit = {
+    timer = new Timer(true)
+
+    if (metadata.timeLimit > 0) {
+      timer.schedule(new CloseFileTimer(this), metadata.timeLimit)
     }
   }
 }

@@ -50,7 +50,7 @@ object CopyToSequenceFile {
       val sourceFile = args(0)
       val destination = args(1)
 
-      val destWriter = new SequenceFileWriter(destination, new Configuration, None, new OutputTextBytesWritable)
+      val destWriter = new SequenceFileWriter(destination, new Configuration, None, new OutputTextBytesWritable, true, System.getProperty("user.name"))
 
       val sourceReader = new FileInputStream(sourceFile)
       val filename = sourceFile.split(System.getProperty("file.separator")).last

@@ -24,95 +24,106 @@ import java.io.InputStream
 import com.typesafe.scalalogging.LazyLogging
 import java.io.OutputStream
 import java.io.File
+import java.nio.file.Paths
+import scray.hdfs.io.environment.WindowsHadoopLibs
+import com.google.common.util.concurrent.ListenableFuture
+import com.google.common.util.concurrent.SettableFuture
+import java.util.ArrayList
+import org.apache.hadoop.security.UserGroupInformation
+import java.security.PrivilegedAction
 
-class RawFileWriter(hdfsURL: String, hdfsConf: Configuration) extends LazyLogging {
+class RawFileWriter(hdfsURL: String, hdfsConf: Configuration, user: String) extends LazyLogging {
 
   var dataWriter: FileSystem = null; // scalastyle:off null
+  val remoteUser: UserGroupInformation = UserGroupInformation.createRemoteUser(user)
 
   if (getClass.getClassLoader != null) {
     hdfsConf.setClassLoader(getClass.getClassLoader)
   }
 
-  def this(hdfsUrl : String) = {
-    this(hdfsUrl, new Configuration)
+  def this(hdfsUrl: String, user: String) = {
+    this(hdfsUrl, new Configuration, user)
   }
 
   def initWriter(path: String): Unit = {
-    
+
     hdfsConf.set("fs.hdfs.impl", classOf[org.apache.hadoop.hdfs.DistributedFileSystem].getName);
     hdfsConf.set("fs.file.impl", classOf[org.apache.hadoop.fs.LocalFileSystem].getName);
     hdfsConf.set("dfs.client.use.datanode.hostname", "true");
     hdfsConf.set("fs.defaultFS", hdfsURL)
 
     logger.debug(s"Create writer for path ${path}")
-    
-    try {
-      dataWriter = FileSystem.get(hdfsConf);
-    } catch {
-      case e: java.io.IOException => {
-        if(e.getMessage.contains("winutils binary in the hadoop binary path")) {
-          if(!path.toString().toLowerCase().trim().startsWith("hdfs://")) {
-            logger.error("No winutils.exe found. For details see https://wiki.apache.org/hadoop/WindowsProblems")
-            throw e
-          } else {
-            logger.debug("No WINUTILS.EXE found. But is not required for hdfs:// connections")
-            
-            val bisTmpFiles = System.getProperty("BISAS_TEMP")
-            
-            if(bisTmpFiles == null) {
-              this.createWinutilsDummy(".")
-            } else {
-              this.createWinutilsDummy(bisTmpFiles)
-            }
-             
-             this.initWriter(path)
-          }
-        } else {
-          throw e
-        }
+    remoteUser.doAs(new PrivilegedAction[Unit] {
+      def run(): Unit = {
+        dataWriter = FileSystem.get(hdfsConf)
       }
-      case e: Exception => throw e
-    }
+    })
   }
-  
-  private def createWinutilsDummy(basepath: String) {
-     // Create dummy file if real WINUTILS.EXE is not required.
-     val dummyFile = new File(basepath + System.getProperty("file.separator") + "HADOOP_HOME");
-     System.getProperties().put("hadoop.home.dir", dummyFile.getAbsolutePath());
-     new File("./bin").mkdirs();
-     new File("./bin/winutils.exe").createNewFile();
-  }
-  
+
   def write(fileName: String, data: InputStream) = synchronized {
     val hdfswritepath = new Path(fileName);
 
-    if(dataWriter == null ) {
+    if (dataWriter == null) {
       logger.debug("Writer was not initialized. Will do it now")
-      
-      initWriter(fileName)
-    }
-    
-    dataWriter.create(new Path(fileName))
-    val hdfsOutputStream = dataWriter.create(hdfswritepath);
 
-    ByteStreams.copy(data, hdfsOutputStream);
-    data.close()
-    hdfsOutputStream.hflush();
-    hdfsOutputStream.hsync(); 
-    hdfsOutputStream.close();
-  }
-  
-  def write(fileName: String): OutputStream = {
-    if(dataWriter == null ) {
-      logger.debug("Writer was not initialized. Will do it now")
-      
       initWriter(fileName)
     }
-        
-    dataWriter.create(new Path(fileName))
+
+    remoteUser.doAs(new PrivilegedAction[Unit] {
+      def run(): Unit = {
+        dataWriter.create(new Path(fileName))
+        val hdfsOutputStream = dataWriter.create(hdfswritepath);
+
+        ByteStreams.copy(data, hdfsOutputStream);
+        data.close()
+        hdfsOutputStream.hflush();
+        hdfsOutputStream.hsync();
+        hdfsOutputStream.close();
+      }
+    })
+
   }
-  
+
+  def write(fileName: String): OutputStream = {
+    if (dataWriter == null) {
+      logger.debug("Writer was not initialized. Will do it now")
+
+      initWriter(fileName)
+    }
+
+    remoteUser.doAs(new PrivilegedAction[OutputStream] {
+      def run(): OutputStream = {
+        dataWriter.create(new Path(fileName))
+      }
+    })
+  }
+
+  def deleteFile(path: String) {
+    if (dataWriter == null) {
+      logger.debug("Writer was not initialized. Will do it now")
+
+      initWriter(path)
+    }
+    remoteUser.doAs(new PrivilegedAction[Unit] {
+      def run(): Unit = {
+        dataWriter.delete(new Path(path), true)
+      }
+    })
+  }
+
   def close = {
-    dataWriter.close()
+
+    remoteUser.doAs(new PrivilegedAction[Unit] {
+      def run(): Unit = {
+        dataWriter.close()
+      }
+    })
+
   }
+
+  //  class DoAsUser(user: Option[UserGroupInformation], function: ) extends  PrivilegedAction[Unit] {
+  //    def run(): Unit = {
+  //
+  //    }
+  //  }
 }

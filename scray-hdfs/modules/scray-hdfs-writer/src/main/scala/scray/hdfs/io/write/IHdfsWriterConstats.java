@@ -17,9 +17,9 @@ package scray.hdfs.io.write;
 
 public class IHdfsWriterConstats {
 	public static enum SequenceKeyValueFormat {
-		SequenceFile_IndexValue_Blob,
-		SequenceFile_Text_Text,
-		SequenceFile_Text_BytesWritable
+		SEQUENCEFILE_INDEXVALUE_BLOB,
+		SEQUENCEFILE_TEXT_TEXT,
+		SEQUENCEFILE_TEXT_BYTESWRITABLE
 	}
 	
 	public static enum WriteParameter {

@@ -1,33 +1,40 @@
 package scray.hdfs.io.index.format.example
 
+
+
+import scray.hdfs.io.configure.WriteParameter
 import scray.hdfs.io.osgi.WriteServiceImpl
 import scray.hdfs.io.write.IHdfsWriterConstats.SequenceKeyValueFormat
+import scala.util.Random
+import scray.hdfs.io.configure.RandomUUIDFilenameCreator
 
 object ServiceApiExample {
-    def main(args: Array[String]) {
-      
+  def main(args: Array[String]) {
+
     val writeService = new WriteServiceImpl
     
-    val writeId = writeService.createWriter("hdfs://10.0.103.102/LogTest3", SequenceKeyValueFormat.SequenceFile_Text_Text)
-    
-    writeService.insert(writeId, "123", System.currentTimeMillis(), "Abc1".getBytes).get
-    writeService.insert(writeId, "123", System.currentTimeMillis(), "Abc2".getBytes).get
-    writeService.insert(writeId, "123", System.currentTimeMillis(), "Abc3".getBytes).get
-    writeService.insert(writeId, "123", System.currentTimeMillis(), "Abc4".getBytes).get
-    writeService.insert(writeId, "123", System.currentTimeMillis(), "Abc5".getBytes).get
-    
-    writeService.insert(writeId, "123", System.currentTimeMillis(), "Abc6".getBytes).get
-    writeService.insert(writeId, "123", System.currentTimeMillis(), "Abc7".getBytes).get
-    writeService.insert(writeId, "123", System.currentTimeMillis(), "Abc8".getBytes).get
-    writeService.insert(writeId, "123", System.currentTimeMillis(), "Abc9".getBytes).get
-    writeService.insert(writeId, "123", System.currentTimeMillis(), "Abc10".getBytes).get
-    
-    writeService.insert(writeId, "123", System.currentTimeMillis(), "Abc11".getBytes).get
-    writeService.insert(writeId, "123", System.currentTimeMillis(), "Abc12".getBytes).get
-    writeService.insert(writeId, "123", System.currentTimeMillis(), "Abc13".getBytes).get
-    writeService.insert(writeId, "123", System.currentTimeMillis(), "Abc14".getBytes).get
-    writeService.insert(writeId, "123", System.currentTimeMillis(), "Abc15".getBytes).get
+    val config = new WriteParameter.Builder()
+    .setPath("hdfs://host1.scray.org/tmp/customFile/ff/")
+    .setFileFormat(SequenceKeyValueFormat.SEQUENCEFILE_TEXT_TEXT)
+    .setTimeLimit(1)
+    .setFileNameCreator(new RandomUUIDFilenameCreator())
+    .createConfiguration
 
+    val writeId = writeService.createWriter(config)
+
+    for (i <- 0 to 10) {
+      println(writeService.insert(writeId, "id42", System.currentTimeMillis(), createDataElement.getBytes).get.getBytesInserted())
+      
+      Thread.sleep(2000)
+    }
     writeService.close(writeId)
+  }
+
+  def createDataElement: String = {
+    "{\"name\": \"station-" + Double.box(Math.random() * 500).intValue() + "\", " +
+    "\"mode\": \"" + Double.box(Math.random() * 2).intValue() + "\"," +
+    "\"temperature\": \"" + Math.floor(Math.random() * 200) + "\"," +
+    "\"energyConsumption\": \"" + Math.random() * 100 + "\"," + 
+    " \"skill_name\": \"REX_Waiting\"}"
   }
 }

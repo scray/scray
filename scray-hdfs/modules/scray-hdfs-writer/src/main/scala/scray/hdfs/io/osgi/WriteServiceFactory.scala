@@ -26,7 +26,7 @@ import scray.hdfs.io.index.format.Writer
 import scray.hdfs.io.write.WriteService
 import scray.hdfs.io.write.IHdfsWriterConstats
 
-class ServiceFactory extends org.osgi.framework.ServiceFactory[scray.hdfs.io.write.WriteService] {
+class WriteServiceFactory extends org.osgi.framework.ServiceFactory[scray.hdfs.io.write.WriteService] {
   
   var writer: WriteServiceImpl = null
 
@@ -46,10 +46,14 @@ class ServiceFactory extends org.osgi.framework.ServiceFactory[scray.hdfs.io.wri
   
 
   def ungetService(bundle: Bundle, reg: ServiceRegistration[scray.hdfs.io.write.WriteService], writer: scray.hdfs.io.write.WriteService): Unit = {
-    this.writer.closeAll
+    if(this.writer != null) {
+      this.writer.closeAll
+    }
   }
   
   def close = {
-    writer.closeAll
+    if(this.writer != null) {
+      writer.closeAll
+    }
   }
 }
