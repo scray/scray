@@ -41,7 +41,7 @@ class RawFileWriter(hdfsURL: String, hdfsConf: Configuration, user: String) exte
     hdfsConf.setClassLoader(getClass.getClassLoader)
   }
 
-  def this(hdfsUrl: String, user: String) = {
+  def this(hdfsUrl: String, user: String, password: Array[Byte]) = {
     this(hdfsUrl, new Configuration, user)
   }
 

@@ -51,7 +51,7 @@ class ReadServiceImplSpecs extends WordSpec with BeforeAndAfter with LazyLogging
   // Write a test file
   before {
     val service = new WriteServiceImpl
-    service.writeRawFile(rawExampleFile, System.getProperty("user.name"), new ByteArrayInputStream(s"ABCDEFG".getBytes))
+    service.writeRawFile(rawExampleFile, new ByteArrayInputStream(s"ABCDEFG".getBytes), System.getProperty("user.name"), "".getBytes)
     
     val config = new WriteParameter.Builder()
       .setPath(sequenceBytesWritableExampleFile)
@@ -121,7 +121,7 @@ class ReadServiceImplSpecs extends WordSpec with BeforeAndAfter with LazyLogging
        // Create example file
        val exampleFile =s"${new URL("file:///" + System.getProperty("user.dir"))}" + s"/target/ReadServiceImplSpecs/listFiles/${UUID.randomUUID()}/file2.txt"
        val service = new WriteServiceImpl
-       service.writeRawFile(exampleFile, System.getProperty("user.name"), new ByteArrayInputStream(s"ABCDEFG".getBytes))
+       service.writeRawFile(exampleFile, new ByteArrayInputStream(s"ABCDEFG".getBytes), System.getProperty("user.name"), "".getBytes)
    
        val reader = new ReadServiceImpl
        

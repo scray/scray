@@ -50,9 +50,9 @@ class WriteServiceImpl extends WriteService {
     logger.debug(s"Create writer for path ${path}")
     val id = UUID.randomUUID()
 
-        val config = new (WriteParameter.Builder)
-    .setPath(path)
-     .createConfiguration
+    val config = new (WriteParameter.Builder)
+      .setPath(path)
+      .createConfiguration
 
     writersMetadata.put(id, new CoordinatedWriter(8192, config, new OutputBlob))
 
@@ -64,9 +64,9 @@ class WriteServiceImpl extends WriteService {
     val id = UUID.randomUUID()
 
     val config = new (WriteParameter.Builder)
-    .setPath(path)
-     .setFileFormat(format)
-     .createConfiguration
+      .setPath(path)
+      .setFileFormat(format)
+      .createConfiguration
 
     this.createWriter(config)
   }
@@ -77,7 +77,7 @@ class WriteServiceImpl extends WriteService {
     metadata.fileFormat match {
       case SequenceKeyValueFormat.SEQUENCEFILE_INDEXVALUE_BLOB    => writersMetadata.put(id, new CoordinatedWriter(metadata.maxFileSize, metadata, new OutputBlob))
       case SequenceKeyValueFormat.SEQUENCEFILE_TEXT_BYTESWRITABLE => writersMetadata.put(id, new CoordinatedWriter(metadata.maxFileSize, metadata, new OutputTextBytesWritable))
-      case SequenceKeyValueFormat.SEQUENCEFILE_TEXT_TEXT        => writersMetadata.put(id, new CoordinatedWriter(metadata.maxFileSize, metadata, new OutputTextText))
+      case SequenceKeyValueFormat.SEQUENCEFILE_TEXT_TEXT          => writersMetadata.put(id, new CoordinatedWriter(metadata.maxFileSize, metadata, new OutputTextText))
     }
 
     id
@@ -125,10 +125,10 @@ class WriteServiceImpl extends WriteService {
     }
   }
 
-  def writeRawFile(path: String, user: String, data: InputStream): ScrayListenableFuture[WriteResult] = synchronized {
+  def writeRawFile(path: String, data: InputStream, user: String, password: Array[Byte]): ScrayListenableFuture[WriteResult] = synchronized {
     try {
 
-      val writer = new RawFileWriter(path, user)
+      val writer = new RawFileWriter(path, user, password)
       writer.write(path, data)
 
       new ScrayListenableFuture(new WriteResult("Data inserted"))
@@ -139,9 +139,9 @@ class WriteServiceImpl extends WriteService {
     }
   }
 
-  def writeRawFile(path: String, user: String): ScrayOutputStream = synchronized {
+  def writeRawFile(path: String, user: String, password: Array[Byte]): ScrayOutputStream = synchronized {
 
-    val writer = new RawFileWriter(path, user)
+    val writer = new RawFileWriter(path, user, password)
 
     new ScrayOutputStream(writer.write(path))
   }
@@ -167,11 +167,11 @@ class WriteServiceImpl extends WriteService {
     val renamer = new Renamer
     renamer.rename(source, destination)
   }
-  
-    def deleteFile(path: String, user: String): ScrayListenableFuture[String] = {
+
+  def deleteFile(path: String, user: String, password: Array[Byte]): ScrayListenableFuture[String] = {
     try {
 
-      val writer = new RawFileWriter(path, user)
+      val writer = new RawFileWriter(path, user, password)
 
       writer.deleteFile(path)
       new ScrayListenableFuture(path)
