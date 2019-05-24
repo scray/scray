@@ -16,10 +16,14 @@ object CoordinatedWriterExample {
   
   def main(args: Array[String]) {
 
-    val metadata = WriteParameter("000", "target/CoordinateWriteExample", Optional.empty(), IHdfsWriterConstats.SequenceKeyValueFormat.SequenceFile_Text_BytesWritable, Version(0), false, 64 * 1024 * 1024L, 5)
-    val writer = new CoordinatedWriter(8192, metadata, new OutputTextBytesWritable)
+    val conf = new (WriteParameter.Builder)
+    .setPath("target/CoordinateWriteExample")
+    .setFileFormat(IHdfsWriterConstats.SequenceKeyValueFormat.SEQUENCEFILE_TEXT_BYTESWRITABLE)
+    .setMaxNumberOfInserts(5)
+    .createConfiguration
+    val writer = new CoordinatedWriter(8192, conf, new OutputTextBytesWritable)
 
-    println(metadata.maxNumberOfInserts)
+    println(conf.maxNumberOfInserts)
     
     for(i <- 0 to 50) {
           val id = i + ""

@@ -8,6 +8,7 @@
 
 	<modelVersion>4.0.0</modelVersion>
 	<artifactId>scray-service</artifactId>
+  <version>1.1.2</version>
 	<name>Scray - Service</name>
 	<description>scray remote query service interface</description>
 

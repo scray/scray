@@ -33,6 +33,9 @@ import scray.hdfs.io.modify.Renamer
 import org.apache.hadoop.conf.Configuration
 import java.util.Optional
 import scray.hdfs.io.configure.WriteParameter
+import scray.hdfs.io.configure.FilenameCreator
+import scray.hdfs.io.configure.RandomUUIDFilenameCreator
+import java.util.Timer
 
 class CoordinatedWriter[+IDXKEY <: Writable, +IDXVALUE <: Writable, +DATAKEY <: Writable, +DATAVALUE <: Writable](
   maxFileSize:    Long                                                       = Long.MaxValue,
@@ -42,12 +45,15 @@ class CoordinatedWriter[+IDXKEY <: Writable, +IDXVALUE <: Writable, +DATAKEY <: 
   private var hdfsConf: Configuration = null; // Initialized when writer was created.
   private var writer: Writer = createNewBasicWriter(metadata)
   private var numInserts = 0
+  private var timer = new Timer(true)
 
   def insert(id: String, updateTime: Long, data: Array[Byte]) = synchronized {
 
     // Limit was reached last time.
     if (writer.isClosed) {
       writer = createNewBasicWriter(metadata)
+      this.startTimer
+      
       logger.debug(s"Create new file ${writer.getPath}")
     }
 
@@ -68,36 +74,37 @@ class CoordinatedWriter[+IDXKEY <: Writable, +IDXVALUE <: Writable, +DATAKEY <: 
   }
 
   private def createNewBasicWriter(metadata: WriteParameter): Writer = {
-    val filePath = this.getPath(metadata.path, metadata.queryspace, metadata.version.number, metadata.writeVersioned, metadata.customFileName)
-    val writer = new SequenceFileWriter(filePath, outTypeMapping, metadata.createScrayIndexFile)
+    val filePath = this.getPath(metadata.path, metadata.queryspace, metadata.version.number, metadata.writeVersioned, metadata.fileNameCreator)
+    val writer = new SequenceFileWriter(filePath, outTypeMapping, metadata.createScrayIndexFile, metadata.user)
     this.hdfsConf = writer.hdfsConf
-
+    this.startTimer
+    
     writer
   }
 
-  private def getPath(basePath: String, queryspace: String, version: Int, writeVersioned: Boolean, customFileName: Optional[String]): String = {
+  private def getPath(basePath: String, queryspace: String, version: Int, writeVersioned: Boolean, customFileName: Optional[FilenameCreator]): String = {
     if (writeVersioned) {
       if (metadata.storeAsHiddenFileTillClosed) {
         if (basePath.endsWith("/")) {
-          s"${basePath}scray-data-${queryspace}-v${version}/.${customFileName.orElse(UUID.randomUUID + ".seq")}"
+          s"${basePath}scray-data-${queryspace}-v${version}/.${customFileName.orElse(new RandomUUIDFilenameCreator).getNextFilename}"
         } else {
-          s"${basePath}/scray-data-${queryspace}-v${version}/.${customFileName.orElse(UUID.randomUUID + ".seq")}"
+          s"${basePath}/scray-data-${queryspace}-v${version}/.${customFileName.orElse(new RandomUUIDFilenameCreator).getNextFilename}"
         }
       } else {
         if (basePath.endsWith("/")) {
-          s"${basePath}scray-data-${queryspace}-v${version}/${customFileName.orElse(UUID.randomUUID + ".seq")}"
+          s"${basePath}scray-data-${queryspace}-v${version}/${customFileName.orElse(new RandomUUIDFilenameCreator).getNextFilename}"
         } else {
-          s"${basePath}/scray-data-${queryspace}-v${version}/${customFileName.orElse(UUID.randomUUID + ".seq")}"
+          s"${basePath}/scray-data-${queryspace}-v${version}/${customFileName.orElse(new RandomUUIDFilenameCreator).getNextFilename}"
         }
       }
     } else {
-      s"${basePath}/${customFileName.orElse(UUID.randomUUID() + ".seq")}"
+      s"${basePath}${customFileName.orElse(new RandomUUIDFilenameCreator).getNextFilename}"
     }
   }
 
   def maxFileSizeReached(writtenBytes: Long, maxSize: Long): Boolean = {
-    if(maxSize !=  0) { 
-     logger.debug(s"Inserted bytes ${writtenBytes} of max ${maxSize} bytes")
+    if (maxSize != 0) {
+      logger.debug(s"Inserted bytes ${writtenBytes} of max ${maxSize} bytes")
       writtenBytes >= maxSize
     } else {
       logger.debug(s"Inserted bytes ${writtenBytes} to sequence file.")
@@ -106,8 +113,8 @@ class CoordinatedWriter[+IDXKEY <: Writable, +IDXVALUE <: Writable, +DATAKEY <: 
   }
 
   def maxNumInsertsReached(numberInserts: Int, maxNumerInserts: Int): Boolean = {
-    
-    if(maxNumerInserts != 0) {
+
+    if (maxNumerInserts != 0) {
       logger.debug(s"Insert ${numberInserts}/${maxNumerInserts}")
       numberInserts >= maxNumerInserts
     } else {
@@ -119,18 +126,19 @@ class CoordinatedWriter[+IDXKEY <: Writable, +IDXVALUE <: Writable, +DATAKEY <: 
   def close: Unit = synchronized {
     varIsClosed = true
     writer.close
+    timer.cancel()
 
     if (metadata.storeAsHiddenFileTillClosed) {
       val renamer = new Renamer();
 
       val pathAndFilename = renamer.separateFilename(writer.getPath)
       val newFilename = pathAndFilename._1 + pathAndFilename._2.replace(".", "")
-      
-      if(metadata.createScrayIndexFile) {
+
+      if (metadata.createScrayIndexFile) {
         renamer.rename(writer.getPath + ".data.seq", newFilename + ".data.seq", hdfsConf).get()
         renamer.rename(writer.getPath + ".idx.seq", newFilename + ".idx.seq", hdfsConf).get()
-      } else { 
-        if(metadata.customFileName.isPresent()) {
+      } else {
+        if (metadata.fileNameCreator.isPresent()) {
           renamer.rename(writer.getPath, newFilename, hdfsConf).get()
         } else {
           renamer.rename(writer.getPath + ".seq", newFilename + ".seq", hdfsConf).get()
@@ -151,11 +159,12 @@ class CoordinatedWriter[+IDXKEY <: Writable, +IDXVALUE <: Writable, +DATAKEY <: 
     writer.getNumberOfInserts
   }
 
-  override def insert(id: String, updateTime: Long, data: InputStream, dataSize: BigInteger, blobSplitSize: Int): Long = {
+  override def insert(id: String, updateTime: Long, data: InputStream, dataSize: BigInteger, blobSplitSize: Int): Long = synchronized {
 
     // Limit was reached last time.
     if (writer.isClosed) {
       writer = createNewBasicWriter(metadata)
+      startTimer
       logger.debug(s"Create new file ${writer.getPath}")
     }
 
@@ -175,11 +184,12 @@ class CoordinatedWriter[+IDXKEY <: Writable, +IDXVALUE <: Writable, +DATAKEY <: 
     writtenBytes
   }
 
-  override def insert(id: String, data: String): Long = {
+  override def insert(id: String, data: String): Long = synchronized {
 
     // Limit was reached last time.
     if (writer.isClosed) {
       writer = createNewBasicWriter(metadata)
+      startTimer
       logger.debug(s"Create new file ${writer.getPath}")
     }
 
@@ -199,11 +209,12 @@ class CoordinatedWriter[+IDXKEY <: Writable, +IDXVALUE <: Writable, +DATAKEY <: 
     writtenBytes
   }
 
-  def insert(id: String, updateTime: Long, data: InputStream, blobSplitSize: Int): Long = {
+  def insert(id: String, updateTime: Long, data: InputStream, blobSplitSize: Int): Long = synchronized {
 
     // Limit was reached last time.
     if (writer.isClosed) {
       writer = createNewBasicWriter(metadata)
+      this.startTimer
       logger.debug(s"Create new file ${writer.getPath}")
     }
 
@@ -219,5 +230,13 @@ class CoordinatedWriter[+IDXKEY <: Writable, +IDXVALUE <: Writable, +DATAKEY <: 
     }
 
     writtenBrytes
+  }
+
+  private def startTimer: Unit = {
+    timer = new Timer(true)
+
+    if (metadata.timeLimit > 0) {
+      timer.schedule(new CloseFileTimer(this), metadata.timeLimit)
+    }
   }
 }

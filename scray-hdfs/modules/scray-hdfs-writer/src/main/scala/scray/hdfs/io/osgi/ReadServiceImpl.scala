@@ -4,6 +4,7 @@ import java.net.URI
 import java.util.HashMap
 import java.util.UUID
 import java.util.Map
+import java.lang.Boolean
 
 import org.apache.hadoop.io.Writable
 import org.slf4j.LoggerFactory
@@ -36,10 +37,10 @@ class ReadServiceImpl extends ReadService {
   private val reader = new HashMap[String, RawFileReader]()
   private val sequenceFileReaderMetadata = new HashMap[UUID, SequenceKeyValueFileReader[Writable, Writable]];
 
-  def getFileList(path: String): ScrayListenableFuture[java.util.List[FileParameter]] = {
+  def getFileList(path: String, user: String, password: Array[Byte]): ScrayListenableFuture[java.util.List[FileParameter]] = {
     try {
       if (reader.get(this.getAuthority(path)) == null) {
-        reader.put(this.getAuthority(path), new RawFileReader(path))
+        reader.put(this.getAuthority(path), new RawFileReader(path, user))
       }
       val result = reader.get(this.getAuthority(path)).getFileList(path).get
       return new ScrayListenableFuture[java.util.List[FileParameter]](result)
@@ -51,10 +52,10 @@ class ReadServiceImpl extends ReadService {
     }
   }
 
-  def getInputStream(path: String): ScrayListenableFuture[java.io.InputStream] = {
+  def getInputStream(path: String, user: String, password: Array[Byte]): ScrayListenableFuture[java.io.InputStream] = {
     try {
       if (reader.get(this.getAuthority(path)) == null) {
-        reader.put(getAuthority(path), new RawFileReader(path))
+        reader.put(getAuthority(path), new RawFileReader(path, user))
       }
 
       val stream = reader
@@ -69,10 +70,10 @@ class ReadServiceImpl extends ReadService {
     }
   }
 
-  def deleteFile(path: String): ScrayListenableFuture[String] = {
+  def deleteFile(path: String, user: String, password: Array[Byte]): ScrayListenableFuture[String] = {
     try {
       if (reader.get(this.getAuthority(path)) == null) {
-        reader.put(getAuthority(path), new RawFileReader(path))
+        reader.put(getAuthority(path), new RawFileReader(path, user))
       }
 
       val stream = reader
@@ -87,12 +88,12 @@ class ReadServiceImpl extends ReadService {
     }
   }
 
-  def readFullSequenceFile(path: String, format: SequenceKeyValueFormat): UUID = {
+  def readFullSequenceFile(path: String, format: SequenceKeyValueFormat, user: String, password: Array[Byte]): UUID = {
     val id = UUID.randomUUID()
     format match {
-      case SequenceKeyValueFormat.SequenceFile_IndexValue_Blob    => sequenceFileReaderMetadata.put(id, new SequenceKeyValueFileReader(path, new OutputBlob))
-      case SequenceKeyValueFormat.SequenceFile_Text_BytesWritable => sequenceFileReaderMetadata.put(id, new SequenceKeyValueFileReader(path, new OutputTextBytesWritable))
-      case SequenceKeyValueFormat.SequenceFile_Text_Text          => sequenceFileReaderMetadata.put(id, new SequenceKeyValueFileReader(path, new OutputTextText))
+      case SequenceKeyValueFormat.SEQUENCEFILE_INDEXVALUE_BLOB    => sequenceFileReaderMetadata.put(id, new SequenceKeyValueFileReader(path, new OutputBlob))
+      case SequenceKeyValueFormat.SEQUENCEFILE_TEXT_BYTESWRITABLE => sequenceFileReaderMetadata.put(id, new SequenceKeyValueFileReader(path, new OutputTextBytesWritable))
+      case SequenceKeyValueFormat.SEQUENCEFILE_TEXT_TEXT          => sequenceFileReaderMetadata.put(id, new SequenceKeyValueFileReader(path, new OutputTextText))
     }
 
     id

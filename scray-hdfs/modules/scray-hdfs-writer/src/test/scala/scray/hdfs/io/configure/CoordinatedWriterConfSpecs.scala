@@ -19,15 +19,59 @@ import org.scalatest.BeforeAndAfter
 import com.typesafe.scalalogging.LazyLogging
 import org.scalatest.WordSpec
 import org.junit.Assert
+import java.util.Arrays
+import scray.hdfs.io.coordination.CloseFileTimer
+import java.util.Timer
 
 class CoordinatedWriterConfSpecs extends WordSpec with BeforeAndAfter with LazyLogging {
-   "CoordinatedWriterConf " should {
+  "CoordinatedWriterConf " should {
     " create configuration object " in {
-      
+
       val builder = new WriteParameter.Builder
-      val config: WriteParameter = builder.setCustomFileName("file1").createConfiguration
-      
-      Assert.assertEquals("file1", config.customFileName.get)
+
+      val config: WriteParameter = builder.setFileNameCreator(new FixNameCreator("file1")).createConfiguration
+
+      Assert.assertEquals("file1", new FixNameCreator("file1").getNextFilename)
     }
-   }
+
+    " compare different configurations " in {
+
+      val config1 = (new WriteParameter.Builder)
+      val config2 = (new WriteParameter.Builder)
+
+      Assert.assertTrue(config1.createConfiguration ==  config2.createConfiguration)
+      
+      config1.setMaxFileSize(1024)
+      Assert.assertFalse(config1.createConfiguration == config2.createConfiguration)
+      Assert.assertFalse(config1.createConfiguration.hashCode() === config2.createConfiguration.hashCode())
+
+      
+      config2.setMaxFileSize(1024)      
+      Assert.assertTrue(config1.createConfiguration == config2.createConfiguration)
+      Assert.assertTrue(config1.createConfiguration.hashCode() === config2.createConfiguration.hashCode())
+
+      
+      config1.setFileNameCreator(new FixNameCreator("file1"))
+      Assert.assertFalse(config1.createConfiguration == config2.createConfiguration)
+      Assert.assertFalse(config1.createConfiguration.hashCode() === config2.createConfiguration.hashCode())
+
+
+      config2.setFileNameCreator(new FixNameCreator("file1"))
+      Assert.assertTrue(config1.createConfiguration == config2.createConfiguration)
+      Assert.assertTrue(config1.createConfiguration.hashCode() === config2.createConfiguration.hashCode())
+
+
+      config2.setFileNameCreator(new FixNameCreator("file2"))
+      Assert.assertFalse(config1.createConfiguration == config2.createConfiguration)
+      Assert.assertFalse(config1.createConfiguration.hashCode() === config2.createConfiguration.hashCode())
+
+      config1.setFileNameCreator(new FixNameCreator("file2"))
+      Assert.assertTrue(config1.createConfiguration == config2.createConfiguration)
+      Assert.assertTrue(config1.createConfiguration.hashCode() === config2.createConfiguration.hashCode())
+      
+      config2.setStoreAsHiddenFileTillClosed(true)
+      Assert.assertFalse(config1.createConfiguration == config2.createConfiguration)
+      Assert.assertFalse(config1.createConfiguration.hashCode() === config2.createConfiguration.hashCode())
+    }
+  }
 }

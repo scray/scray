@@ -30,7 +30,15 @@ class WriteCoordinatorSpecs extends WordSpec with LazyLogging {
     " wrtite to new blob file until count limit is reached " in {
       val outPath = "target/WriteCoordinatorSpecs/writeCoordinatorSpecsMaxCount/" + System.currentTimeMillis() + "/"
 
-      val metadata = WriteParameter("000", outPath, Optional.empty(), IHdfsWriterConstats.SequenceKeyValueFormat.SequenceFile_IndexValue_Blob, Version(0), true, 512 * 1024 * 1024L, 5, true, true)
+      val metadata = new (WriteParameter.Builder)
+      .setPath(outPath)
+      .setQueryspace("000")
+      .setFileFormat(IHdfsWriterConstats.SequenceKeyValueFormat.SEQUENCEFILE_INDEXVALUE_BLOB)
+      .setMaxNumberOfInserts(20)
+      .setCreateScrayIndexFile(true)
+      .setWriteVersioned(true)
+      .createConfiguration
+
       val writer = new CoordinatedWriter(512 * 1024 * 1024L, metadata, new OutputBlob)
 
       val writtenData = new HashMap[String, Array[Byte]]();
@@ -65,6 +73,7 @@ class WriteCoordinatorSpecs extends WordSpec with LazyLogging {
     }
   }
   private def getIndexFiles(path: String): List[String] = {
+    println(path)
     val file = new File(path)
 
     file.listFiles()

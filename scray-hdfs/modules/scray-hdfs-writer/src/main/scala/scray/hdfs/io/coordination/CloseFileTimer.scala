@@ -13,16 +13,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package scray.hdfs.io.write;
+package scray.hdfs.io.coordination
 
-public class IHdfsWriterConstats {
-	public static enum SequenceKeyValueFormat {
-		SEQUENCEFILE_INDEXVALUE_BLOB,
-		SEQUENCEFILE_TEXT_TEXT,
-		SEQUENCEFILE_TEXT_BYTESWRITABLE
-	}
-	
-	public static enum WriteParameter {
-		destinationPath
-	}
+import java.util.TimerTask
+
+import com.typesafe.scalalogging.LazyLogging
+
+class CloseFileTimer(writer: CoordinatedWriter[_, _, _, _]) extends TimerTask with LazyLogging {
+  
+  def run() = {
+    logger.debug("Try to close writer")
+    writer.close
+    logger.debug("Writer closed")
+  }
+  
 }

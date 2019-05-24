@@ -1,17 +1,31 @@
 package scray.hdfs.io.index.format.example
 
+
+
+import scray.hdfs.io.configure.WriteParameter
 import scray.hdfs.io.osgi.WriteServiceImpl
 import scray.hdfs.io.write.IHdfsWriterConstats.SequenceKeyValueFormat
+import scala.util.Random
+import scray.hdfs.io.configure.RandomUUIDFilenameCreator
 
 object ServiceApiExample {
   def main(args: Array[String]) {
 
     val writeService = new WriteServiceImpl
+    
+    val config = new WriteParameter.Builder()
+    .setPath("hdfs://host1.scray.org/tmp/customFile/ff/")
+    .setFileFormat(SequenceKeyValueFormat.SEQUENCEFILE_TEXT_TEXT)
+    .setTimeLimit(1)
+    .setFileNameCreator(new RandomUUIDFilenameCreator())
+    .createConfiguration
 
-    val writeId = writeService.createWriter("hdfs://host1.scray.org/ra", SequenceKeyValueFormat.SequenceFile_Text_Text, 0, "ggga.txt")
+    val writeId = writeService.createWriter(config)
 
     for (i <- 0 to 10) {
       println(writeService.insert(writeId, "id42", System.currentTimeMillis(), createDataElement.getBytes).get.getBytesInserted())
+      
+      Thread.sleep(2000)
     }
     writeService.close(writeId)
   }

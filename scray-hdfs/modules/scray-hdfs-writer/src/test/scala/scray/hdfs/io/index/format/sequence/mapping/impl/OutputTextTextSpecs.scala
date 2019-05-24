@@ -13,7 +13,7 @@ class OutputTextTextSpecs extends WordSpec with LazyLogging {
     " write data as text " in {
       val outFormat = new OutputTextText()
 
-      val writer = new SequenceFileWriter("target/OutputTextTextSpecs/writeData", new OutputTextText, true)
+      val writer = new SequenceFileWriter("target/OutputTextTextSpecs/writeData", new OutputTextText, true, System.getProperty("user.name"))
       
       writer.insert("id1", 1, "data1")
       writer.insert("id2", 2, "data2")
@@ -23,11 +23,10 @@ class OutputTextTextSpecs extends WordSpec with LazyLogging {
       writer.close
 
       val idxReader = new IdxReader("target/OutputTextTextSpecs/writeData.idx.seq", new OutputTextText)
-
-      idxReader.next().map(idxEntry => Assert.assertEquals(idxEntry.toString(), s"""{"id": "id1", "blobSplits": 1, "splitSize": 8192, "updateTime": 1, "dataLength": 78}"""))
+      idxReader.next().map(idxEntry => Assert.assertEquals(s"""{"id": "id1", "blobSplits": 1, "splitSize": 8192, "updateTime": 1, "dataLength": 121}""", idxEntry.toString())) // FIXME
       idxReader.next()
       idxReader.next()
-      idxReader.next().map(idxEntry => Assert.assertEquals(idxEntry.toString(), s"""{"id": "id4", "blobSplits": 1, "splitSize": 8192, "updateTime": 4, "dataLength": 165}"""))
+      idxReader.next().map(idxEntry => Assert.assertEquals(s"""{"id": "id4", "blobSplits": 1, "splitSize": 8192, "updateTime": 4, "dataLength": 232}""", idxEntry.toString()))
 
       val valueReader = new IdxReader("target/OutputTextTextSpecs/writeData.data.seq", new OutputTextText)
 
@@ -39,7 +38,7 @@ class OutputTextTextSpecs extends WordSpec with LazyLogging {
     " write bigger data as text " in {
       val outFormat = new OutputTextText()
 
-      val writer = new SequenceFileWriter("target/OutputTextTextSpecs/writeData", new OutputTextText, true)
+      val writer = new SequenceFileWriter("target/OutputTextTextSpecs/writeData", new OutputTextText, true, System.getProperty("user.name"))
       
       writer.insert("id1", 1, "data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1data1")
 

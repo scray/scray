@@ -29,17 +29,20 @@ import scray.hdfs.io.environment.WindowsHadoopLibs
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.SettableFuture
 import java.util.ArrayList
+import org.apache.hadoop.security.UserGroupInformation
+import java.security.PrivilegedAction
 
-class RawFileWriter(hdfsURL: String, hdfsConf: Configuration) extends LazyLogging {
+class RawFileWriter(hdfsURL: String, hdfsConf: Configuration, user: String) extends LazyLogging {
 
   var dataWriter: FileSystem = null; // scalastyle:off null
+  val remoteUser: UserGroupInformation = UserGroupInformation.createRemoteUser(user)
 
   if (getClass.getClassLoader != null) {
     hdfsConf.setClassLoader(getClass.getClassLoader)
   }
 
-  def this(hdfsUrl: String) = {
-    this(hdfsUrl, new Configuration)
+  def this(hdfsUrl: String, user: String, password: Array[Byte]) = {
+    this(hdfsUrl, new Configuration, user)
   }
 
   def initWriter(path: String): Unit = {
@@ -50,11 +53,12 @@ class RawFileWriter(hdfsURL: String, hdfsConf: Configuration) extends LazyLoggin
     hdfsConf.set("fs.defaultFS", hdfsURL)
 
     logger.debug(s"Create writer for path ${path}")
-    
-    dataWriter = FileSystem.get(hdfsConf);
+    remoteUser.doAs(new PrivilegedAction[Unit] {
+      def run(): Unit = {
+        dataWriter = FileSystem.get(hdfsConf)
+      }
+    })
   }
-
-
 
   def write(fileName: String, data: InputStream) = synchronized {
     val hdfswritepath = new Path(fileName);
@@ -65,14 +69,19 @@ class RawFileWriter(hdfsURL: String, hdfsConf: Configuration) extends LazyLoggin
       initWriter(fileName)
     }
 
-    dataWriter.create(new Path(fileName))
-    val hdfsOutputStream = dataWriter.create(hdfswritepath);
+    remoteUser.doAs(new PrivilegedAction[Unit] {
+      def run(): Unit = {
+        dataWriter.create(new Path(fileName))
+        val hdfsOutputStream = dataWriter.create(hdfswritepath);
 
-    ByteStreams.copy(data, hdfsOutputStream);
-    data.close()
-    hdfsOutputStream.hflush();
-    hdfsOutputStream.hsync();
-    hdfsOutputStream.close();
+        ByteStreams.copy(data, hdfsOutputStream);
+        data.close()
+        hdfsOutputStream.hflush();
+        hdfsOutputStream.hsync();
+        hdfsOutputStream.close();
+      }
+    })
+
   }
 
   def write(fileName: String): OutputStream = {
@@ -82,11 +91,39 @@ class RawFileWriter(hdfsURL: String, hdfsConf: Configuration) extends LazyLoggin
       initWriter(fileName)
     }
 
-    dataWriter.create(new Path(fileName))
+    remoteUser.doAs(new PrivilegedAction[OutputStream] {
+      def run(): OutputStream = {
+        dataWriter.create(new Path(fileName))
+      }
+    })
   }
-  
- 
+
+  def deleteFile(path: String) {
+    if (dataWriter == null) {
+      logger.debug("Writer was not initialized. Will do it now")
+
+      initWriter(path)
+    }
+    remoteUser.doAs(new PrivilegedAction[Unit] {
+      def run(): Unit = {
+        dataWriter.delete(new Path(path), true)
+      }
+    })
+  }
+
   def close = {
-    dataWriter.close()
+
+    remoteUser.doAs(new PrivilegedAction[Unit] {
+      def run(): Unit = {
+        dataWriter.close()
+      }
+    })
+
   }
+
+  //  class DoAsUser(user: Option[UserGroupInformation], function: ) extends  PrivilegedAction[Unit] {
+  //    def run(): Unit = {
+  //
+  //    }
+  //  }
 }

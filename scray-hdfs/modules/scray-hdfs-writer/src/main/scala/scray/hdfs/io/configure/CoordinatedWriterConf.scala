@@ -18,6 +18,7 @@ package scray.hdfs.io.configure
 import scray.hdfs.io.write.IHdfsWriterConstats
 import java.util.Optional
 import scray.hdfs.io.configure.WriteDestionationConstats.WriteMode
+import java.util.Arrays
 
 class CompactionState {}
 case object NEW extends CompactionState
@@ -32,7 +33,7 @@ case class Version(number: Int, compactionState: CompactionState = NEW) {
 }
 /**
  * Parameters for WriteCoordinatr
- * 
+ *
  * @param id id of logical system
  * @param path path to folder
  * @param customFileName defines a file name. If not defined a random UUID will be used
@@ -41,59 +42,133 @@ case class Version(number: Int, compactionState: CompactionState = NEW) {
  * @param maxFileSize If maxFileSize is reached a new file will be used
  * @param maxNumberOfInserts	If maxNumberOfInserts is reached a new file will be used.
  */
-case class WriteParameter(
-    queryspace: String, 
-    path: String,
-    customFileName: Optional[String] = Optional.empty(),
-    fileFormat: IHdfsWriterConstats.SequenceKeyValueFormat, 
-    version: Version = Version(0),
-    writeVersioned: Boolean = false,
-    maxFileSize: Long = Long.MaxValue,
-    maxNumberOfInserts: Int = Integer.MAX_VALUE,
-    storeAsHiddenFileTillClosed: Boolean = false,
-    createScrayIndexFile: Boolean = false
-   )
-   
+class WriteParameter(
+  var queryspace:                  String,
+  val user:                        String,
+  val password:                    Array[Byte]                                = null,
+  var path:                        String,
+  var fileNameCreator:             Optional[FilenameCreator]                  = Optional.empty(),
+  var fileFormat:                  IHdfsWriterConstats.SequenceKeyValueFormat,
+  var version:                     Version                                    = Version(0),
+  var writeVersioned:              Boolean                                    = false,
+  var maxFileSize:                 Long                                       = Long.MaxValue,
+  var maxNumberOfInserts:          Int                                        = Integer.MAX_VALUE,
+  var timeLimit:                   Int                                        = -1,
+  var storeAsHiddenFileTillClosed: Boolean                                    = false,
+  var createScrayIndexFile:        Boolean                                    = false) {
+
+  override def equals(that: Any): Boolean = {
+    that match {
+      case that: WriteParameter => {
+        (this.user == that.user
+          && Arrays.equals(this.password, that.password)
+          && this.path == that.path
+          && this.fileNameCreator == that.fileNameCreator
+          && this.fileFormat == that.fileFormat
+          && this.version == that.version
+          && this.writeVersioned == that.writeVersioned
+          && this.maxFileSize == that.maxFileSize
+          && this.maxNumberOfInserts == that.maxNumberOfInserts
+          && (this.storeAsHiddenFileTillClosed == that.storeAsHiddenFileTillClosed)
+          && (this.createScrayIndexFile == that.createScrayIndexFile))
+      }
+      case _ => false
+    }
+  }
+
+  override def hashCode: Int = {
+    val result = 1
+
+    (composeAttributes(result) _)
+      .andThen(composeAttributes(getHashCodeOrZero(queryspace)))
+      .andThen(composeAttributes(getHashCodeOrZero(user)))
+      .andThen(composeAttributes(getHashCodeOrZeroOfArray(password)))
+      .andThen(composeAttributes(getHashCodeOrZero(path)))
+      .andThen(composeAttributes(getHashCodeOrZero(fileNameCreator)))
+      .andThen(composeAttributes(getHashCodeOrZero(fileFormat)))
+      .andThen(composeAttributes(getHashCodeOrZero(version)))
+      .andThen(composeAttributes(getHashCodeOrZero(writeVersioned)))
+      .andThen(composeAttributes(getHashCodeOrZero(maxFileSize)))
+      .andThen(composeAttributes(getHashCodeOrZero(maxNumberOfInserts)))
+      .andThen(composeAttributes(getHashCodeOrZero(storeAsHiddenFileTillClosed)))
+      .apply(getHashCodeOrZero(createScrayIndexFile))
+
+  }
+
+  def composeAttributes(prev: Int)(next: Int): Int = {
+    val prime = 31
+    prime * prev + next
+  }
+
+  private def getHashCodeOrZeroOfArray(value: Array[Byte]): Int = {
+    if (value == null) {
+      0
+    } else {
+      Arrays.hashCode(value)
+    }
+  }
+  
+  private def getHashCodeOrZero(value: Any): Int = {
+    if (value == null) {
+      0
+    } else {
+      value.hashCode()
+    }
+  }
+}
+
 object WriteParameter {
   class Builder {
     var queryspace: String = null
+    var user: String = System.getProperty("user.name")
+    var password: Array[Byte] = null
     var path: String = null
-    var customFileName: Optional[String] = Optional.empty()
+    var fileNameCreator: Optional[FilenameCreator] = Optional.empty()
     var fileFormat: IHdfsWriterConstats.SequenceKeyValueFormat = null
     var version: Version = Version(0)
     var writeVersioned: Boolean = false
     var maxFileSize: Long = Long.MaxValue
     var maxNumberOfInserts: Int = Integer.MAX_VALUE
-    var timeLimit: Int = Integer.MAX_VALUE
+    var timeLimit: Int = -1
     var writeMode: WriteMode = WriteMode.WriteBack
     var storeAsHiddenFileTillClosed: Boolean = false
     var createScrayIndexFile: Boolean = false
-    
+
     def setQueryspace(queryspace: String): Builder = {
       this.queryspace = queryspace
       this
     }
-    
+
     def setPath(path: String): Builder = {
       this.path = path
       this
     }
 
-    def setCustomFileName(fileName: String): Builder = {
-      this.customFileName = Optional.of(fileName);
+    def setFileNameCreator(fileName: FilenameCreator): Builder = {
+      this.fileNameCreator = Optional.of(fileName);
       this
     }
-    
+
+    def setUser(user: String): Builder = {
+      this.user = user;
+      this
+    }
+
+    def setPassword(password: Array[Byte]) = {
+      this.password = password
+      this
+    }
+
     def setFileFormat(kvFormat: IHdfsWriterConstats.SequenceKeyValueFormat): Builder = {
       this.fileFormat = kvFormat
       this
     }
-    
+
     def setVersion(version: Version): Builder = {
       this.version = version
       this
     }
-    
+
     def setWriteVersioned(writeVersioned: Boolean): Builder = {
       this.writeVersioned = writeVersioned
       this
@@ -110,15 +185,15 @@ object WriteParameter {
     }
 
     def setTimeLimit(seconds: Int): Builder = {
-      this.timeLimit = seconds
+      this.timeLimit = seconds * 1000
       this
     }
-    
+
     def setWriteMode(mode: WriteMode): Builder = {
-      this.writeMode = mode 
+      this.writeMode = mode
       this
     }
-    
+
     def setStoreAsHiddenFileTillClosed(storeAsHiddenFileTillClosed: Boolean): Builder = {
       this.storeAsHiddenFileTillClosed = storeAsHiddenFileTillClosed
       this
@@ -130,16 +205,20 @@ object WriteParameter {
     }
 
     def createConfiguration: WriteParameter = {
-      WriteParameter(queryspace,
-          path,
-          customFileName,
-          fileFormat,
-          version,
-          writeVersioned,
-          maxFileSize, 
-          maxNumberOfInserts,
-          storeAsHiddenFileTillClosed,
-          createScrayIndexFile)
+      new WriteParameter(
+        queryspace,
+        user,
+        password,
+        path,
+        fileNameCreator,
+        fileFormat,
+        version,
+        writeVersioned,
+        maxFileSize,
+        maxNumberOfInserts,
+        timeLimit,
+        storeAsHiddenFileTillClosed,
+        createScrayIndexFile)
     }
   }
 }

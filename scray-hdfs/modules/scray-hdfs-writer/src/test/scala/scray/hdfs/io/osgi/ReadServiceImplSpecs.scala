@@ -34,6 +34,8 @@ import org.scalatest.BeforeAndAfter
 import org.apache.commons.io.IOUtils
 import java.net.URL
 import scray.hdfs.io.write.IHdfsWriterConstats.SequenceKeyValueFormat
+import scray.hdfs.io.configure.WriteParameter
+import scray.hdfs.io.configure.FixNameCreator
 
 class ReadServiceImplSpecs extends WordSpec with BeforeAndAfter with LazyLogging {
   val pathToWinutils = classOf[ReadServiceImplSpecs].getClassLoader.getResource("HADOOP_HOME/bin/winutils.exe");
@@ -49,13 +51,26 @@ class ReadServiceImplSpecs extends WordSpec with BeforeAndAfter with LazyLogging
   // Write a test file
   before {
     val service = new WriteServiceImpl
-    service.writeRawFile(rawExampleFile, new ByteArrayInputStream(s"ABCDEFG".getBytes))
+    service.writeRawFile(rawExampleFile, new ByteArrayInputStream(s"ABCDEFG".getBytes), System.getProperty("user.name"), "".getBytes)
     
-    val writerId1 = service.createWriter(sequenceBytesWritableExampleFile, SequenceKeyValueFormat.SequenceFile_Text_BytesWritable, 12, "fileBytesWritable.seq")
+    val config = new WriteParameter.Builder()
+      .setPath(sequenceBytesWritableExampleFile)
+      .setFileFormat(SequenceKeyValueFormat.SEQUENCEFILE_TEXT_BYTESWRITABLE)
+      .setMaxNumberOfInserts(12)
+      .setFileNameCreator(new FixNameCreator("fileBytesWritable.seq"))
+      .createConfiguration
+    val writerId1 = service.createWriter(config)
     service.insert(writerId1, "Key42", System.currentTimeMillis(), new ByteArrayInputStream(s"ABCDEFG".getBytes))
     service.close(writerId1)
     
-    val writerId2 = service.createWriter(sequenceBytesWritableExampleFile, SequenceKeyValueFormat.SequenceFile_Text_Text, 12, "fileText.seq")
+    val config2 = new WriteParameter.Builder()
+      .setPath(sequenceBytesWritableExampleFile)
+      .setFileFormat(SequenceKeyValueFormat.SEQUENCEFILE_TEXT_TEXT)
+      .setMaxNumberOfInserts(12)
+      .setFileNameCreator(new FixNameCreator("fileText.seq"))
+      .createConfiguration
+      
+    val writerId2 = service.createWriter(config2)
     service.insert(writerId2, "Key42", System.currentTimeMillis(), "ABCDEFG".getBytes)
     service.close(writerId2)
     
@@ -65,7 +80,7 @@ class ReadServiceImplSpecs extends WordSpec with BeforeAndAfter with LazyLogging
     " list files in folder " in {
       val reader = new ReadServiceImpl
 
-      val files = reader.getFileList(rawExampleFile).get()
+      val files = reader.getFileList(rawExampleFile, System.getProperty("user.name"), "".getBytes).get()
 
       Assert.assertEquals(1, files.size());
       Assert.assertEquals("file1.txt", files.get(0).getFileName);
@@ -73,13 +88,13 @@ class ReadServiceImplSpecs extends WordSpec with BeforeAndAfter with LazyLogging
     " read file " in {
       val reader = new ReadServiceImpl
 
-      val fileContent = IOUtils.toString(reader.getInputStream(rawExampleFile).get)
+      val fileContent = IOUtils.toString(reader.getInputStream(rawExampleFile, System.getProperty("user.name"), "".getBytes).get)
       Assert.assertEquals("ABCDEFG", fileContent);
     }
     " read sequence BytesWritable file" in {
        val reader = new ReadServiceImpl
        
-       val id = reader.readFullSequenceFile(sequenceBytesWritableExampleFile + "/fileBytesWritable.seq", SequenceKeyValueFormat.SequenceFile_Text_BytesWritable)
+       val id = reader.readFullSequenceFile(sequenceBytesWritableExampleFile + "/fileBytesWritable.seq", SequenceKeyValueFormat.SEQUENCEFILE_TEXT_BYTESWRITABLE, System.getProperty("user.name"), "".getBytes)
       
        Assert.assertTrue(reader.hasNextSequenceFilePair(id).get)   
        val readData = reader.getNextSequenceFilePair(id).get
@@ -91,7 +106,7 @@ class ReadServiceImplSpecs extends WordSpec with BeforeAndAfter with LazyLogging
     " read sequence Text file" in {
        val reader = new ReadServiceImpl
        
-       val id = reader.readFullSequenceFile(sequenceBytesWritableExampleFile + "/fileText.seq", SequenceKeyValueFormat.SequenceFile_Text_Text)
+       val id = reader.readFullSequenceFile(sequenceBytesWritableExampleFile + "/fileText.seq", SequenceKeyValueFormat.SEQUENCEFILE_TEXT_TEXT, System.getProperty("user.name"), "".getBytes)
       
        Assert.assertTrue(reader.hasNextSequenceFilePair(id).get)   
        val readData = reader.getNextSequenceFilePair(id).get
@@ -106,19 +121,19 @@ class ReadServiceImplSpecs extends WordSpec with BeforeAndAfter with LazyLogging
        // Create example file
        val exampleFile =s"${new URL("file:///" + System.getProperty("user.dir"))}" + s"/target/ReadServiceImplSpecs/listFiles/${UUID.randomUUID()}/file2.txt"
        val service = new WriteServiceImpl
-       service.writeRawFile(exampleFile, new ByteArrayInputStream(s"ABCDEFG".getBytes))
+       service.writeRawFile(exampleFile, new ByteArrayInputStream(s"ABCDEFG".getBytes), System.getProperty("user.name"), "".getBytes)
    
        val reader = new ReadServiceImpl
        
        // Check if file exits
-       val files = reader.getFileList(exampleFile).get()
+       val files = reader.getFileList(exampleFile, System.getProperty("user.name"), "".getBytes).get()
        Assert.assertTrue(files.size() == 1);
        
        // Delete file
-       reader.deleteFile(exampleFile).get
+       reader.deleteFile(exampleFile, "hdfs", "".getBytes).get
        
        // Check if file was removed
-       Assert.assertEquals(0, reader.getFileList(exampleFile.replace("file2.txt", "")).get().size());    
+       Assert.assertEquals(0, reader.getFileList(exampleFile.replace("file2.txt", ""), System.getProperty("user.name"), "".getBytes).get().size());    
      } else {
        logger.warn("Delete test was skipped because deleting files on windows is currently not supported")
      }

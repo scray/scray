@@ -16,13 +16,13 @@
 package scray.hdfs.io.write
 
 import java.io.InputStream
-import java.io.OutputStream
 import java.math.BigInteger
 import java.util.UUID
 
-import com.google.common.util.concurrent.ListenableFuture
-import scray.hdfs.io.write.IHdfsWriterConstats.SequenceKeyValueFormat
-import org.apache.hadoop.conf.Configuration
+
+
+
+
 import scray.hdfs.io.configure.WriteParameter
 
 trait WriteService {
@@ -33,21 +33,19 @@ trait WriteService {
    */
   def createWriter(path: String): UUID 
   def createWriter(path: WriteParameter): UUID 
-  def createWriter(path: String, format: SequenceKeyValueFormat): UUID
-  def createWriter(path: String, format: SequenceKeyValueFormat, numberOpKeyValuePairs: Int, customName: String): UUID
-  
-  
+
   def insert(resource: UUID, id: String, updateTime: Long, data: Array[Byte]):  ScrayListenableFuture[WriteResult]
   def insert(resource: UUID, id: String, updateTime: Long, data: InputStream, blobSplitSize: Int = 5 * 2048):  ScrayListenableFuture[WriteResult]
   def insert(resource: UUID, id: String, updateTime: Long, data: InputStream, dataSize: BigInteger, blobSplitSize: Int):  ScrayListenableFuture[WriteResult]
   
-  def writeRawFile(path: String, data: InputStream): ScrayListenableFuture[WriteResult]
+  def writeRawFile(path: String, data: InputStream, user: String, password: Array[Byte]): ScrayListenableFuture[WriteResult]
   /**
    * @param writeAndRename A dot will be set at the first character of the filename while writing. File will be renamed after stream was closed.
    */
-  def writeRawFile(path: String): ScrayOutputStream
+  def writeRawFile(path: String, user: String, password: Array[Byte]): ScrayOutputStream
   
   def rename(source: String, destination: String): ScrayListenableFuture[WriteResult]
+  def deleteFile(path: String, user: String, password: Array[Byte]): ScrayListenableFuture[String]
 
   def close(resource: UUID)
   def isClosed(resource: UUID): ScrayListenableFuture[WriteResult]

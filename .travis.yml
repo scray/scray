@@ -1,31 +1,34 @@
+---
 language: java
 
 jdk:
     - oraclejdk8
+    - openjdk8
 
 cache:
-  directories:
-    - $HOME/.m2
+    directories:
+        - $HOME/.m2
 
 jobs:
-        include:
-                - stage: build-with-tests
-                  install:
-                          mvn --settings .maven.xml install -B 
-                - stage: build-profil-MinimizedDependencies
-                  install:
-                          mvn clean install --settings .maven.xml -B -PMinimizedDependencies
-                - stage: deploy-develop-with-profil-MinimizedDependencies
-                  install:
-                        mvn clean deploy --settings .maven.xml -B -PMinimizedDependencies
-                - stage: deploy-develop
-                  install:
-                        mvn clean deploy --settings .maven.xml -B
+    include:
+        - stage: build-with-tests
+          install:
+              mvn --settings .maven.xml install -B
+        - stage: build-profil-MinimizedDependencies
+          install:
+              mvn clean install --settings .maven.xml -B -PMinimizedDependencies
+        - stage: deploy-develop-with-profil-MinimizedDependencies
+          install:
+              mvn clean deploy --settings .maven.xml -B -PMinimizedDependencies
+        - stage: deploy-develop
+          install:
+              mvn clean deploy --settings .maven.xml -B
 
 stages:
-  - build-with-tests 
-  - build-profil-MinimizedDependencies 
-  - name: deploy-develop-with-profil-MinimizedDependencies 
-    if: branch = develop 
-  - name: deploy-develop
-    if: branch = develop
+    - build-with-tests
+    - build-profil-MinimizedDependencies
+    - name: deploy-develop-with-profil-MinimizedDependencies
+      if: branch = develop AND type != pull_request AND sender IN (obermeier)
+    - name: deploy-develop
+      if: branch = develop AND type != pull_request AND sender IN (obermeier)
+
