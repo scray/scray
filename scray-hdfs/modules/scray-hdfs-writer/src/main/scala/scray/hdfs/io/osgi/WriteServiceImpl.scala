@@ -157,9 +157,11 @@ class WriteServiceImpl extends WriteService {
       }
     }
 
-    val key = host() + user + password.hashCode()
+    val key = host() + user + (if(password == null) 7 else password.hashCode())
     key.hashCode()
   }
+  
+  
   def writeRawFile(path: String, user: String, password: Array[Byte]): ScrayOutputStream = synchronized {
 
     val writer = new RawFileWriter(path, user, password)
