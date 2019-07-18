@@ -46,6 +46,8 @@ class WriteServiceImpl extends WriteService {
   val logger = LoggerFactory.getLogger(classOf[WriteServiceImpl])
   private val writersMetadata = new HashMap[UUID, CoordinatedWriter[Writable, Writable, Writable, Writable]];
 
+  private var rawFileWriter: RawFileWriter = null
+
   override def createWriter(path: String): UUID = synchronized {
     logger.debug(s"Create writer for path ${path}")
     val id = UUID.randomUUID()
@@ -127,10 +129,11 @@ class WriteServiceImpl extends WriteService {
 
   def writeRawFile(path: String, data: InputStream, user: String, password: Array[Byte]): ScrayListenableFuture[WriteResult] = synchronized {
     try {
-
-      val writer = new RawFileWriter(path, user, password)
-      writer.write(path, data)
-
+      if(rawFileWriter == null) {
+        rawFileWriter = new RawFileWriter(path, user, password)
+      }
+      rawFileWriter.write(path, data)
+      //writer.close
       new ScrayListenableFuture(new WriteResult("Data inserted"))
     } catch {
       case e: Exception => {
@@ -149,6 +152,7 @@ class WriteServiceImpl extends WriteService {
   def close(resource: UUID) = synchronized {
     try {
       writersMetadata.get(resource).close
+      rawFileWriter.close
 
       val result = SettableFuture.create[WriteResult]()
       result.set(new WriteResult("Data inserted"))

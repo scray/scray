@@ -103,7 +103,7 @@ class CoordinatedWriter[+IDXKEY <: Writable, +IDXVALUE <: Writable, +DATAKEY <: 
   }
 
   def maxFileSizeReached(writtenBytes: Long, maxSize: Long): Boolean = {
-    if (maxSize != 0) {
+    if (maxSize > 0) {
       logger.debug(s"Inserted bytes ${writtenBytes} of max ${maxSize} bytes")
       writtenBytes >= maxSize
     } else {
@@ -114,7 +114,7 @@ class CoordinatedWriter[+IDXKEY <: Writable, +IDXVALUE <: Writable, +DATAKEY <: 
 
   def maxNumInsertsReached(numberInserts: Int, maxNumerInserts: Int): Boolean = {
 
-    if (maxNumerInserts != 0) {
+    if (maxNumerInserts > 0) {
       logger.debug(s"Insert ${numberInserts}/${maxNumerInserts}")
       numberInserts >= maxNumerInserts
     } else {
