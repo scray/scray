@@ -51,7 +51,8 @@ class ReadServiceImplSpecs extends WordSpec with BeforeAndAfter with LazyLogging
   // Write a test file
   before {
     val service = new WriteServiceImpl
-    service.writeRawFile(rawExampleFile, new ByteArrayInputStream(s"ABCDEFG".getBytes), System.getProperty("user.name"), "".getBytes)
+    service.writeRawFile(rawExampleFile, new ByteArrayInputStream(s"ABCDEFG".getBytes), System.getProperty("user.name"), "".getBytes).get()
+    service.closeAll
     
     val config = new WriteParameter.Builder()
       .setPath(sequenceBytesWritableExampleFile)

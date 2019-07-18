@@ -130,11 +130,11 @@ class WriteServiceImpl extends WriteService {
 
   def writeRawFile(path: String, data: InputStream, user: String, password: Array[Byte]): ScrayListenableFuture[WriteResult] = synchronized {
     try {
-      val writerId = getHdfsWriterId(path, user,  password)
-      if(rawFileWriter.get(writerId) == null) {
+      val writerId = getHdfsWriterId(path, user, password)
+      if (rawFileWriter.get(writerId) == null) {
         rawFileWriter.put(writerId, new RawFileWriter(path, user, password))
       }
-      
+
       rawFileWriter.get(writerId).write(path, data)
       new ScrayListenableFuture(new WriteResult("Wrote file successfully"))
     } catch {
@@ -145,17 +145,19 @@ class WriteServiceImpl extends WriteService {
   }
 
   protected def getHdfsWriterId(path: String, user: String, password: Array[Byte]): Int = {
-    val host = () => { 
-      if(path.startsWith("file:////")) {
-         path.split("file:////")(1).split("/")(0)
-      } else if(path.startsWith("hdfs://")) {
+    val host = () => {
+      if (path.startsWith("file:////")) {
+        path.split("file:////")(1).split("/")(0)
+      } else if (path.startsWith("hdfs://")) {
         path.split("hdfs://")(1).split("/")(0)
-        }
-     else {
-      throw new IllegalArgumentException("Unsuported path defined. Pash should start with hdfs:// or file:////")
-    }}
-    
-    val key = host() + user + password.hashCode() 
+      } else if (path.startsWith("file:/")) {
+        path.split("file:/")(1).split("/")(0)
+      } else {
+        throw new IllegalArgumentException("Unsuported path defined. Pash should start with hdfs:// or file:///. Path: " + path)
+      }
+    }
+
+    val key = host() + user + password.hashCode()
     key.hashCode()
   }
   def writeRawFile(path: String, user: String, password: Array[Byte]): ScrayOutputStream = synchronized {
@@ -202,17 +204,17 @@ class WriteServiceImpl extends WriteService {
   }
 
   def closeAll = synchronized {
-    
+
     // Close raw file writer
     val rawWriterKeySet = rawFileWriter.keySet().iterator()
-    while(rawWriterKeySet.hasNext()) {
+    while (rawWriterKeySet.hasNext()) {
       try {
-      rawFileWriter.get(rawWriterKeySet.next()).close 
+        rawFileWriter.get(rawWriterKeySet.next()).close
       } catch {
         case e: Exception => logger.error(s"Error while closing writer")
       }
     }
-    
+
     // Close SequenceFile writer
     val keysOfWriter = writersMetadata.keySet().iterator()
     while (keysOfWriter.hasNext()) {
