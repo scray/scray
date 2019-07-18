@@ -40,13 +40,14 @@ import scray.hdfs.io.write.WriteService
 import scray.hdfs.io.index.format.sequence.mapping.impl.OutputTextBytesWritable
 import scray.hdfs.io.index.format.sequence.mapping.impl.OutputBlob
 import scray.hdfs.io.index.format.sequence.mapping.impl.OutputTextText
+import java.net.URI
 
 class WriteServiceImpl extends WriteService {
 
   val logger = LoggerFactory.getLogger(classOf[WriteServiceImpl])
   private val writersMetadata = new HashMap[UUID, CoordinatedWriter[Writable, Writable, Writable, Writable]];
 
-  private var rawFileWriter: RawFileWriter = null
+  private var rawFileWriter: HashMap[Int, RawFileWriter] = new HashMap[Int, RawFileWriter]
 
   override def createWriter(path: String): UUID = synchronized {
     logger.debug(s"Create writer for path ${path}")
@@ -129,12 +130,13 @@ class WriteServiceImpl extends WriteService {
 
   def writeRawFile(path: String, data: InputStream, user: String, password: Array[Byte]): ScrayListenableFuture[WriteResult] = synchronized {
     try {
-      if(rawFileWriter == null) {
-        rawFileWriter = new RawFileWriter(path, user, password)
+      val writerId = getHdfsWriterId(path, user,  password)
+      if(rawFileWriter.get(writerId) == null) {
+        rawFileWriter.put(writerId, new RawFileWriter(path, user, password))
       }
-      rawFileWriter.write(path, data)
-      //writer.close
-      new ScrayListenableFuture(new WriteResult("Data inserted"))
+      
+      rawFileWriter.get(writerId).write(path, data)
+      new ScrayListenableFuture(new WriteResult("Wrote file successfully"))
     } catch {
       case e: Exception => {
         new ScrayListenableFuture(e)
@@ -142,6 +144,20 @@ class WriteServiceImpl extends WriteService {
     }
   }
 
+  protected def getHdfsWriterId(path: String, user: String, password: Array[Byte]): Int = {
+    val host = () => { 
+      if(path.startsWith("file:////")) {
+         path.split("file:////")(1).split("/")(0)
+      } else if(path.startsWith("hdfs://")) {
+        path.split("hdfs://")(1).split("/")(0)
+        }
+     else {
+      throw new IllegalArgumentException("Unsuported path defined. Pash should start with hdfs:// or file:////")
+    }}
+    
+    val key = host() + user + password.hashCode() 
+    key.hashCode()
+  }
   def writeRawFile(path: String, user: String, password: Array[Byte]): ScrayOutputStream = synchronized {
 
     val writer = new RawFileWriter(path, user, password)
@@ -152,7 +168,6 @@ class WriteServiceImpl extends WriteService {
   def close(resource: UUID) = synchronized {
     try {
       writersMetadata.get(resource).close
-      rawFileWriter.close
 
       val result = SettableFuture.create[WriteResult]()
       result.set(new WriteResult("Data inserted"))
@@ -181,15 +196,25 @@ class WriteServiceImpl extends WriteService {
       new ScrayListenableFuture(path)
     } catch {
       case e: Throwable => {
-        e.printStackTrace()
         new ScrayListenableFuture(e)
       }
     }
   }
 
   def closeAll = synchronized {
+    
+    // Close raw file writer
+    val rawWriterKeySet = rawFileWriter.keySet().iterator()
+    while(rawWriterKeySet.hasNext()) {
+      try {
+      rawFileWriter.get(rawWriterKeySet.next()).close 
+      } catch {
+        case e: Exception => logger.error(s"Error while closing writer")
+      }
+    }
+    
+    // Close SequenceFile writer
     val keysOfWriter = writersMetadata.keySet().iterator()
-
     while (keysOfWriter.hasNext()) {
       val writer = writersMetadata.get(keysOfWriter.next())
 
