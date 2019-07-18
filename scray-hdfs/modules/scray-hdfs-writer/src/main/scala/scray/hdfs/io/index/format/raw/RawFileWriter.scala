@@ -71,11 +71,10 @@ class RawFileWriter(hdfsURL: String, hdfsConf: Configuration, user: String) exte
 
     remoteUser.doAs(new PrivilegedAction[Unit] {
       def run(): Unit = {
-        dataWriter.create(new Path(fileName))
+        //dataWriter.create(new Path(fileName))
         val hdfsOutputStream = dataWriter.create(hdfswritepath);
 
         ByteStreams.copy(data, hdfsOutputStream);
-        data.close()
         hdfsOutputStream.hflush();
         hdfsOutputStream.hsync();
         hdfsOutputStream.close();
