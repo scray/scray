@@ -46,6 +46,7 @@ class CoordinatedWriter[+IDXKEY <: Writable, +IDXVALUE <: Writable, +DATAKEY <: 
   private var writer: Writer = createNewBasicWriter(metadata)
   private var numInserts = 0
   private var timer = new Timer(true)
+  private var timerTask: CloseFileTimer = _
 
   def insert(id: String, updateTime: Long, data: Array[Byte]) = synchronized {
 
@@ -56,6 +57,8 @@ class CoordinatedWriter[+IDXKEY <: Writable, +IDXVALUE <: Writable, +DATAKEY <: 
       
       logger.debug(s"Create new file ${writer.getPath}")
     }
+    logger.debug(s"Insert remaining time for time limit ${timerTask.getRemainingTime/1000}s")
+
 
     numInserts = numInserts + 1
     val writtenBytes = writer.insert(id, updateTime, data)
@@ -167,6 +170,7 @@ class CoordinatedWriter[+IDXKEY <: Writable, +IDXVALUE <: Writable, +DATAKEY <: 
       startTimer
       logger.debug(s"Create new file ${writer.getPath}")
     }
+    logger.debug(s"Insert remaining time for time limit ${timerTask.getRemainingTime/1000}s")
 
     numInserts = numInserts + 1
     val writtenBytes = writer.insert(id, updateTime, data)
@@ -192,6 +196,7 @@ class CoordinatedWriter[+IDXKEY <: Writable, +IDXVALUE <: Writable, +DATAKEY <: 
       startTimer
       logger.debug(s"Create new file ${writer.getPath}")
     }
+    logger.debug(s"Insert remaining time for time limit ${timerTask.getRemainingTime/1000}s")
 
     numInserts = numInserts + 1
     val writtenBytes = writer.insert(id, data)
@@ -218,6 +223,8 @@ class CoordinatedWriter[+IDXKEY <: Writable, +IDXVALUE <: Writable, +DATAKEY <: 
       logger.debug(s"Create new file ${writer.getPath}")
     }
 
+    logger.debug(s"Insert remaining time for time limit ${timerTask.getRemainingTime/1000}s")
+    
     numInserts = numInserts + 1
     val writtenBrytes = writer.insert(id, updateTime, data, blobSplitSize)
 
@@ -234,9 +241,10 @@ class CoordinatedWriter[+IDXKEY <: Writable, +IDXVALUE <: Writable, +DATAKEY <: 
 
   private def startTimer: Unit = {
     timer = new Timer(true)
-
+    timerTask = new CloseFileTimer(this, metadata.timeLimit)
+    
     if (metadata.timeLimit > 0) {
-      timer.schedule(new CloseFileTimer(this), metadata.timeLimit)
+      timer.schedule(timerTask, metadata.timeLimit)
     }
   }
 }
