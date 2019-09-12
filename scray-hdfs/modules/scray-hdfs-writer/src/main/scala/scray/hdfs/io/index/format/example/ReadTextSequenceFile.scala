@@ -14,9 +14,16 @@ object ReadTextSequenceFile {
       val reader = new ReadServiceImpl
 
       val id = reader.readFullSequenceFile(args(0), SequenceKeyValueFormat.SEQUENCEFILE_TEXT_TEXT, System.getProperty("user.name"), "".getBytes)
+      var count = 0L;
       while (reader.hasNextSequenceFilePair(id).get) {
-        println(new String(reader.getNextSequenceFilePair(id).get.getValue))
+        val res = new String(reader.getNextSequenceFilePair(id).get.getValue)
+
+        if((count % 1000) == 0) {
+          println(count + "\t" + res)
+        }
+        count += 1   
       }
+      println(count)
     }
 
   }

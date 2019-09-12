@@ -22,6 +22,7 @@ import org.junit.Assert
 import java.util.Arrays
 import scray.hdfs.io.coordination.CloseFileTimer
 import java.util.Timer
+import org.apache.hadoop.io.SequenceFile
 
 class CoordinatedWriterConfSpecs extends WordSpec with BeforeAndAfter with LazyLogging {
   "CoordinatedWriterConf " should {
@@ -33,7 +34,6 @@ class CoordinatedWriterConfSpecs extends WordSpec with BeforeAndAfter with LazyL
 
       Assert.assertEquals("file1", new FixNameCreator("file1").getNextFilename)
     }
-
     " compare different configurations " in {
 
       val config1 = (new WriteParameter.Builder)

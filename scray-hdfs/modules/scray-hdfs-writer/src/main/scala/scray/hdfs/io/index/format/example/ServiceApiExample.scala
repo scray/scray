@@ -7,6 +7,7 @@ import scray.hdfs.io.osgi.WriteServiceImpl
 import scray.hdfs.io.write.IHdfsWriterConstats.SequenceKeyValueFormat
 import scala.util.Random
 import scray.hdfs.io.configure.RandomUUIDFilenameCreator
+import java.io.ByteArrayInputStream
 
 object ServiceApiExample {
   def main(args: Array[String]) {
@@ -22,12 +23,16 @@ object ServiceApiExample {
 
     val writeId = writeService.createWriter(config)
 
-    for (i <- 0 to 10) {
-      println(writeService.insert(writeId, "id42", System.currentTimeMillis(), createDataElement.getBytes).get.getBytesInserted())
+    for(i <- 0 to 100) {
+      writeService.writeRawFile("hdfs://host1.scray.org/tmp/argo9/" + (Math.random() * 20).toInt + "/" + System.currentTimeMillis() , new ByteArrayInputStream("eeee5555555555555".getBytes), "hdfs", "".getBytes).get
       
-      Thread.sleep(2000)
+      println("write")
+      //Thread.sleep(10)
     }
-    writeService.close(writeId)
+    
+    while(true) {
+      Thread.sleep(10)
+    }
   }
 
   def createDataElement: String = {
