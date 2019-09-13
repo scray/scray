@@ -19,7 +19,16 @@ import java.util.TimerTask
 
 import com.typesafe.scalalogging.LazyLogging
 
-class CloseFileTimer(writer: CoordinatedWriter[_, _, _, _]) extends TimerTask with LazyLogging {
+class CloseFileTimer(writer: CoordinatedWriter[_, _, _, _], val timerDelay: Long) extends TimerTask with LazyLogging {
+  
+  private val startTime = System.currentTimeMillis()
+  
+  /**
+   * Estimated remaining time
+   */
+  def getRemainingTime: Long = {
+    (startTime + timerDelay) - System.currentTimeMillis()
+  }
   
   def run() = {
     logger.debug("Try to close writer")
