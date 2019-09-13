@@ -14,7 +14,7 @@ object ServiceApiExample {
     val writeService = new WriteServiceImpl
     
     val config = new WriteParameter.Builder()
-    .setPath("hdfs://host1.scray.org/tmp/customFile/ff/")
+    .setPath("hdfs://host1.scray.org/tmp/scray-service-api-example/")
     .setFileFormat(SequenceKeyValueFormat.SEQUENCEFILE_TEXT_TEXT)
     .setTimeLimit(1)
     .setFileNameCreator(new RandomUUIDFilenameCreator())

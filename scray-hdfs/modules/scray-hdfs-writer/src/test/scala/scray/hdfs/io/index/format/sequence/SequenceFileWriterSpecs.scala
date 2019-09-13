@@ -34,6 +34,7 @@ import scray.hdfs.io.index.format.sequence.mapping.impl.OutputTextBytesWritable
 import scray.hdfs.io.index.format.sequence.mapping.impl.OutputBlob
 import scray.hdfs.io.index.format.sequence.mapping.impl.OutputBlob
 import java.nio.file.Paths
+import scala.util.Success
 
 class SequenceFileWriterSpecs extends WordSpec with LazyLogging {
   
@@ -49,7 +50,7 @@ class SequenceFileWriterSpecs extends WordSpec with LazyLogging {
   "SequenceFileWriterTextBytes " should {
     " read idx" in {
 
-      val writer = new SequenceFileWriter("target/SeqFilWriterTest", new OutputBlob, true, System.getProperty("user.name"))
+      val writer = new SequenceFileWriter("target/SeqFilWriterTest", new OutputBlob, true, System.getProperty("user.name"), "RECORD")
 
       for (i <- 0 to 1000) {
         writer.insert(getKey(i), 100000, getValue(i).getBytes)
@@ -67,7 +68,7 @@ class SequenceFileWriterSpecs extends WordSpec with LazyLogging {
     " read all index entries " in {
       val numDate = 1000 // Number of test data
 
-      val writer = new SequenceFileWriter("target/IdxReaderTest", new OutputBlob, true, System.getProperty("user.name"))
+      val writer = new SequenceFileWriter("target/IdxReaderTest", new OutputBlob, true, System.getProperty("user.name"), "RECORD")
 
       for (i <- 0 to numDate) {
         writer.insert(getKey(i), i, getValue(i).getBytes)
@@ -92,7 +93,7 @@ class SequenceFileWriterSpecs extends WordSpec with LazyLogging {
 
       val numDate = 1000 // Number of test data
 
-      val writer = new SequenceFileWriter("target/IdxReaderTest", new OutputBlob, true, System.getProperty("user.name"))
+      val writer = new SequenceFileWriter("target/IdxReaderTest", new OutputBlob, true, System.getProperty("user.name"), "RECORD")
 
       for (i <- 0 to numDate) {
         writer.insert(getKey(i), i, getValue(i).getBytes)
@@ -119,7 +120,7 @@ class SequenceFileWriterSpecs extends WordSpec with LazyLogging {
 
       val numDate = 1000 // Number of test data
 
-      val writer = new SequenceFileWriter("target/IdxReaderTest1", new OutputBlob, true, System.getProperty("user.name"))
+      val writer = new SequenceFileWriter("target/IdxReaderTest1", new OutputBlob, true, System.getProperty("user.name"), "RECORD")
 
       for (i <- 0 to numDate) {
         writer.insert(getKey(i), i, getValue(i).getBytes)
@@ -148,7 +149,7 @@ class SequenceFileWriterSpecs extends WordSpec with LazyLogging {
         inputData.append(s" ${i}")
       }
      
-      val writer = new SequenceFileWriter("target/IoStreamRWTest", new OutputBlob, true, System.getProperty("user.name"))
+      val writer = new SequenceFileWriter("target/IoStreamRWTest", new OutputBlob, true, System.getProperty("user.name"), "RECORD")
       writer.insert(getKey(124), System.currentTimeMillis(), inputData.toString().getBytes)
       writer.close
 
@@ -180,7 +181,7 @@ class SequenceFileWriterSpecs extends WordSpec with LazyLogging {
         inputData.append(s" ${i}")
       }
      
-      val writer = new SequenceFileWriter("target/IoStreamRWTest", new OutputBlob, true, System.getProperty("user.name"))
+      val writer = new SequenceFileWriter("target/IoStreamRWTest", new OutputBlob, true, System.getProperty("user.name"), "RECORD")
       writer.insert(getKey(124), System.currentTimeMillis(), inputData.toString().getBytes)
       writer.close
       
@@ -192,6 +193,17 @@ class SequenceFileWriterSpecs extends WordSpec with LazyLogging {
 
       Assert.assertEquals(inputData.toString(), Source.fromInputStream(stream).mkString)
     }
-
+    " write with not existing compression type " in {
+     try {
+        val writer = new SequenceFileWriter("target/SeqFilWriterTestRecord", new OutputBlob, true, System.getProperty("user.name"), "RECORD_ABC")
+        writer.insert(getKey(125), System.currentTimeMillis(), "abc".getBytes)
+        fail()
+      } catch {
+        case e: Exception => {
+          if(!e.toString.contains("RECORD_ABC")) {
+            fail()
+          } 
+      } }
+    }
   }
 }
