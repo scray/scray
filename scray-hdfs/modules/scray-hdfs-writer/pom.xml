@@ -18,7 +18,7 @@
 
 	<properties>
 		<minimizedLibsClassifier>minimizedlibs</minimizedLibsClassifier>
-		<hadoop.version>3.1.2</hadoop.version>
+		<hadoop.version>3.2.1</hadoop.version>
 	</properties>
 
 	<distributionManagement>
