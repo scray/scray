@@ -27,8 +27,7 @@ import scray.hdfs.io.read.ReadService
 class Activator extends BundleActivator {
   val writeServiceFactory = new WriteServiceFactory
   val readServiceFactory = new ReadServiceFactory
-  
-
+ 
   override def start(context: BundleContext): Unit = {
     println(s"Register service ${classOf[WriteService].getName} ")
     context.registerService(classOf[WriteService].getName, writeServiceFactory, new Hashtable[String, String]())
