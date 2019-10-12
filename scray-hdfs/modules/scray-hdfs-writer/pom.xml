@@ -61,6 +61,10 @@
 					<groupId>commons-httpclient</groupId>
 					<artifactId>commons-httpclient</artifactId>
 				</exclusion>
+				<exclusion>
+					<groupId>dnsjava</groupId>
+					<artifactId>dnsjava</artifactId>
+				</exclusion>
 			</exclusions>
 		</dependency>
 		<dependency>
