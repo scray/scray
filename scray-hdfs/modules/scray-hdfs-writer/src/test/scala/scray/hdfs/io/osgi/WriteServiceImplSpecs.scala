@@ -110,6 +110,35 @@ class WriteServiceImplSpecs extends WordSpec with LazyLogging {
           }
         });
     }
+    " try to write with not existing compression type " in {
+      val service = new WriteServiceImpl
+
+      val outPath = "chicken://target/WriteServiceImplSpecs/creatRedrive2/" + System.currentTimeMillis() + "/"
+      val writtenData = new HashMap[String, Array[Byte]]();
+
+      val config = new (WriteParameter.Builder)
+      .setPath(outPath)
+      .setSequenceFileCompressionType("Wrong_Type")
+      .setFileFormat(SequenceKeyValueFormat.SEQUENCEFILE_TEXT_TEXT)
+      .createConfiguration
+      val writerId = service.createWriter(config)
+
+      val writeResult = service.insert(writerId, "42", System.currentTimeMillis(), new ByteArrayInputStream(s"ABCDEFG".getBytes))
+
+      Futures.addCallback(
+        writeResult,
+        new FutureCallback[WriteResult]() {
+
+          // Should not happen
+          override def onSuccess(result: WriteResult) {
+            fail
+          }
+
+          override def onFailure(t: Throwable) {
+            Assert.assertTrue(t.isInstanceOf[IllegalArgumentException])
+          }
+        });
+    }
     "check written bytes value " in {
       val writeService = new WriteServiceImpl();
 
@@ -133,12 +162,31 @@ class WriteServiceImplSpecs extends WordSpec with LazyLogging {
       Assert.assertEquals(185, writeService.insert(writerId, "k1", System.currentTimeMillis(), new ByteArrayInputStream("A".getBytes), new BigInteger("2048"), 2048).get.bytesInserted)
       Assert.assertEquals(217, writeService.insert(writerId, "k1", System.currentTimeMillis(), new ByteArrayInputStream("A".getBytes), new BigInteger("2048"), 2048).get.bytesInserted)
     }
+    " write multiple raw files" in {
+      if (!System.getProperty("os.name").toUpperCase().contains("WINDOWS")) {
+        // Create example file
+        val exampleFile1 = s"${new URL("file:///" + System.getProperty("user.dir"))}" + s"/target/ReadServiceImplSpecs/writeRawFile/${UUID.randomUUID()}/file1.txt"
+        val exampleFile2 = s"${new URL("file:///" + System.getProperty("user.dir"))}" + s"/target/ReadServiceImplSpecs/writeRawFile/${UUID.randomUUID()}/file2.txt"
+
+        val service = new WriteServiceImpl
+        service.writeRawFile(exampleFile1, new ByteArrayInputStream(s"ABCDEFG".getBytes), System.getProperty("user.name"), "".getBytes).get
+        service.writeRawFile(exampleFile2, new ByteArrayInputStream(s"ABCDEFG".getBytes), System.getProperty("user.name"), "".getBytes).get
+
+        val reader = new ReadServiceImpl
+
+        // Check if files exits
+        val files1 = reader.getFileList(exampleFile1, System.getProperty("user.name"), "".getBytes).get()
+        Assert.assertTrue(files1.size() == 1);
+        val files2 = reader.getFileList(exampleFile1, System.getProperty("user.name"), "".getBytes).get()
+        Assert.assertTrue(files2.size() == 1);
+      }
+    }
     " delete file " in {
       if (!System.getProperty("os.name").toUpperCase().contains("WINDOWS")) {
         // Create example file
         val exampleFile = s"${new URL("file:///" + System.getProperty("user.dir"))}" + s"/target/ReadServiceImplSpecs/listFiles/${UUID.randomUUID()}/file2.txt"
         val service = new WriteServiceImpl
-        service.writeRawFile(exampleFile, new ByteArrayInputStream(s"ABCDEFG".getBytes), System.getProperty("user.name"), "".getBytes)
+        service.writeRawFile(exampleFile, new ByteArrayInputStream(s"ABCDEFG".getBytes), System.getProperty("user.name"), "".getBytes).get
 
         val reader = new ReadServiceImpl
 

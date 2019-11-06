@@ -48,11 +48,12 @@ class RawFileReader(hdfsURL: String, hdfsConf: Configuration, user: String) exte
     hdfsConf.set("fs.file.impl", classOf[org.apache.hadoop.fs.LocalFileSystem].getName);
     hdfsConf.set("dfs.client.use.datanode.hostname", "true");
     hdfsConf.set("fs.defaultFS", hdfsURL)
- remoteUser.doAs(new PrivilegedAction[Unit] {
+    
+    remoteUser.doAs(new PrivilegedAction[Unit] {
       def run(): Unit = {
-    dataReader = FileSystem.get(hdfsConf);
+        dataReader = FileSystem.get(hdfsConf);
       }
- })
+    })
   }
 
   def read(path: String): InputStream = {
