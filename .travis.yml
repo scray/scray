@@ -4,8 +4,8 @@ language: java
 dist: trusty
 
 jdk:
-    - oraclejdk8
-    - openjdk8
+    - oraclejdk9
+    - openjdk9
 
 cache:
     directories:
