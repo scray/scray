@@ -151,6 +151,10 @@ class ReadServiceImpl extends ReadService {
       result
   }
 
+ override def close(id: UUID) {
+   this.getReader(id).close
+ }
+ 
   private def get() = {
 
   }
