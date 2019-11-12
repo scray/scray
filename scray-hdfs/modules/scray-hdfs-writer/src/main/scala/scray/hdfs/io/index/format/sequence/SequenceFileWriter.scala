@@ -165,6 +165,8 @@ class SequenceFileWriter[IDXKEY <: Writable, IDXVALUE <: Writable, DATAKEY <: Wr
 
         // Write data
         dataWriter.append(outTypeMapping.getDataKey(id), outTypeMapping.getDataValue(data));
+        dataWriter.hflush()
+        dataWriter.hsync()
       }
     })
     numberOfInserts = numberOfInserts + 1
@@ -331,7 +333,12 @@ class SequenceFileWriter[IDXKEY <: Writable, IDXVALUE <: Writable, DATAKEY <: Wr
   def close: Unit = {
     remoteUser.doAs(new PrivilegedAction[Unit] {
       def run(): Unit = {
-        IOUtils.closeStream(dataWriter)
+        if(dataWriter != null) {
+          dataWriter.hflush()
+          IOUtils.closeStream(dataWriter)
+        }
+
+        idxWriter.map(idxWriter => idxWriter.hflush())
         idxWriter.map(idxWriter => IOUtils.closeStream(idxWriter))
       }
     })
