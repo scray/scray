@@ -70,12 +70,13 @@ class SequenceFileWriter[IDXKEY <: Writable, IDXVALUE <: Writable, DATAKEY <: Wr
 
     remoteUser.doAs(new PrivilegedAction[Unit] {
       def run(): Unit = {
-
-        writer = SequenceFile.createWriter(hdfsConf, Writer.file(new Path(path + fileExtension)),
+        val fullPath = new Path(path + fileExtension)
+        
+        writer = SequenceFile.createWriter(hdfsConf, Writer.file(fullPath),
           Writer.keyClass(key.getClass()),
           Writer.valueClass(value.getClass()),
           Writer.bufferSize(fs.getConf().getInt("io.file.buffer.size", 4096)),
-          Writer.replication(fs.getDefaultReplication()),
+          Writer.replication(fs.getDefaultReplication(fullPath)),
           Writer.blockSize(536870912),
           Writer.compression(SequenceFile.CompressionType.RECORD),
           Writer.progressable(null),
