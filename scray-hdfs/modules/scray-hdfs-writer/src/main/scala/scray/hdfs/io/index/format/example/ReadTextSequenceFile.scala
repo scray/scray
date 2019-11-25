@@ -15,7 +15,9 @@ object ReadTextSequenceFile {
 
       val id = reader.readFullSequenceFile(args(0), SequenceKeyValueFormat.SEQUENCEFILE_TEXT_TEXT, System.getProperty("user.name"), "".getBytes)
       while (reader.hasNextSequenceFilePair(id).get) {
-        println(new String(reader.getNextSequenceFilePair(id).get.getValue))
+                println(new String(reader.getNextSequenceFilePair(id).get.getValue) + "...")
+
+        //println(new String(reader.getNextSequenceFilePair(id).get.getValue.splitAt(500)._1 + "..."))
       }
     }
 

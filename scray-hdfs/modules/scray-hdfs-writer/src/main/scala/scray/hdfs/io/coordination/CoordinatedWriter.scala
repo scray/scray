@@ -78,7 +78,7 @@ class CoordinatedWriter[+IDXKEY <: Writable, +IDXVALUE <: Writable, +DATAKEY <: 
 
   private def createNewBasicWriter(metadata: WriteParameter): Writer = {
     val filePath = this.getPath(metadata.path, metadata.queryspace, metadata.version.number, metadata.writeVersioned, metadata.fileNameCreator)
-    val writer = new SequenceFileWriter(filePath, outTypeMapping, metadata.createScrayIndexFile, metadata.user)
+    val writer = new SequenceFileWriter(filePath, outTypeMapping, metadata.createScrayIndexFile, metadata.user, metadata.sequenceFileCompressionType)
     this.hdfsConf = writer.hdfsConf
     this.startTimer
     
@@ -105,7 +105,7 @@ class CoordinatedWriter[+IDXKEY <: Writable, +IDXVALUE <: Writable, +DATAKEY <: 
     }
   }
 
-  def maxFileSizeReached(writtenBytes: Long, maxSize: Long): Boolean = {
+  private def maxFileSizeReached(writtenBytes: Long, maxSize: Long): Boolean = {
     if (maxSize > 0) {
       logger.debug(s"Inserted bytes ${writtenBytes} of max ${maxSize} bytes")
       writtenBytes >= maxSize
@@ -115,7 +115,7 @@ class CoordinatedWriter[+IDXKEY <: Writable, +IDXVALUE <: Writable, +DATAKEY <: 
     }
   }
 
-  def maxNumInsertsReached(numberInserts: Int, maxNumerInserts: Int): Boolean = {
+  private def maxNumInsertsReached(numberInserts: Int, maxNumerInserts: Int): Boolean = {
 
     if (maxNumerInserts > 0) {
       logger.debug(s"Insert ${numberInserts}/${maxNumerInserts}")
@@ -148,6 +148,8 @@ class CoordinatedWriter[+IDXKEY <: Writable, +IDXVALUE <: Writable, +DATAKEY <: 
         }
       }
     }
+    
+    logger.debug(s"File ${this.getPath} closed")
   }
 
   def getPath: String = {
