@@ -8,9 +8,9 @@
     </encoder>
   </appender>
 
-  <logger name="scray" level="debug" />
+  <logger name="scray" level="INFO" />
 
-  <root level="info">
+  <root level="INFO">
     <appender-ref ref="STDOUT" />
   </root>
 </configuration>
