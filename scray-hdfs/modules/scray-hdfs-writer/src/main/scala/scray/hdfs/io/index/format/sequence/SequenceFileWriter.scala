@@ -35,6 +35,7 @@ import scray.hdfs.io.index.format.sequence.mapping.SequenceKeyValuePair
 import java.io.File
 import org.apache.hadoop.security.UserGroupInformation
 import java.security.PrivilegedAction
+import java.net.URI
 
 class SequenceFileWriter[IDXKEY <: Writable, IDXVALUE <: Writable, DATAKEY <: Writable, DATAVALUE <: Writable](path: String, val hdfsConf: Configuration, fs: Option[FileSystem], outTypeMapping: SequenceKeyValuePair[IDXKEY, IDXVALUE, DATAKEY, DATAVALUE], createIndex: Boolean, user: String, compressionType: String) extends scray.hdfs.io.index.format.Writer with LazyLogging {
 
@@ -73,9 +74,8 @@ class SequenceFileWriter[IDXKEY <: Writable, IDXVALUE <: Writable, DATAKEY <: Wr
         val writerOptions = Array[org.apache.hadoop.io.SequenceFile.Writer.Option](
           Writer.compression(SequenceFile.CompressionType.RECORD),
           Writer.valueClass(value.getClass()))
-
         val fullPath = new Path(path + fileExtension)
-
+        
         writer = SequenceFile.createWriter(hdfsConf, Writer.file(fullPath),
           Writer.keyClass(key.getClass()),
           Writer.valueClass(value.getClass()),
@@ -109,19 +109,19 @@ class SequenceFileWriter[IDXKEY <: Writable, IDXVALUE <: Writable, DATAKEY <: Wr
 
   override def insert(id: String, data: String): Long = {
 
-    hdfsConf.set("fs.hdfs.impl", "org.apache.hadoop.hdfs.DistributedFileSystem");
-    hdfsConf.set("fs.file.impl", "org.apache.hadoop.fs.LocalFileSystem");
-
+    //hdfsConf.set("fs.hdfs.impl", "org.apache.hadoop.hdfs.DistributedFileSystem");
+    //hdfsConf.set("fs.file.impl", "org.apache.hadoop.fs.LocalFileSystem");
+  fs.getOrElse(FileSystem.get(URI.create(this.path), hdfsConf))
     if (dataWriter == null) { // scalastyle:off null
       if (createIndex) {
-        dataWriter = initWriter(outTypeMapping.getDataKey("42"), outTypeMapping.getDataValue("".getBytes), fs.getOrElse(FileSystem.get(hdfsConf)), ".data.seq")
+        dataWriter = initWriter(outTypeMapping.getDataKey("42"), outTypeMapping.getDataValue("".getBytes), fs.getOrElse(FileSystem.get(URI.create(this.path), hdfsConf)), ".data.seq")
       } else {
-        dataWriter = initWriter(outTypeMapping.getDataKey("42"), outTypeMapping.getDataValue("".getBytes), fs.getOrElse(FileSystem.get(hdfsConf)), "")
+        dataWriter = initWriter(outTypeMapping.getDataKey("42"), outTypeMapping.getDataValue("".getBytes), fs.getOrElse(FileSystem.get(URI.create(this.path), hdfsConf)), "")
       }
     }
 
     if (this.createIndex && !idxWriter.isDefined) { // scalastyle:off null
-      idxWriter = Some(initWriter(outTypeMapping.getIdxKey("42"), outTypeMapping.getIdxValue("42", 42L, 2L), fs.getOrElse(FileSystem.get(hdfsConf)), ".idx.seq"))
+      idxWriter = Some(initWriter(outTypeMapping.getIdxKey("42"), outTypeMapping.getIdxValue("42", 42L, 2L), fs.getOrElse(FileSystem.get(URI.create(this.path), hdfsConf)), ".idx.seq"))
     }
 
     remoteUser.doAs(new PrivilegedAction[Unit] {
@@ -147,14 +147,14 @@ class SequenceFileWriter[IDXKEY <: Writable, IDXVALUE <: Writable, DATAKEY <: Wr
 
     if (dataWriter == null) { // scalastyle:off null
       if (createIndex) {
-        dataWriter = initWriter(outTypeMapping.getDataKey("42"), outTypeMapping.getDataValue("".getBytes), fs.getOrElse(FileSystem.get(hdfsConf)), ".data.seq")
+        dataWriter = initWriter(outTypeMapping.getDataKey("42"), outTypeMapping.getDataValue("".getBytes), fs.getOrElse(FileSystem.get(URI.create(this.path), hdfsConf)), ".data.seq")
       } else {
-        dataWriter = initWriter(outTypeMapping.getDataKey("42"), outTypeMapping.getDataValue("".getBytes), fs.getOrElse(FileSystem.get(hdfsConf)), "")
+        dataWriter = initWriter(outTypeMapping.getDataKey("42"), outTypeMapping.getDataValue("".getBytes), fs.getOrElse(FileSystem.get(URI.create(this.path), hdfsConf)), "")
       }
     }
 
     if (this.createIndex && !idxWriter.isDefined) { // scalastyle:off null
-      idxWriter = Some(initWriter(outTypeMapping.getIdxKey("42"), outTypeMapping.getIdxValue("42", 42L, 2L), fs.getOrElse(FileSystem.get(hdfsConf)), ".idx.seq"))
+      idxWriter = Some(initWriter(outTypeMapping.getIdxKey("42"), outTypeMapping.getIdxValue("42", 42L, 2L), fs.getOrElse(FileSystem.get(URI.create(this.path), hdfsConf)), ".idx.seq"))
     }
     remoteUser.doAs(new PrivilegedAction[Unit] {
       def run(): Unit = {
@@ -175,16 +175,17 @@ class SequenceFileWriter[IDXKEY <: Writable, IDXVALUE <: Writable, DATAKEY <: Wr
     hdfsConf.set("fs.hdfs.impl", "org.apache.hadoop.hdfs.DistributedFileSystem");
     hdfsConf.set("fs.file.impl", "org.apache.hadoop.fs.LocalFileSystem");
 
+
     if (dataWriter == null) { // scalastyle:off null
       if (createIndex) {
-        dataWriter = initWriter(outTypeMapping.getDataKey("42"), outTypeMapping.getDataValue("".getBytes), fs.getOrElse(FileSystem.get(hdfsConf)), ".data.seq")
+        dataWriter = initWriter(outTypeMapping.getDataKey("42"), outTypeMapping.getDataValue("".getBytes), fs.getOrElse(FileSystem.get(URI.create(this.path), hdfsConf)), ".data.seq")
       } else {
-        dataWriter = initWriter(outTypeMapping.getDataKey("42"), outTypeMapping.getDataValue("".getBytes), fs.getOrElse(FileSystem.get(hdfsConf)), "")
+        dataWriter = initWriter(outTypeMapping.getDataKey("42"), outTypeMapping.getDataValue("".getBytes), fs.getOrElse(FileSystem.get(URI.create(this.path), hdfsConf)), "")
       }
     }
 
     if (this.createIndex && !idxWriter.isDefined) {
-      idxWriter = Some(initWriter(outTypeMapping.getIdxKey("42"), outTypeMapping.getIdxValue("42", 42L, 2L), fs.getOrElse(FileSystem.get(hdfsConf)), ".idx.seq"))
+      idxWriter = Some(initWriter(outTypeMapping.getIdxKey("42"), outTypeMapping.getIdxValue("42", 42L, 2L), fs.getOrElse(FileSystem.get(URI.create(this.path), hdfsConf)), ".idx.seq"))
     }
 
     if (blobSplitSize < 1) {
@@ -282,18 +283,14 @@ class SequenceFileWriter[IDXKEY <: Writable, IDXVALUE <: Writable, DATAKEY <: Wr
 
     if (dataWriter == null) { // scalastyle:off null
       if (createIndex) {
-        dataWriter = initWriter(outTypeMapping.getDataKey("42"), outTypeMapping.getDataValue("".getBytes), fs.getOrElse(FileSystem.get(hdfsConf)), ".data.seq")
+        dataWriter = initWriter(outTypeMapping.getDataKey("42"), outTypeMapping.getDataValue("".getBytes), fs.getOrElse(FileSystem.get(URI.create(this.path), hdfsConf)), ".data.seq")
       } else {
-        dataWriter = initWriter(outTypeMapping.getDataKey("42"), outTypeMapping.getDataValue("".getBytes), fs.getOrElse(FileSystem.get(hdfsConf)), "")
+        dataWriter = initWriter(outTypeMapping.getDataKey("42"), outTypeMapping.getDataValue("".getBytes), fs.getOrElse(FileSystem.get(URI.create(this.path), hdfsConf)), "")
       }
     }
 
     if (this.createIndex && !idxWriter.isDefined) { // scalastyle:off null
-      remoteUser.doAs(new PrivilegedAction[Unit] {
-        def run(): Unit = {
-          idxWriter = Some(initWriter(outTypeMapping.getIdxKey("42"), outTypeMapping.getIdxValue("42", 42L, 2L), fs.getOrElse(FileSystem.get(hdfsConf)), ".idx.seq"))
-        }
-      })
+      idxWriter = Some(initWriter(outTypeMapping.getIdxKey("42"), outTypeMapping.getIdxValue("42", 42L, 2L), fs.getOrElse(FileSystem.get(URI.create(this.path), hdfsConf)), ".idx.seq"))
     }
 
     // Write idx
