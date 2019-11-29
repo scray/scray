@@ -31,6 +31,7 @@ case class Version(number: Int, compactionState: CompactionState = NEW) {
     this(number, NEW)
   }
 }
+
 /**
  * Parameters for WriteCoordinatr
  *
@@ -41,6 +42,7 @@ case class Version(number: Int, compactionState: CompactionState = NEW) {
  * @param version paths are versioned to handle them independently e.g. for compactions
  * @param maxFileSize If maxFileSize is reached a new file will be used
  * @param maxNumberOfInserts	If maxNumberOfInserts is reached a new file will be used.
+ * @param sequenceFileCompressionType type of compression of SequenceFiles. Possible values 'NONE', 'BLOCK' or 'RECORD'. For details see: https://hadoop.apache.org/docs/r2.8.2/hadoop-project-dist/hadoop-common/api/org/apache/hadoop/io/SequenceFile.CompressionType.html
  */
 class WriteParameter(
   var queryspace:                  String,
@@ -55,7 +57,8 @@ class WriteParameter(
   var maxNumberOfInserts:          Int                                        = Integer.MAX_VALUE,
   var timeLimit:                   Int                                        = -1,
   var storeAsHiddenFileTillClosed: Boolean                                    = false,
-  var createScrayIndexFile:        Boolean                                    = false) {
+  var createScrayIndexFile:        Boolean                                    = false,
+  var sequenceFileCompressionType: String                                     = "RECORD") {
 
   override def equals(that: Any): Boolean = {
     that match {
@@ -70,7 +73,9 @@ class WriteParameter(
           && this.maxFileSize == that.maxFileSize
           && this.maxNumberOfInserts == that.maxNumberOfInserts
           && (this.storeAsHiddenFileTillClosed == that.storeAsHiddenFileTillClosed)
-          && (this.createScrayIndexFile == that.createScrayIndexFile))
+          && (this.createScrayIndexFile == that.createScrayIndexFile)
+          && (this.sequenceFileCompressionType == that.sequenceFileCompressionType)  
+        )
       }
       case _ => false
     }
@@ -91,6 +96,7 @@ class WriteParameter(
       .andThen(composeAttributes(getHashCodeOrZero(maxFileSize)))
       .andThen(composeAttributes(getHashCodeOrZero(maxNumberOfInserts)))
       .andThen(composeAttributes(getHashCodeOrZero(storeAsHiddenFileTillClosed)))
+      .andThen(composeAttributes(getHashCodeOrZero(sequenceFileCompressionType)))
       .apply(getHashCodeOrZero(createScrayIndexFile))
 
   }
@@ -133,7 +139,8 @@ object WriteParameter {
     var writeMode: WriteMode = WriteMode.WriteBack
     var storeAsHiddenFileTillClosed: Boolean = false
     var createScrayIndexFile: Boolean = false
-
+    var sequenceFileCompressionType: String = "RECORD"
+    
     def setQueryspace(queryspace: String): Builder = {
       this.queryspace = queryspace
       this
@@ -204,6 +211,11 @@ object WriteParameter {
       this
     }
 
+    def setSequenceFileCompressionType(compressionType: String): Builder = {
+      this.sequenceFileCompressionType = compressionType
+      this
+    }
+    
     def createConfiguration: WriteParameter = {
       new WriteParameter(
         queryspace,
@@ -218,7 +230,8 @@ object WriteParameter {
         maxNumberOfInserts,
         timeLimit,
         storeAsHiddenFileTillClosed,
-        createScrayIndexFile)
+        createScrayIndexFile,
+        sequenceFileCompressionType)
     }
   }
 }

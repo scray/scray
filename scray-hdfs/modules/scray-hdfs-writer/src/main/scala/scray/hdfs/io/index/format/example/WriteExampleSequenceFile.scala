@@ -26,11 +26,11 @@ object WriteExampleSequenceFile {
       println("No HDFS URL defined. E.g. hdfs://127.0.0.1/user/scray/scray-hdfs-data/")
     } else {
 
-      val writer = new SequenceFileWriter(s"hdfs://host1.scray.org/user/hive/warehouse/bisedi/ff2", new OutputTextBytesWritable, true, System.getProperty("user.name"))
+      val writer = new SequenceFileWriter(args(0) + System.currentTimeMillis(), new OutputTextBytesWritable, true, System.getProperty("user.name"), "RECORD")
 
       val insertStart = System.currentTimeMillis();
       
-      for (i <- 0 to 1000000) {
+      for (i <- 0 to 2) {
         val key = "key_" + i
         val value = "data_" + i
 
@@ -40,7 +40,7 @@ object WriteExampleSequenceFile {
 
       writer.flush()
       val insertEnd = System.currentTimeMillis();
-      System.out.println(insertEnd - insertStart);
+      System.out.println("# Required time to write: " + (insertEnd - insertStart) + "ms");
       
       writer.close
     }

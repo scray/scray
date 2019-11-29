@@ -46,6 +46,7 @@ class CoordinatedWriter[+IDXKEY <: Writable, +IDXVALUE <: Writable, +DATAKEY <: 
   private var writer: Writer = createNewBasicWriter(metadata)
   private var numInserts = 0
   private var timer = new Timer(true)
+  private var timerTask: CloseFileTimer = _
 
   def insert(id: String, updateTime: Long, data: Array[Byte]) = synchronized {
 
@@ -56,6 +57,8 @@ class CoordinatedWriter[+IDXKEY <: Writable, +IDXVALUE <: Writable, +DATAKEY <: 
       
       logger.debug(s"Create new file ${writer.getPath}")
     }
+    logger.debug(s"Insert remaining time for time limit ${timerTask.getRemainingTime/1000}s")
+
 
     numInserts = numInserts + 1
     val writtenBytes = writer.insert(id, updateTime, data)
@@ -75,7 +78,7 @@ class CoordinatedWriter[+IDXKEY <: Writable, +IDXVALUE <: Writable, +DATAKEY <: 
 
   private def createNewBasicWriter(metadata: WriteParameter): Writer = {
     val filePath = this.getPath(metadata.path, metadata.queryspace, metadata.version.number, metadata.writeVersioned, metadata.fileNameCreator)
-    val writer = new SequenceFileWriter(filePath, outTypeMapping, metadata.createScrayIndexFile, metadata.user)
+    val writer = new SequenceFileWriter(filePath, outTypeMapping, metadata.createScrayIndexFile, metadata.user, metadata.sequenceFileCompressionType)
     this.hdfsConf = writer.hdfsConf
     this.startTimer
     
@@ -102,8 +105,8 @@ class CoordinatedWriter[+IDXKEY <: Writable, +IDXVALUE <: Writable, +DATAKEY <: 
     }
   }
 
-  def maxFileSizeReached(writtenBytes: Long, maxSize: Long): Boolean = {
-    if (maxSize != 0) {
+  private def maxFileSizeReached(writtenBytes: Long, maxSize: Long): Boolean = {
+    if (maxSize > 0) {
       logger.debug(s"Inserted bytes ${writtenBytes} of max ${maxSize} bytes")
       writtenBytes >= maxSize
     } else {
@@ -112,9 +115,9 @@ class CoordinatedWriter[+IDXKEY <: Writable, +IDXVALUE <: Writable, +DATAKEY <: 
     }
   }
 
-  def maxNumInsertsReached(numberInserts: Int, maxNumerInserts: Int): Boolean = {
+  private def maxNumInsertsReached(numberInserts: Int, maxNumerInserts: Int): Boolean = {
 
-    if (maxNumerInserts != 0) {
+    if (maxNumerInserts > 0) {
       logger.debug(s"Insert ${numberInserts}/${maxNumerInserts}")
       numberInserts >= maxNumerInserts
     } else {
@@ -145,6 +148,8 @@ class CoordinatedWriter[+IDXKEY <: Writable, +IDXVALUE <: Writable, +DATAKEY <: 
         }
       }
     }
+    
+    logger.debug(s"File ${this.getPath} closed")
   }
 
   def getPath: String = {
@@ -167,6 +172,7 @@ class CoordinatedWriter[+IDXKEY <: Writable, +IDXVALUE <: Writable, +DATAKEY <: 
       startTimer
       logger.debug(s"Create new file ${writer.getPath}")
     }
+    logger.debug(s"Insert remaining time for time limit ${timerTask.getRemainingTime/1000}s")
 
     numInserts = numInserts + 1
     val writtenBytes = writer.insert(id, updateTime, data)
@@ -192,6 +198,7 @@ class CoordinatedWriter[+IDXKEY <: Writable, +IDXVALUE <: Writable, +DATAKEY <: 
       startTimer
       logger.debug(s"Create new file ${writer.getPath}")
     }
+    logger.debug(s"Insert remaining time for time limit ${timerTask.getRemainingTime/1000}s")
 
     numInserts = numInserts + 1
     val writtenBytes = writer.insert(id, data)
@@ -218,6 +225,8 @@ class CoordinatedWriter[+IDXKEY <: Writable, +IDXVALUE <: Writable, +DATAKEY <: 
       logger.debug(s"Create new file ${writer.getPath}")
     }
 
+    logger.debug(s"Insert remaining time for time limit ${timerTask.getRemainingTime/1000}s")
+    
     numInserts = numInserts + 1
     val writtenBrytes = writer.insert(id, updateTime, data, blobSplitSize)
 
@@ -234,9 +243,10 @@ class CoordinatedWriter[+IDXKEY <: Writable, +IDXVALUE <: Writable, +DATAKEY <: 
 
   private def startTimer: Unit = {
     timer = new Timer(true)
-
+    timerTask = new CloseFileTimer(this, metadata.timeLimit)
+    
     if (metadata.timeLimit > 0) {
-      timer.schedule(new CloseFileTimer(this), metadata.timeLimit)
+      timer.schedule(timerTask, metadata.timeLimit)
     }
   }
 }

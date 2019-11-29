@@ -10,4 +10,8 @@ class VersionedData(
   def getDataAs[T](f: String => T): T = {
     f(data)
   }
+  
+  def getVersionKey: Int = {
+    dataSource.hashCode() * 31 + mergeKey.hashCode() * 31 
+  }
 }

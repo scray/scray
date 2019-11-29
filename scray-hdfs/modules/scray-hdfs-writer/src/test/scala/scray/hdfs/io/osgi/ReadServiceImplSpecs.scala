@@ -51,7 +51,8 @@ class ReadServiceImplSpecs extends WordSpec with BeforeAndAfter with LazyLogging
   // Write a test file
   before {
     val service = new WriteServiceImpl
-    service.writeRawFile(rawExampleFile, new ByteArrayInputStream(s"ABCDEFG".getBytes), System.getProperty("user.name"), "".getBytes)
+    service.writeRawFile(rawExampleFile, new ByteArrayInputStream(s"ABCDEFG".getBytes), System.getProperty("user.name"), "".getBytes).get()
+    service.closeAll
     
     val config = new WriteParameter.Builder()
       .setPath(sequenceBytesWritableExampleFile)
@@ -95,7 +96,6 @@ class ReadServiceImplSpecs extends WordSpec with BeforeAndAfter with LazyLogging
        val reader = new ReadServiceImpl
        
        val id = reader.readFullSequenceFile(sequenceBytesWritableExampleFile + "/fileBytesWritable.seq", SequenceKeyValueFormat.SEQUENCEFILE_TEXT_BYTESWRITABLE, System.getProperty("user.name"), "".getBytes)
-      
        Assert.assertTrue(reader.hasNextSequenceFilePair(id).get)   
        val readData = reader.getNextSequenceFilePair(id).get
        Assert.assertEquals("ABCDEFG", new String(readData.getValue))
@@ -115,6 +115,23 @@ class ReadServiceImplSpecs extends WordSpec with BeforeAndAfter with LazyLogging
        
        Assert.assertFalse(reader.hasNextSequenceFilePair(id).get)  
        Assert.assertTrue(null == reader.getNextSequenceFilePair(id))
+    }
+    " try to read from closed file " in {
+       val reader = new ReadServiceImpl
+       
+       val id = reader.readFullSequenceFile(sequenceBytesWritableExampleFile + "/fileText.seq", SequenceKeyValueFormat.SEQUENCEFILE_TEXT_TEXT, System.getProperty("user.name"), "".getBytes)
+      
+       Assert.assertTrue(reader.hasNextSequenceFilePair(id).get)   
+       val readData = reader.getNextSequenceFilePair(id).get
+       Assert.assertEquals("ABCDEFG", new String(readData.getValue))
+       Assert.assertTrue(new String(readData.getKey).contains("\"id\": \"Key42\""))
+       
+       reader.close(id)
+       try {
+         reader.hasNextSequenceFilePair(id).get   
+       } catch {
+         case e: Exception => Assert.assertTrue(e.getMessage.contains("No reader with id"))
+       }
     } 
    " delete file " in {
      if(!System.getProperty("os.name").toUpperCase().contains("WINDOWS")) {

@@ -3,20 +3,12 @@
   <artifactId>scray-sync-api</artifactId>
   <name>${project.artifactId}</name>
   <description></description>
-  <inceptionYear>2018</inceptionYear>
-  
-  	<parent>
-		<groupId>org.scray</groupId>
-		<artifactId>scray-querying-parent</artifactId>
-		<version>1.1.3-SNAPSHOT</version>
-		<relativePath>../../pom.xml</relativePath>
-	</parent>
   
   <properties>
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>
     <encoding>UTF-8</encoding>
-    <scala.version>2.12.6</scala.version>
+    <scala.version>2.12.3</scala.version>
     <scala.compat.version>2.12</scala.compat.version>
     <spec2.version>4.2.0</spec2.version>
   </properties>
@@ -110,4 +102,6 @@
       </plugin>
     </plugins>
   </build>
+  <groupId>org.scray</groupId>
+  <version>1.1.3-SNAPSHOT</version>
 </project>
