@@ -12,6 +12,16 @@ class VersionedData(
   }
   
   def getVersionKey: Int = {
-    dataSource.hashCode() * 31 + mergeKey.hashCode() * 31 
+    VersionedData.createVersionKey(dataSource, mergeKey)
+  }
+  
+  override def toString: String = {
+    s"""{"dataSource: "${dataSource}", "mergeKey": "${mergeKey}", "version": ${version}, "data": "${data}"}"""
+  }
+}
+
+object VersionedData {
+  def createVersionKey(dataSource: String, mergeKey: String): Int = {
+    dataSource.hashCode() * 31 + mergeKey.hashCode() * 31
   }
 }
