@@ -14,9 +14,12 @@ import scray.sync.api.VersionedData
 import collection.JavaConverters._
 import scray.sync.api.VersionedDataApi
 import com.typesafe.scalalogging.LazyLogging
+import java.io.OutputStream
+import java.io.OutputStreamWriter
+import java.io.InputStream
 
-class FileVersionedDataApiImpl(storragePath: String) extends VersionedDataApi with LazyLogging {
-  var versionInformations: HashMap[Int, VersionedData] = readFromFile(storragePath)
+class FileVersionedDataApiImpl extends VersionedDataApi with LazyLogging {
+  var versionInformations: HashMap[Int, VersionedData] = this.toMap(new ArrayList[VersionedData])
   val gson = new GsonBuilder().setPrettyPrinting().create();
 
   def getLatestVersion(dataSource: String, mergeKey: String): Option[VersionedData] = {
@@ -27,12 +30,20 @@ class FileVersionedDataApiImpl(storragePath: String) extends VersionedDataApi wi
     versionInformations.put(VersionedData.createVersionKey(dataSource, mergeKey), new VersionedData(dataSource, mergeKey, version, data))
   }
 
-  def persist = {
-    this.writeToFile(storragePath)
+  def persist(path: String) = {
+    this.writeToFile(path)
   }
   
-  def load = {
-    versionInformations = readFromFile(storragePath)
+  def persist(outStream: OutputStream) {
+    this.writeToFile(outStream)
+  }
+  
+  def load(path: String) = {
+    versionInformations = readFromFile(path)
+  }
+  
+  def load(stream: InputStream) = {
+    versionInformations = readFromInputStram(stream)
   }
 
   private def readFromFile(path: String): HashMap[Int, VersionedData] = {
@@ -48,6 +59,26 @@ class FileVersionedDataApiImpl(storragePath: String) extends VersionedDataApi wi
       } catch {
         case _ => {
           logger.debug(s"Unable to open file ${path}. Use empty verson collection")
+          new ArrayList[VersionedData]
+        }
+      }
+    }
+    toMap(dataList())
+  }
+  
+    private def readFromInputStram(stream: InputStream): HashMap[Int, VersionedData] = {
+
+    val dataList = () => {
+      try {
+        val fileContents = Source.fromInputStream(stream).getLines.mkString
+
+        val jsonParser = new GsonBuilder().create();
+        val listType = new TypeToken[ArrayList[VersionedData]]() {}.getType();
+
+        gson.fromJson(fileContents, listType)
+      } catch {
+        case _ => {
+          logger.debug(s"Unable to read from file. Use empty verson collection")
           new ArrayList[VersionedData]
         }
       }
@@ -84,6 +115,15 @@ class FileVersionedDataApiImpl(storragePath: String) extends VersionedDataApi wi
     val file = new File(path)
     val bw = new BufferedWriter(new FileWriter(file))
     bw.write(jsonString)
+    bw.close()
+  }
+  
+  private def writeToFile(outStream: OutputStream) = {
+    val jsonString = gson.toJson(toList(versionInformations))
+
+    val bw = new OutputStreamWriter(outStream)
+    bw.write(jsonString)
+    bw.flush()
     bw.close()
   }
 }
