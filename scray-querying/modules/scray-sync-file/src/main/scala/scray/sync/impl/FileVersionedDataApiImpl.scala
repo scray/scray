@@ -27,8 +27,12 @@ class FileVersionedDataApiImpl(storragePath: String) extends VersionedDataApi wi
     versionInformations.put(VersionedData.createVersionKey(dataSource, mergeKey), new VersionedData(dataSource, mergeKey, version, data))
   }
 
-  def flush = {
+  def persist = {
     this.writeToFile(storragePath)
+  }
+  
+  def load = {
+    versionInformations = readFromFile(storragePath)
   }
 
   private def readFromFile(path: String): HashMap[Int, VersionedData] = {
@@ -68,10 +72,10 @@ class FileVersionedDataApiImpl(storragePath: String) extends VersionedDataApi wi
     })
   }
 
-  private def toList(versionInformations: HashMap[Int, VersionedData]): List[VersionedData] = {
+  private def toList(versionInformations: HashMap[Int, VersionedData]): java.util.List[VersionedData] = {
     versionInformations.keySet.map(key => {
       versionInformations.get(key).get
-    }).toList
+    }).toList.asJava
   }
 
   private def writeToFile(path: String) = {
