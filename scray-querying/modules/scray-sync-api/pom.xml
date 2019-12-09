@@ -1,6 +1,6 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <artifactId>scray-sync-api</artifactId>
+  <artifactId>scray-sync-api_${scala.compat.version}</artifactId>
   <name>${project.artifactId}</name>
   <description></description>
   
@@ -12,6 +12,16 @@
     <scala.compat.version>2.12</scala.compat.version>
     <spec2.version>4.2.0</spec2.version>
   </properties>
+
+	<profiles>
+		<profile>
+			<id>scala-2.11</id>		
+			<properties>
+				<scala.version>2.11.8</scala.version>
+				<scala.compat.version>2.11</scala.compat.version>
+			</properties>
+		</profile>
+	</profiles>
 
   <dependencies>
     <dependency>
