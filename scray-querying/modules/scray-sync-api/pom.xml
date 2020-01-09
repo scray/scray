@@ -2,8 +2,8 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<artifactId>scray-sync-api_${scala.compat.version}</artifactId>
-	<name>${project.artifactId}</name>
-	<description></description>
+	<name>Scray - Sync API</name>
+	<description>API to synchronise jobs</description>
 
 	<properties>
 		<maven.compiler.source>1.8</maven.compiler.source>

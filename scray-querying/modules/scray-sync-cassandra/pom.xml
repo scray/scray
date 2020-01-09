@@ -3,8 +3,8 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<artifactId>scray-sync-cassandra</artifactId>
-	<name>${project.artifactId}</name>
-	<description></description>
+	<name>Scray - Sync API Cassandra</name>
+	<description>Scray - Cassandra implementation for Sync API</description>
 	<inceptionYear>2018</inceptionYear>
 
 	<parent>
@@ -50,7 +50,7 @@
 		</dependency>
     <dependency>
     	<groupId>org.scray</groupId>
-    	<artifactId>scray-sync-api</artifactId>
+    	<artifactId>scray-sync-api_${scala.compat.version}</artifactId>
     	<version>1.1.3-SNAPSHOT</version>
     </dependency>
   </dependencies>
