@@ -102,7 +102,7 @@ class ReadServiceImpl extends ReadService {
   def hasNextSequenceFilePair(id: java.util.UUID): ScrayListenableFuture[Boolean] = {
     try {
       val hasNext = this.getReader(id)
-      .hasNext
+        .hasNext
       new ScrayListenableFuture[Boolean](hasNext)
     } catch {
       case e: Exception => {
@@ -148,11 +148,12 @@ class ReadServiceImpl extends ReadService {
           result = new ScrayListenableFuture[Map.Entry[String, Array[Byte]]](new RuntimeException(errorMessage))
         }
       })
-      result
+    result
   }
 
-  private def get() = {
-
+  override def close(id: UUID) {
+    this.getReader(id).close
+    this.removeReader(id)
   }
 
   private def getReader(resource: UUID): SequenceKeyValueFileReader[Writable, Writable] = {
@@ -163,6 +164,13 @@ class ReadServiceImpl extends ReadService {
       throw new RuntimeException(s"No reader with id ${resource}. To create a reader call readFullSequenceFile(...) first.")
     }
   }
+
+  private def removeReader(resource: UUID) = {
+      if (sequenceFileReaderMetadata.get(resource) != null) {
+        sequenceFileReaderMetadata.remove(resource)
+      }
+  }
+  
   private def getAuthority(path: String): String = {
     val uri = new URI(path)
     uri.getAuthority

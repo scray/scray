@@ -47,7 +47,7 @@ class WriteServiceImplSpecs extends WordSpec with LazyLogging {
     " create and redrive writer " in {
       val service = new WriteServiceImpl
 
-      val outPath = "target/WriteServiceImplSpecs/creatRedrive/" + System.currentTimeMillis() + "/"
+      val outPath = "target/WriteServiceImplSpecs/createAndRedrive/" + System.currentTimeMillis() + "/"
       val writtenData = new HashMap[String, Array[Byte]]();
 
       val writerId = service.createWriter(outPath)
@@ -66,7 +66,7 @@ class WriteServiceImplSpecs extends WordSpec with LazyLogging {
 
       service.close(writerId)
 
-      getIndexFiles(outPath + "/")
+      getIndexFiles(outPath + "")
         .map(fileName => {
           if (fileName.startsWith("/")) {
             (new IdxReader("file://" + fileName + ".idx", new OutputBlob),
@@ -107,7 +107,7 @@ class WriteServiceImplSpecs extends WordSpec with LazyLogging {
           }
 
           override def onFailure(t: Throwable) {
-            Assert.assertTrue(t.isInstanceOf[PrivilegedActionException])
+            Assert.assertTrue(t.isInstanceOf[IOException])
           }
         },
         MoreExecutors.directExecutor);
@@ -115,7 +115,7 @@ class WriteServiceImplSpecs extends WordSpec with LazyLogging {
     " try to write with not existing compression type " in {
       val service = new WriteServiceImpl
 
-      val outPath = "chicken://target/WriteServiceImplSpecs/creatRedrive2/" + System.currentTimeMillis() + "/"
+      val outPath = "file://target/WriteServiceImplSpecs/creatRedrive2/" + System.currentTimeMillis() + "/"
       val writtenData = new HashMap[String, Array[Byte]]();
 
       val config = new (WriteParameter.Builder)

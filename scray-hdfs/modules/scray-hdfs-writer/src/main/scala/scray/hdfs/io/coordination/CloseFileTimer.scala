@@ -31,7 +31,7 @@ class CloseFileTimer(writer: CoordinatedWriter[_, _, _, _], val timerDelay: Long
   }
   
   def run() = {
-    logger.debug("Try to close writer")
+    logger.debug(s"Try to close writer ${writer.getPath}")
     writer.close
     logger.debug("Writer closed")
   }
