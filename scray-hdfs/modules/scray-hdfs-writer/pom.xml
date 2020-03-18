@@ -197,7 +197,7 @@
 						</Import-Package>
 						<_exportcontents>
 						</_exportcontents>
-<!-- 						<Bundle-Activator>scray.hdfs.io.osgi.Activator</Bundle-Activator> -->
+						<Bundle-Activator>scray.hdfs.io.osgi.Activator</Bundle-Activator> 
 					</instructions>
 				</configuration>
 			</plugin>
