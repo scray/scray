@@ -160,11 +160,6 @@
 				<artifactId>kryo</artifactId>
 				<version>3.0.3</version>
 			</dependency>
-			<dependency>
-				<groupId>com.datastax.cassandra</groupId>
-				<artifactId>cassandra-driver-core</artifactId>
-				<version>3.1.0</version>
-			</dependency>
 		</dependencies>
 	</dependencyManagement>
 
@@ -206,7 +201,7 @@
 					<failOnWarning>false</failOnWarning>
 					<sourceDirectory>${basedir}/src/main/scala</sourceDirectory>
 					<testSourceDirectory>${basedir}/src/test/scala</testSourceDirectory>
-					<configLocation>${basedir}/scalastyle_config.xml</configLocation>
+					<configLocation>${project.basedir}/scalastyle_config.xml</configLocation> 
 					<!-- <outputFile>${project.basedir}/target/scalastyle-output.xml</outputFile> -->
 					<outputEncoding>UTF-8</outputEncoding>
 				</configuration>
