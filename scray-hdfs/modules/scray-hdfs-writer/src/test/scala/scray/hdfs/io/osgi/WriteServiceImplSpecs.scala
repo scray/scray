@@ -36,6 +36,7 @@ import java.security.PrivilegedActionException
 import java.util.UUID
 import java.net.URL
 import scala.sys.SystemProperties
+import com.google.common.util.concurrent.MoreExecutors
 
 class WriteServiceImplSpecs extends WordSpec with LazyLogging {
   val pathToWinutils = classOf[WriteServiceImplSpecs].getClassLoader.getResource("HADOOP_HOME/bin/winutils.exe");
@@ -108,7 +109,8 @@ class WriteServiceImplSpecs extends WordSpec with LazyLogging {
           override def onFailure(t: Throwable) {
             Assert.assertTrue(t.isInstanceOf[IOException])
           }
-        });
+        },
+        MoreExecutors.directExecutor);
     }
     " try to write with not existing compression type " in {
       val service = new WriteServiceImpl
@@ -137,7 +139,8 @@ class WriteServiceImplSpecs extends WordSpec with LazyLogging {
           override def onFailure(t: Throwable) {
             Assert.assertTrue(t.isInstanceOf[IllegalArgumentException])
           }
-        });
+        },
+        MoreExecutors.directExecutor);
     }
     "check written bytes value " in {
       val writeService = new WriteServiceImpl();
