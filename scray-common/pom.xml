@@ -39,7 +39,7 @@
 		<url>https://github.com/scray</url>
 		<connection>scm:git:git://github.com/scray/scray.git</connection>
 		<developerConnection>scm:git:https://github.com/scray/scray.git</developerConnection>
-		<tag>1.1.2</tag>
+		<tag>hdfs-writer-2.0.2</tag>
 	</scm>
 
 	<distributionManagement>

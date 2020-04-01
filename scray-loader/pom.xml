@@ -1,7 +1,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<artifactId>scray-loader</artifactId>
-  <version>1.1.2</version>
+	<version>1.1.2</version>
 	<name>Scray - Loader</name>
 	<description>Loads and starts a scray query service</description>
 
@@ -104,6 +104,7 @@
 		<dependency>
 			<groupId>com.google.guava</groupId>
 			<artifactId>guava</artifactId>
+			<version>16.0.1</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.hadoop</groupId>

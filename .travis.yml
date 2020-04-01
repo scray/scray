@@ -1,8 +1,9 @@
 ---
 language: java
 
+dist: trusty
+
 jdk:
-    - oraclejdk8
     - openjdk8
 
 cache:
@@ -17,6 +18,9 @@ jobs:
         - stage: build-profil-MinimizedDependencies
           install:
               mvn clean install --settings .maven.xml -B -PMinimizedDependencies
+        - stage: build-profil-scala_2.11
+          install:
+                  mvn clean install -B -Pscala-2.11
         - stage: deploy-develop-with-profil-MinimizedDependencies
           install:
               mvn clean deploy --settings .maven.xml -B -PMinimizedDependencies
@@ -27,6 +31,7 @@ jobs:
 stages:
     - build-with-tests
     - build-profil-MinimizedDependencies
+    - build-profil-scala_2.11
     - name: deploy-develop-with-profil-MinimizedDependencies
       if: branch = develop AND type != pull_request AND sender IN (obermeier)
     - name: deploy-develop

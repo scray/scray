@@ -47,7 +47,7 @@
 		<url>https://github.com/scray</url>
 		<connection>scm:git:git://github.com/scray/scray.git</connection>
 		<developerConnection>scm:git:https://github.com/scray/scray.git</developerConnection>
-		<tag>1.1.2</tag>
+		<tag>hdfs-writer-2.0.2</tag>
 	</scm>
 
 	<properties>
@@ -160,16 +160,6 @@
 				<artifactId>kryo</artifactId>
 				<version>3.0.3</version>
 			</dependency>
-			<dependency>
-				<groupId>com.google.guava</groupId>
-				<artifactId>guava</artifactId>
-				<version>16.0.1</version>
-			</dependency>
-			<dependency>
-				<groupId>com.datastax.cassandra</groupId>
-				<artifactId>cassandra-driver-core</artifactId>
-				<version>3.1.0</version>
-			</dependency>
 		</dependencies>
 	</dependencyManagement>
 
@@ -211,7 +201,7 @@
 					<failOnWarning>false</failOnWarning>
 					<sourceDirectory>${basedir}/src/main/scala</sourceDirectory>
 					<testSourceDirectory>${basedir}/src/test/scala</testSourceDirectory>
-					<configLocation>${basedir}/scalastyle_config.xml</configLocation>
+					<configLocation>${project.basedir}/scalastyle_config.xml</configLocation> 
 					<!-- <outputFile>${project.basedir}/target/scalastyle-output.xml</outputFile> -->
 					<outputEncoding>UTF-8</outputEncoding>
 				</configuration>
