@@ -26,6 +26,16 @@
 		<module>/modules/scray-sync-file</module>
 	</modules>
 
+	<profiles>
+		<profile>
+			<id>scala-2.11</id>
+			<properties>
+				<scala.version>2.11.8</scala.version>
+				<scala.compat.version>2.11</scala.compat.version>
+			</properties>
+		</profile>
+	</profiles>
+
 	<distributionManagement>
 		<snapshotRepository>
 			<id>ossrh</id>
