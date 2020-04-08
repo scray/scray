@@ -42,5 +42,4 @@ deploy:
     script: scray-examples/ingestion/prometheus_crawler/docker_deploy.sh
     skip_cleanup: true
     on:
-        all_branches: true
-        condition: sender IN (obermeier) OR sender IN (JohannesStrassner) 
+       branch: release/docker_hub
