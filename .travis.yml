@@ -20,7 +20,7 @@ jobs:
               mvn clean install --settings .maven.xml -B -PMinimizedDependencies
         - stage: build-profil-scala_2.11
           install:
-                  mvn clean install -B -Pscala-2.11
+              mvn clean install -B -Pscala-2.11
         - stage: deploy-develop-with-profil-MinimizedDependencies
           install:
               mvn clean deploy --settings .maven.xml -B -PMinimizedDependencies
@@ -37,4 +37,9 @@ stages:
     - name: deploy-develop
       if: branch = develop AND type != pull_request AND sender IN (obermeier)
 
-
+deploy:
+    provider: script
+    script: scray-examples/ingestion/prometheus_crawler/docker_deploy.sh
+    skip_cleanup: true
+    on:
+        all_branches: true
