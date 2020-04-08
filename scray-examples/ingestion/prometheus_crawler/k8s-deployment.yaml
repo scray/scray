@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: prometheus-crawler
+  labels:
+    app: prometheus-crawler
+spec:
+  containers:
+    - name: prometheus-crawler
+      image: scrayorg/examples:prometheus-crawler
+      env:
+        - name: PROMETHEUS_METRIKLIST_URL
+          value: "http://bis-monitoring.qa.dev.seeburger.de/prometheus/api/v1" 
+        - name: DESTINATION_PATH
+          value: "hdfs://hdfs-1.research.dev.seeburger.de/projects/cloud_ai/qa_prometheus/qa_prometheus_single_metrics_" 

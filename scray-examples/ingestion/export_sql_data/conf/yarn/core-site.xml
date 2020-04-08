@@ -1,0 +1,7 @@
+<configuration>
+	<property>
+		<name>fs.defaultFS</name>
+		<value>hdfs://clspromon-aio01.txx.seeburger.de:8020</value>
+		<description>NameNode URI</description>
+	</property>
+</configuration>
