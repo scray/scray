@@ -25,11 +25,11 @@ public class MongodbApiServiceImpl extends MongodbApiService {
     @Override
     public Response addQuery(Query mongoDbQuery, SecurityContext securityContext) throws NotFoundException {
         // do some magic!
-        return Response.ok().entity(new ApiResponseMessage(ApiResponseMessage.OK, "magic!")).build();
+        return Response.ok().entity(new ApiResponseMessage(ApiResponseMessage.OK, "Greetings from Scray MongoDB service! :) ")).build();
     }
     @Override
     public Response getQueryResult( @NotNull String queryId, SecurityContext securityContext) throws NotFoundException {
         // do some magic!
-        return Response.ok().entity(new ApiResponseMessage(ApiResponseMessage.OK, "magic!")).build();
+        return Response.ok().entity(new ApiResponseMessage(ApiResponseMessage.OK, "Greetings from Scray MongoDB service! :) ")).build();
     }
 }

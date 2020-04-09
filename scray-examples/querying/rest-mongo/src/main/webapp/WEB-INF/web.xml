@@ -50,7 +50,7 @@
     </servlet>
     <servlet-mapping>
         <servlet-name>jersey</servlet-name>
-        <url-pattern>/obermeier/stefan/1.0.0/*</url-pattern>
+        <url-pattern>/scray/examples/1.0.0/*</url-pattern>
     </servlet-mapping>
     <filter>
         <filter-name>ApiOriginFilter</filter-name>

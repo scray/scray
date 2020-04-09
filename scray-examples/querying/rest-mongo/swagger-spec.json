@@ -3,17 +3,17 @@
   "info": {
     "description": "Simple API to query MongoDB data",
     "version": "1.0.0",
-    "title": "Swagger Server",
+    "title": "MongoDB rest example",
     "termsOfService": "",
     "contact": {
-      "email": ""
+      "email": "scray@example.com"
     },
     "license": {
       "name": "Apache 2.0",
       "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
     }
   },
-  "host": "localhost",
+  "host": "localhost:8080",
   "basePath": "/scray/examples/1.0.0",
   "tags": [
     {
@@ -24,7 +24,7 @@
     }
   ],
   "schemes": [
-    "https"
+    "http"
   ],
   "paths": {
     "/mongodb": {
