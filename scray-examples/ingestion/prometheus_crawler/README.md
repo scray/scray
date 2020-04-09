@@ -2,12 +2,11 @@
 
 ## Run as docker container
   ```
-  docker pull scrayorg/examples:prometheus-crawler
   docker run \
     -e PROMETHEUS_METRIKLIST_URL='http://prometheus.example.com/prometheus/api/v1' \
     -e DESTINATION_PATH='hdfs://hdfs.example.com/user/hdfs/prometheus_data/prometheus_single_metrics_' \
     --name prometheus_crawler \
-    scrayorg/examples:prometheus-crawler
+    scrayorg/prometheus-crawler
   ```
   
  ## Run in Kubernetes cluster
