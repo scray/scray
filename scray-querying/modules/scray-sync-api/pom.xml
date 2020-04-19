@@ -86,13 +86,7 @@
 					</execution>
 				</executions>
 			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-install-plugin</artifactId>
-				<configuration>
-					<pomFile>target/pom.xml</pomFile>
-				</configuration>
-			</plugin>
+
 			<plugin>
 				<!-- see http://davidb.github.com/scala-maven-plugin -->
 				<groupId>net.alchim31.maven</groupId>
