@@ -7,7 +7,7 @@ This example is technically based on (Hyperleder fabcar example)[https://hyperle
     cd scray/scray-examples/persistence/hyperleder-invoice-example/test-network
 
 ### Flolow Hyperleder fabcar tutorial
-    (Hyperleder fabcar example)[https://hyperledger-fabric.readthedocs.io/en/release-2.0/test_network.html]
+[https://hyperledger-fabric.readthedocs.io/en/release-2.0/test_network.html]
 
 ### Deploy chaincode
     ./network.sh deployCC -l java
