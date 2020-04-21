@@ -1,0 +1,100 @@
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+trigger:
+  - master
+  - release-1.4
+
+variables:
+  NODE_VER: '12.x'
+  PATH: $(Agent.BuildDirectory)/bin:/bin:/usr/bin:/sbin:/usr/sbin:/usr/local/bin:/usr/local/sbin
+
+jobs:
+  - job: fabcar_go
+    displayName: FabCar (Go)
+    pool:
+      vmImage: ubuntu-18.04
+    dependsOn: []
+    timeoutInMinutes: 60
+    steps:
+      - template: install-deps.yml
+      - template: install-fabric.yml
+      - template: fabcar-go.yml
+
+  - job: test_network
+    displayName: Start the test network
+    pool:
+      vmImage: ubuntu-18.04
+    dependsOn: []
+    timeoutInMinutes: 60
+    steps:
+      - template: install-deps.yml
+      - template: install-fabric.yml
+      - template: testnetwork.yml
+
+  - job: fabcar_java
+    displayName: FabCar (Java)
+    pool:
+      vmImage: ubuntu-18.04
+    dependsOn: []
+    timeoutInMinutes: 60
+    steps:
+      - template: install-deps.yml
+      - template: install-fabric.yml
+      - template: fabcar-java.yml
+
+  - job: fabcar_javascript
+    displayName: FabCar (JavaScript)
+    pool:
+      vmImage: ubuntu-18.04
+    dependsOn: []
+    timeoutInMinutes: 60
+    steps:
+      - template: install-deps.yml
+      - template: install-fabric.yml
+      - template: fabcar-javascript.yml
+
+  - job: fabcar_typescript
+    displayName: FabCar (TypeScript)
+    pool:
+      vmImage: ubuntu-18.04
+    dependsOn: []
+    timeoutInMinutes: 60
+    steps:
+      - template: install-deps.yml
+      - template: install-fabric.yml
+      - template: fabcar-typescript.yml
+
+  - job: commercialpaper_javascript
+    displayName: CommercialPaper (JavaScript)
+    pool:
+      vmImage: ubuntu-18.04
+    dependsOn: []
+    timeoutInMinutes: 60
+    steps:
+      - template: install-deps.yml
+      - template: install-fabric.yml
+      - template: commercialpaper-javascript.yml
+
+  - job: commercialpaper_java
+    displayName: CommercialPaper (Java)
+    pool:
+      vmImage: ubuntu-18.04
+    dependsOn: []
+    timeoutInMinutes: 60
+    steps:
+      - template: install-deps.yml
+      - template: install-fabric.yml
+      - template: commercialpaper-java.yml
+
+  - job: commercialpaper_go
+    displayName: CommercialPaper (Go)
+    pool:
+      vmImage: ubuntu-18.04
+    dependsOn: []
+    timeoutInMinutes: 60
+    steps:
+      - template: install-deps.yml
+      - template: install-fabric.yml
+      - template: commercialpaper-go.yml
