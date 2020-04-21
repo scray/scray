@@ -9,8 +9,6 @@ This example is technically based on (Hyperleder fabcar example)[https://hyperle
 ### Flolow Hyperleder fabcar tutorial
 [https://hyperledger-fabric.readthedocs.io/en/release-2.0/test_network.html]
 
-### Deploy chaincode
-    ./network.sh deployCC -l java
 
 ### List all invoices
     peer chaincode query -C mychannel -n fabcar -c '{"Args":["queryAllInvoices"]}'
