@@ -1,28 +1,36 @@
 package io.swagger.api;
 
-import javax.servlet.ServletConfig;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.SecurityContext;
-
-import org.scray.examples.mongodb.api.factories.MongodbApiServiceFactory;
+import io.swagger.model.*;
+import io.swagger.api.MongodbApiService;
+import io.swagger.api.factories.MongodbApiServiceFactory;
 
 import io.swagger.annotations.ApiParam;
+import io.swagger.jaxrs.*;
+
 import io.swagger.model.Query;
 import io.swagger.model.QueryResult;
 
+import java.util.Map;
+import java.util.List;
+import io.swagger.api.NotFoundException;
+
+import java.io.InputStream;
+
+import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
+import org.glassfish.jersey.media.multipart.FormDataParam;
+
+import javax.servlet.ServletConfig;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.SecurityContext;
+import javax.ws.rs.*;
+import javax.validation.constraints.*;
 
 @Path("/mongodb")
 
 
 @io.swagger.annotations.Api(description = "the mongodb API")
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaJerseyServerCodegen", date = "2020-04-09T12:28:03.203Z")
+@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaJerseyServerCodegen", date = "2020-04-29T01:06:05.602Z")
 public class MongodbApi  {
    private final MongodbApiService delegate;
 
@@ -76,5 +84,23 @@ public class MongodbApi  {
 ,@Context SecurityContext securityContext)
     throws NotFoundException {
         return delegate.getQueryResult(queryId,securityContext);
+    }
+    @POST
+    @Path("/{database}/{collection}")
+    @Consumes({ "application/json" })
+    @Produces({ "application/json" })
+    @io.swagger.annotations.ApiOperation(value = "insert data", notes = "insert data", response = Void.class, tags={ "admins", })
+    @io.swagger.annotations.ApiResponses(value = { 
+        @io.swagger.annotations.ApiResponse(code = 201, message = "item created", response = Void.class),
+        
+        @io.swagger.annotations.ApiResponse(code = 400, message = "invalid input, object invalid", response = Void.class),
+        
+        @io.swagger.annotations.ApiResponse(code = 409, message = "an existing item already exists", response = Void.class) })
+    public Response insert(@ApiParam(value = "",required=true) @PathParam("database") String database
+,@ApiParam(value = "",required=true) @PathParam("collection") String collection
+,@ApiParam(value = "Data which will be writen to db" ) String jsonData
+,@Context SecurityContext securityContext)
+    throws NotFoundException {
+        return delegate.insert(database,collection,jsonData,securityContext);
     }
 }

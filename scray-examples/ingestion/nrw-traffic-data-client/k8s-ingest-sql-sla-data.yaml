@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Pod
+metadata:
+    name: nrw-traffic-mongodb
+    labels:
+        app: ingest-nrw-traffic-data-to-mongodb
+spec:
+    containers:
+        - name: cloudai-ingest-sql-sla-data
+          image: scrayorg/nrw-traffic-data-client
+        - name: mongodb
+          image: mongo:4.0
+          

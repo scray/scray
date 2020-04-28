@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nrw-traffic-client
+  labels:
+    app: nrw-traffic-client
+spec:
+  containers:
+    - name: nrw-traffic-client
+      image: scrayorg/nrw-traffic-client

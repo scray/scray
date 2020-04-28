@@ -23,7 +23,7 @@ import javax.validation.constraints.*;
 /**
  * Query
  */
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaJerseyServerCodegen", date = "2020-04-09T12:28:03.203Z")
+@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaJerseyServerCodegen", date = "2020-04-29T01:06:05.602Z")
 public class Query   {
   @JsonProperty("id")
   private String id = null;

@@ -45,7 +45,7 @@
     </servlet>
     <servlet>
         <servlet-name>Bootstrap</servlet-name>
-        <servlet-class>org.scray.examples.mongodb.api.Bootstrap</servlet-class>
+        <servlet-class>io.swagger.api.Bootstrap</servlet-class>
         <load-on-startup>2</load-on-startup>
     </servlet>
     <servlet-mapping>
