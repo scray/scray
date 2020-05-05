@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.List;
 
+import io.prometheus.client.Counter;
 import io.swagger.client.ApiClient;
 import io.swagger.client.ApiException;
 import io.swagger.client.api.AdminsApi;
@@ -13,8 +14,16 @@ public class App {
         final int POLLING_INTERVAL = 60000;
         HttpClient client = new HttpClient();
         D2LogicalModelStringMapper mapper = new D2LogicalModelStringMapper();
+        Thread pServer = null;
+        
+        final Counter nrwHttpRequests = Counter.build()
+                .name("nrw_traffic_client_http_requests")
+                .help("Total requests.")
+                .register();
+        pServer = new Thread(new PrometheusServer());
+        pServer.start();
 
-        while (true) {
+        while (!Thread.interrupted()) {
             try {
                 
                 List<String> jsonData = client.getData(
@@ -31,6 +40,7 @@ public class App {
 
                 try {
                     System.out.println("Insert " + jsonData.size() + " json object(s)");
+                    nrwHttpRequests.inc(); // Increment counter
                     for (String elaboratedData : jsonData) {
                         apiInstance.insert("nrw", "traffic", elaboratedData);
                     }
