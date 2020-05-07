@@ -7,7 +7,7 @@ kubectl create -f k8s-deployment.yaml
 or
 
 ```
-kubectl create -f https://raw.githubusercontent.com/scray/scray/feature/ingestion-examples/scray-examples/scray-examples/persistent-traffic-data/k8s-deployment.yaml
+kubectl apply -f https://raw.githubusercontent.com/scray/scray/feature/ingestion-examples/scray-examples/persistent-traffic-data/k8s-deployment.yaml
 ```
 
 # Data location
