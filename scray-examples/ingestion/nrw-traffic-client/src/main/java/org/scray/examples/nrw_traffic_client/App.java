@@ -12,7 +12,7 @@ import io.swagger.client.api.AdminsApi;
 public class App {
     public static void main(String[] args) {
         final int POLLING_INTERVAL = 60000;
-        String MONGO_DB_HOST = "mongodb-rest-acces";
+        String MONGO_DB_HOST = "mongodb-rest-access";
         int REST_PORT = 8080;
 
         
