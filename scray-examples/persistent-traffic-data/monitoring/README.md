@@ -7,8 +7,8 @@ kubectl apply -f https://raw.githubusercontent.com/scray/scray/feature/ingestion
 ```
 
 ### External Ports
- * Grafana: 33000
- * Prometheus: 39090
+ * Grafana: 30300
+ * Prometheus: 30090
  
 ### DNS name
  * ```scray-example-monitoring```

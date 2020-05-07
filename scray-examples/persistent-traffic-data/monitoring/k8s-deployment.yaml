@@ -34,9 +34,9 @@ spec:
   ports:
   - name: prometheus-port
     port: 9090
-    nodePort: 39090 
+    nodePort: 30090 
     protocol: TCP
   - name: grafana-port
     port: 3000
-    nodePort: 33000
+    nodePort: 30300
     protocol: TCP
