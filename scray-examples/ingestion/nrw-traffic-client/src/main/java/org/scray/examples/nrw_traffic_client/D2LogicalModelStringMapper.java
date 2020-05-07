@@ -42,12 +42,19 @@ public class D2LogicalModelStringMapper {
 
         } catch (JsonParseException e) {
             e.printStackTrace();
+            elaboratedData.add(this.createErrorObject(e));
         } catch (JsonMappingException e) {
             e.printStackTrace();
+            elaboratedData.add(this.createErrorObject(e));
         } catch (IOException e) {
             e.printStackTrace();
+            elaboratedData.add(this.createErrorObject(e));
         }
         
         return elaboratedData;
+    }
+    
+    public String createErrorObject(Exception e) {
+        return "{" + "\"error\": \"" + e.getLocalizedMessage() + "\"}";
     }
 }

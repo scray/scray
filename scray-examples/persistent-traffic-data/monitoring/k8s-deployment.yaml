@@ -1,0 +1,42 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: scray-example-monitoring-deployment
+  labels:
+    app: scray-example-monitoring-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: scray-example-monitoring
+  template:
+    metadata:
+      labels:
+        app: scray-example-monitoring
+    spec:
+      containers:
+        - name: prometheus
+          image: prom/prometheus
+        - name: grafana
+          image: grafana/grafana
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: scray-example-monitoring
+  labels:
+    run: scray-example-monitoring
+spec:
+  type: NodePort
+  selector:
+    app: scray-example-monitoring
+  ports:
+  - name: prometheus-port
+    port: 9090
+    nodePort: 39090 
+    protocol: TCP
+  - name: grafana-port
+    port: 3000
+    nodePort: 33000
+    protocol: TCP

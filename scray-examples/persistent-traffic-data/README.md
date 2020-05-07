@@ -1,0 +1,34 @@
+# To run the full setup, please execute the following:
+
+## Kubernetes
+```
+kubectl create -f k8s-deployment.yaml
+```
+or
+
+```
+kubectl create -f https://raw.githubusercontent.com/scray/scray/feature/ingestion-examples/scray-examples/scray-examples/persistent-traffic-data/k8s-deployment.yaml
+```
+
+# Data location
+
+### MongoDB
+ * port: 30081 
+ * db: "nrw"
+ * collection: traffic
+ 
+### MongoDB writer REST-API
+ * port: 30080
+ * Path to api descripton: /scray/examples/1.0.0/swagger.json
+
+# To run just the MongoDB Rest-Api, please execute: 
+ 
+## Console
+```
+mvn clean package jetty:run
+```
+
+## Docker
+```
+docker run -p 8080:8080 scrayorg/mongodb-example-rest
+```

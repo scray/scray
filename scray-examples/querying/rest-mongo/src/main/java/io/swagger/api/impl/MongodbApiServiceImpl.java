@@ -21,6 +21,7 @@ import javax.validation.constraints.*;
 @javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaJerseyServerCodegen", date = "2020-04-29T01:06:05.602Z")
 public class MongodbApiServiceImpl extends MongodbApiService {
     MongoDbClient client = null;
+    String MONGO_DB_HOST = "mongodb-host";
     
     @Override
     public Response addQuery(Query mongoDbQuery, SecurityContext securityContext) throws NotFoundException {
@@ -36,7 +37,7 @@ public class MongodbApiServiceImpl extends MongodbApiService {
     public Response insert(String database, String collection, String jsonData, SecurityContext securityContext) throws NotFoundException {
         
         if(client == null) {
-         client = new MongoDbClient("127.0.0.1", database, collection);
+         client = new MongoDbClient(MONGO_DB_HOST, database, collection);
         }
         
         client.insert(jsonData);

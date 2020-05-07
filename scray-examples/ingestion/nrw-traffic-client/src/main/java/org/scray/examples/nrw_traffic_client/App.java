@@ -12,6 +12,10 @@ import io.swagger.client.api.AdminsApi;
 public class App {
     public static void main(String[] args) {
         final int POLLING_INTERVAL = 60000;
+        String MONGO_DB_HOST = "mongodb-rest-acces";
+        int REST_PORT = 8080;
+
+        
         HttpClient client = new HttpClient();
         D2LogicalModelStringMapper mapper = new D2LogicalModelStringMapper();
         Thread pServer = null;
@@ -29,13 +33,18 @@ public class App {
                 List<String> jsonData = client.getData(
                         "http://datarun2018.de/BASt-MDM-Interface/srv/2865003/clientPullService?subscriptionID=2865003",
                         mapper);
-                System.out.println("New data: " + jsonData.get(0).substring(0, 200));
-
+                
+                if(jsonData.size() > 0 && jsonData.get(0).length() > 200) { 
+                    System.out.println("New data: " + jsonData.get(0).substring(0, 200));
+                } else {
+                    System.out.println("No valid data from http interface" + jsonData);
+                }
+               
                 AdminsApi apiInstance = new AdminsApi();
 
                 ApiClient apiClient = apiInstance.getApiClient();
                 URL url = new URL(apiClient.getBasePath());
-                URL newUrl = new URL(url.getProtocol(), "127.0.0.1", 8080, url.getFile());
+                URL newUrl = new URL(url.getProtocol(), MONGO_DB_HOST, REST_PORT, url.getFile());
                 apiClient.setBasePath(newUrl.toString());
 
                 try {
@@ -49,9 +58,7 @@ public class App {
                     System.err.println("Exception when calling AdminsApi#insert. Retry in " + POLLING_INTERVAL + "ms");
                 }
 
-            } catch (UnsupportedOperationException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
+            } catch (Exception e) {
                 e.printStackTrace();
             }
             try {
