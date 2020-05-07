@@ -1,11 +1,3 @@
-initContainers:
-- name: git-clone-configuration
-  image: alpine/git:1.0.4
-  command: ['/bin/sh', '-c']
-  args: ['git clone --branch v1.0.0 https://github.com/exoscale-labs/config-mgmt-properties.git && mv config-mgmt-properties/dev/* /config']
-  volumeMounts:
-  - name: config
-    mountPath: /config
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -27,13 +19,27 @@ spec:
         - name: prometheus
           image: prom/prometheus
           volumeMounts:
-          - name: prometheus-confiig
-            mountPath: /etc/prometheus/
-          volumes:
-          - name: cache-volume
-            emptyDir: {}
+          - name: config
+            mountPath: /etc/prometheus/prometheus.yml
+            subPath: prometheus.yml
         - name: grafana
           image: grafana/grafana
+          volumeMounts:
+          - name: config
+            mountPath: /mnt/config
+        - name: configure-grafana
+          image: busybox:1.28
+      initContainers:
+      - name: configuration-loader
+        image: busybox:1.28
+        command: ['/bin/sh', '-c']
+        args: ['wget https://raw.githubusercontent.com/scray/scray/feature/ingestion-examples/scray-examples/persistent-traffic-data/monitoring/configurations/prometheus/prometheus.yaml && mv prometheus.yaml /mnt/config/']
+        volumeMounts:
+        - name: config
+          mountPath: /mnt/config
+      volumes:
+      - name: config
+        emptyDir: {}
 ---
 apiVersion: v1
 kind: Service
