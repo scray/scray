@@ -12,3 +12,6 @@ kubectl apply -f https://raw.githubusercontent.com/scray/scray/feature/ingestion
  
 ### DNS name
  * ```scray-example-monitoring```
+ 
+ ### Access dashboard
+ [http://localhost:30300/d/8ec0OC6Wz/scray-example-prometheus?orgId=1](http://localhost:30300/d/8ec0OC6Wz/scray-example-prometheus?orgId=1)
