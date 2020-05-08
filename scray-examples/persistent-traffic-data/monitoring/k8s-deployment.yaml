@@ -30,6 +30,7 @@ spec:
             subPath: grafana.ini
         - name: grafana-configurator
           image: scrayorg/grafana-configurator
+          imagePullPolicy: Always
       initContainers:
       - name: configuration-loader
         image: busybox:1.28
