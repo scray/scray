@@ -23,7 +23,7 @@ spec:
             mountPath: /etc/prometheus/prometheus.yml
             subPath: prometheus.yml
         - name: grafana
-          image: grafana/grafana
+          image: grafana/grafana:6.7.3
           volumeMounts:
           - name: config
             mountPath: /mnt/config

@@ -1,11 +1,17 @@
-#!/bin/bash
+#!/bin/sh
 
-source "config.sh"
+source "./config.sh"
 
 dashboard_id="h8acj9eWz"
 datasource_id="1"
 
 #curl -X POST -H "Content-Type: application/json" -d '{"name":"scray-importer", "role": "Admin"}' http://admin:admin@${GRAFANA_HOST}:3000/api/auth/keys
+
+function download_configuration {
+    curl https://raw.githubusercontent.com/scray/scray/feature/ingestion-examples/scray-examples/persistent-traffic-data/monitoring/grafana-configurator/dashboard_h8acj9eWz.json -o dashboard_h8acj9eWz.json
+    curl https://raw.githubusercontent.com/scray/scray/feature/ingestion-examples/scray-examples/persistent-traffic-data/monitoring/grafana-configurator/datasource_1.json -o datasource_1.json
+    
+}
 
 function get_grafana_base_url {
 	url=http://$GRAFANA_USER:$GRAFANA_PASSWORD@${GRAFANA_HOST}:$GRAFANA_PORT
@@ -32,6 +38,7 @@ function push_data_source {
 	curl -s -H "Content-Type: application/json"  -X POST -d "$(cat datasource_$data_source_id.json)" $(get_grafana_base_url)/api/datasources/
 }
 
+download_configuration
 #echo $(get_data_source  $datasource_id)
 echo $(push_data_source  $datasource_id)
 echo $(push_dashboard $dashboard_id)
