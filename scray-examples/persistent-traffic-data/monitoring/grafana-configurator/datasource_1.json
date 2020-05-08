@@ -1,0 +1,21 @@
+{
+    "access": "proxy",
+    "basicAuth": false,
+    "basicAuthPassword": "",
+    "basicAuthUser": "",
+    "database": "",
+    "id": 1,
+    "isDefault": true,
+    "jsonData": {},
+    "name": "Scray-Example-Prometheus",
+    "orgId": 1,
+    "password": "",
+    "readOnly": false,
+    "secureJsonFields": {},
+    "type": "prometheus",
+    "typeLogoUrl": "",
+    "url": "http://localhost:9090",
+    "user": "",
+    "version": 4,
+    "withCredentials": false
+}
