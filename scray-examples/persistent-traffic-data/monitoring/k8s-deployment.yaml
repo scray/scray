@@ -28,6 +28,8 @@ spec:
           - name: config
             mountPath: /etc/grafana/grafana.ini
             subPath: grafana.ini
+        - name: grafana-configurator
+          image: scrayorg/grafana-configurator
       initContainers:
       - name: configuration-loader
         image: busybox:1.28
