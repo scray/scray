@@ -13,6 +13,7 @@ kubectl apply -f https://raw.githubusercontent.com/scray/scray/feature/ingestion
 # Data location
 
 ### MongoDB
+ * hostname: mongodb-host
  * port: 30081 
  * db: "nrw"
  * collection: traffic
