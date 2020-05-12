@@ -30,3 +30,9 @@ scrape_configs:
   - job_name: 'mongodb-rest-access'
     static_configs:
     - targets: ['mongodb-rest-access:8080']
+    
+  - job_name: 'cadvisor-host'
+    static_configs:
+    - targets: ['cadvisor-host:8080']    
+    
+    
