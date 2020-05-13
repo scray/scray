@@ -107,3 +107,39 @@ spec:
     port: 27017
     nodePort: 30081
     protocol: TCP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cadvisor
+  labels:
+    app: cadvisor-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cadvisor
+  template:
+    metadata:
+      labels:
+        app: cadvisor
+    spec:
+      containers:
+       - name: cadvisor
+         image: google/cadvisor:latest
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cadvisor-host
+  labels:
+    run: cadvisor-host
+spec:
+  type: NodePort
+  selector:
+    app: cadvisor
+  ports:
+  - name: cadvisor-port
+    port: 8080
+    nodePort: 30089
+    protocol: TCP

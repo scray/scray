@@ -35,7 +35,7 @@ spec:
       - name: configuration-loader
         image: busybox:1.28
         command: ['/bin/sh', '-c']
-        args: ['wget https://raw.githubusercontent.com/scray/scray/feature/ingestion-examples/scray-examples/persistent-traffic-data/monitoring/configurations/prometheus/prometheus.yml && mv prometheus.yml /mnt/config/prometheus.yml && wget https://raw.githubusercontent.com/scray/scray/feature/ingestion-examples/scray-examples/persistent-traffic-data/monitoring/grafana-configurator/grafana.ini && mv grafana.ini /mnt/config/grafana.ini']
+        args: ['wget https://raw.githubusercontent.com/scray/scray/feature/cadvisor/scray-examples/persistent-traffic-data/monitoring/configurations/prometheus/prometheus.yml && mv prometheus.yml /mnt/config/prometheus.yml && wget https://raw.githubusercontent.com/scray/scray/feature/ingestion-examples/scray-examples/persistent-traffic-data/monitoring/grafana-configurator/grafana.ini && mv grafana.ini /mnt/config/grafana.ini']
         volumeMounts:
         - name: config
           mountPath: /mnt/config
