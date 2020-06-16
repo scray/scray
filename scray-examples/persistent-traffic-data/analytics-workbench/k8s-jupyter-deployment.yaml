@@ -31,7 +31,7 @@ spec:
       - name: github-config-loader
         image: alpine/git
         command: ['/bin/sh', '-c']
-        args: ['cd /mnt/config && git clone --single-branch -b feature/addjupyter https://github.com/scray/scray.git && chmod -R a+rw ./scray']
+        args: ['cd /mnt/config && git clone --single-branch -b feature/ingestion-examples https://github.com/scray/scray.git && chmod -R a+rw ./scray']
         volumeMounts:
         - name: config
           mountPath: /mnt/config
