@@ -67,7 +67,7 @@ def encode(dataall,columns):
 
     for column in columns:
         encoder = TolerantLabelEncoder(ignore_unknown=True)
-        encoder.classes_ = np.load(column + '.npy')
+        encoder.classes_ = np.load('/home/jovyan/work/npy/' + column + '.npy')
         dataall[column] = encoder.transform(dataall[column]) 
 
     # restore np.load for future normal usage
