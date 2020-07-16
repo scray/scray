@@ -14,11 +14,11 @@ Three components can be deployed independently.
   
 ## Start all components
 ```
-kubectl apply -f https://raw.githubusercontent.com/scray/scray/feature/ingestion-examples/scray-examples/persistent-traffic-data/ingestion/k8s-deployment.yaml -f https://raw.githubusercontent.com/scray/scray/feature/ingestion-examples/scray-examples/persistent-traffic-data/monitoring/k8s-deployment.yaml -f https://raw.githubusercontent.com/scray/scray/feature/ingestion-examples/scray-examples/persistent-traffic-data/analytics-workbench/k8s-jupyter-deployment.yaml
+kubectl apply -f https://raw.githubusercontent.com/scray/scray/feature/ingestion-examples/scray-examples/persistent-traffic-data/k8s-deployment.yaml -f https://raw.githubusercontent.com/scray/scray/feature/ingestion-examples/scray-examples/persistent-traffic-data/ingestion/monitoring/k8s-deployment.yaml -f https://raw.githubusercontent.com/scray/scray/feature/ingestion-examples/scray-examples/persistent-traffic-data/analytics-workbench/k8s-jupyter-deployment.yaml
 ```
 ## Delete all components
 ```
-kubectl delete -f https://raw.githubusercontent.com/scray/scray/feature/ingestion-examples/scray-examples/persistent-traffic-data/ingestion/k8s-deployment.yaml -f https://raw.githubusercontent.com/scray/scray/feature/ingestion-examples/scray-examples/persistent-traffic-data/monitoring/k8s-deployment.yaml -f https://raw.githubusercontent.com/scray/scray/feature/ingestion-examples/scray-examples/persistent-traffic-data/analytics-workbench/k8s-jupyter-deployment.yaml
+kubectl delete -f https://raw.githubusercontent.com/scray/scray/feature/ingestion-examples/scray-examples/persistent-traffic-data/k8s-deployment.yaml -f https://raw.githubusercontent.com/scray/scray/feature/ingestion-examples/scray-examples/persistent-traffic-data/ingestion/monitoring/k8s-deployment.yaml -f https://raw.githubusercontent.com/scray/scray/feature/ingestion-examples/scray-examples/persistent-traffic-data/analytics-workbench/k8s-jupyter-deployment.yaml
 ```
 
 ## Ingestion component
