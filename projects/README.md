@@ -1,1 +1,1 @@
-# Implementation of different scray related use cases.
+# Implementations of scray related use cases.

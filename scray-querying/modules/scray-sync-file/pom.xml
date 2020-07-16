@@ -83,13 +83,6 @@
 				</executions>
 			</plugin>
 			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-install-plugin</artifactId>
-				<configuration>
-					<pomFile>target/pom.xml</pomFile>
-				</configuration>
-			</plugin>
-			<plugin>
 				<!-- see http://davidb.github.com/scala-maven-plugin -->
 				<groupId>net.alchim31.maven</groupId>
 				<artifactId>scala-maven-plugin</artifactId>
@@ -143,6 +136,6 @@
 		<groupId>org.scray</groupId>
 		<artifactId>scray-querying-parent</artifactId>
 		<version>1.1.3-SNAPSHOT</version>
-		<relativePath>../pom.xml</relativePath>
+		<relativePath>../../pom.xml</relativePath>
 	</parent>
 </project>
