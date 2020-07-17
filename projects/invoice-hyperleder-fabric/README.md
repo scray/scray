@@ -1,1 +1,1 @@
-# Invoice blockchain example
+# Invoice blockchain project
