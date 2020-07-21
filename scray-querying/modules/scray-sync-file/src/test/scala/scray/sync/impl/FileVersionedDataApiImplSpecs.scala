@@ -1,11 +1,12 @@
 package scray.sync.impl
 
-import org.junit.runner.RunWith
-import org.scalatest.WordSpec
-import junit.framework.Assert
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
+
+import org.scalatest.WordSpec
+
+import junit.framework.Assert
 
 class FileVersionedDataApiImplSpecs extends WordSpec {
   "FileVersionedData" should {
