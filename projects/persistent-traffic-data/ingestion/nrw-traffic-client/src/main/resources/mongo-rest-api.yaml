@@ -1,0 +1,158 @@
+swagger: '2.0'
+info:
+  description: Simple API to query MongoDB data
+  version: 1.0.0
+  title: Rest MongoDB example
+  # put the contact info for your development or API team
+
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+
+# tags are used for organizing operations
+tags:
+- name: admins
+  description: Secured Admin-only calls
+- name: developers
+  description: Operations available to regular developers
+
+paths:
+  /mongodb:
+    get:
+      tags:
+      - developers
+      summary: get query result
+      operationId: getQueryResult
+      description: |
+        By passing a querry, you can 
+      produces:
+      - application/json
+      parameters:
+      - in: query
+        name: queryId
+        description: pass the name of the query
+        required: true
+        type: string
+      responses:
+        200:
+          description: search results matching criteria
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/QueryResult'
+        400:
+          description: bad input parameter
+    post:
+      tags:
+      - admins
+      summary: adds an query
+      operationId: addQuery
+      description: Adds new query
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: body
+        name: mongoDbQuery
+        description: MongoDB query
+        schema:
+          $ref: '#/definitions/Query'
+      responses:
+        201:
+          description: item created
+        400:
+          description: invalid input, object invalid
+        409:
+          description: an existing item already exists
+  /mongodb/{database}/{collection}:  
+    post:
+      tags:
+      - admins
+      summary: insert data
+      operationId: insert
+      description: insert data
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+        - in: path
+          name: database
+          required: true
+          type: string
+        - in: path
+          name: collection
+          required: true
+          type: string
+        - in: body
+          name: jsonData
+          description: Data which will be writen to db
+          schema:
+             type: string
+      responses:
+        201:
+          description: item created
+        400:
+          description: invalid input, object invalid
+        409:
+          description: an existing item already exists
+definitions:
+  Query:
+    type: object
+    required:
+    - id
+    - serverAddress
+    - databaseName
+    - collectionName
+    - query
+    properties:
+      id:
+        type: string
+        example: d290f1ee-6c54-4b01-90e6-d701748f0851
+      serverAddress:
+        type: string
+        example: 127.0.0.1:27017
+      databaseName:
+        type: string
+        example: db1
+      collectionName:
+        type: string
+        example: col1
+      query:
+        type: string
+        example: SELECT * FROM inventory WHERE status = "D"
+      description:
+        type: string
+        example: Super description
+  QueryResult:
+    type: object
+    required:
+    - id
+    - queryname
+    - value
+    properties:
+      id:
+        type: string
+        format: uuid
+        example: d290f1ee-6c54-4b01-90e6-d701748f0851
+      name:
+        type: string
+        example: Super KPI
+      value:
+        type: string
+        example: 42
+      description:
+        type: string
+# Added by API Auto Mocking Plugin
+# host: rest.example.com
+# basePath: /scray/kpi/1.0.0
+schemes:
+ - http
+# Added by API Auto Mocking Plugin
+# basePath: /scrayr/example/1.0.0
+# Added by API Auto Mocking Plugin
+# basePath: /scray/example/querying/1.0.0
+# Added by API Auto Mocking Plugin
+host: localhost
+basePath: /scray/examples/1.0.0

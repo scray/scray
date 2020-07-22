@@ -1,0 +1,64 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: scray-example-monitoring-deployment
+  labels:
+    app: scray-example-monitoring-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: scray-example-monitoring
+  template:
+    metadata:
+      labels:
+        app: scray-example-monitoring
+    spec:
+      containers:
+        - name: prometheus
+          image: prom/prometheus
+          volumeMounts:
+          - name: config
+            mountPath: /etc/prometheus/prometheus.yml
+            subPath: prometheus.yml
+        - name: grafana
+          image: grafana/grafana:6.7.3
+          volumeMounts:
+          - name: config
+            mountPath: /etc/grafana/grafana.ini
+            subPath: grafana.ini
+        - name: grafana-configurator
+          image: scrayorg/grafana-configurator
+          imagePullPolicy: Always
+      initContainers:
+      - name: configuration-loader
+        image: busybox:1.28
+        command: ['/bin/sh', '-c']
+        args: ['wget https://raw.githubusercontent.com/scray/scray/feature/ingestion-examples/scray-examples/persistent-traffic-data/monitoring/configurations/prometheus/prometheus.yml && mv prometheus.yml /mnt/config/prometheus.yml && wget https://raw.githubusercontent.com/scray/scray/feature/ingestion-examples/scray-examples/persistent-traffic-data/monitoring/grafana-configurator/grafana.ini && mv grafana.ini /mnt/config/grafana.ini']
+        volumeMounts:
+        - name: config
+          mountPath: /mnt/config
+      volumes:
+      - name: config
+        emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: scray-example-monitoring
+  labels:
+    run: scray-example-monitoring
+spec:
+  type: NodePort
+  selector:
+    app: scray-example-monitoring
+  ports:
+  - name: prometheus-port
+    port: 9090
+    nodePort: 30090 
+    protocol: TCP
+  - name: grafana-port
+    port: 3000
+    nodePort: 30300
+    protocol: TCP
