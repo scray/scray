@@ -1,6 +1,6 @@
 # Highway traffic analytics:
 
-This repository consists of components to analyse publicly available traffic data.
+This repository consists of components to analyse publicly available traffic data. All data are provided by [Landesbetrieb Straßenbau NRW, Verkehrszentrale](https://mcloud.de/web/guest/suche/-/results/suche/relevance/NRW/0/detail/_mcloudde_mdmgeschwindigkeitsdatennrw)  
 Three components can be deployed independently.
 
 * [Ingestion component](#ingestion-component)  
