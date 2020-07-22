@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: Pod
+metadata:
+    name: cloudai-ingest-sql-sla-data
+    labels:
+        app: cloudai-ingest-sql-sla-data
+spec:
+    containers:
+        - name: cloudai-ingest-sql-sla-data
+          image: 127.0.0.1:5000/research/ingest-sql-sla-data:0.9.1
