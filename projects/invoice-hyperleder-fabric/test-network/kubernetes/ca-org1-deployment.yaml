@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: ./kompose -f docker-compose-test-net.yaml -f docker-compose-couch.yaml
+      -f docker-compose-ca.yaml convert
+    kompose.version: 1.21.0 (992df58d8)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: ca-org1
+  name: ca-org1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: ca-org1
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: ./kompose -f docker-compose-test-net.yaml -f docker-compose-couch.yaml
+          -f docker-compose-ca.yaml convert
+        kompose.version: 1.21.0 (992df58d8)
+      creationTimestamp: null
+      labels:
+        io.kompose.network/invoicehyperlederfabric_test: "true"
+        io.kompose.service: ca-org1
+    spec:
+      containers:
+      - args:
+        - sh
+        - -c
+        - fabric-ca-server start -b admin:adminpw -d
+        env:
+        - name: FABRIC_CA_HOME
+          value: /etc/hyperledger/fabric-ca-server
+        - name: FABRIC_CA_SERVER_CA_NAME
+          value: ca-org1
+        - name: FABRIC_CA_SERVER_PORT
+          value: "7054"
+        - name: FABRIC_CA_SERVER_TLS_ENABLED
+          value: "true"
+        image: hyperledger/fabric-ca:latest
+        imagePullPolicy: ""
+        name: ca-org1
+        ports:
+        - containerPort: 7054
+        resources: {}
+        volumeMounts:
+        - mountPath: /etc/hyperledger/fabric-ca-server
+          name: ca-org1-claim0
+      restartPolicy: Always
+      serviceAccountName: ""
+      volumes:
+      - name: ca-org1-claim0
+        persistentVolumeClaim:
+          claimName: ca-org1-claim0
+status: {}

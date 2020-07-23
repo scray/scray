@@ -1,0 +1,97 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: ./kompose -f docker-compose-test-net.yaml -f docker-compose-couch.yaml
+      -f docker-compose-ca.yaml convert
+    kompose.version: 1.21.0 (992df58d8)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: orderer-example-com
+  name: orderer-example-com
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: orderer-example-com
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: ./kompose -f docker-compose-test-net.yaml -f docker-compose-couch.yaml
+          -f docker-compose-ca.yaml convert
+        kompose.version: 1.21.0 (992df58d8)
+      creationTimestamp: null
+      labels:
+        io.kompose.network/invoicehyperlederfabric_test: "true"
+        io.kompose.service: orderer-example-com
+    spec:
+      containers:
+      - args:
+        - orderer
+        env:
+        - name: FABRIC_LOGGING_SPEC
+          value: INFO
+        - name: ORDERER_GENERAL_CLUSTER_CLIENTCERTIFICATE
+          value: /var/hyperledger/orderer/tls/server.crt
+        - name: ORDERER_GENERAL_CLUSTER_CLIENTPRIVATEKEY
+          value: /var/hyperledger/orderer/tls/server.key
+        - name: ORDERER_GENERAL_CLUSTER_ROOTCAS
+          value: '[/var/hyperledger/orderer/tls/ca.crt]'
+        - name: ORDERER_GENERAL_GENESISFILE
+          value: /var/hyperledger/orderer/orderer.genesis.block
+        - name: ORDERER_GENERAL_GENESISMETHOD
+          value: file
+        - name: ORDERER_GENERAL_LISTENADDRESS
+          value: 0.0.0.0
+        - name: ORDERER_GENERAL_LISTENPORT
+          value: "7050"
+        - name: ORDERER_GENERAL_LOCALMSPDIR
+          value: /var/hyperledger/orderer/msp
+        - name: ORDERER_GENERAL_LOCALMSPID
+          value: OrdererMSP
+        - name: ORDERER_GENERAL_TLS_CERTIFICATE
+          value: /var/hyperledger/orderer/tls/server.crt
+        - name: ORDERER_GENERAL_TLS_ENABLED
+          value: "true"
+        - name: ORDERER_GENERAL_TLS_PRIVATEKEY
+          value: /var/hyperledger/orderer/tls/server.key
+        - name: ORDERER_GENERAL_TLS_ROOTCAS
+          value: '[/var/hyperledger/orderer/tls/ca.crt]'
+        - name: ORDERER_KAFKA_TOPIC_REPLICATIONFACTOR
+          value: "1"
+        - name: ORDERER_KAFKA_VERBOSE
+          value: "true"
+        image: hyperledger/fabric-orderer:latest
+        imagePullPolicy: ""
+        name: orderer.example.com
+        ports:
+        - containerPort: 7050
+        resources: {}
+        volumeMounts:
+        - mountPath: /var/hyperledger/orderer/orderer.genesis.block
+          name: orderer-example-com-claim0
+        - mountPath: /var/hyperledger/orderer/msp
+          name: orderer-example-com-claim1
+        - mountPath: /var/hyperledger/orderer/tls
+          name: orderer-example-com-claim2
+        - mountPath: /var/hyperledger/production/orderer
+          name: orderer.example.com
+        workingDir: /opt/gopath/src/github.com/hyperledger/fabric
+      restartPolicy: Always
+      serviceAccountName: ""
+      volumes:
+      - name: orderer-example-com-claim0
+        persistentVolumeClaim:
+          claimName: orderer-example-com-claim0
+      - name: orderer-example-com-claim1
+        persistentVolumeClaim:
+          claimName: orderer-example-com-claim1
+      - name: orderer-example-com-claim2
+        persistentVolumeClaim:
+          claimName: orderer-example-com-claim2
+      - name: orderer.example.com
+        persistentVolumeClaim:
+          claimName: orderer.example.com
+status: {}
