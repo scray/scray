@@ -15,24 +15,18 @@ jobs:
         - stage: build-with-tests
           install:
               mvn --settings .maven.xml install -B
-        - stage: build-profil-MinimizedDependencies
-          install:
-              mvn clean install --settings .maven.xml -B -PMinimizedDependencies
-        - stage: build-profil-scala_2.11
+        - stage: build-profil-scala-2.11
           install:
               mvn clean install -B -Pscala-2.11
-        - stage: deploy-develop-with-profil-MinimizedDependencies
-          install:
-              mvn clean deploy --settings .maven.xml -B -PMinimizedDependencies
         - stage: deploy-develop
           install:
               mvn clean deploy --settings .maven.xml -B
 
 stages:
     - build-with-tests
-    - build-profil-MinimizedDependencies
-    - build-profil-scala_2.11
-    - name: deploy-develop-with-profil-MinimizedDependencies
+    - build-profil-scala-2.12
+    - build-profil-scala-2.11
+    - name: deploy-develop-scala_2.12
       if: branch = develop AND type != pull_request AND sender IN (obermeier)
     - name: deploy-develop
       if: branch = develop AND type != pull_request AND sender IN (obermeier)
