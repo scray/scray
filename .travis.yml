@@ -18,12 +18,6 @@ jobs:
         - stage: build-profil-scala-2.11
           install:
               mvn clean install -B -Pscala-2.11
-        - stage: build-profil-scala-2.12
-          install:
-              mvn clean install -B -Pscala-2.12
-        - stage: deploy-develop-scala-2.12
-          install:
-              mvn clean deploy --settings .maven.xml -B -Pscala-2.12
         - stage: deploy-develop
           install:
               mvn clean deploy --settings .maven.xml -B
