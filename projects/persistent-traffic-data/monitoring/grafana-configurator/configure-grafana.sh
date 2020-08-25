@@ -8,9 +8,8 @@ datasource_id="1"
 #curl -X POST -H "Content-Type: application/json" -d '{"name":"scray-importer", "role": "Admin"}' http://admin:admin@${GRAFANA_HOST}:3000/api/auth/keys
 
 function download_configuration {
-    curl https://raw.githubusercontent.com/scray/scray/feature/ingestion-examples/scray-examples/persistent-traffic-data/monitoring/grafana-configurator/dashboard_h8acj9eWz.json -o dashboard_h8acj9eWz.json
-    curl https://raw.githubusercontent.com/scray/scray/feature/ingestion-examples/scray-examples/persistent-traffic-data/monitoring/grafana-configurator/datasource_1.json -o datasource_1.json
-    
+    curl https://raw.githubusercontent.com/scray/scray/master/projects/persistent-traffic-data/monitoring/grafana-configurator/dashboard_h8acj9eWz.json -o dashboard_h8acj9eWz.json
+    curl https://raw.githubusercontent.com/scray/scray/master/projects/persistent-traffic-data/monitoring/grafana-configurator/datasource_1.json -o datasource_1.json 
 }
 
 function get_grafana_base_url {
