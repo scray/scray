@@ -14,11 +14,11 @@ Three components can be deployed independently.
   
 ## Start all components
 ```
-kubectl apply -f https://raw.githubusercontent.com/scray/scray/feature/ingestion-examples/scray-examples/persistent-traffic-data/ingestion/k8s-deployment.yaml -f https://raw.githubusercontent.com/scray/scray/feature/ingestion-examples/scray-examples/persistent-traffic-data/monitoring/k8s-deployment.yaml -f https://raw.githubusercontent.com/scray/scray/feature/ingestion-examples/scray-examples/persistent-traffic-data/analytics-workbench/k8s-jupyter-deployment.yaml
+kubectl apply -f https://raw.githubusercontent.com/scray/scray/master/projects/persistent-traffic-data/ingestion/k8s-deployment.yaml -f https://raw.githubusercontent.com/scray/scray/master/projects/persistent-traffic-data/monitoring/k8s-deployment.yaml -f https://raw.githubusercontent.com/scray/scray/master/projects/persistent-traffic-data/analytics-workbench/k8s-jupyter-deployment.yaml 
 ```
 ## Delete all components
 ```
-kubectl delete -f https://raw.githubusercontent.com/scray/scray/feature/ingestion-examples/scray-examples/persistent-traffic-data/ingestion/k8s-deployment.yaml -f https://raw.githubusercontent.com/scray/scray/feature/ingestion-examples/scray-examples/persistent-traffic-data/monitoring/k8s-deployment.yaml -f https://raw.githubusercontent.com/scray/scray/feature/ingestion-examples/scray-examples/persistent-traffic-data/analytics-workbench/k8s-jupyter-deployment.yaml
+kubectl delete -f https://raw.githubusercontent.com/scray/scray/master/projects/persistent-traffic-data/ingestion/k8s-deployment.yaml -f https://raw.githubusercontent.com/scray/scray/master/projects/persistent-traffic-data/monitoring/k8s-deployment.yaml -f https://raw.githubusercontent.com/scray/scray/master/projects/persistent-traffic-data/analytics-workbench/k8s-jupyter-deployment.yaml 
 ```
 
 ## Ingestion component
@@ -26,9 +26,9 @@ Traffic data are downloaded and stored in a MongoDB database
 
 ### Start ingestion component
 ```
-kubectl apply -f https://raw.githubusercontent.com/scray/scray/feature/ingestion-examples/scray-examples/persistent-traffic-data/k8s-deployment.yaml
+kubectl apply -f https://raw.githubusercontent.com/scray/scray/master/projects/persistent-traffic-data/ingestion/k8s-deployment.yaml 
 ```
-[Doc of this component](ingestion/README.md)  
+[Doc of this component](ingestion/)  
 
 ### Local links:  
 [Api description](http://127.0.0.1:30091/scray/examples/1.0.0/swagger.json)   
@@ -38,9 +38,9 @@ Monitoring data are collected by Prometheus and visualized with Grafana
 
 ### Start monitoring component
 ```
-kubectl apply -f https://raw.githubusercontent.com/scray/scray/feature/ingestion-examples/scray-examples/persistent-traffic-data/ingestion/monitoring/k8s-deployment.yaml
+kubectl apply -f https://raw.githubusercontent.com/scray/scray/master/projects/persistent-traffic-data/monitoring/k8s-deployment.yaml 
 ```
-[Doc of this component](monitoring/README.md)
+[Doc of this component](monitoring/)
 
 ### Local links:  
 [Grafana dashboard](http://localhost:30300/d/8ec0OC6Wz/scray-example-prometheus?orgId=1)  
@@ -51,9 +51,9 @@ Jupyter environment to analyse the persited data.
 
 ### Start analytics component
 ```
-kubectl apply -f https://raw.githubusercontent.com/scray/scray/feature/ingestion-examples/scray-examples/persistent-traffic-data/analytics-workbench/k8s-jupyter-deployment.yaml
+kubectl apply -f https://raw.githubusercontent.com/scray/scray/master/projects/persistent-traffic-data/analytics-workbench/k8s-jupyter-deployment.yaml
 ```
-[Doc of this component](analytics-workbench/README.md)  
+[Doc of this component](analytics-workbench/)  
 
 ### Local links:  
 [Example Jupyter notebook](http://127.0.0.1:30084/notebooks/work/Query%20NRW%20traffic%20MongoDB.ipynb)  

@@ -5,7 +5,7 @@ Traffic data are downloaded and stored in a MongoDB database
 ## Start ingestion component
 
 ```
-kubectl apply -f https://raw.githubusercontent.com/scray/scray/feature/ingestion-examples/scray-examples/persistent-traffic-data/k8s-deployment.yaml
+kubectl apply -f https://raw.githubusercontent.com/scray/scray/master/projects/persistent-traffic-data/ingestion/k8s-deployment.yaml 
 ```
 
 ## Data location

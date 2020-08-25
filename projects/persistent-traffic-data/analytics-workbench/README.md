@@ -3,7 +3,7 @@
 ## Kubernetes
 
 ```
-kubectl apply -f https://raw.githubusercontent.com/scray/scray/feature/ingestion-examples/scray-examples/persistent-traffic-data/analytics-workbench/k8s-jupyter-deployment.yaml
+kubectl apply -f https://raw.githubusercontent.com/scray/scray/master/projects/persistent-traffic-data/analytics-workbench/k8s-jupyter-deployment.yaml 
 ```
 
 ## Example: Query data from MongoDB
