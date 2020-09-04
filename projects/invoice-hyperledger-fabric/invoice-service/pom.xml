@@ -203,7 +203,7 @@
 			</plugins>
 			<resources>
 				<resource>
-					<directory>target/generated-sources/openapi/src/main/java</directory>
+					<directory>target/generated-sources/openapi/src/main/java/</directory>
 				</resource>
 			</resources>
 	</build>
