@@ -1,12 +1,12 @@
 package org.scray.projects.hyperledger_fabric.invoice_service;
 
 import java.math.BigDecimal;
-import java.util.Date;
+import java.time.OffsetDateTime;
 import java.util.UUID;
 
 import org.hyperledger.fabric.gateway.Contract;
-import org.openapitools.model.Invoice;
 import org.scray.projects.hyperledger_fabric.invoice_service.mapper.HFabricMapper;
+import org.scray.projects.hyperledger_fabric.invoice_service.model.Invoice;
 
 public class Main {
 	static {
@@ -23,7 +23,7 @@ public class Main {
 
 		Invoice invoice = new Invoice();
 		invoice.setId(UUID.randomUUID());
-		invoice.setDate(new Date());
+		//invoice.setDate(new OffsetDateTime(null, null));
 		invoice.setTotal(new BigDecimal(3));
 		invoice.setState("NEW");
 

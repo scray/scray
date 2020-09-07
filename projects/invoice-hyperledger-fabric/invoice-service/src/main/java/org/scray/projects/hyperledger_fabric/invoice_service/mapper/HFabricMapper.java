@@ -6,7 +6,7 @@ import javax.ws.rs.core.SecurityContext;
 
 import org.hyperledger.fabric.gateway.Contract;
 import org.hyperledger.fabric.gateway.ContractException;
-import org.openapitools.model.Invoice;
+import org.scray.projects.hyperledger_fabric.invoice_service.model.Invoice;
 
 public class HFabricMapper {
 	

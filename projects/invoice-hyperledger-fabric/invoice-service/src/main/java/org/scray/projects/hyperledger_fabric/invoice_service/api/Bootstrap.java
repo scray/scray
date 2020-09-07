@@ -1,4 +1,4 @@
-package org.openapitools.api;
+package org.scray.projects.hyperledger_fabric.invoice_service.api;
 
 import io.swagger.jaxrs.config.SwaggerContextService;
 import io.swagger.models.*;
