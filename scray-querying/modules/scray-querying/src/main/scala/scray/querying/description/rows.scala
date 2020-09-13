@@ -34,7 +34,7 @@ trait Row {
 //  def getColumnValueType(col: Column): Option[TypeTag[_]]
   def getColumns: List[Column]
   def getNumberOfEntries: Int
-  def isEmpty = getNumberOfEntries == 0
+  def isEmpty: Boolean = getNumberOfEntries == 0
   @inline def intersectValues(cols: HashSet[Column]): Row
   @inline def recalculateInternalCaches: Unit
 }

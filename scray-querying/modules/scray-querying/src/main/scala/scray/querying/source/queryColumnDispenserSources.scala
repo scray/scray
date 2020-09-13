@@ -39,7 +39,7 @@ class LazyQueryColumnDispenserSource[Q <: DomainQuery](source: LazySource[Q])
 
   private val queryColumns = new HashSet[Column]
   
-  override def init(query: Q) = {
+  override def init(query: Q): Unit = {
     queryColumns.clear
     queryColumns ++= query.getResultSetColumns
   } 

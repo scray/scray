@@ -30,19 +30,19 @@ class FileVersionedDataApiImpl extends VersionedDataApi with LazyLogging {
     versionInformations.put(VersionedData.createVersionKey(dataSource, mergeKey), new VersionedData(dataSource, mergeKey, version, data))
   }
 
-  def persist(path: String) = {
+  def persist(path: String): Unit = {
     this.writeToFile(path)
   }
   
-  def persist(outStream: OutputStream) {
+  def persist(outStream: OutputStream): Unit = {
     this.writeToFile(outStream)
   }
   
-  def load(path: String) = {
+  def load(path: String): Unit = {
     versionInformations = readFromFile(path)
   }
   
-  def load(stream: InputStream) = {
+  def load(stream: InputStream): Unit = {
     versionInformations = readFromInputStram(stream)
   }
 
@@ -109,7 +109,7 @@ class FileVersionedDataApiImpl extends VersionedDataApi with LazyLogging {
     }).toList.asJava
   }
 
-  private def writeToFile(path: String) = {
+  private def writeToFile(path: String): Unit = {
     val jsonString = gson.toJson(toList(versionInformations))
 
     val file = new File(path)
@@ -118,7 +118,7 @@ class FileVersionedDataApiImpl extends VersionedDataApi with LazyLogging {
     bw.close()
   }
   
-  private def writeToFile(outStream: OutputStream) = {
+  private def writeToFile(outStream: OutputStream): Unit = {
     val jsonString = gson.toJson(toList(versionInformations))
 
     val bw = new OutputStreamWriter(outStream)

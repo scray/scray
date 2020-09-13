@@ -74,7 +74,7 @@ class IndexMergeSource[Q <: DomainQuery](main: MergeReferenceColumns[Q, Spool[Ro
 
     override def getColumns: List[Column] = row.getColumns
     override def getNumberOfEntries: Int = row.getNumberOfEntries 
-    override def isEmpty = row.isEmpty
+    override def isEmpty: Boolean = row.isEmpty
   }
   
 

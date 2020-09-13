@@ -56,7 +56,7 @@ class QueryInformation(val qid: UUID, val table: TableIdentifier,
   
   def registerDestructionListerner(listener: DESTRUCTOR) = destructionListeners += listener 
    
-  def destroy() = {
+  def destroy(): Unit = {
     destructionListeners.foreach(_())
     destructionListeners.clear()
   }
