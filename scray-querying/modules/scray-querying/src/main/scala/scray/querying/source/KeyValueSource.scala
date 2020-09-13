@@ -129,7 +129,7 @@ class KeyedSource[K <: DomainQuery, V](
   override def getGraph: Graph[Source[DomainQuery, Seq[Row]], DiEdge] = 
     Graph.from(List(this.asInstanceOf[Source[DomainQuery, Seq[Row]]]), List())
 
-  override def getDiscriminant = table.toString()
+  override def getDiscriminant: String = table.toString()
   
   override def createCache: Cache[_] = {
     RegisterRowCachingSerializers()

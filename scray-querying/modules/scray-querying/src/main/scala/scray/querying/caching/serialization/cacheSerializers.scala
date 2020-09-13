@@ -69,7 +69,7 @@ class KeyValueCacheSerializer extends Serializer[Row] with Serializable {
  */
 class QueryableCacheSerializer extends Serializer[ArrayBuffer[Row]] with Serializable {
 
-  override def serialize(out: DataOutput, value: ArrayBuffer[Row]) = {
+  override def serialize(out: DataOutput, value: ArrayBuffer[Row]): Unit = {
     val size = value.size
     out.writeInt(size)
     @tailrec def serializeRows(index: Int): Unit = if(index < size) {

@@ -32,7 +32,7 @@ class Table[T <: AbstractRow](val keySpace: String, val tableName: String, val c
     rows += row
   }
   
-  def getRows = {
+  def getRows: ListBuffer[RowWithValue] = {
     rows
   }
 }
@@ -135,8 +135,8 @@ object SyncTable {
           colString: DBColumnImplementation[String],
           colInt: DBColumnImplementation[Int],
           colLong: DBColumnImplementation[Long],
-          colBool: DBColumnImplementation[Boolean]) = {
-    new Table(keySpace, tableName, new SyncTableBasicClasses.SyncTableRowEmpty)
+          colBool: DBColumnImplementation[Boolean]): Table[SyncTableBasicClasses.SyncTableRowEmpty] = {
+      new Table(keySpace, tableName, new SyncTableBasicClasses.SyncTableRowEmpty)
   }
 }
 
@@ -156,18 +156,18 @@ abstract class AbstractTypeDetection {
 object JobLockTable {
   def apply(keySpace: String, tableName: String)(implicit 
           colString: DBColumnImplementation[String],
-          colBool: DBColumnImplementation[Boolean]) = {
+          colBool: DBColumnImplementation[Boolean]): Table[SyncTableBasicClasses.JobLockTable] = {
     new Table(keySpace, tableName, new SyncTableBasicClasses.JobLockTable)
   }
 }
 
 object VoidTable {
-  def apply(keySpace: String, tableName: String, columns: AbstractRow) = {
+  def apply(keySpace: String, tableName: String, columns: AbstractRow): Table[AbstractRow] = {
     new Table(keySpace, tableName, columns)
   }
 }
 object DataTable {
-  def apply(keySpace: String, tableName: String, columns: RowWithValue) = {
+  def apply(keySpace: String, tableName: String, columns: RowWithValue): Table[RowWithValue] = {
     new Table(keySpace, tableName, columns)
   }
 }
