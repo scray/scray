@@ -11,9 +11,18 @@ import org.hyperledger.fabric.gateway.Wallets;
 
 public class HFabricConnection {
 
-	Contract contract = null;
+	private Contract contract = null;
+	private BasicConfigParameters parmas =  null;
+	
+	
 
-	public void createConnectionInvoceContract() throws Exception {
+	public HFabricConnection(BasicConfigParameters parmas) {
+        super();
+        this.parmas = parmas;
+    }
+
+
+    public void createConnectionInvoceContract() throws Exception {
 		Gateway gateway = connect();
 
 			// get the network and contract
@@ -48,9 +57,7 @@ public class HFabricConnection {
 		Path walletPath = Paths.get("wallet");
 		Wallet wallet = Wallets.newFileSystemWallet(walletPath);
 		// load a CCP
-		Path networkConfigPath = Paths.get(
-				"/home/stefan/Dokumente/hyperleder-fabric/certs/organizations/peerOrganizations/org1.example.com/",
-				"connection-org1.yaml");
+		Path networkConfigPath = Paths.get(parmas.getNetworkConfigPath());
 
 		for (String path : wallet.list()) {
 			System.out.println(path);

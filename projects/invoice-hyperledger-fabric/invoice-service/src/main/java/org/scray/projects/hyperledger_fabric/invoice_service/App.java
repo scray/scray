@@ -16,12 +16,12 @@ public class App {
 	}
 
 	// helper function for getting connected to the gateway
-	public static Gateway connect() throws Exception{
+	public static Gateway connect(BasicConfigParameters parmas) throws Exception{
 		// Load a file system based wallet for managing identities.
 		Path walletPath = Paths.get("wallet");
 		Wallet wallet = Wallets.newFileSystemWallet(walletPath);
 		// load a CCP
-		Path networkConfigPath = Paths.get("/home/stefan/Dokumente/hyperleder-fabric/certs/organizations/peerOrganizations/org1.example.com/", "connection-org1.yaml");
+		Path networkConfigPath = Paths.get(parmas.getNetworkConfigPath());
 
 		for (String path : wallet.list()) {
 			System.out.println(path);
@@ -33,6 +33,34 @@ public class App {
 	}
 
 	public static void main(String[] args) throws Exception {
+	    BasicConfigParameters params = new BasicConfigParameters();
+	    
+	    for (int i = 0; i < args.length; i++) {
+            if(args[i].startsWith("--networkConfigPath")) {
+                if((i + 1) < (args.length -1)) {
+                    i += 1;
+                    params.setNetworkConfigPath(args[i]);
+                }
+            }
+            
+            if(args[i].startsWith("--caCertPem")) {
+                if((i + 1) < (args.length -1)) {
+                    i += 1;
+                    params.setCaCertPem(args[i]);
+                }
+            }
+            
+            if(args[i].startsWith("--hyperlederHost")) {
+                if((i + 1) < (args.length -1)) {
+                    i += 1;
+                    params.setHyperlederHost(args[i]);
+                }
+            }
+        }
+	    
+	    System.out.println(params);
+	    
+	    
 //		// enrolls the admin and registers the user
 //		try {
 //			EnrollAdmin.main(null);
@@ -42,7 +70,7 @@ public class App {
 //		}
 
 		// connect to the network and invoke the smart contract
-		try (Gateway gateway = connect()) {
+		try (Gateway gateway = connect(params)) {
 
 			// get the network and contract
 			Network network = gateway.getNetwork("mychannel");

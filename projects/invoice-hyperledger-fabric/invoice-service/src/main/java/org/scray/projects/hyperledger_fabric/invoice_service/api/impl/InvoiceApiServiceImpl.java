@@ -1,5 +1,6 @@
 package org.scray.projects.hyperledger_fabric.invoice_service.api.impl;
 
+import org.scray.projects.hyperledger_fabric.invoice_service.BasicConfigParameters;
 import org.scray.projects.hyperledger_fabric.invoice_service.HFabricConnection;
 import org.scray.projects.hyperledger_fabric.invoice_service.api.*;
 import org.scray.projects.hyperledger_fabric.invoice_service.model.*;
@@ -26,9 +27,14 @@ import javax.validation.constraints.*;
 public class InvoiceApiServiceImpl extends InvoiceApiService {
 
     HFabricMapper mapper = null;
+    private BasicConfigParameters parms = null;
 
+    public InvoiceApiServiceImpl(BasicConfigParameters parms) {
+        this.parms = parms;
+    }
+    
     private void initMapper() {
-        HFabricConnection con = new HFabricConnection();
+        HFabricConnection con = new HFabricConnection(parms);
 
         try {
             con.createConnectionInvoceContract();

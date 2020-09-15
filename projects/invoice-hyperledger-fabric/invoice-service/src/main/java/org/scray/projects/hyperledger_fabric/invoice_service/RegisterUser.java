@@ -20,12 +20,11 @@ import org.hyperledger.fabric_ca.sdk.RegistrationRequest;
 
 public class RegisterUser {
 
-	public static void main(String[] args) throws Exception {
+	public static void main(String[] args, BasicConfigParameters parmas) throws Exception {
 
 		// Create a CA client for interacting with the CA.
 		Properties props = new Properties();
-		props.put("pemFile",
-			"/home/stefan/Dokumente/hyperleder-fabric/certs/organizations/peerOrganizations/org1.example.com/ca/ca.org1.example.com-cert.pem");
+		props.put("pemFile", parmas.getCaCertPem());
 		props.put("allowAllHostNames", "true");
 		HFCAClient caClient = HFCAClient.createNewInstance("https://fabric-2.research.dev.seeburger.de:7054", props);
 		CryptoSuite cryptoSuite = CryptoSuiteFactory.getDefault().getCryptoSuite();
