@@ -42,14 +42,16 @@ public class InvoiceApiServiceImpl extends InvoiceApiService {
 
     @Override
     public Response getInvoice(String invoiceId, SecurityContext securityContext) throws NotFoundException {
-        String data = "ERROR";
+        String data = "ERROR: ";
         try {
             if(mapper == null) {
                 initMapper();
             }
             data = new String(mapper.getInvoice(invoiceId, securityContext));
         } catch (ContractException e) {
+        	data +=  e.getLocalizedMessage();
             e.printStackTrace();
+            return Response.status(400).entity(new ApiResponseMessage(ApiResponseMessage.ERROR, data)).build();
         }
         return Response.ok().entity(new ApiResponseMessage(ApiResponseMessage.OK, data)).build();
     }
@@ -65,9 +67,12 @@ public class InvoiceApiServiceImpl extends InvoiceApiService {
             
             mapper.addInvocie(invoiceId, invoiceItem);
         } catch (ContractException | TimeoutException | InterruptedException e) {
+        	String data = e.getLocalizedMessage();
             e.printStackTrace();
+            return Response.status(400).entity(new ApiResponseMessage(ApiResponseMessage.ERROR, data)).build();
+            
         }
 
-        return Response.ok().entity(new ApiResponseMessage(ApiResponseMessage.OK, "magic!")).build();
+        return Response.ok().entity(new ApiResponseMessage(ApiResponseMessage.OK, "")).build();
     }
 }
