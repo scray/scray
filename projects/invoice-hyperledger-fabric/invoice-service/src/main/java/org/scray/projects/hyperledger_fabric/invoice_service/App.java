@@ -33,7 +33,7 @@ public class App {
 	}
 
 	public static void main(String[] args) throws Exception {
-	    BasicConfigParameters params = new BasicConfigParameters();
+	    BasicConfigParameters params = ConfigFileLoader.readFromFile();
 	    
 	    for (int i = 0; i < args.length; i++) {
             if(args[i].startsWith("--networkConfigPath")) {
@@ -59,7 +59,7 @@ public class App {
         }
 	    
 	    System.out.println(params);
-	    
+   
 	    
 //		// enrolls the admin and registers the user
 //		try {

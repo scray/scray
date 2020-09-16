@@ -1,27 +1,24 @@
 package org.scray.projects.hyperledger_fabric.invoice_service.api.impl;
 
-import org.scray.projects.hyperledger_fabric.invoice_service.BasicConfigParameters;
-import org.scray.projects.hyperledger_fabric.invoice_service.HFabricConnection;
-import org.scray.projects.hyperledger_fabric.invoice_service.api.*;
-import org.scray.projects.hyperledger_fabric.invoice_service.model.*;
-
-import org.scray.projects.hyperledger_fabric.invoice_service.model.Invoice;
-
-import java.util.List;
+import java.io.File;
+import java.io.IOException;
 import java.util.concurrent.TimeoutException;
-
-import org.scray.projects.hyperledger_fabric.invoice_service.api.NotFoundException;
-import org.scray.projects.hyperledger_fabric.invoice_service.mapper.HFabricMapper;
-
-import java.io.InputStream;
-
-import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
-import org.hyperledger.fabric.gateway.Contract;
-import org.hyperledger.fabric.gateway.ContractException;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
-import javax.validation.constraints.*;
+
+import org.hyperledger.fabric.gateway.Contract;
+import org.hyperledger.fabric.gateway.ContractException;
+import org.scray.projects.hyperledger_fabric.invoice_service.BasicConfigParameters;
+import org.scray.projects.hyperledger_fabric.invoice_service.HFabricConnection;
+import org.scray.projects.hyperledger_fabric.invoice_service.api.ApiResponseMessage;
+import org.scray.projects.hyperledger_fabric.invoice_service.api.InvoiceApiService;
+import org.scray.projects.hyperledger_fabric.invoice_service.api.NotFoundException;
+import org.scray.projects.hyperledger_fabric.invoice_service.mapper.HFabricMapper;
+import org.scray.projects.hyperledger_fabric.invoice_service.model.Invoice;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 
 @javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaJerseyServerCodegen", date = "2020-09-07T22:23:20.829+02:00[Europe/Berlin]")
 public class InvoiceApiServiceImpl extends InvoiceApiService {
@@ -31,6 +28,18 @@ public class InvoiceApiServiceImpl extends InvoiceApiService {
 
     public InvoiceApiServiceImpl(BasicConfigParameters parms) {
         this.parms = parms;
+        
+        if(parms == null) {
+            ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
+            mapper.findAndRegisterModules();
+            try {
+                BasicConfigParameters params = mapper.readValue(new File("src/main/resources/config.yaml"), BasicConfigParameters.class);
+                this.parms = params;
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        
     }
     
     private void initMapper() {
