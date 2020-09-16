@@ -34,40 +34,14 @@ public class App {
 
 	public static void main(String[] args) throws Exception {
 	    BasicConfigParameters params = ConfigFileLoader.readFromFile();
-	    
-	    for (int i = 0; i < args.length; i++) {
-            if(args[i].startsWith("--networkConfigPath")) {
-                if((i + 1) < (args.length -1)) {
-                    i += 1;
-                    params.setNetworkConfigPath(args[i]);
-                }
-            }
-            
-            if(args[i].startsWith("--caCertPem")) {
-                if((i + 1) < (args.length -1)) {
-                    i += 1;
-                    params.setCaCertPem(args[i]);
-                }
-            }
-            
-            if(args[i].startsWith("--hyperlederHost")) {
-                if((i + 1) < (args.length -1)) {
-                    i += 1;
-                    params.setHyperlederHost(args[i]);
-                }
-            }
-        }
-	    
-	    System.out.println(params);
-   
-	    
+ 
 //		// enrolls the admin and registers the user
-//		try {
-//			EnrollAdmin.main(null);
-//			RegisterUser.main(null);
-//		} catch (Exception e) {
-//			System.err.println(e);
-//		}
+		try {
+			EnrollAdmin.main(args, params);
+			RegisterUser.main(args, params);;
+		} catch (Exception e) {
+			System.err.println(e);
+		}
 
 		// connect to the network and invoke the smart contract
 		try (Gateway gateway = connect(params)) {

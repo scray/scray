@@ -14,7 +14,7 @@ public class ConfigFileLoader {
         ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
         mapper.findAndRegisterModules();
         try {
-           params = mapper.readValue(new File("src/main/resources/config.yaml"), BasicConfigParameters.class);
+           params = mapper.readValue(new File("config/config.yaml"), BasicConfigParameters.class);
            
         } catch (IOException e) {
             e.printStackTrace();

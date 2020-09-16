@@ -1,3 +1,0 @@
-networkConfigPath: config2/connection-org1.yaml
-caCertPem: config2/ca.org1.example.com-cert.pem
-hyperlederHost: localhost

@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: hyperleder-fabric-rest-invoice-example 
+spec:
+  containers:
+  - name: hyperleder-fabric-invoice-example-rest-api 
+    image: hyperleder-fabric-invoice-example-rest-api 
+    volumeMounts:
+    - name: hyperleder-fabric-invoice-example-rest-api-config 
+      mountPath: /mnt/config
+  volumes:
+  - name: hyperleder-fabric-invoice-example-rest-api 
+    emptyDir: {}
