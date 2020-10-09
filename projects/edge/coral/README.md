@@ -1,0 +1,14 @@
+Raspberry Pi 4 B, 4 GB RAM
+https://www.raspberrypi.org/products/raspberry-pi-4-model-b/
+
+Coral USB Accelerator
+https://coral.ai/products/accelerator
+
+Magnetic plastic case with dual fan
+https://joy-it.net/en/products/RB-CaseP4+03B
+
+SanDisk Ultra MicroSDXC-Card 128GB
+ 
+Raspberry Pi - Power supply, 5.1 V, 3.0 A, USB Type-C
+
+DELOCK HDMI connector - micro D male > A female
