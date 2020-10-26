@@ -108,8 +108,7 @@ public final class FabInvoice implements ContractInterface {
      * @return the created Invoice
      */
     @Transaction()
-    public Invoice createInvoice(final Context ctx, final String key, final String invoiceNumber, final Boolean recheived,
-            final Boolean sell) {
+    public Invoice createInvoice(final Context ctx, final String key, final String invoiceNumber, final Boolean recheived, final Boolean sell) {
         ChaincodeStub stub = ctx.getStub();
 
         String carState = stub.getStringState(key);
@@ -125,6 +124,8 @@ public final class FabInvoice implements ContractInterface {
 
         return car;
     }
+    
+
 
     /**
      * Retrieves every car between CAR0 and CAR999 from the ledger.
