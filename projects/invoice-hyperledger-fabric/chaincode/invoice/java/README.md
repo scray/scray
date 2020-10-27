@@ -1,17 +1,17 @@
 # Invoice contract sample
 
-
+## Prerequisites
+[Windows prequists](#windows-prequists)   
+Details of the prequisits can be found [here](Prerequisites)
 
 ## Bring up Blockchain environment
 
 ```
 curl -sSL https://bit.ly/2ysbOFE | bash -s
-```
-	
-```
+
 cd fabric-samples/test-network
 ./network.sh up createChannel
-./network.sh deployCC -ccn scray-invoice-example -ccl java -ccp ~/git/scray/projects/invoice-hyperledger-fabric/chaincode/invoice/java/
+./network.sh deployCC -ccn scray-invoice-example -ccl java -ccp scray/projects/invoice-hyperledger-fabric/chaincode/invoice/java
 ```
 
 ## Interacting with the network
@@ -37,5 +37,16 @@ peer chaincode query -C mychannel -n scray-invoice-example -c '{"Args":["createI
 peer chaincode query -C mychannel -n scray-invoice-example -c '{"Args":["queryInvoice", "k1"]}'
 ```
 
+
+### Windows prequests
+
+* Install [Git](https://git-scm.com/downloads)
+* Install [Docker Desktop](https://www.docker.com/products/docker-desktop)
+
+* Add file sharing resource to docker  
+    Settings|Resources|FILE SHARING
+* Open GIT Bash 
+  * switch to sharing resource folder
+  * execute commands from [Bring up Blockchain environment](bBring-up-blockchain-environment)
 
 This example is technically based on [Hyperleder fabcar example](https://hyperledger-fabric.readthedocs.io/en/release-2.0/test_network.html)
