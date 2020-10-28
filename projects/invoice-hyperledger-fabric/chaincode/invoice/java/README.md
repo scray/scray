@@ -7,16 +7,13 @@ Details of the prequisits can be found [here](Prerequisites)
 ## Bring up Blockchain environment
 
 ```
-curl -sSL https://bit.ly/2ysbOFE | bash -s
-
-cd fabric-samples/test-network
-./network.sh up createChannel
-./network.sh deployCC -ccn scray-invoice-example -ccl java -ccp scray/projects/invoice-hyperledger-fabric/chaincode/invoice/java
+curl -sSL https://raw.githubusercontent.com/scray/scray/feature/contractDockUpdate/projects/invoice-hyperledger-fabric/test-network/bootstrap.sh | bash -s
 ```
 
 ## Interacting with the network
 
 ```
+cd fabric-samples/test-network
 export PATH=${PWD}/../bin:$PATH
 export CORE_PEER_TLS_ENABLED=true
 export CORE_PEER_LOCALMSPID="Org1MSP"
