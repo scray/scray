@@ -44,6 +44,6 @@ peer chaincode query -C mychannel -n scray-invoice-example -c '{"Args":["queryIn
     Settings|Resources|FILE SHARING
 * Open GIT Bash 
   * switch to sharing resource folder
-  * execute commands from [Bring up Blockchain environment](bBring-up-blockchain-environment)
+  * execute commands from [Bring up Blockchain environment](#bring-up-blockchain-environment)
 
 This example is technically based on [Hyperleder fabcar example](https://hyperledger-fabric.readthedocs.io/en/release-2.0/test_network.html)
