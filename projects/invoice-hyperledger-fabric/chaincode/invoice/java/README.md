@@ -34,6 +34,9 @@ peer chaincode invoke -o localhost:7050 --ordererTLSHostnameOverride orderer.exa
 peer chaincode query -C mychannel -n scray-invoice-example -c '{"Args":["queryInvoice", "k1"]}'
 ```
 
+### Shutdown network
+Execute in folder ```fabric-samples/test-network``` command ```./test-network down```
+
 
 ### Windows prequests
 
