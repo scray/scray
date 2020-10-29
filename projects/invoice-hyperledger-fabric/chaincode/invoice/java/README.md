@@ -7,7 +7,7 @@ Details of the prequisits can be found [here](Prerequisites)
 ## Bring up Blockchain environment
 
 ```
-curl -sSL https://raw.githubusercontent.com/scray/scray/feature/contractDockUpdate/projects/invoice-hyperledger-fabric/test-network/bootstrap.sh | bash -s
+curl -sSL https://raw.githubusercontent.com/scray/scray/feature/contractDockUpdate/projects/invoice-hyperledger-fabric/example-network/bootstrap.sh | bash -s
 ```
 
 ## Interacting with the network
