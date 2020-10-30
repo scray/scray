@@ -1,3 +1,5 @@
+<<<<<<< HEAD
+=======
 /channel-artifacts/*.tx
 /channel-artifacts/*.block
 /ledgers
@@ -10,5 +12,6 @@ organizations/fabric-ca/org2/*
 organizations/ordererOrganizations/*
 organizations/peerOrganizations/*
 system-genesis-block/*
+>>>>>>> branch 'feature/contractDockUpdate' of https://github.com/scray/scray.git
 *.tar.gz
 log.txt
