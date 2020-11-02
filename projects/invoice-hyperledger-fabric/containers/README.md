@@ -1,3 +1,13 @@
+## Start new peer
+```kubectl apply -f k8s-test-network-peer0.yaml```
+
+* Connect to CLI
+    ```kubectl exec --stdin --tty $POD_NAME -c scray-peer-cli -- /bin/bash```
+
+* Follow logs of peer
+    ```kubectl logs -f  $POD_NAME -c peer0-org1-scray-org```
+
+
 ## 
 
 ´´´docker build -t scrayorg/start-hl-fabric-test-network .´´´
