@@ -76,9 +76,9 @@ spec:
           - name: CORE_PEER_ADDRESS
             value: "peer0.org1.fabric.hyperledger.projects.scray.org:30001"
           - name: CORE_PEER_LOCALMSPID
-            value: "ScrayOrgMSP"
+            value: "OrgScrayMSP"
           - name: CORE_PEER_LOCALMSPID
-            value: "ScrayOrgMSP"
+            value: "OrgScrayMSP"
           - name: CORE_PEER_TLS_ENABLED
             value: "true"
           - name: CORE_PEER_TLS_CERT_FILE
