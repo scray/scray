@@ -17,10 +17,11 @@ SHARED_FS_USER=scray
 SHARED_FS_PW=scray
 curl --user $SHARED_FS_USER:$SHARED_FS_PW http://$SHARED_FS_HOST/ca/tlsca.example.com-cert.pem > /tmp/tlsca.example.com-cert.pem
 export ORDERER_CA=/tmp/tlsca.example.com-cert.pem
-export $CHANNEL_NAME=mychannel
+export CHANNEL_NAME=mychannel
+export CORE_PEER_ADDRESS=peer0.org1.fabric.hyperledger.projects.scray.org:30003
 
 peer channel fetch 0 mychannel.block -o orderer.example.com:7050 -c $CHANNEL_NAME --tls --cafile $ORDERER_CA
 
-pee channel fetch 0 ./channel-artifacts/channel_org2.block -o localhost:7050 --ordererTLSHostnameOverride orderer.example.com -c channel1 --tls --cafile ${PWD}/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem
+pee channel fetch 0 ./channel-artifacts/channel_org2.block -o localhost:7050 --ordererTLSHostnameOverride orderer.example.com -c $CHANNEL_NAME --tls --cafile ${PWD}/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem
 
-peer channel join -b ./channel-artifacts/channel_org2.block
+peer channel join -b mychannel.block
