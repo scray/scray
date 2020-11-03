@@ -74,7 +74,7 @@ spec:
           - name: CORE_PEER_ID
             value: "Org3cli"
           - name: CORE_PEER_ADDRESS
-            value: "peer0.org1.fabric.hyperledger.projects.scray.org:30001"
+            value: "peer0.org1.fabric.hyperledger.projects.scray.org:30003"
           - name: CORE_PEER_LOCALMSPID
             value: "OrgScrayMSP"
           - name: CORE_PEER_LOCALMSPID
@@ -88,7 +88,7 @@ spec:
           - name: CORE_PEER_TLS_ROOTCERT_FILE
             value: "/etc/hyperledger/fabric/tls/ca.crt"
           - name: CORE_PEER_MSPCONFIGPATH
-            value: "/etc/hyperledger/fabric/msp/users/Admin@peer0.org1.fabric.hyperledger.projects.scray.org/msp"
+            value: "/mnt/conf/organizations/peerOrganizations/org1.fabric.hyperledger.projects.scray.org/users/Admin@org1.fabric.hyperledger.projects.scray.org/msp/"
           volumeMounts:
           - name: peer-conf
             mountPath: /mnt
