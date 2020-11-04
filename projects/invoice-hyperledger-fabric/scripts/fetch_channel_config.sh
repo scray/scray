@@ -5,6 +5,10 @@ export CORE_PEER_ADDRESS=peer0.org1.example.com:7051
 export ORDERER_CA=/opt/gopath/src/github.com/hyperledger/fabric/peer/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem
 export CHANNEL_NAME=mychannel
 
+ORDERER_IP=10.14.128.30
+
+echo $ORDERER_IP orderer.example.com >> /etc/hosts
+
 # Export existing channel configuration
 peer channel fetch config config_block.pb -o orderer.example.com:7050 -c $CHANNEL_NAME --tls --cafile $ORDERER_CA
 configtxlator proto_decode --input config_block.pb --type common.Block | jq .data.data[0].payload.data.config > config.json
