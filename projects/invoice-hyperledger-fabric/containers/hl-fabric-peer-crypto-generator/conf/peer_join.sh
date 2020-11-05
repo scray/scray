@@ -1,6 +1,6 @@
 apk add curl
 
-ORDER_IP=$1
+ORDERER_IP=$1
 PEER_IP=$2
 
 echo $ORDERER_IP orderer.example.com >> /etc/hosts
