@@ -59,6 +59,12 @@ spec:
           - name: peer-conf 
             mountPath: /etc/hyperledger/fabric/tls
             subPath: conf/organizations/peerOrganizations/org1.fabric.hyperledger.projects.scray.org/peers/peer0.org1.fabric.hyperledger.projects.scray.org/tls
+          - name: peer-conf 
+            mountPath: /etc/hyperledger/fabric/core.yaml
+            subPath: core.yaml
+          - name: peer-conf
+            mountPath: /opt/scray/hl-fabric/external_builders
+            subPath: conf/external_builders
           - name: peer0-data
             mountPath: /var/hyperledger/production            
         - name: scray-peer-cli
