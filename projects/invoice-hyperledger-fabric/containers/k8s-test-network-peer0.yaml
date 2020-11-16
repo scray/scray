@@ -39,7 +39,7 @@ spec:
           - name: CORE_PEER_ID
             value: "peer0.org1.fabric.hyperledger.projects.scray.org"              
           - name: CORE_PEER_ADDRESS
-            value: "peer0.org1.fabric.hyperledger.projects.scray.org:30001"
+            value: "peer0.org1.fabric.hyperledger.projects.scray.org:30002"
           - name: CORE_PEER_LISTENADDRESS
             value: "0.0.0.0:7051"         
           - name: CORE_PEER_CHAINCODEADDRESS
@@ -61,12 +61,14 @@ spec:
             subPath: conf/organizations/peerOrganizations/org1.fabric.hyperledger.projects.scray.org/peers/peer0.org1.fabric.hyperledger.projects.scray.org/tls
           - name: peer-conf 
             mountPath: /etc/hyperledger/fabric/core.yaml
-            subPath: core.yaml
+            subPath: conf/core.yaml
           - name: peer-conf
             mountPath: /opt/scray/hl-fabric/external_builders
             subPath: conf/external_builders
           - name: peer0-data
-            mountPath: /var/hyperledger/production            
+            mountPath: /var/hyperledger/production           
+          - mountPath: /host/var/run/docker.sock
+            name: dockersocket
         - name: scray-peer-cli
           stdin: true
           tty: true 
