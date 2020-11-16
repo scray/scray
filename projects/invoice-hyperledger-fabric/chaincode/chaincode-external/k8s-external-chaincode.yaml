@@ -23,7 +23,7 @@ spec:
           - name: FABRIC_LOGGING_SPEC 
             value: "DEBUG"
           - name: CHAINCODE_ID
-            value: "basic_1.0:11501c3f4fd6c731babea1248007e36c5a79325d80c8a5e6b2333f7a0cd26aab"
+            value: "basic_1.0:5a294a12a1a89cd4eed3d4234fbc79f42eab2ac20cd176bc8ebbc07c597cd0ee"
           - name: CHAINCODE_SERVER_ADDRESS
             value: "0.0.0.0:9999"
 ---
@@ -40,5 +40,5 @@ spec:
   ports:
   - name: chaincode 
     port: 9999 
-    nodePort: 9999 
+    nodePort: 30999 
     protocol: TCP
