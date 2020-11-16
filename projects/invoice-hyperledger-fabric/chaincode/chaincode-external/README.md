@@ -13,3 +13,6 @@
 
 
 ```docker exec test-network-cli /bin/bash /opt/scray/scripts/install-external-cc-on-examplenetwork.sh $IP_CC_SERVICE $IP_OF_EXAMPLE_NETWORK```
+
+# Example query
+```peer chaincode query -C mychannel -n basic -c '{"function":"ReadAsset","Args":["asset1"]}'```
