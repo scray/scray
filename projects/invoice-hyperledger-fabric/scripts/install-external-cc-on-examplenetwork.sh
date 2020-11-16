@@ -3,6 +3,7 @@ HOST_IP=$2
 
 export PKGID=basic_1.0:5a294a12a1a89cd4eed3d4234fbc79f42eab2ac20cd176bc8ebbc07c597cd0ee
 
+apk add curl
 
 # Set hostname of external chaincode node
 echo $EXT_CC_IP asset-transfer-basic.org1.example.com >> /etc/hosts
