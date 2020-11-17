@@ -82,8 +82,8 @@ public final class FabInvoice implements ContractInterface {
         ChaincodeStub stub = ctx.getStub();
 
         Invoice[] invoiceData = {
-                new Invoice("001", false, false),
-                new Invoice("002", false, false)
+	    new Invoice("001",0.0, 0.0, false, false),
+	    new Invoice("002",0.0, 0.0, false, false)
         };
 
         for (int i = 0; i < invoiceData.length; i++) {
@@ -108,7 +108,9 @@ public final class FabInvoice implements ContractInterface {
      * @return the created Invoice
      */
     @Transaction()
-    public Invoice createInvoice(final Context ctx, final String key, final String invoiceNumber, final Boolean recheived, final Boolean sell) {
+    public Invoice createInvoice(final Context ctx, final String key, final String invoiceNumber,
+				 final Float vat, final Float  netto,
+				 final Boolean recheived, final Boolean sell) {
         ChaincodeStub stub = ctx.getStub();
 
         String carState = stub.getStringState(key);
@@ -118,7 +120,7 @@ public final class FabInvoice implements ContractInterface {
             throw new ChaincodeException(errorMessage, FabInvoiceErrors.INVOICE_ALREADY_EXISTS.toString());
         }
 
-        Invoice car = new Invoice(invoiceNumber, recheived, sell);
+        Invoice car = new Invoice(invoiceNumber, vat, netto, recheived, sell);
         carState = genson.serialize(car);
         stub.putStringState(key, carState);
 

@@ -15,16 +15,57 @@ import com.owlike.genson.annotation.JsonProperty;
 public final class Invoice {
 
     @Property()
+    private final String hash;
+
+    @Property()
     private final String invoiceNumber;
+
+    @Property()
+    private final Float vat;
+
+    @Property()
+    private final Float netto;
+
+    @Property()
+    private final String countryOrigin;
+
+    @Property()
+    private final String countryReceiver;
+
     
     @Property()
     private final Boolean received;
-    
+
+    @Property()
+    private final Boolean receivedOrder;
+
+    //@Property()
+    //private final Boolean forderungsabtritt;
+
     @Property()
     private final Boolean sell;
+    
+    @Property()
+    private final Boolean forderungBezahlt;
 
-    public Invoice(@JsonProperty("invoiceNumber") final String invoceNumber, @JsonProperty("received") final Boolean received, @JsonProperty("sell") final Boolean sell) {
-        this.invoiceNumber = invoceNumber;
+    
+    @Property()
+    private final String forderungErhaltenVon;
+
+    @Property()
+    private final String steuerbefreiungsgrund;
+
+    @Property()
+    private final Boolean umsatzsteuerAbgefuehrt;
+    
+    
+
+    public Invoice(@JsonProperty("invoiceNumber") final String invoceNumber,
+		   @JsonProperty("vat") final Float  vat, @JsonProperty("netto") final Float  netto,
+		   @JsonProperty("received") final Boolean received, @JsonProperty("sell") final Boolean sell) {
+        this.vat   = vat;
+	this.netto = netto;
+	this.invoiceNumber = invoceNumber;
         this.received = received;
         this.sell = sell;
     }
@@ -52,14 +93,23 @@ public final class Invoice {
 
     @Override
     public String toString() {
-        return this.getClass().getSimpleName() + "@" + Integer.toHexString(hashCode()) + " [invoiceNumber=" + invoiceNumber + ", received="
-                + received + ", sell=" + sell + "]";
+        return this.getClass().getSimpleName() + "@" + Integer.toHexString(hashCode()) + " [invoiceNumber=" + invoiceNumber
+	    + ", vat=" + vat + ", netto=" + netto
+	    + ", received=" + received + ", sell=" + sell + "]";
     }
 
     public String getInvoiceNumber() {
         return invoiceNumber;
     }
 
+     public String getVat() {
+        return vat;
+    }
+
+    public String getNetto() {
+        return netto;
+    }
+    
     public Boolean getReceived() {
         return received;
     }
