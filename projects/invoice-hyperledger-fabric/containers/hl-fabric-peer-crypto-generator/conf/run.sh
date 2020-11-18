@@ -13,8 +13,15 @@ export FABRIC_CFG_PATH=$PWD
 configtxgen -configPath $PWD  -printOrg $ORG_NAME > organizations/peerOrganizations/$DOMAINE/${ORG_NAME}.json
 zip -q -r $ORG_NAME.zip organizations/
 
+
+
 curl --user $SHARED_FS_USER:$SHARED_FS_PW -X MKCOL http://$SHARED_FS_HOST/add_requests
 curl --user $SHARED_FS_USER:$SHARED_FS_PW -X MKCOL http://$SHARED_FS_HOST/add_requests/$CHANNEL_NAME
 curl --user $SHARED_FS_USER:$SHARED_FS_PW -X DELETE http://$SHARED_FS_HOST/add_requests/$CHANNEL_NAME/${ORG_NAME}.json
 curl --user $SHARED_FS_USER:$SHARED_FS_PW -T organizations/peerOrganizations/$DOMAINE/${ORG_NAME}.json http://$SHARED_FS_HOST/add_requests/$CHANNEL_NAME/${ORG_NAME}.json
+
+# Upload CA
+curl --user $SHARED_FS_USER:$SHARED_FS_PW -X MKCOL http://$SHARED_FS_HOST/ca/
+curl --user $SHARED_FS_USER:$SHARED_FS_PW -X MKCOL http://$SHARED_FS_HOST/ca/$CHANNEL_NAME
+curl --user $SHARED_FS_USER:$SHARED_FS_PW -T organizations/peerOrganizations/org1.fabric.hyperledger.projects.scray.org/users/User1@org1.fabric.hyperledger.projects.scray.org/tls/ca.crt http://$SHARED_FS_HOST/ca/$CHANNEL_NAME/$DOMAINE-ca.crt
 
