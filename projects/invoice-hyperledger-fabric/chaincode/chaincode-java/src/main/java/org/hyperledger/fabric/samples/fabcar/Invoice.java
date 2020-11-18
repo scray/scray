@@ -11,7 +11,6 @@ import org.hyperledger.fabric.contract.annotation.Property;
 
 import com.owlike.genson.annotation.JsonProperty;
 
-//
 
 @DataType()
 public final class Invoice {
@@ -39,7 +38,7 @@ public final class Invoice {
     private final Boolean received;
 
     @Property()
-    private final Boolean receivedOrder;
+    private Boolean receivedOrder;
 
     //@Property()
     //private final Boolean forderungsabtritt;
@@ -130,42 +129,39 @@ public final class Invoice {
         return sell;
     }
     
-    public int getHash {
+    public int getHash() {
         return hash;
-
-    public  String getInvoiceNumber {
-        return invoiceNumber;
     }
-
-    public  String getCountryOrigin {
+    
+    public  String getCountryOrigin() {
         return countryOrigin;
     }
 
-    public String getCountryReceiver {
+    public String getCountryReceiver() {
         return countryReceiver;
     }
 
-    public Boolean getReceivedOrder {
+    public Boolean getReceivedOrder() {
         return receivedOrder;
     }
 
-    public Boolean setReceivedOrder(Boolean receivedOrder) {
+    public void setReceivedOrder(Boolean receivedOrder) {
         this.receivedOrder = receivedOrder;
     }
     
-    public Boolean getForderungBezahlt {
+    public Boolean getForderungBezahlt() {
         return forderungBezahlt;
     }
 
-    public  String getForderungErhaltenVon {
+    public  String getForderungErhaltenVon() {
         return forderungErhaltenVon;
     }
 
-    public  String getSteuerbefreiungsgrund {
+    public  String getSteuerbefreiungsgrund() {
         return steuerbefreiungsgrund;
     }
 
-    public  Boolean getUmsatzsteuerAbgefuehrt {
+    public  Boolean getUmsatzsteuerAbgefuehrt() {
         return umsatzsteuerAbgefuehrt;
     }
     

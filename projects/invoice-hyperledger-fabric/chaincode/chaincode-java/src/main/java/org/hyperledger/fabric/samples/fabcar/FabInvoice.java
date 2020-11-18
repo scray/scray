@@ -180,7 +180,7 @@ public final class FabInvoice implements ContractInterface {
 
         Invoice car = genson.deserialize(carState, Invoice.class);
 
-        Invoice newInvoice = new Invoice(car.getInvoiceNumber(),car.getVat(),car.getNetto(), true, car.getSell());
+        Invoice newInvoice = new Invoice(car.getInvoiceNumber(),car.getVat(),car.getNetto(),car.getCountryOrigin(), car.getCountryReceiver(), true, car.getSell());
         String newInvoiceState = genson.serialize(newInvoice);
         stub.putStringState(key, newInvoiceState);
 
@@ -205,10 +205,10 @@ public final class FabInvoice implements ContractInterface {
         //String newInvoiceState = genson.serialize(newInvoice);
         
         invoice.setReceivedOrder(true);
-        String newInvoiceState = genson.serialize(newInvoice);
+        String newInvoiceState = genson.serialize(invoice);
         
         stub.putStringState(key, newInvoiceState);
 
-        return newInvoice;
+        return invoice;
     }
 }
