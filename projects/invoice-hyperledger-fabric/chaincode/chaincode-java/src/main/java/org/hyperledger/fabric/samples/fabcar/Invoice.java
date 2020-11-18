@@ -64,6 +64,7 @@ public final class Invoice {
 
     public Invoice(@JsonProperty("invoiceNumber") final String invoceNumber,
 		   @JsonProperty("vat") final Float  vat, @JsonProperty("netto") final Float  netto,
+		   @JsonProperty("countryOrigin") final String countryOrigin, @JsonProperty("countryReceiver") final String countryReceiver, 
 		   @JsonProperty("received") final Boolean received, @JsonProperty("sell") final Boolean sell) {
 	this.hash = 0;
 	this.vat   = vat;
@@ -72,8 +73,8 @@ public final class Invoice {
         this.received = received;
         this.sell = sell;
 
-	this.countryOrigin = "";
-	this.countryReceiver = "";
+	this.countryOrigin = countryOrigin;
+	this.countryReceiver = countryReceiver;
 	this.receivedOrder = false;
 	this.forderungBezahlt  = false;
 	this.forderungErhaltenVon = "";
@@ -128,4 +129,44 @@ public final class Invoice {
     public Boolean getSell() {
         return sell;
     }
+    
+    public int getHash {
+        return hash;
+
+    public  String getInvoiceNumber {
+        return invoiceNumber;
+    }
+
+    public  String getCountryOrigin {
+        return countryOrigin;
+    }
+
+    public String getCountryReceiver {
+        return countryReceiver;
+    }
+
+    public Boolean getReceivedOrder {
+        return receivedOrder;
+    }
+
+    public Boolean setReceivedOrder(Boolean receivedOrder) {
+        this.receivedOrder = receivedOrder;
+    }
+    
+    public Boolean getForderungBezahlt {
+        return forderungBezahlt;
+    }
+
+    public  String getForderungErhaltenVon {
+        return forderungErhaltenVon;
+    }
+
+    public  String getSteuerbefreiungsgrund {
+        return steuerbefreiungsgrund;
+    }
+
+    public  Boolean getUmsatzsteuerAbgefuehrt {
+        return umsatzsteuerAbgefuehrt;
+    }
+    
 }

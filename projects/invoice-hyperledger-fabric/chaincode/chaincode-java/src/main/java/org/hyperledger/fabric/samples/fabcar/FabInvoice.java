@@ -83,7 +83,7 @@ public final class FabInvoice implements ContractInterface {
     public void initLedger(final Context ctx) {
         ChaincodeStub stub = ctx.getStub();
 
-        Invoice[] invoiceData = {
+        /*Invoice[] invoiceData = {
 	    new Invoice("001",0f, 0f, false, false),
 	    new Invoice("002",0f, 0f, false, false)
         };
@@ -95,7 +95,7 @@ public final class FabInvoice implements ContractInterface {
             String carState = genson.serialize(car);
             stub.putStringState(key, carState);
 
-        }
+        }*/
     }
 
     /**
@@ -112,6 +112,7 @@ public final class FabInvoice implements ContractInterface {
     @Transaction()
     public Invoice createInvoice(final Context ctx, final String key, final String invoiceNumber,
 				 final Float vat, final Float  netto,
+				 final String countryOrigin, final String countryReceiver, 
 				 final Boolean recheived, final Boolean sell) {
         ChaincodeStub stub = ctx.getStub();
 
@@ -122,7 +123,7 @@ public final class FabInvoice implements ContractInterface {
             throw new ChaincodeException(errorMessage, FabInvoiceErrors.INVOICE_ALREADY_EXISTS.toString());
         }
 
-        Invoice car = new Invoice(invoiceNumber, vat, netto, recheived, sell);
+        Invoice car = new Invoice(invoiceNumber, vat, netto, countryOrigin, countryReceiver, recheived, sell);
         carState = genson.serialize(car);
         stub.putStringState(key, carState);
 
@@ -181,6 +182,31 @@ public final class FabInvoice implements ContractInterface {
 
         Invoice newInvoice = new Invoice(car.getInvoiceNumber(),car.getVat(),car.getNetto(), true, car.getSell());
         String newInvoiceState = genson.serialize(newInvoice);
+        stub.putStringState(key, newInvoiceState);
+
+        return newInvoice;
+    }
+    
+    @Transaction()
+    public Invoice markOrderReceived(final Context ctx, final String key) {
+        ChaincodeStub stub = ctx.getStub();
+
+        String carState = stub.getStringState(key);
+
+        if (carState.isEmpty()) {
+            String errorMessage = String.format("Invoice %s does not exist", key);
+            System.out.println(errorMessage);
+            throw new ChaincodeException(errorMessage, FabInvoiceErrors.INVOICE_NOT_FOUND.toString());
+        }
+
+        Invoice invoice = genson.deserialize(carState, Invoice.class);
+        
+        //Invoice newInvoice = new Invoice(car.getInvoiceNumber(),car.getVat(),car.getNetto(), true, car.getSell());
+        //String newInvoiceState = genson.serialize(newInvoice);
+        
+        invoice.setReceivedOrder(true);
+        String newInvoiceState = genson.serialize(newInvoice);
+        
         stub.putStringState(key, newInvoiceState);
 
         return newInvoice;
