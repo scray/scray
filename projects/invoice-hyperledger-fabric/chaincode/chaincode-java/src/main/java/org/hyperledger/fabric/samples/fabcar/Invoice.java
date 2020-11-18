@@ -11,11 +11,13 @@ import org.hyperledger.fabric.contract.annotation.Property;
 
 import com.owlike.genson.annotation.JsonProperty;
 
+//
+
 @DataType()
 public final class Invoice {
 
     @Property()
-    private final String hash;
+    private final int hash;
 
     @Property()
     private final String invoiceNumber;
@@ -63,11 +65,20 @@ public final class Invoice {
     public Invoice(@JsonProperty("invoiceNumber") final String invoceNumber,
 		   @JsonProperty("vat") final Float  vat, @JsonProperty("netto") final Float  netto,
 		   @JsonProperty("received") final Boolean received, @JsonProperty("sell") final Boolean sell) {
-        this.vat   = vat;
+	this.hash = 0;
+	this.vat   = vat;
 	this.netto = netto;
 	this.invoiceNumber = invoceNumber;
         this.received = received;
         this.sell = sell;
+
+	this.countryOrigin = "";
+	this.countryReceiver = "";
+	this.receivedOrder = false;
+	this.forderungBezahlt  = false;
+	this.forderungErhaltenVon = "";
+	this.steuerbefreiungsgrund = "";
+	this.umsatzsteuerAbgefuehrt   = false;
     }
 
     @Override
@@ -102,11 +113,11 @@ public final class Invoice {
         return invoiceNumber;
     }
 
-     public String getVat() {
+     public Float getVat() {
         return vat;
     }
 
-    public String getNetto() {
+    public Float getNetto() {
         return netto;
     }
     

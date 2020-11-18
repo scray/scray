@@ -22,6 +22,8 @@ import org.hyperledger.fabric.shim.ledger.QueryResultsIterator;
 
 import com.owlike.genson.Genson;
 
+//
+
 /**
  * Java implementation of the Fabric Invoice Contract described in the Writing Your
  * First Application tutorial
@@ -82,8 +84,8 @@ public final class FabInvoice implements ContractInterface {
         ChaincodeStub stub = ctx.getStub();
 
         Invoice[] invoiceData = {
-	    new Invoice("001",0.0, 0.0, false, false),
-	    new Invoice("002",0.0, 0.0, false, false)
+	    new Invoice("001",0f, 0f, false, false),
+	    new Invoice("002",0f, 0f, false, false)
         };
 
         for (int i = 0; i < invoiceData.length; i++) {
@@ -177,7 +179,7 @@ public final class FabInvoice implements ContractInterface {
 
         Invoice car = genson.deserialize(carState, Invoice.class);
 
-        Invoice newInvoice = new Invoice(car.getInvoiceNumber(), true, car.getSell());
+        Invoice newInvoice = new Invoice(car.getInvoiceNumber(),car.getVat(),car.getNetto(), true, car.getSell());
         String newInvoiceState = genson.serialize(newInvoice);
         stub.putStringState(key, newInvoiceState);
 

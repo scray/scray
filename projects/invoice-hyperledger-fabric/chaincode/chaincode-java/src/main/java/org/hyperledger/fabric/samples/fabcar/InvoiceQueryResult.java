@@ -11,6 +11,7 @@ import org.hyperledger.fabric.contract.annotation.Property;
 
 import com.owlike.genson.annotation.JsonProperty;
 
+//
 /**
  * CarQueryResult structure used for handling result of query
  *
