@@ -105,8 +105,15 @@ public final class Invoice {
     @Override
     public String toString() {
         return this.getClass().getSimpleName() + "@" + Integer.toHexString(hashCode()) + " [invoiceNumber=" + invoiceNumber
-	    + ", vat=" + vat + ", netto=" + netto
-	    + ", received=" + received + ", sell=" + sell + "]";
+	    + ", hash=" + hash + ", vat=" + vat + ", netto=" + netto
+	    + ", countryOrigin=" + countryOrigin + ", countryReceiver=" + countryReceiver
+	    + ", received=" + received + ", sell=" + sell
+	    + ", receivedOrder=" + receivedOrder
+	    + ", forderungBezahlt=" + forderungBezahlt
+	    + ", forderungErhaltenVon=" + forderungErhaltenVon
+	    + ", steuerbefreiungsgrund=" + steuerbefreiungsgrund
+	    + ", umsatzsteuerAbgefuehrt=" + umsatzsteuerAbgefuehrt
+	    + "]";
     }
 
     public String getInvoiceNumber() {
