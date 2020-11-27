@@ -11,9 +11,11 @@ apk add yq@community
 
 
 export PATH=~/git/fabric-samples/test-network/fabric-samples/bin:$PATH
-cryptogen generate --config=org-scray-crypto.yaml --output=./organizations
+./configure_crypto.sh $ORG_NAME $DOMAINE
+cryptogen generate --config=crypto.yaml --output=./organizations
 export FABRIC_CFG_PATH=$PWD
 
+./configure_configtx.sh $ORG_NAME $DOMAINE
 configtxgen -configPath $PWD  -printOrg $ORG_NAME > organizations/peerOrganizations/$DOMAINE/${ORG_NAME}.json
 zip -q -r $ORG_NAME.zip organizations/
 
@@ -28,3 +30,32 @@ curl --user $SHARED_FS_USER:$SHARED_FS_PW -X MKCOL http://$SHARED_FS_HOST/ca/
 curl --user $SHARED_FS_USER:$SHARED_FS_PW -X MKCOL http://$SHARED_FS_HOST/ca/$CHANNEL_NAME
 curl --user $SHARED_FS_USER:$SHARED_FS_PW -T organizations/peerOrganizations/org1.fabric.hyperledger.projects.scray.org/users/User1@org1.fabric.hyperledger.projects.scray.org/tls/ca.crt http://$SHARED_FS_HOST/ca/$CHANNEL_NAME/$DOMAINE-ca.crt
 
+
+usage()
+{
+    echo "usage: Prepare peer node [[[-o ] [-d]] | [-h]]"
+}
+
+
+while [ "$1" != "" ]; do
+    case $1 in
+        -o | --organization )   shift
+                                ORG_NAME=$1
+                                ;;
+        -d | --domain )   	shift
+	       			DOMAINE=$1	
+                                ;;
+        -h | --help )           usage
+                                exit
+                                ;;
+        * )                     usage
+                                exit 1
+    esac
+    shift
+done
+
+if [ "$interactive" = "1" ]; then
+  echo "interactive is on"
+else
+  echo "interactive is off"
+fi
