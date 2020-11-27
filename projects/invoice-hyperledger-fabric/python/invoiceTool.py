@@ -94,3 +94,10 @@ def markOrderReceived(id):
             '-c',callopt])   
     except Exception as e:
         return str(e)
+    
+def getinfo():
+    try:    
+        callProcess  = subprocess.check_output(['peer', 'channel','-c', 'mychannel', 'getinfo'])
+        return json.loads(str(callProcess)[19:-3])
+    except Exception as e:
+        return str(e)
