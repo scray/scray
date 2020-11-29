@@ -78,7 +78,7 @@ class CoordinatedWriter[+IDXKEY <: Writable, +IDXVALUE <: Writable, +DATAKEY <: 
 
   private def createNewBasicWriter(metadata: WriteParameter): Writer = {
     val filePath = this.getPath(metadata.path, metadata.queryspace, metadata.version.number, metadata.writeVersioned, metadata.fileNameCreator)
-    val writer = new SequenceFileWriter(filePath, outTypeMapping, metadata.createScrayIndexFile, metadata.user, metadata.sequenceFileCompressionType)
+    val writer = new SequenceFileWriter(filePath, outTypeMapping, metadata.createScrayIndexFile, metadata.user, metadata.sequenceFileCompressionType, metadata.appendToExistingFile)
     this.hdfsConf = writer.hdfsConf
     this.startTimer
     
