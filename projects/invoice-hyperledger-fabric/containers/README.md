@@ -12,4 +12,4 @@ Execute in Kubernetes cluster:
   * ```kubectl exec --stdin --tty $POD_NAME  -c scray-peer-cli -- /bin/sh /mnt/conf/peer_join.sh $ORDERER_IP  $PEER_IP```
 
 ## Create configuration
-  *```kubectl create configmap hl-fabric-peer --from-literal=hostname=fabric.scray.org --from-literal=org_name=OrgScray```  	
+  *```kubectl create configmap hl-fabric-peer --from-literal=hostname=fabric.scray.org --from-literal=org_name=OrgScray --from-literal=CORE_PEER_ADDRESS=fabric.scray.org:30002 --from-literal=CORE_PEER_GOSSIP_EXTERNALENDPOINT=fabric.scray.org:30001 --from-literal=CORE_PEER_LOCALMSPID=OrgScrayMSP```  	

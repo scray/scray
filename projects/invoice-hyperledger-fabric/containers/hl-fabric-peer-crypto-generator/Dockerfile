@@ -5,4 +5,4 @@ RUN mkdir /mnt/peer-conf && mkdir /mnt/scripts/
 
 COPY conf /tmp/conf
 
-CMD cp -r /tmp/conf /mnt/peer-conf/ && cd /mnt/peer-conf/conf/ && ./run.sh 
+CMD cp -r /tmp/conf /mnt/peer-conf/ && cd /mnt/peer-conf/conf/ && ./run.sh -d $HOSTNAME -o $ORG_NAME
