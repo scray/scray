@@ -11,4 +11,5 @@ Execute on example-network node:
 Execute in Kubernetes cluster:
   * ```kubectl exec --stdin --tty $POD_NAME  -c scray-peer-cli -- /bin/sh /mnt/conf/peer_join.sh $ORDERER_IP  $PEER_IP```
 
-  	
+## Create configuration
+  *```kubectl create configmap hl-fabric-peer --from-literal=hostname=fabric.scray.org --from-literal=org_name=OrgScray```  	

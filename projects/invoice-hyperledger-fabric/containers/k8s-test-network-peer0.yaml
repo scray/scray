@@ -51,7 +51,7 @@ spec:
           - name: CORE_PEER_GOSSIP_EXTERNALENDPOINT
             value: "peer0.org1.fabric.hyperledger.projects.scray.org:30001"         
           - name: CORE_PEER_LOCALMSPID
-            value: "OrgScrayMSP"        
+            value: "OrgScrayMSP"       
           volumeMounts:
           - name: peer-conf 
             mountPath: /etc/hyperledger/fabric/msp
@@ -97,6 +97,16 @@ spec:
             value: "/etc/hyperledger/fabric/tls/ca.crt"
           - name: CORE_PEER_MSPCONFIGPATH
             value: "/mnt/conf/organizations/peerOrganizations/org1.fabric.hyperledger.projects.scray.org/users/Admin@org1.fabric.hyperledger.projects.scray.org/msp/"
+          - name: HOSTNAME
+            valueFrom:
+              configMapKeyRef:
+                name: hl-fabric-peer 
+                key: hostname
+          - name: ORG_NAME
+            valueFrom:
+              configMapKeyRef:
+                name: hl-fabric-peer
+                key: org_name
           volumeMounts:
           - name: peer-conf
             mountPath: /mnt
@@ -113,7 +123,19 @@ spec:
       initContainers:
       - name: cert-creator 
         image: scrayorg/hl-fabric-peer-crypto-generator       
-        imagePullPolicy: Always 
+        imagePullPolicy: Always
+        env:
+        - name: HOSTNAME
+          valueFrom:
+            configMapKeyRef:
+              name: hl-fabric-peer
+              key: hostname
+        - name: ORG_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: hl-fabric-peer
+              key: org_name
+
         # command: ['/bin/sh', '-c']
         # args: ['cd /mnt/hl-fabric-conf/ && wget https://mft.seeburger.de:443/portal-seefx/~public/ZDEwZTlmMTEtYjg2NC00NWVlLWE1YWEtNWI2OGZhM2NjMDg2?download -O config.zip &&  unzip config.zip']
         volumeMounts:

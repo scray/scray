@@ -7,6 +7,7 @@ SHARED_FS_HOST=10.15.136.41:30080
 SHARED_FS_USER=scray
 SHARED_FS_PW=scray
 
+createConfig() {
 # Add repo for yq
 echo "@community http://dl-cdn.alpinelinux.org/alpine/edge/community" >> /etc/apk/repositories
 apk add yq@community
@@ -31,7 +32,7 @@ curl --user $SHARED_FS_USER:$SHARED_FS_PW -T organizations/peerOrganizations/$DO
 curl --user $SHARED_FS_USER:$SHARED_FS_PW -X MKCOL http://$SHARED_FS_HOST/ca
 curl --user $SHARED_FS_USER:$SHARED_FS_PW -X MKCOL http://$SHARED_FS_HOST/ca/$CHANNEL_NAME
 curl --user $SHARED_FS_USER:$SHARED_FS_PW -T organizations/peerOrganizations/$DOMAINE/users/User1@$DOMAINE/tls/ca.crt http://$SHARED_FS_HOST/ca/$CHANNEL_NAME/$DOMAINE-ca.crt
-
+}
 
 usage()
 {
@@ -56,8 +57,8 @@ while [ "$1" != "" ]; do
     shift
 done
 
-if [ "$interactive" = "1" ]; then
-  echo "interactive is on"
-else
-  echo "interactive is off"
-fi
+echo "Configuration"
+echo "  ORG_NAME: ${ORG_NAME}"
+echo "  DOMAINE: ${DOMAINE}"
+
+createConfig
