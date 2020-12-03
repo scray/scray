@@ -1,4 +1,4 @@
-## Start new peer
+## Hyperleder fabric Kubernetes peer
 
 ### Create peer configuration
    ```
