@@ -1,13 +1,13 @@
 
 ORDERER_IP=$1
+CHANNEL_NAME=$2 #mychannel
+NEW_ORG_NAME=$3
 
 export CORE_PEER_LOCALMSPID="Org1MSP"
 export CORE_PEER_TLS_ROOTCERT_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/organizations/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt
 export CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/organizations/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp
 export CORE_PEER_ADDRESS=peer0.org1.example.com:7051
 export ORDERER_CA=/opt/gopath/src/github.com/hyperledger/fabric/peer/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem
-export CHANNEL_NAME=mychannel
-
 
 echo $ORDERER_IP orderer.example.com >> /etc/hosts
 
@@ -23,13 +23,12 @@ apk add curl
 curl --user $SHARED_FS_USER:$SHARED_FS_PW -X MKCOL http://$SHARED_FS_HOST/ca
 curl --user $SHARED_FS_USER:$SHARED_FS_PW -T /opt/gopath/src/github.com/hyperledger/fabric/peer/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem http://$SHARED_FS_HOST/ca/tlsca.example.com-cert.pem
 
-# Get current configuration
-curl --user 'scray:scray' http://10.14.128.38:30080/latest_configuration/mychannel/latest.json > latest.json
-curl --user 'scray:scray' http://kubernetes.research.dev.seeburger.de:30080/add_requests/mychannel/OrgScrayMSP.json > org3.json
+# Get configuration of new peer
+curl --user 'scray:scray' http://${SHARED_FS_HOST}/newmemberrequests/$CHANNEL_NAME/${NEW_ORG_NAME}.json > new_member_org.json
 
 
 # Add org3 data to existing config
-jq -s '.[0] * {"channel_group":{"groups":{"Application":{"groups": {"OrgScrayMSP":.[1]}}}}}' config.json ./org3.json > modified_config.json
+jq -s ".[0] "*" {\"channel_group\":{\"groups\":{\"Application\":{\"groups\": {\"${NEW_ORG_NAME}MSP\":.[1]}}}}}" config.json ./new_member_org.json > modified_config.json
 
 configtxlator proto_encode --input config.json --type common.Config --output config.pb
 configtxlator proto_encode --input modified_config.json --type common.Config --output modified_config.pb

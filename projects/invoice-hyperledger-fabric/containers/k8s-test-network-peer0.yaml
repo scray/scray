@@ -100,11 +100,15 @@ spec:
           - name: CORE_PEER_ID
             value: "Org3cli"
           - name: CORE_PEER_ADDRESS
-            value: "peer0.org1.fabric.hyperledger.projects.scray.org:30003"
+            valueFrom:
+              configMapKeyRef:
+                name: hl-fabric-peer 
+                key: CORE_PEER_ADDRESS 
           - name: CORE_PEER_LOCALMSPID
-            value: "OrgScrayMSP"
-          - name: CORE_PEER_LOCALMSPID
-            value: "OrgScrayMSP"
+            valueFrom:
+              configMapKeyRef:
+                name: hl-fabric-peer 
+                key: CORE_PEER_LOCALMSPID
           - name: CORE_PEER_TLS_ENABLED
             value: "true"
           - name: CORE_PEER_TLS_CERT_FILE
@@ -114,7 +118,7 @@ spec:
           - name: CORE_PEER_TLS_ROOTCERT_FILE
             value: "/etc/hyperledger/fabric/tls/ca.crt"
           - name: CORE_PEER_MSPCONFIGPATH
-            value: "/mnt/conf/organizations/peerOrganizations/org1.fabric.hyperledger.projects.scray.org/users/Admin@org1.fabric.hyperledger.projects.scray.org/msp/"
+            value: "/mnt/conf/msp/"
           - name: HOSTNAME
             valueFrom:
               configMapKeyRef:
@@ -130,10 +134,10 @@ spec:
             mountPath: /mnt
           - name: peer-conf 
             mountPath: /etc/hyperledger/fabric/msp
-            subPath: conf/organizations/peerOrganizations/org1.fabric.hyperledger.projects.scray.org/peers/peer0.org1.fabric.hyperledger.projects.scray.org/msp 
+            subPath: conf/msp 
           - name: peer-conf 
             mountPath: /etc/hyperledger/fabric/tls
-            subPath: conf/organizations/peerOrganizations/org1.fabric.hyperledger.projects.scray.org/peers/peer0.org1.fabric.hyperledger.projects.scray.org/tls
+            subPath: conf/tls
           - name: peer0-data
             mountPath: /var/hyperledger/production          
           - mountPath: /host/var/run/docker.sock

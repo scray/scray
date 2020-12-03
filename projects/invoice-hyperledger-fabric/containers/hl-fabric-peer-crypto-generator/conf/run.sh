@@ -9,12 +9,8 @@ SHARED_FS_PW=scray
 
 
 copyCertsToDefaultDir() {
-    
-    mkdir msp
-    cp -r organizations/peerOrganizations/${DOMAINE}/peers/peer0.${DOMAINE}/msp ./msp/
-    
-    mkdir tls
-    cp -r organizations/peerOrganizations/${DOMAINE}/peers/peer0.${DOMAINE}/tls ./tls/
+    cp -r organizations/peerOrganizations/${DOMAINE}/peers/peer0.${DOMAINE}/msp ./
+    cp -r organizations/peerOrganizations/${DOMAINE}/peers/peer0.${DOMAINE}/tls ./
 }
 
 createConfig() {
@@ -33,10 +29,10 @@ createConfig() {
     
     copyCertsToDefaultDir
     
-    curl --user $SHARED_FS_USER:$SHARED_FS_PW -X MKCOL http://$SHARED_FS_HOST/add_requests
-    curl --user $SHARED_FS_USER:$SHARED_FS_PW -X MKCOL http://$SHARED_FS_HOST/add_requests/$CHANNEL_NAME
-    curl --user $SHARED_FS_USER:$SHARED_FS_PW -X DELETE http://$SHARED_FS_HOST/add_requests/$CHANNEL_NAME/${ORG_NAME}.json
-    curl --user $SHARED_FS_USER:$SHARED_FS_PW -T organizations/peerOrganizations/$DOMAINE/${ORG_NAME}.json http://$SHARED_FS_HOST/add_requests/$CHANNEL_NAME/${ORG_NAME}.json
+    curl --user $SHARED_FS_USER:$SHARED_FS_PW -X MKCOL http://$SHARED_FS_HOST/newmemberrequests/
+    curl --user $SHARED_FS_USER:$SHARED_FS_PW -X MKCOL http://$SHARED_FS_HOST/newmemberrequests/$CHANNEL_NAME
+    curl --user $SHARED_FS_USER:$SHARED_FS_PW -X DELETE http://$SHARED_FS_HOST/newmemberrequests/$CHANNEL_NAME/${ORG_NAME}.json
+    curl --user $SHARED_FS_USER:$SHARED_FS_PW -T organizations/peerOrganizations/$DOMAINE/${ORG_NAME}.json http://$SHARED_FS_HOST/newmemberrequests/$CHANNEL_NAME/${ORG_NAME}.json
     
     # Upload CA
     curl --user $SHARED_FS_USER:$SHARED_FS_PW -X MKCOL http://$SHARED_FS_HOST/ca
