@@ -1,4 +1,4 @@
-## Hyperleder fabric Kubernetes peer
+## Hyperledger Fabric Kubernetes peer
 
 ### Create peer configuration
    ```
