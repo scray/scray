@@ -37,32 +37,56 @@ spec:
           - name: CORE_PEER_TLS_ROOTCERT_FILE
             value: "/etc/hyperledger/fabric/tls/ca.crt"
           - name: CORE_PEER_ID
-            value: "peer0.org3.example.com"              
+            valueFrom:
+              configMapKeyRef:
+                name: hl-fabric-peer 
+                key: hostname             
           - name: CORE_PEER_ADDRESS
-            value: "peer0.org3.example.com:30001"
+            valueFrom:
+              configMapKeyRef:
+                name: hl-fabric-peer 
+                key: CORE_PEER_ADDRESS 
           - name: CORE_PEER_LISTENADDRESS
-            value: "0.0.0.0:30001"         
+            value: "0.0.0.0:7051"         
           - name: CORE_PEER_CHAINCODEADDRESS
-            value: "peer0.org3.example.com:30002"
+            valueFrom:
+              configMapKeyRef:
+                name: hl-fabric-peer 
+                key: CORE_PEER_ADDRESS 
           - name: CORE_PEER_CHAINCODELISTENADDRESS
             value: "0.0.0.0:30002"  
           - name: CORE_PEER_GOSSIP_BOOTSTRAP
-            value: "peer0.org3.example.com:30001"
+            valueFrom:
+              configMapKeyRef:
+                name: hl-fabric-peer 
+                key: CORE_PEER_GOSSIP_EXTERNALENDPOINT 
           - name: CORE_PEER_GOSSIP_EXTERNALENDPOINT
-            value: "peer0.org3.example.com:30001"         
+            valueFrom:
+              configMapKeyRef:
+                name: hl-fabric-peer 
+                key: CORE_PEER_GOSSIP_EXTERNALENDPOINT     
           - name: CORE_PEER_LOCALMSPID
-            value: "Org3MSP"        
+            valueFrom:
+              configMapKeyRef:
+                name: hl-fabric-peer 
+                key: CORE_PEER_LOCALMSPID
           volumeMounts:
-          - name: config
+          - name: peer-conf 
             mountPath: /etc/hyperledger/fabric/msp
-            subPath: organizations/peerOrganizations/org3.example.com/peers/peer0.org3.example.com/msp
-          - name: config
+            subPath: conf/msp 
+          - name: peer-conf 
             mountPath: /etc/hyperledger/fabric/tls
-            subPath: organizations/peerOrganizations/org3.example.com/peers/peer0.org3.example.com/tls
+            subPath: conf/tls
+          - name: peer-conf 
+            mountPath: /etc/hyperledger/fabric/core.yaml
+            subPath: conf/core.yaml
+          - name: peer-conf
+            mountPath: /opt/scray/hl-fabric/external_builders
+            subPath: conf/external_builders
           - name: peer0-data
-            mountPath: /var/hyperledger/production
+            mountPath: /var/hyperledger/production           
           - mountPath: /host/var/run/docker.sock
-            name: dockersocket          
+            name: dockersocket
         - name: scray-peer-cli
           stdin: true
           tty: true 
@@ -76,11 +100,15 @@ spec:
           - name: CORE_PEER_ID
             value: "Org3cli"
           - name: CORE_PEER_ADDRESS
-            value: "peer0.org3.example.com:30001"
+            valueFrom:
+              configMapKeyRef:
+                name: hl-fabric-peer 
+                key: CORE_PEER_ADDRESS 
           - name: CORE_PEER_LOCALMSPID
-            value: "Org3MSP"
-          - name: CORE_PEER_LOCALMSPID
-            value: "Org3MSP"
+            valueFrom:
+              configMapKeyRef:
+                name: hl-fabric-peer 
+                key: CORE_PEER_LOCALMSPID
           - name: CORE_PEER_TLS_ENABLED
             value: "true"
           - name: CORE_PEER_TLS_CERT_FILE
@@ -90,26 +118,53 @@ spec:
           - name: CORE_PEER_TLS_ROOTCERT_FILE
             value: "/etc/hyperledger/fabric/tls/ca.crt"
           - name: CORE_PEER_MSPCONFIGPATH
-            value: "/etc/hyperledger/fabric/msp/users/Admin@peer0.org3.example.com/msp"
+            value: "/mnt/conf/msp/"
+          - name: HOSTNAME
+            valueFrom:
+              configMapKeyRef:
+                name: hl-fabric-peer 
+                key: hostname
+          - name: ORG_NAME
+            valueFrom:
+              configMapKeyRef:
+                name: hl-fabric-peer
+                key: org_name
           volumeMounts:
-          - name: config
+          - name: peer-conf
+            mountPath: /mnt
+          - name: peer-conf 
             mountPath: /etc/hyperledger/fabric/msp
-            subPath: organizations/peerOrganizations/peer0.org3.example.com
-          - name: config
+            subPath: conf/msp 
+          - name: peer-conf 
             mountPath: /etc/hyperledger/fabric/tls
-            subPath: organizations/peerOrganizations/peer0.org3.example.com/peers/peer0.org3.example.com/tls
+            subPath: conf/tls
           - name: peer0-data
-            mountPath: /var/hyperledger/production           
+            mountPath: /var/hyperledger/production          
+          - mountPath: /host/var/run/docker.sock
+            name: dockersocket      
       initContainers:
-      - name: credential-loader
-        image: alpine/git        
-        command: ['/bin/sh', '-c']
-        args: ['cd /mnt/hl-fabric-conf/ && wget https://mft.seeburger.de:443/portal-seefx/~public/ZDEwZTlmMTEtYjg2NC00NWVlLWE1YWEtNWI2OGZhM2NjMDg2?download -O config.zip &&  unzip config.zip']
+      - name: cert-creator 
+        image: scrayorg/hl-fabric-peer-crypto-generator       
+        imagePullPolicy: Always
+        env:
+        - name: HOSTNAME
+          valueFrom:
+            configMapKeyRef:
+              name: hl-fabric-peer
+              key: hostname
+        - name: ORG_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: hl-fabric-peer
+              key: org_name
+
+        # command: ['/bin/sh', '-c']
+        # args: ['cd /mnt/hl-fabric-conf/ && wget https://mft.seeburger.de:443/portal-seefx/~public/ZDEwZTlmMTEtYjg2NC00NWVlLWE1YWEtNWI2OGZhM2NjMDg2?download -O config.zip &&  unzip config.zip']
         volumeMounts:
-        - name: config
-          mountPath: /mnt/hl-fabric-conf/
+        - name: peer-conf 
+          mountPath: /mnt/peer-conf/ 
       volumes:
-      - name: config
+      - name: peer-conf 
         emptyDir: {}
       - name: peer0-data
         emptyDir: {}
@@ -135,4 +190,8 @@ spec:
   - name: peer-chaincode 
     port: 30002
     nodePort: 30002
+    protocol: TCP
+  - name: peer-listen 
+    port: 7051 
+    nodePort: 30003
     protocol: TCP
