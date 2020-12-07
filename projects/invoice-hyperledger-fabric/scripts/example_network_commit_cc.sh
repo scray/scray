@@ -1,15 +1,16 @@
 EXT_CC_IP=$1
 HOST_IP=$2
+CERT_BASE_PATH=$3
 
 export PKGID=basic_1.0:5a294a12a1a89cd4eed3d4234fbc79f42eab2ac20cd176bc8ebbc07c597cd0ee
-CERT_BASE_PATH=/opt/gopath/src/github.com/hyperledger/fabric/peer
+#CERT_BASE_PATH=/opt/gopath/src/github.com/hyperledger/fabric/peer
 
 export CORE_PEER_TLS_ENABLED=true
 export ORDERER_CA=${CERT_BASE_PATH}/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem
 export PEER0_ORG1_CA=${CERT_BASE_PATH}/organizations/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt
 export PEER0_ORG2_CA=${CERT_BASE_PATH}/organizations/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/ca.crt
 
-CERT_BASE_PATH=/opt/gopath/src/github.com/hyperledger/fabric/peer
+#CERT_BASE_PATH=/opt/gopath/src/github.com/hyperledger/fabric/peer
 
 export CORE_PEER_TLS_ENABLED=true
 export ORDERER_CA=${CERT_BASE_PATH}/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem
