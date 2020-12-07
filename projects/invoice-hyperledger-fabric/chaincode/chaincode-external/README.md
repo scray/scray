@@ -18,7 +18,7 @@ IP_OF_EXAMPLE_NETWORK=10.14.128.30 #Host where the example network is running
 kubectl exec --stdin --tty peer0-org1-scray-org-84ddc5757f-glbgn -c scray-peer-cli -- /bin/sh /mnt/conf/install_and_approve_cc.sh $IP_CC_SERVICE $IP_OF_EXAMPLE_NETWORK
 ```
 
-# Install external chaincode on peers 
+# Install external chaincode on example network peers 
 ```
 IP_CC_SERVICE=10.14.128.38         # Host where the chaincode is running
 IP_OF_EXAMPLE_NETWORK=10.14.128.30 #Host where the example network is running
