@@ -1,17 +1,37 @@
 ## Hyperledger Fabric Kubernetes peer
 
+### Create configuration for new peer
+
+  ```
+  PEER_NAME=peer-42
+  cd ~/git/scray/projects/invoice-hyperledger-fabric/containers
+  ./configure-deployment.sh -n $PEER_NAME
+  ```
+
+### Start service
+  ```kubectl apply -f target/$PEER_NAME/k8s-peer-service.yaml```
+
+
 ### Create peer configuration
+
    ```
-   kubectl create configmap hl-fabric-peer \
+   GOSSIP_PORT=$(kubectl get service $PEER_NAME -o jsonpath="{.spec.ports[?(@.name=='peer-gossip')].nodePort}")
+   PEER_LISTEN_PORT=$(kubectl get service $PEER_NAME -o jsonpath="{.spec.ports[?(@.name=='peer-listen')].nodePort}")
+   PEER_CHAINCODE_PORT=$(kubectl get service $PEER_NAME -o jsonpath="{.spec.ports[?(@.name=='peer-chaincode')].nodePort}")
+   ```
+
+   ```
+   kubectl create configmap hl-fabric-peer-$PEER_NAME \
     --from-literal=hostname=kubernetes.research.dev.seeburger.de \
-    --from-literal=org_name=OrgScray \
-    --from-literal=CORE_PEER_ADDRESS=kubernetes.research.dev.seeburger.de:30003 \
-    --from-literal=CORE_PEER_GOSSIP_EXTERNALENDPOINT=kubernetes.research.dev.seeburger.de:30001 \
-    --from-literal=CORE_PEER_LOCALMSPID=OrgScrayMSP
-   ```  	
+    --from-literal=org_name=$PEER_NAME \
+    --from-literal=CORE_PEER_ADDRESS=kubernetes.research.dev.seeburger.de:$PEER_LISTEN_PORT \
+    --from-literal=CORE_PEER_GOSSIP_EXTERNALENDPOINT=kubernetes.research.dev.seeburger.de:$GOSSIP_PORT \
+    --from-literal=CORE_PEER_LOCALMSPID=${PEER_NAME}MSP
+   ```    	
 
 ### Start new peer:
-  ```kubectl apply -f https://raw.githubusercontent.com/scray/scray/feature/k8s-peer/projects/invoice-hyperledger-fabric/containers/k8s-peer.yaml```
+
+  ```kubectl apply -f target/$PEER_NAME/k8s-peer.yaml```
   
 ## Integrate new peer to example network
 ### Example values
