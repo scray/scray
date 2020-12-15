@@ -25,6 +25,22 @@ setValuesInLocalFile() {
   yq w  -i k8s-peer.yaml "spec.template.spec.containers(name==$PEER_NAME).env(name==CORE_PEER_GOSSIP_EXTERNALENDPOINT).valueFrom.configMapKeyRef.name" hl-fabric-peer-$PEER_NAME 
   yq w  -i k8s-peer.yaml "spec.template.spec.containers(name==$PEER_NAME).env(name==CORE_PEER_LOCALMSPID).valueFrom.configMapKeyRef.name" hl-fabric-peer-$PEER_NAME 
 
+
+
+  yq w  -i k8s-peer.yaml "spec.template.spec.containers(name==scray-peer-cli).env(name==CORE_PEER_ID).valueFrom.configMapKeyRef.name" hl-fabric-peer-$PEER_NAME
+  yq w  -i k8s-peer.yaml "spec.template.spec.containers(name==scray-peer-cli).env(name==CORE_PEER_ADDRESS).valueFrom.configMapKeyRef.name" hl-fabric-peer-$PEER_NAME
+  yq w  -i k8s-peer.yaml "spec.template.spec.containers(name==scray-peer-cli).env(name==CORE_PEER_CHAINCODEADDRESS).valueFrom.configMapKeyRef.name" hl-fabric-peer-$PEER_NAME
+  yq w  -i k8s-peer.yaml "spec.template.spec.containers(name==scray-peer-cli).env(name==CORE_PEER_GOSSIP_BOOTSTRAP).valueFrom.configMapKeyRef.name" hl-fabric-peer-$PEER_NAME
+  yq w  -i k8s-peer.yaml "spec.template.spec.containers(name==scray-peer-cli).env(name==CORE_PEER_GOSSIP_EXTERNALENDPOINT).valueFrom.configMapKeyRef.name" hl-fabric-peer-$PEER_NAME
+  yq w  -i k8s-peer.yaml "spec.template.spec.containers(name==scray-peer-cli).env(name==CORE_PEER_LOCALMSPID).valueFrom.configMapKeyRef.name" hl-fabric-peer-$PEER_NAME
+
+  yq w  -i k8s-peer.yaml "spec.template.spec.containers(name==scray-peer-cli).env(name==HOSTNAME).valueFrom.configMapKeyRef.name" hl-fabric-peer-$PEER_NAME
+  yq w  -i k8s-peer.yaml "spec.template.spec.containers(name==scray-peer-cli).env(name==ORG_NAME).valueFrom.configMapKeyRef.name" hl-fabric-peer-$PEER_NAME
+
+  yq w  -i k8s-peer.yaml "spec.template.spec.initContainers(name==cert-creator).env(name==HOSTNAME).valueFrom.configMapKeyRef.name" hl-fabric-peer-$PEER_NAME
+  yq w  -i k8s-peer.yaml "spec.template.spec.initContainers(name==cert-creator).env(name==ORG_NAME).valueFrom.configMapKeyRef.name" hl-fabric-peer-$PEER_NAME
+
+
   # Configure service
   yq w -i k8s-peer-service.yaml 'metadata.name' $PEER_NAME 
   yq w -i k8s-peer-service.yaml 'metadata.labels.run' $PEER_NAME 
