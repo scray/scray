@@ -96,8 +96,6 @@ spec:
               value: "unix:///host/var/run/docker.sock"
             - name: GOPATH
               value: "/opt/gopath"
-            - name: CORE_PEER_ID
-              value: "Org3cli"
             - name: CORE_PEER_ADDRESS
               valueFrom:
                 configMapKeyRef:
