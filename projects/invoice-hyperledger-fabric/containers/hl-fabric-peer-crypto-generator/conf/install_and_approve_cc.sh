@@ -8,8 +8,12 @@ export PKGID=basic_1.0:5a294a12a1a89cd4eed3d4234fbc79f42eab2ac20cd176bc8ebbc07c5
 echo $EXT_CC_IP asset-transfer-basic.org1.example.com >> /etc/hosts
 echo $HOST_IP peer0.org1.example.com peer0.org2.example.com orderer.example.com >> /etc/hosts
 
-# Get chaincode description
+export CHANNEL_NAME=$CHANNEL_NAME
 
+export CORE_PEER_MSPCONFIGPATH=/mnt/conf/organizations/peerOrganizations/$HOSTNAME/users/Admin@$HOSTNAME/msp/
+export CORE_PEER_ADDRESS=peer0.$HOSTNAME:30003
+
+# Get chaincode description
 curl https://mft.seeburger.de:443/portal-seefx/~public/MDI0Mjk4ZTQtZGQ3ZS00M2Y4LWIyMDktZjY1YzljN2MwMTlm?download > chaincode_description.tgz
 peer lifecycle chaincode install chaincode_description.tgz
 
