@@ -11,7 +11,7 @@ echo $HOST_IP peer0.org1.example.com peer0.org2.example.com orderer.example.com 
 export CHANNEL_NAME=$CHANNEL_NAME
 
 export CORE_PEER_MSPCONFIGPATH=/mnt/conf/organizations/peerOrganizations/$HOSTNAME/users/Admin@$HOSTNAME/msp/
-export CORE_PEER_ADDRESS=peer0.$HOSTNAME:30003
+export CORE_PEER_ADDRESS=peer0.$CORE_PEER_ADDRESS
 
 # Get chaincode description
 curl https://mft.seeburger.de:443/portal-seefx/~public/MDI0Mjk4ZTQtZGQ3ZS00M2Y4LWIyMDktZjY1YzljN2MwMTlm?download > chaincode_description.tgz
