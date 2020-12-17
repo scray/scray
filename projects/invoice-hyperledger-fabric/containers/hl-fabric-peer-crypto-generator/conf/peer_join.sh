@@ -17,7 +17,7 @@ export ORDERER_CA=/tmp/tlsca.example.com-cert.pem
 export CHANNEL_NAME=$CHANNEL_NAME
 
 export CORE_PEER_MSPCONFIGPATH=/mnt/conf/organizations/peerOrganizations/$HOSTNAME/users/Admin@$HOSTNAME/msp/
-export CORE_PEER_ADDRESS=peer0.$HOSTNAME:30003
+export CORE_PEER_ADDRESS=peer0.$CORE_PEER_ADDRESS
 
 peer channel fetch 0 mychannel.block -o $ORDERER_HOSTNAME:7050 -c $CHANNEL_NAME --tls --cafile $ORDERER_CA
 peer channel join -b mychannel.block
