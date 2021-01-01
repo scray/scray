@@ -36,8 +36,10 @@ import java.io.File
 import org.apache.hadoop.security.UserGroupInformation
 import java.security.PrivilegedAction
 import java.net.URI
+import java.util.EnumSet
+import org.apache.hadoop.fs.CreateFlag
 
-class SequenceFileWriter[IDXKEY <: Writable, IDXVALUE <: Writable, DATAKEY <: Writable, DATAVALUE <: Writable](path: String, val hdfsConf: Configuration, fs: Option[FileSystem], outTypeMapping: SequenceKeyValuePair[IDXKEY, IDXVALUE, DATAKEY, DATAVALUE], createIndex: Boolean, user: String, compressionType: String) extends scray.hdfs.io.index.format.Writer with LazyLogging {
+class SequenceFileWriter[IDXKEY <: Writable, IDXVALUE <: Writable, DATAKEY <: Writable, DATAVALUE <: Writable](path: String, val hdfsConf: Configuration, fs: Option[FileSystem], outTypeMapping: SequenceKeyValuePair[IDXKEY, IDXVALUE, DATAKEY, DATAVALUE], createIndex: Boolean, user: String, compressionType: String, appendToExistingFile: Boolean) extends scray.hdfs.io.index.format.Writer with LazyLogging {
 
   var dataWriter: SequenceFile.Writer = null; // scalastyle:off null
   var idxWriter: Option[SequenceFile.Writer] = None
@@ -50,11 +52,15 @@ class SequenceFileWriter[IDXKEY <: Writable, IDXVALUE <: Writable, DATAKEY <: Wr
   var numberOfInserts: Int = 0
 
   def this(path: String, outTypeMapping: SequenceKeyValuePair[IDXKEY, IDXVALUE, DATAKEY, DATAVALUE], createIndex: Boolean, user: String, compressionType: String) = {
-    this(path, new Configuration, None, outTypeMapping, createIndex, user, compressionType)
+    this(path, new Configuration, None, outTypeMapping, createIndex, user, compressionType, false)
+  }
+  
+  def this(path: String, outTypeMapping: SequenceKeyValuePair[IDXKEY, IDXVALUE, DATAKEY, DATAVALUE], createIndex: Boolean, user: String, compressionType: String, appendToExistingFile: Boolean) = {
+    this(path, new Configuration, None, outTypeMapping, createIndex, user, compressionType, appendToExistingFile)
   }
 
   def this(path: String, hdfsConf: Configuration, outTypeMapping: SequenceKeyValuePair[IDXKEY, IDXVALUE, DATAKEY, DATAVALUE], createIndex: Boolean, user: String, compressionType: String) {
-    this(path, hdfsConf, None, outTypeMapping, createIndex, user, compressionType)
+    this(path, hdfsConf, None, outTypeMapping, createIndex, user, compressionType, false)
   }
 
   private def initWriter(
@@ -83,6 +89,7 @@ class SequenceFileWriter[IDXKEY <: Writable, IDXVALUE <: Writable, DATAKEY <: Wr
           Writer.replication(fs.getDefaultReplication(fullPath)),
           Writer.blockSize(536870912),
           Writer.compression(SequenceFile.CompressionType.valueOf(compressionType)),
+          Writer.appendIfExists(appendToExistingFile),
           Writer.progressable(null),
           Writer.metadata(new Metadata()));
       }
