@@ -280,6 +280,8 @@ def doitElement(r,rkey='',hideUnused=False,upkey=''):
     elif isinstance(r, bool):  
         addVisCheckbox(key=rkey,value=r)
         #addVisText(key=rkey,value=str(r)) 
+    elif isinstance(r, int):  
+            addVisText(key=rkey,value=str(r))    
     else:
         print(__name__,type(r),'not implemented')
     
