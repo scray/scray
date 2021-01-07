@@ -142,7 +142,6 @@ spec:
       initContainers:
         - name: cert-creator
           image: scrayorg/hl-fabric-peer-crypto-generator
-          imagePullPolicy: Always
           env:
             - name: HOSTNAME
               valueFrom:

@@ -1,6 +1,7 @@
 #!/bin/bash
 
 PEER_NAME=peer0.scray.org
+BASE_PATH=$PWD
 
 createEnvForNewConf() {
   mkdir -p target/$PEER_NAME
@@ -10,6 +11,26 @@ createEnvForNewConf() {
   cd ./target/$PEER_NAME/
 }
 
+yq() {
+  $BASE_PATH/bin/yq $1 $2 $3 $4 $5
+}
+
+# Check if yq exists
+checkYqVersion() {
+  dowloadYqBin
+}
+
+dowloadYqBin() {
+  if [[ ! -f "./bin/yq" ]]
+  then
+    echo "yq does not exists"
+    echo "download linux_amd64 yq binary"
+    
+    mkdir bin
+    curl -L https://github.com/mikefarah/yq/releases/download/3.4.1/yq_linux_amd64 -o ./bin/yq
+    chmod u+x ./bin/yq
+  fi
+}
 
 setValuesInLocalFile() {
   yq w -i k8s-peer.yaml "metadata.name" $PEER_NAME
@@ -58,16 +79,20 @@ while [ "$1" != "" ]; do
     case $1 in
         -n | --name )   shift
 				PEER_NAME=$1
+				checkYqVersion
 				createEnvForNewConf
 				setValuesInLocalFile
                                 ;;
         -i | --inplace )   	shift
 	       			PEER_NAME=$1
+				checkYqVersion
 				setValuesInLocalFile
                                 ;;
         -h | --help )           usage
                                 exit
                                 ;;
+	-c| --check )		checkYqVersion
+				;;
         * )                     usage
                                 exit 1
     esac
