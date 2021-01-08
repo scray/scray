@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>org.scray.projects.hyperledger-fabric</groupId>
-	<artifactId>invoice-service</artifactId>
+	<artifactId>wallet-creator</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
@@ -32,12 +32,7 @@
 			<version>2.2.0</version>
 		</dependency>
 
-		<dependency>
-			<groupId>io.swagger</groupId>
-			<artifactId>swagger-jersey2-jaxrs</artifactId>
-			<scope>compile</scope>
-			<version>${swagger-core-version}</version>
-		</dependency>
+
 		<dependency>
 			<groupId>ch.qos.logback</groupId>
 			<artifactId>logback-classic</artifactId>
@@ -55,21 +50,6 @@
 			<artifactId>junit</artifactId>
 			<version>${junit-version}</version>
 			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>javax.servlet</groupId>
-			<artifactId>servlet-api</artifactId>
-			<version>${servlet-api-version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.glassfish.jersey.containers</groupId>
-			<artifactId>jersey-container-servlet-core</artifactId>
-			<version>${jersey2-version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.glassfish.jersey.media</groupId>
-			<artifactId>jersey-media-multipart</artifactId>
-			<version>${jersey2-version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.fasterxml.jackson.datatype</groupId>
@@ -119,43 +99,6 @@
 	<build>
 		<plugins>
 			<plugin>
-				<groupId>org.openapitools</groupId>
-				<artifactId>openapi-generator-maven-plugin</artifactId>
-				<!-- RELEASE_VERSION -->
-				<version>4.3.1</version>
-				<!-- /RELEASE_VERSION -->
-				<executions>
-					<execution>
-						<goals>
-							<goal>generate</goal>
-						</goals>
-						<configuration>
-							<inputSpec>${project.basedir}/src/main/resources/rest-api.json</inputSpec>
-							<interfaceOnly>true</interfaceOnly>
-							<generateApis>true</generateApis>
-							<generateModels>true</generateModels>
-
-							<packageName>org.scray.projects.hyperledger_fabric.invoice_service</packageName>
-							<modelPackage>org.scray.projects.hyperledger_fabric.invoice_service.model</modelPackage>
-							<apiPackage>org.scray.projects.hyperledger_fabric.invoice_service.api</apiPackage>
-
-							<generatorName>jaxrs-jersey</generatorName>
-							<configOptions>
-								<sourceFolder>src/gen/java/main</sourceFolder>
-								<java8>true</java8>
-								<dateLibrary>java8</dateLibrary>
-							</configOptions>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
-
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-war-plugin</artifactId>
-				<version>3.1.0</version>
-			</plugin>
-			<plugin>
 				<artifactId>maven-failsafe-plugin</artifactId>
 				<version>2.6</version>
 				<executions>
@@ -166,31 +109,6 @@
 						</goals>
 					</execution>
 				</executions>
-			</plugin>
-			<plugin>
-				<groupId>org.eclipse.jetty</groupId>
-				<artifactId>jetty-maven-plugin</artifactId>
-				<version>${jetty-version}</version>
-				<configuration>
-					<webApp>
-						<contextPath>/</contextPath>
-					</webApp>
-					<webAppSourceDirectory>target/${project.artifactId}-${project.version}</webAppSourceDirectory>
-					<stopPort>8079</stopPort>
-					<stopKey>stopit</stopKey>
-					<stopWait>10</stopWait>
-					<httpConnector>
-						<port>8080</port>
-						<idleTimeout>60000</idleTimeout>
-					</httpConnector>
-				</configuration>
-				<dependencies>
-					<dependency>
-						<groupId>javax.validation</groupId>
-						<artifactId>validation-api</artifactId>
-						<version>${beanvalidation-version}</version>
-					</dependency>
-				</dependencies>
 			</plugin>
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
