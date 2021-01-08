@@ -26,5 +26,6 @@ services:
         - /var/run/:/host/var/run/
         - ../../../../fabric-samples/test-network/organizations:/opt/gopath/src/github.com/hyperledger/fabric/peer/organizations
         - ../../../../scray/projects/invoice-hyperledger-fabric/scripts:/opt/scray/scripts
+        - ../../../../scray/projects/invoice-hyperledger-fabric/conf:/opt/scray/conf
     networks:
       - test
