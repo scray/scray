@@ -54,7 +54,7 @@ kubectl exec --stdin --tty $POD_NAME  -c scray-peer-cli -- /bin/sh /mnt/conf/pee
 ## Create new channel
   * Create genensis block from configtx configuration and add it to system channel. For details [read](https://hyperledger-fabric.readthedocs.io/en/release-2.3/create_channel/create_channel.html)
  
-  ```docker exec test-network-cli /bin/bash /opt/scray/scripts/create_channel.sh $ORDERER_IP  $CHANNEL_NAME```
+    ```docker exec test-network-cli /bin/bash /opt/scray/scripts/create_channel.sh $ORDERER_IP  $CHANNEL_NAME```
 
   * Join peers to channel
     For the Hyperleder Fabric you can use this tutorial [Link](#Integrate-new-peer-to-example-network)
