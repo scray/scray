@@ -52,8 +52,8 @@ public class HFabricConnection {
 
 		// enrolls the admin and registers the user
 		try {
-			EnrollAdmin.main(null, params);
-			RegisterUser.main(null, params);
+			EnrollAdmin.main(null);
+			RegisterUser.main(null);
 		} catch (Exception e) {
 			System.err.println(e);
 		}
