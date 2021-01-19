@@ -17,76 +17,54 @@ spec:
       containers:
         - name: orderer-org1-scray-org
           image: hyperledger/fabric-orderer:2.2.1
-          workingDir: /opt/gopath/src/github.com/hyperledger/fabric/peer
+          workingDir: /opt/gopath/src/github.com/hyperledger/fabric
           env:
             - name: FABRIC_LOGGING_SPEC
               value: "DEBUG"
-            - name: CORE_VM_ENDPOINT
-              value: "unix:///host/var/run/docker.sock"
-            - name: CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE
-              value: "${COMPOSE_PROJECT_NAME}_test"
-            - name: CORE_PEER_TLS_ENABLED
+            - name: ORDERER_GENERAL_LISTENADDRESS
+              value: "0.0.0.0"
+            - name: ORDERER_GENERAL_LISTENPORT
+              value: "7050"
+            - name: ORDERER_GENERAL_GENESISMETHOD
+              value: "file"
+            - name: ORDERER_GENERAL_GENESISFILE
+              value: "/var/hyperledger/orderer/orderer.genesis.block"
+            - name: ORDERER_GENERAL_LOCALMSPID
+              valueFrom:
+                configMapKeyRef:
+                  name: hl-fabric-orderer
+                  key: ORDERER_GENERAL_LOCALMSPID
+            - name: ORDERER_GENERAL_TLS_ENABLED
               value: "true"
-            - name: CORE_PEER_PROFILE_ENABLED
+            - name: ORDERER_GENERAL_TLS_PRIVATEKEY
+              value: "/var/hyperledger/orderer/tls/server.key"
+            - name: ORDERER_GENERAL_TLS_CERTIFICATE
+              value: "/var/hyperledger/orderer/tls/server.crt"
+            - name: ORDERER_GENERAL_TLS_ROOTCAS
+              value: "[/var/hyperledger/orderer/tls/ca.crt]"
+            - name: ORDERER_KAFKA_TOPIC_REPLICATIONFACTOR
+              value: "1"           
+            - name: ORDERER_KAFKA_VERBOSE
               value: "true"
-            - name: CORE_PEER_TLS_CERT_FILE
-              value: "/etc/hyperledger/fabric/tls/server.crt"
-            - name: CORE_PEER_TLS_KEY_FILE
-              value: "/etc/hyperledger/fabric/tls/server.key"
-            - name: CORE_PEER_TLS_ROOTCERT_FILE
-              value: "/etc/hyperledger/fabric/tls/ca.crt"
-            - name: CORE_PEER_ID
-              valueFrom:
-                configMapKeyRef:
-                  name: hl-fabric-peer
-                  key: hostname
-            - name: CORE_PEER_ADDRESS
-              valueFrom:
-                configMapKeyRef:
-                  name: hl-fabric-peer
-                  key: CORE_PEER_ADDRESS
-            - name: CORE_PEER_LISTENADDRESS
-              value: "0.0.0.0:7051"
-            - name: CORE_PEER_CHAINCODEADDRESS
-              valueFrom:
-                configMapKeyRef:
-                  name: hl-fabric-peer
-                  key: CORE_PEER_ADDRESS
-            - name: CORE_PEER_CHAINCODELISTENADDRESS
-              value: "0.0.0.0:30002"
-            - name: CORE_PEER_GOSSIP_BOOTSTRAP
-              valueFrom:
-                configMapKeyRef:
-                  name: hl-fabric-peer
-                  key: CORE_PEER_GOSSIP_EXTERNALENDPOINT
-            - name: CORE_PEER_GOSSIP_EXTERNALENDPOINT
-              valueFrom:
-                configMapKeyRef:
-                  name: hl-fabric-peer
-                  key: CORE_PEER_GOSSIP_EXTERNALENDPOINT
-            - name: CORE_PEER_LOCALMSPID
-              valueFrom:
-                configMapKeyRef:
-                  name: hl-fabric-peer
-                  key: CORE_PEER_LOCALMSPID
+            - name: ORDERER_GENERAL_CLUSTER_CLIENTCERTIFICATE
+              value: "/var/hyperledger/orderer/tls/server.crt"
+            - name: ORDERER_GENERAL_CLUSTER_CLIENTPRIVATEKEY
+              value: "/var/hyperledger/orderer/tls/server.key"
+            - name: ORDERER_GENERAL_CLUSTER_ROOTCAS
+              value: "[/var/hyperledger/orderer/tls/ca.crt]"
+            - name: ORDERER_GENERAL_CLUSTER_CLIENTCERTIFICATE
+              value: "/var/hyperledger/orderer/tls/server.crt"
           volumeMounts:
-            - name: peer-conf
-              mountPath: /etc/hyperledger/fabric/msp
+            - name: orderer-conf
+              mountPath: /var/hyperledger/orderer/orderer.genesis.block
+              subPath: system-genesis-block/genesis.block
+            - name: orderer-conf
+              mountPath: /var/hyperledger/orderer/msp
               subPath: conf/msp
-            - name: peer-conf
-              mountPath: /etc/hyperledger/fabric/tls
+            - name: orderer-conf
+              mountPath: /var/hyperledger/orderer/tls
               subPath: conf/tls
-            - name: peer-conf
-              mountPath: /etc/hyperledger/fabric/core.yaml
-              subPath: conf/core.yaml
-            - name: peer-conf
-              mountPath: /opt/scray/hl-fabric/external_builders
-              subPath: conf/external_builders
-            - name: peer0-data
-              mountPath: /var/hyperledger/production
-            - mountPath: /host/var/run/docker.sock
-              name: dockersocket
-        - name: scray-peer-cli
+        - name: scray-orderer-cli
           stdin: true
           tty: true
           image: hyperledger/fabric-tools:2.2.1
@@ -159,10 +137,7 @@ spec:
             - name: peer-conf
               mountPath: /mnt/peer-conf/
       volumes:
-        - name: peer-conf
+        - name: orderer-conf
           emptyDir: {}
-        - name: peer0-data
+        - name: orderer-data
           emptyDir: {}
-        - name: dockersocket
-          hostPath:
-            path: /var/run/docker.sock
