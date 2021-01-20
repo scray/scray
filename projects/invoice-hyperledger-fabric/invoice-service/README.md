@@ -17,16 +17,3 @@ curl -X POST "http://localhost:8080/hyperledger-fabric-invoice-example/1.0.0/inv
 ```
 curl -X GET "http://localhost:8080/hyperledger-fabric-invoice-example/1.0.0/invoice/123" -H  "accept: application/json"
 ```
-
-# Configuration
-	* Paht of file: config/config.yaml
-	
-
-	```docker build -t hyperleder-fabric-invoice-example-rest-api .```
-	## Run in Docker container
-	
-	```docker run  --mount type=bind,source=/home/stefan/Dokumente/hyperleder-fabric/,target=/mnt/config/hyperleder-fabric --network=host hyperleder-fabric-invoice-example-rest-api```
-	
-	## Run in Kubernetes cluster
-	kubectl apply k8s.yaml
-	kubectl cp /home/stefan/Dokumente/hyperleder-fabric/ default/hyperleder-fabric-rest-invoice-example:/mnt/config/hyperleder-fabric/
