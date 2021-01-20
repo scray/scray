@@ -5,6 +5,8 @@ CA_KEY="../priv_sk"
 NEW_CERT_COMMON_NAME="user1"
 ORGANIZATIONAL_UNIT="admin"
 CREATE_WALLET=false
+WALLET_CREATOR_JAR_PATH=./target
+
 USR_CERT=""
 USR_KEY=""
 
@@ -28,8 +30,12 @@ compileWalletCreator() {
 createWallet() {
 	if [ $CREATE_WALLET = true ]
 	then
-		compileWalletCreator
-		java -jar target/wallet-creator-0.0.1-SNAPSHOT-jar-with-dependencies.jar crt_target/$NEW_CERT_COMMON_NAME/key.pem crt_target/$NEW_CERT_COMMON_NAME/user.crt $NEW_CERT_COMMON_NAME
+		echo $WALLET_CREATOR_JAR_PATH
+		if [ $WALLET_CREATOR_JAR_PATH = ./target ]
+		then
+			compileWalletCreator
+		fi
+		java -jar $WALLET_CREATOR_JAR_PATH/wallet-creator-0.0.1-SNAPSHOT-jar-with-dependencies.jar crt_target/$NEW_CERT_COMMON_NAME/key.pem crt_target/$NEW_CERT_COMMON_NAME/user.crt $NEW_CERT_COMMON_NAME
 	fi
 }
 
@@ -53,8 +59,11 @@ while [ "$1" != "" ]; do
 	-o | --organizational-unit)  shift
 					  ORGANIZATIONAL_UNIT=$1
                                 ;;
-        -w| --create-wallet)  shift
-					CREATE_WALLET=true
+        -w | --create-wallet) shift 
+					CREATE_WALLET=$1
+				;;
+	-j | --wallet-creator-lib-path) shift
+					WALLET_CREATOR_JAR_PATH=$1
 				;;
         -h | --help )           usage
                                 exit
