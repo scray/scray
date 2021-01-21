@@ -6,6 +6,7 @@ CHANNEL_NAME=mychannel
 SHARED_FS_HOST=10.15.136.41:30080
 SHARED_FS_USER=scray
 SHARED_FS_PW=scray
+BASE_PATH=$PWD
 
 
 copyCertsToDefaultDir() {
