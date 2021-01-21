@@ -27,6 +27,7 @@ dowloadYqBin() {
   fi
 }
 
+checkYqVersion
 
 cp $ORG_CRYPTO_CONFIG_FILE $CRYPTO_CONFIG_FILE 
 echo $CRYPTO_CONFIG_FILE
