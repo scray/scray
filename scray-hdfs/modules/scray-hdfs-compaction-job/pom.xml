@@ -26,7 +26,7 @@
 		<scala.version>2.11.8</scala.version>
 		<scala.compat.version>2.11</scala.compat.version>
 		<scala.logging.version>2.1.2</scala.logging.version>
-		<spark.version>2.2.1</spark.version>
+		<spark.version>2.4.7</spark.version>
 		<slf4j.version>1.7.7</slf4j.version>
 		<scray.version>0.10.1-SNAPSHOT</scray.version>
   	</properties>
