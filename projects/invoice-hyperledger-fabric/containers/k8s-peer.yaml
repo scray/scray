@@ -141,7 +141,7 @@ spec:
               name: dockersocket
       initContainers:
         - name: cert-creator
-          image: scrayorg/hl-fabric-peer-crypto-generator
+          image: scrayorg/hl-fabric-peer-crypto-generator:1.0
           env:
             - name: HOSTNAME
               valueFrom:
