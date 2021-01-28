@@ -1,3 +1,0 @@
-networkConfigPath: /mnt/config/hyperleder-fabric/certs/organizations/peerOrganizations/org1.example.com/connection-org1.yaml 
-caCertPem: /mnt/config/hyperleder-fabric/certs/organizations/peerOrganizations/org1.example.com/ca/ca.org1.example.com-cert.pem 
-hyperlederHost: https://fabric-2.research.dev.seeburger.de:7054 

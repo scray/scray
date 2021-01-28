@@ -6,6 +6,7 @@ CHANNEL_NAME=mychannel
 SHARED_FS_HOST=10.15.136.41:30080
 SHARED_FS_USER=scray
 SHARED_FS_PW=scray
+BASE_PATH=$PWD
 
 
 copyCertsToDefaultDir() {
@@ -13,10 +14,28 @@ copyCertsToDefaultDir() {
     cp -r organizations/peerOrganizations/${DOMAINE}/peers/peer0.${DOMAINE}/tls ./
 }
 
+yq() {
+  $BASE_PATH/bin/yq $1 $2 $3 $4 $5
+}
+
+# Check if yq exists
+checkYqVersion() {
+  dowloadYqBin
+}
+
+dowloadYqBin() {
+  if [[ ! -f "./bin/yq" ]]
+  then
+    echo "yq does not exists"
+    echo "download linux_amd64 yq binary"
+    
+    mkdir bin
+    curl -L https://github.com/mikefarah/yq/releases/download/3.4.1/yq_linux_amd64 -o ./bin/yq
+    chmod u+x ./bin/yq
+  fi
+}
+
 createConfig() {
-    # Add repo for yq
-    echo "@community http://dl-cdn.alpinelinux.org/alpine/edge/community" >> /etc/apk/repositories
-    apk add yq@community
     
     export PATH=~/git/fabric-samples/test-network/fabric-samples/bin:$PATH
     ./configure_crypto.sh $ORG_NAME $DOMAINE
@@ -67,4 +86,5 @@ echo "Configuration"
 echo "  ORG_NAME: ${ORG_NAME}"
 echo "  DOMAINE: ${DOMAINE}"
 
+checkYqVersion
 createConfig
