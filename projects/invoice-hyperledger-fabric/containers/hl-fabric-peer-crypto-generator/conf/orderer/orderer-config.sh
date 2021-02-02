@@ -6,24 +6,15 @@ function createCryptos() {
 
 	export PATH=~/git/fabric-samples/test-network/fabric-samples/bin:$PATH
     ./configure_crypto.sh $ORG_NAME $DOMAINE
-    cryptogen generate --config=crypto.yaml --output=./organizations
+    cryptogen generate --config=./target/crypto-config-orderer.yaml --output="organizations"
+    
+    res=$?
+    { set +x; } 2>/dev/null
+    if [ $res -ne 0 ]; then
+      fatalln "Failed to generate certificates..."
+    fi
+    
     export FABRIC_CFG_PATH=$PWD
-    
-    ./configure_configtx.sh $ORG_NAME $DOMAINE
-    configtxgen -configPath $PWD  -printOrg ${ORG_NAME}MSP > organizations/peerOrganizations/$DOMAINE/${ORG_NAME}.json
-    zip -q -r $ORG_NAME.zip organizations/
-    
-    copyCertsToDefaultDir
-
-
-  export PATH=~/git/fabric-samples/test-network/fabric-samples/bin:$PATH
-  ./configure_crypto.sh $ORG_NAME $DOMAINE
-  cryptogen generate --config=crypto.yaml --output=./organizations
-
-  cryptogen generate --config=./crypto-config-org.yaml --output="organizations"
-  cryptogen generate --config=./organizations/cryptogen/crypto-config-orderer.yaml --output="organizations"
-  
-  configtxgen -configPath ./configtx/ -profile EmptyOrdererGenesis -channelID system-channel -outputBlock ./system-genesis-block/genesis.block
 }
 
 # Generate orderer system channel genesis block.

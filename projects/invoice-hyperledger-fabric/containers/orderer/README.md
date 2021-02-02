@@ -9,29 +9,29 @@
   ```
 
 ### Start service
-  ```kubectl apply -f target/$PEER_NAME/k8s-peer-service.yaml```
+  ```kubectl apply -f target/$ORDERER_NAME/k8s-orderer-service.yaml```
 
 
 ### Create peer configuration
 
    ```
-   GOSSIP_PORT=$(kubectl get service $PEER_NAME -o jsonpath="{.spec.ports[?(@.name=='peer-gossip')].nodePort}")
-   PEER_LISTEN_PORT=$(kubectl get service $PEER_NAME -o jsonpath="{.spec.ports[?(@.name=='peer-listen')].nodePort}")
-   PEER_CHAINCODE_PORT=$(kubectl get service $PEER_NAME -o jsonpath="{.spec.ports[?(@.name=='peer-chaincode')].nodePort}")
+   GOSSIP_PORT=$(kubectl get service $ORDERER_NAME -o jsonpath="{.spec.ports[?(@.name=='peer-gossip')].nodePort}")
+   PEER_LISTEN_PORT=$(kubectl get service $ORDERER_NAME -o jsonpath="{.spec.ports[?(@.name=='peer-listen')].nodePort}")
+   PEER_CHAINCODE_PORT=$(kubectl get service $ORDERER_NAME -o jsonpath="{.spec.ports[?(@.name=='peer-chaincode')].nodePort}")
    ```
 
    ```
-   kubectl create configmap hl-fabric-peer-$PEER_NAME \
+   kubectl create configmap hl-fabric-peer-$ORDERER_NAME \
     --from-literal=hostname=kubernetes.research.dev.seeburger.de \
-    --from-literal=org_name=$PEER_NAME \
+    --from-literal=org_name=$ORDERER_NAME \
     --from-literal=CORE_PEER_ADDRESS=kubernetes.research.dev.seeburger.de:$PEER_LISTEN_PORT \
     --from-literal=CORE_PEER_GOSSIP_EXTERNALENDPOINT=kubernetes.research.dev.seeburger.de:$GOSSIP_PORT \
-    --from-literal=CORE_PEER_LOCALMSPID=${PEER_NAME}MSP
+    --from-literal=CORE_PEER_LOCALMSPID=${ORDERER_NAME}MSP
    ```
 
 ### Start new peer:
 
-  ```kubectl apply -f target/$PEER_NAME/k8s-peer.yaml```
+  ```kubectl apply -f target/$ORDERER_NAME/k8s-peer.yaml```
   
 ## Integrate new peer to example network
 ### Example values
