@@ -35,8 +35,6 @@ clean() {
 	rm -fr ./target
 }
 
-
-
 customozeConfigFile() {
 	TARGET_PATH=./target/$ORDERER_NAME
 	

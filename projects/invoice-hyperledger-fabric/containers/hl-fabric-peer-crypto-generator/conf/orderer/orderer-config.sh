@@ -24,6 +24,8 @@ function createConsortium() {
     fatalln "configtxgen tool not found."
   fi
 
+  ./configure_configtx $ORG_NAME $DOMAINE
+
   infoln "Generating Orderer Genesis block"
 
   # Note: For some unknown reason (at least for now) the block file can't be
