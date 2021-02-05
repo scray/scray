@@ -1,6 +1,12 @@
 #!/bin/bash
 
+GEN_BLOCK_PATH=./system-genesis-block
 
+
+copyCertsToDefaultDir() {
+    cp -r organizations/ordererOrganizations/${DOMAINE}/orderers/orderer.${DOMAINE}/msp ./
+    cp -r organizations/ordererOrganizations/${DOMAINE}/orderers/orderer.${DOMAINE}/tls ./
+}
 
 function createCryptos() {
   echo "Create crypto material"
@@ -15,6 +21,8 @@ function createCryptos() {
     fi
     
     export FABRIC_CFG_PATH=$PWD
+    
+    copyCertsToDefaultDir
 }
 
 # Generate orderer system channel genesis block.
@@ -24,18 +32,18 @@ function createConsortium() {
     fatalln "configtxgen tool not found."
   fi
 
-  ./configure_configtx.sh $ORG_NAME $DOMAINE
+#  ./configure_configtx.sh $ORG_NAME $DOMAINE
 
   echo "Generating Orderer Genesis block"
 
   # Note: For some unknown reason (at least for now) the block file can't be
   # named orderer.genesis.block or the orderer will fail to launch!
   set -x
-  configtxgen -profile TwoOrgsOrdererGenesis -channelID system-channel -outputBlock ./system-genesis-block/genesis.block
+  configtxgen -profile TwoOrgsOrdererGenesis -channelID system-channel -outputBlock $GEN_BLOCK_PATH/genesis.block 
   res=$?
   { set +x; } 2>/dev/null
   if [ $res -ne 0 ]; then
-    fatalln "Failed to generate orderer genesis block..."
+    echo "Failed to generate orderer genesis block..."
   fi
 }
 
@@ -53,6 +61,9 @@ while [ "$1" != "" ]; do
         -d | --domain )   	shift
 	       			DOMAINE=$1	
                                 ;;
+        -g | --gennesis.block-path )         shift
+                                GEN_BLOCK_PATH=$1
+				;;
         -h | --help )           usage
                                 exit
                                 ;;

@@ -35,7 +35,7 @@ dowloadYqBin() {
   fi
 }
 
-createConfig() {
+createPeerConfig() {
     
     export PATH=~/git/fabric-samples/test-network/fabric-samples/bin:$PATH
     ./configure_crypto.sh $ORG_NAME $DOMAINE
@@ -73,6 +73,9 @@ while [ "$1" != "" ]; do
         -d | --domain )   	shift
 	       			DOMAINE=$1	
                                 ;;
+        -t | --node-type )         shift
+                                NODE_TYPE=$1
+                                ;;				
         -h | --help )           usage
                                 exit
                                 ;;
@@ -83,8 +86,21 @@ while [ "$1" != "" ]; do
 done
 
 echo "Configuration"
+echo "  NODE_TYPE: ${NODE_TYPE}"
 echo "  ORG_NAME: ${ORG_NAME}"
 echo "  DOMAINE: ${DOMAINE}"
 
 checkYqVersion
-createConfig
+
+if [ "$NODE_TYPE" = orderer ]
+then
+	echo "Configure node as orderer"
+	cd orderer
+	./configure_orderer.sh -o $ORG_NAME -d $DOMAINE
+elif [ "$NODE_TYPE" = peer ]
+then
+  echo "Configure node as peer"
+  createPeerConfig
+else
+  echo "Unknown node type. Treat it as a peer"
+fi

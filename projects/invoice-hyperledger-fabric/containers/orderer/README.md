@@ -3,7 +3,7 @@
 ### Create configuration for new order
 
   ```
-  ORDERER_NAME=peer-42
+  ORDERER_NAME=orderer
   cd ~/git/scray/projects/invoice-hyperledger-fabric/containers/orderer/
   ./configure-orderer-deployment.sh -n $ORDERER_NAME
   ```
@@ -21,12 +21,13 @@
    ```
 
    ```
-   kubectl create configmap hl-fabric-peer-$ORDERER_NAME \
-    --from-literal=hostname=kubernetes.research.dev.seeburger.de \
+   kubectl create configmap hl-fabric-orderer-$ORDERER_NAME \
+    --from-literal=hostname=example.com \
     --from-literal=org_name=$ORDERER_NAME \
     --from-literal=CORE_PEER_ADDRESS=kubernetes.research.dev.seeburger.de:$PEER_LISTEN_PORT \
     --from-literal=CORE_PEER_GOSSIP_EXTERNALENDPOINT=kubernetes.research.dev.seeburger.de:$GOSSIP_PORT \
-    --from-literal=CORE_PEER_LOCALMSPID=${ORDERER_NAME}MSP
+    --from-literal=CORE_PEER_LOCALMSPID=${ORDERER_NAME}MSP \
+    --from-literal=NODE_TYPE=orderer
    ```
 
 ### Start new peer:
