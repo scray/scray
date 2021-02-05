@@ -3,11 +3,11 @@
 
 
 function createCryptos() {
+  echo "Create crypto material"
 
-	export PATH=~/git/fabric-samples/test-network/fabric-samples/bin:$PATH
-    ./configure_crypto.sh $ORG_NAME $DOMAINE
+    export PATH=~/git/fabric-samples/test-network/fabric-samples/bin:$PATH
+    ./configure_crypto.sh -o $ORG_NAME -d $DOMAINE
     cryptogen generate --config=./target/crypto-config-orderer.yaml --output="organizations"
-    
     res=$?
     { set +x; } 2>/dev/null
     if [ $res -ne 0 ]; then
@@ -24,9 +24,9 @@ function createConsortium() {
     fatalln "configtxgen tool not found."
   fi
 
-  ./configure_configtx $ORG_NAME $DOMAINE
+  ./configure_configtx.sh $ORG_NAME $DOMAINE
 
-  infoln "Generating Orderer Genesis block"
+  echo "Generating Orderer Genesis block"
 
   # Note: For some unknown reason (at least for now) the block file can't be
   # named orderer.genesis.block or the orderer will fail to launch!
@@ -66,4 +66,5 @@ echo "Configuration"
 echo "  ORG_NAME: ${ORG_NAME}"
 echo "  DOMAINE: ${DOMAINE}"
 
-createConfig
+createCryptos
+createConsortium
