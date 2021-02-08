@@ -123,7 +123,12 @@ spec:
                 configMapKeyRef:
                   name: hl-fabric-orderer
                   key: org_name
-          # command: ['/bin/sh', '-c']
+            - name: NODE_TYPE
+              valueFrom:
+                configMapKeyRef:
+                  name: hl-fabric-orderer
+                  key: NODE_TYPE
+                  # command: ['/bin/sh', '-c']
           # args: ['cd /mnt/hl-fabric-conf/ && wget https://mft.seeburger.de:443/portal-seefx/~public/ZDEwZTlmMTEtYjg2NC00NWVlLWE1YWEtNWI2OGZhM2NjMDg2?download -O config.zip &&  unzip config.zip']
           volumeMounts:
             - name: orderer-conf
