@@ -74,16 +74,6 @@ spec:
               value: "unix:///host/var/run/docker.sock"
             - name: GOPATH
               value: "/opt/gopath"
-            - name: CORE_PEER_ADDRESS
-              valueFrom:
-                configMapKeyRef:
-                  name: hl-fabric-orderer
-                  key: CORE_PEER_ADDRESS
-            - name: CORE_PEER_LOCALMSPID
-              valueFrom:
-                configMapKeyRef:
-                  name: hl-fabric-orderer
-                  key: CORE_PEER_LOCALMSPID
             - name: CORE_PEER_TLS_ENABLED
               value: "true"
             - name: CORE_PEER_TLS_CERT_FILE
@@ -105,24 +95,23 @@ spec:
                   name: hl-fabric-orderer
                   key: org_name
           volumeMounts:
-            - name: peer-conf
+            - name: orderer-conf
               mountPath: /mnt
-            - name: peer-conf
+            - name: orderer-conf 
               mountPath: /etc/hyperledger/fabric/msp
               subPath: conf/orderer/msp
-            - name: peer-conf
+            - name: orderer-conf 
               mountPath: /etc/hyperledger/fabric/tls
               subPath: conf/orderer/tls
-            - name: peer-conf
+            - name: orderer-conf 
               mountPath: /var/hyperledger/orderer/orderer.genesis.block
               subPath: conf/orderer/system-genesis-block/genesis.block 
-            - name: peer0-data
+            - name: orderer-conf 
               mountPath: /var/hyperledger/production
-            - mountPath: /host/var/run/docker.sock
-              name: dockersocket
       initContainers:
         - name: cert-creator
-          image: scrayorg/hl-fabric-orderer-crypto-generator:1.1
+          image: dedcdockerregistry01:5000/research/hl-fabric-node-configurator:0.1 
+          imagePullPolicy: Always
           env:
             - name: HOSTNAME
               valueFrom:
@@ -137,7 +126,7 @@ spec:
           # command: ['/bin/sh', '-c']
           # args: ['cd /mnt/hl-fabric-conf/ && wget https://mft.seeburger.de:443/portal-seefx/~public/ZDEwZTlmMTEtYjg2NC00NWVlLWE1YWEtNWI2OGZhM2NjMDg2?download -O config.zip &&  unzip config.zip']
           volumeMounts:
-            - name: peer-conf
+            - name: orderer-conf
               mountPath: /mnt/peer-conf/
       volumes:
         - name: orderer-conf
