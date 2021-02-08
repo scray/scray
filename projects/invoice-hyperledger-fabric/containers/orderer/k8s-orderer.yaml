@@ -37,23 +37,23 @@ spec:
             - name: ORDERER_GENERAL_TLS_ENABLED
               value: "true"
             - name: ORDERER_GENERAL_TLS_PRIVATEKEY
-              value: "/etc/hyperledger/fabric/tls/server.key"
+              value: "/var/hyperledger/orderer/tls/server.key"
             - name: ORDERER_GENERAL_TLS_CERTIFICATE
-              value: "/etc/hyperledger/fabric/tls/server.crt"
+              value: "/var/hyperledger/orderer/tls/server.crt"
             - name: ORDERER_GENERAL_TLS_ROOTCAS
-              value: "[/etc/hyperledger/fabric/tls/ca.crt]"
+              value: "[/var/hyperledger/orderer/tls/ca.crt]"
             - name: ORDERER_KAFKA_TOPIC_REPLICATIONFACTOR
               value: "1"           
             - name: ORDERER_KAFKA_VERBOSE
               value: "true"
             - name: ORDERER_GENERAL_CLUSTER_CLIENTCERTIFICATE
-              value: "/etc/hyperledger/fabric/tls/server.crt"
+              value: "/var/hyperledger/orderer/tls/server.crt"
             - name: ORDERER_GENERAL_CLUSTER_CLIENTPRIVATEKEY
-              value: "/etc/hyperledger/fabric/tls/server.key"
+              value: "/var/hyperledger/orderer/tls/server.key"
             - name: ORDERER_GENERAL_CLUSTER_ROOTCAS
-              value: "[/etc/hyperledger/fabric/tls/ca.crt]"
+              value: "[/var/hyperledger/orderer/tls/ca.crt]"
             - name: ORDERER_GENERAL_CLUSTER_CLIENTCERTIFICATE
-              value: "/etc/hyperledger/fabric/tls/server.crt"
+              value: "/var/hyperledger/orderer/tls/server.crt"
           volumeMounts:
             - name: orderer-conf
               mountPath: /var/hyperledger/orderer/orderer.genesis.block
