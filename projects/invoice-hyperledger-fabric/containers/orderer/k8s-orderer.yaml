@@ -57,13 +57,13 @@ spec:
           volumeMounts:
             - name: orderer-conf
               mountPath: /var/hyperledger/orderer/orderer.genesis.block
-              subPath: system-genesis-block/genesis.block
+              subPath: conf/orderer/system-genesis-block/genesis.block
             - name: orderer-conf
               mountPath: /var/hyperledger/orderer/msp
-              subPath: conf/msp
+              subPath: conf/orderer/msp
             - name: orderer-conf
               mountPath: /var/hyperledger/orderer/tls
-              subPath: conf/tls
+              subPath: conf/orderer/tls
         - name: scray-orderer-cli
           stdin: true
           tty: true
