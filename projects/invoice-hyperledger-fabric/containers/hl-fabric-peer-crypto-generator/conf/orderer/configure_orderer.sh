@@ -1,7 +1,7 @@
 #!/bin/bash
 
 GEN_BLOCK_PATH=./system-genesis-block
-
+CREATE_ADMIN_ORG=true
 
 copyCertsToDefaultDir() {
     cp -r organizations/ordererOrganizations/${DOMAINE}/orderers/orderer.${DOMAINE}/msp ./
@@ -11,22 +11,36 @@ copyCertsToDefaultDir() {
 function createCryptos() {
   echo "Create crypto material"
 
-    export PATH=~/git/fabric-samples/test-network/fabric-samples/bin:$PATH
+    export PATH=~/git/fabric-samples/bin:$PATH
     ./configure_crypto.sh -o $ORG_NAME -d $DOMAINE
     cryptogen generate --config=./target/crypto-config-orderer.yaml --output="organizations"
+    
+    # Create admin org
+    if [ "$CREATE_ADMIN_ORG"=true ];
+    then
+    	createAdminOrg
+    fi
+    
+    
     res=$?
     { set +x; } 2>/dev/null
     if [ $res -ne 0 ]; then
-      fatalln "Failed to generate certificates..."
+       "Failed to generate certificates..." 1>&2
     fi
     
     export FABRIC_CFG_PATH=$PWD
-    
     copyCertsToDefaultDir
+}
+
+function createAdminOrg() {
+	cd ../admin/
+	./create-admin-org.sh
+	cd ../orderer/
 }
 
 # Generate orderer system channel genesis block.
 function createConsortium() {
+  export PATH=~/git/fabric-samples/bin:$PATH
   which configtxgen
   if [ "$?" -ne 0 ]; then
     fatalln "configtxgen tool not found."
@@ -36,8 +50,6 @@ function createConsortium() {
 
   echo "Generating Orderer Genesis block"
 
-  # Note: For some unknown reason (at least for now) the block file can't be
-  # named orderer.genesis.block or the orderer will fail to launch!
   set -x
   configtxgen -profile TwoOrgsOrdererGenesis -channelID system-channel -outputBlock $GEN_BLOCK_PATH/genesis.block 
   res=$?
@@ -49,7 +61,7 @@ function createConsortium() {
 
 usage()
 {
-    echo "usage: Prepare peer node [[[-o ] [-d]] | [-h]]"
+    echo "usage: Configure orderer node [[[-o ] [-d]] | [-h]]"
 }
 
 
@@ -64,10 +76,13 @@ while [ "$1" != "" ]; do
         -g | --gennesis.block-path )         shift
                                 GEN_BLOCK_PATH=$1
 				;;
+        -a | --create-admin-org )	shift
+                                CREATE_ADMIN_ORG=$1
+				;;
         -h | --help )           usage
                                 exit
                                 ;;
-        * )                     usage
+        * )                     # usage
                                 exit 1
     esac
     shift

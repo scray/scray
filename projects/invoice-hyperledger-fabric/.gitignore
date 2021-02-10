@@ -1,3 +1,5 @@
 /conf/organizations/
 *.zip
 *.swap
+.gradle/
+scripts/channel-artifacts/

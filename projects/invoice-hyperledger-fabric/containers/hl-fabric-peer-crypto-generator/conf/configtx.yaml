@@ -25,7 +25,7 @@ Organizations:
         ID: OrdererMSP
 
         # MSPDir is the filesystem path which contains the MSP configuration
-        MSPDir: ../organizations/ordererOrganizations/example.com/msp
+        MSPDir: ./organizations/ordererOrganizations/example.com/msp
 
         # Policies defines the set of policies at this level of the config tree
         # For organization policies, their canonical path is usually
@@ -52,7 +52,7 @@ Organizations:
         # ID to load the MSP definition as
         ID: Org1MSP
 
-        MSPDir: ./organizations/peerOrganizations/org1.example.com/msp
+        MSPDir: /home/stefan/git/fabric-samples/test-network/organizations/peerOrganizations/org1.example.com/msp
 
         # Policies defines the set of policies at this level of the config tree
         # For organization policies, their canonical path is usually
@@ -230,8 +230,8 @@ Orderer: &OrdererDefaults
         Consenters:
         - Host: orderer.example.com
           Port: 7050
-          ClientTLSCert: ../organizations/ordererOrganizations/example.com/orderers/orderer.example.com/tls/server.crt
-          ServerTLSCert: ../organizations/ordererOrganizations/example.com/orderers/orderer.example.com/tls/server.crt
+          ClientTLSCert: ./organizations/ordererOrganizations/example.com/orderers/orderer.example.com/tls/server.crt
+          ServerTLSCert: ./organizations/ordererOrganizations/example.com/orderers/orderer.example.com/tls/server.crt
 
     # Batch Timeout: The amount of time to wait before creating a batch
     BatchTimeout: 2s
@@ -324,6 +324,10 @@ Profiles:
                 - *OrdererOrg
             Capabilities:
                 <<: *OrdererCapabilities
+        Consortiums:
+            SampleConsortium:
+                Organizations:
+
     TwoOrgsChannel:
         Consortium: SampleConsortium
         <<: *ChannelDefaults
@@ -331,6 +335,5 @@ Profiles:
             <<: *ApplicationDefaults
             Organizations:
                 - *Org1
-                - *Org2
             Capabilities:
                 <<: *ApplicationCapabilities
