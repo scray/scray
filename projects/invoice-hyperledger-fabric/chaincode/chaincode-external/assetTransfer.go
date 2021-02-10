@@ -53,8 +53,8 @@ type QueryResult struct {
 func (s *SmartContract) InitLedger(ctx contractapi.TransactionContextInterface) error {
 	assets := []Asset{
 		{ID: "asset1", Owner: "company", Hash: 0, InvoiceNumber: "0", Vat: 0.0, Netto: 0.0, CountryOrigin: "DE", CountryReceiver: "DE", Received: false, 
-		ReceivedOrder: false, Sold: false, ClaimPaid: false, ClaimPaidBy: "", TaxExemptionReason: "", TaxReceived: false}
-
+		ReceivedOrder: false, Sold: false, ClaimPaid: false, ClaimPaidBy: "", TaxExemptionReason: "", TaxReceived: false},
+		}
 	for _, asset := range assets {
 		assetJSON, err := json.Marshal(asset)
 		if err != nil {
@@ -73,7 +73,7 @@ func (s *SmartContract) InitLedger(ctx contractapi.TransactionContextInterface) 
 // CreateAsset issues a new asset to the world state with given details.
 func (s *SmartContract) CreateAsset(ctx contractapi.TransactionContextInterface, id, owner string,  hash int,
 	invoiceNumber string, vat float32, netto float32, countryOrigin string, countryReceiver string, received bool,
-    receivedOrder bool, sold bool, claimPaid bool, claimPaidBy string, taxExemptionReason string,taxReceive bool
+        receivedOrder bool, sold bool, claimPaid bool, claimPaidBy string, taxExemptionReason string,taxReceived bool,
 	) error {
 	exists, err := s.AssetExists(ctx, id)
 	if err != nil {
@@ -93,11 +93,11 @@ func (s *SmartContract) CreateAsset(ctx contractapi.TransactionContextInterface,
     	CountryReceiver: countryReceiver,
     	Received:        received,
     	ReceivedOrder:   receivedOrder,
-		Sold: sold,
+	Sold: sold,
     	ClaimPaid: claimPaid,
-		ClaimPaidBy:   claimPaidBy,
-		TaxExemptionReason:  taxExemptionReason,
-		TaxReceived: taxReceived
+	ClaimPaidBy:   claimPaidBy,
+	TaxExemptionReason:  taxExemptionReason,
+	TaxReceived: taxReceived,
 	}
 
 	assetJSON, err := json.Marshal(asset)
@@ -130,7 +130,7 @@ func (s *SmartContract) ReadAsset(ctx contractapi.TransactionContextInterface, i
 // UpdateAsset updates an existing asset in the world state with provided parameters.
 func (s *SmartContract) UpdateAsset(ctx contractapi.TransactionContextInterface, id, owner string,  hash int,
 	invoiceNumber string, vat float32, netto float32, countryOrigin string, countryReceiver string, received bool,
-    receivedOrder bool, sold bool, claimPaid bool, claimPaidBy string, taxExemptionReason string,taxReceive bool) error {
+    receivedOrder bool, sold bool, claimPaid bool, claimPaidBy string, taxExemptionReason string,taxReceived bool) error {
 	exists, err := s.AssetExists(ctx, id)
 	if err != nil {
 		return err
