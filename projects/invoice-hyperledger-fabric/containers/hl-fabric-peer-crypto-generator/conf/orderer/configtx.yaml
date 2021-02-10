@@ -44,6 +44,33 @@ Organizations:
         OrdererEndpoints:
             - orderer.example.com:7050
 
+    - &AdminOrg
+        # DefaultOrg defines the organization which is used in the sampleconfig
+        # of the fabric.git development environment
+        Name: AdminOrgMSP
+
+        # ID to load the MSP definition as
+        ID: AdminOrgMSP
+
+        MSPDir: ../admin/organizations/peerOrganizations/org1.fabric.hyperledger.projects.scray.org/msp
+
+        # Policies defines the set of policies at this level of the config tree
+        # For organization policies, their canonical path is usually
+        #   /Channel/<Application|Orderer>/<OrgName>/<PolicyName>
+        Policies:
+            Readers:
+                Type: Signature
+                Rule: "OR('AdminOrgMSP.admin', 'AdminOrgMSP.peer', 'AdminOrgMSP.client')"
+            Writers:
+                Type: Signature
+                Rule: "OR('AdminOrgMSP.admin', 'AdminOrgMSP.client')"
+            Admins:
+                Type: Signature
+                Rule: "OR('AdminOrgMSP.admin')"
+            Endorsement:
+                Type: Signature
+                Rule: "OR('AdminOrgMSP.peer')"
+
     - &Org1
         # DefaultOrg defines the organization which is used in the sampleconfig
         # of the fabric.git development environment
@@ -327,7 +354,7 @@ Profiles:
         Consortiums:
             SampleConsortium:
                 Organizations:
-
+                  - *AdminOrg
     TwoOrgsChannel:
         Consortium: SampleConsortium
         <<: *ChannelDefaults

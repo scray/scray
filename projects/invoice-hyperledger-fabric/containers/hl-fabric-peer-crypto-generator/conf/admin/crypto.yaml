@@ -1,0 +1,20 @@
+# Copyright IBM Corp. All Rights Reserved.
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+# ---------------------------------------------------------------------------
+# "AdminOrg" - Definition of organizations managing inicial bootstrap
+# ---------------------------------------------------------------------------
+PeerOrgs:
+  # ---------------------------------------------------------------------------
+  # OrgScray
+  # ---------------------------------------------------------------------------
+  - Name: AdminOrg
+    Domain: adminorg.fabric.hyperledger.projects.scray.org 
+    EnableNodeOUs: true
+    Template:
+      Count: 1
+      SANS:
+        - localhost
+    Users:
+      Count: 1
