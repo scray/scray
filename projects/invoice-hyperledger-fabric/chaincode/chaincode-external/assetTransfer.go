@@ -31,6 +31,7 @@ type Asset struct {
 	Size           int    `json:"size"`
 	Owner          string `json:"owner"`
 	AppraisedValue int    `json:"appraisedValue"`
+	Hash           int    `json:"hash"` 
 }
 
 // QueryResult structure used for handling result of query
@@ -42,12 +43,7 @@ type QueryResult struct {
 // InitLedger adds a base set of cars to the ledger
 func (s *SmartContract) InitLedger(ctx contractapi.TransactionContextInterface) error {
 	assets := []Asset{
-		{ID: "asset1", Color: "blue", Size: 5, Owner: "Tomoko", AppraisedValue: 300},
-		{ID: "asset2", Color: "red", Size: 5, Owner: "Brad", AppraisedValue: 400},
-		{ID: "asset3", Color: "green", Size: 10, Owner: "Jin Soo", AppraisedValue: 500},
-		{ID: "asset4", Color: "yellow", Size: 10, Owner: "Max", AppraisedValue: 600},
-		{ID: "asset5", Color: "black", Size: 15, Owner: "Adriana", AppraisedValue: 700},
-		{ID: "asset6", Color: "white", Size: 15, Owner: "Michel", AppraisedValue: 800},
+		{ID: "asset1", Color: "blue", Size: 5, Owner: "Tomoko", AppraisedValue: 300, Hash: 0},
 	}
 
 	for _, asset := range assets {
@@ -66,7 +62,7 @@ func (s *SmartContract) InitLedger(ctx contractapi.TransactionContextInterface) 
 }
 
 // CreateAsset issues a new asset to the world state with given details.
-func (s *SmartContract) CreateAsset(ctx contractapi.TransactionContextInterface, id, color string, size int, owner string, appraisedValue int) error {
+func (s *SmartContract) CreateAsset(ctx contractapi.TransactionContextInterface, id, color string, size int, owner string, appraisedValue int, hash int) error {
 	exists, err := s.AssetExists(ctx, id)
 	if err != nil {
 		return err
@@ -80,6 +76,7 @@ func (s *SmartContract) CreateAsset(ctx contractapi.TransactionContextInterface,
 		Size:           size,
 		Owner:          owner,
 		AppraisedValue: appraisedValue,
+		Hash: hash,
 	}
 
 	assetJSON, err := json.Marshal(asset)
@@ -110,7 +107,7 @@ func (s *SmartContract) ReadAsset(ctx contractapi.TransactionContextInterface, i
 }
 
 // UpdateAsset updates an existing asset in the world state with provided parameters.
-func (s *SmartContract) UpdateAsset(ctx contractapi.TransactionContextInterface, id, color string, size int, owner string, appraisedValue int) error {
+func (s *SmartContract) UpdateAsset(ctx contractapi.TransactionContextInterface, id, color string, size int, owner string, appraisedValue int, hash int) error {
 	exists, err := s.AssetExists(ctx, id)
 	if err != nil {
 		return err
@@ -126,6 +123,7 @@ func (s *SmartContract) UpdateAsset(ctx contractapi.TransactionContextInterface,
 		Size:           size,
 		Owner:          owner,
 		AppraisedValue: appraisedValue,
+		Hash: hash,
 	}
 
 	assetJSON, err := json.Marshal(asset)
