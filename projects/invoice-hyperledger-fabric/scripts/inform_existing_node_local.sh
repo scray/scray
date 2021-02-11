@@ -38,14 +38,4 @@ configtxlator proto_decode --input $WORK_LOCATION/org3_update.pb --type common.C
 echo '{"payload":{"header":{"channel_header":{"channel_id":"'$CHANNEL_NAME'", "type":2}},"data":{"config_update":'$(cat $WORK_LOCATION/org3_update.json)'}}}' | jq . > $WORK_LOCATION/org3_update_in_envelope.json
 configtxlator proto_encode --input $WORK_LOCATION/org3_update_in_envelope.json --type common.Envelope --output $WORK_LOCATION/org3_update_in_envelope.pb
 
-# Sign update by first admin
-#peer channel signconfigtx -f $WORK_LOCATION/org3_update_in_envelope.pb
 
-# Sign by second admin
-export CORE_PEER_LOCALMSPID="Org2MSP"
-export CORE_PEER_TLS_ROOTCERT_FILE=${FABRIC_LOCATION}/organizations/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/ca.crt
-export CORE_PEER_MSPCONFIGPATH=${FABRIC_LOCATION}/organizations/peerOrganizations/org2.example.com/users/Admin@org2.example.com/msp
-export CORE_PEER_ADDRESS=peer0.org2.example.com:9051
-#peer channel update -f $WORK_LOCATION/org3_update_in_envelope.pb -c $CHANNEL_NAME -o orderer.example.com:7050 --tls --cafile $ORDERER_CA
-# instead just sign it
-#peer channel signconfigtx -f $WORK_LOCATION/org3_update_in_envelope.pb
