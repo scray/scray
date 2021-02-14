@@ -82,9 +82,13 @@ func (s *SmartContract) CreateAsset(ctx contractapi.TransactionContextInterface,
 	if exists {
 		return fmt.Errorf("the asset %s already exists", id)
 	}
+	
+	// test
+	clientOrgID, err := ctx.GetClientIdentity().GetMSPID()
+
 	asset := Asset{
 		ID:             id,
-		Owner:          owner,
+		Owner:          clientOrgID,
 		Hash:           hash, 
     	InvoiceNumber:  invoiceNumber,
     	Vat:            vat,
