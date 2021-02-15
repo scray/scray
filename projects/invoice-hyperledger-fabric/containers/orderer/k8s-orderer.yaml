@@ -14,8 +14,12 @@ spec:
       labels:
         app: orderer-org1-scray-org
     spec:
+      hostAliases:
+      - ip: "127.0.0.1"
+        hostnames:
+        - "orderer.example.com"
       containers:
-        - name: orderer-org1-scray-org
+        - name: orderer
           image: hyperledger/fabric-orderer:2.2.1
           workingDir: /opt/gopath/src/github.com/hyperledger/fabric
           env:
@@ -41,7 +45,7 @@ spec:
             - name: ORDERER_GENERAL_TLS_CERTIFICATE
               value: "/var/hyperledger/orderer/tls/server.crt"
             - name: ORDERER_GENERAL_TLS_ROOTCAS
-              value: "[/var/hyperledger/orderer/tls/ca.crt]"
+              value: "[/var/hyperledger/orderer/tls/ca.crt,/tmp/ca.adminorg.fabric.hyperledger.projects.scray.org-cert.pem]"
             - name: ORDERER_KAFKA_TOPIC_REPLICATIONFACTOR
               value: "1"           
             - name: ORDERER_KAFKA_VERBOSE
@@ -51,7 +55,7 @@ spec:
             - name: ORDERER_GENERAL_CLUSTER_CLIENTPRIVATEKEY
               value: "/var/hyperledger/orderer/tls/server.key"
             - name: ORDERER_GENERAL_CLUSTER_ROOTCAS
-              value: "[/var/hyperledger/orderer/tls/ca.crt]"
+              value: "[/var/hyperledger/orderer/tls/ca.crt,/tmp/ca.adminorg.fabric.hyperledger.projects.scray.org-cert.pem]"
             - name: ORDERER_GENERAL_CLUSTER_CLIENTCERTIFICATE
               value: "/var/hyperledger/orderer/tls/server.crt"
           volumeMounts:
@@ -64,6 +68,9 @@ spec:
             - name: orderer-conf
               mountPath: /var/hyperledger/orderer/tls
               subPath: conf/orderer/tls
+            - name: orderer-conf
+              mountPath: /tmp/ca.adminorg.fabric.hyperledger.projects.scray.org-cert.pem
+              subPath: conf/admin/organizations/peerOrganizations/kubernetes.research.dev.seeburger.de/ca/ca.kubernetes.research.dev.seeburger.de-cert.pem 
         - name: scray-orderer-cli
           stdin: true
           tty: true
@@ -108,6 +115,9 @@ spec:
               subPath: conf/orderer/system-genesis-block/genesis.block 
             - name: orderer-conf 
               mountPath: /var/hyperledger/production
+            - name: orderer-conf
+              mountPath: /tmp/ca.adminorg.fabric.hyperledger.projects.scray.org-cert.pem
+              subPath: conf/admin/organizations/peerOrganizations/adminorg.fabric.hyperledger.projects.scray.org/ca/ca.adminorg.fabric.hyperledger.projects.scray.org-cert.pem
       initContainers:
         - name: cert-creator
           image: dedcdockerregistry01:5000/research/hl-fabric-node-configurator:0.1 
