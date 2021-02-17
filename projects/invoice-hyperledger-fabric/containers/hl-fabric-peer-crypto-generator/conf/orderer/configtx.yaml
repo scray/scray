@@ -52,7 +52,7 @@ Organizations:
         # ID to load the MSP definition as
         ID: AdminOrgMSP
 
-        MSPDir: ../admin/organizations/peerOrganizations/org1.fabric.hyperledger.projects.scray.org/msp
+        MSPDir: ../admin/organizations/peerOrganizations/kubernetes.research.dev.seeburger.de/msp
 
         # Policies defines the set of policies at this level of the config tree
         # For organization policies, their canonical path is usually
@@ -66,10 +66,18 @@ Organizations:
                 Rule: "OR('AdminOrgMSP.admin', 'AdminOrgMSP.client')"
             Admins:
                 Type: Signature
-                Rule: "OR('AdminOrgMSP.admin')"
+                Rule: "OR('AdminOrgMSP.admin', 'AdminOrg.admin')"
             Endorsement:
                 Type: Signature
-                Rule: "OR('AdminOrgMSP.peer')"
+                Rule: "OR('AdminOrgMSP.peer', 'AdminOrg.peer')"
+         
+        AnchorPeers:
+          # AnchorPeers defines the location of peers which can be used
+          # for cross org gossip communication.  Note, this value is only
+          # encoded in the genesis block in the Application section context
+          - Host: peer0.org1.example.com
+            Port: 9051
+       
 
     - &Org1
         # DefaultOrg defines the organization which is used in the sampleconfig
@@ -325,7 +333,7 @@ Channel: &ChannelDefaults
         # By default, who may modify elements at this config level
         Admins:
             Type: ImplicitMeta
-            Rule: "MAJORITY Admins"
+            Rule: "ANY Admins"
 
     # Capabilities describes the channel level capabilities, see the
     # dedicated Capabilities section elsewhere in this file for a full
@@ -349,19 +357,19 @@ Profiles:
             <<: *OrdererDefaults
             Organizations:
                 - *OrdererOrg
+                - *AdminOrg
             Capabilities:
                 <<: *OrdererCapabilities
         Consortiums:
             SampleConsortium:
                 Organizations:
-                  - *AdminOrg
+                    - *AdminOrg
     TwoOrgsChannel:
         Consortium: SampleConsortium
         <<: *ChannelDefaults
         Application:
             <<: *ApplicationDefaults
             Organizations:
-                - *Org1
-                - *Org2
+                - *AdminOrg
             Capabilities:
                 <<: *ApplicationCapabilities

@@ -4,23 +4,24 @@ GEN_BLOCK_PATH=./system-genesis-block
 CREATE_ADMIN_ORG=true
 
 copyCertsToDefaultDir() {
-    cp -r organizations/ordererOrganizations/${DOMAINE}/orderers/orderer.${DOMAINE}/msp ./
-    cp -r organizations/ordererOrganizations/${DOMAINE}/orderers/orderer.${DOMAINE}/tls ./
+    cp -r organizations/ordererOrganizations/${DOMAINE}/orderers/$ORG_NAME.${DOMAINE}/msp ./
+    cp -r organizations/ordererOrganizations/${DOMAINE}/orderers/$ORG_NAME.${DOMAINE}/tls ./
 }
 
 function createCryptos() {
   echo "Create crypto material"
+  
+   # Create admin org
+   if [ "$CREATE_ADMIN_ORG"=true ];
+   then
+     createAdminOrg
+    fi
 
+	echo "Create "
     export PATH=~/git/fabric-samples/bin:$PATH
     ./configure_crypto.sh -o $ORG_NAME -d $DOMAINE
     cryptogen generate --config=./target/crypto-config-orderer.yaml --output="organizations"
-    
-    # Create admin org
-    if [ "$CREATE_ADMIN_ORG"=true ];
-    then
-    	createAdminOrg
-    fi
-    
+
     
     res=$?
     { set +x; } 2>/dev/null

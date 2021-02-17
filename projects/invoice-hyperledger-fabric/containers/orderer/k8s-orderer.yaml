@@ -41,7 +41,7 @@ spec:
             - name: ORDERER_GENERAL_TLS_CERTIFICATE
               value: "/var/hyperledger/orderer/tls/server.crt"
             - name: ORDERER_GENERAL_TLS_ROOTCAS
-              value: "[/var/hyperledger/orderer/tls/ca.crt]"
+              value: "[/var/hyperledger/orderer/tls/ca.crt,  /tmp/adminorg_ca.crt]"
             - name: ORDERER_KAFKA_TOPIC_REPLICATIONFACTOR
               value: "1"           
             - name: ORDERER_KAFKA_VERBOSE
@@ -51,7 +51,7 @@ spec:
             - name: ORDERER_GENERAL_CLUSTER_CLIENTPRIVATEKEY
               value: "/var/hyperledger/orderer/tls/server.key"
             - name: ORDERER_GENERAL_CLUSTER_ROOTCAS
-              value: "[/var/hyperledger/orderer/tls/ca.crt]"
+              value: "[/var/hyperledger/orderer/tls/ca.crt, /tmp/adminorg_ca.crt]"
             - name: ORDERER_GENERAL_CLUSTER_CLIENTCERTIFICATE
               value: "/var/hyperledger/orderer/tls/server.crt"
           volumeMounts:
