@@ -1,1 +1,1 @@
-rm -fr organizations
+rm -fr ./organizations

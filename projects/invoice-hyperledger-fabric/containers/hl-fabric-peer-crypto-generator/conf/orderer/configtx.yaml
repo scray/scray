@@ -66,10 +66,10 @@ Organizations:
                 Rule: "OR('AdminOrgMSP.admin', 'AdminOrgMSP.client')"
             Admins:
                 Type: Signature
-                Rule: "OR('AdminOrgMSP.admin', 'AdminOrg.admin')"
+                Rule: "OR('AdminOrgMSP.admin')"
             Endorsement:
                 Type: Signature
-                Rule: "OR('AdminOrgMSP.peer', 'AdminOrg.peer')"
+                Rule: "OR('AdminOrgMSP.peer')"
          
         AnchorPeers:
           # AnchorPeers defines the location of peers which can be used
@@ -357,7 +357,6 @@ Profiles:
             <<: *OrdererDefaults
             Organizations:
                 - *OrdererOrg
-                - *AdminOrg
             Capabilities:
                 <<: *OrdererCapabilities
         Consortiums:
