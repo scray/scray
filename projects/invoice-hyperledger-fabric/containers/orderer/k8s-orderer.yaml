@@ -38,6 +38,8 @@ spec:
                 configMapKeyRef:
                   name: hl-fabric-orderer
                   key: ORDERER_GENERAL_LOCALMSPID
+            - name: ORDERER_GENERAL_LOCALMSPDIR
+              value: "/var/hyperledger/orderer/msp"
             - name: ORDERER_GENERAL_TLS_ENABLED
               value: "true"
             - name: ORDERER_GENERAL_TLS_PRIVATEKEY
@@ -45,7 +47,7 @@ spec:
             - name: ORDERER_GENERAL_TLS_CERTIFICATE
               value: "/var/hyperledger/orderer/tls/server.crt"
             - name: ORDERER_GENERAL_TLS_ROOTCAS
-              value: "[/var/hyperledger/orderer/tls/ca.crt,  /tmp/adminorg_ca.crt]"
+              value: "[/var/hyperledger/orderer/tls/ca.crt]"
             - name: ORDERER_KAFKA_TOPIC_REPLICATIONFACTOR
               value: "1"           
             - name: ORDERER_KAFKA_VERBOSE
@@ -55,7 +57,7 @@ spec:
             - name: ORDERER_GENERAL_CLUSTER_CLIENTPRIVATEKEY
               value: "/var/hyperledger/orderer/tls/server.key"
             - name: ORDERER_GENERAL_CLUSTER_ROOTCAS
-              value: "[/var/hyperledger/orderer/tls/ca.crt, /tmp/adminorg_ca.crt]"
+              value: "[/var/hyperledger/orderer/tls/ca.crt]"
             - name: ORDERER_GENERAL_CLUSTER_CLIENTCERTIFICATE
               value: "/var/hyperledger/orderer/tls/server.crt"
           volumeMounts:
@@ -69,7 +71,7 @@ spec:
               mountPath: /var/hyperledger/orderer/tls
               subPath: conf/orderer/tls
             - name: orderer-conf
-              mountPath: /tmp/ca.adminorg.fabric.hyperledger.projects.scray.org-cert.pem
+              mountPath: /tmp/adminort_ca.crt
               subPath:  conf/admin/organizations/peerOrganizations/kubernetes.research.dev.seeburger.de/ca/ca.kubernetes.research.dev.seeburger.de-cert.pem
         - name: scray-orderer-cli
           stdin: true
