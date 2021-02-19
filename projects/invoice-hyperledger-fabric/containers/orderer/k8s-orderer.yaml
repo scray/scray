@@ -33,11 +33,12 @@ spec:
               value: "file"
             - name: ORDERER_GENERAL_GENESISFILE
               value: "/var/hyperledger/orderer/orderer.genesis.block"
-            - name: ORDERER_GENERAL_LOCALMSPID
-              valueFrom:
-                configMapKeyRef:
-                  name: hl-fabric-orderer
-                  key: ORDERER_GENERAL_LOCALMSPID
+            - name: ORDERER_GENERAL_LOCALMSPID # Fixme
+              value: "OrdererMSP"
+              #valueFrom:
+              #  configMapKeyRef:
+              #    name: hl-fabric-orderer
+              #    key: ORDERER_GENERAL_LOCALMSPID
             - name: ORDERER_GENERAL_TLS_ENABLED
               value: "true"
             - name: ORDERER_GENERAL_TLS_PRIVATEKEY
@@ -97,10 +98,7 @@ spec:
                   name: hl-fabric-orderer
                   key: hostname
             - name: ORG_NAME
-              valueFrom:
-                configMapKeyRef:
-                  name: hl-fabric-orderer
-                  key: org_name
+              value: "orderer" # Fixme Add env var
           volumeMounts:
             - name: orderer-conf
               mountPath: /mnt
