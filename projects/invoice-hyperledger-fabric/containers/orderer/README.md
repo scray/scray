@@ -2,11 +2,6 @@
 
 ### Create configuration for new order
 
-  ```
-  ORDERER_NAME=Orderer
-  cd ~/git/scray/projects/invoice-hyperledger-fabric/containers/orderer/
-  ./configure-orderer-deployment.sh -n $ORDERER_NAME
-  ```
 
 ### Start service
   ```kubectl apply -f target/$ORDERER_NAME/k8s-orderer-service.yaml```
@@ -30,32 +25,22 @@
     --from-literal=NODE_TYPE=orderer
    ```
 
-### Start new peer:
+### Start new orderer:
 
-  ```kubectl apply -f target/$ORDERER_NAME/k8s-peer.yaml```
+  ```kubectl apply -f target/$ORDERER_NAME/k8s-orderer.yaml```
   
-## Integrate new peer to example network
+### Delete orderer:
+
+   ```kubectl delete -f k8s-orderer.yaml```
+  
+## Create new channel
 ### Example values
   ```
-  ORDERER_IP=10.14.128.30 
-  ORDERER_HOSTNAME=orderer.example.com 
-  CHANNEL_NAME=mychannel
-  ORG_ID=OrgScray
+  CHANNEL_NAME=newchannel
   ```
 
-### Addorse new peer data:
-  ```docker exec test-network-cli /bin/bash /opt/scray/scripts/inform_existing_nodes.sh $ORDERER_IP $CHANNEL_NAME $ORG_ID```
-  
-### Join network
- ```
-POD_NAME=$(kubectl get pod -l app=peer0-org1-scray-org -o jsonpath="{.items[0].metadata.name}")
-kubectl exec --stdin --tty $POD_NAME  -c scray-peer-cli -- /bin/sh /mnt/conf/peer_join.sh $ORDERER_IP  $ORDERER_HOSTNAME $CHANNEL_NAME
-```
-
-## Create new channel
-  * Create genensis block from configtx configuration and add it to system channel. For details [read](https://hyperledger-fabric.readthedocs.io/en/release-2.3/create_channel/create_channel.html)
- 
-    ```docker exec test-network-cli /bin/bash /opt/scray/scripts/create_channel.sh $ORDERER_IP  $CHANNEL_NAME```
-
-  * Join peers to channel
-    For the Hyperleder Fabric you can use this tutorial [Link](#Integrate-new-peer-to-example-network)
+### Create channel
+  ```
+  ORDERER_POD=$(kubectl get pod -l app=orderer-org1-scray-org -o jsonpath="{.items[0].metadata.name}")
+  kubectl exec --stdin --tty $ORDERER_POD -c scray-orderer-cli  -- /bin/sh /mnt/conf/orderer/scripts/create_channel.sh $CHANNEL_NAME
+  ```
