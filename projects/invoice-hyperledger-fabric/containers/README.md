@@ -51,10 +51,23 @@ POD_NAME=$(kubectl get pod -l app=peer0-org1-scray-org -o jsonpath="{.items[0].m
 kubectl exec --stdin --tty $POD_NAME  -c scray-peer-cli -- /bin/sh /mnt/conf/peer_join.sh $ORDERER_IP  $ORDERER_HOSTNAME $CHANNEL_NAME
 ```
 
-## Create new channel
-  * Create genensis block from configtx configuration and add it to system channel. For details [read](https://hyperledger-fabric.readthedocs.io/en/release-2.3/create_channel/create_channel.html)
- 
-    ```docker exec test-network-cli /bin/bash /opt/scray/scripts/create_channel.sh $ORDERER_IP  $CHANNEL_NAME```
+## Integrate new peer to Scray K8s network
+### Example values
+  ```
+  ORDERER_IP=10.15.136.41
+  ORDERER_HOSTNAME=orderer.example.com 
+  CHANNEL_NAME=mychannel
+  ```
 
-  * Join peers to channel
-    For the Hyperleder Fabric you can use this tutorial [Link](#Integrate-new-peer-to-example-network)
+### Addorse new peer data:
+```
+ORDERER_POD=$(kubectl get pod -l app=orderer-org1-scray-org -o jsonpath="{.items[0].metadata.name}")
+kubectl exec --stdin --tty $ORDERER_POD -c scray-orderer-cli  -- /bin/sh /mnt/conf/orderer/scripts/inform_existing_nodes.sh $ORDERER_IP $CHANNEL_NAME $PEER_NAME
+```
+  
+### Join network
+ ```
+POD_NAME=$(kubectl get pod -l app=$PEER_NAME -o jsonpath="{.items[0].metadata.name}")
+ORDERER_PORT=$(kubectl get service orderer-org1-scray-org -o jsonpath="{.spec.ports[?(@.name=='orderer-listen')].nodePort}")
+kubectl exec --stdin --tty $POD_NAME  -c scray-peer-cli -- /bin/sh /mnt/conf/peer_join.sh $ORDERER_IP  $ORDERER_HOSTNAME $ORDERER_PORT $CHANNEL_NAME
+```

@@ -36,7 +36,7 @@
 ## Create new channel
 ### Example values
   ```
-  CHANNEL_NAME=newchannel
+  CHANNEL_NAME=mychannel
   ```
 
 ### Create channel

@@ -1,4 +1,6 @@
 CHANNEL_NAME=$1
+ORDERER_HOST=$2
+ORDERER_PORT=$3
 
 export FABRIC_CFG_PATH=/mnt/conf/orderer/
 
@@ -14,9 +16,9 @@ export CORE_PEER_MSPCONFIGPATH=/mnt/conf/admin/organizations/peerOrganizations/k
 
 
 
-export CORE_PEER_ADDRESS=kubernetes.research.dev.seeburger.de:32052
+export CORE_PEER_ADDRESS=$ORDERER_HOST:$ORDERER_PORT
 
 
-peer channel create -o kubernetes.research.dev.seeburger.de:32052  --ordererTLSHostnameOverride orderer.example.com -c $CHANNEL_NAME -f ./channel-artifacts/${CHANNEL_NAME}.tx --outputBlock ./channel-artifacts/channel1.block --tls --cafile ${PWD}/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem
+peer channel create -o $CORE_PEER_ADDRESS  --ordererTLSHostnameOverride orderer.example.com -c $CHANNEL_NAME -f ./channel-artifacts/${CHANNEL_NAME}.tx --outputBlock ./channel-artifacts/channel1.block --tls --cafile ${PWD}/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem
 
 #configtxlator proto_decode --input genesis.block --type common.Block --output config_block.json

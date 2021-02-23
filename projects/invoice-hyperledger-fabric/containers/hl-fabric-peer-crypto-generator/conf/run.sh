@@ -103,4 +103,5 @@ then
   createPeerConfig
 else
   echo "Unknown node type. Treat it as a peer"
+  createPeerConfig
 fi
