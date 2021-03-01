@@ -10,7 +10,7 @@ class ImageTool:
     def __init__(self, filename=None, image=None, h=480):
         self.filename = filename
         self.image = image
-        print("ok")
+        #print("ok")
         if image is None:
             self.image = ImageTool.load(filename)
         
