@@ -1,6 +1,7 @@
 BASE_PATH=$PWD
 
 yq() {
+  checkYqVersion
   $BASE_PATH/bin/yq $1 $2 $3 $4 $5
 }
 

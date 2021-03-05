@@ -6,8 +6,8 @@ pushDockerHub() {
 	echo "$DOCKER_TOKEN" | docker login -u "$DOCKER_USERNAME" --password-stdin
 	echo "$DOCKER_TOKEN"
 	echo "$DOCKER_USERNAME"
-	docker build -t scrayorg/hl-fabric-peer-crypto-generator:1.1 . 
-	docker push scrayorg/hl-fabric-peer-crypto-generator:1.1
+	docker build -t scrayorg/hl-fabric-node-configurator:1.1 . 
+	docker push scrayorg/hl-fabric-node-configurator:1.1
 }
 
 pushLocal() {
@@ -17,6 +17,14 @@ pushLocal() {
 
 }
 
+usage() {
+	echo "usage: push container to docker registry [[-h push to docker hub ] [-l push to local registry]]"
+}
+
+if [[ -z "$1" ]]
+then
+	usage
+fi
 
 while [ "$1" != "" ]; do
     case $1 in
@@ -26,9 +34,6 @@ while [ "$1" != "" ]; do
                                 ;;
         -h | -docker-hub )   	shift
 				pushDockerHub
-                                ;;
-        -h | --help )           usage
-                                exit
                                 ;;
         * )                     usage
                                 exit 1
