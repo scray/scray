@@ -8,6 +8,9 @@ YQ_VERSON=4.4.1
 DEBUG=false
 
 
+echo "FFFFFFFfss" "${BASH_SOURCE[0]}"
+echo "ssss "  $BASE_PATH
+
 
 yq() {
   $BASE_PATH/bin/yq-${YQ_VERSON} $1 $2 $3 $4 $5
@@ -52,7 +55,7 @@ customozeConfigFile() {
 	yq -i eval ".OrdererOrgs[0].Specs[0].Hostname=\"$ORG_NAME\"" $ORG_CRYPTO_CONFIG_FILE
 	
 	# Add SANS
-	echo "source yq_lib.sh" > update_SANS.sh
+	echo "source ../yq_lib.sh" > update_SANS.sh
 	YQ_CHANGE_COMMAND=$(echo \''.OrdererOrgs[0].Specs[0].SANS += '\"$DOMAINE\"\') 
 	echo "yq  -i eval $YQ_CHANGE_COMMAND crypto-config-orderer.yaml " >> update_SANS.sh
 	chmod u+x update_SANS.sh
