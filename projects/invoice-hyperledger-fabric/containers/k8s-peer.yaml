@@ -144,6 +144,8 @@ spec:
           image: dedcdockerregistry01.seeburger.de:5000/research/hl-fabric-node-configurator:0.1 
           imagePullPolicy: Always
           env:
+            - name: NODE_TYPE
+              value: "peer"
             - name: HOSTNAME
               valueFrom:
                 configMapKeyRef:
