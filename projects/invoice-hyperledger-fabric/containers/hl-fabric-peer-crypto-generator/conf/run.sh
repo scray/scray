@@ -3,7 +3,7 @@
 DOMAINE=org1.fabric.hyperledger.projects.scray.org
 ORG_NAME=OrgScrayMSP
 CHANNEL_NAME=mychannel
-SHARED_FS_HOST=10.15.136.41:30080
+SHARED_FS_HOST=hl-fabric-data-share-service:30080
 SHARED_FS_USER=scray
 SHARED_FS_PW=scray
 BASE_PATH=$PWD
@@ -61,7 +61,7 @@ createPeerConfig() {
 
 usage()
 {
-    echo "usage: Prepare peer node [[[-o ] [-d]] | [-h]]"
+    echo "usage: Prepare peer node [[[-o ] [-d] [-s]] | [-h]]"
 }
 
 
@@ -75,11 +75,17 @@ while [ "$1" != "" ]; do
                                 ;;
         -t | --node-type )         shift
                                 NODE_TYPE=$1
+                                ;;	
+        -s | --data-share )     shift
+                                SHARED_FS_HOST=$1
                                 ;;				
-        -h | --help )           usage
+        -h | --help )		
+                 		usage
                                 exit
                                 ;;
-        * )                     usage
+        * )                     
+        						echo "Unknown parameter: "  $1
+        						usage
                                 exit 1
     esac
     shift

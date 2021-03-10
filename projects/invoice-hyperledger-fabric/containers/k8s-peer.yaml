@@ -154,6 +154,12 @@ spec:
                 configMapKeyRef:
                   name: hl-fabric-peer
                   key: org_name
+            - name: DATA_SHARE
+              valueFrom:
+                configMapKeyRef:
+                  name: hl-fabric-peer
+                  key: data_share     
+                  
           # command: ['/bin/sh', '-c']
           # args: ['cd /mnt/hl-fabric-conf/ && wget https://mft.seeburger.de:443/portal-seefx/~public/ZDEwZTlmMTEtYjg2NC00NWVlLWE1YWEtNWI2OGZhM2NjMDg2?download -O config.zip &&  unzip config.zip']
           volumeMounts:

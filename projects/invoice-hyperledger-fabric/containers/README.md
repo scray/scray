@@ -24,6 +24,7 @@
    kubectl create configmap hl-fabric-peer-$PEER_NAME \
     --from-literal=hostname=kubernetes.research.dev.seeburger.de \
     --from-literal=org_name=$PEER_NAME \
+    --from-literal=data_share=hl-fabric-data-share-service:30080 \
     --from-literal=CORE_PEER_ADDRESS=kubernetes.research.dev.seeburger.de:$PEER_LISTEN_PORT \
     --from-literal=CORE_PEER_GOSSIP_EXTERNALENDPOINT=kubernetes.research.dev.seeburger.de:$GOSSIP_PORT \
     --from-literal=CORE_PEER_LOCALMSPID=${PEER_NAME}MSP

@@ -66,7 +66,7 @@ customozeConfigFile() {
 
 usage()
 {
-    echo "usage: Prepare peer node [[[-o ] [-d]] | [-h]]"
+    echo "usage: Crypto creator script [[[-o ] [-d]] | [-h]]"
 }
 
 
