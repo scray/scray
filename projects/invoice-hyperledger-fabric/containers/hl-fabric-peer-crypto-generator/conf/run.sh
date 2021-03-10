@@ -1,5 +1,6 @@
 #!/bin/bash
 
+INPUT_PARAMETERS=$@
 DOMAINE=org1.fabric.hyperledger.projects.scray.org
 ORG_NAME=OrgScrayMSP
 CHANNEL_NAME=mychannel
@@ -85,6 +86,7 @@ while [ "$1" != "" ]; do
                                 ;;
         * )                     
         						echo "Unknown parameter: "  $1
+        						echo "Input parameters" $INPUT_PARAMETERS
         						usage
                                 exit 1
     esac
