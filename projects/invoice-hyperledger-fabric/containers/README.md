@@ -4,7 +4,8 @@
 
   ```
   PEER_NAME=peer-42
-  cd ~/git/scray/projects/invoice-hyperledger-fabric/containers
+  git clone https://github.com/scray/scray.git --branch feature/assure-aks
+  cd scray/projects/invoice-hyperledger-fabric/containers
   ./configure-deployment.sh -n $PEER_NAME
   ```
 
