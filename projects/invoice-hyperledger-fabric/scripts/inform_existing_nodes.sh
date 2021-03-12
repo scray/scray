@@ -16,7 +16,7 @@ peer channel fetch config config_block.pb -o orderer.example.com:7050 -c $CHANNE
 configtxlator proto_decode --input config_block.pb --type common.Block | jq .data.data[0].payload.data.config > config.json
 
 # Upload CA cert
-SHARED_FS_HOST=10.15.136.41:30080
+SHARED_FS_HOST=hl-fabric-data-share-service:30080
 SHARED_FS_USER=scray
 SHARED_FS_PW=scray
 apk add curl

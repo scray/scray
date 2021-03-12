@@ -10,8 +10,8 @@ PeerOrgs:
   # ---------------------------------------------------------------------------
   # OrgScray
   # ---------------------------------------------------------------------------
-  - Name: OrgScrayMSP
-    Domain: org1.fabric.hyperledger.projects.scray.org
+  - Name: 2
+    Domain: 1
     EnableNodeOUs: true
     Template:
       Count: 1

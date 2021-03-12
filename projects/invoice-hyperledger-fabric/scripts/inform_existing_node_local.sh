@@ -3,9 +3,20 @@ CHANNEL_NAME=$2 #mychannel
 NEW_ORG_NAME=$3
 FABRIC_LOCATION=$4
 WORK_LOCATION=$5
-SHARED_FS_HOST=10.15.136.41:30080
+SHARED_FS_HOST=hl-fabric-data-share-service:30080
 SHARED_FS_USER=scray
 SHARED_FS_PW=scray
+
+while [ "$1" != "" ]; do
+    case $1 in
+        -s | --data-share )     shift
+                                SHARED_FS_HOST=$1
+                                ;;				
+        * )                     usage
+                                exit 1
+    esac
+    shift
+done
 
 export CORE_PEER_LOCALMSPID="Org1MSP"
 export CORE_PEER_TLS_ROOTCERT_FILE=${FABRIC_LOCATION}/organizations/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt

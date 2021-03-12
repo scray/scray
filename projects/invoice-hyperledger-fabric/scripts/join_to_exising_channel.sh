@@ -12,7 +12,7 @@ export CORE_PEER_ADDRESS=localhost:9051
 apk add curl
 
 # Download orderer CA
-SHARED_FS_HOST=10.15.136.41:30080
+SHARED_FS_HOST=hl-fabric-data-share-service:30080
 SHARED_FS_USER=scray
 SHARED_FS_PW=scray
 curl --user $SHARED_FS_USER:$SHARED_FS_PW http://$SHARED_FS_HOST/ca/tlsca.example.com-cert.pem > /tmp/tlsca.example.com-cert.pem
