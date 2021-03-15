@@ -11,7 +11,6 @@ echo $ORDERER_IP $ORDERER_HOSTNAME >> /etc/hosts
 echo $(dig +short $HOSTNAME) peer0.${HOSTNAME} >> /etc/hosts
 
 # Download orderer CA
-SHARED_FS_HOST=hl-fabric-data-share-service:30080
 SHARED_FS_USER=scray
 SHARED_FS_PW=scray
 curl --user $SHARED_FS_USER:$SHARED_FS_PW http://$SHARED_FS_HOST/ca/tlsca.example.com-cert.pem > /tmp/tlsca.example.com-cert.pem

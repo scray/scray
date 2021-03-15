@@ -42,7 +42,7 @@
   ORDERER_IP=10.14.128.30 
   ORDERER_HOSTNAME=orderer.example.com 
   CHANNEL_NAME=mychannel
-  ORG_ID=OrgScray
+  ORG_ID=peer-42
   ```
 
 ### Addorse new peer data:
@@ -59,18 +59,21 @@ kubectl exec --stdin --tty $POD_NAME  -c scray-peer-cli -- /bin/sh /mnt/conf/pee
   ```
   ORDERER_IP=10.15.136.41
   ORDERER_HOSTNAME=orderer.example.com 
+  ORDERER_PORT=7050
   CHANNEL_NAME=mychannel
+  SHARED_FS_HOST=10.14.128.38:30080 
+  PEER_NAME=peer-42
   ```
 
 ### Addorse new peer data:
 ```
 ORDERER_POD=$(kubectl get pod -l app=orderer-org1-scray-org -o jsonpath="{.items[0].metadata.name}")
-kubectl exec --stdin --tty $ORDERER_POD -c scray-orderer-cli  -- /bin/sh /mnt/conf/orderer/scripts/inform_existing_nodes.sh $ORDERER_IP $CHANNEL_NAME $PEER_NAME
+kubectl exec --stdin --tty $ORDERER_POD -c scray-orderer-cli  -- /bin/sh /mnt/conf/orderer/scripts/inform_existing_nodes.sh $ORDERER_IP $CHANNEL_NAME $PEER_NAME $SHARED_FS_HOST
 ```
   
 ### Join network
  ```
-POD_NAME=$(kubectl get pod -l app=$PEER_NAME -o jsonpath="{.items[0].metadata.name}")
+PEER_POD_NAME=$(kubectl get pod -l app=$PEER_NAME -o jsonpath="{.items[0].metadata.name}")
 ORDERER_PORT=$(kubectl get service orderer-org1-scray-org -o jsonpath="{.spec.ports[?(@.name=='orderer-listen')].nodePort}")
-kubectl exec --stdin --tty $POD_NAME  -c scray-peer-cli -- /bin/sh /mnt/conf/peer_join.sh $ORDERER_IP  $ORDERER_HOSTNAME $ORDERER_PORT $CHANNEL_NAME
+kubectl exec --stdin --tty $PEER_POD_NAME  -c scray-peer-cli -- /bin/sh /mnt/conf/peer_join.sh $ORDERER_IP  $ORDERER_HOSTNAME $ORDERER_PORT $CHANNEL_NAME $SHARED_FS_HOST
 ```
