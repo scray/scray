@@ -4,6 +4,7 @@
 
   ```
   PEER_NAME=peer-42
+  HOST_NAME=$PEER_NAME 	#External hostname
   git clone https://github.com/scray/scray.git --branch feature/assure-aks
   cd scray/projects/invoice-hyperledger-fabric/containers
   ./configure-deployment.sh -n $PEER_NAME
@@ -26,10 +27,10 @@
     --from-literal=hostname=kubernetes.research.dev.seeburger.de \
     --from-literal=org_name=$PEER_NAME \
     --from-literal=data_share=hl-fabric-data-share-service:80 \
-    --from-literal=CORE_PEER_ADDRESS=kubernetes.research.dev.seeburger.de:$PEER_LISTEN_PORT \
-    --from-literal=CORE_PEER_GOSSIP_EXTERNALENDPOINT=kubernetes.research.dev.seeburger.de:$GOSSIP_PORT \
+    --from-literal=CORE_PEER_ADDRESS=$HOST_NAME:$PEER_LISTEN_PORT \
+    --from-literal=CORE_PEER_GOSSIP_EXTERNALENDPOINT=$HOST_NAME:$GOSSIP_PORT \
     --from-literal=CORE_PEER_LOCALMSPID=${PEER_NAME}MSP
-   ```    	
+   ```    		
 
 ### Start new peer:
 
