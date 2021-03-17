@@ -10,13 +10,18 @@
 
 # Install external chaincode on k8s peer
 ```
+PEER_NAME=peer-42
+CHANNEL_NAME=mychannel
+ORDERER_NAME=orderer-org1-scray-org
 IP_CC_SERVICE=10.14.128.38         # Host where the chaincode is running
-IP_OF_EXAMPLE_NETWORK=10.14.128.30 #Host where the example network is running
-PEER_POD=$(kubectl get pod -l app=peer0-org1-scray-org -o jsonpath="{.items[0].metadata.name}")
+PEER_POD=$(kubectl get pod -l app=$PEER_NAME -o jsonpath="{.items[0].metadata.name}")
+ORDERER_IP=10.14.128.38
+ORDERER_LISTEN_PORT=$(kubectl get service $ORDERER_NAME -o jsonpath="{.spec.ports[?(@.name=='orderer-listen')].nodePort}")
+ORDERER_HOST=orderer.example.com:$ORDERER_LISTEN_PORT
 ```
 
 ```
-kubectl exec --stdin --tty $PEER_POD -c scray-peer-cli -- /bin/sh /mnt/conf/install_and_approve_cc.sh $IP_CC_SERVICE $IP_OF_EXAMPLE_NETWORK
+kubectl exec --stdin --tty $PEER_POD -c scray-peer-cli -- /bin/sh /mnt/conf/install_and_approve_cc.sh $IP_CC_SERVICE $ORDERER_IP $ORDERER_HOST $CHANNEL_NAME $ORDERER_HOST
 ```
 
 # Install external chaincode on example network peers 
