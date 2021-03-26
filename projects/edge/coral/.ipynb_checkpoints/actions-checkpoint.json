@@ -1,0 +1,29 @@
+[
+    {
+        "class": "CropAction",
+        "parameters": {
+            "min": [
+                0.0,
+                0.38333333333333336
+            ],
+            "max": [
+                0.4107981220657277,
+                0.675
+            ],
+            "size": null,
+            "mode": 1
+        }
+    },
+    {
+        "class": "ResizeAction",
+        "parameters": {
+            "size": [
+                600,
+                300
+            ],
+            "use_w": false,
+            "use_h": false,
+            "algorithm": 0
+        }
+    }
+]
