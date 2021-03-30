@@ -4,6 +4,14 @@
 # In[1]:
 
 
+#!pip3 install opencv-python
+#!pip install pafy
+#!pip install youtube_dl
+
+
+# In[2]:
+
+
 import cv2
 import numpy as np
 from PIL import Image
@@ -38,7 +46,7 @@ class ImageWidget(object):
         return Image.open(io.BytesIO(self.image_w.value))
 
 
-# In[2]:
+# In[3]:
 
 
 class BaseAction(object):
@@ -47,7 +55,9 @@ class BaseAction(object):
         return {'class' : self.__class__.__name__, 'parameters' : self.__dict__}
 
 
-# In[11]:
+# # Crop
+
+# In[4]:
 
 
 # input: image, output cropped image
@@ -123,7 +133,9 @@ class CropAction(BaseAction):
         self.max[1] = self.fromNormalizedValue(to[3],size[1]) 
 
 
-# In[4]:
+# # CropWidget
+
+# In[36]:
 
 
 class CropWidget():
@@ -203,9 +215,11 @@ class CropWidget():
         return widgets.IntSlider(value=value, max=max,step=1, description=description,layout=layout)    
         
     # INIT    
-    def init(self, image=None, vstreams=None, parent=None):
-        self.image    = image
-        self.vstreams = vstreams
+    def init(self, action=None, parent=None):
+        self.videoAction = action
+        self.vstreams = action.getVstreams()
+        self.image    = self.vstreams[0]
+        
         self.action   = CropAction(size=self.image.size,min=[0,0], max=[self.image.size[0],self.image.size[1]])
         self.initMinMax()
         self.imageselectw.max = len(self.vstreams) - 1
@@ -273,7 +287,6 @@ class CropWidget():
         #print(list(self.crop_list.options),self.crop_list.value, change.value)
         self.crop_list.value = change.value
         
-
     def crop_list_on_change(self,change):
         if change['type'] == 'change' and change['name'] == 'value':
             #print(self.regions[change['new']])
@@ -313,15 +326,28 @@ class CropWidget():
         #imageselectw.disabled=False    
 
     def on_next_image_button_clicked(self,b):
-        global vstreams
-        self.vstreams = getVstreams(video=video, indexes=[self.index])
-        self.updateImage(self.index)
+        #global vstreams
+        _video   = self.videoAction.video
+        if self.videoAction.index != self.index:
+            self.videoAction = VideoAction(video=_video,index=self.index)
+        _vaction = self.videoAction
+        self.image = _vaction.readImageOfStream()
+        
+        self.initMinMax()
+        self.crop_image()
+        #self.imageWidget.setImage(self.image)
+        
+        #self.initMinMax(self.action.size,self.action.fromNormalized(self.parent.sources.videos[self.parent.id]['bookmarks'][change['new']]))
+        #self.vstreams = getVstreams(video=_video, indexes=[self.index])
+        #self.updateImage(self.index)
 
 #cropWidget = CropWidget(action=CropAction(size=image.size, min=[0,0], max=list(image.size)),imageWidget=ImageWidget(), image=image, vstreams=vstreams)   
 #cropWidget = CropWidget(action=CropAction(),imageWidget=ImageWidget())
 
 
-# In[5]:
+# # Resize
+
+# In[6]:
 
 
 ####################### scale
@@ -366,7 +392,7 @@ class ResizeAction(BaseAction):
         return {'image':new_im}        
 
 
-# In[6]:
+# In[7]:
 
 
 class ResizeWidget():
@@ -411,7 +437,9 @@ class ResizeWidget():
 #resizeWidget = ResizeWidget(action=ResizeAction(),imageWidget=ImageWidget())         
 
 
-# In[7]:
+# # LiveVideoSources
+
+# In[9]:
 
 
 import json
@@ -435,7 +463,9 @@ class LiveVideoSources():
             json.dump(self.videos, f, ensure_ascii=False, indent=4)
 
 
-# In[8]:
+# # LiveVideoSourcesWidget
+
+# In[29]:
 
 
 import ipywidgets as widgets
@@ -449,6 +479,7 @@ class LiveVideoSourcesWidget():
         self.video = None
         self.id = None
         self.child = child
+        self.action = None
         
         self.video_filename = widgets.Text(description = 'filename',value = 'videos.json', style=vstyle, layout=vlayout,disabled=False)    
         self.video_save_button = widgets.Button(description='Save', disabled=False, tooltip='reset all values',style=style)
@@ -505,8 +536,6 @@ class LiveVideoSourcesWidget():
         #bookmark_dict['reset'] = cropNormalizedArea
         #container['bookmarks'] = bookmark_dict
         
-  
-    
     def on_value_submit_video_url(self,change):
         print(change)
         global video
@@ -518,7 +547,6 @@ class LiveVideoSourcesWidget():
         #global vstreams
         #vstreams = getVstreams(video)      
         
-        
     def video_urls_on_change(self,change):
         if change['type'] == 'change' and change['name'] == 'value':
             self.id = change['new']
@@ -529,8 +557,8 @@ class LiveVideoSourcesWidget():
             #vstreams = getVstreams(video)
             
             if self.child != None:
-                _vstreams = VideoAction(self.video).getVstreams()
-                self.child.init(image=_vstreams[0], vstreams=_vstreams, parent=self)
+                action = VideoAction(sources=self.sources,id=self.id,video=self.video)
+                self.child.init(action=action, parent=self)
             
     def on_video_load_button_clicked(self,b): 
         filename = self.video_filename.value
@@ -546,12 +574,12 @@ class LiveVideoSourcesWidget():
         #vstreams = getVstreams(video)
 
     def on_video_save_button_clicked(self,b):
-        global videos
+        #global videos
         filename = self.video_filename.value
         #videos = loadVideosFile(filename=filename)
         container = self.videoContainerTo_Dict()
         #key = container['url'].rsplit('/')[3]
-        key = video.videoid
+        key = self.video.videoid
         self.sources.videos[key] = container
         self.video_urls.options = list(self.sources.videos.keys())
         #print(videos)
@@ -560,11 +588,11 @@ class LiveVideoSourcesWidget():
         
     def on_video_delete_button_clicked(self,b):
         pass
-        
-#LiveVideoSourcesWidget()        
 
 
-# In[9]:
+# # Video Action
+
+# In[32]:
 
 
 import pafy
@@ -574,13 +602,19 @@ import json
 
 class VideoAction():
     #def __init__(self, name='_hEh5wF6lxE',index=0,skipframes=0):
-    def __init__(self, video=None,index=0,skipframes=0):
+    def __init__(self, sources=None, id=None, video=None,index=0,skipframes=0):
         #_entry = videos[name]
         #_video  = pafy.new(_entry['url'])
+        self.sources = sources
+        self.id = id
         self.video = video
+        self.sources = None
+        self.id = None
         self.stream = video.streams[index]
+        self.index = index
         self.capture = cv2.VideoCapture(self.stream.url)
         self.skipframes = skipframes
+        
         
     def saveVideosFile(self,filename='videos.json', videos=None):
         #print(videos)
@@ -650,4 +684,22 @@ class VideoAction():
             image = readImageOfStream(video.streams[index])
             vstreams[index] = image
         return vstreams[index]
+
+
+# # Application
+
+# In[41]:
+
+
+_imageWidget = ImageWidget(display=False)
+_crop = CropWidget(vstreams=[], imageWidget=_imageWidget)
+_videoSources = LiveVideoSourcesWidget(child=_crop)
+_resize = resizeWidget = ResizeWidget(action=ResizeAction(),parent=_crop,imageWidget=_imageWidget)
+
+tab  = widgets.Tab(children = [_videoSources.vbox, _crop.vbox, _resize.vbox])
+tab.set_title(0, 'videos')
+tab.set_title(1, 'crop')
+tab.set_title(2, 'resize')
+display(tab)
+_imageWidget.display()
 
