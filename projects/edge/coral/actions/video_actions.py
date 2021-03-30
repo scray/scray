@@ -47,7 +47,7 @@ class BaseAction(object):
         return {'class' : self.__class__.__name__, 'parameters' : self.__dict__}
 
 
-# In[3]:
+# In[11]:
 
 
 # input: image, output cropped image
@@ -64,11 +64,12 @@ class CropAction(BaseAction):
         self.size = size
         self.mode = mode
         
+    # Problem: + 1    
     def evaluate(self, image=None):
         #return image  return {'image':self.cropped_image}
         if self.mode == self.WORLD:
             return {'image':image.crop(self._flat())}
-        return {'image':image.crop(self.fromNormalized(self._flat(), size=image.size))}      
+        return {'image':image.crop(self.fromNormalized(self.flat(), size=image.size))}      
         
     def _flat(self):
         return (self.min[0],self.min[1],self.max[0] + 1,self.max[1] + 1)
@@ -105,6 +106,8 @@ class CropAction(BaseAction):
     def fromNormalized(self, values, size=None):    
         if size == None:
             size = self.size
+             
+        print('fromNormalized',size)        
         xmin = self.fromNormalizedValue(values[0],size[0])
         ymin = self.fromNormalizedValue(values[1],size[1])
         xmax = self.fromNormalizedValue(values[2],size[0])
