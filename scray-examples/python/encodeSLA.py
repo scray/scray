@@ -179,7 +179,7 @@ filetimestamps = list(sparkSession.read.text('hdfs://172.30.17.145:8020/user/adm
 
 def getencodedpfall(line) :
     try:
-        line = filetimestamps[0]
+        #line = filetimestamps[0]
         pfall = sparkSession.read.parquet('hdfs://172.30.17.145:8020/sla_sql_data/' + line +  '/*').select(columns).dropDuplicates().toPandas()
         astype(pfall,['CSTARTTIME','CENDTIME','CSLATAT','CMESSAGETAT2','CSLADELIVERYTIME','CINBOUNDSIZE'] ,int) 
         pfall['CGLOBALMESSAGEID'] = pfall['CGLOBALMESSAGEID'].apply(hash)
@@ -212,4 +212,10 @@ def getencodedpfall(line) :
 for line in filetimestamps:
     pfall = getencodedpfall(line)
     pfall.to_parquet('/tmp/sla_' + line + '.parquet', engine='pyarrow', compression='GZIP')
+
+
+# In[131]:
+
+
+get_ipython().system('ls /tmp')
 
