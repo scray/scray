@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[1]:
+# In[ ]:
 
 
 import dfBasics
@@ -11,14 +11,28 @@ import pfAdapt
 #import charts
 
 
-# In[2]:
+# In[ ]:
+
+
+def install():
+    import os
+    os.environ['http_proxy'] = "http://172.30.12.56:3128" 
+    os.environ['https_proxy'] = "https://172.30.12.56:3128"  
+    get_ipython().system('pip install pyarrow')
+    #!pip3 install fastparquet
+    #!conda uninstall fastparquet
+    #!conda config --add channels conda-forge
+    #!conda install -y -c conda-forge fastparquet
+
+
+# In[ ]:
 
 
 import pandas as pd
 from pyspark.sql import functions
 
 
-# In[3]:
+# In[ ]:
 
 
 def getCountDF(pf,column,hashes):
@@ -58,7 +72,7 @@ def printtt1():
     return col
 
 
-# In[4]:
+# In[ ]:
 
 
 def astype(pfall,selected,newtype):
@@ -68,13 +82,13 @@ def astype(pfall,selected,newtype):
 
 # # B
 
-# In[5]:
+# In[ ]:
 
 
 selected = [ 'CSTATUS', 'CSERVICE',        'CSENDERPROTOCOL', 'CSENDERENDPOINTID',        'CRECEIVERPROTOCOL', 'CRECEIVERENDPOINTID']
 
 
-# In[6]:
+# In[ ]:
 
 
 def encodepfall(pfall,number):
@@ -103,7 +117,7 @@ def encodepfall(pfall,number):
 
 # # Main
 
-# In[7]:
+# In[ ]:
 
 
 columns = ['CGLOBALMESSAGEID', 'CSTARTTIME', 'CENDTIME', 'CSTATUS', 'CSERVICE',       'CSLABILLINGMONTH', 'CSENDERPROTOCOL', 'CSENDERENDPOINTID',       'CINBOUNDSIZE', 'CRECEIVERPROTOCOL', 'CRECEIVERENDPOINTID', 'CSLATAT',       'CMESSAGETAT2', 'CSLADELIVERYTIME']
@@ -116,33 +130,10 @@ columns = get_columns_2()
 #columns = [ 'CSTARTTIME', 'CSENDERENDPOINTID']
 
 
-# In[8]:
+# In[ ]:
 
 
 sparkSession = dfBasics.getSparkSession()
-
-
-# In[ ]:
-
-
-#len(pfall), len(ac)
-#pfall.head()
-#pfall.dtypes
-#len(mdcountsall)
-
-
-# In[ ]:
-
-
-#pfall[pfall['CGLOBALMESSAGEID'] == mdcountsall.index.get_level_values(0)[0]]
-#pfall['CGLOBALMESSAGEID'] == -9209718302575659389
-
-
-# In[ ]:
-
-
-#len(pfall[pfall['CSLADELIVERYTIME'] == -1])
-#mdcountsall.index.get_level_values(0)[0]
 
 
 # In[ ]:
@@ -175,27 +166,12 @@ def printtt(pfall,tt):
     return col
 
 
+# # slatimestamps
+
 # In[ ]:
 
 
-#pfall.iloc[g[1][0]]['CENDTIME'],pfall.iloc[g[1][1]]['CENDTIME']
-
-
-# In[19]:
-
-
-#len(f), len(mdcountsall),f
-#line= '1580137124017'
-
-#from py4j.java_gateway import Py4JJavaError
-
-
-# In[9]:
-
-
-# read timestamps from file
-with open("/tmp/slatimestamps.txt", "r") as file:
-    lines = file.read().split('\n')
+filetimestamps = list(sparkSession.read.text('hdfs://172.30.17.145:8020/user/admin/slatimestamps.txt').select('value').toPandas()['value'])
 
 
 # In[ ]:
@@ -203,22 +179,29 @@ with open("/tmp/slatimestamps.txt", "r") as file:
 
 def getencodedpfall(line) :
     try:
-        df = sparkSession.read.parquet('hdfs://172.30.17.145:8020/sla_sql_data/' + line +  '/*').select(columns).dropDuplicates()
-        #print('df.toPandas')
-        pfall = df.toPandas() 
-        #print('1')
+        line = filetimestamps[0]
+        pfall = sparkSession.read.parquet('hdfs://172.30.17.145:8020/sla_sql_data/' + line +  '/*').select(columns).dropDuplicates().toPandas()
         astype(pfall,['CSTARTTIME','CENDTIME','CSLATAT','CMESSAGETAT2','CSLADELIVERYTIME','CINBOUNDSIZE'] ,int) 
-        #del(pfall['CSLABILLINGMONTH'])
         pfall['CGLOBALMESSAGEID'] = pfall['CGLOBALMESSAGEID'].apply(hash)
-        #print('1b')
-        #ac = pd.unique(pfall['CGLOBALMESSAGEID'])
         mdcountsall = pfall.groupby(['CGLOBALMESSAGEID','CSTATUS'])['CSTARTTIME'].count()
         mdcountsall = mdcountsall[mdcountsall > 1]
         f = printtt(pfall,mdcountsall)
         pfall = pfall.drop(f)
         astype(pfall,selected,str) 
         encoder.encode(pfall,selected)
-        pfall.to_parquet('/tmp/sla_' + line + '.parquet', engine='fastparquet', compression='GZIP')
+        
+        # check for duplicates
+        g=pfall.groupby('CGLOBALMESSAGEID')['CGLOBALMESSAGEID'].value_counts()
+        _duplicates = list(g.where(g>1).dropna().index.get_level_values(0))
+
+        _drop_index = []
+        for id in _duplicates:
+            index = pfall[pfall['CGLOBALMESSAGEID'] == id].sort_values('CENDTIME').index
+            _drop_index.append(index[0])
+     
+        # drop duplicates    
+        pfall = pfall.drop(_drop_index)   
+        return pfall
     except Exception as e:
         print("does not exist:" + line)
 
@@ -226,14 +209,7 @@ def getencodedpfall(line) :
 # In[ ]:
 
 
-#line = lines[0]
-#pfall = getencodedpfall(line)
-
-
-# In[ ]:
-
-
-for line in lines:
-    getencodedpfall(line)
-    
+for line in filetimestamps:
+    pfall = getencodedpfall(line)
+    pfall.to_parquet('/tmp/sla_' + line + '.parquet', engine='pyarrow', compression='GZIP')
 

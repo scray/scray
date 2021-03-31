@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[1]:
+# In[ ]:
 
 
 import dfBasics
@@ -11,7 +11,7 @@ import pfAdapt
 #import charts
 
 
-# In[2]:
+# In[ ]:
 
 
 import pandas as pd
@@ -22,7 +22,7 @@ from pyspark.sql import functions
 
 # # Main
 
-# In[3]:
+# In[ ]:
 
 
 columns = ['CGLOBALMESSAGEID', 'CSTARTTIME', 'CENDTIME', 'CSTATUS', 'CSERVICE',       'CSLABILLINGMONTH', 'CSENDERPROTOCOL', 'CSENDERENDPOINTID',       'CINBOUNDSIZE', 'CRECEIVERPROTOCOL', 'CRECEIVERENDPOINTID', 'CSLATAT',       'CMESSAGETAT2', 'CSLADELIVERYTIME']
@@ -35,25 +35,49 @@ def get_columns_2():
 columns = [ 'CSTARTTIME', 'CSENDERENDPOINTID']
 
 
-# In[4]:
+# In[ ]:
 
 
 sparkSession = dfBasics.getSparkSession()
 
 
-# In[5]:
+# In[ ]:
 
 
-df = sparkSession.read.parquet('hdfs://172.30.17.145:8020/sla_sql_data/*/*').select(columns).dropDuplicates()  
+df = sparkSession.read.parquet('hdfs://172.30.17.145:8020/sla_sql_data/*/*').select(columns).dropDuplicates() 
 
 
-# In[6]:
+# In[ ]:
+
+
+df.write.parquet("/tmp/sla.parquet") 
+
+
+# In[ ]:
+
+
+df = sparkSession.read.parquet("/tmp/sla.parquet")
+
+
+# In[ ]:
+
+
+df.head()
+
+
+# In[ ]:
 
 
 pfall = df.toPandas() 
 
 
-# In[7]:
+# In[ ]:
+
+
+
+
+
+# In[ ]:
 
 
 from datetime import time
@@ -80,7 +104,7 @@ def converttimestampcolumnn(pf,tsc) :
     pf[tsc] = pf[tsc].apply(lambda x: dt.datetime.fromtimestamp(float(x) / 1e3))
 
 
-# In[10]:
+# In[ ]:
 
 
 def astype(pfall,selected,newtype):
@@ -88,7 +112,7 @@ def astype(pfall,selected,newtype):
         pfall[each] = pfall[each].astype(newtype)
 
 
-# In[11]:
+# In[ ]:
 
 
 selected = [  'CSENDERENDPOINTID']
@@ -101,7 +125,7 @@ encoder.encode(pfall,selected)
 pfall = pfall.drop_duplicates()
 
 
-# In[12]:
+# In[ ]:
 
 
 # convert timestamp to datetime and add column date
@@ -111,20 +135,23 @@ pfall = pfall.drop_duplicates()
 adddatecolumns(pfall,pfall,'CSTARTTIME')
 
 
-# In[13]:
+# In[ ]:
 
 
 astype(pfall,['CSTARTTIME'] ,int) 
 
 
-# In[14]:
+# In[ ]:
 
 
-pfall.to_parquet('/tmp/msgsenders_date.parquet', engine='fastparquet', compression='GZIP')
+import time; ts = str(time.time()) 
+pfall.to_parquet('/tmp/msgsenders_' + ts + '.parquet', engine='fastparquet', compression='GZIP')
 
 
-# In[16]:
+# In[ ]:
 
 
-get_ipython().system('mv /tmp/msgsenders_date.parquet /tmp/msgsenders_200716.parquet')
+#!mv /tmp/msgsenders_date.parquet /tmp/msgsenders_200716.parquet
+import time; ts = time.time() 
+print(ts)
 
