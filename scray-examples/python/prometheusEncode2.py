@@ -4,7 +4,7 @@
 # In[3]:
 
 
-cycle = 15
+cycle = 19
 
 
 # # Functions
