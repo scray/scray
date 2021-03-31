@@ -17,6 +17,12 @@ pushLocal() {
 
 }
 
+# Remove runtime data
+cleanUp() {
+	 echo "Remove generated configuratios before building docker container"
+	./clean.sh
+}
+
 usage() {
 	echo "usage: push container to docker registry [[-h push to docker hub ] [-l push to local registry]]"
 }
@@ -30,10 +36,12 @@ while [ "$1" != "" ]; do
     case $1 in
         -l | --local )   shift
                                 REPO_URL=$1
-				pushLocal
+                                cleanUp
+								pushLocal
                                 ;;
         -h | -docker-hub )   	shift
-				pushDockerHub
+        						cleanUp
+								pushDockerHub
                                 ;;
         * )                     usage
                                 exit 1

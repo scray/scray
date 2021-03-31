@@ -2,19 +2,8 @@
 ORDERER_IP=$1
 CHANNEL_NAME=$2 #mychannel
 NEW_ORG_NAME=$3
+SHARED_FS_HOST=$4
 
-while [ "$1" != "" ]; do
-    case $1 in
-        -s | --data-share )     shift
-                                SHARED_FS_HOST=$1
-                                ;;
-        * )                     usage
-                                exit 1
-    esac
-    shift
-done
-
-	
 export CORE_PEER_TLS_ENABLED=true
 export CORE_PEER_LOCALMSPID="AdminOrgMSP"
 export CORE_PEER_TLS_ROOTCERT_FILE=/mnt/conf/admin/organizations/peerOrganizations/kubernetes.research.dev.seeburger.de/peers/peer0.kubernetes.research.dev.seeburger.de/msp/cacerts/ca.kubernetes.research.dev.seeburger.de-cert.pem 
@@ -29,7 +18,7 @@ peer channel fetch config config_block.pb -o orderer.example.com:7050 -c $CHANNE
 configtxlator proto_decode --input config_block.pb --type common.Block | jq .data.data[0].payload.data.config > config.json
 
 # Upload CA cert
-SHARED_FS_HOST=hl-fabric-data-share-service:30080
+#SHARED_FS_HOST=hl-fabric-data-share-service:30080
 SHARED_FS_USER=scray
 SHARED_FS_PW=scray
 apk add curl
@@ -37,7 +26,7 @@ curl --user $SHARED_FS_USER:$SHARED_FS_PW -X MKCOL http://$SHARED_FS_HOST/ca
 curl --user $SHARED_FS_USER:$SHARED_FS_PW -T $ORDERER_CA http://$SHARED_FS_HOST/ca/tlsca.example.com-cert.pem
 
 # Get configuration of new peer
-curl --user 'scray:scray' http://${SHARED_FS_HOST}/newmemberrequests/$CHANNEL_NAME/${NEW_ORG_NAME}.json > new_member_org.json
+curl --user 'scray:scray' http://${SHARED_FS_HOST}/newmemberrequests/mychannel/${NEW_ORG_NAME}.json > new_member_org.json # FIXME use $CHANNEL_NAME instad of mychannel if peer uploads his config to new destination
 
 
 # Add org3 data to existing config

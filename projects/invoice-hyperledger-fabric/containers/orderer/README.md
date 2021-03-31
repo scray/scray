@@ -2,32 +2,38 @@
 
 ### Create configuration for new order
 
+```
+ORDERER_NAME=orderer
+HOST_NAME=example.com
+cd scray/projects/invoice-hyperledger-fabric/containers/orderer
+```
+
 
 ### Start service
-  ```kubectl apply -f target/$ORDERER_NAME/k8s-orderer-service.yaml```
+  ```kubectl apply -f k8s-orderer-service.yaml```
 
 
-### Create peer configuration
+### Create orderer configuration
+
 
    ```
-   GOSSIP_PORT=$(kubectl get service $ORDERER_NAME -o jsonpath="{.spec.ports[?(@.name=='peer-gossip')].nodePort}")
-   PEER_LISTEN_PORT=$(kubectl get service $ORDERER_NAME -o jsonpath="{.spec.ports[?(@.name=='peer-listen')].nodePort}")
-   PEER_CHAINCODE_PORT=$(kubectl get service $ORDERER_NAME -o jsonpath="{.spec.ports[?(@.name=='peer-chaincode')].nodePort}")
-   ```
-
-   ```
+   kubectl delete configmap hl-fabric-orderer
    kubectl create configmap hl-fabric-orderer \
     --from-literal=hostname=example.com \
     --from-literal=org_name=$ORDERER_NAME \
-    --from-literal=CORE_PEER_ADDRESS=kubernetes.research.dev.seeburger.de:$PEER_LISTEN_PORT \
-    --from-literal=CORE_PEER_GOSSIP_EXTERNALENDPOINT=kubernetes.research.dev.seeburger.de:$GOSSIP_PORT \
     --from-literal=ORDERER_GENERAL_LOCALMSPID=${ORDERER_NAME}MSP \
     --from-literal=NODE_TYPE=orderer
    ```
 
 ### Start new orderer:
 
-  ```kubectl apply -f target/$ORDERER_NAME/k8s-orderer.yaml```
+  ```kubectl apply -f k8s-orderer.yaml```
+  
+  Print orderer logs
+  ```
+  ORDERER_POD=$(kubectl get pod -l app=orderer-org1-scray-org -o jsonpath="{.items[0].metadata.name}")
+  kubectl logs -f $ORDERER_POD  -c orderer
+  ```
   
 ### Delete orderer:
 
@@ -42,5 +48,7 @@
 ### Create channel
   ```
   ORDERER_POD=$(kubectl get pod -l app=orderer-org1-scray-org -o jsonpath="{.items[0].metadata.name}")
-  kubectl exec --stdin --tty $ORDERER_POD -c scray-orderer-cli  -- /bin/sh /mnt/conf/orderer/scripts/create_channel.sh $CHANNEL_NAME
+  ORDERER_PORT=$(kubectl get service orderer-org1-scray-org -o jsonpath="{.spec.ports[?(@.name=='orderer-listen')].nodePort}")
+  ORDERER_PORT=7050
+  kubectl exec --stdin --tty $ORDERER_POD -c scray-orderer-cli  -- /bin/sh /mnt/conf/orderer/scripts/create_channel.sh $CHANNEL_NAME orderer.example.com $ORDERER_PORT
   ```

@@ -71,9 +71,6 @@ spec:
             - name: orderer-conf
               mountPath: /var/hyperledger/orderer/tls
               subPath: conf/orderer/tls
-            - name: orderer-conf
-              mountPath: /tmp/adminort_ca.crt
-              subPath:  conf/admin/organizations/peerOrganizations/kubernetes.research.dev.seeburger.de/ca/ca.kubernetes.research.dev.seeburger.de-cert.pem
         - name: scray-orderer-cli
           stdin: true
           tty: true
@@ -120,7 +117,7 @@ spec:
               subPath: conf/admin/organizations/peerOrganizations/adminorg.fabric.hyperledger.projects.scray.org/ca/ca.adminorg.fabric.hyperledger.projects.scray.org-cert.pem
       initContainers:
         - name: cert-creator
-          image: dedcdockerregistry01:5000/research/hl-fabric-node-configurator:0.1 
+          image: scrayorg/hl-fabric-node-configurator:1.1 
           imagePullPolicy: Always
           env:
             - name: HOSTNAME
