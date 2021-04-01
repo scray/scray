@@ -32,6 +32,33 @@ import pandas as pd
 from pyspark.sql import functions
 
 
+# In[133]:
+
+
+from datetime import time
+import datetime as dt
+import calendar
+import pytz
+de = pytz.timezone('Europe/Berlin')
+
+# long timestamp
+def date(x):
+    return  dt.datetime.fromtimestamp(float(x) / 1e3, tz=de)
+
+
+def adddatecolumns(data,pf,column) :
+    data['year'] = pf[column].apply(lambda x: date(x).date().year)
+    data['month'] = pf[column].apply(lambda x: date(x).date().month)
+    data['day'] = pf[column].apply(lambda x: date(x).date().day)
+    data['hour'] = pf[column].apply(lambda x: date(x).time().hour)
+    data['minute'] = pf[column].apply(lambda x: date(x).time().minute)
+    #data['second'] = pf[column].apply(lambda x: x.time().second)
+    #data['microsecond'] = pf[column].apply(lambda x: x.time().microsecond)
+
+def converttimestampcolumnn(pf,tsc) :
+    pf[tsc] = pf[tsc].apply(lambda x: dt.datetime.fromtimestamp(float(x) / 1e3))
+
+
 # In[ ]:
 
 
@@ -174,7 +201,7 @@ def printtt(pfall,tt):
 filetimestamps = list(sparkSession.read.text('hdfs://172.30.17.145:8020/user/admin/slatimestamps.txt').select('value').toPandas()['value'])
 
 
-# In[ ]:
+# In[136]:
 
 
 def getencodedpfall(line) :
@@ -201,6 +228,7 @@ def getencodedpfall(line) :
      
         # drop duplicates    
         pfall = pfall.drop(_drop_index)   
+        adddatecolumns(pfall,pfall,'CSTARTTIME')
         return pfall
     except Exception as e:
         print("does not exist:" + line)
@@ -214,8 +242,15 @@ for line in filetimestamps:
     pfall.to_parquet('/tmp/sla_' + line + '.parquet', engine='pyarrow', compression='GZIP')
 
 
-# In[131]:
+# In[137]:
 
 
-get_ipython().system('ls /tmp')
+#line = filetimestamps[1]
+#pfall = getencodedpfall(line)
+
+
+# In[140]:
+
+
+#pfall.to_parquet('/tmp/sla_' + line + '.parquet', engine='pyarrow', compression='GZIP')
 
