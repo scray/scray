@@ -32,6 +32,12 @@
                 0.0,
                 1.0,
                 1.0
+            ],
+            "street": [
+                0.259375,
+                0.5611111111111111,
+                0.69375,
+                0.9611111111111111
             ]
         }
     },
@@ -87,8 +93,8 @@
         }
     },
     "G05wmWFDtSo": {
-        "url": "https://www.youtube.com/watch?v=JqUREqYduHw",
-        "title": "Venice Italy Live Webcam - Dorsoduro in Live Streaming from Hotel American Dinesen - Full HD",
+        "url": "https://www.youtube.com/watch?v=G05wmWFDtSo",
+        "title": "Michael Weiss Street Brasov - Pilvax Restaurant & Wine Bar",
         "location": "",
         "country": "",
         "objects": "",
