@@ -81,7 +81,7 @@ def getEncoder(column):
     np.load = lambda *a,**k: np_load_old(*a, allow_pickle=True, **k)
 
     encoder = TolerantLabelEncoder(ignore_unknown=True)
-    encoder.classes_ = np.load(column + '.npy')
+    encoder.classes_ = np.load('/home/jovyan/work/npy/' + column + '.npy')
         
     # restore np.load for future normal usage
     np.load = np_load_old

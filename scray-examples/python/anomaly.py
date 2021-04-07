@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[ ]:
+# In[1]:
 
 
 import numpy as np
@@ -28,7 +28,7 @@ np.random.seed(RANDOM_SEED)
 tf.random.set_seed(RANDOM_SEED)
 
 
-# In[ ]:
+# In[2]:
 
 
 def init_sns():
@@ -36,7 +36,7 @@ def init_sns():
     rcParams['figure.figsize'] = 22, 10
 
 
-# In[ ]:
+# In[3]:
 
 
 ## Setup charts
@@ -141,7 +141,7 @@ def createHeatmap(piv,title="") :
     return ax
 
 
-# In[ ]:
+# In[4]:
 
 
 # functions

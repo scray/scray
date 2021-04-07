@@ -198,11 +198,10 @@ def printtt(pfall,tt):
 # In[ ]:
 
 
-#filetimestamps = list(sparkSession.read.text('hdfs://172.30.17.145:8020/user/admin/slatimestamps.txt').select('value').toPandas()['value'])
-filetimestamps = list(sparkSession.read.text('hdfs://172.30.17.145:8020/user/admin/slatimestamps_diff.txt').select('value').toPandas()['value'])
+filetimestamps = list(sparkSession.read.text('hdfs://172.30.17.145:8020/user/admin/slatimestamps.txt').select('value').toPandas()['value'])
 
 
-# In[45]:
+# In[136]:
 
 
 def getencodedpfall(line) :
@@ -233,19 +232,21 @@ def getencodedpfall(line) :
         return pfall
     except Exception as e:
         print("does not exist:" + line)
-        return None
 
 
 # In[ ]:
 
 
-import os.path
 for line in filetimestamps:
-    fname = '/home/jovyan/work/sla/sla_' + line + '.parquet'
-    if not os.path.isfile(fname):
-        pfall = getencodedpfall(line)
-        if pfall is not None:
-            pfall.to_parquet('/tmp/sla_' + line + '.parquet', engine='pyarrow', compression='GZIP')
+    pfall = getencodedpfall(line)
+    pfall.to_parquet('/tmp/sla_' + line + '.parquet', engine='pyarrow', compression='GZIP')
+
+
+# In[137]:
+
+
+#line = filetimestamps[1]
+#pfall = getencodedpfall(line)
 
 
 # In[140]:
