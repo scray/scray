@@ -18,7 +18,7 @@ public class App {
 	// helper function for getting connected to the gateway
 	public static Gateway connect(BasicConfigParameters parmas) throws Exception{
 		// Load a file system based wallet for managing identities.
-		Path walletPath = Paths.get("wallet");
+		Path walletPath = Paths.get("../tools/wallet-creator/wallet");
 		Wallet wallet = Wallets.newFileSystemWallet(walletPath);
 		// load a CCP
 		Path networkConfigPath = Paths.get(parmas.getNetworkConfigPath());
@@ -28,7 +28,7 @@ public class App {
 		}
 		
 		Gateway.Builder builder = Gateway.createBuilder();
-		builder.identity(wallet, "admin").networkConfig(networkConfigPath).discovery(true);
+		builder.identity(wallet, "Alice").networkConfig(networkConfigPath).discovery(true);
 		return builder.connect();
 	}
 
@@ -68,7 +68,7 @@ public class App {
 	    
 		// enrolls the admin and registers the user
 		try {
-			EnrollAdmin.main(null);
+			//EnrollAdmin.main(null);
 			//RegisterUser.main(null, params);
 		} catch (Exception e) {
 			System.err.println(e);
