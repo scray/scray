@@ -35,46 +35,11 @@ public class GetAllAssetsApp {
 	    params.setNetworkConfigPath(FABRIC_SAMPLES_BASE_PATH + "fabric-samples/test-network/organizations/peerOrganizations/org1.example.com/connection-org1.yaml");
 	    //params.setNetworkConfigPath("/home/stefan/libs/fabric-samples/test-network/organizations/peerOrganizations/org1.example.com/connection-org1.yaml");
 	    params.setCaCertPem(FABRIC_SAMPLES_BASE_PATH + "fabric-samples/test-network/organizations/peerOrganizations/org1.example.com/ca/tlsca.org1.example.com-cert.pem");
-	    params.setHyperlederHost("peer0.org1.example.com");
-	    
-	    
-//	    for (int i = 0; i < args.length; i++) {
-//            if(args[i].startsWith("--networkConfigPath")) {
-//                if((i + 1) < (args.length -1)) {
-//                    i += 1;
-//                    params.setNetworkConfigPath(args[i]);
-//                }
-//            }
-//
-//            if(args[i].startsWith("--caCertPem")) {
-//                if((i + 1) < (args.length -1)) {
-//                    i += 1;
-//                    params.setCaCertPem(args[i]);
-//                }
-//            }
-//            
-//            if(args[i].startsWith("--hyperlederHost")) {
-//                if((i + 1) < (args.length -1)) {
-//                    i += 1;
-//                    params.setHyperlederHost(args[i]);
-//                }
-//            }
-//        }
-	    
+	    params.setHyperlederHost("kubernetes.research.dev.seeburger.de");
+
 	    System.out.println(params);
-	    
-	    
-		// enrolls the admin and registers the user
-		try {
-			//EnrollAdmin.main(null);
-			//RegisterUser.main(null, params);
-		} catch (Exception e) {
-			System.err.println(e);
-		}
 
 		interactWithBC(params);
-		
-
 	}
 	
 	public static void interactWithBC(BasicConfigParameters params) {
@@ -92,9 +57,9 @@ public class GetAllAssetsApp {
 					System.out.println("Submit Transaction: InitLedger creates the initial set of assets on the ledger.");
 					contract.submitTransaction("InitLedger");
 
-					System.out.println("\n");
-					result = contract.evaluateTransaction("GetAllAssets");
-					System.out.println("Evaluate Transaction: GetAllAssets, result: " + new String(result));
+					//System.out.println("\n");
+					//result = contract.evaluateTransaction("GetAllAssets");
+					//System.out.println("Evaluate Transaction: GetAllAssets, result: " + new String(result));
 				}
 				catch(Exception e){
 					e.printStackTrace();

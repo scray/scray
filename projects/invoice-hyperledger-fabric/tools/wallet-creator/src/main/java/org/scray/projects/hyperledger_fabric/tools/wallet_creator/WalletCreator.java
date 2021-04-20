@@ -16,6 +16,7 @@ public class WalletCreator {
 
 	public static void main(String[] args) throws Exception {
 		String username = args[2];
+		String orgNameMSP = args[3];
 		
 		// Create a wallet for managing identities
 		Wallet wallet = Wallets.newFileSystemWallet(Paths.get("wallet"));
@@ -31,7 +32,7 @@ public class WalletCreator {
 		
 		X509Enrollment enrollement = new X509Enrollment(privKey, cert);
 		
-		Identity user = Identities.newX509Identity("Org1MSP", enrollement);
+		Identity user = Identities.newX509Identity(orgNameMSP, enrollement);
 		wallet.put(username, user);
 		System.out.println("Successfully enrolled user \"" + username + "\" and imported it into the wallet");
 	}
