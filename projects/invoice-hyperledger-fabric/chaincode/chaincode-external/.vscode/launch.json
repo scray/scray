@@ -9,10 +9,10 @@
             "type": "go",
             "request": "launch",
             "mode": "auto",
-            "program": "/home/stefan/git/scray/projects/invoice-hyperledger-fabric/chaincode/chaincode-external/assetTransfer.go",
+            "program": "${workspaceRoot}",
             "env": {
                 "CHAINCODE_ID": "basic_1.0:2804dd73085eb1dddd90e135f740b6ecd7bcd8e05cbedf7acc01f52327725ed2",
-                "CHAINCODE_SERVER_ADDRESS":"asset-transfer-basic.org1.example.com:30999",
+                "CHAINCODE_SERVER_ADDRESS":"0.0.0.0:30999",
                 "FABRIC_LOGGING_SPEC":"DEBUG",
                 "CORE_LOGGING_CHAINCODE": "DEBUG",
                 "CORE_LOGGING_LEVEL:": "DEBUG",
