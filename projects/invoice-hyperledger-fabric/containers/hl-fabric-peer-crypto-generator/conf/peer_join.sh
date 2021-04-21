@@ -8,7 +8,7 @@ CHANNEL_NAME=$4
 SHARED_FS_HOST=$5
 
 echo $ORDERER_IP $ORDERER_HOSTNAME >> /etc/hosts
-echo $(dig +short $CORE_PEER_ADDRESS) peer0.${HOSTNAME} >> /etc/hosts
+echo $(dig +short $HOSTNAME) peer0.${HOSTNAME} >> /etc/hosts
 
 # Download orderer CA
 SHARED_FS_USER=scray
