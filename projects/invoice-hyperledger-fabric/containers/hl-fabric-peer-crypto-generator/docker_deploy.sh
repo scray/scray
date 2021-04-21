@@ -1,19 +1,20 @@
 #!/bin/bash
 
 REPO_URL=$1
+VERISON=1.1
 
 pushDockerHub() {
 	echo "$DOCKER_TOKEN" | docker login -u "$DOCKER_USERNAME" --password-stdin
 	echo "$DOCKER_TOKEN"
 	echo "$DOCKER_USERNAME"
-	docker build -t scrayorg/hl-fabric-node-configurator:1.1 . 
-	docker push scrayorg/hl-fabric-node-configurator:1.1
+	docker build -t scrayorg/hl-fabric-node-configurator:$VERISON . 
+	docker push scrayorg/hl-fabric-node-configurator:$VERISON
 }
 
 pushLocal() {
 
-        docker build -t $REPO_URL/research/hl-fabric-node-configurator:0.1 .
-        docker push $REPO_URL/research/hl-fabric-node-configurator:0.1
+        docker build -t $REPO_URL/research/hl-fabric-node-configurator:$VERISON .
+        docker push $REPO_URL/research/hl-fabric-node-configurator:$VERISON
 
 }
 
