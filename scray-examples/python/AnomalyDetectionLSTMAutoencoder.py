@@ -106,7 +106,7 @@ def createHeatmap(piv,title="") :
     return ax
 
 
-# In[7]:
+# In[8]:
 
 
 import numpy as np
@@ -144,7 +144,9 @@ class AnomalyDetectionLSTMAutoencoder():
         
     # setup data (current)
     def createDataframe(self,pfall) :
-        data3 = createData(pfall,0)
+        #data3 = createData(pfall,0)
+        #data3 = createData_ymd(pfall,0)
+        data3 = pfall
         df = pd.DataFrame()
         OUTCOME = self.OUTCOME
         df[OUTCOME] = data3['outcome']
@@ -221,30 +223,6 @@ class AnomalyDetectionLSTMAutoencoder():
 
         self.X_train_pred = self.model.predict(self.X_train)
         self.train_mae_loss = np.mean(np.abs(self.X_train_pred - self.X_train), axis=1)
-
-
-# In[2]:
-
-
-
-
-
-# In[4]:
-
-
-
-
-
-# In[ ]:
-
-
-
-
-
-# In[ ]:
-
-
-
 
 
 # In[ ]:
