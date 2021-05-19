@@ -106,7 +106,7 @@ def createHeatmap(piv,title="") :
     return ax
 
 
-# In[8]:
+# In[9]:
 
 
 import numpy as np
@@ -188,13 +188,13 @@ class AnomalyDetectionLSTMAutoencoder():
 
         test_score_df = pd.DataFrame(index=test[self.TIME_STEPS:].index)
         test_score_df['loss'] = test_mae_loss
-        test_score_df['threshold'] = THRESHOLD
-        test_score_df['anomaly'] = test_score_df.loss > test_score_df.threshold
         test_score_df[self.OUTCOME] = test[self.TIME_STEPS:][self.OUTCOME]
         return test_score_df
     
     def evaluateAnomalies(self,threshold=0.0):
         self.test_score_df      = self.testScoreDF(self.model, threshold, self.X_test, self.test)
+        self.test_score_df['threshold'] = threshold
+        self.test_score_df['anomaly'] = self.test_score_df.loss > self.test_score_df.threshold
         self.anomalies     = self.test_score_df[self.test_score_df.anomaly == True]
     
     def initAndTrain(self,pfall1,perc_train):
