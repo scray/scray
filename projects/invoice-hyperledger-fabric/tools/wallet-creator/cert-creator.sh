@@ -42,6 +42,7 @@ createWallet() {
 
 usage()
 {
+    echo "Unknown parameter" $1
     echo "usage: Create wallet [[[-o ] [-d]] | [-h]]"
 }
 
@@ -52,27 +53,29 @@ while [ "$1" != "" ]; do
                       	  CA_CERT=$1
                                 ;;
         -k | --cakey )   		shift
-	       				  CA_KEY=$1	
+	       				  CA_KEY=$1
                                 ;;
         -n | --new-user-crt)	shift
 	       			  NEW_CERT_COMMON_NAME=$1
-			  ;;
-			  -org | --organisation)	shift
+			                    ;;
+			  --org | --organisation)	shift
 	       			  ORG=$1
-			  ;;
-	      -o | --organizational-unit)  shift
+			                     ;;
+	    -o | --organizational-unit)  shift
 					  ORGANIZATIONAL_UNIT=$1
-        ;;
-        -w | --create-wallet) shift 
+                                 ;;
+        -w | --create-wallet) shift
 					CREATE_WALLET=$1
-				;;
-	      -j | --wallet-creator-lib-path) shift
+				                 ;;
+	    -j | --wallet-creator-lib-path) shift
 					WALLET_CREATOR_JAR_PATH=$1
 				;;
-        -h | --help )           usage
+        -h | --help )
+                                usage $1
                                 exit
                                 ;;
-        * )                     usage
+        * )
+                                usage $1
                                 exit 1
     esac
     shift
