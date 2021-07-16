@@ -48,7 +48,11 @@ IP_OF_EXAMPLE_NETWORK=10.14.128.30 #Host where the example network is running
 docker exec test-network-cli /bin/bash /opt/scray/scripts/example_network_install_and_approve_cc.sh $IP_CC_SERVICE $IP_OF_EXAMPLE_NETWORK
 ```
 # Commit chaincode
-``` docker exec test-network-cli /bin/bash /opt/scray/scripts/example_network_commit_cc.sh $IP_CC_SERVICE $IP_OF_EXAMPLE_NETWORK```
+```
+mkdir -p /opt/scray/scripts/
+wget https://raw.githubusercontent.com/scray/scray/feature/k8s-peer/projects/invoice-hyperledger-fabric/scripts/example_network_commit_cc.sh -P /opt/scray/scripts/
+docker exec cli /bin/bash /opt/scray/scripts/example_network_commit_cc.sh $IP_CC_SERVICE $IP_OF_EXAMPLE_NETWORK
+```
 
 # Example query
 ```peer chaincode query -C mychannel -n basic -c '{"function":"ReadAsset","Args":["asset1"]}'```
