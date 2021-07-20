@@ -26,21 +26,11 @@ type SmartContract struct {
 
 // Asset describes basic details of what makes up a simple asset
 type Asset struct {
-	ID                  string `json:"ID"`
-	Owner               string `json:"owner"`
-	Hash                int    `json:"hash"` 
-    InvoiceNumber       string `json:"invoiceNumber"`
-    Vat                 float32 `json:"vat"`
-    Netto               float32 `json:"netto"`
-    CountryOrigin       string `json:"countryOrigin"`
-    CountryReceiver     string `json:"countryReceiver"`
-    Received            bool   `json:"received"`
-    ReceivedOrder       bool   `json:"receivedOrder"`
-	Sold                bool   `json:"sold"`
-    ClaimPaid           bool   `json:"claimPaid"`
-	ClaimPaidBy         string `json:"claimPaidBy"`
-	TaxExemptionReason  string `json:"taxExemptionReason"`
-	TaxReceived         bool   `json:"taxReceived"`
+	ID             string `json:"ID"`
+	Color          string `json:"color"`
+	Size           int    `json:"size"`
+	Owner          string `json:"owner"`
+	AppraisedValue int    `json:"appraisedValue"`
 }
 
 // QueryResult structure used for handling result of query
@@ -52,9 +42,14 @@ type QueryResult struct {
 // InitLedger adds a base set of cars to the ledger
 func (s *SmartContract) InitLedger(ctx contractapi.TransactionContextInterface) error {
 	assets := []Asset{
-		{ID: "asset1", Owner: "company", Hash: 0, InvoiceNumber: "0", Vat: 0.0, Netto: 0.0, CountryOrigin: "DE", CountryReceiver: "DE", Received: false, 
-		ReceivedOrder: false, Sold: false, ClaimPaid: false, ClaimPaidBy: "", TaxExemptionReason: "", TaxReceived: false},
-		}
+		{ID: "asset1", Color: "blue", Size: 5, Owner: "Tomoko", AppraisedValue: 300},
+		{ID: "asset2", Color: "red", Size: 5, Owner: "Brad", AppraisedValue: 400},
+		{ID: "asset3", Color: "green", Size: 10, Owner: "Jin Soo", AppraisedValue: 500},
+		{ID: "asset4", Color: "yellow", Size: 10, Owner: "Max", AppraisedValue: 600},
+		{ID: "asset5", Color: "black", Size: 15, Owner: "Adriana", AppraisedValue: 700},
+		{ID: "asset6", Color: "white", Size: 15, Owner: "Michel", AppraisedValue: 800},
+	}
+
 	for _, asset := range assets {
 		assetJSON, err := json.Marshal(asset)
 		if err != nil {
@@ -71,10 +66,7 @@ func (s *SmartContract) InitLedger(ctx contractapi.TransactionContextInterface) 
 }
 
 // CreateAsset issues a new asset to the world state with given details.
-func (s *SmartContract) CreateAsset(ctx contractapi.TransactionContextInterface, id, owner string,  hash int,
-	invoiceNumber string, vat float32, netto float32, countryOrigin string, countryReceiver string, received bool,
-        receivedOrder bool, sold bool, claimPaid bool, claimPaidBy string, taxExemptionReason string,taxReceived bool,
-	) error {
+func (s *SmartContract) CreateAsset(ctx contractapi.TransactionContextInterface, id, color string, size int, owner string, appraisedValue int) error {
 	exists, err := s.AssetExists(ctx, id)
 	if err != nil {
 		return err
@@ -82,26 +74,12 @@ func (s *SmartContract) CreateAsset(ctx contractapi.TransactionContextInterface,
 	if exists {
 		return fmt.Errorf("the asset %s already exists", id)
 	}
-	
-	// test
-	clientOrgID, err := ctx.GetClientIdentity().GetMSPID()
-
 	asset := Asset{
 		ID:             id,
-		Owner:          clientOrgID,
-		Hash:           hash, 
-    	InvoiceNumber:  invoiceNumber,
-    	Vat:            vat,
-    	Netto:          netto,
-    	CountryOrigin:  countryOrigin,
-    	CountryReceiver: countryReceiver,
-    	Received:        received,
-    	ReceivedOrder:   receivedOrder,
-	Sold: sold,
-    	ClaimPaid: claimPaid,
-	ClaimPaidBy:   claimPaidBy,
-	TaxExemptionReason:  taxExemptionReason,
-	TaxReceived: taxReceived,
+		Color:          color,
+		Size:           size,
+		Owner:          owner,
+		AppraisedValue: appraisedValue,
 	}
 
 	assetJSON, err := json.Marshal(asset)
@@ -132,9 +110,7 @@ func (s *SmartContract) ReadAsset(ctx contractapi.TransactionContextInterface, i
 }
 
 // UpdateAsset updates an existing asset in the world state with provided parameters.
-func (s *SmartContract) UpdateAsset(ctx contractapi.TransactionContextInterface, id, owner string,  hash int,
-	invoiceNumber string, vat float32, netto float32, countryOrigin string, countryReceiver string, received bool,
-    receivedOrder bool, sold bool, claimPaid bool, claimPaidBy string, taxExemptionReason string,taxReceived bool) error {
+func (s *SmartContract) UpdateAsset(ctx contractapi.TransactionContextInterface, id, color string, size int, owner string, appraisedValue int) error {
 	exists, err := s.AssetExists(ctx, id)
 	if err != nil {
 		return err
@@ -146,20 +122,10 @@ func (s *SmartContract) UpdateAsset(ctx contractapi.TransactionContextInterface,
 	// overwritting original asset with new asset
 	asset := Asset{
 		ID:             id,
+		Color:          color,
+		Size:           size,
 		Owner:          owner,
-		Hash:           hash, 
-    	InvoiceNumber:  invoiceNumber,
-    	Vat:            vat,
-    	Netto:          netto,
-    	CountryOrigin:  countryOrigin,
-    	CountryReceiver: countryReceiver,
-    	Received:        received,
-    	ReceivedOrder:   receivedOrder,
-		Sold: sold,
-    	ClaimPaid: claimPaid,
-		ClaimPaidBy:   claimPaidBy,
-		TaxExemptionReason:  taxExemptionReason,
-		TaxReceived: taxReceived,
+		AppraisedValue: appraisedValue,
 	}
 
 	assetJSON, err := json.Marshal(asset)
