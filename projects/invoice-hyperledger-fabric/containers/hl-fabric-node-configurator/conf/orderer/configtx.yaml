@@ -25,7 +25,7 @@ Organizations:
         ID: OrdererMSP
 
         # MSPDir is the filesystem path which contains the MSP configuration
-        MSPDir: ../organizations/ordererOrganizations/example.com/msp
+        MSPDir: ./organizations/ordererOrganizations/example.com/msp
 
         # Policies defines the set of policies at this level of the config tree
         # For organization policies, their canonical path is usually
@@ -44,6 +44,41 @@ Organizations:
         OrdererEndpoints:
             - orderer.example.com:7050
 
+    - &AdminOrg
+        # DefaultOrg defines the organization which is used in the sampleconfig
+        # of the fabric.git development environment
+        Name: AdminOrgMSP
+
+        # ID to load the MSP definition as
+        ID: AdminOrgMSP
+
+        MSPDir: ../admin/organizations/peerOrganizations/kubernetes.research.dev.seeburger.de/msp
+
+        # Policies defines the set of policies at this level of the config tree
+        # For organization policies, their canonical path is usually
+        #   /Channel/<Application|Orderer>/<OrgName>/<PolicyName>
+        Policies:
+            Readers:
+                Type: Signature
+                Rule: "OR('AdminOrgMSP.admin', 'AdminOrgMSP.peer', 'AdminOrgMSP.client')"
+            Writers:
+                Type: Signature
+                Rule: "OR('AdminOrgMSP.admin', 'AdminOrgMSP.client')"
+            Admins:
+                Type: Signature
+                Rule: "OR('AdminOrgMSP.admin')"
+            Endorsement:
+                Type: Signature
+                Rule: "OR('AdminOrgMSP.peer')"
+         
+        AnchorPeers:
+          # AnchorPeers defines the location of peers which can be used
+          # for cross org gossip communication.  Note, this value is only
+          # encoded in the genesis block in the Application section context
+          - Host: peer0.org1.example.com
+            Port: 9051
+       
+
     - &Org1
         # DefaultOrg defines the organization which is used in the sampleconfig
         # of the fabric.git development environment
@@ -52,7 +87,7 @@ Organizations:
         # ID to load the MSP definition as
         ID: Org1MSP
 
-        MSPDir: /opt/gopath/src/github.com/hyperledger/fabric/peer/organizations/peerOrganizations/org1.example.com/msp 
+        MSPDir: ../organizations/peerOrganizations/org1.example.com/msp
 
         # Policies defines the set of policies at this level of the config tree
         # For organization policies, their canonical path is usually
@@ -87,7 +122,7 @@ Organizations:
         # ID to load the MSP definition as
         ID: Org2MSP
 
-        MSPDir: /opt/gopath/src/github.com/hyperledger/fabric/peer/organizations/peerOrganizations/org2.example.com/msp 
+        MSPDir: ../organizations/peerOrganizations/org2.example.com/msp
 
         # Policies defines the set of policies at this level of the config tree
         # For organization policies, their canonical path is usually
@@ -195,7 +230,7 @@ Application: &ApplicationDefaults
             Rule: "ANY Writers"
         Admins:
             Type: ImplicitMeta
-            Rule: "ANY Admins"
+            Rule: "MAJORITY Admins"
         LifecycleEndorsement:
             Type: ImplicitMeta
             Rule: "ANY Endorsement"
@@ -230,8 +265,8 @@ Orderer: &OrdererDefaults
         Consenters:
         - Host: orderer.example.com
           Port: 7050
-          ClientTLSCert: ../organizations/ordererOrganizations/example.com/orderers/orderer.example.com/tls/server.crt
-          ServerTLSCert: ../organizations/ordererOrganizations/example.com/orderers/orderer.example.com/tls/server.crt
+          ClientTLSCert: ./organizations/ordererOrganizations/example.com/orderers/orderer.example.com/tls/server.crt
+          ServerTLSCert: ./organizations/ordererOrganizations/example.com/orderers/orderer.example.com/tls/server.crt
 
     # Batch Timeout: The amount of time to wait before creating a batch
     BatchTimeout: 2s
@@ -267,7 +302,7 @@ Orderer: &OrdererDefaults
             Rule: "ANY Writers"
         Admins:
             Type: ImplicitMeta
-            Rule: "ANY Admins"
+            Rule: "MAJORITY Admins"
         # BlockValidation specifies what signatures must be included in the block
         # from the orderer for the peer to validate it.
         BlockValidation:
@@ -327,15 +362,13 @@ Profiles:
         Consortiums:
             SampleConsortium:
                 Organizations:
-                    - *Org1
-                    - *Org2
+                    - *AdminOrg
     TwoOrgsChannel:
         Consortium: SampleConsortium
         <<: *ChannelDefaults
         Application:
             <<: *ApplicationDefaults
             Organizations:
-                - *Org1
-                - *Org2
+                - *AdminOrg
             Capabilities:
                 <<: *ApplicationCapabilities

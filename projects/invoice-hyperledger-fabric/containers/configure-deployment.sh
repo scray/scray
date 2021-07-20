@@ -60,6 +60,7 @@ setValuesInLocalFile() {
 
   yq w  -i k8s-peer.yaml "spec.template.spec.initContainers(name==cert-creator).env(name==HOSTNAME).valueFrom.configMapKeyRef.name" hl-fabric-peer-$PEER_NAME
   yq w  -i k8s-peer.yaml "spec.template.spec.initContainers(name==cert-creator).env(name==ORG_NAME).valueFrom.configMapKeyRef.name" hl-fabric-peer-$PEER_NAME
+  yq w  -i k8s-peer.yaml "spec.template.spec.initContainers(name==cert-creator).env(name==DATA_SHARE).valueFrom.configMapKeyRef.name" hl-fabric-peer-$PEER_NAME
 
 
   # Configure service
