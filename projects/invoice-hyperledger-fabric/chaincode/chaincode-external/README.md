@@ -1,16 +1,9 @@
 # Start external chaincode 
 ```kubectl apply -f https://raw.githubusercontent.com/scray/scray/feature/k8s-peer/projects/invoice-hyperledger-fabric/chaincode/chaincode-external/k8s-external-chaincode.yaml```
 
-## Add hostname of external chincode host to /etc/hosts
-```docker exec -it peer0.org1.example.com  /bin/sh -c "echo $IP_CC_SERVICE asset-transfer-basic.org1.example.com >> /etc/hosts"```  
-
-```docker exec -it peer0.org2.example.com  /bin/sh -c "echo $IP_CC_SERVICE asset-transfer-basic.org1.example.com >> /etc/hosts"``` 
-
-```docker exec -it orderer.example.com  /bin/sh -c "echo $IP_CC_SERVICE asset-transfer-basic.org1.example.com >> /etc/hosts"```
-
 # Install external chaincode on k8s peer
 ```
-PEER_NAME=peer42
+PEER_NAME=peer48
 CHANNEL_NAME=mychannel
 ORDERER_NAME=orderer.example.com
 IP_CC_SERVICE=10.14.128.38         # Host where the chaincode is running
@@ -44,15 +37,23 @@ IP_CC_SERVICE=10.14.128.38         # Host where the chaincode is running
 IP_OF_EXAMPLE_NETWORK=10.14.128.30 #Host where the example network is running
 ```
 
+
+### Add hostname of external chincode host to /etc/hosts
+```docker exec -it peer0.org1.example.com  /bin/sh -c "echo $IP_CC_SERVICE asset-transfer-basic.org1.example.com >> /etc/hosts"```  
+
+```docker exec -it peer0.org2.example.com  /bin/sh -c "echo $IP_CC_SERVICE asset-transfer-basic.org1.example.com >> /etc/hosts"``` 
+
+```docker exec -it orderer.example.com  /bin/sh -c "echo $IP_CC_SERVICE asset-transfer-basic.org1.example.com >> /etc/hosts"```
+
 ```
 docker exec test-network-cli /bin/bash /opt/scray/scripts/example_network_install_and_approve_cc.sh $IP_CC_SERVICE $IP_OF_EXAMPLE_NETWORK
 ```
-# Commit chaincode
+### Commit chaincode
 ```
 mkdir -p /opt/scray/scripts/
 wget https://raw.githubusercontent.com/scray/scray/feature/k8s-peer/projects/invoice-hyperledger-fabric/scripts/example_network_commit_cc.sh -P /opt/scray/scripts/
 docker exec cli /bin/bash /opt/scray/scripts/example_network_commit_cc.sh $IP_CC_SERVICE $IP_OF_EXAMPLE_NETWORK
 ```
 
-# Example query
+### Example query
 ```peer chaincode query -C mychannel -n basic -c '{"function":"ReadAsset","Args":["asset1"]}'```
