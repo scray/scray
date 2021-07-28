@@ -32,6 +32,10 @@ curl --user 'scray:scray' http://${SHARED_FS_HOST}/newmemberrequests/mychannel/$
 # Add org3 data to existing config
 jq -s ".[0] "*" {\"channel_group\":{\"groups\":{\"Application\":{\"groups\": {\"${NEW_ORG_NAME}MSP\":.[1]}}}}}" config.json ./new_member_org.json > modified_config.json
 
+# Update policy
+jq '.channel_group.groups.Application.policies.Admins.policy.value.rule = "ANY"' conf_with_new_org.json > any_admin_application.json
+jq '.channel_group.groups.Orderer.policies.Admins.policy.value.rule = "ANY"'  any_admin_application.json >  modified_config.json
+
 configtxlator proto_encode --input config.json --type common.Config --output config.pb
 configtxlator proto_encode --input modified_config.json --type common.Config --output modified_config.pb
 configtxlator compute_update --channel_id $CHANNEL_NAME --original config.pb --updated modified_config.pb --output org3_update.pb
@@ -41,5 +45,11 @@ configtxlator proto_encode --input org3_update_in_envelope.json --type common.En
 
 # Sign update by first admin
 peer channel signconfigtx -f org3_update_in_envelope.pb
+
+export CORE_PEER_TLS_ENABLED=true
+export CORE_PEER_LOCALMSPID="OrdererMSP"
+export CORE_PEER_TLS_ROOTCERT_FILE=/mnt/conf/admin/organizations/peerOrganizations/kubernetes.research.dev.seeburger.de/peers/peer0.kubernetes.research.dev.seeburger.de/msp/cacerts/ca.kuber
+export CORE_PEER_MSPCONFIGPATH=/mnt/conf/orderer/organizations/ordererOrganizations/example.com/users/Admin@example.com/msp/
+export ORDERER_CA=/mnt/conf/orderer/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem #Fixme use orderer name
 
 peer channel update -f org3_update_in_envelope.pb -c $CHANNEL_NAME -o orderer.example.com:7050 --tls --cafile $ORDERER_CA
