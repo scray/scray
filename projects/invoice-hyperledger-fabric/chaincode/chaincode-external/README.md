@@ -45,13 +45,18 @@ IP_OF_EXAMPLE_NETWORK=10.14.128.30 #Host where the example network is running
 ```
 
 ```
-docker exec test-network-cli /bin/bash /opt/scray/scripts/example_network_install_and_approve_cc.sh $IP_CC_SERVICE $IP_OF_EXAMPLE_NETWORK
+apk add curl zip
+
+docker exec cli /bin/bash mkdir -p /opt/scray/scripts/
+docker exec cli /bin/bash wget https://raw.githubusercontent.com/scray/scray/feature/k8s-peer/projects/invoice-hyperledger-fabric/scripts/example_network_install_and_approve_cc.sh -P /opt/scray/scripts/
+docker exec cli /bin/bash chmod u+x  /opt/scray/scripts/example_network_install_and_approve_cc.sh 
+docker exec cli /bin/bash /opt/scray/scripts/example_network_install_and_approve_cc.sh $IP_CC_SERVICE $IP_OF_EXAMPLE_NETWORK /opt/gopath/src/github.com/hyperledger/fabric/peer
 ```
 # Commit chaincode
 ```
-mkdir -p /opt/scray/scripts/
+docker exec cli /bin/bash mkdir -p /opt/scray/scripts/
 wget https://raw.githubusercontent.com/scray/scray/feature/k8s-peer/projects/invoice-hyperledger-fabric/scripts/example_network_commit_cc.sh -P /opt/scray/scripts/
-docker exec cli /bin/bash /opt/scray/scripts/example_network_commit_cc.sh $IP_CC_SERVICE $IP_OF_EXAMPLE_NETWORK
+docker exec cli /bin/bash /opt/scray/scripts/example_network_commit_cc.sh $IP_CC_SERVICE $IP_OF_EXAMPLE_NETWORK /opt/gopath/src/github.com/hyperledger/fabric/peer
 ```
 
 # Example query

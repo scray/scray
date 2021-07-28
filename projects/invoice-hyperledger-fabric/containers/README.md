@@ -13,7 +13,9 @@ kubectl apply -f k8s-hl-fabric-data-share.yaml
 ```
 PEER_NAME=peer48
 HOST_NAME=kubernetes.research.dev.seeburger.de 	#External hostname
-./configure-deployment.sh -n $PEER_NAME
+LOCAL_DOCKER_REGISTRY=oci-reg.seeburger.de
+
+./configure-deployment.sh -n $PEER_NAME $LOCAL_DOCKER_REGISTRY
 ```
 
 ### Start service

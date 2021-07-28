@@ -24,5 +24,9 @@ export CORE_PEER_ADDRESS=$CORE_PEER_ADDRESS
 peer channel fetch 0 mychannel.block -o $ORDERER_HOSTNAME:$ORDERER_PORT -c $CHANNEL_NAME --tls --cafile $ORDERER_CA
 peer channel join -b mychannel.block
 
+echo "Query channel info"
+echo "Wait 5s to join channel"
+
+sleep 5
 export CORE_PEER_MSPCONFIGPATH=/mnt/conf/organizations/peerOrganizations/$HOSTNAME/users/User1@$HOSTNAME/msp/
 peer channel getinfo -c $CHANNEL_NAME
