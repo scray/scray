@@ -62,3 +62,28 @@ docker exec cli /bin/bash /opt/scray/scripts/example_network_commit_cc.sh $IP_CC
 
 ### Example query
 ```peer chaincode query -C mychannel -n basic -c '{"function":"ReadAsset","Args":["asset1"]}'```
+
+
+### Write own invoices
+```
+PEER_NAME=peer50
+CHANNEL_NAME=c3
+PEER_POD=$(kubectl get pod -l app=$PEER_NAME -o jsonpath="{.items[0].metadata.name}")
+INVOICE_ID=ID-$RANDOM
+```
+#### Write invoice
+```
+kubectl exec --stdin --tty $PEER_POD -c scray-peer-cli -- /bin/sh /mnt/conf/peer/add-invoice.sh  $CHANNEL_NAME $INVOICE_ID
+```
+
+#### Read invoice
+```
+kubectl exec --stdin --tty $PEER_POD -c scray-peer-cli -- /bin/sh /mnt/conf/peer/get-my-invoices.sh  $CHANNEL_NAME $INVOICE_ID
+```
+
+### Start in DEBUG mode
+
+```
+kubectl  exec --stdin --tty invoice-chaincode-external-...  -- /bin/sh
+chaincode-external
+```
