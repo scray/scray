@@ -22,4 +22,4 @@ export CORE_PEER_MSPCONFIGPATH=/mnt/conf/organizations/peerOrganizations/$HOSTNA
 export CORE_PEER_ADDRESS=$CORE_PEER_ADDRESS
 
 peer channel fetch 0 mychannel.block -o $ORDERER_HOSTNAME:$ORDERER_PORT -c $CHANNEL_NAME --tls --cafile $ORDERER_CA
-peer channel join -b mychannel.block:
+peer channel join -b mychannel.block
