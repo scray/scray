@@ -141,7 +141,7 @@ spec:
               name: dockersocket
       initContainers:
         - name: cert-creator
-          image: scrayorg/hl-fabric-node-configurator:1.2
+          image: scrayorg/hl-fabric-node-configurator:1.1
           imagePullPolicy: Always
           env:
             - name: NODE_TYPE
