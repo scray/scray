@@ -14,4 +14,5 @@ RUN go get -d -v ./...
 RUN go install -v ./...
 
 EXPOSE 9999
-CMD ["chaincode-external"]
+# CMD ["chaincode-external"]
+CMD ["sh", "-c", "tail -f /dev/null"]
