@@ -12,8 +12,8 @@ kubectl apply -f k8s-hl-fabric-data-share.yaml
 
 ```
 PEER_NAME=peer48
-HOST_NAME=kubernetes.research.dev.seeburger.de 	#External hostname
-LOCAL_DOCKER_REGISTRY=oci-reg.seeburger.de
+PEER_HOST_NAME=$PEER_NAME.kubernetes.research.dev.seeburger.de 
+EXT_PEER_IP=10.15.136.41
 
 ./configure-deployment.sh -n $PEER_NAME $LOCAL_DOCKER_REGISTRY
 ```
@@ -36,8 +36,8 @@ kubectl create configmap hl-fabric-peer-$PEER_NAME \
  --from-literal=hostname=kubernetes.research.dev.seeburger.de \
  --from-literal=org_name=$PEER_NAME \
  --from-literal=data_share=hl-fabric-data-share-service:80 \
- --from-literal=CORE_PEER_ADDRESS=peer0.$HOST_NAME:$PEER_LISTEN_PORT \
- --from-literal=CORE_PEER_GOSSIP_EXTERNALENDPOINT=$HOST_NAME:$GOSSIP_PORT \
+ --from-literal=CORE_PEER_ADDRESS=peer0.$PEER_HOST_NAME:$PEER_LISTEN_PORT \
+ --from-literal=CORE_PEER_GOSSIP_EXTERNALENDPOINT=$PEER_HOST_NAME:$GOSSIP_PORT \
  --from-literal=CORE_PEER_LOCALMSPID=${PEER_NAME}MSP
 ```    		
 
@@ -78,7 +78,7 @@ kubectl create configmap hl-fabric-peer-$PEER_NAME \
 ### Addorse new peer data [add to mychannel]:
 ```
 ORDERER_POD=$(kubectl get pod -l app=orderer-org1-scray-org -o jsonpath="{.items[0].metadata.name}")
-kubectl exec --stdin --tty $ORDERER_POD -c scray-orderer-cli  -- /bin/sh /mnt/conf/orderer/scripts/inform_existing_nodes.sh $ORDERER_IP $CHANNEL_NAME $PEER_NAME $SHARED_FS_HOST
+kubectl exec --stdin --tty $ORDERER_POD -c scray-orderer-cli  -- /bin/sh /mnt/conf/orderer/scripts/inform_existing_nodes.sh $ORDERER_IP $CHANNEL_NAME $PEER_NAME $SHARED_FS_HOST $EXT_PEER_IP $PEER_HOST_NAME
 ```
   
 ### Join network
