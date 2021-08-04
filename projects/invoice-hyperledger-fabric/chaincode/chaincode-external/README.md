@@ -70,10 +70,11 @@ PEER_NAME=peer50
 CHANNEL_NAME=c3
 PEER_POD=$(kubectl get pod -l app=$PEER_NAME -o jsonpath="{.items[0].metadata.name}")
 INVOICE_ID=ID-$RANDOM
+PRODUCT_BUYER="x509::CN=User1@kubernetes.research.dev.seeburger.de,OU=client,L=San Francisco,ST=California,C=US::CN=ca.kubernetes.research.dev.seeburger.de,O=kubernetes.research.dev.seeburger.de,L=San Francisco,ST=California,C=US"
 ```
 #### Create invoice
 ```
-kubectl exec --stdin --tty $PEER_POD -c scray-peer-cli -- /bin/sh /mnt/conf/peer/add-invoice.sh  $CHANNEL_NAME $INVOICE_ID
+kubectl exec --stdin --tty $PEER_POD -c scray-peer-cli -- /bin/sh /mnt/conf/peer/add-invoice.sh  $CHANNEL_NAME $INVOICE_ID $BUYER
 ```
 
 #### Transfer invoice
