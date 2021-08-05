@@ -85,6 +85,8 @@ func (s *SmartContract) CreateAsset(ctx contractapi.TransactionContextInterface,
 		return err
 	}
 
+	println("Buyer:   " + productBuyer)
+
 	asset := Asset{
 		ID:           id,
 		InvoiceOwner: clientID,
@@ -237,6 +239,9 @@ func (s *SmartContract) GetAllAssets(ctx contractapi.TransactionContextInterface
 
 		} else {
 			println("Client id" + clientID + " Is has not the permission to read this invoice. Issuer and owner are allowd to see this invoice")
+			println("Asset ID: " + asset.ID)
+			println("Expcted owner: " + asset.InvoiceOwner + " OR ")
+			println("Expcted product buyer: " + asset.ProductBuyer)
 		}
 	}
 

@@ -3,6 +3,9 @@ ORDERER_IP=$1
 CHANNEL_NAME=$2 #mychannel
 NEW_ORG_NAME=$3
 SHARED_FS_HOST=$4
+EXT_PEER_IP=$5
+PEER_HOST_NAME=$6
+
 
 export CORE_PEER_TLS_ENABLED=true
 export CORE_PEER_LOCALMSPID="AdminOrgMSP"
@@ -12,6 +15,10 @@ export ORDERER_CA=/mnt/conf/orderer/organizations/ordererOrganizations/example.c
 
 
 echo $ORDERER_IP orderer.example.com >> /etc/hosts
+
+# Write new peer to hosts file
+echo $EXTERNAL_IP peer0.${HOSTNAME} >> /etc/hosts
+echo $EXT_PEER_IP $PEER_HOST_NAME >> /etc/hosts
 
 # Export existing channel configuration
 peer channel fetch config config_block.pb -o orderer.example.com:7050 -c $CHANNEL_NAME --tls --cafile $ORDERER_CA

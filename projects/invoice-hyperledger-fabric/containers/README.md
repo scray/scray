@@ -15,7 +15,7 @@ PEER_NAME=peer48
 PEER_HOST_NAME=$PEER_NAME.kubernetes.research.dev.seeburger.de 
 EXT_PEER_IP=10.15.136.41
 
-./configure-deployment.sh -n $PEER_NAME $LOCAL_DOCKER_REGISTRY
+./configure-deployment.sh -n $PEER_NAME
 ```
 
 ### Start service
@@ -33,7 +33,7 @@ EXT_PEER_IP=10.15.136.41
 ```
 kubectl delete configmap hl-fabric-peer-$PEER_NAME 
 kubectl create configmap hl-fabric-peer-$PEER_NAME \
- --from-literal=hostname=kubernetes.research.dev.seeburger.de \
+ --from-literal=hostname=$PEER_HOST_NAME \
  --from-literal=org_name=$PEER_NAME \
  --from-literal=data_share=hl-fabric-data-share-service:80 \
  --from-literal=CORE_PEER_ADDRESS=peer0.$PEER_HOST_NAME:$PEER_LISTEN_PORT \
@@ -87,5 +87,5 @@ PEER_POD_NAME=$(kubectl get pod -l app=$PEER_NAME -o jsonpath="{.items[0].metada
 ORDERER_PORT=$(kubectl get service orderer-org1-scray-org -o jsonpath="{.spec.ports[?(@.name=='orderer-listen')].nodePort}")
 ORDERER_PORT=7050
 PEER_PORT=$(kubectl get service $PEER_NAME -o jsonpath="{.spec.ports[?(@.name=='peer-listen')].nodePort}")
-kubectl exec --stdin --tty $PEER_POD_NAME  -c scray-peer-cli -- /bin/sh /mnt/conf/peer_join.sh $ORDERER_IP  $ORDERER_HOSTNAME $ORDERER_PORT $CHANNEL_NAME $SHARED_FS_HOST
+kubectl exec --stdin --tty $PEER_POD_NAME  -c scray-peer-cli -- /bin/sh /mnt/conf/peer_join.sh $ORDERER_IP  $ORDERER_HOSTNAME $ORDERER_PORT $CHANNEL_NAME $SHARED_FS_HOST $EXT_PEER_IP
 ```

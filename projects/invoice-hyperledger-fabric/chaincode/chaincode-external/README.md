@@ -74,7 +74,7 @@ PRODUCT_BUYER="x509::CN=User1@kubernetes.research.dev.seeburger.de,OU=client,L=S
 ```
 #### Create invoice
 ```
-kubectl exec --stdin --tty $PEER_POD -c scray-peer-cli -- /bin/sh /mnt/conf/peer/add-invoice.sh  $CHANNEL_NAME $INVOICE_ID $BUYER
+kubectl exec --stdin --tty $PEER_POD -c scray-peer-cli -- /bin/sh /mnt/conf/peer/add-invoice.sh  $CHANNEL_NAME $INVOICE_ID $PRODUCT_BUYER
 ```
 
 #### Transfer invoice

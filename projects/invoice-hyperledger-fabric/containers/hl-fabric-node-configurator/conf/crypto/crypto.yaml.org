@@ -13,9 +13,13 @@ PeerOrgs:
   - Name: OrgScray
     Domain: org1.fabric.hyperledger.projects.scray.org 
     EnableNodeOUs: true
+    CA:
+      Country: DE
+      Province: Baden
+      Locality: Bretten
     Template:
       Count: 1
       SANS:
         - localhost
     Users:
-      Count: 1
+      Count: 2
