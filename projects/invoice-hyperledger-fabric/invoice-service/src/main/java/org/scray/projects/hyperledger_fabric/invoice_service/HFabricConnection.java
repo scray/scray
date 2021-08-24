@@ -25,14 +25,11 @@ public class HFabricConnection {
     public void createConnectionInvoceContract() throws Exception {
 		Gateway gateway = connect();
 
-			// get the network and contract
-			Network network = gateway.getNetwork("mychannel");
-			Contract contract = network.getContract("basic");
+		// get the network and contract
+		Network network = gateway.getNetwork("mychannel");
+		Contract contract = network.getContract("basic");
 
-			this.contract = contract;
-			
-			
-
+		this.contract = contract;
 	}
 	
 	
