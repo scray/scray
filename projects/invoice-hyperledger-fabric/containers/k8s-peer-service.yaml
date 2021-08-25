@@ -9,9 +9,6 @@ spec:
   selector:
     app: peer-id 
   ports:
-    - name: peer-gossip
-      port: 7051
-      protocol: TCP
     - name: peer-chaincode
       port: 30002
       protocol: TCP
