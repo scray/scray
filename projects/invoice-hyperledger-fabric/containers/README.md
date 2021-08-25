@@ -25,7 +25,7 @@ EXT_PEER_IP=10.15.136.41
 ### Create peer configuration
 
    ```
-   GOSSIP_PORT=$(kubectl get service $PEER_NAME -o jsonpath="{.spec.ports[?(@.name=='peer-gossip')].nodePort}")
+   GOSSIP_PORT=$(kubectl get service $PEER_NAME -o jsonpath="{.spec.ports[?(@.name=='peer-listen')].nodePort}")
    PEER_LISTEN_PORT=$(kubectl get service $PEER_NAME -o jsonpath="{.spec.ports[?(@.name=='peer-listen')].nodePort}")
    PEER_CHAINCODE_PORT=$(kubectl get service $PEER_NAME -o jsonpath="{.spec.ports[?(@.name=='peer-chaincode')].nodePort}")
    ```
@@ -37,7 +37,7 @@ kubectl create configmap hl-fabric-peer-$PEER_NAME \
  --from-literal=org_name=$PEER_NAME \
  --from-literal=data_share=hl-fabric-data-share-service:80 \
  --from-literal=CORE_PEER_ADDRESS=peer0.$PEER_HOST_NAME:$PEER_LISTEN_PORT \
- --from-literal=CORE_PEER_GOSSIP_EXTERNALENDPOINT=$PEER_HOST_NAME:$GOSSIP_PORT \
+ --from-literal=CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.$PEER_HOST_NAME:$GOSSIP_PORT \
  --from-literal=CORE_PEER_LOCALMSPID=${PEER_NAME}MSP
 ```    		
 
