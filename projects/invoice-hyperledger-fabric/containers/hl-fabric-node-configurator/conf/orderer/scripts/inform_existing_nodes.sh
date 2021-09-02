@@ -37,7 +37,7 @@ curl --user 'scray:scray' http://${SHARED_FS_HOST}/newmemberrequests/mychannel/$
 
 
 # Add org3 data to existing config
-jq -s ".[0] "*" {\"channel_group\":{\"groups\":{\"Application\":{\"groups\": {\"${NEW_ORG_NAME}MSP\":.[1]}}}}}" config.json ./new_member_org.json > modified_config.json
+jq -s ".[0] "*" {\"channel_group\":{\"groups\":{\"Application\":{\"groups\": {\"${NEW_ORG_NAME}MSP\":.[1]}}}}}" config.json ./new_member_org.json > conf_with_new_org.json 
 
 # Update policy
 jq '.channel_group.groups.Application.policies.Admins.policy.value.rule = "ANY"' conf_with_new_org.json > any_admin_application.json
