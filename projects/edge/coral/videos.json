@@ -1,7 +1,7 @@
 {
-    "uQXoCldmH9o": {
-        "url": "https://youtu.be/uQXoCldmH9o",
-        "title": "Busanjin-gu Live CAM KOREA 대한민국 부산진구 View",
+    "JqUREqYduHw": {
+        "url": "https://www.youtube.com/watch?v=JqUREqYduHw",
+        "title": "Venice Italy Live Webcam - Dorsoduro in Live Streaming from Hotel American Dinesen - Full HD",
         "location": "",
         "country": "",
         "objects": "",
@@ -12,15 +12,27 @@
                 1.0,
                 1.0
             ],
-            "test": [
-                0.28125,
-                0.0,
-                0.99609375,
-                0.9930555555555556
+            "bridge": [
+                0.57265625,
+                0.41805555555555557,
+                0.9953125,
+                0.6111111111111112
+            ],
+            "Treppe": [
+                0.2109375,
+                0.8194444444444444,
+                0.39375,
+                0.9398148148148148
+            ],
+            "Eingang": [
+                0.14402810304449648,
+                0.6104166666666667,
+                0.27049180327868855,
+                0.9041666666666667
             ]
         }
     },
-    "watch?v=G05wmWFDtSo": {
+    "G05wmWFDtSo": {
         "url": "https://www.youtube.com/watch?v=G05wmWFDtSo",
         "title": "Michael Weiss Street Brasov - Pilvax Restaurant & Wine Bar",
         "location": "",
@@ -32,6 +44,12 @@
                 0.0,
                 1.0,
                 1.0
+            ],
+            "crop1": [
+                0.4552083333333333,
+                0.6166666666666667,
+                0.7020833333333333,
+                0.95
             ],
             "street": [
                 0.165625,
@@ -53,8 +71,29 @@
             ]
         }
     },
-    "watch?v=eJ7ZkQ5TC08": {
-        "url": "https://www.youtube.com/watch?v=eJ7ZkQ5TC08",
+    "Ntt1wwgCEOQ": {
+        "url": "https://www.youtube.com/watch?v=Ntt1wwgCEOQ",
+        "title": "AC Boardwalk Live",
+        "location": "",
+        "country": "",
+        "objects": "",
+        "bookmarks": {
+            "reset": [
+                0.0,
+                0.0,
+                1.0,
+                1.0
+            ],
+            "part": [
+                0.25,
+                0.5333333333333333,
+                0.6546875,
+                0.9944444444444445
+            ]
+        }
+    },
+    "AdUw5RdyZxI": {
+        "url": "https://www.youtube.com/watch?v=AdUw5RdyZxI",
         "title": "EarthCam Live:  Times Square in 4K",
         "location": "",
         "country": "",
@@ -68,69 +107,9 @@
             ]
         }
     },
-    "_hEh5wF6lxE": {
-        "url": "https://youtu.be/_hEh5wF6lxE",
-        "title": "🔴 New York Live CAM - 7th Av. & Time Square USA View",
-        "location": "",
-        "country": "",
-        "objects": "",
-        "bookmarks": {
-            "reset": [
-                0.0,
-                0.0,
-                1.0,
-                1.0
-            ]
-        }
-    },
-    "JqUREqYduHw": {
-        "url": "https://www.youtube.com/watch?v=JqUREqYduHw",
-        "title": "Venice Italy Live Webcam - Dorsoduro in Live Streaming from Hotel American Dinesen - Full HD",
-        "location": "",
-        "country": "",
-        "objects": "",
-        "bookmarks": {
-            "reset": [
-                0.0,
-                0.0,
-                1.0,
-                1.0
-            ]
-        }
-    },
-    "G05wmWFDtSo": {
-        "url": "https://www.youtube.com/watch?v=G05wmWFDtSo",
-        "title": "Michael Weiss Street Brasov - Pilvax Restaurant & Wine Bar",
-        "location": "",
-        "country": "",
-        "objects": "",
-        "bookmarks": {
-            "reset": [
-                0.0,
-                0.0,
-                1.0,
-                1.0
-            ]
-        }
-    },
-    "DRzwyuG625A": {
-        "url": "https://youtu.be/DRzwyuG625A",
-        "title": "Live  Hounslow Cam 24/7",
-        "location": "",
-        "country": "",
-        "objects": "",
-        "bookmarks": {
-            "reset": [
-                0.0,
-                0.0,
-                1.0,
-                1.0
-            ]
-        }
-    },
-    "sMuqEg8fPtA": {
-        "url": "https://youtu.be/sMuqEg8fPtA",
-        "title": "Bar",
+    "S4AG47F94Ss": {
+        "url": "https://youtu.be/S4AG47F94Ss",
+        "title": "Platja d'Aro Center Live",
         "location": "",
         "country": "",
         "objects": "",
