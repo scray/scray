@@ -22,7 +22,6 @@ public class App {
 	public static void main(String[] args) throws Exception {
 	    BlockchainOperations op = new BlockchainOperations("c1", "basic", "otto", "C:\\Users\\st.obermeier\\git\\scray\\projects\\invoice-hyperledger-fabric\\applications\\reader-app\\wallet");
 
-	    op.write("order1" + Math.random());
 
 	    String assets = op.read("GetAllAssets");
 	    System.out.println(assets);
