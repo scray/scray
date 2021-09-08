@@ -15,4 +15,4 @@ RUN go install -v ./...
 
 EXPOSE 9999
 # CMD ["chaincode-external"]
-CMD ["sh", "-c", "tail -f /dev/null"]
+CMD ["sh", "-c", "chaincode-external; tail -f /dev/null"]
