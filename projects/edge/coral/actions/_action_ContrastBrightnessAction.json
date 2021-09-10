@@ -1,0 +1,7 @@
+{
+    "class": "ContrastBrightnessAction",
+    "parameters": {
+        "contrast": 254,
+        "brightness": 0.614
+    }
+}
