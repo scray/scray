@@ -7,19 +7,17 @@
  */
 package com.seeburger.research.seamless.hl_client;
 
+import org.hyperledger.fabric.gateway.*;
+import org.hyperledger.fabric.sdk.Orderer;
+import org.hyperledger.fabric.sdk.Peer;
+
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.concurrent.TimeoutException;
+import java.util.Collection;
+import java.util.Properties;
 
-import org.hyperledger.fabric.gateway.Contract;
-import org.hyperledger.fabric.gateway.ContractException;
-import org.hyperledger.fabric.gateway.Gateway;
-import org.hyperledger.fabric.gateway.Network;
-import org.hyperledger.fabric.gateway.Wallet;
-import org.hyperledger.fabric.gateway.Wallets;
-
-public class BlockchainOperations
+public class ListenOnContractEvents
 {
     String channel = "mychannel";
     String smartContract = "basic";
@@ -29,13 +27,12 @@ public class BlockchainOperations
 
     JsonMapper j = null;
 
-    public BlockchainOperations(String channel, String smartContract, String userName, String walletPath)
+    public ListenOnContractEvents(String channel, String smartContract, String userName, String walletPath)
     {
         super();
         this.channel = channel;
         this.smartContract = smartContract;
         this.walletPathString = walletPath;
-        this.j = new JsonMapper();
         this.userName = userName;
     }
 
@@ -60,8 +57,20 @@ public class BlockchainOperations
 
                 contract.submitTransaction("CreateAsset",
                         id,
-                            "x509::CN=otto\\ ,OU=admin,O=kubernetes.research.dev.seeburger.de\\ ::CN=ca.peer2.kubernetes.research.dev.seeburger.de,O=peer2.kubernetes.research.dev.seeburger.de,L=Bretten,ST=Baden,C=DE"
-                        );
+                        "2",
+                        "3",
+                        "4",
+                        "5",
+                        "6",
+                        "true",
+                        "true",
+                        "true",
+                        "true",
+                        "true",
+                        "true",
+                        "true",
+                        "true",
+                        "true");
             }
             catch (Exception e)
             {
@@ -72,7 +81,7 @@ public class BlockchainOperations
             return resultString;
     }
 
-    public String read(String methodName) {
+    public String showChannelInfos(String methodName) {
         String data = "{}";
 
             try
@@ -83,7 +92,15 @@ public class BlockchainOperations
                 // get the network and contract
                 Network network = gateway.getNetwork(channel);
                 Contract contract = network.getContract("basic");
-                data = new String(contract.evaluateTransaction(methodName));
+
+                Collection<String> installedChaincode = network.getChannel().getDiscoveredChaincodeNames();
+                Collection<Orderer> orderer = network.getChannel().getOrderers();
+                Collection<Peer> peers = network.getChannel().getPeers();
+
+                System.out.println("Installed chaincode: " + installedChaincode);
+                System.out.println("Orderer list: " + orderer);
+                System.out.println("Peers " + peers);
+
             }
             catch (Exception e)
             {

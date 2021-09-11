@@ -11,6 +11,8 @@ package com.seeburger.research.seamless.hl_client;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.UUID;
+
 import org.hyperledger.fabric.gateway.Contract;
 import org.hyperledger.fabric.gateway.Gateway;
 import org.hyperledger.fabric.gateway.Network;
@@ -22,9 +24,10 @@ public class App {
 	public static void main(String[] args) throws Exception {
 	    BlockchainOperations op = new BlockchainOperations("c1", "basic", "otto", "C:\\Users\\st.obermeier\\git\\scray\\projects\\invoice-hyperledger-fabric\\applications\\reader-app\\wallet");
 
-
+	    op.write(UUID.randomUUID().toString());
+		op.write("dd");
 	    String assets = op.read("GetAllAssets");
-	    System.out.println(assets);
+	    System.out.println("Assets:\t" + assets);
 	}
 
 

@@ -49,6 +49,7 @@ ORG_NAME=peer50
 
 
 ### Peer side
+```kubectl exec --stdin --tty $PEER_POD -c scray-peer-cli -- /bin/sh```
 * ```./cert-creator.sh pull_csr --common-name otto --shared-fs-host kubernetes.research.dev.seeburger.de:30080```
 
 * ```
@@ -69,4 +70,5 @@ ORG_NAME=peer50
 
 ```
  cat /mnt/conf/organizations/peerOrganizations/kubernetes.research.dev.seeburger.de/tlsca/tlsca.kubernetes.research.dev.seeburger.de-cert.pem
+GOSSIP_PORT=$(kubectl get service $PEER_NAME -o jsonpath="{.spec.ports[?(@.name=='peer-listen')].nodePort}")
 ```

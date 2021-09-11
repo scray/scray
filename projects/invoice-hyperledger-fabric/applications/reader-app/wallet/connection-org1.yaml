@@ -16,31 +16,35 @@ organizations:
     - ca.org1.example.com
 peers:
   peer0.peer2.kubernetes.research.dev.seeburger.de:
-    url: grpcs://peer0.peer2.kubernetes.research.dev.seeburger.de:32474
+    url: grpcs://peer0.peer2.kubernetes.research.dev.seeburger.de:31506
     tlsCACerts:
       pem: |
             -----BEGIN CERTIFICATE-----
-            MIICrDCCAlKgAwIBAgIRAJ5C6ZyZBXavukNaGEGvDr8wCgYIKoZIzj0EAwIwgZ8x
-            CzAJBgNVBAYTAkRFMQ4wDAYDVQQIEwVCYWRlbjEQMA4GA1UEBxMHQnJldHRlbjEz
-            MDEGA1UEChMqcGVlcjIua3ViZXJuZXRlcy5yZXNlYXJjaC5kZXYuc2VlYnVyZ2Vy
-            LmRlMTkwNwYDVQQDEzB0bHNjYS5wZWVyMi5rdWJlcm5ldGVzLnJlc2VhcmNoLmRl
-            di5zZWVidXJnZXIuZGUwHhcNMjEwOTAyMTQzMTAwWhcNMzEwODMxMTQzMTAwWjCB
-            nzELMAkGA1UEBhMCREUxDjAMBgNVBAgTBUJhZGVuMRAwDgYDVQQHEwdCcmV0dGVu
-            MTMwMQYDVQQKEypwZWVyMi5rdWJlcm5ldGVzLnJlc2VhcmNoLmRldi5zZWVidXJn
-            ZXIuZGUxOTA3BgNVBAMTMHRsc2NhLnBlZXIyLmt1YmVybmV0ZXMucmVzZWFyY2gu
-            ZGV2LnNlZWJ1cmdlci5kZTBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABDdiqCcU
-            iWJg5BoFuljsJ/oPza5+b1uDdMIXG/aXp0cP8bahI9QeT7GQlj7s8AvWn4lv6r24
-            nxbARMDJeYWKTqqjbTBrMA4GA1UdDwEB/wQEAwIBpjAdBgNVHSUEFjAUBggrBgEF
-            BQcDAgYIKwYBBQUHAwEwDwYDVR0TAQH/BAUwAwEB/zApBgNVHQ4EIgQgDbfmwmgr
-            p+4Daq3IeQhrvmAAEe//qDJS3qGmU8/LV6owCgYIKoZIzj0EAwIDSAAwRQIhAJM1
-            416S3MmvU0mKbVqnKPpxdSqaeh1y0Nlsph+Y7SxvAiBdm/itaUr084O/DROPjsbA
-            vOTa7YWvp0qOajhK5ZEHaA==
+            MIICqzCCAlGgAwIBAgIQeI+o4x2/7aMR4JuMIhB1DzAKBggqhkjOPQQDAjCBnzEL
+            MAkGA1UEBhMCREUxDjAMBgNVBAgTBUJhZGVuMRAwDgYDVQQHEwdCcmV0dGVuMTMw
+            MQYDVQQKEypwZWVyMi5rdWJlcm5ldGVzLnJlc2VhcmNoLmRldi5zZWVidXJnZXIu
+            ZGUxOTA3BgNVBAMTMHRsc2NhLnBlZXIyLmt1YmVybmV0ZXMucmVzZWFyY2guZGV2
+            LnNlZWJ1cmdlci5kZTAeFw0yMTA5MTAxNTI4MDBaFw0zMTA5MDgxNTI4MDBaMIGf
+            MQswCQYDVQQGEwJERTEOMAwGA1UECBMFQmFkZW4xEDAOBgNVBAcTB0JyZXR0ZW4x
+            MzAxBgNVBAoTKnBlZXIyLmt1YmVybmV0ZXMucmVzZWFyY2guZGV2LnNlZWJ1cmdl
+            ci5kZTE5MDcGA1UEAxMwdGxzY2EucGVlcjIua3ViZXJuZXRlcy5yZXNlYXJjaC5k
+            ZXYuc2VlYnVyZ2VyLmRlMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE/rYBgaFT
+            rmQF1c4rRpbJkM+fKq3cxCGuLFc7p6NpL0nhKyNWG7eYGJ3Fb1/oZPdzS6Igf5cv
+            dK1d95gMEWbR2qNtMGswDgYDVR0PAQH/BAQDAgGmMB0GA1UdJQQWMBQGCCsGAQUF
+            BwMCBggrBgEFBQcDATAPBgNVHRMBAf8EBTADAQH/MCkGA1UdDgQiBCB8aQKV+nzo
+            ke2pj76gWBNY6IcmMCZr53A9vf9gKgj0pjAKBggqhkjOPQQDAgNIADBFAiBm8Yk+
+            dynjO7eXcUNuMcmfwjMcebkxI+XVuzIYMQJALAIhAM07CfOlXGLvNAuYsU/D36aB
+            MUWRh0IGGVoypyHbtGh3
             -----END CERTIFICATE-----
+
 
 
 grpcOptions:
       ssl-target-name-override: peer0.peer2.kubernetes.research.dev.seeburger.de
       hostnameOverride: peer0.peer2.kubernetes.research.dev.seeburger.de
+orderers:
+  orderer.example.com:
+    url: grpc://orderer.example.com:31081
 certificateAuthorities:
   ca.org1.example.com:
     url: https://peer0.org1.example.com:7054
