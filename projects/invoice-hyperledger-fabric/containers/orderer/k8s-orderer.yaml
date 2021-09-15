@@ -61,6 +61,8 @@ spec:
               value: "[/var/hyperledger/orderer/tls/ca.crt]"
             - name: ORDERER_GENERAL_CLUSTER_CLIENTCERTIFICATE
               value: "/var/hyperledger/orderer/tls/server.crt"
+            - name: CONFIGTX_ORDERER_ADDRESSES
+              value: [affe.spdf.de:1234]
           volumeMounts:
             - name: orderer-conf
               mountPath: /var/hyperledger/orderer/orderer.genesis.block

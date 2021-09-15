@@ -1,0 +1,74 @@
+---
+name: test-network-org1
+version: 1.0.0
+client:
+  organization: peer4089
+  connection:
+    timeout:
+      peer:
+        endorser: '300'
+organizations:
+  peer4089:
+    mspid: peer2MSP
+    peers:
+    - peer0.peer2.kubernetes.research.dev.seeburger.de
+    certificateAuthorities:
+    - ca.org1.example.com
+peers:
+  peer0.peer2.kubernetes.research.dev.seeburger.de:
+    url: grpcs://peer0.peer2.kubernetes.research.dev.seeburger.de:31506
+    tlsCACerts:
+      pem: |
+            -----BEGIN CERTIFICATE-----
+            MIICqzCCAlGgAwIBAgIQeI+o4x2/7aMR4JuMIhB1DzAKBggqhkjOPQQDAjCBnzEL
+            MAkGA1UEBhMCREUxDjAMBgNVBAgTBUJhZGVuMRAwDgYDVQQHEwdCcmV0dGVuMTMw
+            MQYDVQQKEypwZWVyMi5rdWJlcm5ldGVzLnJlc2VhcmNoLmRldi5zZWVidXJnZXIu
+            ZGUxOTA3BgNVBAMTMHRsc2NhLnBlZXIyLmt1YmVybmV0ZXMucmVzZWFyY2guZGV2
+            LnNlZWJ1cmdlci5kZTAeFw0yMTA5MTAxNTI4MDBaFw0zMTA5MDgxNTI4MDBaMIGf
+            MQswCQYDVQQGEwJERTEOMAwGA1UECBMFQmFkZW4xEDAOBgNVBAcTB0JyZXR0ZW4x
+            MzAxBgNVBAoTKnBlZXIyLmt1YmVybmV0ZXMucmVzZWFyY2guZGV2LnNlZWJ1cmdl
+            ci5kZTE5MDcGA1UEAxMwdGxzY2EucGVlcjIua3ViZXJuZXRlcy5yZXNlYXJjaC5k
+            ZXYuc2VlYnVyZ2VyLmRlMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE/rYBgaFT
+            rmQF1c4rRpbJkM+fKq3cxCGuLFc7p6NpL0nhKyNWG7eYGJ3Fb1/oZPdzS6Igf5cv
+            dK1d95gMEWbR2qNtMGswDgYDVR0PAQH/BAQDAgGmMB0GA1UdJQQWMBQGCCsGAQUF
+            BwMCBggrBgEFBQcDATAPBgNVHRMBAf8EBTADAQH/MCkGA1UdDgQiBCB8aQKV+nzo
+            ke2pj76gWBNY6IcmMCZr53A9vf9gKgj0pjAKBggqhkjOPQQDAgNIADBFAiBm8Yk+
+            dynjO7eXcUNuMcmfwjMcebkxI+XVuzIYMQJALAIhAM07CfOlXGLvNAuYsU/D36aB
+            MUWRh0IGGVoypyHbtGh3
+            -----END CERTIFICATE-----
+
+
+
+grpcOptions:
+      ssl-target-name-override: peer0.peer2.kubernetes.research.dev.seeburger.de
+      hostnameOverride: peer0.peer2.kubernetes.research.dev.seeburger.de
+orderers:
+  orderer.example.com:
+    url: grpc://orderer.example.com:31081
+certificateAuthorities:
+  ca.org1.example.com:
+    url: https://peer0.org1.example.com:7054
+    caName: ca-org1
+    tlsCACerts:
+      pem: 
+        - |
+          -----BEGIN CERTIFICATE-----
+          MIICsDCCAlegAwIBAgIQDrL2aNqrxP9YpBaKq/zNlTAKBggqhkjOPQQDAjCBojEL
+          MAkGA1UEBhMCREUxDjAMBgNVBAgTBUJhZGVuMRAwDgYDVQQHEwdCcmV0dGVuMTYw
+          NAYDVQQKEy1wZWVyNDA4OS5rdWJlcm5ldGVzLnJlc2VhcmNoLmRldi5zZWVidXJn
+          ZXIuZGUxOTA3BgNVBAMTMGNhLnBlZXI0MDg5Lmt1YmVybmV0ZXMucmVzZWFyY2gu
+          ZGV2LnNlZWJ1cmdlci5kZTAeFw0yMTA4MDYwODM5MDBaFw0zMTA4MDQwODM5MDBa
+          MIGiMQswCQYDVQQGEwJERTEOMAwGA1UECBMFQmFkZW4xEDAOBgNVBAcTB0JyZXR0
+          ZW4xNjA0BgNVBAoTLXBlZXI0MDg5Lmt1YmVybmV0ZXMucmVzZWFyY2guZGV2LnNl
+          ZWJ1cmdlci5kZTE5MDcGA1UEAxMwY2EucGVlcjQwODkua3ViZXJuZXRlcy5yZXNl
+          YXJjaC5kZXYuc2VlYnVyZ2VyLmRlMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE
+          IBriY5YjzHvJJD21adfxF6qQUEaPBNCsrugrd4Yy9JM9M/htuH225GTLIc18fhbB
+          eER+CmM4IEU73cZMsv2QraNtMGswDgYDVR0PAQH/BAQDAgGmMB0GA1UdJQQWMBQG
+          CCsGAQUFBwMCBggrBgEFBQcDATAPBgNVHRMBAf8EBTADAQH/MCkGA1UdDgQiBCBw
+          CVt6VxZciGtE6bX5n7sYj1ZcribbufdtmlKlRGHRjzAKBggqhkjOPQQDAgNHADBE
+          AiBvY1k52PqB7qaZP398KjfxihLQ6FdOhsjh4rI/7JOlzgIgWEZzLoIgcwNlsBCe
+          dRKofpE3vAmDyMa0A4bXXsWZMNQ=
+          -----END CERTIFICATE-----
+          
+    httpOptions:
+      verify: false

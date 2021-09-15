@@ -28,8 +28,8 @@ EXT_PEER_IP=10.15.136.41
    GOSSIP_PORT=$(kubectl get service $PEER_NAME -o jsonpath="{.spec.ports[?(@.name=='peer-listen')].nodePort}")
    PEER_LISTEN_PORT=$(kubectl get service $PEER_NAME -o jsonpath="{.spec.ports[?(@.name=='peer-listen')].nodePort}")
    PEER_CHAINCODE_PORT=$(kubectl get service $PEER_NAME -o jsonpath="{.spec.ports[?(@.name=='peer-chaincode')].nodePort}")
-   ```
-
+  ```
+dd
 ```
 kubectl delete configmap hl-fabric-peer-$PEER_NAME 
 kubectl create configmap hl-fabric-peer-$PEER_NAME \
@@ -39,7 +39,7 @@ kubectl create configmap hl-fabric-peer-$PEER_NAME \
  --from-literal=CORE_PEER_ADDRESS=peer0.$PEER_HOST_NAME:$PEER_LISTEN_PORT \
  --from-literal=CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.$PEER_HOST_NAME:$GOSSIP_PORT \
  --from-literal=CORE_PEER_LOCALMSPID=${PEER_NAME}MSP
-```    		
+```    
 
 ### Start new peer:
 
@@ -74,6 +74,7 @@ kubectl create configmap hl-fabric-peer-$PEER_NAME \
   CHANNEL_NAME=mychannel
   SHARED_FS_HOST=10.14.128.38:30080 
   ```
+  
 
 ### Addorse new peer data [add to mychannel]:
 ```
@@ -83,9 +84,14 @@ kubectl exec --stdin --tty $ORDERER_POD -c scray-orderer-cli  -- /bin/sh /mnt/co
   
 ### Join network
  ```
-PEER_POD_NAME=$(kubectl get pod -l app=$PEER_NAME -o jsonpath="{.items[0].metadata.name}")
-ORDERER_PORT=$(kubectl get service orderer-org1-scray-org -o jsonpath="{.spec.ports[?(@.name=='orderer-listen')].nodePort}")
-ORDERER_PORT=7050
-PEER_PORT=$(kubectl get service $PEER_NAME -o jsonpath="{.spec.ports[?(@.name=='peer-listen')].nodePort}")
-kubectl exec --stdin --tty $PEER_POD_NAME  -c scray-peer-cli -- /bin/sh /mnt/conf/peer_join.sh $ORDERER_IP  $ORDERER_HOSTNAME $ORDERER_PORT $CHANNEL_NAME $SHARED_FS_HOST $EXT_PEER_IP
+  PEER_POD_NAME=$(kubectl get pod -l app=$PEER_NAME -o jsonpath="{.items[0].metadata.name}")
+  ORDERER_PORT=$(kubectl get service orderer-org1-scray-org -o jsonpath="{.spec.ports[?(@.name=='orderer-listen')].nodePort}")
+  ORDERER_PORT=7050
+  PEER_PORT=$(kubectl get service $PEER_NAME -o jsonpath="{.spec.ports[?(@.name=='peer-listen')].nodePort}")
+  kubectl exec --stdin --tty $PEER_POD_NAME  -c scray-peer-cli -- /bin/sh /mnt/conf/peer_join.sh $ORDERER_IP  $ORDERER_HOSTNAME $ORDERER_PORT $CHANNEL_NAME $SHARED_FS_HOST $EXT_PEER_IP
 ```
+
+# Export data
+### Export channel configuration
+Channel configuration can be found here after after the export: ```$SHARED_FS_HOST/channel/configuration/$CHANNEL_NAME/config.json```  
+```kubectl exec --stdin --tty $ORDERER_POD -c scray-orderer-cli  -- /bin/sh /mnt/conf/orderer/scripts/publish_channel_conf.sh  $CHANNEL_NAME $SHARED_FS_HOST```

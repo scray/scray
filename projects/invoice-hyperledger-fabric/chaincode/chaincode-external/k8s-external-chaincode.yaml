@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: invoice-chaincode-external 
-          image: scrayorg/hl-fabric-external-invoice-example 
+          image: scrayorg/hl-fabric-external-invoice-example:1.2 
           imagePullPolicy: Always
           workingDir: /go/src/github.com/hyperledger/fabric-samples/asset-transfer-basic/chaincode-external 
           env:
