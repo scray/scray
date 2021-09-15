@@ -69,7 +69,7 @@ kubectl create configmap hl-fabric-peer-$PEER_NAME \
   ```
   ORDERER_IP=$(kubectl get pods  -l app=orderer-org1-scray-org -o jsonpath='{.items[*].status.podIP}')
   ORDERER_HOSTNAME=orderer.example.com 
-  ORDERER_PORT=7050
+  ORDERER_PORT=30081
   # ORDERER_PORT=$(kubectl get service orderer-org1-scray-org -o jsonpath="{.spec.ports[?(@.name=='orderer-listen')].nodePort}")
   CHANNEL_NAME=mychannel
   SHARED_FS_HOST=10.14.128.38:30080 
@@ -85,7 +85,7 @@ kubectl exec --stdin --tty $ORDERER_POD -c scray-orderer-cli  -- /bin/sh /mnt/co
  ```
 PEER_POD_NAME=$(kubectl get pod -l app=$PEER_NAME -o jsonpath="{.items[0].metadata.name}")
 ORDERER_PORT=$(kubectl get service orderer-org1-scray-org -o jsonpath="{.spec.ports[?(@.name=='orderer-listen')].nodePort}")
-ORDERER_PORT=7050
+ORDERER_PORT=30081
 PEER_PORT=$(kubectl get service $PEER_NAME -o jsonpath="{.spec.ports[?(@.name=='peer-listen')].nodePort}")
 kubectl exec --stdin --tty $PEER_POD_NAME  -c scray-peer-cli -- /bin/sh /mnt/conf/peer_join.sh $ORDERER_IP  $ORDERER_HOSTNAME $ORDERER_PORT $CHANNEL_NAME $SHARED_FS_HOST $EXT_PEER_IP
 ```
