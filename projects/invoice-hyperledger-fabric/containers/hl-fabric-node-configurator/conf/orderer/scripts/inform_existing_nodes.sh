@@ -21,7 +21,7 @@ echo $EXTERNAL_IP peer0.${HOSTNAME} >> /etc/hosts
 echo $EXT_PEER_IP $PEER_HOST_NAME >> /etc/hosts
 
 # Export existing channel configuration
-peer channel fetch config config_block.pb -o orderer.example.com:7050 -c $CHANNEL_NAME --tls --cafile $ORDERER_CA
+peer channel fetch config config_block.pb -o orderer.example.com:30081 -c $CHANNEL_NAME --tls --cafile $ORDERER_CA
 configtxlator proto_decode --input config_block.pb --type common.Block | jq .data.data[0].payload.data.config > config.json
 
 # Upload CA cert
@@ -59,4 +59,4 @@ export CORE_PEER_TLS_ROOTCERT_FILE=/mnt/conf/admin/organizations/peerOrganizatio
 export CORE_PEER_MSPCONFIGPATH=/mnt/conf/orderer/organizations/ordererOrganizations/example.com/users/Admin@example.com/msp/
 export ORDERER_CA=/mnt/conf/orderer/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem #Fixme use orderer name
 
-peer channel update -f org3_update_in_envelope.pb -c $CHANNEL_NAME -o orderer.example.com:7050 --tls --cafile $ORDERER_CA
+peer channel update -f org3_update_in_envelope.pb -c $CHANNEL_NAME -o orderer.example.com:30081 --tls --cafile $ORDERER_CA

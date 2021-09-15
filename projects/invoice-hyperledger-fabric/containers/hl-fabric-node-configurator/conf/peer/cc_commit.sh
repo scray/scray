@@ -7,6 +7,6 @@ export CORE_PEER_MSPCONFIGPATH=/mnt/conf/organizations/peerOrganizations/$HOSTNA
 echo Installed chaincode
 peer lifecycle chaincode queryinstalled
 
-peer lifecycle chaincode checkcommitreadiness -o orderer.example.com:7050 --ordererTLSHostnameOverride orderer.example.com --tls  --cafile /tmp/tlsca.example.com-cert.pem --channelID $CHANNEL_ID --name basic --sequence 1 --version 1.0
+peer lifecycle chaincode checkcommitreadiness -o orderer.example.com:30081 --ordererTLSHostnameOverride orderer.example.com --tls  --cafile /tmp/tlsca.example.com-cert.pem --channelID $CHANNEL_ID --name basic --sequence 1 --version 1.0
 
-peer lifecycle chaincode commit -o orderer.example.com:7050 --tls  --cafile /tmp/tlsca.example.com-cert.pem --channelID $CHANNEL_ID --name basic --version 1.0 --sequence 1
+peer lifecycle chaincode commit -o orderer.example.com:30081 --tls  --cafile /tmp/tlsca.example.com-cert.pem --channelID $CHANNEL_ID --name basic --version 1.0 --sequence 1

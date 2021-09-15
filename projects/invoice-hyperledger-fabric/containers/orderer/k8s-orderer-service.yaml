@@ -10,5 +10,6 @@ spec:
     app: orderer-org1-scray-org 
   ports:
     - name: orderer-listen
-      port: 7050
+      port: 30081 
+      nodePort: 30081
       protocol: TCP

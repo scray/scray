@@ -29,7 +29,6 @@ EXT_PEER_IP=10.15.136.41
    PEER_LISTEN_PORT=$(kubectl get service $PEER_NAME -o jsonpath="{.spec.ports[?(@.name=='peer-listen')].nodePort}")
    PEER_CHAINCODE_PORT=$(kubectl get service $PEER_NAME -o jsonpath="{.spec.ports[?(@.name=='peer-chaincode')].nodePort}")
   ```
-dd
 ```
 kubectl delete configmap hl-fabric-peer-$PEER_NAME 
 kubectl create configmap hl-fabric-peer-$PEER_NAME \
@@ -69,7 +68,7 @@ kubectl create configmap hl-fabric-peer-$PEER_NAME \
   ```
   ORDERER_IP=$(kubectl get pods  -l app=orderer-org1-scray-org -o jsonpath='{.items[*].status.podIP}')
   ORDERER_HOSTNAME=orderer.example.com 
-  ORDERER_PORT=7050
+  ORDERER_PORT=30081
   # ORDERER_PORT=$(kubectl get service orderer-org1-scray-org -o jsonpath="{.spec.ports[?(@.name=='orderer-listen')].nodePort}")
   CHANNEL_NAME=mychannel
   SHARED_FS_HOST=10.14.128.38:30080 
