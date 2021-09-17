@@ -22,13 +22,19 @@
                 0.2109375,
                 0.8194444444444444,
                 0.39375,
-                0.9398148148148148
+                0.9694444444444444
             ],
             "Eingang": [
                 0.14402810304449648,
                 0.6104166666666667,
                 0.27049180327868855,
                 0.9041666666666667
+            ],
+            "Platz": [
+                0.20989583333333334,
+                0.4842592592592593,
+                0.5755208333333334,
+                0.812962962962963
             ]
         }
     },
@@ -110,6 +116,111 @@
     "S4AG47F94Ss": {
         "url": "https://youtu.be/S4AG47F94Ss",
         "title": "Platja d'Aro Center Live",
+        "location": "",
+        "country": "",
+        "objects": "",
+        "bookmarks": {
+            "reset": [
+                0.0,
+                0.0,
+                1.0,
+                1.0
+            ]
+        }
+    },
+    "vVyBOU9Huvo": {
+        "url": "https://www.youtube.com/watch?v=vVyBOU9Huvo",
+        "title": "Resorts Casino Hotel Beach Camera",
+        "location": "",
+        "country": "",
+        "objects": "",
+        "bookmarks": {
+            "reset": [
+                0.0,
+                0.0,
+                1.0,
+                1.0
+            ]
+        }
+    },
+    "QJGpJEpkfCM": {
+        "url": "https://youtu.be/QJGpJEpkfCM",
+        "title": "【LIVE】大阪 道頓堀  ライブカメラ osaka Dotonbori Livecamera",
+        "location": "",
+        "country": "",
+        "objects": "",
+        "bookmarks": {
+            "reset": [
+                0.0,
+                0.0,
+                1.0,
+                1.0
+            ]
+        }
+    },
+    "fophHLy_yfE": {
+        "url": "https://youtu.be/fophHLy_yfE",
+        "title": "Venice Beach live Camera 2",
+        "location": "",
+        "country": "",
+        "objects": "",
+        "bookmarks": {
+            "reset": [
+                0.0,
+                0.0,
+                1.0,
+                1.0
+            ]
+        }
+    },
+    "zpjV9OfcrCg": {
+        "url": "https://youtu.be/zpjV9OfcrCg",
+        "title": "🔴  LIVE  · Thailand / Koh Phangan  · Thong Sala center (Mandolino Pizzeria)",
+        "location": "",
+        "country": "",
+        "objects": "",
+        "bookmarks": {
+            "reset": [
+                0.0,
+                0.0,
+                1.0,
+                1.0
+            ]
+        }
+    },
+    "Ic_RrO6BK7I": {
+        "url": "https://youtu.be/Ic_RrO6BK7I",
+        "title": "🔴 ITALIAN LIVE TRAIN 24/7&LIVE CHAT. Cab Ride Venice–Verona Train Live View Train Driver's Eyes View",
+        "location": "",
+        "country": "",
+        "objects": "",
+        "bookmarks": {
+            "reset": [
+                0.0,
+                0.0,
+                1.0,
+                1.0
+            ]
+        }
+    },
+    "4haomWy6jB0": {
+        "url": "https://youtu.be/4haomWy6jB0",
+        "title": "🔴 HONG KONG DOUBLE DECKER LIVE TRAM 24/7&LIVE CHAT. VIRTUAL TRAM RIDE Live CAB View. Tram Live View",
+        "location": "",
+        "country": "",
+        "objects": "",
+        "bookmarks": {
+            "reset": [
+                0.0,
+                0.0,
+                1.0,
+                1.0
+            ]
+        }
+    },
+    "7BONmOqNL2M": {
+        "url": "https://youtu.be/7BONmOqNL2M",
+        "title": "【LIVE】東京都 新宿 24時間 ライブカメラ / 西武新宿駅 pepe前広場 交差点 （YUNIKA VISION前） Tokyo Shinjuku Live camera",
         "location": "",
         "country": "",
         "objects": "",
