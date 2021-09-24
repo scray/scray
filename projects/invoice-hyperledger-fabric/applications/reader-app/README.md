@@ -1,24 +1,9 @@
-```
-cd ~/git/fabric-samples/
-export PATH=~/git/fabric-samples/bin:$PATH
-```
-
-### Start network
-```
-./network.sh up
-./network.sh createChannel
-./network.sh deployCC -ccn basic -ccp  ../asset-transfer-basic/chaincode-java -ccl java
-```
-
-### Stop network
+## Create connection description
 
 ```
-./network.sh down
+cat /mnt/conf/organizations/peerOrganizations/peer2.kubernetes.research.dev.seeburger.de/tlsca/tlsca.peer2.kubernetes.research.dev.seeburger.de-cert.pem
 ```
+Put it in connection-org1.yaml
 
-
-```
-./network.sh up createChannel -c mychannel -ca
-./network.sh deployCC -ccn basic -ccp ../asset-transfer-basic/chaincode-java/  -ccl java
-
-```
+## Get peer port
+```GOSSIP_PORT=$(kubectl get service $PEER_NAME -o jsonpath="{.spec.ports[?(@.name=='peer-listen')].nodePort}")```
