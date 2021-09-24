@@ -43,7 +43,34 @@
                     "use_h": false,
                     "algorithm": 0
                 }
-            }
-        ]
-    }
-}
+            },
+            {
+                "class": "ObjectsInterpreterAction",
+                "parameters": {
+                    "score_threshold": 0.2,
+                    "filter": [],
+                    "result": {
+                        "objects": [
+                            [
+                                0,
+                                0.3828125,
+                                [
+                                    2,
+                                    67,
+                                    13,
+                                    94
+                                ]
+                            ],
+                            [
+                                8,
+                                0.328125,
+                                [
+                                    151,
+                                    101,
+                                    284,
+                                    263
+                                ]
+                            ]
+                        ],
+                        "inference_time": 0.01846214700344717,
+                        "image": 
