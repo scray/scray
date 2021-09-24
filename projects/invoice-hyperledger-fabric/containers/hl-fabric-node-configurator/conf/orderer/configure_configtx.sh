@@ -63,6 +63,6 @@ yq w -i $CONFIGTX_TMP --style=double  "Organizations[0].Policies.Endorsement.Rul
 
 #yq w -i $CONFIGTX_TMP "Organizations[0].AnchorPeers[0].Port" $PORT
 
-yq w -i $CONFIGTX_TMP "Orderer.Addresses" $DOMAINE:7050
+yq w -i $CONFIGTX_TMP "Orderer.Addresses" $DOMAINE:30081
 
 cat $CONFIGTX_TMP 
