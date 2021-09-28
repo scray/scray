@@ -5,7 +5,7 @@
  *
  * Copyright (c) SEEBURGER AG, Germany. All Rights Reserved.
  */
-package com.seeburger.research.seamless.hl_client;
+package org.scray.hyperledger.fabric.example.app;
 
 import org.hyperledger.fabric.gateway.*;
 import org.hyperledger.fabric.sdk.Orderer;
@@ -15,7 +15,6 @@ import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
-import java.util.Properties;
 
 public class ListenOnContractEvents
 {
@@ -121,9 +120,9 @@ public class ListenOnContractEvents
 
         Wallet wallet = Wallets.newFileSystemWallet(walletPath);
         // load a CCP
-//      Path networkConfigPath = Paths.get("C:\\Users\\st.obermeier\\git\\fabric-samples\\test-network\\organizations\\peerOrganizations\\org1.example.com\\connection-org1.yaml");
+//      Path networkConfigPath = Paths.get("C:\\Users\\st.obermeier\\git\\fabric-samples\\test-network\\organizations\\peerOrganizations\\org1.example.com\\connection.yaml");
 
-        Path networkConfigPath = Paths.get(walletPathString + File.separator + "connection-org1.yaml");
+        Path networkConfigPath = Paths.get(walletPathString + File.separator + "connection.yaml");
         System.out.println(networkConfigPath);
         Gateway.Builder builder = Gateway.createBuilder();
         System.out.println("Wallet path: " + walletPathString + "\t" + wallet.list());

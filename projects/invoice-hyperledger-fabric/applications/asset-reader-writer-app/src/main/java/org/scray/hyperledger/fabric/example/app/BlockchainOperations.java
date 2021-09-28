@@ -5,15 +5,13 @@
  *
  * Copyright (c) SEEBURGER AG, Germany. All Rights Reserved.
  */
-package com.seeburger.research.seamless.hl_client;
+package org.scray.hyperledger.fabric.example.app;
 
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.concurrent.TimeoutException;
 
 import org.hyperledger.fabric.gateway.Contract;
-import org.hyperledger.fabric.gateway.ContractException;
 import org.hyperledger.fabric.gateway.Gateway;
 import org.hyperledger.fabric.gateway.Network;
 import org.hyperledger.fabric.gateway.Wallet;
@@ -103,10 +101,8 @@ public class BlockchainOperations
 
 
         Wallet wallet = Wallets.newFileSystemWallet(walletPath);
-        // load a CCP
-//      Path networkConfigPath = Paths.get("C:\\Users\\st.obermeier\\git\\fabric-samples\\test-network\\organizations\\peerOrganizations\\org1.example.com\\connection-org1.yaml");
 
-        Path networkConfigPath = Paths.get(walletPathString + File.separator + "connection-org1.yaml");
+        Path networkConfigPath = Paths.get(walletPathString + File.separator + "connection.yaml");
         System.out.println(networkConfigPath);
         Gateway.Builder builder = Gateway.createBuilder();
         System.out.println("Wallet path: " + walletPathString + "\t" + wallet.list());

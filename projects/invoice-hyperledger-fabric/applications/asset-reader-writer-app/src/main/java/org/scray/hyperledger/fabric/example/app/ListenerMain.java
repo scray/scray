@@ -1,4 +1,4 @@
-package com.seeburger.research.seamless.hl_client;
+package org.scray.hyperledger.fabric.example.app;
 
 public class ListenerMain {
 
@@ -7,7 +7,5 @@ public class ListenerMain {
 
         String assets = op.showChannelInfos("GetAllAssets");
         System.out.println(assets);
-
-
     }
 }

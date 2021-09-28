@@ -5,7 +5,7 @@
  *
  * Copyright (c) SEEBURGER AG, Germany. All Rights Reserved.
  */
-package com.seeburger.research.seamless.hl_client;
+package org.scray.hyperledger.fabric.example.app;
 
 import com.google.gson.Gson;
 

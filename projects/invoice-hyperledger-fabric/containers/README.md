@@ -1,6 +1,6 @@
 ## Hyperledger Fabric Kubernetes peer
 
-## Prequist
+## Prerequisites
 
 ```
 git clone https://github.com/scray/scray.git --branch feature/assure-aks

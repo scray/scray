@@ -1,4 +1,4 @@
-package com.seeburger.research.seamless.hl_client;
+package org.scray.hyperledger.fabric.example.app;
 
 import static org.junit.Assert.assertTrue;
 
