@@ -12,8 +12,8 @@
       "url" : "http://www.apache.org/licenses/LICENSE-2.0.html"
     }
   },
-  "host" : "localhost",
-  "basePath" : "/hyperledger-fabric-invoice-example/1.0.0",
+  "host" : "virtserver.swaggerhub.com",
+  "basePath" : "/obermeier5/hyperledger_fabric_invoice_example/1.0.0",
   "tags" : [ {
     "name" : "admins",
     "description" : "Secured Admin-only calls"

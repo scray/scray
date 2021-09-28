@@ -1,35 +1,36 @@
 package org.scray.projects.hyperledger_fabric.invoice_service.api.impl;
 
-import java.io.File;
-import java.io.IOException;
+import org.scray.projects.hyperledger_fabric.invoice_service.BasicConfigParameters;
+import org.scray.projects.hyperledger_fabric.invoice_service.HFabricConnection;
+import org.scray.projects.hyperledger_fabric.invoice_service.api.*;
+import org.scray.projects.hyperledger_fabric.invoice_service.model.*;
+
+import org.scray.projects.hyperledger_fabric.invoice_service.model.Invoice;
+
+import java.util.List;
 import java.util.concurrent.TimeoutException;
+
+import org.scray.projects.hyperledger_fabric.invoice_service.api.NotFoundException;
+import org.scray.projects.hyperledger_fabric.invoice_service.mapper.HFabricMapper;
+
+import java.io.InputStream;
+
+import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
+import org.hyperledger.fabric.gateway.Contract;
+import org.hyperledger.fabric.gateway.ContractException;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
-
-import org.hyperledger.fabric.gateway.Contract;
-import org.hyperledger.fabric.gateway.ContractException;
-import org.scray.projects.hyperledger_fabric.invoice_service.BasicConfigParameters;
-import org.scray.projects.hyperledger_fabric.invoice_service.ConfigFileLoader;
-import org.scray.projects.hyperledger_fabric.invoice_service.HFabricConnection;
-import org.scray.projects.hyperledger_fabric.invoice_service.api.ApiResponseMessage;
-import org.scray.projects.hyperledger_fabric.invoice_service.api.InvoiceApiService;
-import org.scray.projects.hyperledger_fabric.invoice_service.api.NotFoundException;
-import org.scray.projects.hyperledger_fabric.invoice_service.mapper.HFabricMapper;
-import org.scray.projects.hyperledger_fabric.invoice_service.model.Invoice;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import javax.validation.constraints.*;
 
 @javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaJerseyServerCodegen", date = "2020-09-07T22:23:20.829+02:00[Europe/Berlin]")
 public class InvoiceApiServiceImpl extends InvoiceApiService {
 
-    private HFabricMapper mapper = null;
+    HFabricMapper mapper = null;
     private BasicConfigParameters parms = null;
 
     public InvoiceApiServiceImpl(BasicConfigParameters parms) {
-    	parms = ConfigFileLoader.readFromFile();
-        this.parms = parms;        
+        this.parms = parms;
     }
     
     private void initMapper() {

@@ -12,17 +12,17 @@ import org.hyperledger.fabric.gateway.Wallets;
 public class HFabricConnection {
 
 	private Contract contract = null;
-	private BasicConfigParameters parmas = null;
+	private BasicConfigParameters parmas =  null;
+	
+	
 
 	public HFabricConnection(BasicConfigParameters parmas) {
-		super();
-		this.parmas = parmas;
-	}
+        super();
+        this.parmas = parmas;
+    }
 
-	public void createConnectionInvoceContract() throws Exception {
-		
-		createUserAndWallet(parmas);
-		
+
+    public void createConnectionInvoceContract() throws Exception {
 		Gateway gateway = connect();
 
 		// get the network and contract
@@ -30,16 +30,16 @@ public class HFabricConnection {
 		Contract contract = network.getContract("basic");
 
 		this.contract = contract;
-
 	}
-
+	
+	
 	public Contract getInvoiceLectureConnection() throws Exception {
-		if (contract != null) {
+		if(contract != null) {
 			return contract;
 		} else {
 			this.createConnectionInvoceContract();
-
-			if (contract != null) {
+			
+			if(contract != null) {
 				return contract;
 			} else {
 				System.out.println("Unable to connect to ledger");
@@ -48,20 +48,8 @@ public class HFabricConnection {
 		}
 	}
 
-	private void createUserAndWallet(BasicConfigParameters params) {
-
-		// enrolls the admin and registers the user
-		try {
-			EnrollAdmin.main(null, params);
-			RegisterUser.main(null, params);
-		} catch (Exception e) {
-			System.err.println(e);
-		}
-	}
-
 	// helper function for getting connected to the gateway
 	private Gateway connect() throws Exception {
-
 		// Load a file system based wallet for managing identities.
 		Path walletPath = Paths.get("wallet");
 		Wallet wallet = Wallets.newFileSystemWallet(walletPath);

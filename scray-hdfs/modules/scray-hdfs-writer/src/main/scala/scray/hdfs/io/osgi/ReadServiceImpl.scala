@@ -156,6 +156,19 @@ class ReadServiceImpl extends ReadService {
     this.removeReader(id)
   }
 
+  override def closeAll(): Unit = {
+    // Close raw file writer
+    val readerKeySet = reader.keySet().iterator()
+    while (readerKeySet.hasNext()) {
+      try {
+        reader.get(readerKeySet.next())
+        reader.remove(readerKeySet.next())
+      } catch {
+        case e: Exception => logger.error(s"Error while closing writer")
+      }
+    }
+  }
+
   private def getReader(resource: UUID): SequenceKeyValueFileReader[Writable, Writable] = {
     if (sequenceFileReaderMetadata.get(resource) != null) {
       sequenceFileReaderMetadata.get(resource)

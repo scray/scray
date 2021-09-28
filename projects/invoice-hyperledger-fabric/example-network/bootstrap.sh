@@ -6,9 +6,14 @@ function installHyperledgerTestNework() {
 	  exit 1
 	fi
 	
-	curl -sSL https://raw.githubusercontent.com/hyperledger/fabric/release-2.2/scripts/bootstrap.sh | bash -s
+	curl -sSL https://raw.githubusercontent.com/hyperledger/fabric/release-2.2/scripts/bootstrap.sh | bash -s	
 }
 
+
+function createCLIContainer() {
+	docker-compose -f scray/projects/invoice-hyperledger-fabric/containers/docker-compose-test-network-cli.yaml  up -d
+	docker exec  Org3cli /bin/bash /opt/scray/scripts/inform_existing_nodes.sh 192.168.55.1
+}
 
 function getScrayChaincode() {
 	if ! [ -x "$(command -v git)" ]; then
@@ -21,7 +26,7 @@ function getScrayChaincode() {
 
 function setupExampleLedger() {
 	cd fabric-samples/test-network
-	./network.sh up createChannel -ca -s couchdb
+	./network.sh up createChannel
 	# ./network.sh up createChannel -ca -s couchdb
 	./network.sh deployCC -ccn scray-invoice-example -ccl java -ccp $BASE_DIR/scray/projects/invoice-hyperledger-fabric/chaincode/invoice/java
 }
