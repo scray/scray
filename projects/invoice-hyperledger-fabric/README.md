@@ -4,7 +4,7 @@ This project uses the [Hyperledger Fabric](https://www.hyperledger.org/use/fabri
 It 'kubernetze' Hyperledger Fabric components like the 
 * [Ordering Service](containers/orderer/README.md), 
 * [Peer Nodes](containers/README.md), 
-* [External Smart Contracts]((chaincode/chaincode-external/README.md)) 
+* [External Smart Contracts](chaincode/chaincode-external/README.md)  
 
 and provides tooling to interact with the blockchain network.  
 With features like:
