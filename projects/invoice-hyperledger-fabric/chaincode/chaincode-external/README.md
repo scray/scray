@@ -87,10 +87,3 @@ kubectl exec --stdin --tty $PEER_POD -c scray-peer-cli -- /bin/sh /mnt/conf/peer
 ```
 kubectl exec --stdin --tty $PEER_POD -c scray-peer-cli -- /bin/sh /mnt/conf/peer/get-my-invoices.sh  $CHANNEL_NAME $INVOICE_ID
 ```
-
-### Start in DEBUG mode
-
-```
-kubectl  exec --stdin --tty invoice-chaincode-external-...  -- /bin/sh
-chaincode-external
-```

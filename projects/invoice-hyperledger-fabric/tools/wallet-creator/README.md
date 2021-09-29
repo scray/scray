@@ -29,12 +29,4 @@
 * ```
   ./cert-creator.sh push_crt --common-name otto --shared-fs-host kubernetes.research.dev.seeburger.de:30080
   ````
-* GOTO App side  
-
-
-### Connection description
-
-```
- cat /mnt/conf/organizations/peerOrganizations/kubernetes.research.dev.seeburger.de/tlsca/tlsca.kubernetes.research.dev.seeburger.de-cert.pem
-GOSSIP_PORT=$(kubectl get service $PEER_NAME -o jsonpath="{.spec.ports[?(@.name=='peer-listen')].nodePort}")
-```
+* GOTO App side
