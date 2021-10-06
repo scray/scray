@@ -2,4 +2,7 @@
 *.zip
 *.swap
 .gradle/
+*.csr
+*.crt
+*.id
 scripts/channel-artifacts/

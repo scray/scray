@@ -59,11 +59,10 @@ yq w -i $CONFIGTX_TMP --style=double  "Organizations[0].Policies.Admins.Rule" ${
 defaultEndorsementRule="OR('${ORG_MSP_NAME}.peer')"
 yq w -i $CONFIGTX_TMP --style=double  "Organizations[0].Policies.Endorsement.Rule" ${defaultEndorsementRule}
 
-echo FFFFFFFFf
 #yq w -i $CONFIGTX_TMP "Organizations[0].AnchorPeers[0].Host" $DOMAINE
 
 #yq w -i $CONFIGTX_TMP "Organizations[0].AnchorPeers[0].Port" $PORT
 
-yq w -i $CONFIGTX_TMP "Orderer.Addresses" $DOMAINE:7050
+yq w -i $CONFIGTX_TMP "Orderer.Addresses" $DOMAINE:30081
 
 cat $CONFIGTX_TMP 

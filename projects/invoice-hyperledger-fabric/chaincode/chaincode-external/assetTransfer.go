@@ -5,6 +5,7 @@ SPDX-License-Identifier: Apache-2.0
 package main
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -26,11 +27,9 @@ type SmartContract struct {
 
 // Asset describes basic details of what makes up a simple asset
 type Asset struct {
-	ID             string `json:"ID"`
-	Color          string `json:"color"`
-	Size           int    `json:"size"`
-	Owner          string `json:"owner"`
-	AppraisedValue int    `json:"appraisedValue"`
+	ID           string `json:"ID"`
+	InvoiceOwner string `json:"InvoiceOwner"`
+	ProductBuyer string `json:"ProductByer"`
 }
 
 // QueryResult structure used for handling result of query
@@ -41,13 +40,17 @@ type QueryResult struct {
 
 // InitLedger adds a base set of cars to the ledger
 func (s *SmartContract) InitLedger(ctx contractapi.TransactionContextInterface) error {
+
+	println("Init ledger" + ctx.GetStub().GetChannelID())
+
+	// Get ID of submitting client identity
+	clientID, err := s.GetSubmittingClientIdentity(ctx)
+	if err != nil {
+		return err
+	}
+
 	assets := []Asset{
-		{ID: "asset1", Color: "blue", Size: 5, Owner: "Tomoko", AppraisedValue: 300},
-		{ID: "asset2", Color: "red", Size: 5, Owner: "Brad", AppraisedValue: 400},
-		{ID: "asset3", Color: "green", Size: 10, Owner: "Jin Soo", AppraisedValue: 500},
-		{ID: "asset4", Color: "yellow", Size: 10, Owner: "Max", AppraisedValue: 600},
-		{ID: "asset5", Color: "black", Size: 15, Owner: "Adriana", AppraisedValue: 700},
-		{ID: "asset6", Color: "white", Size: 15, Owner: "Michel", AppraisedValue: 800},
+		{ID: "invoice1", InvoiceOwner: clientID, ProductBuyer: clientID},
 	}
 
 	for _, asset := range assets {
@@ -66,7 +69,8 @@ func (s *SmartContract) InitLedger(ctx contractapi.TransactionContextInterface) 
 }
 
 // CreateAsset issues a new asset to the world state with given details.
-func (s *SmartContract) CreateAsset(ctx contractapi.TransactionContextInterface, id, color string, size int, owner string, appraisedValue int) error {
+func (s *SmartContract) CreateAsset(ctx contractapi.TransactionContextInterface, id string, productBuyer string) error {
+
 	exists, err := s.AssetExists(ctx, id)
 	if err != nil {
 		return err
@@ -74,14 +78,20 @@ func (s *SmartContract) CreateAsset(ctx contractapi.TransactionContextInterface,
 	if exists {
 		return fmt.Errorf("the asset %s already exists", id)
 	}
-	asset := Asset{
-		ID:             id,
-		Color:          color,
-		Size:           size,
-		Owner:          owner,
-		AppraisedValue: appraisedValue,
+
+	// Get ID of submitting client identity
+	clientID, err := s.GetSubmittingClientIdentity(ctx)
+	if err != nil {
+		return err
 	}
 
+	println("Buyer:   " + productBuyer)
+
+	asset := Asset{
+		ID:           id,
+		InvoiceOwner: clientID,
+		ProductBuyer: productBuyer,
+	}
 	assetJSON, err := json.Marshal(asset)
 	if err != nil {
 		return err
@@ -92,6 +102,7 @@ func (s *SmartContract) CreateAsset(ctx contractapi.TransactionContextInterface,
 
 // ReadAsset returns the asset stored in the world state with given id.
 func (s *SmartContract) ReadAsset(ctx contractapi.TransactionContextInterface, id string) (*Asset, error) {
+
 	assetJSON, err := ctx.GetStub().GetState(id)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read from world state. %s", err.Error())
@@ -106,7 +117,17 @@ func (s *SmartContract) ReadAsset(ctx contractapi.TransactionContextInterface, i
 		return nil, err
 	}
 
-	return &asset, nil
+	// Get ID of submitting client identity
+	clientID, err := s.GetSubmittingClientIdentity(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	if clientID == asset.InvoiceOwner || clientID == asset.ProductBuyer {
+		return &asset, nil
+	} else {
+		return nil, fmt.Errorf("Only InvoiceOwner or ProductBuyer are allow to read this invoice ")
+	}
 }
 
 // UpdateAsset updates an existing asset in the world state with provided parameters.
@@ -121,11 +142,7 @@ func (s *SmartContract) UpdateAsset(ctx contractapi.TransactionContextInterface,
 
 	// overwritting original asset with new asset
 	asset := Asset{
-		ID:             id,
-		Color:          color,
-		Size:           size,
-		Owner:          owner,
-		AppraisedValue: appraisedValue,
+		ID: id,
 	}
 
 	assetJSON, err := json.Marshal(asset)
@@ -166,7 +183,17 @@ func (s *SmartContract) TransferAsset(ctx contractapi.TransactionContextInterfac
 		return err
 	}
 
-	asset.Owner = newOwner
+	// Get ID of submitting client identity
+	clientID, err := s.GetSubmittingClientIdentity(ctx)
+	if err != nil {
+		return err
+	}
+
+	if clientID != asset.InvoiceOwner {
+		return fmt.Errorf("submitting client not authorized to send invoice")
+	}
+
+	asset.InvoiceOwner = newOwner
 	assetJSON, err := json.Marshal(asset)
 	if err != nil {
 		return err
@@ -177,6 +204,12 @@ func (s *SmartContract) TransferAsset(ctx contractapi.TransactionContextInterfac
 
 // GetAllAssets returns all assets found in world state
 func (s *SmartContract) GetAllAssets(ctx contractapi.TransactionContextInterface) ([]QueryResult, error) {
+
+	clientID, err := s.GetSubmittingClientIdentity(ctx)
+	if err != nil {
+		println("Unable to get clientID")
+	}
+
 	// range query with empty string for startKey and endKey does an open-ended query of all assets in the chaincode namespace.
 	resultsIterator, err := ctx.GetStub().GetStateByRange("", "")
 
@@ -200,11 +233,32 @@ func (s *SmartContract) GetAllAssets(ctx contractapi.TransactionContextInterface
 			return nil, err
 		}
 
-		queryResult := QueryResult{Key: queryResponse.Key, Record: &asset}
-		results = append(results, queryResult)
+		if clientID == asset.InvoiceOwner || clientID == asset.ProductBuyer {
+			queryResult := QueryResult{Key: queryResponse.Key, Record: &asset}
+			results = append(results, queryResult)
+
+		} else {
+			println("Client id" + clientID + " Is has not the permission to read this invoice. Issuer and owner are allowd to see this invoice")
+			println("Asset ID: " + asset.ID)
+			println("Expcted owner: " + asset.InvoiceOwner + " OR ")
+			println("Expcted product buyer: " + asset.ProductBuyer)
+		}
 	}
 
 	return results, nil
+}
+
+func (s *SmartContract) GetSubmittingClientIdentity(ctx contractapi.TransactionContextInterface) (string, error) {
+
+	b64ID, err := ctx.GetClientIdentity().GetID()
+	if err != nil {
+		return "", fmt.Errorf("Failed to read clientID: %v", err)
+	}
+	decodeID, err := base64.StdEncoding.DecodeString(b64ID)
+	if err != nil {
+		return "", fmt.Errorf("failed to base64 decode clientID: %v", err)
+	}
+	return string(decodeID), nil
 }
 
 func main() {

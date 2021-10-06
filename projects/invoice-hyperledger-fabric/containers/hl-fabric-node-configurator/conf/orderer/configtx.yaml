@@ -42,7 +42,7 @@ Organizations:
                 Rule: "OR('OrdererMSP.admin')"
 
         OrdererEndpoints:
-            - orderer.example.com:7050
+            - orderer.example.com:30081
 
     - &AdminOrg
         # DefaultOrg defines the organization which is used in the sampleconfig
@@ -259,12 +259,12 @@ Orderer: &OrdererDefaults
     # as TLS validation.  The preferred way to specify orderer addresses is now
     # to include the OrdererEndpoints item in your org definition
     Addresses:
-        - orderer.example.com:7050
+        - orderer.example.com:30081
 
     EtcdRaft:
         Consenters:
         - Host: orderer.example.com
-          Port: 7050
+          Port: 30081 
           ClientTLSCert: ./organizations/ordererOrganizations/example.com/orderers/orderer.example.com/tls/server.crt
           ServerTLSCert: ./organizations/ordererOrganizations/example.com/orderers/orderer.example.com/tls/server.crt
 

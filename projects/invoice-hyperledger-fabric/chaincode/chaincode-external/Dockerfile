@@ -1,4 +1,4 @@
-# Copyright IBM Corp. All Rights Reserved.
+ # Copyright IBM Corp. All Rights Reserved.
 #
 # SPDX-License-Identifier: Apache-2.0
 
@@ -14,4 +14,5 @@ RUN go get -d -v ./...
 RUN go install -v ./...
 
 EXPOSE 9999
-CMD ["chaincode-external"]
+# CMD ["chaincode-external"]
+CMD ["sh", "-c", "chaincode-external; tail -f /dev/null"]

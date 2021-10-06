@@ -136,6 +136,7 @@ class WriteServiceImpl extends WriteService {
       }
 
       rawFileWriter.get(writerId).write(path, data)
+      rawFileWriter.remove(writerId)
       new ScrayListenableFuture(new WriteResult("Wrote file successfully"))
     } catch {
       case e: Exception => {
@@ -172,6 +173,7 @@ class WriteServiceImpl extends WriteService {
   def close(resource: UUID) = synchronized {
     try {
       writersMetadata.get(resource).close
+      writersMetadata.remove(resource)
 
       val result = SettableFuture.create[WriteResult]()
       result.set(new WriteResult("Data inserted"))
@@ -212,8 +214,9 @@ class WriteServiceImpl extends WriteService {
     while (rawWriterKeySet.hasNext()) {
       try {
         rawFileWriter.get(rawWriterKeySet.next()).close
+        rawFileWriter.remove(rawWriterKeySet.next())
       } catch {
-        case e: Exception => logger.error(s"Error while closing writer")
+        case e: Exception => logger.error(s"Error while closing writer: " + e )
       }
     }
 
@@ -224,8 +227,9 @@ class WriteServiceImpl extends WriteService {
 
       try {
         writer.close
+        writersMetadata.remove(keysOfWriter.next())
       } catch {
-        case e: Exception => logger.error(s"Error while closing writer ${writer}")
+        case e: Exception => logger.error(s"Error while closing writer ${writer}. Exception: ${e}")
       }
 
     }

@@ -6,9 +6,11 @@ ORDERER_HOSTNAME=$2
 ORDERER_PORT=$3
 CHANNEL_NAME=$4
 SHARED_FS_HOST=$5
+EXTERNAL_IP=$6
 
 echo $ORDERER_IP $ORDERER_HOSTNAME >> /etc/hosts
-echo $(dig +short $HOSTNAME) peer0.${HOSTNAME} >> /etc/hosts
+# echo $(dig +short $HOSTNAME) peer0.${HOSTNAME} >> /etc/hosts
+echo $EXTERNAL_IP peer0.${HOSTNAME} >> /etc/hosts
 
 # Download orderer CA
 SHARED_FS_USER=scray
@@ -23,6 +25,3 @@ export CORE_PEER_ADDRESS=$CORE_PEER_ADDRESS
 
 peer channel fetch 0 mychannel.block -o $ORDERER_HOSTNAME:$ORDERER_PORT -c $CHANNEL_NAME --tls --cafile $ORDERER_CA
 peer channel join -b mychannel.block
-
-export CORE_PEER_MSPCONFIGPATH=/mnt/conf/organizations/peerOrganizations/$HOSTNAME/users/User1@$HOSTNAME/msp/
-peer channel getinfo -c $CHANNEL_NAME

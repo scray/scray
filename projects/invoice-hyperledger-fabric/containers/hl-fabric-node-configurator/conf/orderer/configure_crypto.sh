@@ -8,10 +8,6 @@ YQ_VERSON=4.4.1
 DEBUG=false
 
 
-echo "FFFFFFFfss" "${BASH_SOURCE[0]}"
-echo "ssss "  $BASE_PATH
-
-
 yq() {
   $BASE_PATH/bin/yq-${YQ_VERSON} $1 $2 $3 $4 $5
 }

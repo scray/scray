@@ -28,7 +28,7 @@ spec:
             - name: ORDERER_GENERAL_LISTENADDRESS
               value: "0.0.0.0"
             - name: ORDERER_GENERAL_LISTENPORT
-              value: "7050"
+              value: "30081"
             - name: ORDERER_GENERAL_GENESISMETHOD
               value: "file"
             - name: ORDERER_GENERAL_GENESISFILE
@@ -61,6 +61,7 @@ spec:
               value: "[/var/hyperledger/orderer/tls/ca.crt]"
             - name: ORDERER_GENERAL_CLUSTER_CLIENTCERTIFICATE
               value: "/var/hyperledger/orderer/tls/server.crt"
+            - name: CONFIGTX_ORDERER_ADDRESSES
           volumeMounts:
             - name: orderer-conf
               mountPath: /var/hyperledger/orderer/orderer.genesis.block
@@ -117,7 +118,7 @@ spec:
               subPath: conf/admin/organizations/peerOrganizations/adminorg.fabric.hyperledger.projects.scray.org/ca/ca.adminorg.fabric.hyperledger.projects.scray.org-cert.pem
       initContainers:
         - name: cert-creator
-          image: scrayorg/hl-fabric-node-configurator:1.1 
+          image: scrayorg/hl-fabric-node-configurator:1.1
           imagePullPolicy: Always
           env:
             - name: HOSTNAME
