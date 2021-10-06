@@ -3,7 +3,7 @@
 ## Prerequisites
 
 ```
-git clone https://github.com/scray/scray.git --branch feature/assure-aks
+git clone https://github.com/scray/scray.git
 cd scray/projects/invoice-hyperledger-fabric/containers
 kubectl apply -f k8s-hl-fabric-data-share.yaml
 ```
