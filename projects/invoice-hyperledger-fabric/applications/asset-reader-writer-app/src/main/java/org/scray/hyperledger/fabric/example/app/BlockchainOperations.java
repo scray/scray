@@ -92,8 +92,6 @@ public class BlockchainOperations
         return data;
     }
 
-
-
     // helper function for getting connected to the gateway
     public Gateway connect(String userName) throws Exception{
         // Load a file system based wallet for managing identities.
