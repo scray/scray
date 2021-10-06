@@ -75,7 +75,7 @@ kubectl create configmap hl-fabric-peer-$PEER_NAME \
   ```
   
 
-### Addorse new peer data [add to mychannel]:
+### Endorse new peer data [add to mychannel]:
 ```
 ORDERER_POD=$(kubectl get pod -l app=orderer-org1-scray-org -o jsonpath="{.items[0].metadata.name}")
 kubectl exec --stdin --tty $ORDERER_POD -c scray-orderer-cli  -- /bin/sh /mnt/conf/orderer/scripts/inform_existing_nodes.sh $ORDERER_IP $CHANNEL_NAME $PEER_NAME $SHARED_FS_HOST $EXT_PEER_IP $PEER_HOST_NAME
