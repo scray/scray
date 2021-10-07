@@ -1,7 +1,7 @@
 #!/bin/bash
 
 REPO_URL=$1
-VERISON=1.1
+VERISON=1.2
 
 pushDockerHub() {
 	echo "$DOCKER_TOKEN" | docker login -u "$DOCKER_USERNAME" --password-stdin
