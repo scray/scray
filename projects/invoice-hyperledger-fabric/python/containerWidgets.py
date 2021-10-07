@@ -5,7 +5,7 @@
 
 
 # widgets Tool
-
+ 
 import ipywidgets as widgets
 from IPython.display import clear_output
 from IPython.display import Javascript, display
