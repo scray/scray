@@ -16,13 +16,8 @@
   az deployment group create   --name Scray-Blockchain-Test   --resource-group Scray-Blockchain-Test   --template-file aks-template.json
   ```
 
+## Access cluster 
 * Get kubernetes credentials
   ```
   az aks get-credentials --overwrite-existing  --resource-group Scray-Blockchain-Test --name Scray-Blockchain-Test
   ```
-
-## Uninstall Template
-
-```
-az deployment group delete   --name ExampleDeployment   --resource-group Scray-Blockchain-Test
-```
