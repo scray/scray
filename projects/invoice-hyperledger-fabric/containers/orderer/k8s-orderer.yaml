@@ -118,7 +118,7 @@ spec:
               subPath: conf/admin/organizations/peerOrganizations/adminorg.fabric.hyperledger.projects.scray.org/ca/ca.adminorg.fabric.hyperledger.projects.scray.org-cert.pem
       initContainers:
         - name: cert-creator
-          image: scrayorg/hl-fabric-node-configurator:1.1
+          image: scrayorg/hl-fabric-node-configurator:1.2
           imagePullPolicy: Always
           env:
             - name: HOSTNAME

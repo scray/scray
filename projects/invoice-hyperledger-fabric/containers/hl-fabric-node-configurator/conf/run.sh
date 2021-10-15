@@ -1,4 +1,3 @@
-#!/bin/bash
 
 INPUT_PARAMETERS=$@
 DOMAINE=org1.fabric.hyperledger.projects.scray.org

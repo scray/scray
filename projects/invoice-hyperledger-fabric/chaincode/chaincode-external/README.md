@@ -16,7 +16,7 @@ EXT_PEER_IP=10.14.128.38
 
 ```
 ORDERER_PORT=$(kubectl get service orderer-org1-scray-org -o jsonpath="{.spec.ports[?(@.name=='orderer-listen')].nodePort}")
-ORDERER_PORT=7050
+ORDERER_PORT=30081
 ORDERER_IP=$(kubectl get pods  -l app=orderer-org1-scray-org -o jsonpath='{.items[*].status.podIP}')
 kubectl exec --stdin --tty $PEER_POD -c scray-peer-cli -- /bin/sh /mnt/conf/install_and_approve_cc.sh $IP_CC_SERVICE $ORDERER_IP $ORDERER_HOST $ORDERER_PORT $CHANNEL_NAME 
 ```

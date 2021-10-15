@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: webdav
-          image: bytemark/webdav
+          image: bytemark/webdav:2.4
           env:
           - name: AUTH_TYPE
             value: "Basic"

@@ -1,16 +1,16 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[1]:
+# In[2]:
 
 
 import pandas as pd
 pd.set_option('display.max_rows', 500)
-invoices = pd.read_parquet('/home/jovyan/work/invoices_facturx.parquet')
+invoices = pd.read_parquet('./invoices_facturx.parquet')
 invoices = invoices['supplyChainTradeTransaction']
 
 
-# In[2]:
+# In[4]:
 
 
 #import numpy.ndarray
@@ -138,7 +138,7 @@ def freeze(d):
     return d            
 
 
-# In[3]:
+# In[5]:
 
 
 
@@ -195,7 +195,7 @@ def addChildsElement(r,hideUnused=False):
         
 
 
-# In[1]:
+# In[6]:
 
 
 import ipywidgets as widgets
