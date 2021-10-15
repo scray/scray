@@ -4,5 +4,6 @@
 .gradle/
 *.csr
 *.crt
+*.pem
 *.id
 scripts/channel-artifacts/

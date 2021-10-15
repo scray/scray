@@ -1,3 +1,4 @@
+---
 ################################################################################
 #
 #   Section: Organizations
@@ -7,29 +8,33 @@
 #
 ################################################################################
 Organizations:
-  - &2
-    # DefaultOrg defines the organization which is used in the sampleconfig
-    # of the fabric.git development environment
-    Name: 2MSP
-    # ID to load the MSP definition as
-    ID: 2MSP
-    MSPDir: organizations/peerOrganizations/1/msp
-    Policies:
-      Readers:
-        Type: Signature
-        Rule: "OR('2MSP.admin', '2MSP.peer', '2MSP.client')"
-      Writers:
-        Type: Signature
-        Rule: "OR('2MSP.admin', '2MSP.client')"
-      Admins:
-        Type: Signature
-        Rule: "OR('2MSP.admin')"
-      Endorsement:
-        Type: Signature
-        Rule: "OR('2MSP.peer')"
-    AnchorPeers:
-      # AnchorPeers defines the location of peers which can be used
-      # for cross org gossip communication.  Note, this value is only
-      # encoded in the genesis block in the Application section context
-      - Host: 1
-        Port: 30001
+    - &OrgScrayMSP
+        # DefaultOrg defines the organization which is used in the sampleconfig
+        # of the fabric.git development environment
+        Name: OrgScrayMSPMSP
+
+        # ID to load the MSP definition as
+        ID: OrgScrayMSPMSP
+
+        MSPDir: organizations/peerOrganizations/org1.fabric.hyperledger.projects.scray.org/msp
+
+        Policies:
+            Readers:
+                Type: Signature
+                Rule: "OR('OrgScrayMSPMSP.admin', 'OrgScrayMSPMSP.peer', 'OrgScrayMSPMSP.client')"
+            Writers:
+                Type: Signature
+                Rule: "OR('OrgScrayMSPMSP.admin', 'OrgScrayMSPMSP.client')"
+            Admins:
+                Type: Signature
+                Rule: "OR('OrgScrayMSPMSP.admin')"
+            Endorsement:
+                Type: Signature
+                Rule: "OR('OrgScrayMSPMSP.peer')"
+
+        AnchorPeers:
+            # AnchorPeers defines the location of peers which can be used
+            # for cross org gossip communication.  Note, this value is only
+            # encoded in the genesis block in the Application section context
+            - Host: org1.fabric.hyperledger.projects.scray.org 
+              Port: 30001
