@@ -1,9 +1,0 @@
-/conf/organizations/
-*.zip
-*.swap
-.gradle/
-*.csr
-*.crt
-*.pem
-*.id
-scripts/channel-artifacts/
