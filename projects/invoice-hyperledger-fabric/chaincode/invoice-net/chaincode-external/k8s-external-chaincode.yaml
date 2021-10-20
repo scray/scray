@@ -41,5 +41,4 @@ spec:
   ports:
   - name: chaincode 
     port: 9999 
-    nodePort: 30999 
     protocol: TCP
