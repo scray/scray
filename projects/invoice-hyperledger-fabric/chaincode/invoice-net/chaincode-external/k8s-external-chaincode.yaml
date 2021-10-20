@@ -2,21 +2,21 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: invoice-chaincode-external
+  name: invoice-net-chaincode-external
   labels:
-    app: invoice-chaincode-external 
+    app: invoice-net-chaincode-external 
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: invoice-chaincode-external 
+      app: invoice-net-chaincode-external 
   template:
     metadata:
       labels:
-        app: invoice-chaincode-external 
+        app: invoice-net-chaincode-external 
     spec:
       containers:
-        - name: invoice-chaincode-external 
+        - name: invoice-net-chaincode-external 
           image: scrayorg/chaincode-invoice-net 
           imagePullPolicy: Always
           workingDir: /go/src/github.com/hyperledger/fabric-samples/asset-transfer-basic/chaincode-external 
@@ -31,13 +31,13 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: hl-fabric-cc-external-invoice 
+  name: hl-fabric-cc-external-invoice-net 
   labels:
-    run: hl-fabric-cc-external-invoice 
+    run: hl-fabric-cc-external-invoice-net 
 spec:
   type: NodePort
   selector:
-    app: invoice-chaincode-external 
+    app: invoice-net-chaincode-external 
   ports:
   - name: chaincode 
     port: 9999 
