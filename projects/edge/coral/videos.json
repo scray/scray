@@ -35,6 +35,12 @@
                 0.4842592592592593,
                 0.5755208333333334,
                 0.812962962962963
+            ],
+            "Boot": [
+                0.2107728337236534,
+                0.75625,
+                0.6838407494145199,
+                0.9041666666666667
             ]
         }
     },
@@ -227,6 +233,21 @@
     "7BONmOqNL2M": {
         "url": "https://youtu.be/7BONmOqNL2M",
         "title": "【LIVE】東京都 新宿 24時間 ライブカメラ / 西武新宿駅 pepe前広場 交差点 （YUNIKA VISION前） Tokyo Shinjuku Live camera",
+        "location": "",
+        "country": "",
+        "objects": "",
+        "bookmarks": {
+            "reset": [
+                0.0,
+                0.0,
+                1.0,
+                1.0
+            ]
+        }
+    },
+    "W5Hk6pBQ660": {
+        "url": "https://youtu.be/W5Hk6pBQ660",
+        "title": "Ferry Cam - Southampton to Cowes Isle of Wight Red Funnel Ferry VTS Radio (Live Camera 24/7 4K)",
         "location": "",
         "country": "",
         "objects": "",

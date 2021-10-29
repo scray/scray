@@ -4,16 +4,16 @@
         "sources": {
             "class": "LiveVideoSources",
             "parameters": {
-                "filename": "../videos2.json"
+                "filename": "../videos.json"
             }
         },
         "actions": [
             {
                 "class": "VideoAction",
                 "parameters": {
-                    "id": "LJ5wabMQ4Vk",
-                    "index": 0,
-                    "skipframes": 10
+                    "id": "JqUREqYduHw",
+                    "index": 2,
+                    "skipframes": 0
                 }
             },
             {
@@ -24,8 +24,8 @@
                         0.0
                     ],
                     "max": [
-                        1.0,
-                        1.0
+                        0.99375,
+                        0.9916666666666667
                     ],
                     "region": null,
                     "size": null,
@@ -36,8 +36,8 @@
                 "class": "ResizeAction",
                 "parameters": {
                     "size": [
-                        300,
-                        300
+                        640,
+                        380
                     ],
                     "use_w": false,
                     "use_h": false,

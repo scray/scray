@@ -24,8 +24,8 @@
                         0.0
                     ],
                     "max": [
-                        1.0,
-                        1.0
+                        0.99609375,
+                        0.9930555555555556
                     ],
                     "region": null,
                     "size": null,
@@ -36,8 +36,8 @@
                 "class": "ResizeAction",
                 "parameters": {
                     "size": [
-                        300,
-                        300
+                        641,
+                        481
                     ],
                     "use_w": false,
                     "use_h": false,
