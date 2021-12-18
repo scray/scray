@@ -3,7 +3,7 @@
 
 # # ImageWidget
 
-# In[1]:
+# In[5]:
 
 
 import cv2
@@ -70,7 +70,7 @@ class ImageWidget(object):
 
 # ## BaseAction
 
-# In[2]:
+# In[6]:
 
 
 class BaseAction(object):
@@ -116,7 +116,7 @@ class BaseAction(object):
 
 # ## BaseWidget
 
-# In[3]:
+# In[7]:
 
 
 class BaseWidget(object):
@@ -142,7 +142,7 @@ class BaseWidget(object):
 
 # ## TemplateAction
 
-# In[4]:
+# In[8]:
 
 
 class TemplateAction(BaseAction):
@@ -157,7 +157,7 @@ class TemplateAction(BaseAction):
 
 # ## TemplateWidget
 
-# In[5]:
+# In[9]:
 
 
 class TemplateWidget(BaseWidget):
@@ -186,7 +186,7 @@ class TemplateWidget(BaseWidget):
 
 # ## CropAction
 
-# In[6]:
+# In[10]:
 
 
 # input: image, output cropped image
@@ -280,7 +280,7 @@ class CropAction(BaseAction):
 # ## DisplayWidget
 # action: VideoAction (uses only VideoAction)
 
-# In[7]:
+# In[11]:
 
 
 class DisplayWidget(BaseWidget):
@@ -338,7 +338,7 @@ class DisplayWidget(BaseWidget):
 # 
 # abhängig von parent und sources (speichert regions dort)
 
-# In[8]:
+# In[12]:
 
 
 #display(DisplayWidget(action=_crop.videoAction,imageWidget=_imageWidget).hbox)
@@ -502,7 +502,7 @@ class CropWidget(BaseWidget):
             #        self.imageWidget.evaluate(self.result['image'])           
         
     def initMinMax(self,size=None,cropArea = None):
-        print('CropWidget','initMinMax')
+        #print('CropWidget','initMinMax')
         if self.action == None:
             return
         
@@ -584,7 +584,7 @@ class CropWidget(BaseWidget):
 
 # ## ResizeAction
 
-# In[9]:
+# In[13]:
 
 
 ####################### scale
@@ -634,7 +634,7 @@ class ResizeAction(BaseAction):
 
 # ## ResizeWidget
 
-# In[10]:
+# In[14]:
 
 
 class ResizeWidget(BaseWidget):
@@ -688,7 +688,7 @@ class ResizeWidget(BaseWidget):
 
 # ## FileWidget
 
-# In[11]:
+# In[15]:
 
 
 import ipywidgets as widgets
@@ -749,7 +749,7 @@ class FileWidget(BaseWidget):
         del self.sources.videos[self.video_urls.value]
 
 
-# In[12]:
+# In[16]:
 
 
 #fw = FileWidget(filename = '../videos.json', description='pipeline')
@@ -758,7 +758,7 @@ class FileWidget(BaseWidget):
 
 # ## ContrastBrightnessAction
 
-# In[13]:
+# In[17]:
 
 
 class ContrastBrightnessAction(BaseAction):
@@ -853,7 +853,7 @@ class ContrastBrightnessWidget(BaseWidget):
 
 # ## Video Action
 
-# In[14]:
+# In[37]:
 
 
 import pafy
@@ -908,11 +908,15 @@ class VideoAction(BaseAction):
         
     # select stream   
     def _setIndex(self,index):
+        if self.video != None:
+            if index > len (self.video.streams) - 1:
+                index = len (self.video.streams) - 1
+        
         self.index = index
         self._last_state['index'] = index
         
         if self.video != None and self.index != None:
-            #print(self.index)
+            #print(self.index, len(self.video.streams))
             self._stream = self.video.streams[self.index]
             self._capture = cv2.VideoCapture(self._stream.url)
             
@@ -985,7 +989,7 @@ class VideoAction(BaseAction):
 
 # ## TemplateWrapperWidget
 
-# In[15]:
+# In[19]:
 
 
 layout2={'width': '350px'}
@@ -1020,7 +1024,7 @@ class TemplateWrapperWidget(BaseWidget):
 
 # ## LiveVideoSources
 
-# In[16]:
+# In[20]:
 
 
 import json
@@ -1056,7 +1060,7 @@ class LiveVideoSources(BaseAction):
 
 # ## LiveVideoSourcesWidget
 
-# In[59]:
+# In[21]:
 
 
 import ipywidgets as widgets
@@ -1200,7 +1204,7 @@ class LiveVideoSourcesWidget(BaseWidget):
 
 # ## HaltableActionPlayer (-> )
 
-# In[18]:
+# In[22]:
 
 
 import ipywidgets as widgets
@@ -1244,7 +1248,7 @@ class HaltableActionExecutor:
 
 # ## EasyVideoPipeLine
 
-# In[19]:
+# In[23]:
 
 
 def createActionOfDict(adict):
@@ -1276,7 +1280,7 @@ def evaluateActionList(action_list, img):
 #_actions = [CropAction(min=(0,0),max=(1,0.5),mode=1),ResizeAction(size=(900,500))]
 
 
-# In[20]:
+# In[24]:
 
 
 class EasyVideoPipeLine(BaseAction):
@@ -1334,7 +1338,7 @@ class EasyVideoPipeLine(BaseAction):
 
 # ## TabWidget
 
-# In[21]:
+# In[25]:
 
 
 class TabWidget(BaseAction):
@@ -1411,7 +1415,7 @@ class TabWidget(BaseAction):
 
 # ## SimpleApplicationWidget
 
-# In[22]:
+# In[23]:
 
 
 from IPython.display import display
@@ -1467,4 +1471,34 @@ class SimpleApplicationWidget(BaseWidget):
 
     def get_current_pipeline(self):
         return EasyVideoPipeLine(sources=self._tab._widgets[0].sources, actions=self._tab._widgets)
+
+
+# In[51]:
+
+
+import video_actions_v2 as va
+import time, datetime
+from os import listdir
+
+def listdirectory(directory,filter='.'):
+    return [x for x in listdir(directory) if not x.startswith(filter)]
+
+_videos = listdirectory('../data/videos/single')
+
+for _video in _videos:
+    _filename = '../data/videos/single/' + _video
+    #print(_filename)
+    _sources = LiveVideoSources(_filename)
+    _id = list(_sources.videos.keys())[0]
+    _action = VideoAction(sources=_sources, id=_id, index=5)
+    #_action = VideoAction(sources=_sources, id=_id)
+    ts = time.time()
+    asctime = time.asctime().split(' ', 1)[1].replace(' ','-')
+    _action.evaluate()['image'].save('/home/jovyan/work/images/' + _id + '_' + str(_action.index) + '_' + str(ts) + '_' + asctime + '_' + '.png')
+
+
+# In[27]:
+
+
+_action.__dict__
 
