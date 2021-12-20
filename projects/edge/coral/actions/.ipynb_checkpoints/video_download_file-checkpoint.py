@@ -16,12 +16,13 @@ import video_actions_v2 as va
 
 import time, datetime
 from os import listdir
-from sys import argv
+import sys
 
 def listdirectory(directory,filter='.'):
     return [x for x in listdir(directory) if not x.startswith(filter)]
 
-_video_filename = argv
+_video_filename = sys.argv[1]
+print(_video_filename)
 
 #_videos = listdirectory('../data/videos/single')
 #_videos = ['video_Cp4RRAEgpeU.json']
@@ -31,7 +32,7 @@ while True:
     for _video in _videos:
         try:
             _filename = '../data/videos/single/' + _video
-            #print(_filename)
+            print(_filename)
             _sources = va.LiveVideoSources(_filename)
             _id = list(_sources.videos.keys())[0]
             _action = va.VideoAction(sources=_sources, id=_id, index=5)

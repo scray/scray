@@ -853,7 +853,7 @@ class ContrastBrightnessWidget(BaseWidget):
 
 # ## Video Action
 
-# In[24]:
+# In[33]:
 
 
 import pafy
@@ -934,6 +934,10 @@ class VideoAction(BaseAction):
         
     # read next image of current stream    
     def readImage(self):
+        if(self._capture == None):
+            #print(self.index)
+            self.setIndex(self.index)
+        
         self.skipFrames(self.skipframes)
         grabbed, frame = self._capture.read()
         if grabbed == True:
