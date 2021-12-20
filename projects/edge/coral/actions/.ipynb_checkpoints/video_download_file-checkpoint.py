@@ -16,11 +16,16 @@ import video_actions_v2 as va
 
 import time, datetime
 from os import listdir
+from sys import argv
 
 def listdirectory(directory,filter='.'):
     return [x for x in listdir(directory) if not x.startswith(filter)]
 
-_videos = listdirectory('../data/videos/single')
+_video_filename = argv
+
+#_videos = listdirectory('../data/videos/single')
+#_videos = ['video_Cp4RRAEgpeU.json']
+_videos = [_video_filename]
 
 while True:
     for _video in _videos:

@@ -3,7 +3,7 @@
 
 # # ImageWidget
 
-# In[5]:
+# In[2]:
 
 
 import cv2
@@ -70,7 +70,7 @@ class ImageWidget(object):
 
 # ## BaseAction
 
-# In[6]:
+# In[3]:
 
 
 class BaseAction(object):
@@ -116,7 +116,7 @@ class BaseAction(object):
 
 # ## BaseWidget
 
-# In[7]:
+# In[4]:
 
 
 class BaseWidget(object):
@@ -142,7 +142,7 @@ class BaseWidget(object):
 
 # ## TemplateAction
 
-# In[8]:
+# In[5]:
 
 
 class TemplateAction(BaseAction):
@@ -157,7 +157,7 @@ class TemplateAction(BaseAction):
 
 # ## TemplateWidget
 
-# In[9]:
+# In[6]:
 
 
 class TemplateWidget(BaseWidget):
@@ -186,7 +186,7 @@ class TemplateWidget(BaseWidget):
 
 # ## CropAction
 
-# In[10]:
+# In[7]:
 
 
 # input: image, output cropped image
@@ -280,7 +280,7 @@ class CropAction(BaseAction):
 # ## DisplayWidget
 # action: VideoAction (uses only VideoAction)
 
-# In[11]:
+# In[8]:
 
 
 class DisplayWidget(BaseWidget):
@@ -338,7 +338,7 @@ class DisplayWidget(BaseWidget):
 # 
 # abhängig von parent und sources (speichert regions dort)
 
-# In[12]:
+# In[9]:
 
 
 #display(DisplayWidget(action=_crop.videoAction,imageWidget=_imageWidget).hbox)
@@ -584,7 +584,7 @@ class CropWidget(BaseWidget):
 
 # ## ResizeAction
 
-# In[13]:
+# In[10]:
 
 
 ####################### scale
@@ -634,7 +634,7 @@ class ResizeAction(BaseAction):
 
 # ## ResizeWidget
 
-# In[14]:
+# In[11]:
 
 
 class ResizeWidget(BaseWidget):
@@ -688,7 +688,7 @@ class ResizeWidget(BaseWidget):
 
 # ## FileWidget
 
-# In[15]:
+# In[12]:
 
 
 import ipywidgets as widgets
@@ -749,7 +749,7 @@ class FileWidget(BaseWidget):
         del self.sources.videos[self.video_urls.value]
 
 
-# In[16]:
+# In[13]:
 
 
 #fw = FileWidget(filename = '../videos.json', description='pipeline')
@@ -758,7 +758,7 @@ class FileWidget(BaseWidget):
 
 # ## ContrastBrightnessAction
 
-# In[17]:
+# In[14]:
 
 
 class ContrastBrightnessAction(BaseAction):
@@ -853,7 +853,7 @@ class ContrastBrightnessWidget(BaseWidget):
 
 # ## Video Action
 
-# In[37]:
+# In[24]:
 
 
 import pafy
@@ -888,6 +888,7 @@ class VideoAction(BaseAction):
                 self.sources = sources
                 url = self.sources.videos[self.id]['url']   
                 self.video = video = pafy.new(url)     
+                return True
             except Exception as exception: 
                 print('Exception VideoAction init', str(exception))    
                 return False
@@ -989,7 +990,7 @@ class VideoAction(BaseAction):
 
 # ## TemplateWrapperWidget
 
-# In[19]:
+# In[16]:
 
 
 layout2={'width': '350px'}
@@ -1024,7 +1025,7 @@ class TemplateWrapperWidget(BaseWidget):
 
 # ## LiveVideoSources
 
-# In[20]:
+# In[17]:
 
 
 import json
@@ -1060,7 +1061,7 @@ class LiveVideoSources(BaseAction):
 
 # ## LiveVideoSourcesWidget
 
-# In[21]:
+# In[18]:
 
 
 import ipywidgets as widgets
@@ -1188,8 +1189,11 @@ class LiveVideoSourcesWidget(BaseWidget):
         
     def on_video_load_button_clicked(self,b): 
         filename = self.video_filename.value
-        self.sources = LiveVideoSources(filename)
-        self.video_urls.options = self.sources.get_keys()
+        try:
+            self.sources = LiveVideoSources(filename)
+            self.video_urls.options = self.sources.get_keys()
+        except Exception as e:  
+            print('on_video_load_button_clicked:' + filename)
         
     def on_video_save_button_clicked(self,b):
         #global videos
@@ -1204,7 +1208,7 @@ class LiveVideoSourcesWidget(BaseWidget):
 
 # ## HaltableActionPlayer (-> )
 
-# In[22]:
+# In[19]:
 
 
 import ipywidgets as widgets
@@ -1248,7 +1252,7 @@ class HaltableActionExecutor:
 
 # ## EasyVideoPipeLine
 
-# In[23]:
+# In[20]:
 
 
 def createActionOfDict(adict):
@@ -1280,7 +1284,7 @@ def evaluateActionList(action_list, img):
 #_actions = [CropAction(min=(0,0),max=(1,0.5),mode=1),ResizeAction(size=(900,500))]
 
 
-# In[24]:
+# In[21]:
 
 
 class EasyVideoPipeLine(BaseAction):
@@ -1338,7 +1342,7 @@ class EasyVideoPipeLine(BaseAction):
 
 # ## TabWidget
 
-# In[25]:
+# In[22]:
 
 
 class TabWidget(BaseAction):
@@ -1471,34 +1475,4 @@ class SimpleApplicationWidget(BaseWidget):
 
     def get_current_pipeline(self):
         return EasyVideoPipeLine(sources=self._tab._widgets[0].sources, actions=self._tab._widgets)
-
-
-# In[51]:
-
-
-import video_actions_v2 as va
-import time, datetime
-from os import listdir
-
-def listdirectory(directory,filter='.'):
-    return [x for x in listdir(directory) if not x.startswith(filter)]
-
-_videos = listdirectory('../data/videos/single')
-
-for _video in _videos:
-    _filename = '../data/videos/single/' + _video
-    #print(_filename)
-    _sources = LiveVideoSources(_filename)
-    _id = list(_sources.videos.keys())[0]
-    _action = VideoAction(sources=_sources, id=_id, index=5)
-    #_action = VideoAction(sources=_sources, id=_id)
-    ts = time.time()
-    asctime = time.asctime().split(' ', 1)[1].replace(' ','-')
-    _action.evaluate()['image'].save('/home/jovyan/work/images/' + _id + '_' + str(_action.index) + '_' + str(ts) + '_' + asctime + '_' + '.png')
-
-
-# In[27]:
-
-
-_action.__dict__
 

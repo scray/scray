@@ -20,7 +20,8 @@ from os import listdir
 def listdirectory(directory,filter='.'):
     return [x for x in listdir(directory) if not x.startswith(filter)]
 
-_videos = listdirectory('../data/videos/single')
+#_videos = listdirectory('../data/videos/single')
+_videos = ['video_Cp4RRAEgpeU.json']
 
 while True:
     for _video in _videos:
@@ -32,5 +33,6 @@ while True:
         ts = time.time()
         asctime = time.asctime().split(' ', 1)[1].replace(' ','-')
         _action.evaluate()['image'].save('/home/jovyan/work/images/' + _id + '_' + str(_action.index) + '_' + str(ts) + '_' + asctime + '_' + '.png')
+
 
 
