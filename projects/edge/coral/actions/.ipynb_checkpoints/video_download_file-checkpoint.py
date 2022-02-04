@@ -37,7 +37,7 @@ while True:
             _action = va.VideoAction(sources=_sources, id=_id, index=5)
             ts = time.time()
             asctime = time.asctime().split(' ', 1)[1].replace(' ','-')
-            _action.evaluate()['image'].save('/home/jovyan/work/data4/new/' + _id + '_' + str(_action.index) + '_' + str(ts) + '_' + asctime + '_' + '.png')
+            _action.evaluate()['image'].save('/home/jovyan/work/data/new/' + _id + '_' + str(_action.index) + '_' + str(ts) + '_' + asctime + '_' + '.png')
         except Exception as e:   
             pass
 
