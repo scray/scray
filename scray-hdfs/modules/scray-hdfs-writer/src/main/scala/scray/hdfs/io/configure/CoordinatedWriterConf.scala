@@ -15,9 +15,12 @@
 
 package scray.hdfs.io.configure
 
+import org.apache.hadoop.fs.InvalidPathException
 import scray.hdfs.io.write.IHdfsWriterConstats
+
 import java.util.Optional
 import scray.hdfs.io.configure.WriteDestionationConstats.WriteMode
+
 import java.util.Arrays
 
 class CompactionState {}
@@ -151,6 +154,9 @@ object WriteParameter {
     }
 
     def setPath(path: String): Builder = {
+      if(path.contains(" ")) {
+        throw new InvalidPathException(" spaces are not allowed in the path: " + path );
+      }
       this.path = path
       this
     }

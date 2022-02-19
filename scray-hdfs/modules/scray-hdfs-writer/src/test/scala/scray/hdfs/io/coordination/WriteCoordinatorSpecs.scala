@@ -1,20 +1,21 @@
 package scray.hdfs.io.coordination
 
 import java.io.File
-
 import org.scalatest.WordSpec
-
 import com.typesafe.scalalogging.LazyLogging
 import scray.hdfs.io.index.format.sequence.IdxReader
 import scray.hdfs.io.index.format.sequence.ValueFileReader
 import scray.hdfs.io.index.format.sequence.mapping.impl.OutputBlob
-import scray.hdfs.io.write.IHdfsWriterConstats;
+import scray.hdfs.io.write.IHdfsWriterConstats
 
 import java.util.HashMap
 import junit.framework.Assert
+import org.apache.hadoop.fs.InvalidPathException
+
 import java.io.ByteArrayInputStream
 import java.nio.file.Paths
 import scray.hdfs.io.index.format.sequence.mapping.impl.OutputTextText
+
 import java.util.Optional
 import scray.hdfs.io.configure.WriteParameter
 import scray.hdfs.io.configure.Version
@@ -70,6 +71,15 @@ class WriteCoordinatorSpecs extends WordSpec with LazyLogging {
             Assert.assertTrue((new String(data.get)).equals(new String(value)))
           }
         }
+    }
+  }
+  "throw exception if path contains a space " in {
+    try {
+      new (WriteParameter.Builder)
+        .setPath("/tmp/test path/file1.txt")
+    } catch {
+      case e: InvalidPathException => Assert.assertTrue(true)
+      case e: Throwable => Assert.fail("Unexpected exception: " + e.getMessage)
     }
   }
   private def getIndexFiles(path: String): List[String] = {
