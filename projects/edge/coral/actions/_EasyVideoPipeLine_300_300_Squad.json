@@ -1,0 +1,49 @@
+{
+    "class": "EasyVideoPipeLine",
+    "parameters": {
+        "sources": {
+            "class": "LiveVideoSources",
+            "parameters": {
+                "filename": "Squads1.json"
+            }
+        },
+        "actions": [
+            {
+                "class": "VideoAction",
+                "parameters": {
+                    "id": "RSq6zuAEIzs",
+                    "index": 1,
+                    "skipframes": 0
+                }
+            },
+            {
+                "class": "CropAction",
+                "parameters": {
+                    "min": [
+                        0.309375,
+                        0.08333333333333333
+                    ],
+                    "max": [
+                        0.66171875,
+                        0.9916666666666667
+                    ],
+                    "region": null,
+                    "size": null,
+                    "mode": 1
+                }
+            },
+            {
+                "class": "ResizeAction",
+                "parameters": {
+                    "size": [
+                        300,
+                        300
+                    ],
+                    "use_w": false,
+                    "use_h": false,
+                    "algorithm": 1
+                }
+            }
+        ]
+    }
+}
