@@ -1,0 +1,36 @@
+{    
+    "video.mp4": {
+        "url": "video.mp4",
+        "directory": "",
+        "title": "Squad",
+        "location": "",
+        "country": "",
+        "objects": "",
+        "bookmarks": {
+            "reset": [
+                0.0,
+                0.0,
+                1.0,
+                1.0
+            ]
+        }
+    },
+    
+    "other.mp4": {
+        "url": "video.mp4",
+        "directory": "",
+        "title": "Squad",
+        "location": "",
+        "country": "",
+        "objects": "",
+        "bookmarks": {
+            "reset": [
+                0.0,
+                0.0,
+                1.0,
+                1.0
+            ]
+        }
+    }
+    
+}
