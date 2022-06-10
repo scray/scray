@@ -1,0 +1,49 @@
+{
+    "class": "EasyVideoPipeLine",
+    "parameters": {
+        "sources": {
+            "class": "LiveVideoSources",
+            "parameters": {
+                "filename": "../local_videos.json"
+            }
+        },
+        "actions": [
+            {
+                "class": "VideoFileAction",
+                "parameters": {
+                    "id": "video_RSq6zuAEIzs.mp4",
+                    "index": 1,
+                    "skipframes": 0
+                }
+            },
+            {
+                "class": "CropAction",
+                "parameters": {
+                    "min": [
+                        0.309375,
+                        0.08333333333333333
+                    ],
+                    "max": [
+                        0.66171875,
+                        0.9916666666666667
+                    ],
+                    "region": null,
+                    "size": null,
+                    "mode": 1
+                }
+            },
+            {
+                "class": "ResizeAction",
+                "parameters": {
+                    "size": [
+                        641,
+                        481
+                    ],
+                    "use_w": false,
+                    "use_h": false,
+                    "algorithm": 0
+                }
+            }
+        ]
+    }
+}
