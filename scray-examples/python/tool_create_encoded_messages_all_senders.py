@@ -120,17 +120,17 @@ import numpy as np
 import encoder
 from pyspark.sql.functions import col
 
-def encode_columns_spark(columns=None):
+def encode_columns_spark(dataframe=None,columns=None):
     for column in columns:
         global _encoder
-        global df3
-        print (column)
+        #print (column)
         _encoder = encoder.TolerantLabelEncoder(ignore_unknown=True)
         _encoder.classes_ = np.load('/home/jovyan/work/cls/jupyter/npy/' + column + '.npy')
         #dataall[column] = _encoder.transform(dataall[column]) 
         udf_transform = udf(lambda z: transform(z), StringType())
-        df3=df3.withColumn(column, udf_transform(col(column)).cast("Integer"))
+        dataframe=dataframe.withColumn(column, udf_transform(col(column)).cast("Integer"))
         #df3.head()
+    return dataframe
 
 
 # In[ ]:
@@ -147,6 +147,7 @@ def cast_spark_columns(dataframe=None,columns=[],type="int" ):
 
 def process(sender=None, dataframe=None):
     df3 = dataframe.where(f.col("CSENDERENDPOINTID").isin([sender]))
+    df3 = encode_columns_spark(dataframe=df3,columns=columns)
     df3 = df3.withColumn("year", udf_add_year(df3.CSTARTTIME)).withColumn("month", udf_add_month(df3.CSTARTTIME)).withColumn("day", udf_add_day(df3.CSTARTTIME)).withColumn("hour", udf_add_hour(df3.CSTARTTIME)) 
     df3=cast_spark_columns(dataframe=df3, columns=['CSTARTTIME', 'CENDTIME','CINBOUNDSIZE','CSLATAT','CMESSAGETAT2','CSLADELIVERYTIME'], type='long')
     return df3
@@ -155,8 +156,42 @@ def process(sender=None, dataframe=None):
 # In[ ]:
 
 
+np_load_old = np.load
+
+# modify the default parameters of np.load
+np.load = lambda *a,**k: np_load_old(*a, allow_pickle=True, **k)
+
+# restore np.load for future normal usage
+#np.load = np_load_old
+
+
+# In[ ]:
+
+
+#import pyspark.sql.functions as f
+#ender = senders[0]
+#df4 = process(sender=sender,dataframe=df)
+#df4.head()
+
+
+# In[ ]:
+
+
+from os import listdir
+
+def listdirectory(path=None,filter='.'):
+    return [x for x in listdir(path) if not x.startswith(filter)]    
+
+_files = listdirectory(path='/tmp/enc')
+senders = senders[len(_files):]
+
+
+# In[ ]:
+
+
 import pyspark.sql.functions as f
 #sender = senders[0]
+#senders=senders[24:]
 for sender in senders:
     df4 = process(sender=sender,dataframe=df)
     df4.write.mode("overwrite").parquet("/tmp/enc/sla_enc_" + sender + ".parquet")
