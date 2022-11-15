@@ -111,6 +111,7 @@ udf_add_year = udf(lambda z: date(z).date().year, IntegerType())
 udf_add_month = udf(lambda z: date(z).date().month, IntegerType())
 udf_add_day = udf(lambda z: date(z).date().day, IntegerType())
 udf_add_hour = udf(lambda z: date(z).time().hour, IntegerType())
+udf_add_minute = udf(lambda z: date(z).time().minute, IntegerType())
 
 
 # In[ ]:
@@ -142,13 +143,13 @@ def cast_spark_columns(dataframe=None,columns=[],type="int" ):
     return dataframe    
 
 
-# In[ ]:
+# In[1]:
 
 
 def process(sender=None, dataframe=None):
     df3 = dataframe.where(f.col("CSENDERENDPOINTID").isin([sender]))
     df3 = encode_columns_spark(dataframe=df3,columns=columns)
-    df3 = df3.withColumn("year", udf_add_year(df3.CSTARTTIME)).withColumn("month", udf_add_month(df3.CSTARTTIME)).withColumn("day", udf_add_day(df3.CSTARTTIME)).withColumn("hour", udf_add_hour(df3.CSTARTTIME)) 
+    df3 = df3.withColumn("year", udf_add_year(df3.CSTARTTIME)).withColumn("month", udf_add_month(df3.CSTARTTIME)).withColumn("day", udf_add_day(df3.CSTARTTIME)).withColumn("hour", udf_add_hour(df3.CSTARTTIME)).withColumn("minute", udf_add_minute(df3.CSTARTTIME)) 
     df3=cast_spark_columns(dataframe=df3, columns=['CSTARTTIME', 'CENDTIME','CINBOUNDSIZE','CSLATAT','CMESSAGETAT2','CSLADELIVERYTIME'], type='long')
     return df3
 
@@ -194,5 +195,5 @@ import pyspark.sql.functions as f
 #senders=senders[24:]
 for sender in senders:
     df4 = process(sender=sender,dataframe=df)
-    df4.write.mode("overwrite").parquet("/tmp/enc/sla_enc_" + sender + ".parquet")
+    df4.write.mode("overwrite").parquet("/tmp/enc2/sla_enc_" + sender + ".parquet")
 

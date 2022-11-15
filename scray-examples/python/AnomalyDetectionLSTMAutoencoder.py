@@ -106,7 +106,7 @@ def createHeatmap(piv,title="") :
     return ax
 
 
-# In[9]:
+# In[1]:
 
 
 import numpy as np
@@ -121,7 +121,7 @@ from pandas.plotting import register_matplotlib_converters
 from sklearn.preprocessing import StandardScaler
 
 class AnomalyDetectionLSTMAutoencoder():
-    def __init__(self,OUTCOME = 'close', TIME_STEPS = 24):
+    def __init__(self,OUTCOME = 'close', TIME_STEPS = 24, dataframe=None):
         #%matplotlib inline
         #%config InlineBackend.figure_format='retina'
 
@@ -138,28 +138,65 @@ class AnomalyDetectionLSTMAutoencoder():
         np.random.seed(RANDOM_SEED)
         tf.random.set_seed(RANDOM_SEED)
         
+    def initAndTrain_divide(self,pfall1,perc_train):
+        self.df1 = self.createDataframe(pfall1)
+        train, test = self.getTrainAndTest(self.df1,perc_train)
+        self.initAndTrain(train=train, test=test)
+        
+    def initAndTrain(self,train=None, test=None):
+        self.train = train 
+        self.test  = test   
+    
+        self.scaler = StandardScaler()
+        self.scaler = self.scaler.fit(self.train[[self.OUTCOME]])
+        self.train[self.OUTCOME] = self.scaler.transform(self.train[[self.OUTCOME]])
+        self.test[self.OUTCOME] = self.scaler.transform(self.test[[self.OUTCOME]])
+
+        # reshape to [samples, time_steps, n_features]
+
+        self.X_train, self.y_train = self.create_dataset(self.train[[self.OUTCOME]], self.train[[self.OUTCOME]], self.TIME_STEPS)
+        self.X_test, self.y_test = self.create_dataset(self.test[[self.OUTCOME]], self.test[[self.OUTCOME]], self.TIME_STEPS)
+        #print(X_train.shape)
+
+        self.model = self.initmodel(self.X_train)
+
+        history = self.model.fit(
+            self.X_train, self.y_train,
+            epochs=10,
+            batch_size=32,
+            validation_split=0.1,
+            shuffle=False)
+
+        self.X_train_pred = self.model.predict(self.X_train)
+        self.train_mae_loss = np.mean(np.abs(self.X_train_pred - self.X_train), axis=1)                 
+        
+        
     def init_sns(self):
         sns.set(style='whitegrid', palette='muted', font_scale=1.5)
         rcParams['figure.figsize'] = 22, 10  
         
     # setup data (current)
     def createDataframe(self,pfall) :
-        #data3 = createData(pfall,0)
-        #data3 = createData_ymd(pfall,0)
+        
         data3 = pfall
         df = pd.DataFrame()
         OUTCOME = self.OUTCOME
         df[OUTCOME] = data3['outcome']
-        df.set_index(data3['date'], inplace=True)
+        
+        if 'date' in data3.columns:
+            df.set_index(data3['date'], inplace=True)
+        else:
+            df.set_index(data3.index, inplace=True)
         return df
 
     def getTrainAndTest(self,df,TRAIN_SIZE) :
         train_size = int(len(df) * TRAIN_SIZE)
         test_size = len(df) - train_size
         train, test = df.iloc[0:train_size], df.iloc[train_size:len(df)]
-        print("train.shape: ",train.shape, "test.shape: ", test.shape)
+        #print("train.shape: ",train.shape, "test.shape: ", test.shape)
         return train, test
 
+    #def create_dataset(self,X, time_steps=1):
     def create_dataset(self,X, y, time_steps=1):
         Xs, ys = [], []
         for i in range(len(X) - time_steps):
@@ -197,32 +234,6 @@ class AnomalyDetectionLSTMAutoencoder():
         self.test_score_df['anomaly'] = self.test_score_df.loss > self.test_score_df.threshold
         self.anomalies     = self.test_score_df[self.test_score_df.anomaly == True]
     
-    def initAndTrain(self,pfall1,perc_train):
-        self.df1 = self.createDataframe(pfall1)
-        self.train, self.test = self.getTrainAndTest(self.df1,perc_train)
-
-        self.scaler = StandardScaler()
-        self.scaler = self.scaler.fit(self.train[[self.OUTCOME]])
-        self.train[self.OUTCOME] = self.scaler.transform(self.train[[self.OUTCOME]])
-        self.test[self.OUTCOME] = self.scaler.transform(self.test[[self.OUTCOME]])
-
-        # reshape to [samples, time_steps, n_features]
-
-        self.X_train, self.y_train = self.create_dataset(self.train[[self.OUTCOME]], self.train.close, self.TIME_STEPS)
-        self.X_test, self.y_test = self.create_dataset(self.test[[self.OUTCOME]], self.test.close, self.TIME_STEPS)
-        #print(X_train.shape)
-
-        self.model = self.initmodel(self.X_train)
-
-        history = self.model.fit(
-            self.X_train, self.y_train,
-            epochs=10,
-            batch_size=32,
-            validation_split=0.1,
-            shuffle=False)
-
-        self.X_train_pred = self.model.predict(self.X_train)
-        self.train_mae_loss = np.mean(np.abs(self.X_train_pred - self.X_train), axis=1)
 
 
 # In[ ]:
