@@ -5,7 +5,7 @@
 
 # # Main
 
-# In[ ]:
+# In[1]:
 
 
 import dfBasics
@@ -15,14 +15,14 @@ import pfAdapt
 #import charts
 
 
-# In[ ]:
+# In[2]:
 
 
 import pandas as pd
 from pyspark.sql import functions
 
 
-# In[ ]:
+# In[3]:
 
 
 columns = ['CGLOBALMESSAGEID', 'CSTARTTIME', 'CENDTIME', 'CSTATUS', 'CSERVICE',       'CSLABILLINGMONTH', 'CSENDERPROTOCOL', 'CSENDERENDPOINTID',       'CINBOUNDSIZE', 'CRECEIVERPROTOCOL', 'CRECEIVERENDPOINTID', 'CSLATAT',       'CMESSAGETAT2', 'CSLADELIVERYTIME']
@@ -39,13 +39,19 @@ columns = ['CGLOBALMESSAGEID',  'CSTARTTIME', 'CENDTIME', 'CSTATUS', 'CSERVICE',
 #columns = [ 'CSTARTTIME', 'CSENDERENDPOINTID']
 
 
-# In[ ]:
+# In[4]:
 
 
 sparkSession = dfBasics.getSparkSession()
 
 
 # ## work
+
+# In[ ]:
+
+
+df = sparkSession.read.parquet('hdfs://172.30.17.145:8020/sla_sql_data/*/*').select(['CSENDERENDPOINTID']).dropDuplicates() 
+
 
 # In[ ]:
 
