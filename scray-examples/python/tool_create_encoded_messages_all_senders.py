@@ -9,7 +9,7 @@
 
 # # Main
 
-# In[ ]:
+# In[1]:
 
 
 import dfBasics
@@ -19,14 +19,14 @@ import pfAdapt
 #import charts
 
 
-# In[ ]:
+# In[2]:
 
 
 import pandas as pd
 from pyspark.sql import functions
 
 
-# In[ ]:
+# In[7]:
 
 
 columns = ['CGLOBALMESSAGEID', 'CSTARTTIME', 'CENDTIME', 'CSTATUS', 'CSERVICE',       'CSLABILLINGMONTH', 'CSENDERPROTOCOL', 'CSENDERENDPOINTID',       'CINBOUNDSIZE', 'CRECEIVERPROTOCOL', 'CRECEIVERENDPOINTID', 'CSLATAT',       'CMESSAGETAT2', 'CSLADELIVERYTIME']
@@ -43,7 +43,7 @@ columns = ['CGLOBALMESSAGEID',  'CSTARTTIME', 'CENDTIME', 'CSTATUS', 'CSERVICE',
 #columns = [ 'CSTARTTIME', 'CSENDERENDPOINTID']
 
 
-# In[ ]:
+# In[8]:
 
 
 sparkSession = dfBasics.getSparkSession()
@@ -51,14 +51,15 @@ sparkSession = dfBasics.getSparkSession()
 
 # ## encode columns
 
-# In[ ]:
+# In[9]:
 
 
-df = sparkSession.read.parquet("/tmp/sla.parquet")
+#df = sparkSession.read.parquet("/tmp/sla.parquet")
+df = sparkSession.read.parquet('hdfs://172.30.17.145:8020/sla_sql_data/*/*').select(columns).dropDuplicates() 
 #senders = pd.read_parquet('/tmp/senders' + '.parquet', engine='pyarrow')
 
 
-# In[ ]:
+# In[10]:
 
 
 from pyspark.sql.functions import udf
@@ -73,27 +74,29 @@ udf_transform = udf(lambda z: transform(z), StringType())
 #df2 = df2.withColumn("CSENDERENDPOINTID", udf_transform(df2.CSENDERENDPOINTID)) 
 
 
-# In[ ]:
+# In[11]:
 
 
 senders = sparkSession.read.parquet("/tmp/senders.parquet")
 senders = list(senders.toPandas()['CSENDERENDPOINTID'])
 
 
-# In[ ]:
+# In[12]:
 
 
-columns = list(df.limit(1).toPandas().columns)
-columns.remove('CGLOBALMESSAGEID')
-columns.remove('CSLATAT')
-columns.remove('CMESSAGETAT2') 
-columns.remove('CSLADELIVERYTIME')
-columns.remove('CINBOUNDSIZE')
-columns.remove('CSTARTTIME')
-columns.remove('CENDTIME')
+def get_columns(df):
+    columns = list(df.limit(1).toPandas().columns)
+    columns.remove('CGLOBALMESSAGEID')
+    columns.remove('CSLATAT')
+    columns.remove('CMESSAGETAT2') 
+    columns.remove('CSLADELIVERYTIME')
+    columns.remove('CINBOUNDSIZE')
+    columns.remove('CSTARTTIME')
+    columns.remove('CENDTIME')
+    return columns
 
 
-# In[ ]:
+# In[13]:
 
 
 from datetime import time
@@ -112,21 +115,22 @@ udf_add_month = udf(lambda z: date(z).date().month, IntegerType())
 udf_add_day = udf(lambda z: date(z).date().day, IntegerType())
 udf_add_hour = udf(lambda z: date(z).time().hour, IntegerType())
 udf_add_minute = udf(lambda z: date(z).time().minute, IntegerType())
+udf_add_minute = udf(lambda z: date(z).time().minute, IntegerType())
 
 
-# In[ ]:
+# In[14]:
 
 
 import numpy as np
 import encoder
 from pyspark.sql.functions import col
 
-def encode_columns_spark(dataframe=None,columns=None):
+def encode_columns_spark(dataframe=None,columns=None, npy='/home/jovyan/work/npy'):
     for column in columns:
         global _encoder
         #print (column)
         _encoder = encoder.TolerantLabelEncoder(ignore_unknown=True)
-        _encoder.classes_ = np.load('/home/jovyan/work/cls/jupyter/npy/' + column + '.npy')
+        _encoder.classes_ = np.load(npy + '/' + column + '.npy')
         #dataall[column] = _encoder.transform(dataall[column]) 
         udf_transform = udf(lambda z: transform(z), StringType())
         dataframe=dataframe.withColumn(column, udf_transform(col(column)).cast("Integer"))
@@ -134,7 +138,7 @@ def encode_columns_spark(dataframe=None,columns=None):
     return dataframe
 
 
-# In[ ]:
+# In[15]:
 
 
 def cast_spark_columns(dataframe=None,columns=[],type="int" ):
@@ -143,7 +147,7 @@ def cast_spark_columns(dataframe=None,columns=[],type="int" ):
     return dataframe    
 
 
-# In[1]:
+# In[16]:
 
 
 def process(sender=None, dataframe=None):
@@ -154,7 +158,7 @@ def process(sender=None, dataframe=None):
     return df3
 
 
-# In[ ]:
+# In[17]:
 
 
 np_load_old = np.load
@@ -166,16 +170,17 @@ np.load = lambda *a,**k: np_load_old(*a, allow_pickle=True, **k)
 #np.load = np_load_old
 
 
-# In[ ]:
+# In[18]:
 
 
 #import pyspark.sql.functions as f
 #ender = senders[0]
 #df4 = process(sender=sender,dataframe=df)
 #df4.head()
+#!mkdir /tmp/enc
 
 
-# In[ ]:
+# In[19]:
 
 
 from os import listdir
@@ -187,6 +192,27 @@ _files = listdirectory(path='/tmp/enc')
 senders = senders[len(_files):]
 
 
+# In[20]:
+
+
+columns = ['CSTATUS','CSERVICE','CSENDERENDPOINTID','CSENDERPROTOCOL','CRECEIVERPROTOCOL','CRECEIVERENDPOINTID']
+
+
+# In[21]:
+
+
+#import pyspark.sql.functions as f
+#sender = senders[0]
+#df4 = process(sender=sender,dataframe=df)
+#df4.write.mode("overwrite").parquet("/tmp/enc/sla_enc_" + sender + ".parquet")
+
+
+# In[23]:
+
+
+#!ls /tmp/enc/
+
+
 # In[ ]:
 
 
@@ -195,5 +221,5 @@ import pyspark.sql.functions as f
 #senders=senders[24:]
 for sender in senders:
     df4 = process(sender=sender,dataframe=df)
-    df4.write.mode("overwrite").parquet("/tmp/enc2/sla_enc_" + sender + ".parquet")
+    df4.write.mode("overwrite").parquet("/tmp/enc/sla_enc_" + sender + ".parquet")
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[ ]:
+# In[4]:
 
 
 #https://stackoverflow.com/questions/50041551/tell-labelenocder-to-ignore-new-labels
@@ -20,17 +20,20 @@ class TolerantLabelEncoder(LabelEncoder):
         self.unknown_encoded_value = unknown_encoded_value
 
     def transform(self, y):
-        check_is_fitted(self, 'classes_')
-        y = column_or_1d(y, warn=True)
+        try:
+            check_is_fitted(self, 'classes_')
+            y = column_or_1d(y, warn=True)
 
-        indices = np.isin(y, self.classes_)
-        if not self.ignore_unknown and not np.all(indices):
-            raise ValueError("y contains new labels: %s" 
-                                         % str(np.setdiff1d(y, self.classes_)))
+            indices = np.isin(y, self.classes_)
+            if not self.ignore_unknown and not np.all(indices):
+                raise ValueError("y contains new labels: %s" 
+                                             % str(np.setdiff1d(y, self.classes_)))
 
-        y_transformed = np.searchsorted(self.classes_, y)
-        y_transformed[~indices]=self.unknown_encoded_value
-        return y_transformed
+            y_transformed = np.searchsorted(self.classes_, y)
+            y_transformed[~indices]=self.unknown_encoded_value
+            return y_transformed
+        except Exception as exception: 
+            return [-1]
 
     def inverse_transform(self, y):
         check_is_fitted(self, 'classes_')
@@ -46,7 +49,7 @@ class TolerantLabelEncoder(LabelEncoder):
         return y_transformed
 
 
-# In[ ]:
+# In[5]:
 
 
 def createEncoders(dataall,columns):
@@ -58,7 +61,7 @@ def createEncoders(dataall,columns):
         print(le.classes_)
         np.save(column + '.npy', le.classes_)
         
-def encode(dataall,columns):
+def encode(dataall,columns,npy='/home/jovyan/work/npy/'):
     # save np.load
     np_load_old = np.load
 
@@ -67,13 +70,13 @@ def encode(dataall,columns):
 
     for column in columns:
         encoder = TolerantLabelEncoder(ignore_unknown=True)
-        encoder.classes_ = np.load('/home/jovyan/work/npy/' + column + '.npy')
+        encoder.classes_ = np.load(npy + column + '.npy')
         dataall[column] = encoder.transform(dataall[column]) 
 
     # restore np.load for future normal usage
     np.load = np_load_old
     
-def getEncoder(column):
+def getEncoder(column,npy='/home/jovyan/work/npy/'):
     # save np.load
     np_load_old = np.load
 
@@ -81,7 +84,7 @@ def getEncoder(column):
     np.load = lambda *a,**k: np_load_old(*a, allow_pickle=True, **k)
 
     encoder = TolerantLabelEncoder(ignore_unknown=True)
-    encoder.classes_ = np.load('/home/jovyan/work/npy/' + column + '.npy')
+    encoder.classes_ = np.load(npy + column + '.npy')
         
     # restore np.load for future normal usage
     np.load = np_load_old
