@@ -26,7 +26,7 @@ import pandas as pd
 from pyspark.sql import functions
 
 
-# In[3]:
+# In[7]:
 
 
 columns = ['CGLOBALMESSAGEID', 'CSTARTTIME', 'CENDTIME', 'CSTATUS', 'CSERVICE',       'CSLABILLINGMONTH', 'CSENDERPROTOCOL', 'CSENDERENDPOINTID',       'CINBOUNDSIZE', 'CRECEIVERPROTOCOL', 'CRECEIVERENDPOINTID', 'CSLATAT',       'CMESSAGETAT2', 'CSLADELIVERYTIME']
@@ -43,18 +43,16 @@ columns = ['CGLOBALMESSAGEID',  'CSTARTTIME', 'CENDTIME', 'CSTATUS', 'CSERVICE',
 #columns = [ 'CSTARTTIME', 'CSENDERENDPOINTID']
 
 
-# In[4]:
+# In[8]:
 
 
 sparkSession = dfBasics.getSparkSession()
 
 
-# In[5]:
-
-
 # ## encode columns
 
 # In[9]:
+
 
 #df = sparkSession.read.parquet("/tmp/sla.parquet")
 df = sparkSession.read.parquet('hdfs://172.30.17.145:8020/sla_sql_data/*/*').select(columns).dropDuplicates() 
@@ -185,36 +183,34 @@ np.load = lambda *a,**k: np_load_old(*a, allow_pickle=True, **k)
 # In[19]:
 
 
-
-
-# In[6]:
-
-
-#!mkdir -p /home/jovyan/work/output/enc
-
-
-# In[8]:
-
-
 from os import listdir
 
 def listdirectory(path=None,filter='.'):
     return [x for x in listdir(path) if not x.startswith(filter)]    
 
-_files = listdirectory(path='/home/jovyan/work/output/enc')
+_files = listdirectory(path='/tmp/enc')
 senders = senders[len(_files):]
+
+
+# In[20]:
 
 
 columns = ['CSTATUS','CSERVICE','CSENDERENDPOINTID','CSENDERPROTOCOL','CRECEIVERPROTOCOL','CRECEIVERENDPOINTID']
 
 
-# In[9]:
+# In[21]:
 
 
 #import pyspark.sql.functions as f
 #sender = senders[0]
 #df4 = process(sender=sender,dataframe=df)
-#df4.write.mode("overwrite").parquet("/home/jovyan/work/output/enc/sla_enc_" + sender + ".parquet")
+#df4.write.mode("overwrite").parquet("/tmp/enc/sla_enc_" + sender + ".parquet")
+
+
+# In[23]:
+
+
+#!ls /tmp/enc/
 
 
 # In[ ]:
@@ -222,19 +218,8 @@ columns = ['CSTATUS','CSERVICE','CSENDERENDPOINTID','CSENDERPROTOCOL','CRECEIVER
 
 import pyspark.sql.functions as f
 #sender = senders[0]
+#senders=senders[24:]
 for sender in senders:
     df4 = process(sender=sender,dataframe=df)
-    df4.write.mode("overwrite").parquet("/home/jovyan/work/output/enc/sla_enc_" + sender + ".parquet")
-
-
-# In[ ]:
-
-
-
-
-
-# In[ ]:
-
-
-
+    df4.write.mode("overwrite").parquet("/tmp/enc/sla_enc_" + sender + ".parquet")
 
