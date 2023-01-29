@@ -131,8 +131,11 @@ def encode_columns_spark(dataframe=None,columns=None, npy='/home/jovyan/work/npy
     for column in columns:
         global _encoder
         #print (column)
-        _encoder = encoder.TolerantLabelEncoder(ignore_unknown=True)
-        _encoder.classes_ = np.load(npy + '/' + column + '.npy')
+        #_encoder = encoder.TolerantLabelEncoder(ignore_unknown=True)
+        #_encoder.classes_ = np.load(npy + '/' + column + '.npy')
+        
+        _encoder = encoders[column]
+        
         #dataall[column] = _encoder.transform(dataall[column]) 
         udf_transform = udf(lambda z: transform(z), StringType())
         dataframe=dataframe.withColumn(column, udf_transform(col(column)).cast("Integer"))
@@ -193,7 +196,20 @@ np.load = lambda *a,**k: np_load_old(*a, allow_pickle=True, **k)
 #!mkdir -p /home/jovyan/work/output/enc
 
 
+# In[7]:
+
+
+if None in senders:
+    senders.remove(None)
+
+
 # In[8]:
+
+
+#None in senders
+
+
+# In[9]:
 
 
 from os import listdir
@@ -204,15 +220,32 @@ def listdirectory(path=None,filter='.'):
 _files = listdirectory(path='/home/jovyan/work/output/enc')
 senders = senders[len(_files):]
 
-
 columns = ['CSTATUS','CSERVICE','CSENDERENDPOINTID','CSENDERPROTOCOL','CRECEIVERPROTOCOL','CRECEIVERENDPOINTID']
 
 
-# In[9]:
+# In[11]:
+
+
+npy='/home/jovyan/work/npy'
+encoders = {}
+for column in columns:
+    _encoder = encoder.TolerantLabelEncoder(ignore_unknown=True)
+    _encoder.classes_ = np.load(npy + '/' + column + '.npy')
+    encoders[column] = _encoder
+
+
+# In[12]:
+
+
+#encoders
+
+
+# In[13]:
 
 
 #import pyspark.sql.functions as f
 #sender = senders[0]
+#print(sender)
 #df4 = process(sender=sender,dataframe=df)
 #df4.write.mode("overwrite").parquet("/home/jovyan/work/output/enc/sla_enc_" + sender + ".parquet")
 
