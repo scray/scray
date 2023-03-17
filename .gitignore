@@ -61,3 +61,10 @@ buildNumber.properties
 
 # Jupyter notebooks
 .ipynb_checkpoints
+__pycache__
+
+# python example projects
+/scray-examples/python/output/
+*.crc
+*.parquet
+
