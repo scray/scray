@@ -59,5 +59,11 @@ dependency-reduced-pom.xml
 buildNumber.properties
 .mvn/timing.properties
 
-# jupyter
+# Jupyter notebooks
 .ipynb_checkpoints
+__pycache__
+
+# python example projects
+/scray-examples/python/output/
+*.crc
+*.parquet
