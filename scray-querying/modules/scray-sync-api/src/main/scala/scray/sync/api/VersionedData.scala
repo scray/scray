@@ -38,11 +38,27 @@ class VersionedData(
   def getDataAs[T](f: String => T): T = {
     f(data)
   }
-  
+
   def getVersionKey: Int = {
     VersionedData.createVersionKey(dataSource, mergeKey)
   }
-  
+
+  def getDataSource: String = {
+    dataSource
+  }
+
+  def getMergeKey: String = {
+    mergeKey
+  }
+
+  def getVersion: Long = {
+    version
+  }
+
+  def getData: String = {
+    data
+  }
+
   override def toString: String = {
     s"""{"dataSource: "${dataSource}", "mergeKey": "${mergeKey}", "version": ${version}, "data": "${data}"}"""
   }
