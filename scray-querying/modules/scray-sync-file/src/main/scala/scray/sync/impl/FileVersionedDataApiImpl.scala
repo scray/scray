@@ -28,23 +28,26 @@
 
 package scray.sync.impl
 
-import scray.sync.api.VersionedData
-import scala.io.Source
+import scray.sync.api.{VersionedData, VersionedDataApi}
+
 import scala.collection.mutable.HashMap
 import java.util.ArrayList
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
+
 import java.io.FileWriter
 import java.io.BufferedWriter
 import java.io.File
 import com.google.gson.reflect.TypeToken
 import scray.sync.api.VersionedData
+
 import collection.JavaConverters._
-import scray.sync.api.VersionedDataApi
 import com.typesafe.scalalogging.LazyLogging
+
 import java.io.OutputStream
 import java.io.OutputStreamWriter
 import java.io.InputStream
+import scala.io.Source
 
 class FileVersionedDataApiImpl extends VersionedDataApi with LazyLogging {
   var versionInformations: HashMap[Int, VersionedData] = this.toMap(new ArrayList[VersionedData])
@@ -56,6 +59,10 @@ class FileVersionedDataApiImpl extends VersionedDataApi with LazyLogging {
 
   def updateVersion(dataSource: String, mergeKey: String, version: Long, data: String) {
     versionInformations.put(VersionedData.createVersionKey(dataSource, mergeKey), new VersionedData(dataSource, mergeKey, version, data))
+  }
+
+  def updateVersion(vd: VersionedData) {
+    versionInformations.put(VersionedData.createVersionKey(vd.dataSource, vd.mergeKey), vd)
   }
 
   def persist(path: String): Unit = {
