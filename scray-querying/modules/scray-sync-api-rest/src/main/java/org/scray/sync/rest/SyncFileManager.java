@@ -26,7 +26,7 @@ public class SyncFileManager {
     }
 
     public void loadSyncFile(String path) throws FileNotFoundException {
-        FileVersionedDataApiImpl syncInstanceRead = new FileVersionedDataApiImpl();
+        this.syncInstanceRead = new FileVersionedDataApiImpl();
         File outFile = new File(path);
 
         if(outFile.exists()) {
