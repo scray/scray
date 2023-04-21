@@ -8,7 +8,7 @@
 import pandas as pd
 pd.plotting.register_matplotlib_converters()
 import matplotlib.pyplot as plt
-get_ipython().run_line_magic('matplotlib', 'inline')
+#%matplotlib inline
 import seaborn as sns
 print("Setup Complete")
 
@@ -106,6 +106,8 @@ def createHeatmap(piv,title="") :
     return ax
 
 
+# # AnomalyDetectionLSTMAutoencoder
+
 # In[1]:
 
 
@@ -177,7 +179,6 @@ class AnomalyDetectionLSTMAutoencoder():
         
     # setup data (current)
     def createDataframe(self,pfall) :
-        
         data3 = pfall
         df = pd.DataFrame()
         OUTCOME = self.OUTCOME

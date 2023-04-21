@@ -3,14 +3,14 @@
 
 # # init
 
-# In[1]:
+# In[2]:
 
 
 # demo: loads file with all messages (CSTARTTIME, CSENDERENDPOINTID, ymdhm )
 # show some charts, anomaly detection with LSTM autoencoders
 
 
-# In[2]:
+# In[3]:
 
 
 import base.dfBasics as dfBasics
@@ -24,7 +24,14 @@ import pandas as pd
 from pyspark.sql import functions
 
 
-# In[3]:
+# In[71]:
+
+
+import datetime
+import numpy as np
+
+
+# In[4]:
 
 
 sparkSession = dfBasics.getSparkSession()
@@ -32,37 +39,21 @@ sparkSession = dfBasics.getSparkSession()
 
 # ### load data
 
-# In[4]:
-
-
-print('load data')
-df = pd.read_parquet('/home/jovyan/work/output/sla_enc_all_5.parquet')
-print('load data 1')
-
-
 # In[5]:
 
 
-senders = pd.unique(df['CSENDERENDPOINTID'])
+#df = pd.read_parquet('/home/jovyan/work/output/sla_enc_all_4.parquet')
 
 
 # In[6]:
 
 
-sender = senders[0]
-pfall = df[df['CSENDERENDPOINTID'] == sender]
-
-
-# In[7]:
-
-
-#pfall.head()
-print('load data 2')
+#senders = pd.unique(df['CSENDERENDPOINTID'])
 
 
 # ## functions
 
-# In[78]:
+# In[7]:
 
 
 ## Setup charts
@@ -206,7 +197,6 @@ def createData_ymdhm(pfall,month,year=2020) :
 
 def createData_column_ymdh(pfall,month=-1,year=2020, column=None) :
     if (month > 0) & (month < 13) :
-        print(month)
         mdcountsall = pfall[(pfall['year'] == year) & (pfall['month'] == month)]
     else :
         mdcountsall = pfall 
@@ -245,7 +235,7 @@ def label(graph,skip,rot) :
             label.set_visible(False)
 
 
-# In[9]:
+# In[8]:
 
 
 def label_skip(a):
@@ -258,7 +248,7 @@ def label_skip(a):
 
 # ### visualization
 
-# In[10]:
+# In[9]:
 
 
 def createBarplot(md=None,fx=24,fy=12,fontscale=3.0,title="") :
@@ -283,7 +273,7 @@ def createHeatmap(piv,title="") :
     return ax
 
 
-# In[11]:
+# In[10]:
 
 
 #pfall
@@ -298,7 +288,7 @@ def createHeatmap(piv,title="") :
 #pfall5
 
 
-# In[12]:
+# In[11]:
 
 
 #year=2022
@@ -306,13 +296,13 @@ def createHeatmap(piv,title="") :
 #mdcountsall = pfall[(pfall['year'] == year) & (pfall['month'] == month)].groupby(['year','month','day','hour'])['year'].count()
 
 
-# In[13]:
+# In[12]:
 
 
 #pfall
 
 
-# In[14]:
+# In[13]:
 
 
 #checka(pfall[(pfall[year]== 2022) & (pfall[month]== 7)])
@@ -332,7 +322,7 @@ def createHeatmap(piv,title="") :
 
 
 
-# In[15]:
+# In[14]:
 
 
 from calendar import monthrange
@@ -469,7 +459,7 @@ def check(pda):
 
 # ### checka
 
-# In[16]:
+# In[15]:
 
 
 # 2019-10-29-00
@@ -568,7 +558,7 @@ def checka(pda, outcome='outcome'):
            
 
 
-# In[17]:
+# In[16]:
 
 
 def get_date_list(pda, hours=False):
@@ -618,7 +608,7 @@ def get_date_list(pda, hours=False):
            
 
 
-# In[18]:
+# In[17]:
 
 
 def check_and_fill_hours_of_month(dataframe=None,year=2022,month=7):
@@ -637,7 +627,7 @@ def check_and_fill_hours_of_month(dataframe=None,year=2022,month=7):
     return dataframe       
 
 
-# In[19]:
+# In[18]:
 
 
 def check_complete(dataframe=None,year=2020):
@@ -655,7 +645,7 @@ def fill1(pda,year,month):
     
 
 
-# In[20]:
+# In[19]:
 
 
 def unique(pfall):
@@ -670,7 +660,7 @@ def unique(pfall):
 #del pda['index'] 
 
 
-# In[21]:
+# In[20]:
 
 
 class Time(object):         
@@ -720,7 +710,7 @@ def init_date_widget(_res):
     set_date_widget_value(day_to, _range.end['day'])
 
 
-# In[22]:
+# In[21]:
 
 
 def createHeatmapPfall(pfall=None,sender='all',month=1,year=2020,values='outcome',index='hours',columns='days'):
@@ -736,7 +726,7 @@ def createHeatmapPfall(pfall=None,sender='all',month=1,year=2020,values='outcome
     createHeatmap(piv, titlestring)
 
 
-# In[23]:
+# In[22]:
 
 
 def on_value_submit_month(change):
@@ -758,7 +748,7 @@ def on_value_submit_month(change):
 
 # ### other
 
-# In[24]:
+# In[23]:
 
 
 def replace_index_by_date_column(df,column='date'):
@@ -770,7 +760,7 @@ def replace_index_by_date_column(df,column='date'):
 
 # ## create data
 
-# In[118]:
+# In[24]:
 
 
 def create_data(pfall):
@@ -781,7 +771,7 @@ def create_data(pfall):
     del pfall1['index']
     del pfall1['CGLOBALMESSAGEID']
 
-    pfall0 = pfall.reset_index()
+    pfall0 = pfall
 
     ####
     pda_hour = createData_ymdh(pfall0,0)
@@ -792,8 +782,7 @@ def create_data(pfall):
     ####
     #_column = 'CINBOUNDSIZE'
     _column='CMESSAGETAT2'
-    #pfall5 = createData_column_ymdh(pfall,column=_column)
-    pfall5 = createData_column_ymdh(pfall0,column=_column)
+    pfall5 = createData_column_ymdh(pfall,column=_column)
     pda_CMESSAGETAT2_hour = checka(pfall5 ).sort_values(['date'])
     #pda_CINBOUNDSIZE_hour = checka(pfall5 ).sort_values(['date'])
     _index = replace_index_by_date_column(pda_CMESSAGETAT2_hour)
@@ -801,7 +790,7 @@ def create_data(pfall):
 
 # # Time Series Anomaly Detection with LSTM Autoencoders (selected sender)
 
-# In[26]:
+# In[25]:
 
 
 def get_trained_period(anomalyEnc):
@@ -836,12 +825,10 @@ def get_index_period(pfall):
 
 # ### train models
 
-# In[27]:
+# In[26]:
 
 
 import AnomalyDetectionLSTMAutoencoder
-import datetime
-import datetime as dt
 
 def train_model(dataframe=None, time_steps=30, year=2022,month=6,day=None,hour=None):
     anomalyEnc = AnomalyDetectionLSTMAutoencoder.AnomalyDetectionLSTMAutoencoder(TIME_STEPS = time_steps)
@@ -852,24 +839,14 @@ def train_model(dataframe=None, time_steps=30, year=2022,month=6,day=None,hour=N
     anomalyEnc.df1 = anomalyEnc.createDataframe(dataframe)
     anomalyEnc.df1['datetime'] = dataframe['datetime']
     
-    _day = day
-    if _day is None:
-        _day = 1    
-    date = datetime.datetime(year,month,_day)
-    dates = dataframe['datetime']
-    _dt = min(dates, key=lambda d: abs(d - date))
-    perc_train = get_percent(pda_hour,year=_dt.year,month=_dt.month,day=day,hour=hour)    
-    if perc_train == 1.0:
-        perc_train = 0.7
-        
-    #perc_train = get_percent(dataframe,year=year,month=month,day=day,hour=hour)
+    perc_train = get_percent(dataframe,year=year,month=month,day=day,hour=hour)
     train, test = anomalyEnc.getTrainAndTest(anomalyEnc.df1,perc_train)
     anomalyEnc.initAndTrain(train=train, test=test)
     
     return anomalyEnc
 
 
-# In[28]:
+# In[27]:
 
 
 def get_anomalies(anomalyEnc,threshold):
@@ -878,7 +855,7 @@ def get_anomalies(anomalyEnc,threshold):
     return anomalyEnc.anomalies
 
 
-# In[29]:
+# In[28]:
 
 
 def numpy_to_dataframe(b):
@@ -887,7 +864,7 @@ def numpy_to_dataframe(b):
     return _df
 
 
-# In[30]:
+# In[29]:
 
 
 def train_models():
@@ -902,7 +879,7 @@ def train_models():
 
 # #### SAVE scaler, test 
 
-# In[53]:
+# In[30]:
 
 
 #https://machinelearningmastery.com/how-to-save-and-load-models-and-data-preparation-in-scikit-learn-for-later-use/
@@ -914,16 +891,15 @@ from pickle import dump
 #dump(model, open('model.pkl', 'wb'))
 # save the scaler
 
-#_path = '/home/jovyan/work/output/experiment_anomaly_expect/' + str(sender) + '/anomalyEnc_hour/'
-def save_models(path=None, experiment=None):
+def save_models():
     from pathlib import Path
-    _path = path + experiment + '/anomalyEnc_hour/'
+    _path = '/home/jovyan/work/output/experiment_anomaly_expect/' + str(sender) + '/anomalyEnc_hour/'
     _enc = anomalyEnc_hour
     Path(_path).mkdir(parents=True, exist_ok=True)
     dump(_enc.scaler, open(_path + 'scaler.pkl', 'wb'))
     _enc.test.to_parquet(_path + 'test.parquet')
 
-    _path = path + experiment + '/anomalyEnc_CMESSAGETAT2_hour/'
+    _path = '/home/jovyan/work/output/experiment_anomaly_expect/' + str(sender) + '/anomalyEnc_CMESSAGETAT2_hour/'
     _enc = anomalyEnc_CMESSAGETAT2_hour
     Path(_path).mkdir(parents=True, exist_ok=True)
     dump(_enc.scaler, open(_path + 'scaler.pkl', 'wb'))
@@ -932,7 +908,7 @@ def save_models(path=None, experiment=None):
 
 # ### functions
 
-# In[32]:
+# In[31]:
 
 
 def scatterplot(index, values,label):
@@ -940,8 +916,10 @@ def scatterplot(index, values,label):
       x=index,
       y=values,
       color=sns.color_palette()[3],
-      s=152,
+      #s=152,
+      s=50,  
       label=label
+      #linewidth=5  
     )
     
 def plot_test(test,scaler,anomalies,titlestring,xlabel):
@@ -987,7 +965,7 @@ def plot_test(test,scaler,anomalies,titlestring,xlabel):
 
 # ### plot graphs
 
-# In[33]:
+# In[32]:
 
 
 def plot_graph(_df,contains=None, y='outcome'):
@@ -1073,7 +1051,7 @@ def plot_graph2(test=None, expect=None, column_y='outcome',contains=None, date_f
 
 # ### filtered plot
 
-# In[34]:
+# In[33]:
 
 
 def inverse_transform_anomalies(scaler=None,anomalies=None, column_y='close'):
@@ -1146,7 +1124,7 @@ def filtered_plot_enc(anomalyEnc, contains=None,date_from=None, date_to=None,tit
     return filtered_plot(anomalyEnc.test,anomalyEnc.scaler,anomalyEnc.anomalies,anomalyEnc.TIME_STEPS,contains,date_from, date_to,titlestring,xlabel,skip,rotate)   
 
 
-# In[35]:
+# In[34]:
 
 
 def filtered_plot2(test=None,scaler=None,anomalies=None,TIME_STEPS=None,contains=None, date_from=None, date_to=None,titlestring='',xlabel='',skip=None,rotate=80, annotations=True, ylabel='msg count'):
@@ -1214,7 +1192,7 @@ def filtered_plot_enc2(anomalyEnc, contains=None,date_from=None, date_to=None,ti
 
 # ### plot_error
 
-# In[36]:
+# In[35]:
 
 
 def plt_add_anomaly(_df2):
@@ -1240,7 +1218,7 @@ def add_datetime_column(dataframe):
     _date = []
     for i,row in dataframe.iterrows():
         _date.append(dt.datetime.strptime(i, "%Y-%m-%d-%H"))
-    dataframe['date'] = _date    
+    dataframe['datetime'] = _date    
 
 def get_closest_datestring(datestring='2022-07-13-15',dates=None):
     date = datetime.datetime.strptime(datestring, "%Y-%m-%d-%H")
@@ -1258,17 +1236,33 @@ def filter_dataframe(dataframe,contains=None, date_from=None, date_to=None):
         dataframe1 = dataframe.iloc[_from_index:_to_index + 1]   
     return dataframe1
     
-def plot_error(anomalyEnc,contains=None, date_from=None, date_to=None):
+def plot_error(anomalyEnc=None, score=None, anomalies=None, contains=None, date_from=None, date_to=None):
     fig = plt.figure(figsize=(18,9))
     #_test = anomalyEnc.test_score_df.iloc[2050:]
-    _test = anomalyEnc.test_score_df
+    
+    if score is None:
+        _test = anomalyEnc.test_score_df
+    else:
+        _test = score
+    
+    if anomalies is None:
+        _anomalies = anomalyEnc.anomalies
+    else:
+        _anomalies = anomalies
+    
+    date_from = get_closest_datestring(datestring=date_from,dates=_test['datetime'])
+    date_to = get_closest_datestring(datestring=date_to,dates=_test['datetime'])
     
     _test = filter_dataframe(_test,contains=contains, date_from=date_from, date_to=date_to)
     
-    _threshold= pd.unique(anomalyEnc.anomalies['threshold'])[0]
     
+    
+    
+    _threshold= pd.unique(_anomalies['threshold'])[0]
+    
+    plt.axhline(y=_threshold, color="red",linewidth = 3) 
     plt.plot(_test.index, _test['loss'])   
-    plt.axhline(y=_threshold, color="red") 
+    
     
     #ticks = (_test.index[0], _test.index[len(_test.index) - 1])
     #plt.xticks(rotation=80,ticks=ticks)
@@ -1278,10 +1272,14 @@ def plot_error(anomalyEnc,contains=None, date_from=None, date_to=None):
     
     plt_add_anomaly(_test)
     
+    # monthly lines
+    for timestring in _test[_test.index.str.contains('-01-00')].index:
+        plt.axvline(x=timestring, color="grey")
+    
     plt.show(fig)
 
 
-# In[37]:
+# In[36]:
 
 
 def update_threshold_for_error_in_timerange(enc,date_from='2022-07-12-10',date_to='2022-07-13-15'):
@@ -1290,7 +1288,7 @@ def update_threshold_for_error_in_timerange(enc,date_from='2022-07-12-10',date_t
     _anomalies = get_anomalies(enc,_threshold).index
 
 
-# In[38]:
+# In[37]:
 
 
 def update_thresholds():
@@ -1300,16 +1298,16 @@ def update_thresholds():
 
 # #### SAVE anomalies, errors
 
-# In[52]:
+# In[38]:
 
 
-def save_errors(path=None, experiment=None):
-    _path = path + experiment + '/anomalyEnc_hour/'
+def save_errors():
+    _path = '/home/jovyan/work/output/experiment_anomaly_expect/' + str(sender) + '/anomalyEnc_hour/'
     _enc = anomalyEnc_hour
     _enc.anomalies.to_parquet(_path + 'anomalies.parquet')
     _enc.test_score_df.to_parquet(_path + 'test_score_df.parquet')
 
-    _path = path + experiment + '/anomalyEnc_CMESSAGETAT2_hour/'
+    _path = '/home/jovyan/work/output/experiment_anomaly_expect/' + str(sender) + '/anomalyEnc_CMESSAGETAT2_hour/'
     _enc = anomalyEnc_CMESSAGETAT2_hour
     _enc.anomalies.to_parquet(_path + 'anomalies.parquet')
     _enc.test_score_df.to_parquet(_path + 'test_score_df.parquet')
@@ -1317,7 +1315,7 @@ def save_errors(path=None, experiment=None):
 
 # ### plot_anomalies
 
-# In[40]:
+# In[39]:
 
 
 def plot_bounding_lines(timerange,color="red"):
@@ -1340,13 +1338,18 @@ def plot_bounding_box(timerange,_test,scaler):
     plt.fill_between(x, y1, y2, facecolor='g', alpha=.3)
    
 
-def plot_anomalies(anomalyEnc,test=None, scaler=None, expect=None, column_y='outcome',contains=None, date_from=None, date_to=None):
-    _anomalies = anomalyEnc.anomalies
-    _threshold= pd.unique(anomalyEnc.anomalies['threshold'])[0]
+def plot_anomalies(anomalyEnc=None,test=None, scaler=None, anomalies=None, expect=None, column_y='outcome',contains=None, date_from=None, date_to=None):
+   
+    if anomalies is None:
+        _anomalies = anomalyEnc.anomalies
+    else:
+        _anomalies = anomalies
     
-    _from = get_closest_datestring(datestring=date_from, dates = anomalyEnc.anomalies['datetime'])
-    _to = get_closest_datestring(datestring=date_to,dates = anomalyEnc.anomalies['datetime'])
-    _anomalies = filter_dataframe(anomalyEnc.anomalies, date_from=_from, date_to=_to)
+    _threshold= pd.unique(_anomalies['threshold'])[0]
+    
+    _from = get_closest_datestring(datestring=date_from, dates = _anomalies['datetime'])
+    _to = get_closest_datestring(datestring=date_to,dates = _anomalies['datetime'])
+    _anomalies = filter_dataframe(_anomalies, date_from=_from, date_to=_to)
     
     if test is None:
         _test = anomalyEnc.test
@@ -1358,13 +1361,16 @@ def plot_anomalies(anomalyEnc,test=None, scaler=None, expect=None, column_y='out
     else:
         _scaler = scaler    
         
-    _test = filter_dataframe(_test,contains=contains, date_from=date_from, date_to=date_to)     
-    del _test["datetime"]    
+    _test = filter_dataframe(_test,contains=contains, date_from=get_closest_datestring(datestring=date_from, dates = _test['datetime']), date_to=get_closest_datestring(datestring=date_to, dates = _test['datetime']))     
+    #del _test["datetime"]    
+    _test = _test[['close']]    
         
     fig = plt.figure(figsize=(18,9))
+    #fig.set_facecolor('#F2F2F2')
+    
     
     if expect is not None:
-        plot_bounding_box(expect, _test, anomalyEnc.scaler)
+        plot_bounding_box(expect, _test, _scaler)
         #plot_bounding_lines(expect)
     
     
@@ -1377,27 +1383,26 @@ def plot_anomalies(anomalyEnc,test=None, scaler=None, expect=None, column_y='out
 
     _a = inverse_transform_anomalies(scaler=_scaler,anomalies=_anomalies, column_y='close')
     ax = scatterplot(_anomalies.index, _a, 'anomaly') 
-    
-    #ax = scatterplot(_anomalies.index, _anomalies[column_y], 'anomaly') 
-    
-    #ticks = (_test.index[0], _test.index[len(_test.index) - 1])
-    #plt.xticks(rotation=80,ticks=ticks)
+    ax.set_facecolor('#F2F2F2')   # set the background color of the plot area
     
     skip_x = label_skip(len(_test.index))
     plt.xticks( _test.index[0::skip_x],rotation=70,fontsize=10)
     plt.yticks(fontsize=10)
     
-   
+    # monthly lines
+    for timestring in _test[_test.index.str.contains('-01-00')].index:
+        plt.axvline(x=timestring, color="grey")   
+
     plt.show()
 
 
-# In[41]:
+# In[40]:
 
 
 #_test = plot_anomalies(enc,date_from='2022-07-08-10',date_to='2022-07-14-15',expect=('2022-07-12-10','2022-07-13-15'))
 
 
-# In[ ]:
+# In[41]:
 
 
 #!ls -l /home/jovyan/work/output/experiment_anomaly_expect/
@@ -1405,28 +1410,21 @@ def plot_anomalies(anomalyEnc,test=None, scaler=None, expect=None, column_y='out
 
 # # Loop
 
-# In[126]:
+# In[42]:
 
 
-def process(pfall,path=None,experiment=None):
+def process(sender):
+    pfall = df[df['CSENDERENDPOINTID'] == sender]
+    #print('1')
     create_data(pfall)
+    #print('2')
     train_models()
-
-    save_models(path=path, experiment=experiment)
+    save_models()
     update_thresholds()
-    save_errors(path=path, experiment=experiment)
+    save_errors()
 
 
-# In[125]:
-
-
-from os import listdir
-
-def listdirectory(path=None,filter='.'):
-    return [x for x in listdir(path) if not x.startswith(filter)]    
-
-
-# In[ ]:
+# In[43]:
 
 
 #global sender
@@ -1434,60 +1432,214 @@ def listdirectory(path=None,filter='.'):
 #process(sender)
 
 
-# ##  process_all_senders
-
-# In[128]:
+# In[44]:
 
 
-def process_all_senders():
-
-    _path = '/home/jovyan/work/output/experiment_anomaly_expect/'
-    _files = listdirectory(path=_path)
-    senders = pd.unique(df['CSENDERENDPOINTID'])
-    
-    for sender in senders:
-        if str(sender) not in _files:
-            try:
-                pfall = df[df['CSENDERENDPOINTID'] == sender]
-                process(pfall,path='/home/jovyan/work/output/experiment_anomaly_expect/', experiment=str(sender))
-            except Exception as exception:
-                pass    
+#_path = '/home/jovyan/work/output/experiment_anomaly_expect/' + str(sender) + '/anomalyEnc_hour/'
 
 
-# In[ ]:
+# In[45]:
 
 
-# process_all_senders()
+from os import listdir
 
+def listdirectory(path=None,filter='.'):
+    return [x for x in listdir(path) if not x.startswith(filter)]    
 
-# ## sender receivers
-
-# In[124]:
-
-
-#!ls /home/jovyan/work/output/experiment_anomaly_expect_sender_receiver/2580_4364/anomalyEnc_CMESSAGETAT2_hour
-
-
-# In[131]:
-
-
-senders = [2580,3210]
-
-
-# In[ ]:
-
-
-_path = '/home/jovyan/work/output/experiment_anomaly_expect_sender_receiver/'
+_path = '/home/jovyan/work/output/experiment_anomaly_expect/'
 _files = listdirectory(path=_path)
 
-for sender in senders:
-    _pfall = df[df['CSENDERENDPOINTID'] == sender]
-    receivers = pd.unique(_pfall['CRECEIVERENDPOINTID'])
-    for receiver in receivers:
-        experiment= str(sender) + '_' + str(receiver)
-        #print(experiment)
-        if experiment not in _files:
-            #print(experiment)
-            _pfall1 = _pfall[_pfall['CRECEIVERENDPOINTID'] == receiver]
-            process(_pfall1,path=_path, experiment=experiment)
+
+# In[46]:
+
+
+#_files
+
+
+# In[47]:
+
+
+#for sender in senders:
+#    if str(sender) not in _files:
+#        process(sender)
+
+
+# # Evaluate
+
+# ### list directory
+
+# In[48]:
+
+
+from os import listdir
+
+
+def listdirectory(path=None,filter='.'):
+    return [x for x in listdir(path) if not x.startswith(filter)]    
+
+path = '/home/jovyan/work/output/experiment_anomaly_expect/' 
+senders = listdirectory(path=path)
+
+
+# In[49]:
+
+
+len(_files)
+#_files[0], senders[0]
+
+
+# In[50]:
+
+
+#!ls /home/jovyan/work/output/experiment_anomaly_expect/2580/anomalyEnc_hour
+
+
+# In[ ]:
+
+
+
+
+
+# In[51]:
+
+
+sender = senders[10]
+
+from pickle import load
+def load_data(experiment=None,path='/home/jovyan/work/output/experiment_anomaly_expect/',folder='anomalyEnc_CMESSAGETAT2_hour'):
+    global scaler,anomalies,test,score
+    _path = path + experiment + '/' + folder + '/'
+    #_path = '/home/jovyan/work/output/experiment_anomaly_expect/' + str(sender) + '/anomalyEnc_hour/'
+    scaler = load(open(_path + 'scaler.pkl', 'rb'))
+    anomalies = pd.read_parquet(_path + 'anomalies.parquet')
+    test  = pd.read_parquet(_path + 'test.parquet')
+    score = pd.read_parquet(_path + 'test_score_df.parquet')
+    return scaler,anomalies,test,score
+
+
+# In[111]:
+
+
+def get_score_and_anomalies_with_threshold(threshold,score):
+    score2 = score.copy()
+    score2['threshold'] = threshold
+    score2['anomaly'] = score2.loss >= score2.threshold
+    anomalies2 = score2[score2.anomaly == True]
+    add_datetime_column(anomalies2)
+    return score2,anomalies2
+
+def create_date_cluster(anomalies3):
+    month_datelist = list(anomalies3['datetime'])
+    _start=month_datelist[0].date().day
+    _current = _start
+    _count = 0
+    _results=[]
+    for date in month_datelist :
+        if date.date().day - _current > 1:
+                _results.append((_start,_current,_count))
+                _start = date.date().day
+                _count = 0
+        _current = date.date().day  
+        _count = _count + 1
+    _results.append((_start,_current,_count))   
+    return _results
+
+def get_score_region(score):
+    _from = get_closest_datestring(datestring='2022-07-12-10', dates = score['datetime'])
+    _to = get_closest_datestring(datestring='2022-07-13-15',dates = score['datetime'])
+    _score = filter_dataframe(score, date_from=_from, date_to=_to)
+    return _score
+
+def get_selected_thresholds(_score):
+    _score['iclose'] = scaler.inverse_transform( _score[['close']]) 
+    _iscore = _score[_score['iclose'] > 0.0000001]
+    _min = min(_iscore.loss)
+    _max = max(_iscore.loss)
+    _avg = (_max - _min)/2 + _min
+    return _min,_max,_avg
+
+def get_number_anomalies_with_threshold(_min,score):
+    score2,anomalies2 = get_score_and_anomalies_with_threshold(_min,score)
+    anomalies2['iclose'] = scaler.inverse_transform( anomalies2[['close']]) 
+    anomalies3 = anomalies2[anomalies2.index.str.contains('2022-07')]
+    cluster = create_date_cluster(anomalies3)
+    return len(anomalies2), len(anomalies2[anomalies2['iclose'] > 0.0000001]), len(anomalies3), len(anomalies3[anomalies3['iclose'] > 0.0000001]), cluster 
+
+
+def get_selected_number_anomalies(score):
+    try:
+        add_datetime_column(score)
+        _score = get_score_region(score)
+        _min,_max,_avg = get_selected_thresholds(_score)
+        _lmin = get_number_anomalies_with_threshold(_min,score)
+        _lmax = get_number_anomalies_with_threshold(_max,score)
+        _lavg = get_number_anomalies_with_threshold(_avg,score)
+        return _lmin,_lmax,_lavg,  len(get_score_and_anomalies_with_threshold(_score.loss[0],score)[1])
+    except Exception as exception:
+        #print(exception)
+        return (0,0),(0,0),(0,0),  0
+    
+    #_min = min(_score.loss)
+    #_max = max(_score.loss)
+    #return len(get_score_and_anomalies_with_threshold(_min,_score)[1]), len(get_score_and_anomalies_with_threshold(_max,_score)[1]), len(get_score_and_anomalies_with_threshold(_score.loss[0],_score)[1])
+
+
+# In[105]:
+
+
+import pandas as pd
+pd.options.mode.chained_assignment = None  # default='warn'
+#pd.options.mode.chained_assignment = "warn"
+
+def create_statistics(senders,folder='anomalyEnc_CMESSAGETAT2_hour'):
+    global statistics
+    statistics = pd.DataFrame(columns=['min0','max0','avg0','start', 'min','max','avg', 'min_07','max_07','avg_07', 'ccmin_07','ccmax_07','ccavg_07','cmin_07','cmax_07','cavg_07', 'amin','amax','astart','test_not_null','filled','values'])
+
+    for sender in senders:
+        try:
+            scaler,anomalies,test,score = load_data(experiment=str(sender),folder=folder)
+            _lmin,_lmax,_lavg, _lstart = get_selected_number_anomalies(score)
+            
+            _result =scaler.inverse_transform( test[['close']]) 
+            _values_test_not_null = len(_result[_result > 0.0000001])
+            _filled = round(1 - _values_test_not_null / len(_result),3)
+
+            add_datetime_column(score)
+            _region = get_score_region(score)
+            _result = scaler.inverse_transform( _region[['close']])
+            #values = len(_result[_result != 0])
+            values = len(_result[_result > 0.0000001])
+
+            statistics.loc[sender] = _lmin[0],_lmax[0],_lavg[0],_lstart, _lmin[1],_lmax[1],_lavg[1],_lmin[3],_lmax[3],_lavg[3],            len(_lmin[4]),len(_lmax[4]),len(_lavg[4]), _lmin[4],_lmax[4],_lavg[4],            _lmin[0]/len(test),_lmax[0]/len(test),_lavg[0]/len(test),_values_test_not_null,_filled,values
+        except Exception as exception: 
+            print(exception)
+            pass
+        
+    statistics['min'] = statistics['min'].astype(int)
+    statistics['max'] = statistics['max'].astype(int)
+    statistics['avg'] = statistics['avg'].astype(int)
+    statistics['min0'] = statistics['min0'].astype(int)
+    statistics['max0'] = statistics['max0'].astype(int)
+    statistics['avg0'] = statistics['avg0'].astype(int)
+    statistics['start'] = statistics['start'].astype(int) 
+    statistics['values'] = statistics['values'].astype(int)  
+    statistics['test_not_null'] = statistics['test_not_null'].astype(int)
+    return statistics       
+
+#_statistics1 = create_statistics(senders)
+#_statistics.to_parquet('/home/jovyan/work/output/statistics2.parquet')
+
+
+# In[ ]:
+
+
+_statistics1 = create_statistics(senders,folder='anomalyEnc_CMESSAGETAT2_hour')
+_statistics1.to_parquet('/home/jovyan/work/output/statistics_CMESSAGETAT2_hour.parquet')
+
+
+# In[ ]:
+
+
+_statistics2 = create_statistics(senders,folder='anomalyEnc_hour')
+_statistics2.to_parquet('/home/jovyan/work/output/statistics_anomalyEnc_hour.parquet')
 
