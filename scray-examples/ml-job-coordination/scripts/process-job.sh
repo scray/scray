@@ -1,8 +1,8 @@
 #!/bin/bash
 
 JOB_NAME=randomforest
-SOURCE_DATA=default
-NOTEBOOK_NAME=default.ipynb
+SOURCE_DATA=.
+NOTEBOOK_NAME=example-notebook.ipynb
 SYNC_API_URL="http://ml-integration.research.dev.seeburger.de:8082/sync/versioneddata"
 
 downloadJob() {
@@ -19,6 +19,12 @@ runJob() {
   cd ..
   tar -czvf $JOB_NAME-fin.tar.gz $SOURCE_DATA
   sftp ubuntu@ml-integration-git.research.dev.seeburger.de:/home/ubuntu/sftp-share/ <<<'PUT '$JOB_NAME-fin.tar.gz''
+}
+
+runLocalJob() {
+
+  cd /mnt/ext-notebooks/
+  papermill $NOTEBOOK_NAME out.$NOTEBOOK_NAME
 }
 
 setState() {
@@ -62,14 +68,20 @@ waitForNextJob() {
   echo "State UPLOADED reached"
 }
 
-while true; do
-  # setState 'UPLOADED'
-  waitForNextJob
 
-  setState 'DOWNLOADING'
-  downloadJob
-  setState 'RUNNING'
-  runJob
-  setState 'COMPLETED'
+if [ "$SCRAY_SYNC_MODE" == "LOCAL" ]
+then
+    runLocalJob
+    exit
+else
+  while true; do
+    waitForNextJob
 
-done
+    setState 'DOWNLOADING'
+    downloadJob
+    setState 'RUNNING'
+    runJob
+    setState 'COMPLETED'
+
+  done
+fi
