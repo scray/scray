@@ -47,6 +47,7 @@ import com.typesafe.scalalogging.LazyLogging
 import java.io.OutputStream
 import java.io.OutputStreamWriter
 import java.io.InputStream
+import java.util
 import scala.io.Source
 
 class FileVersionedDataApiImpl extends VersionedDataApi with LazyLogging {
@@ -160,5 +161,12 @@ class FileVersionedDataApiImpl extends VersionedDataApi with LazyLogging {
     bw.write(jsonString)
     bw.flush()
     bw.close()
+  }
+
+  /**
+   * Get all resources where a version exits for
+   */
+  override def getAllVersionedResources(): util.List[VersionedData] = {
+    this.toList(this.versionInformations);
   }
 }

@@ -53,4 +53,9 @@ trait VersionedDataApi {
    * Load versioned data informations from given InputStream
    */
   def load(path: InputStream)
+
+  /**
+   * Get all resources where a version exits for
+   */
+  def getAllVersionedResources(): java.util.ArrayList[VersionedData]
 }

@@ -17,6 +17,7 @@ import scray.sync.api.VersionedData;
 import scray.sync.impl.FileVersionedDataApiImpl;
 
 import java.io.FileNotFoundException;
+import java.util.List;
 
 @RestController
 public class ReadController {
@@ -39,6 +40,10 @@ public class ReadController {
     @GetMapping(value = "/sync/versioneddata/latest")
     ResponseEntity<VersionedData> getLatestVersion(@RequestParam String datasource, @RequestParam String mergekey) {
 
+        if(datasource == null && mergekey == null) {
+            syncApiManager.getSyncApi().getLatestVersion(datasource, mergekey);
+        }
+
         Option<VersionedData> latestVersion = syncApiManager.getSyncApi().getLatestVersion(datasource, mergekey);
 
         if(latestVersion.isEmpty()) {
@@ -47,6 +52,25 @@ public class ReadController {
             return new  ResponseEntity<VersionedData>(latestVersion.get(), HttpStatus.OK);
         }
     }
+
+    @Operation(summary = "Get lates versions of all versioned resources.",
+            description = "A list with all versioned resource of this user",
+
+            tags = { "Sync-API" })
+    @ApiResponses(value =
+            {
+                    @ApiResponse(responseCode = "200",
+                            description = "OK",
+                            content = @Content(
+                                    mediaType = MediaType.APPLICATION_JSON_VALUE,
+                                    schema = @Schema(implementation = VersionedData.class))) })
+    @CrossOrigin(origins = "*")
+    @GetMapping(value = "/sync/versioneddata/all/latest")
+    public ResponseEntity<List<VersionedData>> getLatestVersion() {
+    	return new ResponseEntity<>(syncApiManager.getSyncApi().getAllVersionedResources(), HttpStatus.OK);
+    }
+
+
 
     @Operation(summary = "Update Version",
             description = "Update a version",

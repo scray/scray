@@ -1,6 +1,5 @@
 package org.scray.sync.rest;
 
-import org.scray.sync.rest.controller.ReadController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scray.sync.impl.FileVersionedDataApiImpl;
