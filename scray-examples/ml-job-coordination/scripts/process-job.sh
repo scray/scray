@@ -1,6 +1,6 @@
 #!/bin/bash
 
-JOB_NAME=randomforest
+JOB_NAME=ki1-tensorflow-gpu
 SOURCE_DATA=.
 NOTEBOOK_NAME=example-notebook.ipynb
 SYNC_API_URL="http://ml-integration.research.dev.seeburger.de:8082/sync/versioneddata"
