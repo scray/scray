@@ -15,22 +15,18 @@
 # limitations under the License.
 #
 
-import logging
-from typing import Dict, Optional
-from scray.client.config import ScrayClientConfig
+"""
+Configuration class for the Scray client.
+"""
 
-logger = logging.getLogger(__name__)
+from dataclasses import dataclass
+from typing import Optional
 
-class ScrayClient:
+__all__ = [
+    "ScrayClientConfig",
+]
 
-    def __init__(
-        self,
-        client_config: ScrayClientConfig,
-        logging_level: Optional[int] = logging.INFO,
-    ):
-        self.logging_level = logging_level
-    
-    def create() -> None: logger.info("Create scray client")
-
-    def getLatestVersion(self, datasource) -> int:
-        return 1
+@dataclass
+class ScrayClientConfig:
+    host_address: str
+    port: Optional[int] = 80
