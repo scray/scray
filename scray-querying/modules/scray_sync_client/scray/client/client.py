@@ -30,5 +30,5 @@ class ScrayClient:
     
     def create() -> None: logger.info("Create scray client")
 
-    def getLatestVersion(datasource) -> int:
+    def getLatestVersion(self, datasource) -> int:
         return 1
