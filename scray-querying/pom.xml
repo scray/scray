@@ -20,7 +20,6 @@
 
 	
 	<modules>
-		<module>modules/scray-querying</module>
 		<module>/modules/scray-sync-api</module>
 		<module>/modules/scray-sync-cassandra</module>
 		<module>/modules/scray-sync-file</module>

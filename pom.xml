@@ -55,9 +55,9 @@
 		<maven.compiler.target>17</maven.compiler.target>
 		<encoding>UTF-8</encoding>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<scala.tools.version>2.11</scala.tools.version>
-		<scala.version>2.11.12</scala.version>
-		<scala.suffix>2.11</scala.suffix>
+		<scala.tools.version>2.13</scala.tools.version>
+		<scala.version>2.13.6</scala.version>
+		<scala.suffix>2.13</scala.suffix>
 		
 		<dependency.locations.enabled>false</dependency.locations.enabled>
 
@@ -112,7 +112,7 @@
 		<dependency>
 			<groupId>org.scalatest</groupId>
 			<artifactId>scalatest_${scala.suffix}</artifactId>
-			<version>2.2.2</version>
+			<version>3.0.8</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
@@ -124,7 +124,7 @@
 		<dependency>
 			<groupId>com.typesafe.scala-logging</groupId>
 			<artifactId>scala-logging_${scala.suffix}</artifactId>
-			<version>3.5.0</version>
+			<version>3.9.2</version>
 		</dependency>
 		<dependency>
 			<groupId>ch.qos.logback</groupId>
@@ -138,7 +138,7 @@
 			<dependency>
 				<groupId>com.twitter</groupId>
 				<artifactId>util-core_${scala.suffix}</artifactId>
-				<version>6.43.0</version>
+				<version>22.12.0</version>
 			</dependency>
 			<dependency>
 				<groupId>com.google.code.findbugs</groupId>

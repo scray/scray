@@ -8,12 +8,12 @@
 
 	<modelVersion>4.0.0</modelVersion>
 	<artifactId>scray-service</artifactId>
-  <version>1.1.3-SNAPSHOT</version>
+  	<version>1.1.3-SNAPSHOT</version>
 	<name>Scray - Service</name>
 	<description>scray remote query service interface</description>
 
 	<properties>
-		<scrooge.version>4.16.0</scrooge.version>
+		<scrooge.version>22.12.0</scrooge.version>
 	</properties>
 
 	<distributionManagement>

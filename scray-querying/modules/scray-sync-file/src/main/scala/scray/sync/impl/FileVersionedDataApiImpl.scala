@@ -166,7 +166,7 @@ class FileVersionedDataApiImpl extends VersionedDataApi with LazyLogging {
   /**
    * Get all resources where a version exits for
    */
-  override def getAllVersionedResources(): util.List[VersionedData] = {
-    this.toList(this.versionInformations);
+  override def getAllVersionedResources(): util.ArrayList[VersionedData] = {
+    this.toList(this.versionInformations).asInstanceOf[util.ArrayList[VersionedData]]
   }
 }
