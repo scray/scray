@@ -28,5 +28,7 @@ class ScrayClient:
     ):
         self.logging_level = logging_level
     
-    @classmethod
     def create() -> None: logger.info("Create scray client")
+
+    def getLatestVersion(datasource) -> int:
+        return 1
