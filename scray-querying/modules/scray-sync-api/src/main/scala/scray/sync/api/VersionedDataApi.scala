@@ -57,5 +57,5 @@ trait VersionedDataApi {
   /**
    * Get all resources where a version exits for
    */
-  def getAllVersionedResources(): java.util.ArrayList[VersionedData]
+  def getAllVersionedResources(): java.util.List[VersionedData]
 }
