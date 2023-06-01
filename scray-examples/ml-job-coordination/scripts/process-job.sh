@@ -1,6 +1,12 @@
 #!/bin/bash
+DEFAULT_JOB_NAME=ki1-tensorflow-gpu
 
-JOB_NAME=ki1-tensorflow-gpu
+if [ -z "$JOB_NAME" ]
+then
+      echo "JOB_NAME not set. Use default value $DEFAULT_JOB_NAME"
+      JOB_NAME=$DEFAULT_JOB_NAME
+fi
+
 SOURCE_DATA=.
 NOTEBOOK_NAME=example-notebook.ipynb
 SYNC_API_URL="http://ml-integration.research.dev.seeburger.de:8082/sync/versioneddata"
@@ -58,7 +64,7 @@ waitForNextJob() {
     NOTEBOOK_NAME=$(echo "$STATE_OBJECT" | jq -r .notebookName)
 
     STATE=$(echo "$STATE_OBJECT" | jq .state)
-    echo "Wait for state UPLOADED current state is " "$STATE"
+    echo "[$JOB_NAME] Wait for state UPLOADED current state is " "$STATE"
     sleep 5
   done
 
