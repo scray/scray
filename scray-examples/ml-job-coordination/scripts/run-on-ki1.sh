@@ -1,6 +1,7 @@
 JOB_NAME=ki1-tensorflow-gpu
 SOURCE_DATA=token_classification
 NOTEBOOK_NAME=token_classification_01.ipynb
+INITIAL_STATE=""
 
 createArchive() {
   echo "Create archive $JOB_NAME.tar.gz from source $SOURCE_DATA"
@@ -61,6 +62,9 @@ function parse-args() {
             --notebook-name )   shift
                 NOTEBOOK_NAME=$1
         ;;
+            --initial-state )   shift
+                INITIAL_STATE=$1
+        ;;
         esac
         shift
     done
@@ -78,7 +82,12 @@ fi
 
 echo  JOB_NAME: $JOB_NAME SOURCE_DATA: $SOURCE_DATA NOTEBOOK_NAME: $NOTEBOOK_NAME
 
-createArchive
-setState 'UPLOADED'
-waitForJobCompletion
-downloadResuls
+if [ "$INITIAL_STATE" == "RUNNING" ]
+then
+    waitForJobCompletion
+else         
+    createArchive
+    setState 'UPLOADED'
+    waitForJobCompletion
+    downloadResuls
+fi
