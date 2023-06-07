@@ -17,12 +17,29 @@ downloadJob() {
   tar -xzf $JOB_NAME.tar.gz
 }
 
+uploadCurrentNotebookState() {
+  tar -czvf $JOB_NAME-state.tar.gz $SOURCE_DATA/out.$NOTEBOOK_NAME
+  sftp ubuntu@ml-integration-git.research.dev.seeburger.de:/home/ubuntu/sftp-share/ <<<'PUT '$JOB_NAME-state.tar.gz''
+}
+
+
 runJob() {
-
   cd $SOURCE_DATA
-  papermill $NOTEBOOK_NAME out.$NOTEBOOK_NAME
 
-  cd ..
+  papermill --stdout-file notebook-stdout --autosave-cell-every 2  $NOTEBOOK_NAME out.$NOTEBOOK_NAME &
+  PID=$!
+
+  while ps -p $PID > /dev/null; do
+    echo "papermill $PID is running"
+    echo "Upload current notebook state"
+    uploadCurrentNotebookState
+    sleep 4
+  done
+
+  if ["$SOURCE_DATA" != "./"]
+  then
+        cd ..
+  fi
   tar -czvf $JOB_NAME-fin.tar.gz $SOURCE_DATA
   sftp ubuntu@ml-integration-git.research.dev.seeburger.de:/home/ubuntu/sftp-share/ <<<'PUT '$JOB_NAME-fin.tar.gz''
 }
