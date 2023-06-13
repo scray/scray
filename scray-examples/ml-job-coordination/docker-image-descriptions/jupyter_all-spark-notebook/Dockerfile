@@ -9,4 +9,4 @@ COPY scripts/process-job.sh /opt/scray-sync/
 
 RUN pip install papermill
 
-CMD ["/opt/scray-sync/process-job.sh"]
+CMD ["/opt/scray-sync/process-job.sh; tail -f /dev/null"]
