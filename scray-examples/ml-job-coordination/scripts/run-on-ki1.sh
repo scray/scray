@@ -33,20 +33,47 @@ curl -sS -X 'PUT' \
 
 }
 
+jq() {
+  ./bin/jq $1 $2 $3 $4 $5 $6 $7 $8 $9
+}
+
+# Check if yq exists
+checkYqVersion() {
+  downloadYqBin
+}
+
+downloadYqBin() {
+  if [[ ! -f "./bin/jq" ]]
+  then
+    echo "yq does not exists"
+    if [ "$OSTYPE" == "linux-gnu" ]
+    then
+      echo "download linux_amd64 yq binary"
+      mkdir bin
+      curl -L https://github.com/mikefarah/yq/releases/download/3.4.1/yq_linux_amd64 -o ./bin/yq
+      chmod u+x ./bin/yq
+    elif [ "$OSTYPE" == "msys" ]
+    then
+      echo "download jq-win64.exe  jq binary"
+      mkdir bin
+      curl -L https://github.com/jqlang/jq/releases/download/jq-1.6/jq-win64.exe -o ./bin/jq
+      chmod u+x ./bin/jq
+    fi
+  fi
+}
 
 waitForJobCompletion() {
    STATE_OBJECT=$(curl -sS -X 'GET'   'http://ml-integration.research.dev.seeburger.de:8082/sync/versioneddata/latest?datasource='$JOB_NAME'&mergekey=_'   -H 'accept: application/json' | jq '.data  | fromjson')
-   STATE=$(echo $STATE_OBJECT | jq .state)
 
   while [ "$STATE" != "\"COMPLETED\"" ]
   do
     STATE_OBJECT=$(curl -sS -X 'GET'   'http://ml-integration.research.dev.seeburger.de:8082/sync/versioneddata/latest?datasource='$JOB_NAME'&mergekey=_'   -H 'accept: application/json' | jq '.data  | fromjson')
-    STATE=$(echo $STATE_OBJECT | jq .state)
-    echo "Wait for state COMPLETED  current state is " $STATE
+    STATE=$(echo "$STATE_OBJECT" | jq .state)
+    echo "Wait for state COMPLETED  current state is " "$STATE"
     sleep 5
   done
 
-  echo "State COMPLETED reched"
+  echo "State COMPLETED reached"
 }
 
 function parse-args() {
@@ -70,6 +97,7 @@ function parse-args() {
     done
 }
 
+checkYqVersion
 
 if [ "$1" == "run" ]
 then

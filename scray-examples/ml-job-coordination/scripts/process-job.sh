@@ -10,9 +10,22 @@ fi
 SOURCE_DATA=.
 NOTEBOOK_NAME=example-notebook.ipynb
 SYNC_API_URL="http://ml-integration.research.dev.seeburger.de:8082/sync/versioneddata"
+JOB_LOCATION="~/jobs/b636f6f92d51e742f861ee2a928621b6/"
 
 downloadJob() {
-  rm ./$JOB_NAME.tar.gz
+
+  # Prepare environment
+  cd ~/
+  mkdir -p jobs
+  cd jobs
+  JOB_FOLDER=$(echo -n $JOB_NAME | md5sum | cut -f1 -d" ")
+  echo "Job folder: $JOB_FOLDER"
+
+  rm -fr $JOB_FOLDER
+  mkdir -p $JOB_FOLDER
+  cd $JOB_FOLDER
+  JOB_LOCATION=$(pwd)
+
   sftp ubuntu@ml-integration-git.research.dev.seeburger.de:/home/ubuntu/sftp-share/$JOB_NAME.tar.gz ./$JOB_NAME.tar.gz
   tar -xzf $JOB_NAME.tar.gz
 }
@@ -24,6 +37,7 @@ uploadCurrentNotebookState() {
 
 
 runJob() {
+  cd $JOB_LOCATION
   cd $SOURCE_DATA
 
   papermill --stdout-file notebook-stdout --autosave-cell-every 2  $NOTEBOOK_NAME out.$NOTEBOOK_NAME &
@@ -90,7 +104,6 @@ waitForNextJob() {
 
   echo "State UPLOADED reached"
 }
-
 
 if [ "$SCRAY_SYNC_MODE" == "LOCAL" ]
 then
