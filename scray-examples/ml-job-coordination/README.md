@@ -16,5 +16,5 @@ docker run --runtime=nvidia --gpus all -e JOB_NAME=timestamp-example --name time
 ### jupyter_tensorflow_pytorch_latest-gpu
 ```
 docker build -t scray-jupyter_tensorflow_pytorch-gpu:0.1.1 -f ./docker-image-descriptions/jupyter_tensorflow_pytorch_latest-gpu/Dockerfile .
-docker run --runtime=nvidia --gpus all -e JOB_NAME=timestamp-example --name timestamp-example -v ~/.ssh:/root/.ssh:ro scray-jupyter_tensorflow_pytorch-gpu:0.1.1
+sudo docker run -p 7892:8888 -p 7851:7850 --name ki2 --runtime=nvidia --gpus all -e JOB_NAME=ki1_tensorflow_pytorch --name ki1_tensorflow_pytorch -v /home/research/workspaces/ml-integration:/tf2 -v /home/research/workspaces/huggingface/cache/huggingface:/root/.cache/huggingface -v ~/.ssh:/root/.ssh:ro scray-jupyter_tensorflow_pytorch-gpu:0.1.1
 ```
