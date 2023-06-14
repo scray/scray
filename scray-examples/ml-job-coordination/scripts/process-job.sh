@@ -74,7 +74,7 @@ setState() {
   "dataSource": "'$JOB_NAME'",
   "mergeKey": "_",
   "version": 0,
-  "data": "{\"filename\": \"'$JOB_NAME'\", \"state\": \"'$1'\"}",
+  "data": "{\"filename\": \"'$JOB_NAME'.tar.gz\", \"state\": \"'$1'\",  \"dataDir\": \"'$SOURCE_DATA'\", \"notebookName\": \"'$NOTEBOOK_NAME'\"}",
   "versionKey": 0
 }'
 
