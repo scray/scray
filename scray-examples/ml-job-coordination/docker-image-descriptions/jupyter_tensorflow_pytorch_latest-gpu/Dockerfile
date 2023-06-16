@@ -7,3 +7,4 @@ RUN pip install accelerate
 RUN pip install bitsandbytes
 RUN pip install confluent_kafka
 RUN pip install kafka-python
+RUN pip install datasets
