@@ -19,15 +19,23 @@ spec:
           image: scray-jupyter_tensorflow-gpu:0.1.1
           workingDir: /opt/scray-sync/
           env:
-            - name: SCRAY_SYNC_MODE
-              value: "LOCAL"
+            - name: JOB_NAME
+              value: "timestamp-example"
           volumeMounts:
             - name: notebooks
               mountPath: /mnt/ext-notebooks/
+            - name: ssh-key-volume
+              mountPath: "/etc/ssh-key"
       volumes:
         - name: notebooks
           persistentVolumeClaim:
             claimName: notebooks-pv-claim
+              - name: my-secret
+        - name: ssh-key-volume
+          secret:
+            secretName: data-ssh-key
+            defaultMode: 256
+
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
