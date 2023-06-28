@@ -1,7 +1,8 @@
 JOB_NAME=ki1-tensorflow-gpu
-SOURCE_DATA=token_classification
+SOURCE_DATA=./
 NOTEBOOK_NAME=token_classification_01.ipynb
 INITIAL_STATE=""
+PROCESSING_ENV="ki1-k8s"
 
 createArchive() {
   echo "Create archive $JOB_NAME.tar.gz from source $SOURCE_DATA"
@@ -36,7 +37,7 @@ curl -sS -X 'PUT' \
   "dataSource": "'$JOB_NAME'",
   "mergeKey": "_",
   "version": 0,
-  "data": "{\"filename\": \"'$JOB_NAME'.tar.gz\", \"state\": \"'$1'\",  \"dataDir\": \"'$SOURCE_DATA'\", \"notebookName\": \"'$NOTEBOOK_NAME'\"}",
+  "data": "{\"filename\": \"'$JOB_NAME'.tar.gz\", \"processingEnv\": \"'$PROCESSING_ENV'\", \"state\": \"'$1'\",  \"dataDir\": \"'$SOURCE_DATA'\", \"notebookName\": \"'$NOTEBOOK_NAME'\"}",
   "versionKey": 0
   }'
 
@@ -75,6 +76,9 @@ function parse-args() {
             --initial-state )   shift
                 INITIAL_STATE=$1
         ;;
+	    --processing-env) shift
+		PROCESSING_ENV=$1
+	;;
         esac
         shift
     done
