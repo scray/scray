@@ -26,19 +26,22 @@ downloadJob() {
   cd $JOB_FOLDER
   JOB_LOCATION=$(pwd)
 
-  sftp ubuntu@ml-integration-git.research.dev.seeburger.de:/home/ubuntu/sftp-share/$JOB_NAME.tar.gz ./$JOB_NAME.tar.gz
+  sftp -o StrictHostKeyChecking=no -i /etc/ssh-key/id_rsa ubuntu@ml-integration-git.research.dev.seeburger.de:/home/ubuntu/sftp-share/$JOB_NAME.tar.gz ./$JOB_NAME.tar.gz
   tar -xzf $JOB_NAME.tar.gz
 }
 
 uploadCurrentNotebookState() {
   tar -czvf $JOB_NAME-state.tar.gz $SOURCE_DATA/out.$NOTEBOOK_NAME
-  sftp ubuntu@ml-integration-git.research.dev.seeburger.de:/home/ubuntu/sftp-share/ <<<'PUT '$JOB_NAME-state.tar.gz''
+  sftp -o StrictHostKeyChecking=no -i /etc/ssh-key/id_rsa ubuntu@ml-integration-git.research.dev.seeburger.de:/home/ubuntu/sftp-share/ <<<'PUT '$JOB_NAME-state.tar.gz''
 }
 
 
 runJob() {
   cd $JOB_LOCATION
   cd $SOURCE_DATA
+  
+  ls 
+  echo papermill --stdout-file notebook-stdout --autosave-cell-every 2  $NOTEBOOK_NAME out.$NOTEBOOK_NAME &
 
   papermill --stdout-file notebook-stdout --autosave-cell-every 2  $NOTEBOOK_NAME out.$NOTEBOOK_NAME &
   PID=$!
@@ -47,15 +50,11 @@ runJob() {
     echo "papermill $PID is running"
     echo "Upload current notebook state"
     uploadCurrentNotebookState
-    sleep 4
+    sleep 40
   done
 
-  if ["$SOURCE_DATA" != "./"]
-  then
-        cd ..
-  fi
   tar -czvf $JOB_NAME-fin.tar.gz $SOURCE_DATA
-  sftp ubuntu@ml-integration-git.research.dev.seeburger.de:/home/ubuntu/sftp-share/ <<<'PUT '$JOB_NAME-fin.tar.gz''
+  sftp -i /etc/ssh-key/id_rsa ubuntu@ml-integration-git.research.dev.seeburger.de:/home/ubuntu/sftp-share/ <<<'PUT '$JOB_NAME-fin.tar.gz''
 }
 
 runLocalJob() {
@@ -89,13 +88,13 @@ waitForNextJob() {
   echo SOURCE_DATA: "$SOURCE_DATA"
   echo NOTEBOOK_NAME: "$NOTEBOOK_NAME"
 
-  while [ "$STATE" != "\"UPLOADED\"" ]; do
+  while [ "$STATE" != "\"SCHEDULED\"" ]; do
     STATE_OBJECT=$(curl -sS -X 'GET' $SYNC_API_URL'/latest?datasource='$JOB_NAME'&mergekey=_' -H 'accept: application/json' | jq '.data  | fromjson')
     SOURCE_DATA=$(echo "$STATE_OBJECT" | jq -r .dataDir)
     NOTEBOOK_NAME=$(echo "$STATE_OBJECT" | jq -r .notebookName)
 
     STATE=$(echo "$STATE_OBJECT" | jq .state)
-    echo "[$JOB_NAME] Wait for state UPLOADED current state is " "$STATE"
+    echo "[$JOB_NAME] Wait for state SCHEDULED current state is " "$STATE"
     sleep 5
   done
 
@@ -110,7 +109,7 @@ then
     runLocalJob
     exit
 else
-  while true; do
+  #while true; do
     waitForNextJob
 
     setState 'DOWNLOADING'
@@ -119,5 +118,7 @@ else
     runJob
     setState 'COMPLETED'
 
-  done
+  #done
 fi
+
+echo "Job $JOB_NAME completed. Terminate job processor"
