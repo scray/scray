@@ -98,7 +98,15 @@ echo  JOB_NAME: $JOB_NAME SOURCE_DATA: $SOURCE_DATA NOTEBOOK_NAME: $NOTEBOOK_NAM
 
 if [ "$INITIAL_STATE" == "RUNNING" ]
 then
+
+fi
+
+if [ "$INITIAL_STATE" == "RUNNING" ]
+then
     waitForJobCompletion
+elif [ "$INITIAL_STATE" == "COMPLETED" ]
+then
+   downloadResuls
 else         
     createArchive
     setState 'UPLOADED'
