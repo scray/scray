@@ -14,8 +14,9 @@ downloadResuls() {
   rm -f $JOB_NAME-fin.tar.gz
   sftp ubuntu@ml-integration-git.research.dev.seeburger.de:/home/ubuntu/sftp-share/$JOB_NAME-fin.tar.gz ./
   tar -xzmf $JOB_NAME-fin.tar.gz
-
-   echo "Learning results loaded"
+  rm -f $JOB_NAME-fin.tar.gz
+  
+  echo "Learning results loaded"
 }
 
 downloadUpdatedNotebook() {
@@ -77,7 +78,7 @@ function parse-args() {
                 INITIAL_STATE=$1
         ;;
 	    --processing-env) shift
-		PROCESSING_ENV=$1
+		            PROCESSING_ENV=$1
 	;;
         esac
         shift
