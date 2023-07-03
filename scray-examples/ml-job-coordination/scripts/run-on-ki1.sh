@@ -103,7 +103,6 @@ then
 elif [ "$INITIAL_STATE" == "COMPLETED" ]
 then
    downloadResuls
-
 else         
     createArchive
     setState 'UPLOADED'

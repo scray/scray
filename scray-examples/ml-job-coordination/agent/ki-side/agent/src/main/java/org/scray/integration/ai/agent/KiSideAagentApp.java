@@ -1,4 +1,4 @@
-package com.seeburger.research.seamless.fmu_management;
+package org.scray.integration.ai.agent;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

@@ -1,4 +1,4 @@
-package com.seeburger.research.seamless.fmu_management;
+package org.scray.integration.ai.agent;
 
 import java.util.UUID;
 import org.springframework.web.bind.annotation.CrossOrigin;

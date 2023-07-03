@@ -1,14 +1,13 @@
 ## Table of contents
 
-  * [Building FMU-Management](#building-fmu-management)
+  * [Building KI agent](#building)
 
 
-### Building FMU-Management
+### Scray KI agent
 
-To properly build the FMU-Management, the following tools should be installed:
 
 ### Prerequisites
-* Java 11 JDK
+* Java 17 
 * Maven (tested with 3.8)
 
 
@@ -23,5 +22,5 @@ To build the core project, do the following:
 ### Starting
 
 ```
-    java -jar target\fmu-management-0.0.1-SNAPSHOT.jar
+    ki-side-agent-0.0.1-SNAPSHOT.jar
 ```

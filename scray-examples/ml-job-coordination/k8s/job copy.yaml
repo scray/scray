@@ -22,18 +22,18 @@ spec:
             - name: JOB_NAME
               value: "timestamp-example"
           volumeMounts:
+            - name: notebooks
+              mountPath: /mnt/ext-notebooks/
             - name: ssh-key-volume
               mountPath: "/etc/ssh-key"
-            - name: hf-cache
-              mountPath: /root/.cache/huggingface/
       volumes:
+        - name: notebooks
+          persistentVolumeClaim:
+            claimName: notebooks-pv-claim
         - name: ssh-key-volume
           secret:
             secretName: data-ssh-key
             defaultMode: 256
-        - name: hf-cache
-          persistentVolumeClaim:
-            claimName: 'hf-cache'     
 
 ---
 apiVersion: v1
@@ -47,15 +47,3 @@ spec:
   resources:
     requests:
       storage: 200Mi
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: hf-cache
-spec:
-  storageClassName: manual
-  accessModes:
-    - ReadWriteMany
-  resources:
-    requests:
-      storage: 200Gi

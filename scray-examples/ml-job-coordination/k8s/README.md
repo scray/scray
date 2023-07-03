@@ -6,4 +6,10 @@ kubectl create secret generic data-ssh-key --from-file=id_rsa=/home/research/.ss
 ```
 
 docker save mynginx > myimage.tar
+
+#### Import to microk8s
 microk8s.ctr -n k8s.io image import myimage.tar
+
+
+#### Import to containerd
+ctr -n=k8s.io images import myimage.tar
