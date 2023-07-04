@@ -21,8 +21,9 @@ downloadResuls() {
 
 downloadUpdatedNotebook() {
   rm -f $JOB_NAME-state.tar.gz >/dev/null
-  sftp ubuntu@ml-integration-git.research.dev.seeburger.de:/home/ubuntu/sftp-share/$JOB_NAME-state.tar.gz ./ >/dev/null
+  sftp ubuntu@ml-integration-git.research.dev.seeburger.de:/home/ubuntu/sftp-share/$JOB_NAME-state.tar.gz ./ > /dev/null
   tar -xzmf $JOB_NAME-state.tar.gz >/dev/null
+  rm -f $JOB_NAME-state.tar.gz >/dev/null
 
   echo "Notebook out.$NOTEBOOK_NAME updated"
 }
@@ -66,7 +67,7 @@ function parse-args() {
     while [ "$1" != "" ]; do
         case $1 in
             --job-name )   shift
-                JOB_NAME=$1
+                JOB_NAME=$1-$RANDOM
         ;;
             --source-data )   shift
                SOURCE_DATA=$1
@@ -77,7 +78,7 @@ function parse-args() {
             --initial-state )   shift
                 INITIAL_STATE=$1
         ;;
-	    --processing-env) shift
+	          --processing-env) shift
 		            PROCESSING_ENV=$1
 	;;
         esac
@@ -89,7 +90,12 @@ function parse-args() {
 if [ "$1" == "run" ]
 then
     shift
-    parse-args "${@}"  
+    parse-args "${@}" 
+
+    SYS_JOB_NAME=$JOB_NAME-$RANDOM 
+    JOB_NAME=$SYS_JOB_NAME
+
+    echo "{\"jobName\": \"'$JOB_NAME'\", \"sysJobName\": \"'$SYS_JOB_NAME'\"}" > SYS-JOB-NAME-$JOB_NAME.json 
 else         
     echo "Usage: run --job-name ki1-gpu --source-data token_classification --notebook-name token_classification_01.ipynb" 
     exit 1

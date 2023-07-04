@@ -1,4 +1,4 @@
-FROM huggingface-transformers-pytorch-deepspeed-latest-gpu:0.1.1
+FROM huggingface-transformers-pytorch-deepspeed-latest-gpu:0.1.2
 
 RUN pip install pandas
 RUN pip install transformers

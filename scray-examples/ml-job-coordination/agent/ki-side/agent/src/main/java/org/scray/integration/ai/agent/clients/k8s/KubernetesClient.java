@@ -47,7 +47,7 @@ public class KubernetesClient {
 				descriptor, 
 				deploymentName, 
 				deploymentName, 
-				"huggingface-transformers-pytorch-deepspeed-latest-gpu-dep:0.1.1");
+				"huggingface-transformers-pytorch-deepspeed-latest-gpu-dep:0.1.2");
 		
 		var configuredVpc = aiK8client.configurePvc(descriptor, deploymentName);
 		
@@ -67,7 +67,7 @@ public class KubernetesClient {
 				descriptor, 
 				deploymentName, 
 				jobName, 
-				"huggingface-transformers-pytorch-deepspeed-latest-gpu-dep:0.1.1");
+				"huggingface-transformers-pytorch-deepspeed-latest-gpu-dep:0.1.2");
 		
 		var configuredVpc = aiK8client.configurePvc(descriptor, deploymentName);
 		
