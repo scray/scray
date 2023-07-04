@@ -95,7 +95,7 @@ then
     SYS_JOB_NAME=$JOB_NAME-$RANDOM 
     JOB_NAME=$SYS_JOB_NAME
 
-    echo "{\"jobName\": \"'$JOB_NAME'\", \"sysJobName\": \"'$SYS_JOB_NAME'\"}" > SYS-JOB-NAME-$JOB_NAME.json 
+    echo "{\"timestamp\": \"'$(date +%s)'\", \"jobName\": \"'$JOB_NAME'\", \"sysJobName\": \"'$SYS_JOB_NAME'\"}" > SYS-JOB-NAME-$JOB_NAME.json 
 else         
     echo "Usage: run --job-name ki1-gpu --source-data token_classification --notebook-name token_classification_01.ipynb" 
     exit 1
