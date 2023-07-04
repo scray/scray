@@ -35,7 +35,7 @@ public class RestClient {
 		conn.setRequestProperty("Content-Type", "application/json");
 		conn.setRequestProperty("Accept", "application/json");
 		conn.setDoOutput(true);
-		System.out.println("puttt ");
+
 		try(OutputStream os = conn.getOutputStream()) {
 		    byte[] input = data.getBytes("utf-8");
 		    os.write(input, 0, input.length);			

@@ -57,7 +57,7 @@ public class KubernetesClient {
 		aiK8client.close();
 	}
 	
-	public void DeployJob(String jobName) {
+	public void DeployJob(String jobName, String imageName) {
 		KubernetesClient aiK8client = new KubernetesClient();
 		
 		var deploymentName = "scray-ai-job-" + UUID.randomUUID();

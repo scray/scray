@@ -9,8 +9,8 @@ public class AiJobsData {
 	String filename;
 	String dataDir;
 	String notebookName;
-	String imageName;
-	String processingEnv;
+	String imageName =     "huggingface-transformers-pytorch-deepspeed-latest-gpu-dep:0.1.2";
+	String processingEnv = "http://scray.org/ai/jobs/env/see/ki1-k8s";
 
 	public String getProcessingEnv() {
 		return processingEnv;

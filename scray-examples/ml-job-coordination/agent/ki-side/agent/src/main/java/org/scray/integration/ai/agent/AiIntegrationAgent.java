@@ -22,6 +22,9 @@ import org.slf4j.Logger;
 public class AiIntegrationAgent {
 
 	private static final Logger logger = LoggerFactory.getLogger(AiIntegrationAgent.class);
+	
+	private List allowedImages = new ArrayList<>();
+	boolean useImageAllowList = false;
 
 	public AiIntegrationAgent() {
 
@@ -65,8 +68,11 @@ public class AiIntegrationAgent {
 						logger.info("Writ to API {}", newOutput);
 						apiClient.putData(newOutput);
 
-						KubernetesClient k8sClient = new KubernetesClient();
-						k8sClient.DeployJob(versionedData2.getDataSource());
+						if(!useImageAllowList || allowedImages.contains(aiJobState.getImageName())) {
+							KubernetesClient k8sClient = new KubernetesClient();
+							k8sClient.DeployJob(versionedData2.getDataSource(), aiJobState.getImageName());
+						}
+
 
 					} else {
 						logger.debug("Job which is not for my env {}", aiJobState.getProcessingEnv());
