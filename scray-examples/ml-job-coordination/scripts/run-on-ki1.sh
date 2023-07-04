@@ -4,6 +4,7 @@ NOTEBOOK_NAME=token_classification_01.ipynb
 INITIAL_STATE=""
 PROCESSING_ENV="ki1-k8s"
 DOCKER_IMAGE="huggingface-transformers-pytorch-deepspeed-latest-gpu-dep:0.1.2"
+JOB_NAME_LITERALLY=false
 
 createArchive() {
   echo "Create archive $JOB_NAME.tar.gz from source $SOURCE_DATA"
@@ -68,7 +69,7 @@ function parse-args() {
     while [ "$1" != "" ]; do
         case $1 in
             --job-name )   shift
-                JOB_NAME=$1-$RANDOM
+                JOB_NAME=$1
         ;;
             --source-data )   shift
                SOURCE_DATA=$1
@@ -85,6 +86,8 @@ function parse-args() {
 	          --docker-image) shift
 		            DOCKER_IMAGE=$1
 	      ;;
+	          --take-jobname-literally) shift
+		            JOB_NAME_LITERALLY=$1            
         esac
         shift
     done
@@ -96,8 +99,11 @@ then
     shift
     parse-args "${@}" 
 
-    SYS_JOB_NAME=$JOB_NAME-$RANDOM 
-    JOB_NAME=$SYS_JOB_NAME
+    if [ JOB_NAME_LITERALLY == "true" ]
+    then
+      SYS_JOB_NAME=$JOB_NAME-$RANDOM 
+      JOB_NAME=$SYS_JOB_NAME
+    fi
 
     echo "{\"timestamp\": \"'$(date +%s)'\", \"jobName\": \"'$JOB_NAME'\", \"sysJobName\": \"'$SYS_JOB_NAME'\"}" > SYS-JOB-NAME-$JOB_NAME.json 
 else         
