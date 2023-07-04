@@ -3,6 +3,7 @@ SOURCE_DATA=./
 NOTEBOOK_NAME=token_classification_01.ipynb
 INITIAL_STATE=""
 PROCESSING_ENV="ki1-k8s"
+DOCKER_IMAGE="huggingface-transformers-pytorch-deepspeed-latest-gpu-dep:0.1.2"
 
 createArchive() {
   echo "Create archive $JOB_NAME.tar.gz from source $SOURCE_DATA"
@@ -39,7 +40,7 @@ curl -sS -X 'PUT' \
   "dataSource": "'$JOB_NAME'",
   "mergeKey": "_",
   "version": 0,
-  "data": "{\"filename\": \"'$JOB_NAME'.tar.gz\", \"processingEnv\": \"'$PROCESSING_ENV'\", \"state\": \"'$1'\",  \"dataDir\": \"'$SOURCE_DATA'\", \"notebookName\": \"'$NOTEBOOK_NAME'\"}",
+  "data": "{\"filename\": \"'$JOB_NAME'.tar.gz\", \"processingEnv\": \"'$PROCESSING_ENV'\", \"state\": \"'$1'\", \"imageName\": \"'$DOCKER_IMAGE'\",   \"dataDir\": \"'$SOURCE_DATA'\", \"notebookName\": \"'$NOTEBOOK_NAME'\"}",
   "versionKey": 0
   }'
 
@@ -80,7 +81,10 @@ function parse-args() {
         ;;
 	          --processing-env) shift
 		            PROCESSING_ENV=$1
-	;;
+        ;;
+	          --docker-image) shift
+		            DOCKER_IMAGE=$1
+	      ;;
         esac
         shift
     done
