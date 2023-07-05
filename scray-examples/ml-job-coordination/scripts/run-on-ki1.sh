@@ -99,7 +99,7 @@ then
     shift
     parse-args "${@}" 
 
-    if [ JOB_NAME_LITERALLY == "true" ]
+    if [ $JOB_NAME_LITERALLY == "false" ]
     then
       SYS_JOB_NAME=$JOB_NAME-$RANDOM 
       JOB_NAME=$SYS_JOB_NAME

@@ -76,6 +76,15 @@ public class AiIntegrationAgent {
 
 					} else {
 						logger.debug("Job which is not for my env {}", aiJobState.getProcessingEnv());
+						
+						aiJobState.setState("SCHEDULED");
+						versionedData2.setData(mapper.writeValueAsString(aiJobState));
+
+						String newOutput = mapper.writeValueAsString(versionedData2);
+
+						logger.info("Writ to API {}", newOutput);
+						apiClient.putData(newOutput);
+
 					}
 
 				}
