@@ -24,10 +24,10 @@ class VersionedDataWriter(host: String, keyspace: String, table: String, replica
       cassandraSession.execute(this.createTableStatement(table))
 
      val insertStatement = QueryBuilder.insertInto(keyspace, table)
-        .value("dataSource", data.dataSource)
-        .value("mergeKey",   data.mergeKey)
-        .value("version",    data.version)
-        .value("data",       data.data)
+        .value("dataSource", data.getDataSource)
+        .value("mergeKey",   data.getMergeKey)
+        .value("version",    data.getVersion)
+        .value("data",       data.getData)
     
     cassandraSession.execute(insertStatement)
     })

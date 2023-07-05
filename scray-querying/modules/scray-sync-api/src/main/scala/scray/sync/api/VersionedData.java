@@ -1,4 +1,3 @@
-/**
 // See the LICENCE.txt file distributed with this work for additional
 // information regarding copyright ownership.
 //
@@ -27,37 +26,54 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package scray.sync.api
+package scray.sync.api;
 
-import java.io.InputStream
-import java.io.OutputStream
+import java.util.function.Function;
 
-trait VersionedDataApi {
-  def getLatestVersion(dataSource: String, mergeKey: String): Option[VersionedData]
-  def updateVersion(dataSource: String, mergeKey: String, version: Long, data: String)
-  /**
-   * Persist versioned data informations to local file system 
-   */
-  def persist(path: String)
-  
-  /**
-   * Write versioned data informations to OutputStream
-   */
-  def persist(path: OutputStream)
-  
-  /**
-   * Load versioned data informations from local file system
-   */
-  def load(path: String)
-  
-  /**
-   * Load versioned data informations from given InputStream
-   */
-  def load(path: InputStream)
+public class VersionedData {
+    private final String dataSource;
+    private final String mergeKey;
+    private final long version;
+    private final String data;
 
-  /**
-   * Get all resources where a version exits for
-   */
-  def getAllVersionedResources(): java.util.List[VersionedData]
+    public VersionedData(String dataSource, String mergeKey, long version, String data) {
+        this.dataSource = dataSource;
+        this.mergeKey = mergeKey;
+        this.version = version;
+        this.data = data;
+    }
+
+    public <T> T getDataAs(Function<String, T> f) {
+        return f.apply(data);
+    }
+
+    public int getVersionKey() {
+        return VersionedData.createVersionKey(dataSource, mergeKey);
+    }
+
+    public String getDataSource() {
+        return dataSource;
+    }
+
+    public String getMergeKey() {
+        return mergeKey;
+    }
+
+    public long getVersion() {
+        return version;
+    }
+
+    public String getData() {
+        return data;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("{\"dataSource\": \"%s\", \"mergeKey\": \"%s\", \"version\": %d, \"data\": \"%s\"}",
+                dataSource, mergeKey, version, data);
+    }
+
+    public static int createVersionKey(String dataSource, String mergeKey) {
+        return dataSource.hashCode() * 31 + mergeKey.hashCode() * 31;
+    }
 }
-**/

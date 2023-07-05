@@ -1,4 +1,3 @@
-/**
 // See the LICENCE.txt file distributed with this work for additional
 // information regarding copyright ownership.
 //
@@ -27,37 +26,41 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package scray.sync.api
+package scray.sync.api;
 
-import java.io.InputStream
-import java.io.OutputStream
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.List;
+import java.util.Optional;
 
-trait VersionedDataApi {
-  def getLatestVersion(dataSource: String, mergeKey: String): Option[VersionedData]
-  def updateVersion(dataSource: String, mergeKey: String, version: Long, data: String)
-  /**
-   * Persist versioned data informations to local file system 
-   */
-  def persist(path: String)
-  
-  /**
-   * Write versioned data informations to OutputStream
-   */
-  def persist(path: OutputStream)
-  
-  /**
-   * Load versioned data informations from local file system
-   */
-  def load(path: String)
-  
-  /**
-   * Load versioned data informations from given InputStream
-   */
-  def load(path: InputStream)
+public interface VersionedDataApi {
 
-  /**
-   * Get all resources where a version exits for
-   */
-  def getAllVersionedResources(): java.util.List[VersionedData]
+    Optional<VersionedData> getLatestVersion(String dataSource, String mergeKey);
+
+    void updateVersion(String dataSource, String mergeKey, long version, String data);
+
+    /**
+     * Persist versioned data informations to local file system
+     */
+    void persist(String path);
+
+    /**
+     * Write versioned data informations to OutputStream
+     */
+    void persist(OutputStream outputStream);
+
+    /**
+     * Load versioned data informations from local file system
+     */
+    void load(String path);
+
+    /**
+     * Load versioned data informations from given InputStream
+     */
+    void load(InputStream inputStream);
+
+    /**
+     * Get all resources where a version exits for
+     */
+    List<VersionedData> getAllVersionedResources();
 }
-**/

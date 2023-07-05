@@ -1,71 +1,73 @@
-// See the LICENCE.txt file distributed with this work for additional
+/**
+// see the licence.txt file distributed with this work for additional
 // information regarding copyright ownership.
 //
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-// http://www.apache.org/licenses/LICENSE-2.0
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// licensed under the apache license, version 2.0 (the "license");
+// you may not use this file except in compliance with the license.
+// you may obtain a copy of the license at
+// http://www.apache.org/licenses/license-2.0
+// unless required by applicable law or agreed to in writing, software
+// distributed under the license is distributed on an "as is" basis,
+// without warranties or conditions of any kind, either express or implied.
+// see the license for the specific language governing permissions and
+// limitations under the license.
 
-// See the LICENCE.txt file distributed with this work for additional
+// see the licence.txt file distributed with this work for additional
 // information regarding copyright ownership.
 //
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
+// licensed under the apache license, version 2.0 (the "license");
+// you may not use this file except in compliance with the license.
+// you may obtain a copy of the license at
 
-// http://www.apache.org/licenses/LICENSE-2.0
+// http://www.apache.org/licenses/license-2.0
 
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// unless required by applicable law or agreed to in writing, software
+// distributed under the license is distributed on an "as is" basis,
+// without warranties or conditions of any kind, either express or implied.
+// see the license for the specific language governing permissions and
+// limitations under the license.
 
 package scray.sync.api
 
-class VersionedData(
-  val dataSource: String,  // Defines where the data come from. E.g. from a batch or streaming job
-  val mergeKey: String,    // Describes a attribute to merge two dataSources
-  val version: Long,       // Version of this data. E.g. time stamp
-  val data: String         // String representation of the data to store
+class versioneddata(
+  val datasource: string,  // defines where the data come from. e.g. from a batch or streaming job
+  val mergekey: string,    // describes a attribute to merge two datasources
+  val version: long,       // version of this data. e.g. time stamp
+  val data: string         // string representation of the data to store
 ) {
-  
-  def getDataAs[T](f: String => T): T = {
+
+  def getdataas[t](f: string => t): t = {
     f(data)
   }
 
-  def getVersionKey: Int = {
-    VersionedData.createVersionKey(dataSource, mergeKey)
+  def getversionkey: int = {
+    versioneddata.createversionkey(datasource, mergekey)
   }
 
-  def getDataSource: String = {
-    dataSource
+  def getdatasource: string = {
+    datasource
   }
 
-  def getMergeKey: String = {
-    mergeKey
+  def getmergekey: string = {
+    mergekey
   }
 
-  def getVersion: Long = {
+  def getversion: long = {
     version
   }
 
-  def getData: String = {
+  def getdata: string = {
     data
   }
 
-  override def toString: String = {
-    s"""{"dataSource: "${dataSource}", "mergeKey": "${mergeKey}", "version": ${version}, "data": "${data}"}"""
+  override def tostring: string = {
+    s"""{"datasource: "${datasource}", "mergekey": "${mergekey}", "version": ${version}, "data": "${data}"}"""
   }
 }
 
-object VersionedData {
-  def createVersionKey(dataSource: String, mergeKey: String): Int = {
-    dataSource.hashCode() * 31 + mergeKey.hashCode() * 31
+object versioneddata {
+  def createversionkey(datasource: string, mergekey: string): int = {
+    datasource.hashcode() * 31 + mergekey.hashcode() * 31
   }
 }
+**/

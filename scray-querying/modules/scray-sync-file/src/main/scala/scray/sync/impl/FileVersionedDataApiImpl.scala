@@ -41,7 +41,6 @@ import java.io.File
 import com.google.gson.reflect.TypeToken
 import scray.sync.api.VersionedData
 
-import collection.JavaConverters._
 import com.typesafe.scalalogging.LazyLogging
 
 import java.io.OutputStream
@@ -63,7 +62,7 @@ class FileVersionedDataApiImpl extends VersionedDataApi with LazyLogging {
   }
 
   def updateVersion(vd: VersionedData) {
-    versionInformations.put(VersionedData.createVersionKey(vd.dataSource, vd.mergeKey), vd)
+    versionInformations.put(VersionedData.createVersionKey(vd.getDataSource, vd.getMergeKey), vd)
   }
 
   def persist(path: String): Unit = {
@@ -128,7 +127,7 @@ class FileVersionedDataApiImpl extends VersionedDataApi with LazyLogging {
         // Add data if not exists
         case None => acc.put(nexVersiondata.getVersionKey, nexVersiondata)
         case Some(existingVersion) => {
-          if (existingVersion.version > nexVersiondata.version) {
+          if (existingVersion.getVersion > nexVersiondata.getVersion()) {
             logger.debug(s"Existing version is newer than next version. Existing: ${existingVersion}, Next: ${nexVersiondata}")
           } else {
             acc.put(nexVersiondata.getVersionKey, nexVersiondata)
