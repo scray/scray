@@ -62,19 +62,24 @@ public class KubernetesClient {
 		
 		var deploymentName = "scray-ai-job-" + UUID.randomUUID();
 		var descriptor = aiK8client.loadDesciptorFormFile("job.yaml"); // Fixme
-				
-		var configuredDescriptor = aiK8client.configureDeploymentDescriptor(
-				descriptor, 
-				deploymentName, 
-				jobName, 
-				"huggingface-transformers-pytorch-deepspeed-latest-gpu-dep:0.1.2");
 		
-		var configuredVpc = aiK8client.configurePvc(descriptor, deploymentName);
-		
-		aiK8client.deployDeployment(configuredDescriptor);
-		aiK8client.deployVolumeClaim(configuredVpc);
-		
-		aiK8client.close();
+		if(deploymentName == null) {
+			logger.error("Deploymentdescriptor (job.yaml) not found");
+		} else {
+			
+			var configuredDescriptor = aiK8client.configureDeploymentDescriptor(
+					descriptor, 
+					deploymentName, 
+					jobName, 
+					imageName);
+			
+			var configuredVpc = aiK8client.configurePvc(descriptor, deploymentName);
+			
+			aiK8client.deployDeployment(configuredDescriptor);
+			aiK8client.deployVolumeClaim(configuredVpc);
+			
+			aiK8client.close();
+		}
 	}
 	
 	public NamespaceListVisitFromServerGetDeleteRecreateWaitApplicable<HasMetadata> loadDesciptorFormFile(String path) {
