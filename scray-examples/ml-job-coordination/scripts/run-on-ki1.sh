@@ -2,7 +2,7 @@ JOB_NAME=ki1-tensorflow-gpu
 SOURCE_DATA=./
 NOTEBOOK_NAME=token_classification_01.ipynb
 INITIAL_STATE=""
-PROCESSING_ENV="ki1-k8s"
+PROCESSING_ENV=""
 DOCKER_IMAGE="huggingface-transformers-pytorch-deepspeed-latest-gpu-dep:0.1.2"
 JOB_NAME_LITERALLY=false
 
