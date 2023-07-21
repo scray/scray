@@ -22,7 +22,7 @@ sudo docker run -p 7892:8888 -p 7851:7850 --name ki2 --runtime=nvidia --gpus all
 ### huggingface-transformers-pytorch-deepspeed-latest-gpu
 ```
 docker build -t huggingface-transformers-pytorch-deepspeed-latest-gpu-dep:0.1.2 -f ./docker-image-descriptions/huggingface-transformers-pytorch-deepspeed-latest-gpu/Dockerfile .
-docker run --runtime=nvidia --gpus all --ipc=host --ulimit memlock=-1 --ulimit stack=67108864  -e JOB_NAME=deepspeed1 --name deepspeed1 -v /home/research/workspaces/huggingface/cache/huggingface:/root/.cache/huggingface -v ~/.ssh:/root/.ssh:ro huggingface-transformers-pytorch-deepspeed-latest-gpu:0.1.1
+docker run --runtime=nvidia --gpus all --ipc=host --ulimit memlock=-1 --ulimit stack=67108864  -e JOB_NAME=deepspeed1 --name deepspeed1 -v /mnt/ssd2/huggingface/cache/huggingface:/root/.cache/huggingface -v /mnt/ssd2/ml-models:/root/ml-models -v ~/.ssh:/root/.ssh:ro huggingface-transformers-pytorch-deepspeed-latest-gpu:0.1.1
 
 ```
 
