@@ -9,8 +9,8 @@ public class AiJobsData {
 	String filename;
 	String dataDir;
 	String notebookName;
-	String imageName =     "huggingface-transformers-pytorch-deepspeed-latest-gpu-dep:0.1.2";
-	String processingEnv = "http://scray.org/ai/jobs/env/see/ki1-k8s";
+	String imageName =     "scray-jupyter-spark:0.1.1";
+	String processingEnv = "http://scray.org/ai/jobs/env/see/ki1-standalone";
 
 	public String getProcessingEnv() {
 		return processingEnv;
@@ -52,9 +52,7 @@ public class AiJobsData {
 		this.imageName = imageName;
 	}
 
-	public AiJobsData() {
-
-	}
+	public AiJobsData() {}
 
 	public String getState() {
 		return state;

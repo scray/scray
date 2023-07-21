@@ -41,7 +41,7 @@ kind: PersistentVolumeClaim
 metadata:
   name: notebooks-pv-claim
 spec:
-  storageClassName: manual
+  storageClassName: local-storage
   accessModes:
     - ReadWriteOnce
   resources:
@@ -53,7 +53,7 @@ kind: PersistentVolumeClaim
 metadata:
   name: hf-cache
 spec:
-  storageClassName: manual
+  storageClassName: local-storage
   accessModes:
     - ReadWriteMany
   resources:
