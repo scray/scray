@@ -21,6 +21,8 @@ spec:
           env:
             - name: JOB_NAME
               value: "timestamp-example"
+            - name: RUN_TYPE
+              value: "once"
           volumeMounts:
             - name: ssh-key-volume
               mountPath: "/etc/ssh-key"

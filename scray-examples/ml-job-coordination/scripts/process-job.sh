@@ -1,4 +1,5 @@
 #!/bin/bash
+
 DEFAULT_JOB_NAME=ki1-tensorflow-gpu
 
 if [ -z "$JOB_NAME" ]
@@ -7,10 +8,17 @@ then
       JOB_NAME=$DEFAULT_JOB_NAME
 fi
 
+if [ -z "$RUN_TYPE" ]
+then
+    echo "RUN_TYPE not set. Use default value service"
+    RUN_TYPE=service
+fi
+
 SOURCE_DATA=.
 NOTEBOOK_NAME=example-notebook.ipynb
 SYNC_API_URL="http://ml-integration.research.dev.seeburger.de:8082/sync/versioneddata"
 JOB_LOCATION="~/jobs/b636f6f92d51e742f861ee2a928621b6/"
+
 
 downloadJob() {
 
@@ -104,21 +112,29 @@ waitForNextJob() {
   echo "State UPLOADED reached"
 }
 
-if [ "$SCRAY_SYNC_MODE" == "LOCAL" ]
-then
-    runLocalJob
-    exit
-else
-  #while true; do
+processNextJob() {
     waitForNextJob
-
     setState 'DOWNLOADING'
     downloadJob
     setState 'RUNNING'
     runJob
     setState 'COMPLETED'
+}
 
-  #done
+if [ "$SCRAY_SYNC_MODE" == "LOCAL" ]
+then
+    runLocalJob
+    exit
+else
+  if [ "$RUN_TYPE" == "service" ]
+  then
+    while true; do
+      processNextJob
+    done
+  else
+    echo "Process one job."
+    processNextJob
+  fi
 fi
 
 echo "Job $JOB_NAME completed. Terminate job processor"

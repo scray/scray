@@ -47,10 +47,13 @@ public class AiIntegrationAgent {
 		HashMap<String, EnvType> environements = new HashMap<String, EnvType>();
 		environements.put("http://scray.org/ai/jobs/env/see/ki1-k8s", 		 Environment.EnvType.K8s);
 		environements.put("http://scray.org/ai/jobs/env/see/ki1-standalone", Environment.EnvType.Standalone);
-
+		//environements.put("http://scray.org/ai/jobs/env/see/os-k8s", 		 Environment.EnvType.K8s);
+		
+		
 		var agent = new AiIntegrationAgent(environements);
 
 		while (!Thread.currentThread().isInterrupted()) {
+			logger.info("Look for new jobs for env: " + environements);
 			agent.pollForNewJobs();
 			Thread.sleep(5000);
 		}
