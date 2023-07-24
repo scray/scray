@@ -30,7 +30,7 @@ spec:
         - name: ssh-key-volume
           secret:
             secretName: data-ssh-key
-            defaultMode: 256
+            defaultMode: 405
         - name: hf-cache
           persistentVolumeClaim:
             claimName: 'hf-cache'     
