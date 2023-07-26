@@ -1,14 +1,12 @@
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: batch/v1
+kind: Job
 metadata:
   name: jupyter-tensorflow-job
   labels:
     app: jupyter-tensorflow-job
 spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: jupyter-tensorflow-job
+  completions: 1
+  parallelism: 1
   template:
     metadata:
       labels:
@@ -21,11 +19,14 @@ spec:
           env:
             - name: JOB_NAME
               value: "timestamp-example"
+            - name: RUN_TYPE
+              value: "once"
           volumeMounts:
             - name: ssh-key-volume
               mountPath: "/etc/ssh-key"
             - name: hf-cache
               mountPath: /root/.cache/huggingface/
+      restartPolicy: Never
       volumes:
         - name: ssh-key-volume
           secret:
@@ -33,29 +34,4 @@ spec:
             defaultMode: 256
         - name: hf-cache
           persistentVolumeClaim:
-            claimName: 'hf-cache'     
-
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: notebooks-pv-claim
-spec:
-  storageClassName: manual
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 200Mi
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: hf-cache
-spec:
-  storageClassName: manual
-  accessModes:
-    - ReadWriteMany
-  resources:
-    requests:
-      storage: 200Gi
+            claimName: 'hf-cache'

@@ -22,6 +22,8 @@ import io.fabric8.kubernetes.api.model.PersistentVolumeClaimVolumeSourceBuilder;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
 import io.fabric8.kubernetes.api.model.apps.DeploymentFluent.MetadataNested;
+import io.fabric8.kubernetes.api.model.batch.v1.Job;
+import io.fabric8.kubernetes.api.model.batch.v1.JobBuilder;
 import io.fabric8.kubernetes.client.Config;
 import io.fabric8.kubernetes.client.ConfigBuilder;
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
@@ -57,7 +59,7 @@ public class KubernetesClient {
 		aiK8client.close();
 	}
 	
-	public void DeployJob(String jobName, String imageName) {
+	public void deployJob(String jobName, String imageName) {
 		KubernetesClient aiK8client = new KubernetesClient();
 		
 		var deploymentName = "scray-ai-job-" + UUID.randomUUID();
@@ -67,7 +69,7 @@ public class KubernetesClient {
 			logger.error("Deploymentdescriptor (job.yaml) not found");
 		} else {
 			
-			var configuredDescriptor = aiK8client.configureDeploymentDescriptor(
+			var configureJob = aiK8client.configureJobDescriptor(
 					descriptor, 
 					deploymentName, 
 					jobName, 
@@ -75,8 +77,16 @@ public class KubernetesClient {
 			
 			var configuredVpc = aiK8client.configurePvc(descriptor, deploymentName);
 			
-			aiK8client.deployDeployment(configuredDescriptor);
-			aiK8client.deployVolumeClaim(configuredVpc);
+			try {
+				aiK8client.deployJob(configureJob);
+			} catch(Exception e) {
+				logger.warn("Error while creating job. {}", e );
+			}
+			try {
+				aiK8client.deployVolumeClaim(configuredVpc);
+			} catch(Exception e) {
+				logger.warn("Error while creating pvc. {}", e );
+			}
 			
 			aiK8client.close();
 		}
@@ -142,6 +152,41 @@ public class KubernetesClient {
 			.reduce(null, (a, b) -> b);
 	}
 	
+	public Job configureJobDescriptor(
+			NamespaceListVisitFromServerGetDeleteRecreateWaitApplicable<HasMetadata> preparedDeploymentDescriptor, 
+			String deplymentName, 
+			String jobName, 
+			String imageName) {
+			
+			return preparedDeploymentDescriptor.items().stream()
+			.filter(item -> item != null && item.getKind().equals("Job") &&  item.getMetadata().getName().equals("jupyter-tensorflow-job"))
+			.map(job -> (Job)job)
+			.map(job -> {
+				Job newDeplyment = new JobBuilder(job)
+						.withNewMetadata()
+							.withName(deplymentName)
+							.addToLabels("app", deplymentName)
+						.endMetadata()
+						.editOrNewSpec()
+							.editOrNewTemplate()
+								.editOrNewSpec()
+									.editMatchingContainer(c -> c.getName().equals("scray-ai-container"))
+									.withImage(imageName)
+									.editMatchingEnv(e -> e.getName().equals("JOB_NAME"))
+										.withValue(jobName)
+									.endEnv()
+									.editMatchingEnv(e -> e.getName().equals("RUN_TYPE")).withValue("once").endEnv()
+									.endContainer()
+								.endSpec()
+							.endTemplate()
+						.endSpec()
+					.build();
+				
+				return newDeplyment;
+			})
+			.reduce(null, (a, b) -> b);
+	}
+	
 	public PersistentVolumeClaim configurePvc(
 			NamespaceListVisitFromServerGetDeleteRecreateWaitApplicable<HasMetadata> preparedDeploymentDescriptor,
 			String deplymentName) {
@@ -159,6 +204,10 @@ public class KubernetesClient {
 					.build();
 				})
 				.reduce(null, (a, b) -> b);
+	}
+	
+	public void deployJob(Job job) {
+		this.client.batch().jobs().inNamespace("default").createOrReplace(job);
 	}
 	
 	public void deployDeployment(Deployment dep) {
