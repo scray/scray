@@ -43,7 +43,7 @@ public class KubernetesClient {
 		KubernetesClient aiK8client = new KubernetesClient();
 		
 		var deploymentName = "scray-ai-job-" + UUID.randomUUID();
-		var descriptor = aiK8client.loadDesciptorFormFile("job.yaml"); // Fixme add path parameter
+		var descriptor = aiK8client.loadDesciptorFormFile("job2.yaml"); // Fixme add path parameter
 				
 		var configuredDescriptor = aiK8client.configureDeploymentDescriptor(
 				descriptor, 
@@ -63,10 +63,10 @@ public class KubernetesClient {
 		KubernetesClient aiK8client = new KubernetesClient();
 		
 		var deploymentName = "scray-ai-job-" + UUID.randomUUID();
-		var descriptor = aiK8client.loadDesciptorFormFile("job.yaml"); // Fixme
+		var descriptor = aiK8client.loadDesciptorFormFile("job2.yaml"); // Fixme
 		
 		if(deploymentName == null) {
-			logger.error("Deploymentdescriptor (job.yaml) not found");
+			logger.error("Deploymentdescriptor (job2.yaml) not found");
 		} else {
 			
 			var configureJob = aiK8client.configureJobDescriptor(
