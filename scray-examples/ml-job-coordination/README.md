@@ -33,3 +33,9 @@ docker build -t huggingface-transformers-pytorch-deepspeed-latest-gpu-dep:0.1.2 
 docker run --runtime=nvidia --gpus all --ipc=host --ulimit memlock=-1 --ulimit stack=67108864  -e JOB_NAME=deepdep1 --name deepdep1 -v /mnt/ssd2/huggingface/cache/huggingface:/root/.cache/huggingface -v /mnt/ssd2/ml-models:/root/ml-models -v ~/.ssh:/root/.ssh:ro huggingface-transformers-pytorch-deepspeed-latest-gpu-dep:0.1.2
 
 ```
+
+### seamless_m4t
+```
+docker build -t seamless_m4t:0.1.2 -f ./docker-image-descriptions/seamless_m4t/Dockerfile .
+
+```
