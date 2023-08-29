@@ -37,5 +37,6 @@ docker run --runtime=nvidia --gpus all --ipc=host --ulimit memlock=-1 --ulimit s
 ### seamless_m4t
 ```
 docker build -t seamless_m4t:0.1.2 -f ./docker-image-descriptions/seamless_m4t/Dockerfile .
-
+docker save seamless_m4t:0.1.2 > /tmp/q1.tar
+sudo ctr -n=k8s.io images import /tmp/q1.tar
 ```
