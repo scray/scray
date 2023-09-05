@@ -1,3 +1,4 @@
+
 package org.scray.integration.ai.agent.clients.k8s;
 
 import java.io.File;
@@ -19,11 +20,16 @@ import io.fabric8.kubernetes.api.model.ObjectMetaBuilder;
 import io.fabric8.kubernetes.api.model.PersistentVolumeClaim;
 import io.fabric8.kubernetes.api.model.PersistentVolumeClaimBuilder;
 import io.fabric8.kubernetes.api.model.PersistentVolumeClaimVolumeSourceBuilder;
+import io.fabric8.kubernetes.api.model.Service;
+import io.fabric8.kubernetes.api.model.ServiceBuilder;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
 import io.fabric8.kubernetes.api.model.apps.DeploymentFluent.MetadataNested;
 import io.fabric8.kubernetes.api.model.batch.v1.Job;
 import io.fabric8.kubernetes.api.model.batch.v1.JobBuilder;
+import io.fabric8.kubernetes.api.model.extensions.IngressRuleBuilder;
+import io.fabric8.kubernetes.api.model.networking.v1.Ingress;
+import io.fabric8.kubernetes.api.model.networking.v1.IngressBuilder;
 import io.fabric8.kubernetes.client.Config;
 import io.fabric8.kubernetes.client.ConfigBuilder;
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
@@ -41,42 +47,42 @@ public class KubernetesClient {
 	public static void main(String[] args) throws IOException {
 
 		KubernetesClient aiK8client = new KubernetesClient();
-		
+
 		var deploymentName = "scray-ai-job-" + UUID.randomUUID();
 		var descriptor = aiK8client.loadDesciptorFormFile("job2.yaml"); // Fixme add path parameter
-				
+
 		var configuredDescriptor = aiK8client.configureDeploymentDescriptor(
-				descriptor, 
-				deploymentName, 
-				deploymentName, 
+				descriptor,
+				deploymentName,
+				deploymentName,
 				"huggingface-transformers-pytorch-deepspeed-latest-gpu-dep:0.1.2");
-		
+
 		var configuredVpc = aiK8client.configurePvc(descriptor, deploymentName);
-		
+
 		aiK8client.deployDeployment(configuredDescriptor);
 		aiK8client.deployVolumeClaim(configuredVpc);
-		
+
 		aiK8client.close();
 	}
-	
+
 	public void deployJob(String jobName, String imageName) {
 		KubernetesClient aiK8client = new KubernetesClient();
-		
+
 		var deploymentName = "scray-ai-job-" + UUID.randomUUID();
 		var descriptor = aiK8client.loadDesciptorFormFile("job2.yaml"); // Fixme
-		
+
 		if(deploymentName == null) {
 			logger.error("Deploymentdescriptor (job2.yaml) not found");
 		} else {
-			
+
 			var configureJob = aiK8client.configureJobDescriptor(
-					descriptor, 
-					deploymentName, 
-					jobName, 
+					descriptor,
+					deploymentName,
+					jobName,
 					imageName);
-			
+
 			var configuredVpc = aiK8client.configurePvc(descriptor, deploymentName);
-			
+
 			try {
 				aiK8client.deployJob(configureJob);
 			} catch(Exception e) {
@@ -87,37 +93,39 @@ public class KubernetesClient {
 			} catch(Exception e) {
 				logger.warn("Error while creating pvc. {}", e );
 			}
-			
+
 			aiK8client.close();
 		}
 	}
-	
+
 	public NamespaceListVisitFromServerGetDeleteRecreateWaitApplicable<HasMetadata> loadDesciptorFormFile(String path) {
 		FileInputStream jobDeploymentDescriptor;
 		NamespaceListVisitFromServerGetDeleteRecreateWaitApplicable<HasMetadata>  preparedDeploymentDescriptor = null;
-		
+
 		try {
 			jobDeploymentDescriptor = new FileInputStream(new File(path));
+
 			 preparedDeploymentDescriptor = client
 					.inNamespace("default")
 					.load(jobDeploymentDescriptor);
-				jobDeploymentDescriptor.close();
+
+			jobDeploymentDescriptor.close();
 		} catch (FileNotFoundException e) {
-			e.printStackTrace();
+			logger.error("Deployment descriptor file not found {}", path);
 		} catch (IOException e) {
+			logger.error("Error while reading deployment descrptor file {}", path);
 			e.printStackTrace();
 		}
 
 		return preparedDeploymentDescriptor;
-		
 	}
-	
+
 	public Deployment configureDeploymentDescriptor(
-			NamespaceListVisitFromServerGetDeleteRecreateWaitApplicable<HasMetadata> preparedDeploymentDescriptor, 
-			String deplymentName, 
-			String jobName, 
+			NamespaceListVisitFromServerGetDeleteRecreateWaitApplicable<HasMetadata> preparedDeploymentDescriptor,
+			String deplymentName,
+			String jobName,
 			String imageName) {
-			
+
 			return preparedDeploymentDescriptor.items().stream()
 			.filter(item -> item != null && item.getKind().equals("Deployment") &&  item.getMetadata().getName().equals("jupyter-tensorflow-job"))
 			.map(deplyment -> (Deployment)deplyment)
@@ -146,21 +154,21 @@ public class KubernetesClient {
 							.endTemplate()
 						.endSpec()
 					.build();
-				
+
 				return newDeplyment;
 			})
 			.reduce(null, (a, b) -> b);
 	}
-	
+
 	public Job configureJobDescriptor(
-			NamespaceListVisitFromServerGetDeleteRecreateWaitApplicable<HasMetadata> preparedDeploymentDescriptor, 
-			String deplymentName, 
-			String jobName, 
+			NamespaceListVisitFromServerGetDeleteRecreateWaitApplicable<HasMetadata> preparedDeploymentDescriptor,
+			String deplymentName,
+			String jobName,
 			String imageName) {
-			
+
 			return preparedDeploymentDescriptor.items().stream()
 			.filter(item -> item != null && item.getKind().equals("Job") &&  item.getMetadata().getName().equals("jupyter-tensorflow-job"))
-			.map(job -> (Job)job)
+			.map(Job.class::cast)
 			.map(job -> {
 				Job newDeplyment = new JobBuilder(job)
 						.withNewMetadata()
@@ -181,21 +189,90 @@ public class KubernetesClient {
 							.endTemplate()
 						.endSpec()
 					.build();
-				
+
 				return newDeplyment;
 			})
 			.reduce(null, (a, b) -> b);
 	}
-	
+
+
+	public Ingress configureIngressDefinition(
+			NamespaceListVisitFromServerGetDeleteRecreateWaitApplicable<HasMetadata> preparedDeploymentDescriptor,
+			String host,
+			String jobName,
+			String path,
+			String serviceName,
+			int portNumber) {
+
+			return preparedDeploymentDescriptor.items().stream()
+			.filter(item -> item != null && item.getKind().equals("Ingress") &&  item.getMetadata().getName().equals("scray-app-ingress-template"))
+			.map(Ingress.class::cast)
+			.map(ingress -> {
+				Ingress newDeplyment = new IngressBuilder(ingress)
+						.withNewMetadata()
+							.withName(jobName)
+						.endMetadata()
+						.editOrNewSpec()
+							.editMatchingRule(r -> r.getHost().equals("HOST"))
+								.withHost(host)
+								.editHttp()
+									.editMatchingPath(p -> p.getPath().equals("/app1"))
+									.withPath(path)
+									.editBackend()
+										.editOrNewService()
+											.withName(serviceName)
+											.editOrNewPort()
+												.withNumber(portNumber)
+											.endPort()
+										.endService()
+									.endBackend()
+									.endPath()
+								.endHttp()
+							.endRule()
+						.endSpec()
+					.build();
+
+				return newDeplyment;
+			})
+			.reduce(null, (a, b) -> b);
+	}
+
+	public Service configureServiceDefinion(
+			NamespaceListVisitFromServerGetDeleteRecreateWaitApplicable<HasMetadata> preparedDeploymentDescriptor,
+			String jobName,
+			Integer port
+			) {
+
+		return preparedDeploymentDescriptor.items().stream()
+			.filter(item -> item != null && item.getKind().equals("Service") &&  item.getMetadata().getName().equals("SCARY-APP-SERVICE"))
+			.map(Service.class::cast)
+			.map(ingress -> {
+				Service newDeplyment = new ServiceBuilder(ingress)
+						.withNewMetadata()
+							.withName(jobName)
+						.endMetadata()
+						.editOrNewSpec()
+							.addToSelector("app", jobName)
+							.editFirstPort()
+								.withPort(port)
+							.endPort()
+						.endSpec()
+					.build();
+
+				return newDeplyment;
+			})
+			.reduce(null, (a, b) -> b);
+	}
+
 	public PersistentVolumeClaim configurePvc(
 			NamespaceListVisitFromServerGetDeleteRecreateWaitApplicable<HasMetadata> preparedDeploymentDescriptor,
 			String deplymentName) {
-		
+
 		return preparedDeploymentDescriptor.items().stream()
 				.filter(item -> item != null && item.getKind().equals("PersistentVolumeClaim") &&  item.getMetadata().getName().equals("notebooks-pv-claim"))
 				.map(pvc -> (PersistentVolumeClaim)pvc)
 				.map(pvc -> {
-					
+
 					logger.debug("Update pvc ");
 					return new PersistentVolumeClaimBuilder(pvc)
 					.withNewMetadata()
@@ -205,21 +282,31 @@ public class KubernetesClient {
 				})
 				.reduce(null, (a, b) -> b);
 	}
-	
+
 	public void deployJob(Job job) {
 		this.client.batch().jobs().inNamespace("default").createOrReplace(job);
 	}
-	
+
 	public void deployDeployment(Deployment dep) {
 		this.client.apps().deployments().inNamespace("default").createOrReplace(dep);
 	}
-	
+
 	public void deployVolumeClaim(PersistentVolumeClaim pvclaim) {
 		client.persistentVolumeClaims().inNamespace("default").createOrReplace(pvclaim);
 	}
-	
+
+	public void deployIngress(Ingress ingress) {
+		client.network().v1().ingresses().inNamespace("default").createOrReplace(ingress);
+	}
+
+	public void deployService(Service service) {
+		client.services().inNamespace("default").createOrReplace(service);
+	}
+
 	public void close() {
 		this.client.close();
 	}
+
+
 
 }

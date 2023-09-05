@@ -37,19 +37,21 @@ public class AiIntegrationAgent {
 	private RestClient apiClient = new RestClient();
 
 	public AiIntegrationAgent() {}
-	
+
 	public AiIntegrationAgent(HashMap<String, EnvType> environements) {
 		this.environements = environements;
 	}
 
 	public static void main(String[] args) throws InterruptedException {
-		
+
 		HashMap<String, EnvType> environements = new HashMap<String, EnvType>();
 		environements.put("http://scray.org/ai/jobs/env/see/ki1-k8s", 		 Environment.EnvType.K8s);
 		environements.put("http://scray.org/ai/jobs/env/see/ki1-standalone", Environment.EnvType.Standalone);
+		environements.put("http://scray.org/ai/app/env/see/os", Environment.EnvType.Standalone);
+
 		//environements.put("http://scray.org/ai/jobs/env/see/os-k8s", 		 Environment.EnvType.K8s);
 		//environements.put("http://scray.org/ai/jobs/env/see/st-k8s", 		 Environment.EnvType.K8s);
-		
+
 		var agent = new AiIntegrationAgent(environements);
 
 		while (!Thread.currentThread().isInterrupted()) {
@@ -67,7 +69,7 @@ public class AiIntegrationAgent {
 				.map(versonData -> {
 					try {
 						return Optional.of(
-								new JobToSchedule(versonData, 
+								new JobToSchedule(versonData,
 										jsonObjectMapper.readValue(versonData.getData(), AiJobsData.class))
 								);
 					} catch (JacksonException e) {
@@ -79,7 +81,7 @@ public class AiIntegrationAgent {
 				})
 				.flatMap(Optional::stream)
 				// check environment
-				.filter(jobData -> {				
+				.filter(jobData -> {
 					if (jobData.getAiJobsData().getProcessingEnv() != null && myEnvs.contains(jobData.getAiJobsData().getProcessingEnv())) {
 						return true;
 					} else {
@@ -88,16 +90,16 @@ public class AiIntegrationAgent {
 				})
 				;
 	}
-	
-	
+
+
 	public void setStateScheduled(VersionedData2 versionedData, AiJobsData jobState) {
-		
+
 		// Set new state scheduled
 		jobState.setState("SCHEDULED");
 		try {
 			versionedData.setData(jsonObjectMapper.writeValueAsString(jobState));
 			String sheduleState = jsonObjectMapper.writeValueAsString(versionedData);
-			
+
 			logger.info("Write scheduled state to API {}", sheduleState);
 			apiClient.putData(sheduleState);
 		} catch (JsonProcessingException e) {
@@ -107,9 +109,9 @@ public class AiIntegrationAgent {
 		}
 
 	}
-	
+
 	public void scheduleInKubernetes(VersionedData2 versionedData, AiJobsData jobState) {
-	
+
 		logger.info("Schedule container for {}", versionedData.getDataSource());
 
 		if(!useImageAllowList || allowedImages.contains(jobState.getImageName())) {
@@ -119,8 +121,8 @@ public class AiIntegrationAgent {
 			logger.warn("Requested container not in allow list {}", jobState.getImageName());
 		}
 	}
-	
-	
+
+
 
 
 	public void pollForNewJobs() {
@@ -133,21 +135,21 @@ public class AiIntegrationAgent {
 				.filter(jobData -> jobData.getAiJobsData().getState().equals("UPLOADED"))
 				.map(jobToStart -> {
 					var envType = environements.get(jobToStart.getAiJobsData().getProcessingEnv());
-					
+
 					if(envType == envType.Standalone) {
 						this.setStateScheduled(jobToStart.getVersionData(), jobToStart.getAiJobsData());
-					} else if(envType == envType.K8s) {				
+					} else if(envType == envType.K8s) {
 						this.scheduleInKubernetes(jobToStart.getVersionData(), jobToStart.getAiJobsData());
 						this.setStateScheduled(jobToStart.getVersionData(), jobToStart.getAiJobsData());
 					}
 					return "";
 				}).toList();
-				
+
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
 	}
-	
+
 	public void addEnv(String name, EnvType type) {
 		this.environements.put(name, type);
 	}

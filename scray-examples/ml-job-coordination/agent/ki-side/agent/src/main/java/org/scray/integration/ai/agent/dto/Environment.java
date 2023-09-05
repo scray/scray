@@ -1,15 +1,16 @@
 package org.scray.integration.ai.agent.dto;
 
 public class Environment {
-	
+
 	public enum EnvType {
 		K8s,
-		Standalone
+		Standalone,
+		App
 	}
-	
+
 	private String name;
 	private EnvType type;
-	
+
 
 	public EnvType getType() {
 		return type;

@@ -44,7 +44,6 @@ curl -sS -X 'PUT' \
   "data": "{\"filename\": \"'$JOB_NAME'.tar.gz\", \"processingEnv\": \"'$PROCESSING_ENV'\", \"state\": \"'$1'\", \"imageName\": \"'$DOCKER_IMAGE'\",   \"dataDir\": \"'$SOURCE_DATA'\", \"notebookName\": \"'$NOTEBOOK_NAME'\"}",
   "versionKey": 0
   }'
-
 }
 
 waitForJobCompletion() {

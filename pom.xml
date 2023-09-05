@@ -58,13 +58,13 @@
 		<scala.tools.version>2.13</scala.tools.version>
 		<scala.version>2.13.6</scala.version>
 		<scala.suffix>2.13</scala.suffix>
-		
+
 		<dependency.locations.enabled>false</dependency.locations.enabled>
 
-		<!-- finagle 6.12 might be needed for scray stateless services because 
+		<!-- finagle 6.12 might be needed for scray stateless services because
 			storehaus-memcached depends on it - need to test -->
 		<!-- <finagle.version>6.12.2</finagle.version> -->
-		<!-- finagle 6.15 fixes a bug with AbstractMethod error for DefaultServer 
+		<!-- finagle 6.15 fixes a bug with AbstractMethod error for DefaultServer
 			in bdq-scray-sil -->
 		<finagle.version>6.15.0</finagle.version>
 
@@ -78,13 +78,13 @@
 
 	<modules>
 		<module>scray-querying</module>
-		<module>scray-cassandra</module>
-		<module>scray-jdbc</module>
-		<module>scray-hdfs</module>
-		<module>scray-service</module>
+<!--		<module>scray-cassandra</module>-->
+<!--		<module>scray-jdbc</module>-->
+<!--		<module>scray-hdfs</module>-->
+<!--		<module>scray-service</module>-->
 		<module>scray-common</module>
-		<module>scray-client-jdbc</module>
-		<module>scray-loader</module>
+<!--		<module>scray-client-jdbc</module>-->
+<!--		<module>scray-loader</module>-->
 	</modules>
 
 	<distributionManagement>
@@ -201,7 +201,7 @@
 					<failOnWarning>false</failOnWarning>
 					<sourceDirectory>${basedir}/src/main/scala</sourceDirectory>
 					<testSourceDirectory>${basedir}/src/test/scala</testSourceDirectory>
-					<configLocation>${project.basedir}/scalastyle_config.xml</configLocation> 
+					<configLocation>${project.basedir}/scalastyle_config.xml</configLocation>
 					<!-- <outputFile>${project.basedir}/target/scalastyle-output.xml</outputFile> -->
 					<outputEncoding>UTF-8</outputEncoding>
 				</configuration>
@@ -236,7 +236,7 @@
 					<junitxml>.</junitxml>
 					<filereports>WDF TestSuite.txt</filereports>
 					<tagsToExclude>CassandraUp,SilUp</tagsToExclude>
-					<argLine> --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.base=ALL-UNNAMED --add-opens java.base/java.util.stream=ALL-UNNAMED</argLine>				
+					<argLine> --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.base=ALL-UNNAMED --add-opens java.base/java.util.stream=ALL-UNNAMED</argLine>
 </configuration>
 				<executions>
 					<execution>
@@ -310,7 +310,7 @@
 			<name>Typesafe Repository</name>
 			<url>http://repo.typesafe.com/typesafe/releases/</url>
 		</repository>
-		<!-- <repository> <id>websudos.co.uk</id> <name>Websudos Repository</name> 
+		<!-- <repository> <id>websudos.co.uk</id> <name>Websudos Repository</name>
 			<url>http://maven.websudos.co.uk/ext-release-local</url> </repository> -->
 		<repository>
 			<id>sonatype.org</id>
