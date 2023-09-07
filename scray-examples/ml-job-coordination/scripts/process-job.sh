@@ -1,6 +1,7 @@
 #!/bin/bash
 
 DEFAULT_JOB_NAME=ki1-tensorflow-gpu
+RUNTIME_TYPE="PAPERMILL"
 
 if [ -z "$JOB_NAME" ]
 then
@@ -45,8 +46,16 @@ uploadCurrentNotebookState() {
   sftp -o StrictHostKeyChecking=no -i /etc/ssh-key/id_rsa ubuntu@ml-integration-git.research.dev.seeburger.de:/home/ubuntu/sftp-share/ <<<'PUT '$JOB_NAME-state.tar.gz''
 }
 
+runPythonJob() {
+  cd $JOB_LOCATION
+  cd $SOURCE_DATA
+ 
+  pip install -r requirements.txt
+  python3 $NOTEBOOK_NAME
+}
 
-runJob() {
+
+runPapermillJob() {
   cd $JOB_LOCATION
   cd $SOURCE_DATA
   
@@ -65,6 +74,30 @@ runJob() {
 
   tar -czvf $JOB_NAME-fin.tar.gz $SOURCE_DATA
   sftp -i /etc/ssh-key/id_rsa ubuntu@ml-integration-git.research.dev.seeburger.de:/home/ubuntu/sftp-share/ <<<'PUT '$JOB_NAME-fin.tar.gz''
+}
+
+
+
+runJob() {
+
+  if [ "$RUNTIME_TYPE" == "PAPERMILL" ]
+  then
+   runPapermillJob
+  elif [ "$RUNTIME_TYPE" == "PYTHON" ]
+  then
+    runPythonJob
+  else
+
+    echo "Process one job."
+    processNextJob
+  fi
+
+
+
+EXECUTION_ENV=
+
+
+
 }
 
 runLocalJob() {

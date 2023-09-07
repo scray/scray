@@ -60,6 +60,11 @@ buildNumber.properties
 .mvn/
 bin/
 
+# No archives
+*.gz
+*.tar
+
+
 # Jupyter notebooks
 .ipynb_checkpoints
 __pycache__

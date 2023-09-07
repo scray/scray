@@ -5,8 +5,10 @@ ENV GRADIO_SERVER_PORT=${GRADIO_SERVER_PORT}
 
 WORKDIR /workspace
 
+COPY scripts/process-job.sh /opt/scray-sync/
+
 ADD requirements.txt app.py /workspace/
 
 RUN pip install -r /workspace/requirements.txt
 
-CMD ["python3", "/workspace/app.py"]
+CMD ["bash", "-c", "/opt/scray-sync/process-job.sh"]

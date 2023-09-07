@@ -24,8 +24,6 @@ spec:
           volumeMounts:
             - name: ssh-key-volume
               mountPath: "/etc/ssh-key"
-            - name: hf-cache
-              mountPath: /root/.cache/huggingface/
       restartPolicy: Never
       volumes:
         - name: ssh-key-volume
