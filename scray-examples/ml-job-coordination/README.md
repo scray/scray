@@ -41,9 +41,8 @@ docker save seamless_m4t:0.1.2 > /tmp/q1.tar
 sudo ctr -n=k8s.io images import /tmp/q1.tar
 ```
 
-### seamless_m4tf
+### python container
 ```
-docker build -t python:0.1.2 -f ./docker-image-descriptions/app-env/Dockerfile .
-docker save seamless_m4t:0.1.2 > /tmp/q1.tar
-sudo ctr -n=k8s.io images import /tmp/q1.tar
+docker build -t scray/python:0.1.2 -f ./docker-image-descriptions/app-env/Dockerfile .
 ```
+

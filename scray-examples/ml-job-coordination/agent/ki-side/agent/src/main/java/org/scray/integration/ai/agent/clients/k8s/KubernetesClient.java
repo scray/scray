@@ -65,7 +65,7 @@ public class KubernetesClient {
 		aiK8client.close();
 	}
 
-	public void deployJob(String jobName, String imageName) {
+	public void deployAppJob(String jobName, String imageName) {
 		KubernetesClient aiK8client = new KubernetesClient();
 
 		var deploymentName = "scray-ai-job-" + UUID.randomUUID();
@@ -73,6 +73,61 @@ public class KubernetesClient {
 
 		if(deploymentName == null) {
 			logger.error("Deploymentdescriptor (job2.yaml) not found");
+		} else {
+
+			var configureJob = aiK8client.configureJobDescriptor(
+					descriptor,
+					deploymentName,
+					jobName,
+					imageName);
+
+			var configuredVpc = aiK8client.configurePvc(descriptor, deploymentName);
+
+			try {
+				aiK8client.deployJob(configureJob);
+			} catch(Exception e) {
+				logger.warn("Error while creating job. {}", e );
+			}
+			try {
+				aiK8client.deployVolumeClaim(configuredVpc);
+			} catch(Exception e) {
+				logger.warn("Error while creating pvc. {}", e );
+			}
+
+			aiK8client.close();
+		}
+	}
+
+	public void deployApp(String jobName, String imageName, String jobTemplatePath) {
+
+		String host = "kubernetes.research.dev.seeburger.de";
+		String ingressPath = "app/"  + jobName;
+		String serviceName = jobName;
+		int portNumber = 8083;
+
+
+		var serviceDescriptorTemplate = this.loadDesciptorFormFile("service.yaml");
+		Service serviceDescription = this.configureServiceDefinion(serviceDescriptorTemplate, serviceName, jobName, portNumber);
+		//this.deployService(serviceDescription);
+
+
+		var ingressDescriptorTemplate = this.loadDesciptorFormFile("app-ingress.yaml");
+		Ingress ingressDescription = this.configureIngressDefinition(ingressDescriptorTemplate, host, jobName, ingressPath, serviceName, portNumber);
+		//this.deployIngress(ingressDescription);
+
+
+		this.deployJob(jobName, imageName, jobTemplatePath);
+
+	}
+
+	public void deployJob(String jobName, String imageName, String jobTemplatePath) {
+		KubernetesClient aiK8client = new KubernetesClient();
+
+		var deploymentName = "scray-ai-job-" + jobName + "-" + UUID.randomUUID();
+		var descriptor = aiK8client.loadDesciptorFormFile(jobTemplatePath);
+
+		if(descriptor == null) {
+			logger.error("Deploymentdescriptor (" + jobTemplatePath + ") not found");
 		} else {
 
 			var configureJob = aiK8client.configureJobDescriptor(
@@ -239,7 +294,8 @@ public class KubernetesClient {
 
 	public Service configureServiceDefinion(
 			NamespaceListVisitFromServerGetDeleteRecreateWaitApplicable<HasMetadata> preparedDeploymentDescriptor,
-			String jobName,
+			String selectorApp,
+			String serviceName,
 			Integer port
 			) {
 
@@ -249,10 +305,10 @@ public class KubernetesClient {
 			.map(ingress -> {
 				Service newDeplyment = new ServiceBuilder(ingress)
 						.withNewMetadata()
-							.withName(jobName)
+							.withName(serviceName)
 						.endMetadata()
 						.editOrNewSpec()
-							.addToSelector("app", jobName)
+							.addToSelector("app", selectorApp)
 							.editFirstPort()
 								.withPort(port)
 							.endPort()

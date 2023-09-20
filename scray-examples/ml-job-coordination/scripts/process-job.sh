@@ -1,7 +1,14 @@
 #!/bin/bash
 
 DEFAULT_JOB_NAME=ki1-tensorflow-gpu
-RUNTIME_TYPE="PAPERMILL"
+
+
+
+if [[ -z "${RUNTIME_TYPE}" ]]; then
+  RUNTIME_TYPE="PAPERMILL"
+fi
+
+echo RUNTIME_TYPE=$RUNTIME_TYPE
 
 if [ -z "$JOB_NAME" ]
 then
@@ -50,7 +57,13 @@ runPythonJob() {
   cd $JOB_LOCATION
   cd $SOURCE_DATA
  
-  pip install -r requirements.txt
+  if test -f "$FILE"; then
+    pip install -r requirements.txt
+  else
+    echo "no requirements.txt"
+  fi
+
+  
   python3 $NOTEBOOK_NAME
 }
 

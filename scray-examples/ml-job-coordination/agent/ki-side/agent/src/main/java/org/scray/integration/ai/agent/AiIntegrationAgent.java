@@ -22,6 +22,7 @@ import org.scray.integration.ai.agent.dto.AiJobsData;
 import org.scray.integration.ai.agent.dto.Environment;
 import org.scray.integration.ai.agent.dto.Environment.EnvType;
 import org.scray.integration.ai.agent.dto.JobToSchedule;
+import org.scray.integration.ai.agent.dto.K8sParameters;
 import org.scray.integration.ai.agent.dto.VersionedData2;
 import org.slf4j.Logger;
 
@@ -45,9 +46,11 @@ public class AiIntegrationAgent {
 	public static void main(String[] args) throws InterruptedException {
 
 		HashMap<String, EnvType> environements = new HashMap<String, EnvType>();
-		environements.put("http://scray.org/ai/jobs/env/see/ki1-k8s", 		 Environment.EnvType.K8s);
-		environements.put("http://scray.org/ai/jobs/env/see/ki1-standalone", Environment.EnvType.Standalone);
-		environements.put("http://scray.org/ai/app/env/see/os", Environment.EnvType.Standalone);
+		//environements.put("http://scray.org/ai/jobs/env/see/ki1-k8s", 		 Environment.EnvType.K8s);
+		//environements.put("http://scray.org/ai/jobs/env/see/ki1-standalone", Environment.EnvType.Standalone);
+		//environements.put("http://scray.org/ai/app/env/see/os", Environment.EnvType.Standalone);
+		environements.put("http://scray.org/ai/app/env/see/os", Environment.EnvType.App);
+
 
 		//environements.put("http://scray.org/ai/jobs/env/see/os-k8s", 		 Environment.EnvType.K8s);
 		//environements.put("http://scray.org/ai/jobs/env/see/st-k8s", 		 Environment.EnvType.K8s);
@@ -70,7 +73,7 @@ public class AiIntegrationAgent {
 					try {
 						return Optional.of(
 								new JobToSchedule(versonData,
-										jsonObjectMapper.readValue(versonData.getData(), AiJobsData.class))
+										jsonObjectMapper.readValue(versonData.getData(), AiJobsData.class), new K8sParameters("app-job.yaml")) // FIXME K8sParameter should be a parameter
 								);
 					} catch (JacksonException e) {
 						logger.warn("No Ai job data parsed");
@@ -116,7 +119,7 @@ public class AiIntegrationAgent {
 
 		if(!useImageAllowList || allowedImages.contains(jobState.getImageName())) {
 			KubernetesClient k8sClient = new KubernetesClient();
-			k8sClient.deployJob(versionedData.getDataSource(), jobState.getImageName());
+			k8sClient.deployJob(versionedData.getDataSource(), jobState.getImageName(), jobState.getJobTemplateFile());
 		} else {
 			logger.warn("Requested container not in allow list {}", jobState.getImageName());
 		}
@@ -140,6 +143,30 @@ public class AiIntegrationAgent {
 						this.setStateScheduled(jobToStart.getVersionData(), jobToStart.getAiJobsData());
 					} else if(envType == envType.K8s) {
 						this.scheduleInKubernetes(jobToStart.getVersionData(), jobToStart.getAiJobsData());
+						this.setStateScheduled(jobToStart.getVersionData(), jobToStart.getAiJobsData());
+					} else if(envType == envType.App) {
+
+
+						logger.info("Schedule container for {}", jobToStart.getVersionData().getDataSource());
+
+						if(!useImageAllowList || allowedImages.contains(jobToStart.getAiJobsData().getImageName())) {
+							KubernetesClient k8sClient = new KubernetesClient();
+
+							k8sClient.deployApp(syncApiData, syncApiData, syncApiData);
+
+						} else {
+							logger.warn("Requested container not in allow list {}", jobToStart.getAiJobsData().getImageName());
+						}
+
+
+
+						// Deploy job
+
+					    jobToStart.getAiJobsData().setJobTemplateFile("app-job.yaml");
+						this.scheduleInKubernetes(jobToStart.getVersionData(), jobToStart.getAiJobsData());
+
+
+						// Set state to scheduled
 						this.setStateScheduled(jobToStart.getVersionData(), jobToStart.getAiJobsData());
 					}
 					return "";

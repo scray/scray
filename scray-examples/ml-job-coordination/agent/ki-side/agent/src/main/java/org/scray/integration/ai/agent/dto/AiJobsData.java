@@ -11,6 +11,7 @@ public class AiJobsData {
 	String notebookName;
 	String imageName =     "scray-jupyter-spark:0.1.1";
 	String processingEnv = "http://scray.org/ai/jobs/env/see/ki1-standalone";
+	String jobTemplateFile = "job2.yaml";
 
 	public String getProcessingEnv() {
 		return processingEnv;
@@ -61,5 +62,14 @@ public class AiJobsData {
 	public void setState(String state) {
 		this.state = state;
 	}
+
+	public String getJobTemplateFile() {
+		return jobTemplateFile;
+	}
+
+	public void setJobTemplateFile(String jobTemplateFile) {
+		this.jobTemplateFile = jobTemplateFile;
+	}
+
 
 }
