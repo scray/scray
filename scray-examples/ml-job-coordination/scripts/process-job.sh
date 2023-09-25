@@ -3,7 +3,7 @@
 DEFAULT_JOB_NAME=ki1-tensorflow-gpu
 
 
-
+echo ffffffffffffffffffffffff ${RUNTIME_TYPE}
 if [[ -z "${RUNTIME_TYPE}" ]]; then
   RUNTIME_TYPE="PAPERMILL"
 fi
@@ -56,8 +56,10 @@ uploadCurrentNotebookState() {
 runPythonJob() {
   cd $JOB_LOCATION
   cd $SOURCE_DATA
- 
-  if test -f "$FILE"; then
+
+  REQ_FILE=requirements.txt
+    
+   if test -f "$REQ_FILE"; then
     pip install -r requirements.txt
   else
     echo "no requirements.txt"
@@ -92,7 +94,7 @@ runPapermillJob() {
 
 
 runJob() {
-
+  echo "Run job with type $RUNTIME_TYPE"
   if [ "$RUNTIME_TYPE" == "PAPERMILL" ]
   then
    runPapermillJob

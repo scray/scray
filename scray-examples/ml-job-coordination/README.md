@@ -43,6 +43,6 @@ sudo ctr -n=k8s.io images import /tmp/q1.tar
 
 ### python container
 ```
-docker build -t scray/python:0.1.2 -f ./docker-image-descriptions/app-env/Dockerfile .
+docker build -t scray/python:0.1.2 -f ./example-app/Dockerfile .
 ```
 

@@ -1,3 +1,4 @@
+pwd
 JOB_NAME=ki1-tensorflow-gpu
 SOURCE_DATA=./
 NOTEBOOK_NAME=token_classification_01.ipynb
