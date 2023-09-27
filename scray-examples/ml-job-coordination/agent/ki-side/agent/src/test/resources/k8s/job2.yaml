@@ -19,17 +19,25 @@ spec:
           env:
             - name: JOB_NAME
               value: "timestamp-example"
-            - name: RUNTIME_TYPE
-              value: "PYTHON"
             - name: RUN_TYPE
               value: "once"
           volumeMounts:
             - name: ssh-key-volume
               mountPath: "/etc/ssh-key"
+            - name: hf-cache2
+              mountPath: /root/.cache/huggingface/
+            - name: model-cache
+              mountPath: /root/ml-models
       restartPolicy: Never
       volumes:
         - name: ssh-key-volume
           secret:
             secretName: data-ssh-key
             defaultMode: 256
+        - name: hf-cache2
+          persistentVolumeClaim:
+            claimName: 'hf-cache2'
+        - name: model-cache
+          persistentVolumeClaim:
+            claimName: 'model-cache'
 

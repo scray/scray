@@ -12,6 +12,9 @@ import java.util.function.Function;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import io.fabric8.kubernetes.api.builder.Fluent;
 import io.fabric8.kubernetes.api.builder.Visitor;
 import io.fabric8.kubernetes.api.model.Container;
@@ -68,7 +71,7 @@ public class KubernetesClient {
 	public void deployAppJob(String jobName, String imageName) {
 		KubernetesClient aiK8client = new KubernetesClient();
 
-		var deploymentName = "scray-ai-job-" + UUID.randomUUID();
+		var deploymentName = jobName;
 		var descriptor = aiK8client.loadDesciptorFormFile("job2.yaml"); // Fixme
 
 		if(deploymentName == null) {
@@ -103,17 +106,28 @@ public class KubernetesClient {
 		String host = "kubernetes.research.dev.seeburger.de";
 		String ingressPath = "app/"  + jobName;
 		String serviceName = jobName;
-		int portNumber = 8083;
+		int portNumber = 7860;
 
 
 		var serviceDescriptorTemplate = this.loadDesciptorFormFile("service.yaml");
 		Service serviceDescription = this.configureServiceDefinion(serviceDescriptorTemplate, serviceName, jobName, portNumber);
-		//this.deployService(serviceDescription);
+
+		System.out.println(serviceDescription);
+
+		this.deployService(serviceDescription);
 
 
 		var ingressDescriptorTemplate = this.loadDesciptorFormFile("app-ingress.yaml");
 		Ingress ingressDescription = this.configureIngressDefinition(ingressDescriptorTemplate, host, jobName, ingressPath, serviceName, portNumber);
-		//this.deployIngress(ingressDescription);
+		try {
+			this.deployIngress(ingressDescription);
+		} catch(IllegalArgumentException e) {
+			if(e.getLocalizedMessage().contains("Nothing to create.")) {
+				logger.info("Ingress exists. Noting to create");
+			} else {
+				throw e;
+			}
+		}
 
 
 		this.deployJob(jobName, imageName, jobTemplatePath);
@@ -123,7 +137,7 @@ public class KubernetesClient {
 	public void deployJob(String jobName, String imageName, String jobTemplatePath) {
 		KubernetesClient aiK8client = new KubernetesClient();
 
-		var deploymentName = "scray-ai-job-" + jobName + "-" + UUID.randomUUID();
+		var deploymentName = jobName;
 		var descriptor = aiK8client.loadDesciptorFormFile(jobTemplatePath);
 
 		if(descriptor == null) {
@@ -221,17 +235,21 @@ public class KubernetesClient {
 			String jobName,
 			String imageName) {
 
-			return preparedDeploymentDescriptor.items().stream()
+		var jobDescription = preparedDeploymentDescriptor.items().stream()
 			.filter(item -> item != null && item.getKind().equals("Job") &&  item.getMetadata().getName().equals("jupyter-tensorflow-job"))
 			.map(Job.class::cast)
 			.map(job -> {
 				Job newDeplyment = new JobBuilder(job)
 						.withNewMetadata()
 							.withName(deplymentName)
+							.removeFromLabels("app")
 							.addToLabels("app", deplymentName)
 						.endMetadata()
 						.editOrNewSpec()
 							.editOrNewTemplate()
+								.withNewMetadata()
+									.addToLabels("app", deplymentName)
+								.endMetadata()
 								.editOrNewSpec()
 									.editMatchingContainer(c -> c.getName().equals("scray-ai-container"))
 									.withImage(imageName)
@@ -248,6 +266,15 @@ public class KubernetesClient {
 				return newDeplyment;
 			})
 			.reduce(null, (a, b) -> b);
+
+			ObjectMapper objectMapper = new ObjectMapper();
+			try {
+				System.out.println("RRRRRRR" + objectMapper.writeValueAsString(jobDescription));
+			} catch (JsonProcessingException e) {
+				e.printStackTrace();
+			}
+
+			return jobDescription;
 	}
 
 

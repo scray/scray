@@ -152,18 +152,14 @@ public class AiIntegrationAgent {
 						if(!useImageAllowList || allowedImages.contains(jobToStart.getAiJobsData().getImageName())) {
 							KubernetesClient k8sClient = new KubernetesClient();
 
-							k8sClient.deployApp(syncApiData, syncApiData, syncApiData);
+						    jobToStart.getAiJobsData().setJobTemplateFile("app-job.yaml");
+
+						    // (String jobName, String imageName, String jobTemplatePath)
+							k8sClient.deployApp(jobToStart.getVersionData().getDataSource(), jobToStart.getAiJobsData().getImageName(), jobToStart.getAiJobsData().getJobTemplateFile());
 
 						} else {
 							logger.warn("Requested container not in allow list {}", jobToStart.getAiJobsData().getImageName());
 						}
-
-
-
-						// Deploy job
-
-					    jobToStart.getAiJobsData().setJobTemplateFile("app-job.yaml");
-						this.scheduleInKubernetes(jobToStart.getVersionData(), jobToStart.getAiJobsData());
 
 
 						// Set state to scheduled
