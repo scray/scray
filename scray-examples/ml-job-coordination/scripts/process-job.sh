@@ -57,9 +57,15 @@ runPythonJob() {
   cd $JOB_LOCATION
   cd $SOURCE_DATA
 
+<<<<<<< HEAD
   REQ_FILE=requirements.txt
     
    if test -f "$REQ_FILE"; then
+=======
+  EQ_FILE=requirements.txt
+ 
+  if test -f "$REQ_FILE"; then
+>>>>>>> 87c2a045 (Add ingress component)
     pip install -r requirements.txt
   else
     echo "no requirements.txt"
@@ -94,7 +100,11 @@ runPapermillJob() {
 
 
 runJob() {
+<<<<<<< HEAD
   echo "Run job with type $RUNTIME_TYPE"
+=======
+  
+>>>>>>> 87c2a045 (Add ingress component)
   if [ "$RUNTIME_TYPE" == "PAPERMILL" ]
   then
    runPapermillJob

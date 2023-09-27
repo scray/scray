@@ -16,6 +16,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import io.fabric8.kubernetes.api.model.networking.v1.Ingress;
+
 import org.scray.integration.ai.agent.clients.k8s.KubernetesClient;
 import org.scray.integration.ai.agent.clients.rest.RestClient;
 import org.scray.integration.ai.agent.dto.AiJobsData;
@@ -150,13 +152,14 @@ public class AiIntegrationAgent {
 						logger.info("Schedule container for {}", jobToStart.getVersionData().getDataSource());
 
 						if(!useImageAllowList || allowedImages.contains(jobToStart.getAiJobsData().getImageName())) {
+
+
+
 							KubernetesClient k8sClient = new KubernetesClient();
 
 						    jobToStart.getAiJobsData().setJobTemplateFile("app-job.yaml");
 
-						    // (String jobName, String imageName, String jobTemplatePath)
 							k8sClient.deployApp(jobToStart.getVersionData().getDataSource(), jobToStart.getAiJobsData().getImageName(), jobToStart.getAiJobsData().getJobTemplateFile());
-
 						} else {
 							logger.warn("Requested container not in allow list {}", jobToStart.getAiJobsData().getImageName());
 						}

@@ -103,8 +103,8 @@ public class KubernetesClient {
 
 	public void deployApp(String jobName, String imageName, String jobTemplatePath) {
 
-		String host = "kubernetes.research.dev.seeburger.de";
-		String ingressPath = "app/"  + jobName;
+		String host = jobName + ".app.research.dev.seeburger.de";
+		String ingressPath = "/";
 		String serviceName = jobName;
 		int portNumber = 7860;
 
@@ -116,9 +116,12 @@ public class KubernetesClient {
 
 		this.deployService(serviceDescription);
 
-
+		// Configure ingress
 		var ingressDescriptorTemplate = this.loadDesciptorFormFile("app-ingress.yaml");
 		Ingress ingressDescription = this.configureIngressDefinition(ingressDescriptorTemplate, host, jobName, ingressPath, serviceName, portNumber);
+
+		this.deployIngress(ingressDescription);
+
 		try {
 			this.deployIngress(ingressDescription);
 		} catch(IllegalArgumentException e) {
@@ -267,13 +270,6 @@ public class KubernetesClient {
 			})
 			.reduce(null, (a, b) -> b);
 
-			ObjectMapper objectMapper = new ObjectMapper();
-			try {
-				System.out.println("RRRRRRR" + objectMapper.writeValueAsString(jobDescription));
-			} catch (JsonProcessingException e) {
-				e.printStackTrace();
-			}
-
 			return jobDescription;
 	}
 
@@ -293,12 +289,13 @@ public class KubernetesClient {
 				Ingress newDeplyment = new IngressBuilder(ingress)
 						.withNewMetadata()
 							.withName(jobName)
+							.addToAnnotations("nginx.org/websocket-services", jobName)
 						.endMetadata()
 						.editOrNewSpec()
 							.editMatchingRule(r -> r.getHost().equals("HOST"))
 								.withHost(host)
 								.editHttp()
-									.editMatchingPath(p -> p.getPath().equals("/app1"))
+									.editMatchingPath(p -> p.getPath().equals("/"))
 									.withPath(path)
 									.editBackend()
 										.editOrNewService()
