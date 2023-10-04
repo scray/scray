@@ -49,7 +49,8 @@ downloadJob() {
 }
 
 uploadCurrentNotebookState() {
-  tar -czvf $JOB_NAME-state.tar.gz $SOURCE_DATA/out.$NOTEBOOK_NAME
+  LOG_FILE=$1
+  tar -czvf $JOB_NAME-state.tar.gz $SOURCE_DATA/$LOG_FILE
   sftp -o StrictHostKeyChecking=no -i /etc/ssh-key/id_rsa ubuntu@ml-integration-git.research.dev.seeburger.de:/home/ubuntu/sftp-share/ <<<'PUT '$JOB_NAME-state.tar.gz''
 }
 
@@ -60,19 +61,19 @@ runPythonJob() {
   REQ_FILE=requirements.txt
  
   if test -f "$REQ_FILE"; then
-    pip install -r requirements.txt 2>&1 | tee out.$NOTEBOOK_NAME
+    pip install -r requirements.txt 2>&1 | tee -a out.$JOB_NAME.txt 
   else
     echo "no requirements.txt"
   fi
 
-  python3 $NOTEBOOK_NAME  2>&1 | tee out.$NOTEBOOK_NAME &
+  python3 $NOTEBOOK_NAME  2>&1 | tee -a out.$JOB_NAME.txt &
 
   PID=$!
 
   while ps -p $PID > /dev/null; do
     echo " python3 $NOTEBOOK_NAME $PID is running"
     echo "Upload std out"
-    uploadCurrentNotebookState
+    uploadCurrentNotebookState out.$JOB_NAME.txt
     sleep 40
   done
 }
@@ -91,7 +92,7 @@ runPapermillJob() {
   while ps -p $PID > /dev/null; do
     echo "papermill $PID is running"
     echo "Upload current notebook state"
-    uploadCurrentNotebookState
+    uploadCurrentNotebookState out.$NOTEBOOK_NAME
     sleep 40
   done
 
