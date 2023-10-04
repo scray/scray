@@ -3,7 +3,7 @@
 DEFAULT_JOB_NAME=ki1-tensorflow-gpu
 
 
-echo ffffffffffffffffffffffff ${RUNTIME_TYPE}
+
 if [[ -z "${RUNTIME_TYPE}" ]]; then
   RUNTIME_TYPE="PAPERMILL"
 fi
@@ -57,22 +57,24 @@ runPythonJob() {
   cd $JOB_LOCATION
   cd $SOURCE_DATA
 
-<<<<<<< HEAD
   REQ_FILE=requirements.txt
-    
-   if test -f "$REQ_FILE"; then
-=======
-  EQ_FILE=requirements.txt
  
   if test -f "$REQ_FILE"; then
->>>>>>> 87c2a045 (Add ingress component)
-    pip install -r requirements.txt
+    pip install -r requirements.txt 2>&1 | tee out.$NOTEBOOK_NAME
   else
     echo "no requirements.txt"
   fi
 
-  
-  python3 $NOTEBOOK_NAME
+  python3 $NOTEBOOK_NAME  2>&1 | tee out.$NOTEBOOK_NAME &
+
+  PID=$!
+
+  while ps -p $PID > /dev/null; do
+    echo " python3 $NOTEBOOK_NAME $PID is running"
+    echo "Upload std out"
+    uploadCurrentNotebookState
+    sleep 40
+  done
 }
 
 
@@ -100,11 +102,7 @@ runPapermillJob() {
 
 
 runJob() {
-<<<<<<< HEAD
-  echo "Run job with type $RUNTIME_TYPE"
-=======
   
->>>>>>> 87c2a045 (Add ingress component)
   if [ "$RUNTIME_TYPE" == "PAPERMILL" ]
   then
    runPapermillJob
@@ -112,7 +110,6 @@ runJob() {
   then
     runPythonJob
   else
-
     echo "Process one job."
     processNextJob
   fi
