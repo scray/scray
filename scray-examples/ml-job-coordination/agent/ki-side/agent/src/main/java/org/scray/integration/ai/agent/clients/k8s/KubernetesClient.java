@@ -87,6 +87,7 @@ public class KubernetesClient {
 			var configuredVpc = aiK8client.configurePvc(descriptor, deploymentName);
 
 			try {
+
 				aiK8client.deployJob(configureJob);
 			} catch(Exception e) {
 				logger.warn("Error while creating job. {}", e );
@@ -364,11 +365,13 @@ public class KubernetesClient {
 	}
 
 	public void deployJob(Job job) {
-		this.client.batch().jobs().inNamespace("default").createOrReplace(job);
+		this.client.batch().v1().jobs().inNamespace("default").resource(job).delete();
+		this.client.batch().v1().jobs().inNamespace("default").resource(job).serverSideApply();
 	}
 
 	public void deployDeployment(Deployment dep) {
-		this.client.apps().deployments().inNamespace("default").createOrReplace(dep);
+		this.client.apps().deployments().inNamespace("default").resource(dep).delete();
+		this.client.apps().deployments().inNamespace("default").resource(dep).serverSideApply();
 	}
 
 	public void deployVolumeClaim(PersistentVolumeClaim pvclaim) {

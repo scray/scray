@@ -20,9 +20,10 @@ public class KubernetesClientTests {
 
 		Ingress ingressDescription = aiK8client.configureIngressDefinition(descriptor, "research.ibm.com", "job2", "/app-frieda", "friedas-service", 4711);
 
-		aiK8client.deployIngress(ingressDescription);
 		ObjectMapper objectMapper = new ObjectMapper();
 		try {
+			//aiK8client.deployIngress(ingressDescription);
+
 			System.out.println(objectMapper.writeValueAsString(ingressDescription));
 		} catch (JsonProcessingException e) {
 			e.printStackTrace();
@@ -37,7 +38,7 @@ public class KubernetesClientTests {
 		Service serviceDescription = aiK8client.configureServiceDefinion(descriptor, "scray-app1", "scray-app1", 7411);
 
 
-		aiK8client.deployService(serviceDescription);
+		//aiK8client.deployService(serviceDescription);
 
 		ObjectMapper objectMapper = new ObjectMapper();
 		try {
@@ -55,7 +56,7 @@ public class KubernetesClientTests {
 		Service serviceDescription = aiK8client.configureServiceDefinion(descriptor, "scray-app1", "scray-app1", 7411);
 
 
-		aiK8client.deployService(serviceDescription);
+		//aiK8client.deployService(serviceDescription);
 
 		ObjectMapper objectMapper = new ObjectMapper();
 		try {

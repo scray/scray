@@ -52,6 +52,8 @@ public class AiIntegrationAgent {
 		//environements.put("http://scray.org/ai/jobs/env/see/ki1-standalone", Environment.EnvType.Standalone);
 		//environements.put("http://scray.org/ai/app/env/see/os", Environment.EnvType.Standalone);
 		environements.put("http://scray.org/ai/app/env/see/os", Environment.EnvType.App);
+		environements.put("http://scray.org/ai/app/env/see/stefan", Environment.EnvType.App);
+
 
 
 		//environements.put("http://scray.org/ai/jobs/env/see/os-k8s", 		 Environment.EnvType.K8s);
