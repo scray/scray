@@ -6,7 +6,7 @@
 	<artifactId>scray-sync-events-mqtt</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>scray-sync-api-rest</name>
-	<description>Rest interface for Scray sync API</description>
+	<description>Publish state changes to mqtt topic</description>
 	<properties>
 		<java.version>17</java.version>
 		<scala.compat.version>2.13</scala.compat.version>

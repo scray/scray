@@ -12,14 +12,35 @@ public class Client {
 	String mqttHost = null;
 	IMqttClient publisher = null;
 
-	public void send() {
+	public static void main(String[] args) throws InterruptedException {
+		send();
+	}
+
+	public static void send() throws InterruptedException {
+
+		String message = "\r\n"
+				+ "  {\r\n"
+				+ "    \"dataSource\": \"tutor\",\r\n"
+				+ "    \"mergeKey\": \"_\",\r\n"
+				+ "    \"version\": 0,\r\n"
+				+ "    \"data\": \"{\\\"filename\\\": \\\"tutor.tar.gz\\\", \\\"state\\\": \\\"COMPLETED\\\",  \\\"dataDir\\\": \\\"./\\\", \\\"notebookName\\\": \\\"app_frontend.py\\\"}\",\r\n"
+				+ "    \"versionKey\": -862364917\r\n"
+				+ "  },";
+
 		String publisherId = UUID.randomUUID().toString();
 		var publisher = new MqttChannel(
 				"tcp://ml-integration.research.dev.seeburger.de:1883",
 				Optional.empty(),
 				Optional.empty());
 
-		publisher.publish("/topic1/", "message_" + System.currentTimeMillis());
+		for (int i = 0; i < 100; i++) {
+			publisher.publish("/topic1/", message);
+
+			Thread.sleep(4000);
+		}
+
+
+
 	}
 
 }

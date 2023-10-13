@@ -4,8 +4,6 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.eclipse.paho.client.mqttv3.IMqttClient;
-import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
-import org.eclipse.paho.client.mqttv3.MqttCallback;
 import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
@@ -38,8 +36,8 @@ public class MqttChannel {
 			publisher = new MqttClient(mqttHost, publisherId, new MemoryPersistence());
 
 			MqttConnectOptions options = new MqttConnectOptions();
-			// options.setAutomaticReconnect(true);
-			// options.setCleanSession(true);
+			options.setAutomaticReconnect(true);
+			options.setCleanSession(true);
 			options.setConnectionTimeout(10);
 			options.setKeepAliveInterval(10);
 
@@ -49,7 +47,15 @@ public class MqttChannel {
 			logger.debug("Connect publisher");
 			publisher.connect(options);
 		} catch (MqttException e) {
+			logger.warn("Error while creating connection " + e);
 			e.printStackTrace();
+
+			try {
+				publisher.close();
+			} catch (MqttException e1) {
+				logger.warn("Error while trying to close connection after create connection error " + e);
+				e1.printStackTrace();
+			}
 		}
 	}
 
@@ -75,5 +81,4 @@ public class MqttChannel {
 			e.printStackTrace();
 		}
 	}
-
 }
