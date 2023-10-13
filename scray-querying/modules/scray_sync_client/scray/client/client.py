@@ -19,6 +19,8 @@ import logging
 from typing import Dict, Optional
 from scray.client.config import ScrayClientConfig
 
+from requests import Session
+
 logger = logging.getLogger(__name__)
 
 class ScrayClient:
@@ -29,8 +31,15 @@ class ScrayClient:
         logging_level: Optional[int] = logging.INFO,
     ):
         self.logging_level = logging_level
+
+        self.request_session = Session()
+
     
     def create() -> None: logger.info("Create scray client")
 
     def getLatestVersion(self, datasource) -> int:
-        return 1
+        response = self._make_request(
+            request_method=self.request_session.get, url=f"{cli}/{identifier}"
+        )
+
+        return self._container_cls._resource_cls()(**response.json())
