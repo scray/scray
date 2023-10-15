@@ -5,6 +5,9 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+
+import org.scray.sync.rest.MqttSyncEventManager;
+import org.scray.sync.rest.SyncEventManager;
 import org.scray.sync.rest.SyncFileManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,6 +27,8 @@ public class ReadController {
 
     private static final Logger logger = LoggerFactory.getLogger(ReadController.class);
     SyncFileManager syncApiManager = new SyncFileManager("sync-api-stat.json");
+    SyncEventManager eventManager = new MqttSyncEventManager();
+
 
     @Operation(summary = "Get latest version",
             description = "Get latest version of the data",
@@ -86,6 +91,7 @@ public class ReadController {
     void updateVersion(@RequestBody VersionedData updatedVersionedData) {
         syncApiManager.getSyncApi().updateVersion(updatedVersionedData);
         syncApiManager.persist();
+        eventManager.publishUpdate(updatedVersionedData);
     }
 
 }
