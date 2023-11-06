@@ -44,3 +44,8 @@ To build the core project, do the following:
     * Configure ingress for service
     * Deploy on cluster
     * Set stat to `SCHEDULED`
+
+
+## Setup env
+### Add secret
+```kubectl create secret generic data-ssh-key --from-file=id_rsa=/home/research/.ssh/id_rsa```

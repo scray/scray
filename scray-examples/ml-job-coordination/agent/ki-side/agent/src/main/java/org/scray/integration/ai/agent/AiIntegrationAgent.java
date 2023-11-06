@@ -51,13 +51,13 @@ public class AiIntegrationAgent {
 		//environements.put("http://scray.org/ai/jobs/env/see/ki1-k8s", 		 Environment.EnvType.K8s);
 		//environements.put("http://scray.org/ai/jobs/env/see/ki1-standalone", Environment.EnvType.Standalone);
 		//environements.put("http://scray.org/ai/app/env/see/os", Environment.EnvType.Standalone);
-		environements.put("http://scray.org/ai/app/env/see/os", Environment.EnvType.App);
-		environements.put("http://scray.org/ai/app/env/see/stefan", Environment.EnvType.App);
+		//environements.put("http://scray.org/ai/app/env/see/os", Environment.EnvType.App);
+		//environements.put("http://scray.org/ai/app/env/see/stefan", Environment.EnvType.App);
 
 
 
 		//environements.put("http://scray.org/ai/jobs/env/see/os-k8s", 		 Environment.EnvType.K8s);
-		//environements.put("http://scray.org/ai/jobs/env/see/st-k8s", 		 Environment.EnvType.K8s);
+		environements.put("http://scray.org/ai/jobs/env/see/st-k8s", 		 Environment.EnvType.K8s);
 
 		var agent = new AiIntegrationAgent(environements);
 
@@ -77,7 +77,7 @@ public class AiIntegrationAgent {
 					try {
 						return Optional.of(
 								new JobToSchedule(versonData,
-										jsonObjectMapper.readValue(versonData.getData(), AiJobsData.class), new K8sParameters("app-job.yaml")) // FIXME K8sParameter should be a parameter
+										jsonObjectMapper.readValue(versonData.getData(), AiJobsData.class), new K8sParameters("job2.yaml")) // FIXME K8sParameter should be a parameter
 								);
 					} catch (JacksonException e) {
 						logger.warn("No Ai job data parsed");

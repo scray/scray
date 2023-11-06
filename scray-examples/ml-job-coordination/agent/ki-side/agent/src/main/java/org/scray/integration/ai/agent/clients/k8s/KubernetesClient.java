@@ -350,7 +350,7 @@ public class KubernetesClient {
 			String deplymentName) {
 
 		return preparedDeploymentDescriptor.items().stream()
-				.filter(item -> item != null && item.getKind().equals("PersistentVolumeClaim") &&  item.getMetadata().getName().equals("notebooks-pv-claim"))
+				.filter(item -> item != null && item.getKind().equals("persistentVolumeClaim") &&  item.getMetadata().getName().equals("notebooks-pv-claim"))
 				.map(pvc -> (PersistentVolumeClaim)pvc)
 				.map(pvc -> {
 
@@ -375,6 +375,7 @@ public class KubernetesClient {
 	}
 
 	public void deployVolumeClaim(PersistentVolumeClaim pvclaim) {
+		logger.debug(pvclaim.toString());
 		client.persistentVolumeClaims().inNamespace("default").createOrReplace(pvclaim);
 	}
 
