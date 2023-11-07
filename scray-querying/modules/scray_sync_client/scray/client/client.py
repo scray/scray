@@ -17,7 +17,9 @@
 
 import logging
 from typing import Dict, Optional
+import json
 from scray.client.config import ScrayClientConfig
+from scray.client.models.versioned_data import VersionedData
 
 from requests import Session
 
@@ -28,18 +30,55 @@ class ScrayClient:
     def __init__(
         self,
         client_config: ScrayClientConfig,
-        logging_level: Optional[int] = logging.INFO,
+        logging_level: Optional[int] = logging.DEBUG,
     ):
         self.logging_level = logging_level
+        self.client_config = client_config
 
         self.request_session = Session()
 
     
     def create() -> None: logger.info("Create scray client")
 
-    def getLatestVersion(self, datasource) -> int:
-        response = self._make_request(
-            request_method=self.request_session.get, url=f"{cli}/{identifier}"
-        )
+    def getLatestVersion(self, datasource, mergeky) -> VersionedData:
 
-        return self._container_cls._resource_cls()(**response.json())
+        url = f"{self.client_config.host_address}:{self.client_config.port}/sync/versioneddata/latest/?datasource={datasource}&mergekey={mergeky}"
+        logger.debug("Request " + url)
+        response = self._make_getrequest(conn=self.request_session, method="GET", url=url)
+
+        print(response)
+        result = VersionedData(response)
+
+        return result
+
+
+    def updateVersion(self, versionedData):
+        url = f"{self.client_config.host_address}:{self.client_config.port}/sync/versioneddata/latest/?datasource={versionedData.data_source}&mergekey={versionedData.merge_key}"
+        logger.debug("Request " + url)
+
+        self._make_putrequest(conn=self.request_session, url=url, data=versionedData.to_api_json)
+
+
+
+
+    def _make_getrequest(
+        self, conn, method, url
+    ):
+
+        response = conn.request(method, url)
+        if response.status_code == 200:
+            return response.json()
+        else:
+            logger.error(f"Error while interacting with sync API. Code: {response.status_code}")
+            return ""
+    
+    def _make_putrequest(
+        self, conn, url, data
+    ):
+        newHeaders = {'Content-type': 'application/json'}
+
+        response = conn.put(url, data=str(data()), headers=newHeaders)
+        if response.status_code == 200:
+            logger.info("State successfully updated")
+        else:
+            logger.error(f"Error while interacting with sync API. Code: {response.status_code}")

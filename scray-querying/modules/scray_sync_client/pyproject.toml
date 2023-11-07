@@ -12,6 +12,12 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 
+dependencies = [
+  'requests ~= 2.31.0',
+  'dacite'
+]
+
+
 [project.urls]
 "Homepage" = "https://github.com/scray/scray"
 "Bug Tracker" = "https://github.com/scray/scray/issues"
@@ -20,6 +26,3 @@ classifiers = [
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
-include = [
-    { path = "client/py.typed" }
-]
