@@ -46,7 +46,6 @@ class ScrayClient:
         logger.debug("Request " + url)
         response = self._make_getrequest(conn=self.request_session, method="GET", url=url)
 
-        print(response)
         result = VersionedData(response)
 
         return result
