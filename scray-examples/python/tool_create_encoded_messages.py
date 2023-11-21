@@ -5,7 +5,7 @@
 
 # ## init
 
-# In[1]:
+# In[ ]:
 
 
 import dfBasics
@@ -15,14 +15,14 @@ import encoder
 #import charts
 
 
-# In[2]:
+# In[ ]:
 
 
 import pandas as pd
 from pyspark.sql import functions
 
 
-# In[3]:
+# In[ ]:
 
 
 sparkSession = dfBasics.getSparkSession()
@@ -224,7 +224,7 @@ def calc_error(columns):
     return error
 
 
-# In[9]:
+# In[ ]:
 
 
 import pyspark.sql.functions as f
@@ -271,11 +271,11 @@ def process(dataframe=None, encoders=None, columns=None, sender=None):
 # In[ ]:
 
 
-def process_update(year,month,df,encoders=None, columns=None):
-    df2 = df.where(f.col("year").isin([year])).where(f.col("month").isin([month]))
+def process_update(year,month,week,df,encoders=None, columns=None):
+    df2 = df.where(f.col("year").isin([year])).where(f.col("week").isin([week]))
     df3 = process(dataframe=df2, encoders=encoders, columns=columns)
     df4 = df3.withColumn("error", udf_add_error(f.col("CSTATUS"), f.col("CSERVICE")).cast(IntegerType()))
-    df4.write.mode('overwrite').parquet('/home/jovyan/work/output/v00003_v00001/sla_enc_v00003_v00001_' + str(year) + '_' + str(month) + '.parquet')
+    df4.write.mode('overwrite').parquet('/home/jovyan/work/output/v00003_v00001/sla_enc_v00003_v00001_' + str(year) + '_' + str(month) + '_' + str(week) + '.parquet')
 
 
 # In[ ]:
@@ -356,11 +356,11 @@ df4 = df3.withColumn("error", udf_add_error(f.col("CSTATUS"), f.col("CSERVICE"))
 #_df3.limit(1).toPandas()
 
 
-# In[20]:
+# In[ ]:
 
 
 def get_year_weeks(df):
-    columns = ['year','week']
+    columns = ['year','month','week']
     return df.select(columns).dropDuplicates().toPandas() 
 
 def get_weeks(pf,year):
@@ -371,7 +371,7 @@ def get_weeks(pf,year):
 pf_year_weeks = get_year_weeks(df)
 
 
-# In[37]:
+# In[ ]:
 
 
 """
@@ -388,5 +388,6 @@ years = [2019,2020,2021,2022,2023]
 for year in years:
     weeks = get_weeks(pf_year_weeks,year)
     for week in weeks:
-        process_update(year,week,df,encoders=encoders, columns=columns)           
+        month = pf_year_weeks[(pf_year_weeks['year'] == year) & (pf_year_weeks['week'] == week)].iloc[0]['month']
+        process_update(year,month,week,df,encoders=encoders, columns=columns)           
 
