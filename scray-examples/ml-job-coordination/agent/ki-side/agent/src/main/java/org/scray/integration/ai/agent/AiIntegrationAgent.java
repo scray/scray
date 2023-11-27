@@ -50,14 +50,14 @@ public class AiIntegrationAgent {
 		HashMap<String, EnvType> environements = new HashMap<String, EnvType>();
 		//environements.put("http://scray.org/ai/jobs/env/see/ki1-k8s", 		 Environment.EnvType.K8s);
 		//environements.put("http://scray.org/ai/jobs/env/see/ki1-standalone", Environment.EnvType.Standalone);
-		//environements.put("http://scray.org/ai/app/env/see/os", Environment.EnvType.Standalone);
-		//environements.put("http://scray.org/ai/app/env/see/os", Environment.EnvType.App);
+		environements.put("http://scray.org/ai/app/env/see/os/k8s", Environment.EnvType.K8s);
+		environements.put("http://scray.org/ai/app/env/see/os", Environment.EnvType.App);
 		//environements.put("http://scray.org/ai/app/env/see/stefan", Environment.EnvType.App);
 
 
 
 		//environements.put("http://scray.org/ai/jobs/env/see/os-k8s", 		 Environment.EnvType.K8s);
-		environements.put("http://scray.org/ai/jobs/env/see/st-k8s", 		 Environment.EnvType.K8s);
+		//environements.put("http://scray.org/ai/jobs/env/see/st-k8s", 		 Environment.EnvType.K8s);
 
 		var agent = new AiIntegrationAgent(environements);
 
