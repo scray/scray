@@ -1,3 +1,6 @@
+import argparse
+from scray.job_client.models.job_arguments import JobArguments
+
 class ArgsParser:
     def __init__(self):
         self.parser = argparse.ArgumentParser(description="Command Line Argument Parser")

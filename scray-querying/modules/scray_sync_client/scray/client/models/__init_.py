@@ -17,5 +17,4 @@
 
 from __future__ import absolute_import
 
-# import models into model package
-from scray.client.models.versioned_data import VersionedData
+#from scray.client.models.versioned_data import VersionedData
