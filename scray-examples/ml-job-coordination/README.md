@@ -46,3 +46,14 @@ sudo ctr -n=k8s.io images import /tmp/q1.tar
 docker build -t scray/python:0.1.2 -f ./example-app/Dockerfile .
 ```
 
+## Commonly used external resources
+### SSH credentials to login to integration server
+
+```
+kubectl create secret generic data-ssh-key --from-file=id_rsa=/home/ubuntu/.ssh/id_rsa
+```
+
+### Volumes to cache data
+```
+```
+
