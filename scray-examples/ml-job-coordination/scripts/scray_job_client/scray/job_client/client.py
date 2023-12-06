@@ -55,6 +55,14 @@ class ScrayJobClient:
 
     }
 
+    def get_job_state(self, job_name):
+        
+        latestVersion = self.client.getLatestVersion('_', job_name)
+        logger.info("Latest version data: " + latestVersion.to_str())
+        job_state = JobSyncApiData.from_json(json_string=latestVersion.data).state
+
+        return job_state
+
     def wait_for_job_completion(self, job_name):
         
 

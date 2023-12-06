@@ -10,7 +10,9 @@ if __name__ == '__main__':
     )
 
     client = ScrayJobClient(config=config)
-    client.setState(job_name="backend-16280", processing_env="http://scray.org/ai/app/env/see/os/k8s ", state="WANTED_D")
+    job_state = client.get_job_state("backend-16280")
+
+    print(job_state)
 
 
 
