@@ -1,5 +1,5 @@
 [project]
-name = "scray_job_client"
+name = "scray-job-client"
 version = "0.0.1"
 authors = [
   { name="Stefan Obermeier", email="st.obermeier@seeburger.de" },

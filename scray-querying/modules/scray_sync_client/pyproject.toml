@@ -1,5 +1,5 @@
 [project]
-name = "scray_sync_client"
+name = "scray-sync-client"
 version = "0.0.1"
 authors = [
   { name="Stefan Obermeier", email="st.obermeier@seeburger.de" },
