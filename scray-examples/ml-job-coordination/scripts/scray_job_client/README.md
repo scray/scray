@@ -1,8 +1,11 @@
 ### Quickstart
 
 ```bash
-!pip uninstall scray_job_client -y
-!pip install git+https://github.com/scray/scray.git@python-client#subdirectory=scray-querying/modules/scray_sync_client
+!pip uninstall scray-sync-client -y
+!pip install git+https://github.com/scray/scray.git@develop#subdirectory=scray-querying/modules/scray_sync_client
+
+!pip uninstall scray-job-client -y
+!pip install git+https://github.com/scray/scray.git@develop#subdirectory=scray-examples/ml-job-coordination/scripts/scray_job_client
 ```
 
 ### Kill job
