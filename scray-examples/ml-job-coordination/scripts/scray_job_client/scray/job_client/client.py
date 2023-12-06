@@ -75,7 +75,7 @@ class ScrayJobClient:
             time.sleep(1)
 
 
-    def setState(self, state, job_name, processing_env, docker_image, source_data, notebook_name):
+    def setState(self, state, job_name, processing_env, docker_image = "_", source_data = "_", notebook_name = "_"):
 
         data = json.dumps({
                 "filename": f"{job_name}.tar.gz",
