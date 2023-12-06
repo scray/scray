@@ -20,8 +20,10 @@ from typing import Dict, Optional
 import json
 from scray.client.config import ScrayClientConfig
 from scray.job_client.config import ScrayJobClientConfig
+from scray.job_client.models.job_sync_api_data import JobSyncApiData
 from scray.client.models.versioned_data import VersionedData
 from scray.client import ScrayClient
+import time
 
 from requests import Session
 
@@ -52,6 +54,25 @@ class ScrayJobClient:
     def __waitForJobcompletion():  {
 
     }
+
+    def wait_for_job_completion(self, job_name):
+        
+
+        while True:
+            
+            latestVersion = self.client.getLatestVersion('_', job_name)
+
+            logger.info("Latest version data: " + latestVersion.to_str())
+
+            state = JobSyncApiData.from_json(json_string=latestVersion.data).state
+
+            print(f"Waiting for state 'COMPLETED'; current state is '{state}'")
+
+            if state == "COMPLETED":
+                print("State 'COMPLETED' reached")
+                break
+
+            time.sleep(1)
 
 
     def setState(self, state, job_name, processing_env, docker_image, source_data, notebook_name):

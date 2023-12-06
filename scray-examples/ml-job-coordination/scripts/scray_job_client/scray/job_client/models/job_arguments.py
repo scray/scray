@@ -1,3 +1,5 @@
+import json
+
 class JobArguments:
     def __init__(self):
         self.job_name = None
@@ -7,3 +9,6 @@ class JobArguments:
         self.processing_env = None
         self.docker_image = None
         self.job_name_literally = None
+        self.state = None
+
+  

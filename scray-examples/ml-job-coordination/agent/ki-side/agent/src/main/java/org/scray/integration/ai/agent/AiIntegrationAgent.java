@@ -173,6 +173,14 @@ public class AiIntegrationAgent {
 					return "";
 				}).toList();
 
+				this.getJobDataForThisAgent(syncApiData, environements.keySet())
+				.filter(jobData -> jobData.getAiJobsData().getState().equals("WANTED_D"))
+				.map(jobToTerminate -> {
+					logger.info("Kill job {} (Simmulated)", jobToTerminate.getVersionData().getDataSource());
+					return "";
+				}).toList();
+
+
 			} catch (Exception e) {
 				e.printStackTrace();
 			}

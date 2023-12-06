@@ -1,5 +1,5 @@
 [project]
-name = "scray-job-client"
+name = "scray_job_client"
 version = "0.0.1"
 authors = [
   { name="Stefan Obermeier", email="st.obermeier@seeburger.de" },
@@ -13,7 +13,6 @@ classifiers = [
 ]
 
 dependencies = [
-  'scray_sync_client ~= 0.0.1',
   'scray_sync_client ~= 0.0.1'
 ]
 
@@ -21,6 +20,9 @@ dependencies = [
 [project.urls]
 "Homepage" = "https://github.com/scray/scray"
 "Bug Tracker" = "https://github.com/scray/scray/issues"
+
+[project.scripts]
+scray_job_client = "scray.job_client:main"
 
 [build-system]
 requires = ["hatchling"]

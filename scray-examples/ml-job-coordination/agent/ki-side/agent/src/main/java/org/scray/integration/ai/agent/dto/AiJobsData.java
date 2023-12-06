@@ -70,6 +70,4 @@ public class AiJobsData {
 	public void setJobTemplateFile(String jobTemplateFile) {
 		this.jobTemplateFile = jobTemplateFile;
 	}
-
-
 }
