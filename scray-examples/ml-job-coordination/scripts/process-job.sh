@@ -29,6 +29,11 @@ NOTEBOOK_NAME=example-notebook.ipynb
 SYNC_API_URL="http://ml-integration.research.dev.seeburger.de:8082/sync/versioneddata"
 JOB_LOCATION="~/jobs/b636f6f92d51e742f861ee2a928621b6/"
 
+prepareSshEnv() {
+  mkdir ~/.ssh
+  cp /etc/ssh-key/id_rsa ~/.ssh/id_rsa
+  chmod 600 ~/.ssh/id_rsa
+}
 
 downloadJob() {
 
@@ -44,14 +49,14 @@ downloadJob() {
   cd $JOB_FOLDER
   JOB_LOCATION=$(pwd)
 
-  sftp -o StrictHostKeyChecking=no -i /etc/ssh-key/id_rsa ubuntu@ml-integration-git.research.dev.seeburger.de:/home/ubuntu/sftp-share/$JOB_NAME.tar.gz ./$JOB_NAME.tar.gz
+  sftp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ubuntu@ml-integration-git.research.dev.seeburger.de:/home/ubuntu/sftp-share/$JOB_NAME.tar.gz ./$JOB_NAME.tar.gz
   tar -xzf $JOB_NAME.tar.gz
 }
 
 uploadCurrentNotebookState() {
   LOG_FILE=$1
   tar -czvf $JOB_NAME-state.tar.gz $SOURCE_DATA/$LOG_FILE
-  sftp -o StrictHostKeyChecking=no -i /etc/ssh-key/id_rsa ubuntu@ml-integration-git.research.dev.seeburger.de:/home/ubuntu/sftp-share/ <<<'PUT '$JOB_NAME-state.tar.gz''
+  sftp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa  ubuntu@ml-integration-git.research.dev.seeburger.de:/home/ubuntu/sftp-share/ <<<'PUT '$JOB_NAME-state.tar.gz''
 }
 
 runPythonJob() {
@@ -170,6 +175,7 @@ waitForNextJob() {
   echo "State UPLOADED reached"
 }
 
+
 processNextJob() {
     waitForNextJob
     setState 'DOWNLOADING'
@@ -184,6 +190,7 @@ then
     runLocalJob
     exit
 else
+  prepareSshEnv
   if [ "$RUN_TYPE" == "service" ]
   then
     while true; do
