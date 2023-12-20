@@ -1,6 +1,5 @@
-from scray.job_client.client import ScrayJobClient 
+from scray.job_client.client import ScrayJobClient
 from scray.job_client.config import ScrayJobClientConfig
-from scray.job_client.models.cli_args  import ArgsParser
 
 if __name__ == '__main__':
 

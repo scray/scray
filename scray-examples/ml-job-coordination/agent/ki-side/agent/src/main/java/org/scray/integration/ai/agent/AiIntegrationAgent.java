@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.fabric8.kubernetes.api.model.networking.v1.Ingress;
 
 import org.scray.integration.ai.agent.clients.k8s.KubernetesClient;
+import org.scray.integration.ai.agent.clients.k8s.KubernetesClient.JobNotFoundException;
 import org.scray.integration.ai.agent.clients.rest.RestClient;
 import org.scray.integration.ai.agent.dto.AiJobsData;
 import org.scray.integration.ai.agent.dto.Environment;
@@ -50,9 +51,11 @@ public class AiIntegrationAgent {
 		HashMap<String, EnvType> environements = new HashMap<String, EnvType>();
 		//environements.put("http://scray.org/ai/jobs/env/see/ki1-k8s", 		 Environment.EnvType.K8s);
 		//environements.put("http://scray.org/ai/jobs/env/see/ki1-standalone", Environment.EnvType.Standalone);
-		environements.put("http://scray.org/ai/app/env/see/os/k8s", Environment.EnvType.K8s);
-		environements.put("http://scray.org/ai/app/env/see/os", Environment.EnvType.App);
-		//environements.put("http://scray.org/ai/app/env/see/stefan", Environment.EnvType.App);
+	    //environements.put("http://scray.org/ai/app/env/see/os/k8s", Environment.EnvType.K8s);
+		//environements.put("http://scray.org/ai/app/env/see/os", Environment.EnvType.App);
+		environements.put("http://scray.org/ai/app/env/see/stefan", Environment.EnvType.K8s);
+		environements.put("http://scray.org/ai/app/env/see/stefan-t", Environment.EnvType.K8s);
+
 
 
 
@@ -99,22 +102,19 @@ public class AiIntegrationAgent {
 	}
 
 
-	public void setStateScheduled(VersionedData2 versionedData, AiJobsData jobState) {
+	public void setState(VersionedData2 versionedData, AiJobsData jobData, String state) {
 
 		// Set new state scheduled
-		jobState.setState("SCHEDULED");
+		jobData.setState(state);
 		try {
-			versionedData.setData(jsonObjectMapper.writeValueAsString(jobState));
+			versionedData.setData(jsonObjectMapper.writeValueAsString(jobData));
 			String sheduleState = jsonObjectMapper.writeValueAsString(versionedData);
 
 			logger.info("Write scheduled state to API {}", sheduleState);
 			apiClient.putData(sheduleState);
-		} catch (JsonProcessingException e) {
-			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-
 	}
 
 	public void scheduleInKubernetes(VersionedData2 versionedData, AiJobsData jobState) {
@@ -144,18 +144,16 @@ public class AiIntegrationAgent {
 					var envType = environements.get(jobToStart.getAiJobsData().getProcessingEnv());
 
 					if(envType == envType.Standalone) {
-						this.setStateScheduled(jobToStart.getVersionData(), jobToStart.getAiJobsData());
+						this.setState(jobToStart.getVersionData(), jobToStart.getAiJobsData(), "SCHEDULED");
 					} else if(envType == envType.K8s) {
 						this.scheduleInKubernetes(jobToStart.getVersionData(), jobToStart.getAiJobsData());
-						this.setStateScheduled(jobToStart.getVersionData(), jobToStart.getAiJobsData());
+						this.setState(jobToStart.getVersionData(), jobToStart.getAiJobsData(), "SCHEDULED");
 					} else if(envType == envType.App) {
 
 
 						logger.info("Schedule container for {}", jobToStart.getVersionData().getDataSource());
 
 						if(!useImageAllowList || allowedImages.contains(jobToStart.getAiJobsData().getImageName())) {
-
-
 
 							KubernetesClient k8sClient = new KubernetesClient();
 
@@ -168,7 +166,7 @@ public class AiIntegrationAgent {
 
 
 						// Set state to scheduled
-						this.setStateScheduled(jobToStart.getVersionData(), jobToStart.getAiJobsData());
+						this.setState(jobToStart.getVersionData(), jobToStart.getAiJobsData(), "SCHEDULED");
 					}
 					return "";
 				}).toList();
@@ -176,7 +174,17 @@ public class AiIntegrationAgent {
 				this.getJobDataForThisAgent(syncApiData, environements.keySet())
 				.filter(jobData -> jobData.getAiJobsData().getState().equals("WANTED_D"))
 				.map(jobToTerminate -> {
-					logger.info("Kill job {} (Simmulated)", jobToTerminate.getVersionData().getDataSource());
+					logger.info("Kill job {}", jobToTerminate.getVersionData().getDataSource());
+
+					try {
+						KubernetesClient k8sClient = new KubernetesClient();
+						k8sClient.deleteJob(jobToTerminate.getVersionData().getDataSource());
+					} catch (JobNotFoundException e) {
+						logger.warn(e.getMessage());
+					}
+
+					this.setState(jobToTerminate.getVersionData(), jobToTerminate.getAiJobsData(), "DEAD");
+
 					return "";
 				}).toList();
 

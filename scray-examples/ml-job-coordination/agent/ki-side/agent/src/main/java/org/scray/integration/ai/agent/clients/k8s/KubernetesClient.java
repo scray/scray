@@ -389,13 +389,29 @@ public class KubernetesClient {
 
 	public void deleteJob(String jobName) {
 		Job job = client.batch().v1().jobs().inNamespace("default").list().getItems().stream()
-		.filter(jobR -> jobR.getMetadata().getLabels().get("job-name").equals(jobName))
+		.filter(jobR -> {
+			String appName = jobR.getSpec().getTemplate().getMetadata().getLabels().get("app");
+			return appName.equals(jobName);
+		})
 		.reduce(null, (a, b) -> b);
 
-		this.client.batch().v1().jobs().inNamespace("default").resource(job).delete();
+		if(job != null) {
+			logger.info("Delete job {}", jobName);
+			this.client.batch().v1().jobs().inNamespace("default").resource(job).delete();
+		} else {
+			logger.info("Can not delete job {}. Job not found", jobName);
+			throw new JobNotFoundException("Can not delete job " + jobName + ". Job not found");
+		}
 	}
 
 	public void close() {
 		this.client.close();
+	}
+
+	public class JobNotFoundException
+	  extends RuntimeException {
+	    public JobNotFoundException(String errorMessage) {
+	        super(errorMessage);
+	    }
 	}
 }
