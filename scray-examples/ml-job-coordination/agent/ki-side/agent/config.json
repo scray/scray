@@ -1,0 +1,21 @@
+{
+	"version": "1.0",
+	"name": "See research agent config",
+
+	"environments": [
+		{
+			"name": "",
+			"id": "http://scray.org/ai/app/env/see/os/k8s",
+			"ingress": "",
+			"k8sJobDescripton": "",
+			"k8sDeploymentDescription": ""
+		},
+		{
+			"name": "",
+			"id": "http://scray.org/ai/app/env/see/os/",
+			"ingress": "",
+			"k8sJobDescripton": "",
+			"k8sDeploymentDescription": ""
+		}
+	]
+}

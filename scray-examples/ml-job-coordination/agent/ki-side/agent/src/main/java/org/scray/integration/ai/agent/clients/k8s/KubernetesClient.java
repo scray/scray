@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -351,7 +352,7 @@ public class KubernetesClient {
 
 		return preparedDeploymentDescriptor.items().stream()
 				.filter(item -> item != null && item.getKind().equals("persistentVolumeClaim") &&  item.getMetadata().getName().equals("notebooks-pv-claim"))
-				.map(pvc -> (PersistentVolumeClaim)pvc)
+				.map(PersistentVolumeClaim.class::cast)
 				.map(pvc -> {
 
 					logger.debug("Update pvc ");
@@ -375,7 +376,6 @@ public class KubernetesClient {
 	}
 
 	public void deployVolumeClaim(PersistentVolumeClaim pvclaim) {
-		logger.debug(pvclaim.toString());
 		client.persistentVolumeClaims().inNamespace("default").createOrReplace(pvclaim);
 	}
 
@@ -387,10 +387,15 @@ public class KubernetesClient {
 		client.services().inNamespace("default").createOrReplace(service);
 	}
 
+	public void deleteJob(String jobName) {
+		Job job = client.batch().v1().jobs().inNamespace("default").list().getItems().stream()
+		.filter(jobR -> jobR.getMetadata().getLabels().get("job-name").equals(jobName))
+		.reduce(null, (a, b) -> b);
+
+		this.client.batch().v1().jobs().inNamespace("default").resource(job).delete();
+	}
+
 	public void close() {
 		this.client.close();
 	}
-
-
-
 }

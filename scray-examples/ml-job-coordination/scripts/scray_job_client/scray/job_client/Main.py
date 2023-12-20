@@ -1,15 +1,18 @@
-from scray.job_client import ScrayJobClient
+from scray.job_client.client import ScrayJobClient 
 from scray.job_client.config import ScrayJobClientConfig
+from scray.job_client.models.cli_args  import ArgsParser
 
-config = ScrayJobClientConfig(
+if __name__ == '__main__':
+
+    config = ScrayJobClientConfig(
     host_address = "http://ml-integration.research.dev.seeburger.de",
     port = 8082
-)
-client = ScrayJobClient(client_config=config)
+    )
 
-latestVersion = client.getLatestVersion('_', 'm4t2-19536')
+    client = ScrayJobClient(config=config)
+    job_state = client.get_job_state("backend-16280")
 
-client.updateVersion(latestVersion)
+    print(job_state)
 
-print(latestVersion)
+
 

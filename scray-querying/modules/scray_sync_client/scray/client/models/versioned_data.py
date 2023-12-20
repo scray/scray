@@ -23,12 +23,13 @@ class VersionedData(object):
             self.version_key = version_key
 
 
-    def __init__(self, dic):
+    def fromDict(self, dic):
         self._data_source = dic["dataSource"]
         self._merge_key = dic["mergeKey"]
         self._data = dic["data"]
         self._version = dic["version"]
         self._version_key = dic["versionKey"]
+        return self
 
     @property
     def data_source(self):

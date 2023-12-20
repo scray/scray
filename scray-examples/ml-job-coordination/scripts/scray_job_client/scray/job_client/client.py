@@ -19,26 +19,87 @@ import logging
 from typing import Dict, Optional
 import json
 from scray.client.config import ScrayClientConfig
+from scray.job_client.config import ScrayJobClientConfig
+from scray.job_client.models.job_sync_api_data import JobSyncApiData
 from scray.client.models.versioned_data import VersionedData
 from scray.client import ScrayClient
+import time
 
 from requests import Session
 
 logger = logging.getLogger(__name__)
 
+
 class ScrayJobClient:
+    client = None
 
     def __init__(
         self,
-        client: ScrayJobClientConfig,
+        config: ScrayJobClientConfig,
         logging_level: Optional[int] = logging.DEBUG,
     ):
         self.logging_level = logging_level
-        self.client_config = client_config
+        self.config = config
+       # self.client_config = client_config
 
-        client = ScrayClient(client_config=config)
+        scrayClientConfig = ScrayClientConfig(
 
-    
+            host_address = config.host_address,
+            port = config.port
+        )
+
+        self.client = ScrayClient(client_config=scrayClientConfig)
+
+
     def __waitForJobcompletion():  {
 
     }
+
+    def get_job_state(self, job_name):
+        
+        latestVersion = self.client.getLatestVersion('_', job_name)
+        logger.info("Latest version data: " + latestVersion.to_str())
+        job_state = JobSyncApiData.from_json(json_string=latestVersion.data).state
+
+        return job_state
+
+    def wait_for_job_completion(self, job_name):
+        
+
+        while True:
+            
+            latestVersion = self.client.getLatestVersion('_', job_name)
+
+            logger.info("Latest version data: " + latestVersion.to_str())
+
+            state = JobSyncApiData.from_json(json_string=latestVersion.data).state
+
+            print(f"Waiting for state 'COMPLETED'; current state is '{state}'")
+
+            if state == "COMPLETED":
+                print("State 'COMPLETED' reached")
+                break
+
+            time.sleep(1)
+
+
+    def setState(self, state, job_name, processing_env, docker_image = "_", source_data = "_", notebook_name = "_"):
+
+        data = json.dumps({
+                "filename": f"{job_name}.tar.gz",
+                "processingEnv": processing_env,
+                "state": state,
+                "imageName": docker_image,
+                "dataDir": source_data,
+                "notebookName": notebook_name
+            })
+
+        versionedData = VersionedData(
+                                    data_source = job_name,
+                                    merge_key = "_",
+                                    version = 0,
+                                    data= data,
+                                    version_key = 0)
+
+        self.client.updateVersion(versionedData)
+

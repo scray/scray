@@ -15,6 +15,10 @@
 # limitations under the License.
 #
 
-from .client import ScrayClient
+#rom .client import ScrayJobClient
 
-__all__ = []
+
+__all__ = [
+    "ScrayJobClient",
+    "ScrayJobClientConfig",
+]
