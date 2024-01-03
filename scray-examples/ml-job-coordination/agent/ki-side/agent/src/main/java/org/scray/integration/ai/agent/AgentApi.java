@@ -20,7 +20,7 @@ import org.springframework.http.MediaType;
 @RestController
 @CrossOrigin(origins = "http://localhost:4200")
 public class AgentApi {
-
+	Version version = new Version("0.0.1-SNAPSHOT");
 
 	@Operation(
 		tags =  "DeploymentInformations" ,
@@ -40,6 +40,13 @@ public class AgentApi {
 	   return "42-FF";
 	}
 
-	
+	@Operation(tags = "System", responses = {
+			@ApiResponse(responseCode = "200", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE), description = "Success Response.") }, summary = "Get software version", description = "Get version of the ki side agent")
+	@GetMapping("/version")
+	public Version getSoftwareVersion() {
+		return version;
+	}
+
+
 }
 
