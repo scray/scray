@@ -1,5 +1,6 @@
 package org.scray.integration.ai.agent.conf;
 
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -17,6 +18,7 @@ import com.fasterxml.jackson.core.exc.StreamWriteException;
 import com.fasterxml.jackson.databind.DatabindException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 
 public class ConfigurationLoader {
 
@@ -30,7 +32,11 @@ public class ConfigurationLoader {
 		}
 	}
 
-	private void write(Environments envs) throws ConfiguratonIoError{
+	public ConfigurationLoader(String confLocation) {
+		this.configurationFileLocation = confLocation;
+	}
+
+	public void write(Environments envs) throws ConfiguratonIoError{
 		FileOutputStream outStream;
 		try {
 			outStream = new FileOutputStream(configurationFileLocation);
@@ -44,7 +50,7 @@ public class ConfigurationLoader {
 	}
 
 	public void write(Environments envs, OutputStream stream) throws ConfiguratonIoError, StreamWriteException, DatabindException, IOException {
-		ObjectMapper objectMapper = new ObjectMapper();
+		ObjectMapper objectMapper = new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT);
 		objectMapper.writeValue(stream, envs);
 	}
 
@@ -52,8 +58,13 @@ public class ConfigurationLoader {
 		ObjectMapper objectMapper = new ObjectMapper();
 		Environments envs;
 		try {
-			envs = objectMapper.readValue(this.configurationFileLocation, Environments.class);
+			var inStream = new FileInputStream(this.configurationFileLocation);
+			envs = objectMapper.readValue(inStream, Environments.class);
 		} catch (JsonProcessingException e) {
+			logger.debug(MessageFormat.format("Error while reading configuration {0}", e));
+			e.printStackTrace();
+			throw new ConfiguratonIoError(e.getMessage());
+		} catch (IOException e) {
 			logger.debug(MessageFormat.format("Error while reading configuration {0}", e));
 			e.printStackTrace();
 			throw new ConfiguratonIoError(e.getMessage());
