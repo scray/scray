@@ -3,22 +3,24 @@ package org.scray.integration.ai.agent;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
 import org.junit.jupiter.api.Test;
+import org.scray.integration.ai.agent.conf.Environment;
 
 public class AiIntegrationAgentTests {
-	
+
 	@Test
 	public void getJobDataForThisAgent() {
 		AiIntegrationAgent agent = new AiIntegrationAgent();
 
-		
-		HashSet<String> myEnvs = new HashSet<String>(){{
-		    add("http://scray.org/ai/jobs/env/see/ki2-k8s");
+
+		HashMap<String, Environment> myEnvs = new HashMap<String, Environment>(){{
+		    put("http://scray.org/ai/jobs/env/see/ki2-k8s", new Environment());
 		}};
-		
+
 		String testData = "[\r\n"
 				+ "   {\r\n"
 				+ "      \"dataSource\":\"deepspeed1-1736\",\r\n"
@@ -41,14 +43,14 @@ public class AiIntegrationAgentTests {
 				+ "      \"data\":\"{\\\"filename\\\": \\\"deepspeed1.tar.gz\\\", \\\"state\\\": \\\"COMPLETED\\\",  \\\"dataDir\\\": \\\"./\\\", \\\"notebookName\\\": \\\"app_backend.ipynb\\\"}\",\r\n"
 				+ "      \"versionKey\":69008779\r\n"
 				+ "   }]";
-		
+
 		try {
-			
+
 			// Check if job data for this agent are selected.
-			
+
 			var jobData = agent.getJobDataForThisAgent(testData, myEnvs);
 			assertEquals(1, jobData.count());
-			
+
 		} catch (Exception e) {
 			fail("Exception when parsing data: " + e.getMessage());
 		}

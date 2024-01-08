@@ -21,9 +21,10 @@ import io.fabric8.kubernetes.api.model.networking.v1.Ingress;
 import org.scray.integration.ai.agent.clients.k8s.KubernetesClient;
 import org.scray.integration.ai.agent.clients.k8s.KubernetesClient.JobNotFoundException;
 import org.scray.integration.ai.agent.clients.rest.RestClient;
+import org.scray.integration.ai.agent.conf.Environment;
+import org.scray.integration.ai.agent.conf.Environment.EnvType;
+import org.scray.integration.ai.agent.conf.Environments;
 import org.scray.integration.ai.agent.dto.AiJobsData;
-import org.scray.integration.ai.agent.dto.Environment;
-import org.scray.integration.ai.agent.dto.Environment.EnvType;
 import org.scray.integration.ai.agent.dto.JobToSchedule;
 import org.scray.integration.ai.agent.dto.K8sParameters;
 import org.scray.integration.ai.agent.dto.VersionedData2;
@@ -35,25 +36,31 @@ public class AiIntegrationAgent {
 
 	private List<String> allowedImages = new ArrayList<>();
 	boolean useImageAllowList = false;
-	private HashMap<String, EnvType> environements = null;
+	private HashMap<String,Environment> environements = null;
 
 	private ObjectMapper jsonObjectMapper = new ObjectMapper();
 	private RestClient apiClient = new RestClient();
 
 	public AiIntegrationAgent() {}
 
-	public AiIntegrationAgent(HashMap<String, EnvType> environements) {
+	public AiIntegrationAgent(HashMap<String,Environment> environements) {
 		this.environements = environements;
 	}
 
 	public static void main(String[] args) throws InterruptedException {
 
-		HashMap<String, EnvType> environements = new HashMap<String, EnvType>();
+		var exampleEnv = new Environment("Environment for scray example job", "http://scray.org/integration/job/example", EnvType.K8s);
+		exampleEnv.setK8sJobDescriptonTemplate("job2.yaml");
+
+		var environements = new HashMap<String,Environment>();
+		environements.put(exampleEnv.getId(), exampleEnv);
+
+		//HashMap<String, EnvType> environements = new HashMap<String, EnvType>();
 		//environements.put("http://scray.org/ai/jobs/env/see/ki1-k8s", 		 Environment.EnvType.K8s);
 		//environements.put("http://scray.org/ai/jobs/env/see/ki1-standalone", Environment.EnvType.Standalone);
 
-		environements.put("http://scray.org/ai/jup/env/see/os/k8s", Environment.EnvType.K8s);
-		environements.put("http://scray.org/ai/app/env/see/os/k8s", Environment.EnvType.App);
+		//environements.put("http://scray.org/ai/jup/env/see/os/k8s", Environment.EnvType.K8s);
+		//environements.put("http://scray.org/ai/app/env/see/os/k8s", Environment.EnvType.App);
 
 		//environements.put("http://scray.org/ai/app/env/see/stefan", Environment.EnvType.K8s);
 		//environements.put("http://scray.org/ai/app/env/see/stefan-t", Environment.EnvType.K8s);
@@ -73,7 +80,7 @@ public class AiIntegrationAgent {
 		}
 	}
 
-	public Stream<JobToSchedule> getJobDataForThisAgent(String syncApiData, Set<String> myEnvs)
+	public Stream<JobToSchedule> getJobDataForThisAgent(String syncApiData, HashMap<String,Environment> myEnvs)
 			throws JsonMappingException, JsonProcessingException {
 
 		return Arrays.asList(jsonObjectMapper.readValue(syncApiData, VersionedData2[].class)).stream()
@@ -82,7 +89,7 @@ public class AiIntegrationAgent {
 					try {
 						return Optional.of(
 								new JobToSchedule(versonData,
-										jsonObjectMapper.readValue(versonData.getData(), AiJobsData.class), new K8sParameters("job2.yaml")) // FIXME K8sParameter should be a parameter
+										jsonObjectMapper.readValue(versonData.getData(), AiJobsData.class))
 								);
 					} catch (JacksonException e) {
 						logger.warn("No Ai job data parsed");
@@ -94,7 +101,9 @@ public class AiIntegrationAgent {
 				.flatMap(Optional::stream)
 				// check environment
 				.filter(jobData -> {
-					if (jobData.getAiJobsData().getProcessingEnv() != null && myEnvs.contains(jobData.getAiJobsData().getProcessingEnv())) {
+					if (jobData.getAiJobsData().getProcessingEnv() != null && myEnvs.keySet().contains(jobData.getAiJobsData().getProcessingEnv())) {
+						var myEnv = myEnvs.get(jobData.getAiJobsData().getProcessingEnv());
+						jobData.setK8sParameters(new K8sParameters(myEnv.getK8sJobDescriptonTemplate()));
 						return true;
 					} else {
 						return false;
@@ -140,10 +149,10 @@ public class AiIntegrationAgent {
 			try {
 				syncApiData = apiClient.getData();
 
-				this.getJobDataForThisAgent(syncApiData, environements.keySet())
+				this.getJobDataForThisAgent(syncApiData, environements)
 				.filter(jobData -> jobData.getAiJobsData().getState().equals("UPLOADED"))
 				.map(jobToStart -> {
-					var envType = environements.get(jobToStart.getAiJobsData().getProcessingEnv());
+					var envType = environements.get(jobToStart.getAiJobsData().getProcessingEnv()).getType();
 
 					if(envType == envType.Standalone) {
 						this.setState(jobToStart.getVersionData(), jobToStart.getAiJobsData(), "SCHEDULED");
@@ -173,7 +182,7 @@ public class AiIntegrationAgent {
 					return "";
 				}).toList();
 
-				this.getJobDataForThisAgent(syncApiData, environements.keySet())
+				this.getJobDataForThisAgent(syncApiData, environements)
 				.filter(jobData -> jobData.getAiJobsData().getState().equals("WANTED_D"))
 				.map(jobToTerminate -> {
 					logger.info("Kill job {}", jobToTerminate.getVersionData().getDataSource());
@@ -196,7 +205,7 @@ public class AiIntegrationAgent {
 			}
 	}
 
-	public void addEnv(String name, EnvType type) {
+	public void addEnv(String name, Environment type) {
 		this.environements.put(name, type);
 	}
 }
