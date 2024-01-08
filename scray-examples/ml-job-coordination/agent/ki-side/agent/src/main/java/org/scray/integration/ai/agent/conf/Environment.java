@@ -1,21 +1,29 @@
 package org.scray.integration.ai.agent.conf;
 
 public class Environment{
-    private String name;
+	private String name;
     private String id;
     private String ingressTemplate;
     private String k8sJobDescriptonTemplate;
     private String k8sDeploymentDescriptionTemplate;
+	private EnvType type;
 
+
+	public enum EnvType {
+		K8s,
+		Standalone,
+		App
+	}
 
 	public Environment() {
 		super();
 	}
 
-	public Environment(String name, String id) {
+	public Environment(String name, String id, EnvType type) {
 		super();
 		this.name = name;
 		this.id = id;
+		this.type = type;
 	}
 
 	public String getName() {
@@ -56,5 +64,13 @@ public class Environment{
 
 	public void setK8sDeploymentDescriptionTemplate(String k8sDeploymentDescriptionTemplate) {
 		this.k8sDeploymentDescriptionTemplate = k8sDeploymentDescriptionTemplate;
+	}
+
+	public EnvType getType() {
+		return type;
+	}
+
+	public void setType(EnvType type) {
+		this.type = type;
 	}
 }
