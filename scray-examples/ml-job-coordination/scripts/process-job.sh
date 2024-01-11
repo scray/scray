@@ -72,7 +72,8 @@ runPythonJob() {
   fi
 
   python3 $NOTEBOOK_NAME  2>&1 | tee -a out.$JOB_NAME.txt &
-
+  uploadCurrentNotebookState out.$JOB_NAME.txt
+  
   PID=$!
 
   while ps -p $PID > /dev/null; do
