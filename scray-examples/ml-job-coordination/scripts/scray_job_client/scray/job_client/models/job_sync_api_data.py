@@ -9,6 +9,8 @@ class JobSyncApiData:
         self.state = None
         self.imageName = None
         self.processingEnv = None
+        self.metadata = None
+
    
     @staticmethod
     def from_json(json_string):
@@ -22,5 +24,6 @@ class JobSyncApiData:
         instance.state = data.get('state')
         instance.imageName = data.get('imageName')
         instance.processingEnv = data.get('processingEnv')
+        instance.metadata = data.get('metadata')
 
         return instance
