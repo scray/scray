@@ -94,7 +94,7 @@ class ScrayJobClient:
             print(f"Waiting for state '{desiredState}'; current state is '{state}'")
 
             if state == desiredState:
-                print("State '{desiredState}' reached")
+                print(f"State '{desiredState}' reached")
                 break
 
             time.sleep(1)
