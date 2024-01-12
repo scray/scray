@@ -100,7 +100,7 @@ class ScrayJobClient:
             time.sleep(1)
 
 
-    def setState(self, state, job_name, processing_env, docker_image = "_", source_data = "_", notebook_name = "_"):
+    def setState(self, state, job_name, processing_env, docker_image = "_", source_data = "_", notebook_name = "_", metadata = ""):
 
         data = json.dumps({
                 "filename": f"{job_name}.tar.gz",
@@ -108,7 +108,8 @@ class ScrayJobClient:
                 "state": state,
                 "imageName": docker_image,
                 "dataDir": source_data,
-                "notebookName": notebook_name
+                "notebookName": notebook_name,
+                "metadata": metadata
             })
 
         versionedData = VersionedData(
@@ -120,3 +121,10 @@ class ScrayJobClient:
 
         self.client.updateVersion(versionedData)
 
+    def get_job_metadata(self, job_name):
+        
+        latestVersion = self.client.getLatestVersion('_', job_name)
+        logger.info("Latest version data: " + latestVersion.to_str())
+        metadata = JobSyncApiData.from_json(json_string=latestVersion.data).metadata
+
+        return metadata
