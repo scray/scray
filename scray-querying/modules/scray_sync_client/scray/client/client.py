@@ -19,151 +19,81 @@ import logging
 from typing import Dict, Optional
 import json
 from scray.client.config import ScrayClientConfig
-from scray.job_client.config import ScrayJobClientConfig
-from scray.job_client.models.job_sync_api_data import JobSyncApiData
 from scray.client.models.versioned_data import VersionedData
-from scray.client import ScrayClient
-import time
 
 from requests import Session
 
 logger = logging.getLogger(__name__)
 
-
-class ScrayJobClient:
-    client = None
+class ScrayClient:
 
     def __init__(
         self,
-        config: ScrayJobClientConfig,
+        client_config: ScrayClientConfig,
         logging_level: Optional[int] = logging.DEBUG,
     ):
         self.logging_level = logging_level
-        self.config = config
-       # self.client_config = client_config
+        self.client_config = client_config
 
-        scrayClientConfig = ScrayClientConfig(
+        self.request_session = Session()
 
-            host_address = config.host_address,
-            port = config.port
-        )
-
-        self.client = ScrayClient(client_config=scrayClientConfig)
-
-
-    def __waitForJobcompletion():  {
-
-    }
-
-    def get_job_state(self, job_name):
-        
-        latestVersion = self.client.getLatestVersion('_', job_name)
-        logger.info("Latest version data: " + latestVersion.to_str())
-        job_state = JobSyncApiData.from_json(json_string=latestVersion.data).state
-
-        return job_state
-
-    def wait_for_job_completion(self, job_name):
-        
-        while True:
-            
-            latestVersion = self.client.getLatestVersion('_', job_name)
-
-            logger.info("Latest version data: " + latestVersion.to_str())
-
-            state = JobSyncApiData.from_json(json_string=latestVersion.data).state
-
-            print(f"Waiting for state 'COMPLETED'; current state is '{state}'")
-
-            if state == "COMPLETED":
-                print("State 'COMPLETED' reached")
-                break
-
-            time.sleep(1)
     
-    def wait_for_job_state(self, job_name, desiredState):
-        
-        while True:
-            
-            latestVersion = self.client.getLatestVersion
+    def create() -> None: logger.info("Create scray client")
 
-            logger.info("Latest version data: " + latestVersion.to_str())
+    def getLatestVersion(self, datasource, mergeky) -> VersionedData:
 
-            state = JobSyncApiData.from_json(json_string=latestVersion.data).state
+        url = f"{self.client_config.host_address}:{self.client_config.port}/sync/versioneddata/latest/?datasource={datasource}&mergekey={mergeky}"
+        logger.debug("Request " + url)
+        response = self._make_getrequest(conn=self.request_session, method="GET", url=url)
 
-            print(f"Waiting for state '{desiredState}'; current state is '{state}'")
+        result = VersionedData()
+        result.fromDict(response)
 
-            if state == desiredState:
-                print(f"State '{desiredState}' reached")
-                break
+        return result
+    
 
-            time.sleep(1)
+    
 
-    def get_jobs(self, processing_env, requested_state) -> list[str]:
-        
-           
-            latestVersions = self.client.get_all_versioned_data()
+    def get_all_versioned_data(self) -> list[VersionedData]:
 
-            logger.info("Latest version data: " + str(type(latestVersions)))
+        url = f"{self.client_config.host_address}:{self.client_config.port}/sync/versioneddata/all/latest/"
+        logger.debug("Request " + url)
+        response = self._make_getrequest(conn=self.request_session, method="GET", url=url)
 
-            def state_filter(latestVersion) -> str:
-                state = JobSyncApiData.from_json(json_string=latestVersion.data).state
+        def create_versioned_data_object(response):
+            result = VersionedData()
+            result.fromDict(response)
+            return result
 
-                return True if state == requested_state else False
-            
-            def get_job_name(versioned_data) -> str:
-                return versioned_data.data_source
-            
-            matching_state = list(filter(state_filter, latestVersions))
+        list(map(create_versioned_data_object, response))
 
-            return list(map(get_job_name, matching_state))
+    def updateVersion(self, versionedData):
+        url = f"{self.client_config.host_address}:{self.client_config.port}/sync/versioneddata/latest/?datasource={versionedData.data_source}&mergekey={versionedData.merge_key}"
+        logger.debug("Request " + url)
 
-            
-
-    def wait_for_job_state(self, job_name, desiredState):
-        
-        while True:
-            
-            latestVersion = self.client.getLatestVersion('_', job_name)
-
-            logger.info("Latest version data: " + latestVersion.to_str())
-
-            state = JobSyncApiData.from_json(json_string=latestVersion.data).state
-
-            print(f"Waiting for state '{desiredState}'; current state is '{state}'")
-
-            if state == desiredState:
-                print(f"State '{desiredState}' reached")
-                break
-
-            time.sleep(1)
+        self._make_putrequest(conn=self.request_session, url=url, data=versionedData.to_api_json)
 
 
-    def setState(self, state, job_name, processing_env, docker_image = "_", source_data = "_", notebook_name = "_", metadata = ""):
 
-        data = json.dumps({
-                "filename": f"{job_name}.tar.gz",
-                "processingEnv": processing_env,
-                "state": state,
-                "imageName": docker_image,
-                "dataDir": source_data,
-                "notebookName": notebook_name,
-                "metadata": metadata
-            })
 
-        versionedData = VersionedData(
-                                    data_source = job_name,
-                                    merge_key = "_",
-                                    version = 0,
-                                    data= data,
-                                    version_key = 0)
+    def _make_getrequest(
+        self, conn, method, url
+    ):
 
-        self.client.updateVersion(versionedData)
+        response = conn.request(method, url)
+        if response.status_code == 200:
+            return response.json()
+        else:
+            logger.error(f"Error while interacting with sync API. Code: {response.status_code}")
+            return ""
+    
+    def _make_putrequest(
+        self, conn, url, data
+    ):
+        newHeaders = {'Content-type': 'application/json'}
 
-    def get_job_metadata(self, job_name):
-        
-        latestVersion = self.client.getLatestVersion('_', job_name)
-        logger.info("Latest version data: " + latestVersion.to_str())
-        metadata = JobSyncApiData.from_json(json_string=latestVersion.data).metadata
-
-        return metadata
+        response = conn.put(url, data=str(data()), headers=newHeaders)
+        if response.status_code == 200:
+            logger.info("State successfully updated")
+        else:
+            logger.error(f"Error while interacting with sync API. Code: {response.status_code}")

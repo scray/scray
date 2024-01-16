@@ -19,7 +19,8 @@ if __name__ == '__main__':
     client = ScrayJobClient(config=config)
     job_state = client.get_jobs(processing_env="http://scray.org/ai/app/env/see/os/k8s", requested_state="TEST")
 
-    print("FFF....... " + str(job_state))
+    print("New job state is: ....... " + str(job_state))
+
 
 
 

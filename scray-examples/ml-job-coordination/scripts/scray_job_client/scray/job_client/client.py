@@ -99,19 +99,30 @@ class ScrayJobClient:
 
             time.sleep(1)
 
-    def get_jobs(self, processing_env, requested_state):
+    def get_jobs(self, processing_env, requested_state) -> list[str]:
         
            
-            latestVersion = self.client.get_all_versioned_data()
+            latestVersions = self.client.get_all_versioned_data()
 
-            logger.info("Latest version data: " + str(type(latestVersion)))
+            if latestVersions is None:
+                logger.info("No new version available")
+                return []
+            else:
+                logger.info("Latest version data: " + str(type(latestVersions)))
 
-            state = JobSyncApiData.from_json(json_string=latestVersion.data).state
+                def state_filter(latestVersion) -> str:
+                    state = JobSyncApiData.from_json(json_string=latestVersion.data).state
 
-            print(f"Waiting for state '{requested_state}'; current state is '{state}'")
+                    return True if state == requested_state else False
+                
+                def get_job_name(versioned_data) -> str:
+                    return versioned_data.data_source
+                
+                matching_state = list(filter(state_filter, latestVersions))
 
-            if state == requested_state:
-                print(f"State '{requested_state}' reached")
+                return list(map(get_job_name, matching_state))
+
+            
 
     def wait_for_job_state(self, job_name, desiredState):
         
