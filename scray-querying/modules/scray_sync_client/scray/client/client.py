@@ -65,7 +65,7 @@ class ScrayClient:
             result.fromDict(response)
             return result
 
-        list(map(create_versioned_data_object, response))
+        return list(map(create_versioned_data_object, response))
 
     def updateVersion(self, versionedData):
         url = f"{self.client_config.host_address}:{self.client_config.port}/sync/versioneddata/latest/?datasource={versionedData.data_source}&mergekey={versionedData.merge_key}"

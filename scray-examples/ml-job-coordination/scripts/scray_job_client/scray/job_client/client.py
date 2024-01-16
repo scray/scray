@@ -111,9 +111,12 @@ class ScrayJobClient:
                 logger.info("Latest version data: " + str(type(latestVersions)))
 
                 def state_filter(latestVersion) -> str:
-                    state = JobSyncApiData.from_json(json_string=latestVersion.data).state
+                    try:
+                        state = JobSyncApiData.from_json(json_string=latestVersion.data).state
+                        return True if state == requested_state else False
+                    except ValueError:
+                        return False 
 
-                    return True if state == requested_state else False
                 
                 def get_job_name(versioned_data) -> str:
                     return versioned_data.data_source
