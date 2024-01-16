@@ -50,7 +50,22 @@ class ScrayClient:
         result.fromDict(response)
 
         return result
+    
 
+    
+
+    def get_all_versioned_data(self) -> list[VersionedData]:
+
+        url = f"{self.client_config.host_address}:{self.client_config.port}/sync/versioneddata/all/latest/"
+        logger.debug("Request " + url)
+        response = self._make_getrequest(conn=self.request_session, method="GET", url=url)
+
+        def create_versioned_data_object(response):
+            result = VersionedData()
+            result.fromDict(response)
+            return result
+
+        return list(map(create_versioned_data_object, response))
 
     def updateVersion(self, versionedData):
         url = f"{self.client_config.host_address}:{self.client_config.port}/sync/versioneddata/latest/?datasource={versionedData.data_source}&mergekey={versionedData.merge_key}"

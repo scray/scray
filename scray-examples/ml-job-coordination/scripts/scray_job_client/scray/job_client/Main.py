@@ -16,11 +16,10 @@ if __name__ == '__main__':
     "description": "This is a sample advertisement."
 }
 
-
     client = ScrayJobClient(config=config)
-    job_state = client.setState(job_name="doerners_super_docs_4712", processing_env="http://scray.org/ai/app/env/see/os/k8s", state="READY_TO_CONVERT", metadata=metadata)
+    job_state = client.get_jobs(processing_env="http://scray.org/ai/app/env/see/os/k8s", requested_state="TEST")
 
-    print(client.get_job_metadata("doerners_super_docs_4712"))
+    print("FFF....... " + str(job_state))
 
 
 
