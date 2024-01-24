@@ -57,3 +57,9 @@ kubectl create secret generic data-ssh-key --from-file=id_rsa=/home/ubuntu/.ssh/
 ```
 ```
 
+
+# Python image
+
+```
+docker build -t scray/python:0.1.3 -f ./docker-image-descriptions/example-app/Dockerfile .
+```
