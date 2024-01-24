@@ -2,7 +2,9 @@ JOB_NAME=ki1-tensorflow-gpu
 SOURCE_DATA=./
 NOTEBOOK_NAME=token_classification_01.ipynb
 INITIAL_STATE=""
-PROCESSING_ENV="ki1-k8s"
+PROCESSING_ENV=""
+DOCKER_IMAGE="huggingface-transformers-pytorch-deepspeed-latest-gpu-dep:0.1.2"
+JOB_NAME_LITERALLY=false
 
 createArchive() {
   echo "Create archive $JOB_NAME.tar.gz from source $SOURCE_DATA"
@@ -21,10 +23,13 @@ downloadResuls() {
 
 downloadUpdatedNotebook() {
   rm -f $JOB_NAME-state.tar.gz >/dev/null
-  sftp ubuntu@ml-integration-git.research.dev.seeburger.de:/home/ubuntu/sftp-share/$JOB_NAME-state.tar.gz ./ >/dev/null
-  tar -xzmf $JOB_NAME-state.tar.gz >/dev/null
+  sftp ubuntu@ml-integration-git.research.dev.seeburger.de:/home/ubuntu/sftp-share/$JOB_NAME-state.tar.gz ./ &> /dev/null
 
-  echo "Notebook out.$NOTEBOOK_NAME updated"
+  if [[ $? = 0 ]]; then
+    tar -xzmf $JOB_NAME-state.tar.gz >/dev/null
+    echo "Notebook out.$NOTEBOOK_NAME updated"
+  fi
+
 }
 
 
@@ -38,10 +43,9 @@ curl -sS -X 'PUT' \
   "dataSource": "'$JOB_NAME'",
   "mergeKey": "_",
   "version": 0,
-  "data": "{\"filename\": \"'$JOB_NAME'.tar.gz\", \"processingEnv\": \"'$PROCESSING_ENV'\", \"state\": \"'$1'\",  \"dataDir\": \"'$SOURCE_DATA'\", \"notebookName\": \"'$NOTEBOOK_NAME'\"}",
+  "data": "{\"filename\": \"'$JOB_NAME'.tar.gz\", \"processingEnv\": \"'$PROCESSING_ENV'\", \"state\": \"'$1'\", \"imageName\": \"'$DOCKER_IMAGE'\",   \"dataDir\": \"'$SOURCE_DATA'\", \"notebookName\": \"'$NOTEBOOK_NAME'\"}",
   "versionKey": 0
   }'
-
 }
 
 waitForJobCompletion() {
@@ -77,9 +81,14 @@ function parse-args() {
             --initial-state )   shift
                 INITIAL_STATE=$1
         ;;
-	    --processing-env) shift
+	          --processing-env) shift
 		            PROCESSING_ENV=$1
-	;;
+        ;;
+	          --docker-image) shift
+		            DOCKER_IMAGE=$1
+	      ;;
+	          --take-jobname-literally) shift
+		            JOB_NAME_LITERALLY=$1            
         esac
         shift
     done
@@ -89,7 +98,15 @@ function parse-args() {
 if [ "$1" == "run" ]
 then
     shift
-    parse-args "${@}"  
+    parse-args "${@}" 
+
+    if [ $JOB_NAME_LITERALLY == "false" ]
+    then
+      SYS_JOB_NAME=$JOB_NAME-$RANDOM 
+      JOB_NAME=$SYS_JOB_NAME
+    fi
+
+    echo "{\"timestamp\": \"'$(date +%s)'\", \"jobName\": \"'$JOB_NAME'\", \"sysJobName\": \"'$SYS_JOB_NAME'\"}" > SYS-JOB-NAME-$JOB_NAME.json 
 else         
     echo "Usage: run --job-name ki1-gpu --source-data token_classification --notebook-name token_classification_01.ipynb" 
     exit 1
@@ -103,7 +120,6 @@ then
 elif [ "$INITIAL_STATE" == "COMPLETED" ]
 then
    downloadResuls
-
 else         
     createArchive
     setState 'UPLOADED'

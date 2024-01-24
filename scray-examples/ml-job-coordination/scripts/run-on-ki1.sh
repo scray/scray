@@ -23,11 +23,13 @@ downloadResuls() {
 
 downloadUpdatedNotebook() {
   rm -f $JOB_NAME-state.tar.gz >/dev/null
-  sftp ubuntu@ml-integration-git.research.dev.seeburger.de:/home/ubuntu/sftp-share/$JOB_NAME-state.tar.gz ./ > /dev/null
-  tar -xzmf $JOB_NAME-state.tar.gz >/dev/null
-  rm -f $JOB_NAME-state.tar.gz >/dev/null
+  sftp ubuntu@ml-integration-git.research.dev.seeburger.de:/home/ubuntu/sftp-share/$JOB_NAME-state.tar.gz ./ &> /dev/null
 
-  echo "Notebook out.$NOTEBOOK_NAME updated"
+  if [[ $? = 0 ]]; then
+    tar -xzmf $JOB_NAME-state.tar.gz >/dev/null
+    echo "Notebook out.$NOTEBOOK_NAME updated"
+  fi
+
 }
 
 
