@@ -1,36 +1,44 @@
-pwd
 JOB_NAME=ki1-tensorflow-gpu
 SOURCE_DATA=./
 NOTEBOOK_NAME=token_classification_01.ipynb
 INITIAL_STATE=""
 PROCESSING_ENV=""
-DOCKER_IMAGE="huggingface-transformers-pytorch-deepspeed-latest-gpu-dep:0.1.2"
+DOCKER_IMAGE="scray-jupyter_tensorflow_pytorch-gpu:0.1.1"
 JOB_NAME_LITERALLY=false
 
 createArchive() {
   echo "Create archive $JOB_NAME.tar.gz from source $SOURCE_DATA"
-  tar -czvf $JOB_NAME.tar.gz $SOURCE_DATA
+  tar -czvf $JOB_NAME.tar.gz $SOURCE_DATA > /dev/null
   sftp -o StrictHostKeyChecking=accept-new ubuntu@ml-integration-git.research.dev.seeburger.de:/home/ubuntu/sftp-share/  <<< 'put '$JOB_NAME'.tar.gz'
+  rm -f ./$JOB_NAME.tar.gz
 }
 
 downloadResuls() {
   rm -f $JOB_NAME-fin.tar.gz
   sftp ubuntu@ml-integration-git.research.dev.seeburger.de:/home/ubuntu/sftp-share/$JOB_NAME-fin.tar.gz ./
   tar -xzmf $JOB_NAME-fin.tar.gz
-  rm -f $JOB_NAME-fin.tar.gz
+
+  # Clean up
+  rm -f ./$JOB_NAME-fin.tar.gz
+  rm -f ./$JOB_NAME.tar.gz
+  rm -f ./$JOB_NAME-state.tar.gz
+  rm -f ./SYS-JOB-NAME-$JOB_NAME.json 
   
   echo "Learning results loaded"
 }
 
 downloadUpdatedNotebook() {
   rm -f $JOB_NAME-state.tar.gz >/dev/null
-  sftp ubuntu@ml-integration-git.research.dev.seeburger.de:/home/ubuntu/sftp-share/$JOB_NAME-state.tar.gz ./ > /dev/null
-  tar -xzmf $JOB_NAME-state.tar.gz >/dev/null
-  rm -f $JOB_NAME-state.tar.gz >/dev/null
+  sftp ubuntu@ml-integration-git.research.dev.seeburger.de:/home/ubuntu/sftp-share/$JOB_NAME-state.tar.gz ./ &> /dev/null
 
-  echo "Notebook out.$NOTEBOOK_NAME updated"
+  if [[ $? = 0 ]]; then
+    tar -xzmf $JOB_NAME-state.tar.gz >/dev/null
+    rm -f ./$JOB_NAME-state.tar.gz
+
+    echo "Notebook out.$NOTEBOOK_NAME updated"
+  fi
+
 }
-
 
 setState() {
 echo $1
@@ -80,14 +88,14 @@ function parse-args() {
             --initial-state )   shift
                 INITIAL_STATE=$1
         ;;
-	          --processing-env) shift
-		            PROCESSING_ENV=$1
+	        --processing-env) shift
+		        PROCESSING_ENV=$1
         ;;
-	          --docker-image) shift
-		            DOCKER_IMAGE=$1
+	        --docker-image) shift
+		        DOCKER_IMAGE=$1
 	      ;;
-	          --take-jobname-literally) shift
-		            JOB_NAME_LITERALLY=$1            
+	        --take-jobname-literally) shift
+		        JOB_NAME_LITERALLY=$1            
         esac
         shift
     done

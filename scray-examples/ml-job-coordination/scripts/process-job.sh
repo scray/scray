@@ -2,8 +2,6 @@
 
 DEFAULT_JOB_NAME=ki1-tensorflow-gpu
 
-
-
 if [[ -z "${RUNTIME_TYPE}" ]]; then
   RUNTIME_TYPE="PAPERMILL"
 fi
@@ -94,6 +92,8 @@ runPapermillJob() {
   papermill --stdout-file notebook-stdout --autosave-cell-every 2  $NOTEBOOK_NAME out.$NOTEBOOK_NAME &
   PID=$!
 
+  uploadCurrentNotebookState out.$NOTEBOOK_NAME
+  
   while ps -p $PID > /dev/null; do
     echo "papermill $PID is running"
     echo "Upload current notebook state"

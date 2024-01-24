@@ -1,6 +1,9 @@
 
+## Examples
+    * [Example job](example-jobs/README.md)
+    * [Example app](example-app/README.mdd)
 
-## Build job images
+## Prepared images
 
 ### jupyter_spark
 ```
@@ -16,7 +19,16 @@ docker run --runtime=nvidia --gpus all -e JOB_NAME=timestamp-example --name time
 ### jupyter_tensorflow_pytorch_latest-gpu
 ```
 docker build -t scray-jupyter_tensorflow_pytorch-gpu:0.1.1 -f ./docker-image-descriptions/jupyter_tensorflow_pytorch_latest-gpu/Dockerfile .
-sudo docker run -p 7892:8888 -p 7851:7850 --name ki2 --runtime=nvidia --gpus all -e JOB_NAME=ki1_tensorflow_pytorch --name ki1_tensorflow_pytorch -v /home/research/workspaces/ml-integration:/tf2 -v /home/research/workspaces/huggingface/cache/huggingface:/root/.cache/huggingface -v ~/.ssh:/root/.ssh:ro scray-jupyter_tensorflow_pytorch-gpu:0.1.1
+```
+
+### Python image
+
+```
+docker build -t scray/python:0.1.2 -f ./example-app/Dockerfile .
+```
+
+```
+docker build -t scray/python:0.1.3 -f ./docker-image-descriptions/scray-python-3.10.12/Dockerfile .
 ```
 
 ### huggingface-transformers-pytorch-deepspeed-latest-gpu
@@ -41,11 +53,6 @@ docker save seamless_m4t:0.1.2 > /tmp/q1.tar
 sudo ctr -n=k8s.io images import /tmp/q1.tar
 ```
 
-### python container
-```
-docker build -t scray/python:0.1.2 -f ./example-app/Dockerfile .
-```
-
 ## Commonly used external resources
 ### SSH credentials to login to integration server
 
@@ -53,13 +60,5 @@ docker build -t scray/python:0.1.2 -f ./example-app/Dockerfile .
 kubectl create secret generic data-ssh-key --from-file=id_rsa=/home/ubuntu/.ssh/id_rsa
 ```
 
-### Volumes to cache data
-```
-```
 
 
-# Python image
-
-```
-docker build -t scray/python:0.1.3 -f ./docker-image-descriptions/example-app/Dockerfile .
-```
