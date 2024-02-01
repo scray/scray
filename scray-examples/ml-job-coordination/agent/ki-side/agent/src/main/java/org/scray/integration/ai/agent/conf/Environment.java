@@ -14,6 +14,7 @@ public class Environment {
     private static final Logger logger = LoggerFactory.getLogger(Environment.class);
 
     private String name;
+
     private String id;
     private int version;
     private String description;
@@ -23,6 +24,7 @@ public class Environment {
     private EnvType type;
     private HashMap<String, String> envVars = new HashMap<>();
     private String confBasePath = "conf";
+
 
 
     public enum EnvType {
@@ -110,7 +112,6 @@ public class Environment {
     public void setName(String name) {
         this.name = name;
     }
-
     public String getId() {
         return id;
     }
@@ -151,18 +152,6 @@ public class Environment {
         return type;
     }
 
-    public void setType(EnvType type) {
-        this.type = type;
-    }
-
-    public HashMap<String, String> getEnvVars() {
-        return envVars;
-    }
-
-    public void putEnvVar(String name, String value) {
-        this.envVars.put(name, value);
-    }
-
     public Integer getVersion()
     {
         return version;
@@ -178,4 +167,15 @@ public class Environment {
     {
         return "Environment [name=" + name + ", version=" + version + ", type=" + type + "]";
     }
+	public void setType(EnvType type) {
+		this.type = type;
+	}
+
+	public HashMap<String, String> getEnvVars() {
+		return envVars;
+	}
+
+	public void putEnvVar(String name, String value) {
+		this.envVars.put(name, value);
+	}
 }
