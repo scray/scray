@@ -49,8 +49,14 @@ public class AiIntegrationAgent {
 
 	public static void main(String[] args) throws InterruptedException {
 
-		var exampleEnv = new Environment("Environment for scray example job", "http://scray.org/integration/job/example", EnvType.K8s);
+		var exampleEnv = new Environment(
+				"Environment for scray example job",
+				"http://scray.org/integration/job/example",
+				EnvType.K8s
+				);
+
 		exampleEnv.setK8sJobDescriptonTemplate("job2.yaml");
+		exampleEnv.putEnvVar("RUNTIME_TYPE", "PYTHON");
 
 		var environements = new HashMap<String,Environment>();
 		environements.put(exampleEnv.getId(), exampleEnv);

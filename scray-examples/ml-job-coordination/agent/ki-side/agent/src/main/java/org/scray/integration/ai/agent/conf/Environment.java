@@ -1,5 +1,7 @@
 package org.scray.integration.ai.agent.conf;
 
+import java.util.HashMap;
+
 public class Environment{
 	private String name;
     private String id;
@@ -7,6 +9,7 @@ public class Environment{
     private String k8sJobDescriptonTemplate;
     private String k8sDeploymentDescriptionTemplate;
 	private EnvType type;
+	private HashMap<String, String> envVars = new HashMap<>();
 
 
 	public enum EnvType {
@@ -72,5 +75,13 @@ public class Environment{
 
 	public void setType(EnvType type) {
 		this.type = type;
+	}
+
+	public HashMap<String, String> getEnvVars() {
+		return envVars;
+	}
+
+	public void putEnvVar(String name, String value) {
+		this.envVars.put(name, value);
 	}
 }
