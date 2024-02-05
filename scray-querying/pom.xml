@@ -25,6 +25,7 @@
 		<module>/modules/scray-sync-cassandra</module>
 		<module>/modules/scray-sync-file</module>
 		<module>/modules/scray-sync-api-rest</module>
+		<module>/modules/scray-sync-events-mqtt</module>
 	</modules>
 
 	<profiles>
