@@ -12,43 +12,43 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import scray.sync.api.VersionedData;
 import scray.sync.api.VersionedDataApi;
 
-public class MqttSyncEventManager implements SyncEventManager{
-    private static final Logger logger = LoggerFactory.getLogger(SyncFileManager.class);
+public class MqttSyncEventManager implements SyncEventManager {
+	private static final Logger logger = LoggerFactory.getLogger(SyncFileManager.class);
 
-	 String host = System.getenv("SCRAY_EVENT_MQTT_HOST");
-	 String topic = System.getenv("SCRAY_EVENT_MQTT_TOPIC");
-	 String user = System.getenv("SCRAY_EVENT_MQTT_USER");
-	 String pw = System.getenv("SCRAY_EVENT_MQTT_PW");
+	String host = System.getenv("SCRAY_EVENT_MQTT_HOST");
+	String topic = System.getenv("SCRAY_EVENT_MQTT_TOPIC");
+	String user = System.getenv("SCRAY_EVENT_MQTT_USER");
+	String pw = System.getenv("SCRAY_EVENT_MQTT_PW");
 
 	MqttChannel publisher = null;
 
 	private void initClient() {
-		if(host == null) {
+		if (host == null) {
 			logger.warn("No MQTT host defined. Not event will be sent. ");
 		} else {
-			this.publisher = new MqttChannel(
-					host,
-					Optional.ofNullable(user),
-					Optional.ofNullable(pw));
+			this.publisher = new MqttChannel(host, Optional.ofNullable(user), Optional.ofNullable(pw));
 		}
 	}
 
 	@Override
 	public void publishUpdate(VersionedData updatedVersionedData) {
-		if(publisher == null) {
-			this.initClient();
-		}
 
-		ObjectMapper objectMapper = new ObjectMapper();
-		String versionedDataString;
-		try {
-			versionedDataString = objectMapper.writeValueAsString(updatedVersionedData);
+		if (host != null) {
+			if (publisher == null) {
+				this.initClient();
+			}
 
-			logger.debug("Public scray sync update event");
-			this.publisher.publish(topic, versionedDataString);
+			ObjectMapper objectMapper = new ObjectMapper();
+			String versionedDataString;
+			try {
+				versionedDataString = objectMapper.writeValueAsString(updatedVersionedData);
 
-		} catch (JsonProcessingException e) {
-			e.printStackTrace();
+				logger.debug("Public scray sync update event");
+				this.publisher.publish(topic, versionedDataString);
+
+			} catch (JsonProcessingException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 
