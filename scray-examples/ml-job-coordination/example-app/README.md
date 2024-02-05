@@ -1,4 +1,3 @@
-
 ### Start a in /see/os environement
 
 ```
@@ -7,5 +6,5 @@
   --job-name gradio-example-app\ 
   --processing-env http://scray.org/ai/app/env/see/os\
   --notebook-name app.py\
-  --docker-image  scray/python:0.1.2
+  --docker-image  scray/gradio-example:0.1.3
 ```

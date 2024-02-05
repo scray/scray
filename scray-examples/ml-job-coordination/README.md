@@ -1,4 +1,3 @@
-
 ## Examples
     * [Example job](example-jobs/README.md)
     * [Example app](example-app/README.mdd)
@@ -22,10 +21,6 @@ docker build -t scray-jupyter_tensorflow_pytorch-gpu:0.1.1 -f ./docker-image-des
 ```
 
 ### Python image
-
-```
-docker build -t scray/python:0.1.2 -f ./example-app/Dockerfile .
-```
 
 ```
 docker build -t scray/python:0.1.3 -f ./docker-image-descriptions/scray-python-3.10.12/Dockerfile .
@@ -53,12 +48,18 @@ docker save seamless_m4t:0.1.2 > /tmp/q1.tar
 sudo ctr -n=k8s.io images import /tmp/q1.tar
 ```
 
+
+### Use Case specific images
+
+### Gradio example app
+
+```
+docker build -t scray/gradio-example:0.1.3 -f ./example-app/Dockerfile .
+```
+
 ## Commonly used external resources
 ### SSH credentials to login to integration server
 
 ```
 kubectl create secret generic data-ssh-key --from-file=id_rsa=/home/ubuntu/.ssh/id_rsa
 ```
-
-
-
