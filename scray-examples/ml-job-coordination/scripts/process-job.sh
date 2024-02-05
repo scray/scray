@@ -22,9 +22,14 @@ fi
 
 echo "RUN_TYPE is: $RUN_TYPE"
 
+if [ -z "$SYNC_API_URL" ]
+then
+    echo "RUN_TYPE not set. Use default value service"
+    SYNC_API_URL="http://ml-integration.research.dev.seeburger.de:8082/sync/versioneddata"
+fi
+
 SOURCE_DATA=.
 NOTEBOOK_NAME=example-notebook.ipynb
-SYNC_API_URL="http://ml-integration.research.dev.seeburger.de:8082/sync/versioneddata"
 JOB_LOCATION="~/jobs/b636f6f92d51e742f861ee2a928621b6/"
 
 prepareSshEnv() {

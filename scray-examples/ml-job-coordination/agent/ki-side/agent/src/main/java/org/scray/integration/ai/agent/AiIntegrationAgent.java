@@ -50,6 +50,7 @@ public class AiIntegrationAgent {
 
 		HashMap<String, EnvType> environements = new HashMap<String, EnvType>();
 		environements.put("http://scray.org/ai/jobs/env/see/ki1-k8s", 		 Environment.EnvType.K8s);
+		environements.put("http://scray.org/ai/jobs/env/see/ki1-k8s", 		 Environment.EnvType.K8s);
 		environements.put("http://scray.org/ai/jobs/env/see/ki1-standalone", Environment.EnvType.Standalone);
 
 		//environements.put("http://scray.org/ai/jup/env/see/os/k8s", Environment.EnvType.K8s);
@@ -156,11 +157,8 @@ public class AiIntegrationAgent {
 						logger.info("Schedule container for {}", jobToStart.getVersionData().getDataSource());
 
 						if(!useImageAllowList || allowedImages.contains(jobToStart.getAiJobsData().getImageName())) {
-
 							KubernetesClient k8sClient = new KubernetesClient();
-
 						    jobToStart.getAiJobsData().setJobTemplateFile("app-job.yaml");
-
 							k8sClient.deployApp(jobToStart.getVersionData().getDataSource(), jobToStart.getAiJobsData().getImageName(), jobToStart.getAiJobsData().getJobTemplateFile());
 						} else {
 							logger.warn("Requested container not in allow list {}", jobToStart.getAiJobsData().getImageName());

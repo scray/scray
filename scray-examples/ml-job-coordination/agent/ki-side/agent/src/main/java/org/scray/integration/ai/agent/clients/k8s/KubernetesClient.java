@@ -238,7 +238,8 @@ public class KubernetesClient {
 			NamespaceListVisitFromServerGetDeleteRecreateWaitApplicable<HasMetadata> preparedDeploymentDescriptor,
 			String deplymentName,
 			String jobName,
-			String imageName) {
+			String imageName,
+			String syncApiUrl) {
 
 		var jobDescription = preparedDeploymentDescriptor.items().stream()
 			.filter(item -> item != null && item.getKind().equals("Job") &&  item.getMetadata().getName().equals("jupyter-tensorflow-job"))
@@ -262,6 +263,7 @@ public class KubernetesClient {
 										.withValue(jobName)
 									.endEnv()
 									.editMatchingEnv(e -> e.getName().equals("RUN_TYPE")).withValue("once").endEnv()
+									.editMatchingEnv(e -> e.getName().equals("SYNC_API_URL")).withValue(syncApiUrl).endEnv()
 									.endContainer()
 								.endSpec()
 							.endTemplate()

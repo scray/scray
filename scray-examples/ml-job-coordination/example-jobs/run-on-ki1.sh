@@ -11,16 +11,17 @@ SYNC_API_URL="http://ml-integration.research.dev.seeburger.de:8082"
 
 
 
+
 createArchive() {
   echo "Create archive $JOB_NAME.tar.gz from source $SOURCE_DATA"
   tar -czvf $JOB_NAME.tar.gz $SOURCE_DATA > /dev/null
-  sftp -o StrictHostKeyChecking=accept-new $DATA_INTEGRATION_USER@$DATA_INTEGRATION_HOST:/home/$DATA_INTEGRATION_USER/sftp-share/  <<< 'put '$JOB_NAME'.tar.gz'
+  sftp -o StrictHostKeyChecking=accept-new $DATA_INTEGRATION_USER@$DATA_INTEGRATION_HOST:~/sftp-share/  <<< 'put '$JOB_NAME'.tar.gz'
   rm -f ./$JOB_NAME.tar.gz
 }
 
 downloadResuls() {
   rm -f $JOB_NAME-fin.tar.gz
-  sftp $DATA_INTEGRATION_USER@$DATA_INTEGRATION_HOST:/home/$DATA_INTEGRATION_USER/sftp-share/$JOB_NAME-fin.tar.gz ./
+  sftp $DATA_INTEGRATION_USER@$DATA_INTEGRATION_HOST:~/sftp-share/$JOB_NAME-fin.tar.gz ./
   tar -xzmf $JOB_NAME-fin.tar.gz
 
   # Clean up
@@ -34,7 +35,7 @@ downloadResuls() {
 
 downloadUpdatedNotebook() {
   rm -f $JOB_NAME-state.tar.gz >/dev/null
-  sftp $DATA_INTEGRATION_USER@$DATA_INTEGRATION_HOST:/home/$DATA_INTEGRATION_USER/sftp-share/$JOB_NAME-state.tar.gz ./ &> /dev/null
+  sftp $DATA_INTEGRATION_USER@$DATA_INTEGRATION_HOST:~/sftp-share/$JOB_NAME-state.tar.gz ./ &> /dev/null
 
   if [[ $? = 0 ]]; then
     tar -xzmf $JOB_NAME-state.tar.gz >/dev/null
@@ -61,7 +62,7 @@ curl -sS -X 'PUT' \
 }
 
 waitForJobCompletion() {
-   echo ''$SYNC_API_URL'/sync/versioneddata/latest?datasource='$JOB_NAME'&mergekey=_'
+
    STATE_OBJECT=$(curl -sS -X 'GET'   ''$SYNC_API_URL'/sync/versioneddata/latest?datasource='$JOB_NAME'&mergekey=_'   -H 'accept: application/json' | jq '.data  | fromjson')
 
   while [ "$STATE" != "\"COMPLETED\"" ]
@@ -83,10 +84,10 @@ function parse-args() {
     while [ "$1" != "" ]; do
         case $1 in
             --job-name )   shift
-               JOB_NAME=$1
+                JOB_NAME=$1
         ;;
             --source-data )   shift
-               SOURCE_DATA=$1
+                SOURCE_DATA=$1
         ;;
             --notebook-name )   shift
                 NOTEBOOK_NAME=$1
@@ -94,8 +95,8 @@ function parse-args() {
             --initial-state )   shift
                 INITIAL_STATE=$1
         ;;
-	    --processing-env) shift
-	        PROCESSING_ENV=$1
+	          --processing-env) shift
+	              PROCESSING_ENV=$1
         ;;
             --data-integration-host) shift
                 DATA_INTEGRATION_HOST=$1
@@ -103,11 +104,11 @@ function parse-args() {
             --sync-api-host) shift
                 SYNC_API_URL=$1
         ;;
-	    --docker-image) shift
-	        DOCKER_IMAGE=$1
-	;;
-	    --take-jobname-literally) shift
-	        JOB_NAME_LITERALLY=$1            
+	          --docker-image) shift
+	              DOCKER_IMAGE=$1
+	      ;;
+	          --take-jobname-literally) shift
+	            JOB_NAME_LITERALLY=$1            
         esac
         shift
     done
