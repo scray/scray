@@ -6,7 +6,7 @@ WORKDIR /workspace
 
 COPY scripts/process-job.sh /opt/scray-sync/
 
-ADD docker-image-descriptions/example-app/requirements.txt /workspace/
+ADD docker-image-descriptions/scray-python-3.10.12/requirements.txt /workspace/
 
 RUN pip install --upgrade pip ipython ipykernel
 RUN ipython kernel install --name "python3" --user
