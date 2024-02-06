@@ -3,6 +3,7 @@
 DEFAULT_JOB_NAME=ki1-tensorflow-gpu
 
 if [[ -z "${RUNTIME_TYPE}" ]]; then
+  echo "RUNTIME_TYPE not set use default PAPERMILL"
   RUNTIME_TYPE="PAPERMILL"
 fi
 
@@ -74,9 +75,23 @@ runPythonJob() {
     echo "no requirements.txt"
   fi
 
-  python3 $NOTEBOOK_NAME  2>&1 | tee -a out.$JOB_NAME.txt &
+#  mkfifo /tmp/python-job-out
+#  < /tmp/python-job-out tee -a out.ff.txt &
+#  python3 -u $NOTEBOOK_NAME &> /tmp/python-job-out & 
+  echo "Execute: "  $NOTEBOOK_NAME 
+
+  echo "python3 -u $NOTEBOOK_NAME 2>&1 | tee -a out.$JOB_NAME.txt" > run.sh
+  chmod u+x run.sh
+  ./run.sh &
+
+
 
   PID=$!
+
+
+  echo "Wait for completion" >>  out.$JOB_NAME.txt
+  tail out.$JOB_NAME.txt
+
 
   while ps -p $PID > /dev/null; do
     echo " python3 $NOTEBOOK_NAME $PID is running"
@@ -84,6 +99,9 @@ runPythonJob() {
     uploadCurrentNotebookState out.$JOB_NAME.txt
     sleep 40
   done
+
+  tar -czvf $JOB_NAME-fin.tar.gz $SOURCE_DATA
+  sftp -i /etc/ssh-key/id_rsa ubuntu@ml-integration-git.research.dev.seeburger.de:/home/ubuntu/sftp-share/ <<<'PUT '$JOB_NAME-fin.tar.gz''
 }
 
 
@@ -189,6 +207,7 @@ processNextJob() {
     runJob
     setState 'COMPLETED'
 }
+
 
 if [ "$SCRAY_SYNC_MODE" == "LOCAL" ]
 then
