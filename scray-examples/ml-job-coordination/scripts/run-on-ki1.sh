@@ -7,7 +7,7 @@ DOCKER_IMAGE="scray-jupyter_tensorflow_pytorch-gpu:0.1.1"
 JOB_NAME_LITERALLY=false
 DATA_INTEGRATION_HOST=ml-integration-git.research.dev.seeburger.de
 DATA_INTEGRATION_USER=ubuntu
-SYNC_API_URL= "http://ml-integration.research.dev.seeburger.de:8082"
+SYNC_API_URL="http://ml-integration.research.dev.seeburger.de:8082"
 
 
 
@@ -70,7 +70,8 @@ curl -sS -X 'PUT' \
 }
 
 waitForJobCompletion() {
-   STATE_OBJECT=$(curl -sS -X 'GET'   ''$SYNC_API_URL''/sync/versioneddata/latest?datasource='$JOB_NAME'&mergekey=_'   -H 'accept: application/json' | jq '.data  | fromjson')
+
+   STATE_OBJECT=$(curl -sS -X 'GET'   ''$SYNC_API_URL'/sync/versioneddata/latest?datasource='$JOB_NAME'&mergekey=_'   -H 'accept: application/json' | jq '.data  | fromjson')
 
   while [ "$STATE" != "\"COMPLETED\"" ]
   do
