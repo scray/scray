@@ -18,6 +18,15 @@ createArchive() {
   rm -f ./$JOB_NAME.tar.gz
 }
 
+cleanUp() {
+  # Remove old files
+  rm -f ./$JOB_NAME-fin.tar.gz
+  rm -f ./$JOB_NAME.tar.gz
+  rm -f ./$JOB_NAME-state.tar.gz
+  rm -f ./SYS-JOB-NAME-$JOB_NAME.json 
+  rm -f out.$NOTEBOOK_NAME
+}
+
 downloadResuls() {
   rm -f $JOB_NAME-fin.tar.gz
   sftp $DATA_INTEGRATION_USER@$DATA_INTEGRATION_HOST:~/sftp-share/$JOB_NAME-fin.tar.gz ./
@@ -132,7 +141,8 @@ then
 elif [ "$INITIAL_STATE" == "COMPLETED" ]
 then
    downloadResuls
-else         
+else   
+    cleanUp
     createArchive
     setState 'UPLOADED'
     waitForJobCompletion
