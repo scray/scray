@@ -1,5 +1,5 @@
-from scray.job_client.client import ScrayJobClient
-from scray.job_client.config import ScrayJobClientConfig
+from scray_job_client.job_client.client import ScrayJobClient
+from scray_job_client.job_client.config import ScrayJobClientConfig
 import json
 
 if __name__ == '__main__':

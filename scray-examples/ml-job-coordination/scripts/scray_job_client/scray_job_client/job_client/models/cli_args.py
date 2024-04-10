@@ -1,5 +1,5 @@
 import argparse
-from scray.job_client.models.job_arguments import JobArguments
+from scray_job_client.job_client.models.job_arguments import JobArguments
 
 class ArgsParser:
     def __init__(self):

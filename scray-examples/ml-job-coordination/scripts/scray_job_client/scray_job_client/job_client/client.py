@@ -19,8 +19,8 @@ import logging
 from typing import Dict, Optional
 import json
 from scray.client.config import ScrayClientConfig
-from scray.job_client.config import ScrayJobClientConfig
-from scray.job_client.models.job_sync_api_data import JobSyncApiData
+from scray_job_client.job_client.config import ScrayJobClientConfig
+from scray_job_client.job_client.models.job_sync_api_data import JobSyncApiData
 from scray.client.models.versioned_data import VersionedData
 from scray.client import ScrayClient
 import time
