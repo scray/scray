@@ -100,8 +100,7 @@ class ScrayJobClient:
             time.sleep(1)
 
     def get_jobs(self, processing_env, requested_state=None) -> list[str]:
-        
-           
+              
             latestVersions = self.client.get_all_versioned_data()
 
             if latestVersions is None:
@@ -110,13 +109,18 @@ class ScrayJobClient:
             else:
                 logger.info("Latest version data: " + str(type(latestVersions)))
 
-                def state_filter(latestVersion) -> str:
+                def env_state_filter(latestVersion) -> str:
                     try:
-                        state = JobSyncApiData.from_json(json_string=latestVersion.data).state
-                        if requested_state is None:
-                            return True  # If no state is requested, include all states
+                        metadata = JobSyncApiData.from_json(json_string=latestVersion.data)
+
+                        if metadata.processingEnv == processing_env:
+                            if requested_state is None:
+                                return True  # If no state is requested, include all states
+                            else:
+                                return metadata.state == requested_state
                         else:
-                            return state == requested_state
+                            return False
+                        
                     except ValueError:
                         return False 
 
@@ -124,11 +128,13 @@ class ScrayJobClient:
                 def get_job_name(versioned_data) -> str:
                     return versioned_data.data_source
                 
-                matching_state = list(filter(state_filter, latestVersions))
+                matching_state = list(filter(env_state_filter, latestVersions))
 
                 return list(map(get_job_name, matching_state))
 
-            
+
+
+
 
     def wait_for_job_state(self, job_name, desiredState):
         
