@@ -11,17 +11,25 @@ SYNC_API_URL="http://ml-integration.research.dev.seeburger.de:8082"
 
 
 
-
 createArchive() {
   echo "Create archive $JOB_NAME.tar.gz from source $SOURCE_DATA"
   tar -czvf $JOB_NAME.tar.gz $SOURCE_DATA > /dev/null
-  sftp -o StrictHostKeyChecking=accept-new $DATA_INTEGRATION_USER@$DATA_INTEGRATION_HOST:~/sftp-share/  <<< 'put '$JOB_NAME'.tar.gz'
+  sftp -o StrictHostKeyChecking=accept-new $DATA_INTEGRATION_USER@$DATA_INTEGRATION_HOST:/sftp-share/  <<< 'put '$JOB_NAME'.tar.gz'
   rm -f ./$JOB_NAME.tar.gz
+}
+
+cleanUp() {
+  # Remove old files
+  rm -f ./$JOB_NAME-fin.tar.gz
+  rm -f ./$JOB_NAME.tar.gz
+  rm -f ./$JOB_NAME-state.tar.gz
+  rm -f ./SYS-JOB-NAME-$JOB_NAME.json 
+  rm -f out.$NOTEBOOK_NAME
 }
 
 downloadResuls() {
   rm -f $JOB_NAME-fin.tar.gz
-  sftp $DATA_INTEGRATION_USER@$DATA_INTEGRATION_HOST:~/sftp-share/$JOB_NAME-fin.tar.gz ./
+  sftp $DATA_INTEGRATION_USER@$DATA_INTEGRATION_HOST:sftp-share/$JOB_NAME-fin.tar.gz ./
   tar -xzmf $JOB_NAME-fin.tar.gz
 
   # Clean up
@@ -35,7 +43,7 @@ downloadResuls() {
 
 downloadUpdatedNotebook() {
   rm -f $JOB_NAME-state.tar.gz >/dev/null
-  sftp $DATA_INTEGRATION_USER@$DATA_INTEGRATION_HOST:~/sftp-share/$JOB_NAME-state.tar.gz ./ &> /dev/null
+  sftp $DATA_INTEGRATION_USER@$DATA_INTEGRATION_HOST:sftp-share/$JOB_NAME-state.tar.gz ./ &> /dev/null
 
   if [[ $? = 0 ]]; then
     tar -xzmf $JOB_NAME-state.tar.gz >/dev/null
@@ -87,7 +95,7 @@ function parse-args() {
                 JOB_NAME=$1
         ;;
             --source-data )   shift
-                SOURCE_DATA=$1
+               SOURCE_DATA=$1
         ;;
             --notebook-name )   shift
                 NOTEBOOK_NAME=$1
@@ -95,20 +103,14 @@ function parse-args() {
             --initial-state )   shift
                 INITIAL_STATE=$1
         ;;
-	          --processing-env) shift
-	              PROCESSING_ENV=$1
+	        --processing-env) shift
+		        PROCESSING_ENV=$1
         ;;
-            --data-integration-host) shift
-                DATA_INTEGRATION_HOST=$1
-        ;;
-            --sync-api-host) shift
-                SYNC_API_URL=$1
-        ;;
-	          --docker-image) shift
-	              DOCKER_IMAGE=$1
+	        --docker-image) shift
+		        DOCKER_IMAGE=$1
 	      ;;
-	          --take-jobname-literally) shift
-	            JOB_NAME_LITERALLY=$1            
+	        --take-jobname-literally) shift
+		        JOB_NAME_LITERALLY=$1            
         esac
         shift
     done
@@ -140,10 +142,10 @@ then
 elif [ "$INITIAL_STATE" == "COMPLETED" ]
 then
    downloadResuls
-else         
+else   
+    cleanUp
     createArchive
     setState 'UPLOADED'
     waitForJobCompletion
     downloadResuls
 fi
-
