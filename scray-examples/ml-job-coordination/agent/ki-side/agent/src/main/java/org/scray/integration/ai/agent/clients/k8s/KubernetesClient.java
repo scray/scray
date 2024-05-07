@@ -69,7 +69,7 @@ public class KubernetesClient {
 		aiK8client.close();
 	}
 
-	public void deployAppJob(String jobName, String imageName) {
+	public void deployAppJob(String jobName, String imageName, String syncApiUrl) {
 		KubernetesClient aiK8client = new KubernetesClient();
 
 		var deploymentName = jobName;
@@ -83,7 +83,8 @@ public class KubernetesClient {
 					descriptor,
 					deploymentName,
 					jobName,
-					imageName);
+					imageName,
+					syncApiUrl);
 
 			var configuredVpc = aiK8client.configurePvc(descriptor, deploymentName);
 
@@ -103,7 +104,7 @@ public class KubernetesClient {
 		}
 	}
 
-	public void deployApp(String jobName, String imageName, String jobTemplatePath) {
+	public void deployApp(String jobName, String imageName, String jobTemplatePath, String syncApiUrl) {
 
 		String host = jobName + ".app.research.dev.seeburger.de";
 		String ingressPath = "/";
@@ -135,11 +136,11 @@ public class KubernetesClient {
 		}
 
 
-		this.deployJob(jobName, imageName, jobTemplatePath);
+		this.deployJob(jobName, imageName, jobTemplatePath, syncApiUrl);
 
 	}
 
-	public void deployJob(String jobName, String imageName, String jobTemplatePath) {
+	public void deployJob(String jobName, String imageName, String jobTemplatePath, String syncApiUrl) {
 		KubernetesClient aiK8client = new KubernetesClient();
 
 		var deploymentName = jobName;
@@ -153,17 +154,19 @@ public class KubernetesClient {
 					descriptor,
 					deploymentName,
 					jobName,
-					imageName);
+					imageName,
+					syncApiUrl);
 
 			var configuredVpc = aiK8client.configurePvc(descriptor, deploymentName);
 
 			try {
+				System.out.println(configureJob);
 				aiK8client.deployJob(configureJob);
 			} catch(Exception e) {
 				logger.warn("Error while creating job. {}", e );
 			}
 			try {
-				aiK8client.deployVolumeClaim(configuredVpc);
+				//aiK8client.deployVolumeClaim(configuredVpc);
 			} catch(Exception e) {
 				logger.warn("Error while creating pvc. {}", e );
 			}

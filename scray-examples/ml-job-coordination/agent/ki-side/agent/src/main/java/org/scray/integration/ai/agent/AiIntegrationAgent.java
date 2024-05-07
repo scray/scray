@@ -40,6 +40,8 @@ public class AiIntegrationAgent {
 	private ObjectMapper jsonObjectMapper = new ObjectMapper();
 	private RestClient apiClient = new RestClient();
 
+	private String syncApiUrl = "https://ml-integration.research.dev.seeburger.de:8082";
+
 	public AiIntegrationAgent() {}
 
 	public AiIntegrationAgent(HashMap<String, EnvType> environements) {
@@ -49,15 +51,15 @@ public class AiIntegrationAgent {
 	public static void main(String[] args) throws InterruptedException {
 
 		HashMap<String, EnvType> environements = new HashMap<String, EnvType>();
-		environements.put("http://scray.org/ai/jobs/env/see/ki1-k8s", 		 Environment.EnvType.K8s);
-		environements.put("http://scray.org/ai/jobs/env/see/ki1-k8s", 		 Environment.EnvType.K8s);
-		environements.put("http://scray.org/ai/jobs/env/see/ki1-standalone", Environment.EnvType.Standalone);
+		//environements.put("http://scray.org/ai/jobs/env/see/ki1-k8s", 		 Environment.EnvType.K8s);
+		//environements.put("http://scray.org/ai/jobs/env/see/ki1-k8s", 		 Environment.EnvType.K8s);
+		//environements.put("http://scray.org/ai/jobs/env/see/ki1-standalone", Environment.EnvType.Standalone);
 
 		//environements.put("http://scray.org/ai/jup/env/see/os/k8s", Environment.EnvType.K8s);
 		//environements.put("http://scray.org/ai/app/env/see/os/k8s", Environment.EnvType.App);
 
 		//environements.put("http://scray.org/ai/app/env/see/stefan", Environment.EnvType.K8s);
-		//environements.put("http://scray.org/ai/app/env/see/stefan-t", Environment.EnvType.K8s);
+		environements.put("http://scray.org/ai/app/env/see/stefan-t", Environment.EnvType.K8s);
 
 
 
@@ -126,7 +128,7 @@ public class AiIntegrationAgent {
 
 		if(!useImageAllowList || allowedImages.contains(jobState.getImageName())) {
 			KubernetesClient k8sClient = new KubernetesClient();
-			k8sClient.deployJob(versionedData.getDataSource(), jobState.getImageName(), jobState.getJobTemplateFile());
+			k8sClient.deployJob(versionedData.getDataSource(), jobState.getImageName(), jobState.getJobTemplateFile(), syncApiUrl);
 		} else {
 			logger.warn("Requested container not in allow list {}", jobState.getImageName());
 		}
@@ -159,7 +161,7 @@ public class AiIntegrationAgent {
 						if(!useImageAllowList || allowedImages.contains(jobToStart.getAiJobsData().getImageName())) {
 							KubernetesClient k8sClient = new KubernetesClient();
 						    jobToStart.getAiJobsData().setJobTemplateFile("app-job.yaml");
-							k8sClient.deployApp(jobToStart.getVersionData().getDataSource(), jobToStart.getAiJobsData().getImageName(), jobToStart.getAiJobsData().getJobTemplateFile());
+							k8sClient.deployApp(jobToStart.getVersionData().getDataSource(), jobToStart.getAiJobsData().getImageName(), jobToStart.getAiJobsData().getJobTemplateFile(), syncApiUrl);
 						} else {
 							logger.warn("Requested container not in allow list {}", jobToStart.getAiJobsData().getImageName());
 						}

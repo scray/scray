@@ -71,7 +71,7 @@ public class KubernetesClientTests {
 		KubernetesClient aiK8client = new KubernetesClient();
 
 		var descriptor = aiK8client.loadDesciptorFormFile("src/test/resources/k8s/app-job.yaml");
-		Job serviceDescription = aiK8client.configureJobDescriptor(descriptor, "scray-app1", "scray-app1", "image1");
+		Job serviceDescription = aiK8client.configureJobDescriptor(descriptor, "scray-app1", "scray-app1", "image1", "ml-integration.research.dev.seeburger.de:8082");
 
 
 
