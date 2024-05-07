@@ -128,10 +128,10 @@ class ScrayJobClient:
                 def get_job_name(versioned_data) -> str:
                     return versioned_data.data_source
                 
-                matching_state = list(filter(env_state_filter, latestVersions))
+                job_with_matching_state = list(filter(env_state_filter, latestVersions))
 
-                return list(map(get_job_name, matching_state))
-
+                return list(map(get_job_name, job_with_matching_state))
+    
 
 
 
@@ -183,3 +183,4 @@ class ScrayJobClient:
         metadata = JobSyncApiData.from_json(json_string=latestVersion.data).metadata
 
         return metadata
+    

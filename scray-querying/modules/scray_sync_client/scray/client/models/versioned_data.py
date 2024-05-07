@@ -28,7 +28,7 @@ class VersionedData(object):
         self._merge_key = dic["mergeKey"]
         self._data = dic["data"]
         self._version = dic["version"]
-        self._version_key = dic["versionKey"]
+        self._version_key = dic.get("versionKey", None)
         return self
 
     @property
