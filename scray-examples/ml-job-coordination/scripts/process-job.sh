@@ -167,7 +167,7 @@ setState() {
   "dataSource": "'$JOB_NAME'",
   "mergeKey": "_",
   "version": 0,
-  "data": "{\"filename\": \"'$JOB_NAME'.tar.gz\", \"state\": \"'$1'\",  \"dataDir\": \"'$SOURCE_DATA'\", \"notebookName\": \"'$NOTEBOOK_NAME'\"}",
+  "data": "{\"filename\": \"'$JOB_NAME'.tar.gz\", \"processingEnv\": \"'$PROCESSING_ENV'\",  \"state\": \"'$1'\",  \"dataDir\": \"'$SOURCE_DATA'\", \"notebookName\": \"'$NOTEBOOK_NAME'\"}",
   "versionKey": 0
 }'
 
@@ -178,9 +178,11 @@ waitForNextJob() {
   STATE=$(echo "$STATE_OBJECT" | jq .state)
   SOURCE_DATA=$(echo "$STATE_OBJECT" | jq -r .dataDir)
   NOTEBOOK_NAME=$(echo "$STATE_OBJECT" | jq -r .notebookName)
+  PROCESSING_ENV=$(echo "$STATE_OBJECT" | jq -r .processingEnv)
 
   echo SOURCE_DATA: "$SOURCE_DATA"
   echo NOTEBOOK_NAME: "$NOTEBOOK_NAME"
+  echo PROCESSING_ENV: "$PROCESSING_ENV"
 
   while [ "$STATE" != "\"SCHEDULED\"" ]; do
     STATE_OBJECT=$(curl -sS -X 'GET' $SYNC_API_URL'/latest?datasource='$JOB_NAME'&mergekey=_' -H 'accept: application/json' | jq '.data  | fromjson')
