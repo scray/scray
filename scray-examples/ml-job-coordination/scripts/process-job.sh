@@ -1,5 +1,11 @@
 #!/bin/bash
 
+if [[ -z "${TRIGGER_STATE}" ]]; then
+  echo "TRIGGER_STATE not set use default \"SCHEDULED\""
+  TRIGGER_STATE="SCHEDULED"
+fi
+
+
 DEFAULT_JOB_NAME=ki1-tensorflow-gpu
 
 if [[ -z "${RUNTIME_TYPE}" ]]; then
@@ -184,13 +190,13 @@ waitForNextJob() {
   echo NOTEBOOK_NAME: "$NOTEBOOK_NAME"
   echo PROCESSING_ENV: "$PROCESSING_ENV"
 
-  while [ "$STATE" != "\"SCHEDULED\"" ]; do
+  while [ "$STATE" != "\"$TRIGGER_STATE\"" ]; do
     STATE_OBJECT=$(curl -sS -X 'GET' $SYNC_API_URL'/latest?datasource='$JOB_NAME'&mergekey=_' -H 'accept: application/json' | jq '.data  | fromjson')
     SOURCE_DATA=$(echo "$STATE_OBJECT" | jq -r .dataDir)
     NOTEBOOK_NAME=$(echo "$STATE_OBJECT" | jq -r .notebookName)
 
     STATE=$(echo "$STATE_OBJECT" | jq .state)
-    echo "[$JOB_NAME] Wait for state SCHEDULED current state is " "$STATE"
+    echo "[$JOB_NAME] Wait for state $TRIGGER_STATE current state is " "$STATE"
     sleep 5
   done
 
