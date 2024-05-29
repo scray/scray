@@ -1,0 +1,45 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: jupyter-tensorflow-job
+  labels:
+    app: jupyter-tensorflow-job
+spec:
+  completions: 1
+  parallelism: 1
+  template:
+    metadata:
+      labels:
+        app: jupyter-tensorflow-job
+    spec:
+      containers:
+        - name: scray-ai-container
+          image: scray-jupyter_tensorflow-gpu:0.1.1
+          workingDir: /opt/scray-sync/
+          env:
+            - name: JOB_NAME
+              value: "timestamp-example"
+            - name: RUN_TYPE
+              value: "once"
+          volumeMounts:
+            - name: ssh-key-volume
+              mountPath: "/etc/ssh-key"
+      restartPolicy: Never
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: gpu.nvidia.com/count
+                operator: In
+                values:
+                  - "3"
+              - key: gpu.nvidia.com/vram
+                operator: In
+                values:
+                  - "8"
+      volumes:
+        - name: ssh-key-volume
+          secret:
+            secretName: data-ssh-key
+            defaultMode: 256
