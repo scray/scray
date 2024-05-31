@@ -66,22 +66,22 @@ public class KubernetesClientTests {
 		}
 	}
 
-	@Test
-	public void configureJobDescription() {
-		KubernetesClient aiK8client = new KubernetesClient();
-
-		var descriptor = aiK8client.loadDesciptorFormFile("src/test/resources/k8s/app-job.yaml");
-		Job serviceDescription = aiK8client.configureJobDescriptor(descriptor, "scray-app1", "scray-app1", "image1", "ml-integration.research.dev.seeburger.de:8082");
-
-
-
-		ObjectMapper objectMapper = new ObjectMapper();
-		try {
-			System.out.println(objectMapper.writeValueAsString(serviceDescription));
-		} catch (JsonProcessingException e) {
-			e.printStackTrace();
-		}
-	}
+//	@Test
+//	public void configureJobDescription() {
+//		KubernetesClient aiK8client = new KubernetesClient();
+//
+//		var descriptor = aiK8client.loadDesciptorFormFile("src/test/resources/k8s/app-job.yaml");
+//		Job serviceDescription = aiK8client.configureJobDescriptor(descriptor, "scray-app1", "scray-app1", "image1", "ml-integration.research.dev.seeburger.de:8082");
+//
+//
+//
+//		ObjectMapper objectMapper = new ObjectMapper();
+//		try {
+//			System.out.println(objectMapper.writeValueAsString(serviceDescription));
+//		} catch (JsonProcessingException e) {
+//			e.printStackTrace();
+//		}
+//	}
 
 
 

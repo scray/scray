@@ -40,7 +40,7 @@ public class AiIntegrationAgent {
 	private ObjectMapper jsonObjectMapper = new ObjectMapper();
 	private RestClient apiClient = new RestClient();
 
-	private String syncApiUrl = "https://ml-integration.research.dev.seeburger.de:8082";
+	private String syncApiUrl = "http://ml-integration.research.dev.seeburger.de:8082/sync/versioneddata";
 
 	public AiIntegrationAgent() {}
 
@@ -61,8 +61,13 @@ public class AiIntegrationAgent {
 		//environements.put("http://scray.org/ai/app/env/see/stefan", Environment.EnvType.K8s);
 		//environements.put("http://scray.org/ai/app/env/see/stefan-t", Environment.EnvType.K8s);
 
-		environements.put("http://scray.org/ai/app/env/see/stefan-t", Environment.EnvType.K8s);
+		//environements.put("http://scray.org/ai/app/env/see/stefan-t", Environment.EnvType.K8s);
 
+        //environements.put("http://scray.org/ai/jobs/env/see/ki1-k8s/cpu/python", Environment.EnvType.Python);
+
+        //environements.put("http://scray.org/ai/jobs/env/see/ki2-k8s/cpu/python", Environment.EnvType.Python);
+        //environements.put("http://scray.org/ai/jobs/env/see/ki2-k8s/python", Environment.EnvType.Python);
+		environements.put("http://scray.org/ai/jobs/env/see/ki2-k8s", Environment.EnvType.K8s);
 
 
 
@@ -155,8 +160,10 @@ public class AiIntegrationAgent {
 					} else if(envType == envType.K8s) {
 						this.scheduleInKubernetes(jobToStart.getVersionData(), jobToStart.getAiJobsData());
 						this.setState(jobToStart.getVersionData(), jobToStart.getAiJobsData(), "SCHEDULED");
+					} else if(envType == envType.Python) {
+                        this.scheduleInKubernetes(jobToStart.getVersionData(), jobToStart.getAiJobsData());
+                        this.setState(jobToStart.getVersionData(), jobToStart.getAiJobsData(), "SCHEDULED");
 					} else if(envType == envType.App) {
-
 
 						logger.info("Schedule container for {}", jobToStart.getVersionData().getDataSource());
 

@@ -16,6 +16,9 @@ spec:
         - name: scray-ai-container
           image: scray-jupyter_tensorflow-gpu:0.1.1
           workingDir: /opt/scray-sync/
+          resources:
+            limits:
+              nvidia.com/gpu: "1"
           env:
             - name: JOB_NAME
               value: "timestamp-example"

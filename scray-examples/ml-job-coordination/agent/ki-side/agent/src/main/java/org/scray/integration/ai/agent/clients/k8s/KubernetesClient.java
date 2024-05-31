@@ -69,14 +69,14 @@ public class KubernetesClient {
 		aiK8client.close();
 	}
 
-	public void deployAppJob(String jobName, String imageName, String syncApiUrl) {
+	public void deployAppJob(String jobName, String imageName, String jobTemplatePath, String syncApiUrl) {
 		KubernetesClient aiK8client = new KubernetesClient();
 
 		var deploymentName = jobName;
-		var descriptor = aiK8client.loadDesciptorFormFile("job2.yaml"); // Fixme
+		var descriptor = aiK8client.loadDesciptorFormFile(jobTemplatePath);
 
 		if(deploymentName == null) {
-			logger.error("Deploymentdescriptor (job2.yaml) not found");
+			logger.error("Deploymentdescriptor {0} not found", jobTemplatePath);
 		} else {
 
 			var configureJob = aiK8client.configureJobDescriptor(

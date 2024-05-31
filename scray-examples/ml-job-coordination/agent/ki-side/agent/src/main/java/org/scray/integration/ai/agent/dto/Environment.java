@@ -5,7 +5,8 @@ public class Environment {
 	public enum EnvType {
 		K8s,
 		Standalone,
-		App
+		App,
+		Python
 	}
 
 	private String name;

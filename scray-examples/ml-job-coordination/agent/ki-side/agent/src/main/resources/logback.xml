@@ -6,7 +6,7 @@
             </pattern>
         </encoder>
     </appender>
-    <root level="DEBUG">
+    <root level="Info">
         <appender-ref ref="STDOUT"/>
     </root>
 </configuration>
