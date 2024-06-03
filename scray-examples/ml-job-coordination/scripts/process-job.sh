@@ -107,7 +107,7 @@ runPythonJob() {
   done
 
   tar -czvf $JOB_NAME-fin.tar.gz $SOURCE_DATA
-  sftp -i /etc/ssh-key/id_rsa ubuntu@ml-integration-git.research.dev.seeburger.de:/home/ubuntu/sftp-share/ <<<'PUT '$JOB_NAME-fin.tar.gz''
+  sftp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ubuntu@ml-integration-git.research.dev.seeburger.de:/home/ubuntu/sftp-share/ <<<'PUT '$JOB_NAME-fin.tar.gz''
 }
 
 
@@ -131,7 +131,7 @@ runPapermillJob() {
   done
 
   tar -czvf $JOB_NAME-fin.tar.gz $SOURCE_DATA
-  sftp -i /etc/ssh-key/id_rsa ubuntu@ml-integration-git.research.dev.seeburger.de:/home/ubuntu/sftp-share/ <<<'PUT '$JOB_NAME-fin.tar.gz''
+  sftp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ubuntu@ml-integration-git.research.dev.seeburger.de:/home/ubuntu/sftp-share/ <<<'PUT '$JOB_NAME-fin.tar.gz''
 }
 
 
