@@ -14,7 +14,7 @@ SYNC_API_URL="http://ml-integration.research.dev.seeburger.de:8082"
 createArchive() {
   echo "Create archive $JOB_NAME.tar.gz from source $SOURCE_DATA"
   tar -czvf $JOB_NAME.tar.gz $SOURCE_DATA > /dev/null
-  sftp -o StrictHostKeyChecking=accept-new $DATA_INTEGRATION_USER@$DATA_INTEGRATION_HOST:/sftp-share/  <<< 'put '$JOB_NAME'.tar.gz'
+  sftp -o StrictHostKeyChecking=accept-new $DATA_INTEGRATION_USER@$DATA_INTEGRATION_HOST:sftp-share/  <<< 'put '$JOB_NAME'.tar.gz'
   rm -f ./$JOB_NAME.tar.gz
 }
 

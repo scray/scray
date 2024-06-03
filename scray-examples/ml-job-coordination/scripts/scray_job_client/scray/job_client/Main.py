@@ -18,10 +18,10 @@ if __name__ == '__main__':
 
     client = ScrayJobClient(config=config)
 
-    env = "http://scray.org/ai/app/env/see/os/k8s"
+    env="http://scray.org/ai/jobs/test/metadata"
 
     #client.setState(state="TEST", job_name="test_job2", processing_env=env)
-    job_state = client.get_jobs(processing_env=env, requested_state="CONVERTED")
+    job_state = client.get_jobs(processing_env=env, requested_state="RUNNING")
 
     print("New job state is: ....... " + str(len(job_state)))
 
