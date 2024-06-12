@@ -9,6 +9,7 @@ import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 import org.scray.integration.ai.agent.conf.Environment;
+import org.scray.integration.ai.agent.conf.Environment.EnvType;
 
 public class AiIntegrationAgentTests {
 
@@ -16,9 +17,14 @@ public class AiIntegrationAgentTests {
 	public void getJobDataForThisAgent() {
 		AiIntegrationAgent agent = new AiIntegrationAgent();
 
+        var exampleEnv = new Environment(
+                                          "Environment for scray example job",
+                                          "http://scray.org/integration/job/example2",
+                                          EnvType.K8s,
+                                          1);
 
 		HashMap<String, Environment> myEnvs = new HashMap<String, Environment>(){{
-		    put("http://scray.org/ai/jobs/env/see/ki2-k8s", new Environment());
+		    put("http://scray.org/ai/jobs/env/see/ki2-k8s", exampleEnv);
 		}};
 
 		String testData = "[\r\n"
@@ -52,6 +58,7 @@ public class AiIntegrationAgentTests {
 			assertEquals(1, jobData.count());
 
 		} catch (Exception e) {
+		    e.printStackTrace();
 			fail("Exception when parsing data: " + e.getMessage());
 		}
 	}

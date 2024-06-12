@@ -69,7 +69,7 @@ public class KubernetesClient {
 		aiK8client.close();
 	}
 
-	public void deployAppJob(String jobName, String imageName, String jobTemplatePath, String syncApiUrl) {
+	public void deployAppJob(String jobName, String runtimeType, String imageName, String jobTemplatePath, String syncApiUrl) {
 		KubernetesClient aiK8client = new KubernetesClient();
 
 		var deploymentName = jobName;
@@ -83,6 +83,7 @@ public class KubernetesClient {
 					descriptor,
 					deploymentName,
 					jobName,
+					runtimeType,
 					imageName,
 					syncApiUrl);
 
@@ -104,7 +105,7 @@ public class KubernetesClient {
 		}
 	}
 
-	public void deployApp(String jobName, String imageName, String jobTemplatePath, String syncApiUrl) {
+	public void deployApp(String jobName, String runtimeType, String imageName, String jobTemplatePath, String syncApiUrl) {
 
 		String host = jobName + ".app.research.dev.seeburger.de";
 		String ingressPath = "/";
@@ -135,12 +136,10 @@ public class KubernetesClient {
 			}
 		}
 
-
-		this.deployJob(jobName, imageName, jobTemplatePath, syncApiUrl);
-
+		this.deployJob(jobName, runtimeType, imageName, jobTemplatePath, syncApiUrl);
 	}
 
-	public void deployJob(String jobName, String imageName, String jobTemplatePath, String syncApiUrl) {
+	public void deployJob(String jobName, String runtimeType, String imageName, String jobTemplatePath, String syncApiUrl) {
 		KubernetesClient aiK8client = new KubernetesClient();
 
 		var deploymentName = jobName;
@@ -154,6 +153,7 @@ public class KubernetesClient {
 					descriptor,
 					deploymentName,
 					jobName,
+					runtimeType,
 					imageName,
 					syncApiUrl);
 
@@ -178,6 +178,8 @@ public class KubernetesClient {
 	public NamespaceListVisitFromServerGetDeleteRecreateWaitApplicable<HasMetadata> loadDesciptorFormFile(String path) {
 		FileInputStream jobDeploymentDescriptor;
 		NamespaceListVisitFromServerGetDeleteRecreateWaitApplicable<HasMetadata>  preparedDeploymentDescriptor = null;
+
+		logger.debug("Load descriptor from {}", path);
 
 		try {
 			jobDeploymentDescriptor = new FileInputStream(new File(path));
@@ -241,6 +243,7 @@ public class KubernetesClient {
 			NamespaceListVisitFromServerGetDeleteRecreateWaitApplicable<HasMetadata> preparedDeploymentDescriptor,
 			String deplymentName,
 			String jobName,
+			String runtimeType,
 			String imageName,
 			String syncApiUrl) {
 
@@ -265,7 +268,8 @@ public class KubernetesClient {
 									.editMatchingEnv(e -> e.getName().equals("JOB_NAME"))
 										.withValue(jobName)
 									.endEnv()
-									.editMatchingEnv(e -> e.getName().equals("RUN_TYPE")).withValue("once").endEnv()
+									.editMatchingEnv(e -> e.getName().equals("RUN_TYPE")).withValue("once").endEnv() // FIXME ??
+                                    .editMatchingEnv(e -> e.getName().equals("RUNTIME_TYPE")).withValue(runtimeType).endEnv()
 									.editMatchingEnv(e -> e.getName().equals("SYNC_API_URL")).withValue(syncApiUrl).endEnv()
 									.endContainer()
 								.endSpec()

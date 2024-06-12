@@ -36,14 +36,15 @@ public class Environment {
 
     public Environment() {}
 
-    public Environment(String description, String name, EnvType type, int version) {
-        super();
-        this.name = name;
-        this.id = this.getSha256Hash(name);
-        this.description = description;
-        this.type = type;
-        this.version = version;
-    }
+
+	public Environment(String description, String name, EnvType type, int version) {
+		super();
+		this.name = name;
+		this.id = this.getSha256Hash(name);
+		this.description = description;
+		this.type = type;
+		this.version = version;
+	}
 
     public Environment(String name, String id, int version,
                        String description,
@@ -91,16 +92,16 @@ public class Environment {
            return this.getOrCreateWorkDir(basePath, this);
         }
 
-    public String getOrCreateWorkDir(String basePath, Environment env) {
-        String path = this.getWorkDirPath(basePath, env);
+       public String getOrCreateWorkDir(String basePath, Environment env) {
+           String path = this.getWorkDirPath(basePath, env);
 
-        File workDir = new File(path);
-        if (!workDir.exists()){
-            workDir.mkdirs();
-        }
+           File workDir = new File(path);
+           if (!workDir.exists()){
+               workDir.mkdirs();
+           }
 
-        return path;
-    }
+           return path;
+       }
 
     public String getWorkDirPath(String basePath, Environment env) {
         return basePath.concat("/").concat(env.getId()).concat("_v").concat(env.getVersion().toString());
@@ -152,6 +153,18 @@ public class Environment {
         return type;
     }
 
+	public void setType(EnvType type) {
+		this.type = type;
+	}
+
+	public HashMap<String, String> getEnvVars() {
+		return envVars;
+	}
+
+	public void putEnvVar(String name, String value) {
+		this.envVars.put(name, value);
+	}
+
     public Integer getVersion()
     {
         return version;
@@ -167,15 +180,4 @@ public class Environment {
     {
         return "Environment [name=" + name + ", version=" + version + ", type=" + type + "]";
     }
-	public void setType(EnvType type) {
-		this.type = type;
-	}
-
-	public HashMap<String, String> getEnvVars() {
-		return envVars;
-	}
-
-	public void putEnvVar(String name, String value) {
-		this.envVars.put(name, value);
-	}
 }
