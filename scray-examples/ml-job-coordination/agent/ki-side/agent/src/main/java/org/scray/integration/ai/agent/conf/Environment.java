@@ -9,6 +9,8 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 public class Environment {
 
     private static final Logger logger = LoggerFactory.getLogger(Environment.class);
@@ -27,6 +29,7 @@ public class Environment {
 
 
 
+
     public enum EnvType {
         K8s,
         Standalone,
@@ -34,8 +37,9 @@ public class Environment {
         Python
     }
 
-    public Environment() {}
 
+
+	public Environment() {}
 
 	public Environment(String description, String name, EnvType type, int version) {
 		super();
@@ -66,6 +70,7 @@ public class Environment {
     }
 
     String getSha256Hash(String input) {
+
         MessageDigest md;
         try
         {
@@ -140,6 +145,7 @@ public class Environment {
     public void setK8sJobDescriptonTemplate(String k8sJobDescriptonTemplate) {
         this.k8sJobDescriptonTemplate = k8sJobDescriptonTemplate;
     }
+
 
     public String getK8sDeploymentDescriptionTemplate() {
         return this.getWorkDirPath(confBasePath, this).concat("/").concat(k8sDeploymentDescriptionTemplate);
