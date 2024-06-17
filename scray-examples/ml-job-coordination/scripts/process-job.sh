@@ -90,8 +90,9 @@ runPythonJob() {
   chmod u+x run.sh
   ./run.sh &
 
-
-
+  python3 $NOTEBOOK_NAME  2>&1 | tee -a out.$JOB_NAME.txt &
+  uploadCurrentNotebookState out.$JOB_NAME.txt
+  
   PID=$!
 
 
