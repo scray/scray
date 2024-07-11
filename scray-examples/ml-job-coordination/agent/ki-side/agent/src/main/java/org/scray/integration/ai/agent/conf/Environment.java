@@ -138,6 +138,7 @@ public class Environment {
         return this.getWorkDirPath(confBasePath, this).concat("/").concat(k8sJobDescriptonTemplate);
     }
 
+    @JsonIgnore
     public String getK8sJobDescriptonTemplatePath() {
         return this.getWorkDirPath(confBasePath, this).concat("/").concat(k8sJobDescriptonTemplate);
     }
