@@ -1,0 +1,18 @@
+- name: "http://scray.org/test/env1"
+  id: "6648a4317cbf4ca322b36bf555c627a7d5c86e03bf6dafc7c9d9ffcdee1580b4"
+  version: 1
+  ingressTemplate: "app-ingress.yaml"
+  k8sJobDescriptonTemplate: "job2.yaml"
+  k8sDeploymentDescriptionTemplate: ""
+  type: "K8s"
+  envVars:
+    JAVA_HOME: "/opt/java/spdf-21/"
+- name: "http://scray.org/test/env2"
+  id: "51ca563596f61c2359290c532e45546c98c3094b9d157f4819f36b95b7621a03"
+  version: 2
+  ingressTemplate: "app-ingress.yaml"
+  k8sJobDescriptonTemplate: "job2.yaml"
+  k8sDeploymentDescriptionTemplate: ""
+  type: "Python"
+  envVars:
+    JAVA_HOME: "/opt/java/spdf-17/"

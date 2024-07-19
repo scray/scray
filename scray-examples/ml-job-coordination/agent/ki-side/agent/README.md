@@ -48,4 +48,4 @@ To build the core project, do the following:
 
 ## Setup env
 ### Add secret
-```kubectl create secret generic data-ssh-key --from-file=id_rsa=/home/research/.ssh/id_rsa```
+```kubectl create secret generic data-ssh-key --from-file=id_rsa=$HOME/.ssh/id_rsa```
