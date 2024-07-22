@@ -27,7 +27,7 @@ public class RestClient {
 
 		return output;
 	}
-	
+
 	public void putData(String data) throws IOException {
 		URL url = new URL("http://ml-integration.research.dev.seeburger.de:8082/sync/versioneddata/latest");
 		HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -38,11 +38,11 @@ public class RestClient {
 
 		try(OutputStream os = conn.getOutputStream()) {
 		    byte[] input = data.getBytes("utf-8");
-		    os.write(input, 0, input.length);			
+		    os.write(input, 0, input.length);
 		} catch(Exception e) {
 			e.printStackTrace();
 		}
-		
+
 		if (conn.getResponseCode() != 200) {
 			throw new RuntimeException("Failed : HTTP Error code : " + conn.getResponseCode());
 		}

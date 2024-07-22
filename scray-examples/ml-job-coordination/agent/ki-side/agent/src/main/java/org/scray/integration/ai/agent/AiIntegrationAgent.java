@@ -39,51 +39,82 @@ public class AiIntegrationAgent
 
     private List<String> allowedImages = new ArrayList<>();
     boolean useImageAllowList = false;
-    private HashMap<String, Environment> environements = null;
 
     private ObjectMapper jsonObjectMapper = new ObjectMapper();
     private RestClient apiClient = new RestClient();
 
+    private Environments environements = null;
+
     private String syncApiUrl = "http://ml-integration.research.dev.seeburger.de:8082/sync/versioneddata";
 
-    public AiIntegrationAgent()
+    public AiIntegrationAgent(Environments envs)
     {
+        this.environements = envs;
     }
 
-
-    public AiIntegrationAgent(HashMap<String, Environment> environements)
-    {
-        this.environements = environements;
-    }
+    public AiIntegrationAgent(){}
 
 
     public static void main(String[] args)
         throws InterruptedException
     {
 
+        String confLocation = System.getenv("CONFIG_PATH");
+
+        if(confLocation != null) {
+            logger.info("Env var found for configuration location {}", confLocation);
+        } else {
+            confLocation = Environments.defaultConfigurationLocation;
+            logger.debug("Use default configuration location {}", confLocation);
+        }
+
+
+        Environments envs = new Environments(1, "ki1");
+
+        try
+        {
+            envs.initFromFile(confLocation);
+
+            var agent = new AiIntegrationAgent(envs);
+
+            while (!Thread.currentThread().isInterrupted())
+            {
+                logger.info("Look for new jobs for env: " + envs);
+                agent.pollForNewJobs();
+                Thread.sleep(5000);
+            }
+        }
+        catch (Exception e)
+        {
+            logger.error("Unable to load configuration from file {}", confLocation);
+            e.printStackTrace();
+        }
+
+//        Environments environements = new Environments(1, "ki1", null);
+//
+//        var exampleEnv = new Environment(
+//                                         "Environment for ki1",
+//                                         "http://scray.org/ai/jobs/env/see/ki1-k8s",
+//                                         EnvType.K8s,
+//                                         1);
+//
+//
+//        exampleEnv.getOrCreateWorkDir("conf");
+//
+//        var exampleEnv2 = new Environment(
+//                                          "Environment for scray example job",
+//                                          "http://scray.org/ai/jobs/env/see/stefan/python",
+//                                          EnvType.K8s,
+//                                          1);
+//        exampleEnv2.getOrCreateWorkDir("conf");
+//        exampleEnv.putEnvVar("RUNTIME_TYPE", "PYTHON22");
 
 
 
-        var exampleEnv = new Environment(
-                                         "Environment for ki1",
-                                         "http://scray.org/ai/jobs/env/see/ki1-k8s",
-                                         EnvType.K8s,
-                                         1);
 
-
-        exampleEnv.getOrCreateWorkDir("conf");
-
-        var exampleEnv2 = new Environment(
-                                          "Environment for scray example job",
-                                          "http://scray.org/ai/jobs/env/see/stefan/python",
-                                          EnvType.K8s,
-                                          1);
-        exampleEnv2.getOrCreateWorkDir("conf");
-        exampleEnv.putEnvVar("RUNTIME_TYPE", "PYTHON22");
-
-        var environements = new HashMap<String, Environment>();
-        environements.put(exampleEnv.getName(), exampleEnv);
-        environements.put(exampleEnv2.getName(), exampleEnv2);
+//        var environements = new HashMap<String, Environment>();
+//        environements.put(exampleEnv.getName(), exampleEnv);
+//        environements.put(exampleEnv2.getName(), exampleEnv2);
 
         // HashMap<String, EnvType> environements = new HashMap<String, EnvType>();
         // environements.put("http://scray.org/ai/jobs/env/see/ki1-k8s", Environment.EnvType.K8s);
@@ -107,18 +138,11 @@ public class AiIntegrationAgent
         // environements.put("http://scray.org/ai/jobs/env/see/os-k8s", Environment.EnvType.K8s);
         // environements.put("http://scray.org/ai/jobs/env/see/st-k8s", Environment.EnvType.K8s);
 
-        var agent = new AiIntegrationAgent(environements);
 
-        while (!Thread.currentThread().isInterrupted())
-        {
-            logger.info("Look for new jobs for env: " + environements);
-            agent.pollForNewJobs();
-            Thread.sleep(5000);
-        }
     }
 
 
-    public Stream<JobToSchedule> getJobDataForThisAgent(String syncApiData, HashMap<String, Environment> myEnvs)
+    public Stream<JobToSchedule> getJobDataForThisAgent(String syncApiData, Environments myEnvs)
         throws JsonMappingException, JsonProcessingException
     {
 
@@ -144,11 +168,11 @@ public class AiIntegrationAgent
                      // check environment
                      .filter(jobData ->
                      {
-                         if (jobData.getAiJobsData().getProcessingEnv() != null && myEnvs.keySet().contains(jobData.getAiJobsData()
-                                                                                                                   .getProcessingEnv()))
+                         if (jobData.getAiJobsData().getProcessingEnv() != null &&
+                                         myEnvs.getEnvironment(jobData.getAiJobsData().getProcessingEnv()) != null)
                          {
-                             var myEnv = myEnvs.get(jobData.getAiJobsData().getProcessingEnv());
-                             jobData.setK8sParameters(new K8sParameters(myEnv.getK8sJobDescriptonTemplatePath()));
+                             var myEnv = myEnvs.getEnvironment(jobData.getAiJobsData().getProcessingEnv());
+                             jobData.setK8sParameters(new K8sParameters(myEnv.getK8sJobDescriptonTemplateFullPath()));
                              return true;
                          }
                          else
@@ -187,7 +211,7 @@ public class AiIntegrationAgent
         if (!useImageAllowList || allowedImages.contains(jobState.getImageName()))
         {
             KubernetesClient k8sClient = new KubernetesClient();
-            k8sClient.deployJob(versionedData.getDataSource(), env.getEnvVars().get("RUNTIME_TYPE"), jobState.getImageName(), env.getK8sJobDescriptonTemplatePath(), syncApiUrl);
+            k8sClient.deployJob(versionedData.getDataSource(), env.getEnvVars().get("RUNTIME_TYPE"), jobState.getImageName(), env.getK8sJobDescriptonTemplateFullPath(), syncApiUrl);
         }
         else
         {
@@ -208,7 +232,7 @@ public class AiIntegrationAgent
                 .filter(jobData -> jobData.getAiJobsData().getState().equals("UPLOADED"))
                 .map(jobToStart ->
                 {
-                    var env = environements.get(jobToStart.getAiJobsData().getProcessingEnv());
+                    var env = environements.getEnvironment(jobToStart.getAiJobsData().getProcessingEnv());
                     var envType = env.getType();
 
                     if (envType == envType.Standalone)
@@ -236,7 +260,7 @@ public class AiIntegrationAgent
                         k8sClient.deployApp(jobToStart.getVersionData().getDataSource(),
                                             env.getEnvVars().get("RUNTIME_TYPE"),
                                             jobToStart.getAiJobsData().getImageName(),
-                                            env.getK8sJobDescriptonTemplatePath(),
+                                            env.getK8sJobDescriptonTemplateFullPath(),
                                             syncApiUrl
                                             );
                     }
@@ -282,6 +306,6 @@ public class AiIntegrationAgent
 
     public void addEnv(String name, Environment type)
     {
-        this.environements.put(name, type);
+        this.environements.addEnvironment(name, type);
     }
 }

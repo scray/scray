@@ -10,6 +10,7 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.scray.integration.ai.agent.conf.Environment;
 import org.scray.integration.ai.agent.conf.Environment.EnvType;
+import org.scray.integration.ai.agent.conf.Environments;
 
 public class AiIntegrationAgentTests {
 
@@ -23,9 +24,8 @@ public class AiIntegrationAgentTests {
                                           EnvType.K8s,
                                           1);
 
-		HashMap<String, Environment> myEnvs = new HashMap<String, Environment>(){{
-		    put("http://scray.org/ai/jobs/env/see/ki2-k8s", exampleEnv);
-		}};
+		Environments myEnvs = new Environments(1, "test");
+		myEnvs.addEnvironment("http://scray.org/ai/jobs/env/see/ki2-k8s", exampleEnv);
 
 		String testData = "[\r\n"
 				+ "   {\r\n"
