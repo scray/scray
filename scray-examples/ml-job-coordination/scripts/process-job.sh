@@ -116,7 +116,14 @@ runPapermillJob() {
   cd $JOB_LOCATION
   cd $SOURCE_DATA
   
-  ls 
+  REQ_FILE=requirements.txt
+ 
+  if test -f "$REQ_FILE"; then
+    pip install -r requirements.txt 2>&1 | tee -a out.$JOB_NAME.txt 
+  else
+    echo "no requirements.txt"
+  fi
+
   echo papermill --stdout-file notebook-stdout --autosave-cell-every 2  $NOTEBOOK_NAME out.$NOTEBOOK_NAME &
 
   papermill --stdout-file notebook-stdout --autosave-cell-every 2  $NOTEBOOK_NAME out.$NOTEBOOK_NAME &
