@@ -1,0 +1,21 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: gradio-example-app6
+  annotations:
+    nginx.org/websocket-services: gradio-example-app6
+    nginx.ingress.kubernetes.io/rewrite-target: /$1
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: gradio-example-app6.app.research.dev.seeburger.de
+    http:
+        paths:
+          - path: /
+            #lopathType: ImplementationSpecific
+            pathType: Prefix
+            backend:
+              service:
+                name: gradio-example-app6
+                port:
+                  number: 7860

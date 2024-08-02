@@ -1,0 +1,9 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: SCARY-APP-SERVICE
+spec:
+  selector:
+    app: SCRAY-APP-LABLE
+  ports:
+    - port: 5678

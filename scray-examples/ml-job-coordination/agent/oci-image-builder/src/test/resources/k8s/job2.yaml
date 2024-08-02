@@ -1,0 +1,43 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: jupyter-tensorflow-job
+  labels:
+    app: jupyter-tensorflow-job
+spec:
+  completions: 1
+  parallelism: 1
+  template:
+    metadata:
+      labels:
+        app: jupyter-tensorflow-job
+    spec:
+      containers:
+        - name: scray-ai-container
+          image: scray-jupyter_tensorflow-gpu:0.1.1
+          workingDir: /opt/scray-sync/
+          env:
+            - name: JOB_NAME
+              value: "timestamp-example"
+            - name: RUN_TYPE
+              value: "once"
+          volumeMounts:
+            - name: ssh-key-volume
+              mountPath: "/etc/ssh-key"
+            - name: hf-cache2
+              mountPath: /root/.cache/huggingface/
+            - name: model-cache
+              mountPath: /root/ml-models
+      restartPolicy: Never
+      volumes:
+        - name: ssh-key-volume
+          secret:
+            secretName: data-ssh-key
+            defaultMode: 256
+        - name: hf-cache2
+          persistentVolumeClaim:
+            claimName: 'hf-cache2'
+        - name: model-cache
+          persistentVolumeClaim:
+            claimName: 'model-cache'
+
