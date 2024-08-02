@@ -13,9 +13,9 @@ classifiers = [
 ]
 
 dependencies = [
-  'scray_sync_client ~= 0.0.1'
+    'scray_sync_client ~= 0.0.1',
+    'paramiko ~= 2.10.1'
 ]
-
 
 [project.urls]
 "Homepage" = "https://github.com/scray/scray"
