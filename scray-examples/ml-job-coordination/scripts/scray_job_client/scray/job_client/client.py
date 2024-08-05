@@ -102,7 +102,6 @@ class ScrayJobClient:
     def get_jobs(self, processing_env, requested_state=None) -> list[str]:
               
             latestVersions = self.client.get_all_versioned_data()
-            print("FFF> " + str(len(latestVersions)))
             if latestVersions is None:
                 logger.info("No new version available")
                 return []
@@ -114,8 +113,6 @@ class ScrayJobClient:
                         metadata = JobSyncApiData.from_json(json_string=latestVersion.data)
 
                         if metadata.processingEnv == processing_env:
-                            print(metadata.processingEnv)
-                            print(metadata.state)
                             if requested_state is None:
                                 return True  # If no state is requested, include all states
                             else:
