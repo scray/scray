@@ -49,3 +49,9 @@ To build the core project, do the following:
 ## Setup env
 ### Add secret
 ```kubectl create secret generic data-ssh-key --from-file=id_rsa=$HOME/.ssh/id_rsa```
+
+
+
+### Connect to Keycloak
+
+```keytool -importcert -alias kc-crt -keystore "/c/Program Files/Eclipse Adoptium/jdk-17.0.11.9-hotspot/lib/security/cacerts" -storepass changeit -file ca.der```
