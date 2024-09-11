@@ -22,7 +22,7 @@ dependencies = [
 "Bug Tracker" = "https://github.com/scray/scray/issues"
 
 [project.scripts]
-scray_job_client = "scray.job_client:main"
+scray-job-client = "scray.job_client:main_cli"
 
 [build-system]
 requires = ["hatchling"]

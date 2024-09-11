@@ -59,3 +59,14 @@ job_state = client.wait_for_job_completion("backend-16280")
 ```
 
 
+## CLI Options
+
+### Submit job
+```
+scray-job-client run\
+  --job-name timestamp-example\
+  --notebook-name timestamp-example.ipynb\
+  --processing-env http://scray.org/ai/jobs/env/see/ki1-k8s
+```
+
+

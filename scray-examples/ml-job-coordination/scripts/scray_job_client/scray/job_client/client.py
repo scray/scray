@@ -23,6 +23,7 @@ from scray.job_client.config import ScrayJobClientConfig
 from scray.job_client.models.job_sync_api_data import JobSyncApiData
 from scray.client.models.versioned_data import VersionedData
 from scray.client import ScrayClient
+from scray.client.io import create_archive
 import time
 
 from requests import Session
@@ -183,3 +184,6 @@ class ScrayJobClient:
 
         return metadata
     
+    def upload_notebook(self, job_name, source_data ):
+        create_archive(job_name, source_data, self.config, data_integration_host)
+

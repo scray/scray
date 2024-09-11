@@ -17,8 +17,11 @@
 
 #rom .client import ScrayJobClient
 
+from .main import main_cli
 
 __all__ = [
     "ScrayJobClient",
     "ScrayJobClientConfig",
+    "main",
+    "io",
 ]

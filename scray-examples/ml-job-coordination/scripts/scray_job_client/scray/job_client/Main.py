@@ -1,30 +1,22 @@
 from scray.job_client.client import ScrayJobClient
 from scray.job_client.config import ScrayJobClientConfig
+from scray.job_client.models.cli_args import ArgsParser
 import json
 
-if __name__ == '__main__':
-
-    config = ScrayJobClientConfig(
-    host_address = "http://ml-integration.research.dev.seeburger.de",
-    port = 8082
-    )
+# if __name__ == '__main__':
 
 
-    metadata  = {
-    "url": "example.com/chicken",
-    "price": 100,
-    "description": "This is a sample advertisement."
-}
+def main_cli():
+    args_parser = ArgsParser()
+    job_args = args_parser.parse_args()
 
-    client = ScrayJobClient(config=config)
+    print(f"Job Name: {job_args.job_name}")
+    print(f"Source Data: {job_args.source_data}")
+    print(f"Notebook Name: {job_args.notebook_name}")
+    print(f"Initial State: {job_args.initial_state}")
+    print(f"Processing Environment: {job_args.processing_env}")
+    print(f"Docker Image: {job_args.docker_image}")
+    print(f"Take Job Name Literally: {job_args.job_name_literally}")
 
-    env="http://scray.org/ai/jobs/test/metadata"
-
-    #client.setState(state="TEST", job_name="test_job2", processing_env=env)
-    job_state = client.get_jobs(processing_env=env, requested_state="RUNNING")
-
-    print("New job state is: ....... " + str(len(job_state)))
-
-
-
+    
 
