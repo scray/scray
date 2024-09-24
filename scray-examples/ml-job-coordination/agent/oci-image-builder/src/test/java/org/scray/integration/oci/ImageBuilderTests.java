@@ -1,10 +1,3 @@
-/*
- * ImageBuilderTests.java
- *
- * created at 2024-04-26 by st.obermeier <YOURMAILADDRESS>
- *
- * Copyright (c) SEEBURGER AG, Germany. All Rights Reserved.
- */
 package org.scray.integration.oci;
 
 import org.junit.jupiter.api.Test;
@@ -33,7 +26,7 @@ public class ImageBuilderTests
         var destPath = "";
         var builder = new ImageBuilder();
         builder.downloadFile("ubuntu",
-                             "ml-integration.research.dev.seeburger.de", 22,
+                             "ml-integration.research.dev.example.com", 22,
                              "C:\\Users\\st.obermeier\\.ssh\\id_rsa",
                              "sftp-share_test//file.tar.gz",
                              destPath);
@@ -49,7 +42,7 @@ public class ImageBuilderTests
     public void testFullWorkflow() {
         var destPath = "";
         var builder = new ImageBuilder();
-        builder.run("registry.research.dev.seeburger.de:5000", "scray-example-image:0.2", "file1.tar.gz");
+        builder.run("registry.research.dev.example.com:5000", "scray-example-image:0.2", "file1.tar.gz");
     }
 
 }

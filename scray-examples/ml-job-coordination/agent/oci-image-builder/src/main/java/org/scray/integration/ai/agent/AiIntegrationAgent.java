@@ -37,7 +37,7 @@ public class AiIntegrationAgent {
 	private ObjectMapper jsonObjectMapper = new ObjectMapper();
 	private RestClient apiClient = new RestClient();
 
-	private String syncApiUrl = "http://ml-integration.research.dev.seeburger.de:8082";
+	private String syncApiUrl = "http://ml-integration.research.dev.example.com:8082";
 
 	public AiIntegrationAgent() {}
 
@@ -58,7 +58,7 @@ public class AiIntegrationAgent {
 
 		//environements.put("http://scray.org/ai/app/env/see/stefan", Environment.EnvType.K8s);
 
-		environements.put("http://research.dev.seeburger.de/oci/image/", Environment.EnvType.OciBuild);
+		environements.put("http://research.dev.example.com/oci/image/", Environment.EnvType.OciBuild);
 
 		//environements.put("http://scray.org/ai/app/env/see/stefan-t", Environment.EnvType.K8s);
 
@@ -142,7 +142,7 @@ public class AiIntegrationAgent {
 					    if (jobToStart.getAiJobsData().getImageName() != null) {
 
     				        var builder = new ImageBuilder();
-    				        builder.run("registry.research.dev.seeburger.de:5000",
+    				        builder.run("registry.research.dev.example.com:5000",
     				                    jobToStart.getAiJobsData().getImageName(),
     				                    jobToStart.getAiJobsData().getFilename());
 					    } else {

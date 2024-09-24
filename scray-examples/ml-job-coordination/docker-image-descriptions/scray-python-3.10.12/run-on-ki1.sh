@@ -10,12 +10,12 @@ JOB_NAME_LITERALLY=false
 createArchive() {
   echo "Create archive $JOB_NAME.tar.gz from source $SOURCE_DATA"
   tar -czvf $JOB_NAME.tar.gz $SOURCE_DATA
-  sftp -o StrictHostKeyChecking=accept-new ubuntu@ml-integration-git.research.dev.seeburger.de:/home/ubuntu/sftp-share/  <<< 'put '$JOB_NAME'.tar.gz'
+  sftp -o StrictHostKeyChecking=accept-new ubuntu@ml-integration-git.research.dev.example.com:/home/ubuntu/sftp-share/  <<< 'put '$JOB_NAME'.tar.gz'
 }
 
 downloadResuls() {
   rm -f $JOB_NAME-fin.tar.gz
-  sftp ubuntu@ml-integration-git.research.dev.seeburger.de:/home/ubuntu/sftp-share/$JOB_NAME-fin.tar.gz ./
+  sftp ubuntu@ml-integration-git.research.dev.example.com:/home/ubuntu/sftp-share/$JOB_NAME-fin.tar.gz ./
   tar -xzmf $JOB_NAME-fin.tar.gz
   rm -f $JOB_NAME-fin.tar.gz
   
@@ -24,7 +24,7 @@ downloadResuls() {
 
 downloadUpdatedNotebook() {
   rm -f $JOB_NAME-state.tar.gz >/dev/null
-  sftp ubuntu@ml-integration-git.research.dev.seeburger.de:/home/ubuntu/sftp-share/$JOB_NAME-state.tar.gz ./ > /dev/null
+  sftp ubuntu@ml-integration-git.research.dev.example.com:/home/ubuntu/sftp-share/$JOB_NAME-state.tar.gz ./ > /dev/null
   tar -xzmf $JOB_NAME-state.tar.gz >/dev/null
   rm -f $JOB_NAME-state.tar.gz >/dev/null
 
@@ -35,7 +35,7 @@ downloadUpdatedNotebook() {
 setState() {
 echo $1
 curl -sS -X 'PUT' \
-  'http://ml-integration.research.dev.seeburger.de:8082/sync/versioneddata/latest' \
+  'http://ml-integration.research.dev.example.com:8082/sync/versioneddata/latest' \
   -H 'accept: */*' \
   -H 'Content-Type: application/json' \
   -d '{
@@ -48,11 +48,11 @@ curl -sS -X 'PUT' \
 }
 
 waitForJobCompletion() {
-   STATE_OBJECT=$(curl -sS -X 'GET'   'http://ml-integration.research.dev.seeburger.de:8082/sync/versioneddata/latest?datasource='$JOB_NAME'&mergekey=_'   -H 'accept: application/json' | jq '.data  | fromjson')
+   STATE_OBJECT=$(curl -sS -X 'GET'   'http://ml-integration.research.dev.example.com:8082/sync/versioneddata/latest?datasource='$JOB_NAME'&mergekey=_'   -H 'accept: application/json' | jq '.data  | fromjson')
 
   while [ "$STATE" != "\"COMPLETED\"" ]
   do
-    STATE_OBJECT=$(curl -sS -X 'GET'   'http://ml-integration.research.dev.seeburger.de:8082/sync/versioneddata/latest?datasource='$JOB_NAME'&mergekey=_'   -H 'accept: application/json' | jq '.data  | fromjson')
+    STATE_OBJECT=$(curl -sS -X 'GET'   'http://ml-integration.research.dev.example.com:8082/sync/versioneddata/latest?datasource='$JOB_NAME'&mergekey=_'   -H 'accept: application/json' | jq '.data  | fromjson')
     STATE=$(echo "$STATE_OBJECT" | jq .state)
 
     downloadUpdatedNotebook

@@ -32,7 +32,7 @@ echo "RUN_TYPE is: $RUN_TYPE"
 if [ -z "$SYNC_API_URL" ]
 then
     echo "RUN_TYPE not set. Use default value service"
-    SYNC_API_URL="http://ml-integration.research.dev.seeburger.de:8082/sync/versioneddata"
+    SYNC_API_URL="http://ml-integration.research.dev.example.com:8082/sync/versioneddata"
 fi
 
 SOURCE_DATA=.
@@ -59,14 +59,14 @@ downloadJob() {
   cd $JOB_FOLDER
   JOB_LOCATION=$(pwd)
 
-  sftp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ubuntu@ml-integration-git.research.dev.seeburger.de:/home/ubuntu/sftp-share/$JOB_NAME.tar.gz ./$JOB_NAME.tar.gz
+  sftp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ubuntu@ml-integration-git.research.dev.example.com:/home/ubuntu/sftp-share/$JOB_NAME.tar.gz ./$JOB_NAME.tar.gz
   tar -xzf $JOB_NAME.tar.gz
 }
 
 uploadCurrentNotebookState() {
   LOG_FILE=$1
   tar -czvf $JOB_NAME-state.tar.gz $SOURCE_DATA/$LOG_FILE
-  sftp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa  ubuntu@ml-integration-git.research.dev.seeburger.de:/home/ubuntu/sftp-share/ <<<'PUT '$JOB_NAME-state.tar.gz''
+  sftp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa  ubuntu@ml-integration-git.research.dev.example.com:/home/ubuntu/sftp-share/ <<<'PUT '$JOB_NAME-state.tar.gz''
 }
 
 runPythonJob() {
@@ -108,7 +108,7 @@ runPythonJob() {
   done
 
   tar -czvf $JOB_NAME-fin.tar.gz $SOURCE_DATA
-  sftp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ubuntu@ml-integration-git.research.dev.seeburger.de:/home/ubuntu/sftp-share/ <<<'PUT '$JOB_NAME-fin.tar.gz''
+  sftp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ubuntu@ml-integration-git.research.dev.example.com:/home/ubuntu/sftp-share/ <<<'PUT '$JOB_NAME-fin.tar.gz''
 }
 
 
@@ -139,7 +139,7 @@ runPapermillJob() {
   done
 
   tar -czvf $JOB_NAME-fin.tar.gz $SOURCE_DATA
-  sftp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ubuntu@ml-integration-git.research.dev.seeburger.de:/home/ubuntu/sftp-share/ <<<'PUT '$JOB_NAME-fin.tar.gz''
+  sftp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ubuntu@ml-integration-git.research.dev.example.com:/home/ubuntu/sftp-share/ <<<'PUT '$JOB_NAME-fin.tar.gz''
 }
 
 

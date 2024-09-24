@@ -107,7 +107,7 @@ public class KubernetesClient {
 
 	public void deployApp(String jobName, String runtimeType, String imageName, String jobTemplatePath, String syncApiUrl) {
 
-		String host = jobName + ".app.research.dev.seeburger.de";
+		String host = jobName + ".app.research.dev.example.com";
 		String ingressPath = "/";
 		String serviceName = jobName;
 		int portNumber = 7860;

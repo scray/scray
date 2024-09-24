@@ -12,6 +12,6 @@ class JobArguments:
         self.job_name_literally = None
         self.state = None
         self.sft_user = "ubuntu"
-        self.sft_host = "ml-integration.research.dev.seeburger.de"
+        self.sft_host = "ml-integration.research.dev.example.com"
 
   

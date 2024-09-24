@@ -5,9 +5,9 @@ INITIAL_STATE=""
 PROCESSING_ENV=""
 DOCKER_IMAGE="scrayorg/scray-jupyter_tensorflow-gpu:0.1.1"
 JOB_NAME_LITERALLY=false
-DATA_INTEGRATION_HOST=ml-integration-git.research.dev.seeburger.de
+DATA_INTEGRATION_HOST=ml-integration-git.research.dev.example.com
 DATA_INTEGRATION_USER=ubuntu
-SYNC_API_URL="http://ml-integration.research.dev.seeburger.de:8082"
+SYNC_API_URL="http://ml-integration.research.dev.example.com:8082"
 
 
 

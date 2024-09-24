@@ -39,6 +39,6 @@ To build the core project, do the following:
 
 ## Client requrements
 ### Job env
-    http://research.dev.seeburger.de/oci/image/
+    http://research.dev.example.com/oci/image/
 ### Requirements
     * Job with a Dockerfile

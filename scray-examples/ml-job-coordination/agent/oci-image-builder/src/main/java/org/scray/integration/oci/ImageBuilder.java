@@ -249,7 +249,7 @@ public class ImageBuilder
 
         System.out.println(workDir);
         this.downloadFile("ubuntu",
-                             "ml-integration.research.dev.seeburger.de",
+                             "ml-integration.research.dev.example.com",
                              22,
                              "~/.ssh/id_rsa",
                              "sftp-share//" + jobFile,
@@ -267,7 +267,7 @@ public class ImageBuilder
             this.createResultArchive(logFiles, workDir + "/" + resultFile);
 
             this.uploadFile("ubuntu",
-                              "ml-integration.research.dev.seeburger.de",
+                              "ml-integration.research.dev.example.com",
                               22,
                               "~/.ssh/id_rsa",
                               workDir + "/" + resultFile,

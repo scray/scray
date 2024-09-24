@@ -8,7 +8,7 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-  - host: gradio-example-app6.app.research.dev.seeburger.de
+  - host: gradio-example-app6.app.research.dev.example.com
     http:
         paths:
           - path: /

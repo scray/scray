@@ -16,7 +16,7 @@ from scray.job_client.config import ScrayJobClientConfig
 
 
 config = ScrayJobClientConfig(
-  host_address = "http://ml-integration.research.dev.seeburger.de",
+  host_address = "http://ml-integration.research.dev.example.com",
   port = 8082
 )
 
@@ -32,7 +32,7 @@ from scray.job_client.config import ScrayJobClientConfig
 
 
 config = ScrayJobClientConfig(
-  host_address = "http://ml-integration.research.dev.seeburger.de",
+  host_address = "http://ml-integration.research.dev.example.com",
   port = 8082
 )
 
@@ -50,7 +50,7 @@ from scray.job_client.config import ScrayJobClientConfig
 
 
 config = ScrayJobClientConfig(
-  host_address = "http://ml-integration.research.dev.seeburger.de",
+  host_address = "http://ml-integration.research.dev.example.com",
   port = 8082
 )
 

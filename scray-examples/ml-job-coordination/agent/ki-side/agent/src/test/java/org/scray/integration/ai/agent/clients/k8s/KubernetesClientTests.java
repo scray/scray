@@ -73,7 +73,7 @@ public class KubernetesClientTests {
 		KubernetesClient aiK8client = new KubernetesClient();
 
 		var descriptor = aiK8client.loadDesciptorFormFile("src/test/resources/k8s/app-job.yaml");
-		Job jobDescription = aiK8client.configureJobDescriptor(descriptor, "scray-app1", "scray-app1", "PYTHON","image1", "ml-integration.research.dev.seeburger.de:8082");
+		Job jobDescription = aiK8client.configureJobDescriptor(descriptor, "scray-app1", "scray-app1", "PYTHON","image1", "ml-integration.research.dev.example.com:8082");
 
 		ObjectMapper objectMapper = new ObjectMapper();
 		String jobDef;

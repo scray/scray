@@ -12,7 +12,7 @@ public class RestClient {
 	public String getData() throws IOException {
 		String output = null;
 
-		URL url = new URL("http://ml-integration.research.dev.seeburger.de:8082/sync/versioneddata/all/latest");
+		URL url = new URL("http://ml-integration.research.dev.example.com:8082/sync/versioneddata/all/latest");
 		HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 		conn.setRequestMethod("GET");
 		conn.setRequestProperty("Accept", "application/json");
@@ -29,7 +29,7 @@ public class RestClient {
 	}
 	
 	public void putData(String data) throws IOException {
-		URL url = new URL("http://ml-integration.research.dev.seeburger.de:8082/sync/versioneddata/latest");
+		URL url = new URL("http://ml-integration.research.dev.example.com:8082/sync/versioneddata/latest");
 		HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 		conn.setRequestMethod("PUT");
 		conn.setRequestProperty("Content-Type", "application/json");
