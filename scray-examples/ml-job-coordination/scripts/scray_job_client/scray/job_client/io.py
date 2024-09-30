@@ -101,47 +101,47 @@ def download_results(job_name, data_integration_user, data_integration_host):
         except Exception as e:
             print(f"Error during tar extraction: {e}")
 
-# Example usage
-create_archive(
-    job_name="example_job",
-    source_data="/path/to/source_data",
-    data_integration_user="user",
-    data_integration_host="host.com"
-)
+    # Example usage
+    create_archive(
+        job_name="example_job",
+        source_data="/path/to/source_data",
+        data_integration_user="user",
+        data_integration_host="host.com"
+    )
 
-clean_up(
-    job_name="example_job",
-    notebook_name="example_notebook"
-)
+    clean_up(
+        job_name="example_job",
+        notebook_name="example_notebook"
+    )
 
-download_results(
-    job_name="example_job",
-    data_integration_user="user",
-    data_integration_host="host.com"
-)
+    download_results(
+        job_name="example_job",
+        data_integration_user="user",
+        data_integration_host="host.com"
+    )
 
-# Example usage
-download_updated_notebook(
-    job_name="example_job",
-    notebook_name="example_notebook",
-    data_integration_user="user",
-    data_integration_host="host.com"
-)
+    # Example usage
+    download_updated_notebook(
+        job_name="example_job",
+        notebook_name="example_notebook",
+        data_integration_user="user",
+        data_integration_host="host.com"
+    )
 
-create_archive(
-    job_name="example_job",
-    source_data="/path/to/source_data",
-    data_integration_user="user",
-    data_integration_host="host.com"
-)
+    create_archive(
+        job_name="example_job",
+        source_data="/path/to/source_data",
+        data_integration_user="user",
+        data_integration_host="host.com"
+    )
 
-clean_up(
-    job_name="example_job",
-    notebook_name="example_notebook"
-)
+    clean_up(
+        job_name="example_job",
+        notebook_name="example_notebook"
+    )
 
-download_results(
-    job_name="example_job",
-    data_integration_user="user",
-    data_integration_host="host.com"
-)
+    download_results(
+        job_name="example_job",
+        data_integration_user="user",
+        data_integration_host="host.com"
+    )

@@ -17,11 +17,12 @@
 
 #rom .client import ScrayJobClient
 
-from .main import main_cli
+from .io import create_archive
 
 __all__ = [
     "ScrayJobClient",
     "ScrayJobClientConfig",
-    "main",
-    "io",
+    "main_cli",
+    "download_updated_notebook", 
+    "create_archive",
 ]
