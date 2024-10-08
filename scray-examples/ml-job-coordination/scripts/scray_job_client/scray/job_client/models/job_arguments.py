@@ -11,7 +11,7 @@ class JobArguments:
         self.docker_image = None
         self.job_name_literally = None
         self.state = None
-        self.sft_user = "ubuntu"
-        self.sft_host = "ml-integration.research.dev.example.com"
+        self.sft_user = None
+        self.sft_host = None
 
   
