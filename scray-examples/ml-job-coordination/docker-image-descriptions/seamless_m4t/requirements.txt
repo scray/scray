@@ -1,6 +1,8 @@
-fairseq2==0.1.0
-git+https://github.com/facebookresearch/seamless_communication
-gradio==3.40.1
-huggingface_hub==0.16.4
 torch==2.0.1
-torchaudio==2.0.2
+huggingface_hub
+bitsandbytes
+confluent_kafka
+kafka-python
+transformers
+accelerate
+pandas

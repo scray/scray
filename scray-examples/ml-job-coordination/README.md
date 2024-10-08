@@ -48,7 +48,11 @@ docker save seamless_m4t:0.1.2 > /tmp/q1.tar
 sudo ctr -n=k8s.io images import /tmp/q1.tar
 ```
 
+### llama
 
+```
+docker build -t scray/llama-backend:0.1.3 -f ./docker-image-descriptions/seamless_m4t/ 
+```
 ### Use Case specific images
 
 ### Gradio example app

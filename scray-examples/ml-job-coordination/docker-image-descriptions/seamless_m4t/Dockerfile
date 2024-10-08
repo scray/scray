@@ -52,6 +52,10 @@ RUN pip install --no-cache-dir --upgrade -r /tmp/requirements.txt
 RUN python -m pip install --upgrade pip
 RUN pip install papermill
 
+RUN pip install --upgrade pip ipython ipykernel
+RUN ipython kernel install --name "python3" --user
+
+
 COPY --chown=1000 . ${HOME}/app
 ENV PYTHONPATH=${HOME}/app \
     PYTHONUNBUFFERED=1 \
