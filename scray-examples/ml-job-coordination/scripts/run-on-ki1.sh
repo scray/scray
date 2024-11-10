@@ -103,18 +103,41 @@ function parse-args() {
             --initial-state )   shift
                 INITIAL_STATE=$1
         ;;
-	        --processing-env) shift
-		        PROCESSING_ENV=$1
+	          --processing-env) shift
+		            PROCESSING_ENV=$1
         ;;
-	        --docker-image) shift
-		        DOCKER_IMAGE=$1
+	          --docker-image) shift
+		            DOCKER_IMAGE=$1
 	      ;;
-	        --take-jobname-literally) shift
-		        JOB_NAME_LITERALLY=$1            
+	          --take-jobname-literally) shift
+		            JOB_NAME_LITERALLY=$1            
         esac
         shift
     done
 }
+
+
+# Check if sync host env var is empty
+if [ -z "$SCRAY_DATA_INTEGRATION_HOST" ]; then
+    echo "The environment variable  SCRAY_DATA_INTEGRATION_HOST not set. Default value \"$DATA_INTEGRATION_HOST\" is used."
+else
+    DATA_INTEGRATION_HOST="$SCRAY_DATA_INTEGRATION_HOST"
+fi
+
+# Check if sync host user env var is empty
+if [ -z "$SCRAY_DATA_INTEGRATION_USER" ]; then
+    echo "The environment variable  SCRAY_DATA_INTEGRATION_USER not set. Default value \"$DATA_INTEGRATION_USER\" is used."
+else
+    DATA_INTEGRATION_USER="$SCRAY_DATA_INTEGRATION_USER"
+fi
+
+# Check if sync host user env var is empty
+if [ -z "$SCRAY_SYNC_API_URL" ]; then
+    echo "The environment variable  SCRAY_DATA_INTEGRATION_USER not set. Default value \"$SYNC_API_URL\" is used."
+else
+    SYNC_API_URL="$SCRAY_SYNC_API_URL"
+fi
+
 
 
 if [ "$1" == "run" ]
