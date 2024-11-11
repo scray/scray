@@ -131,6 +131,12 @@ else
     DATA_INTEGRATION_USER="$SCRAY_DATA_INTEGRATION_USER"
 fi
 
+# Check if sync host user env var is empty
+if [ -z "$SCRAY_SYNC_API_URL" ]; then
+    echo "The environment variable  SCRAY_DATA_INTEGRATION_USER not set. Default value \"$SYNC_API_URL\" is used."
+else
+    SYNC_API_URL="$SCRAY_SYNC_API_URL"
+fi
 
 
 

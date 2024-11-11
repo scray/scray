@@ -1,5 +1,9 @@
 #!/bin/bash
 
+DATA_INTEGRATION_HOST=ml-integration-git.research.dev.example.com
+DATA_INTEGRATION_USER=ubuntu
+SYNC_API_URL="http://ml-integration.research.dev.example.com:8082"
+
 if [[ -z "${TRIGGER_STATE}" ]]; then
   echo "TRIGGER_STATE not set use default \"SCHEDULED\""
   TRIGGER_STATE="SCHEDULED"
@@ -59,14 +63,14 @@ downloadJob() {
   cd $JOB_FOLDER
   JOB_LOCATION=$(pwd)
 
-  sftp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ubuntu@ml-integration-git.research.dev.example.com:/home/ubuntu/sftp-share/$JOB_NAME.tar.gz ./$JOB_NAME.tar.gz
+  sftp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa $DATA_INTEGRATION_USER@$DATA_INTEGRATION_HOST:sftp-share/$JOB_NAME.tar.gz ./$JOB_NAME.tar.gz
   tar -xzf $JOB_NAME.tar.gz
 }
 
 uploadCurrentNotebookState() {
   LOG_FILE=$1
   tar -czvf $JOB_NAME-state.tar.gz $SOURCE_DATA/$LOG_FILE
-  sftp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa  ubuntu@ml-integration-git.research.dev.example.com:/home/ubuntu/sftp-share/ <<<'PUT '$JOB_NAME-state.tar.gz''
+  sftp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa  $DATA_INTEGRATION_USER@$DATA_INTEGRATION_HOST:sftp-share/ <<<'PUT '$JOB_NAME-state.tar.gz''
 }
 
 runPythonJob() {
@@ -108,7 +112,7 @@ runPythonJob() {
   done
 
   tar -czvf $JOB_NAME-fin.tar.gz $SOURCE_DATA
-  sftp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ubuntu@ml-integration-git.research.dev.example.com:/home/ubuntu/sftp-share/ <<<'PUT '$JOB_NAME-fin.tar.gz''
+  sftp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa $DATA_INTEGRATION_USER@$DATA_INTEGRATION_HOST:sftp-share/ <<<'PUT '$JOB_NAME-fin.tar.gz''
 }
 
 
@@ -139,7 +143,7 @@ runPapermillJob() {
   done
 
   tar -czvf $JOB_NAME-fin.tar.gz $SOURCE_DATA
-  sftp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ubuntu@ml-integration-git.research.dev.example.com:/home/ubuntu/sftp-share/ <<<'PUT '$JOB_NAME-fin.tar.gz''
+  sftp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa $DATA_INTEGRATION_USER@$DATA_INTEGRATION_HOST:sftp-share/ <<<'PUT '$JOB_NAME-fin.tar.gz''
 }
 
 
@@ -223,6 +227,28 @@ processNextJob() {
     runJob
     setState 'COMPLETED'
 }
+
+
+# Check if sync host env var is empty
+if [ -z "$SCRAY_DATA_INTEGRATION_HOST" ]; then
+    echo "The environment variable  SCRAY_DATA_INTEGRATION_HOST not set. Default value \"$DATA_INTEGRATION_HOST\" is used."
+else
+    DATA_INTEGRATION_HOST="$SCRAY_DATA_INTEGRATION_HOST"
+fi
+
+# Check if sync host user env var is empty
+if [ -z "$SCRAY_DATA_INTEGRATION_USER" ]; then
+    echo "The environment variable  SCRAY_DATA_INTEGRATION_USER not set. Default value \"$DATA_INTEGRATION_USER\" is used."
+else
+    DATA_INTEGRATION_USER="$SCRAY_DATA_INTEGRATION_USER"
+fi
+
+# Check if sync host user env var is empty
+if [ -z "$SCRAY_SYNC_API_URL" ]; then
+    echo "The environment variable  SCRAY_DATA_INTEGRATION_USER not set. Default value \"$SYNC_API_URL\" is used."
+else
+    SYNC_API_URL="$SCRAY_SYNC_API_URL"
+fi
 
 
 if [ "$SCRAY_SYNC_MODE" == "LOCAL" ]
