@@ -183,7 +183,10 @@ class ScrayJobClient:
         metadata = JobSyncApiData.from_json(json_string=latestVersion.data).metadata
 
         return metadata
-    
-    def upload_notebook(self, job_name, source_data ):
-        create_archive(job_name, source_data, self.config, data_integration_host)
+    env = ""
+
+    def upload_notebook(self, env, job_name, source_data ):
+
+        
+        create_archive(job_name, source_data, self.config, data_integration_host + env)
 
