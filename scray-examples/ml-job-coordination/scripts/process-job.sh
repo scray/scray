@@ -90,15 +90,14 @@ runPythonJob() {
 #  python3 -u $NOTEBOOK_NAME &> /tmp/python-job-out & 
   echo "Execute: "  $NOTEBOOK_NAME 
 
-  echo "python3 -u $NOTEBOOK_NAME 2>&1 | tee -a out.$JOB_NAME.txt" > run.sh
-  chmod u+x run.sh
-  ./run.sh &
+ # echo "python3 -u $NOTEBOOK_NAME 2>&1 | tee -a out.$JOB_NAME.txt" > run.sh
+ # chmod u+x run.sh
+ # ./run.sh &
 
   python3 $NOTEBOOK_NAME  2>&1 | tee -a out.$JOB_NAME.txt &
   uploadCurrentNotebookState out.$JOB_NAME.txt
   
   PID=$!
-
 
   echo "Wait for completion" >>  out.$JOB_NAME.txt
   tail out.$JOB_NAME.txt
@@ -245,9 +244,9 @@ fi
 
 # Check if sync host user env var is empty
 if [ -z "$SCRAY_SYNC_API_URL" ]; then
-    echo "The environment variable  SCRAY_DATA_INTEGRATION_USER not set. Default value \"$SYNC_API_URL\" is used."
+    echo "The environment variable SCRAY_SYNC_API_URL not set. Default value \"$SYNC_API_URL\" is used."
 else
-    SYNC_API_URL="$SCRAY_SYNC_API_URL"
+    SYNC_API_URL="$SCRAY_SYNC_API_URL/sync/versioneddata"
 fi
 
 
