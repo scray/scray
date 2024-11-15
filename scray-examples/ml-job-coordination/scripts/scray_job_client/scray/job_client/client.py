@@ -133,6 +133,16 @@ class ScrayJobClient:
                 return list(map(get_job_name, job_with_matching_state))
     
 
+    def wait_for_new_job(self, processing_env, requested_state)-> list[str]:
+
+        while True:
+
+            jobs = self.get_jobs(processing_env, requested_state)
+
+            if jobs:
+                return jobs
+                
+            time.sleep(1)
 
 
 
@@ -186,7 +196,5 @@ class ScrayJobClient:
     env = ""
 
     def upload_notebook(self, env, job_name, source_data ):
-
-        
         create_archive(job_name, source_data, self.config, data_integration_host + env)
 
