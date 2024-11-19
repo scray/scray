@@ -17,7 +17,6 @@ class ArgsParser:
     def parse_args(self):
         args = self.parser.parse_args()
 
-
         # Ensure that the context is 'run' before allowing other arguments
         if not args.run:
             print("Error: This command only supports the 'run' context.")

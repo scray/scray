@@ -1,49 +1,64 @@
+from typing import List
+
+
 class JobStates:
-    def __init__(self, trigger_states=None, error_states=None, completed_states=None):
-        self.trigger_states = trigger_states if trigger_states else []
-        self.error_states = error_states if error_states else []
-        self.completed_states = completed_states if completed_states else []
+    def __init__(
+        self, 
+        env: str, 
+        trigger_states: List[str], 
+        error_states: List[str], 
+        completed_states: List[str]
+    ) -> None:
+        self._env = env
+        self._trigger_states = trigger_states
+        self._error_states = error_states
+        self._completed_states = completed_states
 
-    def add_trigger_state(self, env, state):
-        self.trigger_states.append((env, state))
+    # Property for 'env' with validation
+    @property
+    def env(self) -> str:
+        return self._env
 
-    def add_error_state(self, env, state):
-        self.error_states.append((env, state))
+    @env.setter
+    def env(self, value: str) -> None:
+        if not isinstance(value, str):
+            raise ValueError("Environment must be a string")
+        self._env = value
 
-    def add_completed_state(self, env, state):
-        self.completed_states.append((env, state))
+    # Property for 'trigger_states' with validation
+    @property
+    def trigger_states(self) -> List[str]:
+        return self._trigger_states
 
-    def get_trigger_states(self):
-        return self.trigger_states
+    @trigger_states.setter
+    def trigger_states(self, states: List[str]) -> None:
+        if not isinstance(states, list):
+            raise ValueError("Trigger states must be a list of strings")
+        self._trigger_states = states
 
-    def get_error_states(self):
-        return self.error_states
+    # Property for 'error_states' with validation
+    @property
+    def error_states(self) -> List[str]:
+        return self._error_states
 
-    def get_completed_states(self):
-        return self.completed_states
+    @error_states.setter
+    def error_states(self, states: List[str]) -> None:
+        if not isinstance(states, list):
+            raise ValueError("Error states must be a list of strings")
+        self._error_states = states
 
-    def clear_states(self):
-        self.trigger_states.clear()
-        self.error_states.clear()
-        self.completed_states.clear()
+    # Property for 'completed_states' with validation
+    @property
+    def completed_states(self) -> List[str]:
+        return self._completed_states
 
-    def display_states(self):
-        print("Trigger States:", self.trigger_states)
-        print("Error States:", self.error_states)
-        print("Completed States:", self.completed_states)
+    @completed_states.setter
+    def completed_states(self, states: List[str]) -> None:
+        if not isinstance(states, list):
+            raise ValueError("Completed states must be a list of strings")
+        self._completed_states = states
 
-    def has_error(self, env=None):
-        if env:
-            return any(e == env for e, _ in self.error_states)
-        return len(self.error_states) > 0
+    def __repr__(self) -> str:
+        return (f"JobStates(env={self.env}, trigger_states={self.trigger_states}, "
+                f"error_states={self.error_states}, completed_states={self.completed_states})")
 
-    def is_completed(self, env=None):
-        if env:
-            return any(e == env for e, _ in self.completed_states)
-        return len(self.completed_states) > 0
-
-    def __str__(self):
-        """String representation of the StateManager."""
-        return (f"Trigger States: {self.trigger_states}\n"
-                f"Error States: {self.error_states}\n"
-                f"Completed States: {self.completed_states}")

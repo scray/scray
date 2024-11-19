@@ -20,6 +20,7 @@ from typing import Dict, Optional
 import json
 from scray.client.config import ScrayClientConfig
 from scray.job_client.config import ScrayJobClientConfig
+from scray.job_client.models.job_state_configuration import JobStates
 from scray.job_client.models.job_sync_api_data import JobSyncApiData
 from scray.client.models.versioned_data import VersionedData
 from scray.client import ScrayClient
@@ -55,6 +56,16 @@ class ScrayJobClient:
     def __waitForJobcompletion():  {
 
     }
+        
+    def load_job_state_configuration(self, processor = "42") -> JobStates:
+        trigger_states = [("env1", "UPLOADED")]
+        error_states = [("env1", "CONVERSION_ERROR")]
+        completed_states =  [("env1", "CONVERTED")]
+
+
+
+        return JobStates(trigger_states=trigger_states, error_states=error_states, completed_states=completed_states)
+
 
     def get_job_state(self, job_name):
         
