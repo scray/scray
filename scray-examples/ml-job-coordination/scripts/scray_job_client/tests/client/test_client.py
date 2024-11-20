@@ -49,27 +49,29 @@ class TestScrayClient(TestCase):
 
         client = ScrayJobClient(config=config)
 
+        # Create configuration
         name = "agent-007"
         env = "http://scray.org/sync/agent/configuration"
+
         states = [JobStates(
-            env="http://scray.org/ai/jobs/env/see/000", 
-            trigger_states=["UPLOADED"], 
-            error_states=["CONVERSION_ERROR"], 
-            completed_states=["SUMMARIZED"])
-            ]
+                env="http://scray.org/ai/jobs/env/see/000", 
+                trigger_states=["UPLOADED"], 
+                error_states=["CONVERSION_ERROR"], 
+                completed_states=["SUMMARIZED"]
+            )]
         
         input  = S3Configuration(
-            hostname = "https://s3.example.com", 
-            bucket = "data-bucket", 
-            path = "/in-data/data.txt", 
-            data_description = "data description"
+                hostname = "https://s3.example.com", 
+                bucket = "data-bucket", 
+                path = "/in-data/data.txt", 
+                data_description = "data description"
             )
         
         output = ScrayJobMetadataConfiguration(
-            hostname = "https://s3.example.com", 
-            env = "http://scray.org/ai/jobs/env/see/000/result", 
-            jobname= "job512", data_description = 
-            "data description"
+                hostname = "https://s3.example.com", 
+                env = "http://scray.org/ai/jobs/env/see/000/result", 
+                jobname= "job512", 
+                data_description = "data description"
             )
 
         agent_conf = AgentConfiguration(
