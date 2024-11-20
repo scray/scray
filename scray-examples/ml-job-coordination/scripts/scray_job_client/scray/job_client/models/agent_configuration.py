@@ -15,71 +15,35 @@
 # limitations under the License.
 #
 
+from dataclasses import dataclass
+import json
 from typing import List
 
+from scray.job_client.models.conf.agent_data_io_configuration import AgentDataIoConfiguration
 from scray.job_client.models.job_state_configuration import JobStates
 
-
+@dataclass
 class AgentConfiguration:
+    env: str
+    name: str
+    job_states: List[JobStates]
+    data_input_conf: AgentDataIoConfiguration
+    data_output_conf: AgentDataIoConfiguration
 
-    """
-    A class to represent the configuration of an agent.
-    
-    Attributes:
-        env (str): The environment where the agent operates.
-        name (str): The name of the agent.
-        job_states (List[JobStates]): A list of job states related to the agent.
-    """
-    def __init__(self, env: str, name: str, job_states: List[JobStates]) -> None:
-        self._env = env
-        self._name = name
-        self._job_states = job_states
+    @staticmethod
+    def from_json(json_string):
+        instance = AgentConfiguration()
 
-    # Property for 'env'
-    @property
-    def env(self) -> str:
-        return self._env
+        data = json.loads(json_string)
+        instance.filename = data.get('filename')
+        instance.state = data.get('state')
+        instance.dataDir = data.get('dataDir')
+        instance.notebookName = data.get('notebookName')
+        instance.state = data.get('state')
+        instance.imageName = data.get('imageName')
+        instance.processingEnv = data.get('processingEnv')
+        instance.metadata = data.get('metadata')
 
-    @env.setter
-    def env(self, value: str) -> None:
-        if not isinstance(value, str):
-            raise ValueError("Environment must be a string")
-        self._env = value
+        return instance
 
-    # Property for 'name'
-    @property
-    def name(self) -> str:
-        return self._name
-
-    @name.setter
-    def name(self, value: str) -> None:
-        if not isinstance(value, str) or not value.strip():
-            raise ValueError("Name must be a non-empty string")
-        self._name = value
-
-    # Property for 'job_states'
-    @property
-    def job_states(self) -> List[str]:
-        return self._job_states
-
-    @job_states.setter
-    def job_states(self, states: List[str]) -> None:
-        if not isinstance(states, list) or not all(isinstance(state, str) for state in states):
-            raise ValueError("Job states must be a list of strings")
-        self._job_states = states
-
-    def __repr__(self) -> str:
-        return (f"AgentConfiguration(env={self.env!r}, name={self.name!r}, "
-                f"job_states={self.job_states!r})")
-
-    def add_job_state(self, state: str) -> None:
-        """Add a new job state to the list of job states."""
-        if not isinstance(state, str):
-            raise ValueError("Job state must be a string")
-        self._job_states.append(state)
-
-    def remove_job_state(self, state: str) -> None:
-        """Remove a job state from the list of job states if it exists."""
-        if state in self._job_states:
-            self._job_states.remove(state)
 

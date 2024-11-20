@@ -20,6 +20,7 @@ from typing import Dict, Optional
 import json
 from scray.client.config import ScrayClientConfig
 from scray.job_client.config import ScrayJobClientConfig
+from scray.job_client.models.agent_configuration import AgentConfiguration
 from scray.job_client.models.job_state_configuration import JobStates
 from scray.job_client.models.job_sync_api_data import JobSyncApiData
 from scray.client.models.versioned_data import VersionedData
@@ -197,6 +198,17 @@ class ScrayJobClient:
 
         self.client.updateVersion(versionedData)
 
+    def get_agent_conf(self, env: str, agent_name: str) -> AgentConfiguration:
+        
+        latestVersion = self.client.getLatestVersion('_', agent_name)
+        logger.info("Latest agent config version: " + latestVersion.to_str())
+        agent_conf = JobSyncApiData.from_json(json_string=latestVersion.data).state
+
+        return agent_conf
+    
+    def set_agent_conf(self, env: str, agent_name: str, configuration: AgentConfiguration):
+        logger.warn("Set agent conf not implemented.  ")
+    
     def get_job_metadata(self, job_name):
         
         latestVersion = self.client.getLatestVersion('_', job_name)
