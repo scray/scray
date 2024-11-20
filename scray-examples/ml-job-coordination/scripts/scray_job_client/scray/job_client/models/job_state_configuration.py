@@ -1,7 +1,13 @@
+from dataclasses import asdict, dataclass
 from typing import List
 
-
+@dataclass
 class JobStates:
+    env: str 
+    trigger_states: List[str] 
+    error_states: List[str]
+    completed_states: List[str]
+
     def __init__(
         self, 
         env: str, 
@@ -61,4 +67,7 @@ class JobStates:
     def __repr__(self) -> str:
         return (f"JobStates(env={self.env}, trigger_states={self.trigger_states}, "
                 f"error_states={self.error_states}, completed_states={self.completed_states})")
+    
+    def to_dict(self):
+         return asdict(self)
 

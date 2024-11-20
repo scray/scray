@@ -15,11 +15,13 @@
 # limitations under the License.
 #
 
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 import json
+import logging
 from typing import List
 
 from scray.job_client.models.conf.agent_data_io_configuration import AgentDataIoConfiguration
+from scray.job_client.models.conf.s3_configuration import S3Configuration
 from scray.job_client.models.job_state_configuration import JobStates
 
 @dataclass
@@ -30,20 +32,41 @@ class AgentConfiguration:
     data_input_conf: AgentDataIoConfiguration
     data_output_conf: AgentDataIoConfiguration
 
+    logger = logging.getLogger(__name__)
+
+
+    @staticmethod
+    def _get_data_io_configuration(data: dict):
+        if data.get("type") == "http://scray.org/agent/conf/io/type/s3":
+            return(S3Configuration.from_dict(data))
+        else:
+            logging.error("Unknown io configuration type" + data.get("type", "No type defined"))
+            return None
+
+
     @staticmethod
     def from_json(json_string):
-        instance = AgentConfiguration()
-
         data = json.loads(json_string)
-        instance.filename = data.get('filename')
-        instance.state = data.get('state')
-        instance.dataDir = data.get('dataDir')
-        instance.notebookName = data.get('notebookName')
-        instance.state = data.get('state')
-        instance.imageName = data.get('imageName')
-        instance.processingEnv = data.get('processingEnv')
-        instance.metadata = data.get('metadata')
+
+        instance = AgentConfiguration(
+            env = data.get('env'),
+            name = data.get('name'),
+            job_states = data.get('job_states'),
+            data_input_conf = AgentConfiguration._get_data_io_configuration(data.get('data_input_conf')),
+            data_output_conf = AgentConfiguration._get_data_io_configuration(data.get('data_output_conf'))
+        )
 
         return instance
+    
+
+
+    def to_dict(self):
+        return {
+            "env": self.env,
+            "name": self.name,
+            "job_states": [state.to_dict() for state in self.job_states],
+            "data_input_conf": self.data_input_conf.to_dict(),
+            "data_output_conf": self.data_output_conf.to_dict(),
+        }
 
 

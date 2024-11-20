@@ -27,6 +27,7 @@ from scray.job_client.models.job_state_configuration import JobStates
 logger = logging.getLogger(__name__)
 
 class TestAgentConfiguration(TestCase):
+
     def test_job_state_configuration(self):
 
         name = "agent-007"
@@ -57,15 +58,27 @@ class TestAgentConfiguration(TestCase):
             JobStates(env="http://scray.org/ai/jobs/env/see/001", trigger_states=["UPLOADED"], error_states=["CONVERSION_ERROR"], completed_states=["SUMMARIZED"])
         ]
 
-        input  = S3Configuration(hostname = "https://s3.example.com", bucket = "data-bucket", path = "/in-data/data.txt", data_description = "open api description")
-        output = S3Configuration(hostname = "https://s3.example.com", bucket = "data-bucket", path = "/out-data/", data_description = "open api description")
+        input  = S3Configuration(hostname = "https://s3.i1.example.com", bucket = "data-bucket", path = "/in-data/data.txt", data_description = "open api description")
+        output = S3Configuration(hostname = "https://s3.i2.example.com", bucket = "data-bucket", path = "/out-data/", data_description = "open api description")
 
         
         agent_conf = AgentConfiguration(env=env, name=name, job_states=states, data_input_conf=input, data_output_conf=output)
 
-        conf_json = json.dumps(agent_conf)
+        conf_json = json.dumps(agent_conf.to_dict(), indent=4)
+        
+        # Check produced json
+        self.assertTrue("\"hostname\": \"https://s3.i1.example.com\"" in str(conf_json))
+        self.assertTrue("\"hostname\": \"https://s3.i2.example.com\"" in str(conf_json))
 
         print(conf_json)
+
+        # Deserialize configuration
+        deserialized_conf = AgentConfiguration.from_json(conf_json)
+
+        # Check object created from json data
+        self.assertEqual(deserialized_conf.data_input_conf.hostname, "https://s3.i1.example.com")
+        self.assertEqual(deserialized_conf.data_output_conf.hostname, "https://s3.i2.example.com")
+
 
 if __name__ == '__main__':
     unittest.main()
