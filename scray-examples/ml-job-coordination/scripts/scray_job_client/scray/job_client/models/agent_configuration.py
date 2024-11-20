@@ -21,6 +21,7 @@ import logging
 from typing import List
 
 from scray.job_client.models.conf.agent_data_io_configuration import AgentDataIoConfiguration
+from scray.job_client.models.conf.scray_job_metadata_configuration import ScrayJobMetadataConfiguration
 from scray.job_client.models.conf.s3_configuration import S3Configuration
 from scray.job_client.models.job_state_configuration import JobStates
 
@@ -39,6 +40,8 @@ class AgentConfiguration:
     def _get_data_io_configuration(data: dict):
         if data.get("type") == "http://scray.org/agent/conf/io/type/s3":
             return(S3Configuration.from_dict(data))
+        elif data.get("type") == "http://scray.org/agent/conf/io/type/scrayjobmetadata":
+            return(ScrayJobMetadataConfiguration.from_dict(data))
         else:
             logging.error("Unknown io configuration type" + data.get("type", "No type defined"))
             return None

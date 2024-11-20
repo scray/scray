@@ -63,8 +63,6 @@ class ScrayJobClient:
         error_states = [("env1", "CONVERSION_ERROR")]
         completed_states =  [("env1", "CONVERTED")]
 
-
-
         return JobStates(trigger_states=trigger_states, error_states=error_states, completed_states=completed_states)
 
 
@@ -202,13 +200,24 @@ class ScrayJobClient:
         
         latestVersion = self.client.getLatestVersion('_', agent_name)
         logger.info("Latest agent config version: " + latestVersion.to_str())
-        agent_conf = JobSyncApiData.from_json(json_string=latestVersion.data).state
+        agent_conf = AgentConfiguration.from_json(json_string=latestVersion.data)
 
         return agent_conf
     
     def set_agent_conf(self, env: str, agent_name: str, configuration: AgentConfiguration):
-        logger.warn("Set agent conf not implemented.  ")
-    
+
+        conf_json = json.dumps(configuration.to_dict())
+
+        versionedData = VersionedData(
+                                    data_source = agent_name,
+                                    merge_key = "_",
+                                    version = 0,
+                                    data= conf_json,
+                                    version_key = 0)
+
+        self.client.updateVersion(versionedData)
+
+
     def get_job_metadata(self, job_name):
         
         latestVersion = self.client.getLatestVersion('_', job_name)
