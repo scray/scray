@@ -68,7 +68,7 @@ class TestScrayClient(TestCase):
             )
         
         output = ScrayJobMetadataConfiguration(
-                hostname = "https://s3.example.com", 
+                hostname = "http://ml-integration.research.example.com", 
                 env = "http://scray.org/ai/jobs/env/see/000/result", 
                 jobname= "job512", 
                 data_description = "data description"
@@ -88,7 +88,6 @@ class TestScrayClient(TestCase):
         agent_conf_read = client.get_agent_conf(env = "env1", agent_name = "process")
 
         # Print configuration
-
         print("Agent name: " + agent_conf_read.name)
 
         input_conf = agent_conf_read.data_input_conf
