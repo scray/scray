@@ -21,4 +21,4 @@ from __future__ import absolute_import
 from scray.client.models.versioned_data import VersionedData
 from .agent_configuration import AgentConfiguration
 
-__all__ = ["AgentConfiguration"]
+__all__ = ["AgentConfiguration", "JobStates"]

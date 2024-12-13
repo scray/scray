@@ -1,6 +1,10 @@
+import logging
 import os
+from pathlib import Path
 import paramiko
 import tarfile
+
+logger = logging.getLogger(__name__)
 
 def download_updated_notebook(job_name, notebook_name, data_integration_user, data_integration_host):
     # Remove existing tar.gz file if it exists
@@ -42,10 +46,17 @@ def create_archive(job_name, source_data, data_integration_user, data_integratio
     # Upload the file using SFTP
     transport = paramiko.Transport((data_integration_host, 22))
     try:
-        transport.connect(username=data_integration_user)
+        private_key_path = f"{Path.home()}/.ssh/id_rsa"
+        key = paramiko.RSAKey.from_private_key_file(private_key_path)
+
+        transport.connect(username=data_integration_user, pkey=key)
         sftp = paramiko.SFTPClient.from_transport(transport)
-        sftp.put(f"{job_name}.tar.gz", f"sftp-share/{job_name}.tar.gz")
-        sftp.close()
+        print(f"{job_name}.tar.gz")
+        if os.path.exists(f"{job_name}.tar.gz"):
+            sftp.put(f"{job_name}.tar.gz", f"sftp-share/{job_name}.tar.gz")
+            sftp.close()
+        else:
+            logger.warning(f"Error: {job_name}.tar.gz does not exist!")
     except Exception as e:
         print(f"Error during SFTP transfer: {e}")
     finally:
@@ -53,6 +64,8 @@ def create_archive(job_name, source_data, data_integration_user, data_integratio
     
     # Remove the local tar.gz file
     os.remove(f"{job_name}.tar.gz")
+    
+    return job_name
 
 def clean_up(job_name, notebook_name):
     # Remove old files

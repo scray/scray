@@ -19,7 +19,7 @@
 Configuration class for the Scray job client.
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Optional
 
 __all__ = [
@@ -30,3 +30,11 @@ __all__ = [
 class ScrayJobClientConfig:
     host_address: str
     port: Optional[int] = 80
+    
+    data_integration_user: str = "ubuntu"
+    data_integration_host: str = None
+    data_integration_port: int = 22
+
+    def __post_init__(self):
+      if self.data_integration_host == None:
+        self.data_integration_host = self.host_address.replace("https://", "").replace("http://", "").replace("/", "")

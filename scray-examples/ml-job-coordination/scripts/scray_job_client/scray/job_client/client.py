@@ -27,6 +27,7 @@ from scray.client.models.versioned_data import VersionedData
 from scray.client import ScrayClient
 from scray.job_client.io import create_archive
 import time
+import uuid
 
 from requests import Session
 
@@ -175,7 +176,7 @@ class ScrayJobClient:
             time.sleep(1)
 
 
-    def setState(self, state, job_name, processing_env, docker_image = "_", source_data = "_", notebook_name = "_", metadata = ""):
+    def setState(self, state, job_name, processing_env, docker_image = "scrayorg/scray-jupyter_tensorflow-gpu:0.1.3", source_data = "./", notebook_name = "token_classification_01.ipynb", metadata = ""):
 
         data = json.dumps({
                 "filename": f"{job_name}.tar.gz",
@@ -227,6 +228,12 @@ class ScrayJobClient:
         return metadata
     env = ""
 
-    def upload_notebook(self, env, job_name, source_data ):
-        create_archive(job_name, source_data, self.config, data_integration_host + env)
+    def abc(self):
+        print("abc")
+
+    def upload_job(self, source_data, notebook_name: str,  processing_env: str = "http://scray.org/ai/jobs/env/see/ki1-k8s", job_name = "job-" + str(uuid.uuid4())):
+        create_archive(job_name, source_data, self.config.data_integration_user, self.config.data_integration_host)
+
+        return job_name
+
 

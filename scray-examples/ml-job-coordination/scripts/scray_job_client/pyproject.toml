@@ -14,7 +14,7 @@ classifiers = [
 
 dependencies = [
     'scray_sync_client ~= 0.0.1',
-    'paramiko ~= 2.10.1'
+    'paramiko ~= 3.5.0'
 ]
 
 [project.urls]
