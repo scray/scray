@@ -228,12 +228,19 @@ class ScrayJobClient:
         return metadata
     env = ""
 
-    def abc(self):
-        print("abc")
 
     def upload_job(self, source_data, notebook_name: str,  processing_env: str = "http://scray.org/ai/jobs/env/see/ki1-k8s", job_name = "job-" + str(uuid.uuid4())):
         create_archive(job_name, source_data, self.config.data_integration_user, self.config.data_integration_host)
 
         return job_name
 
+    def deploy_job(self, source_data, notebook_name: str,  processing_env: str = "http://scray.org/ai/jobs/env/see/ki1-k8s", job_name = "job-" + str(uuid.uuid4()), initState="UPLOADED"):
+        create_archive(job_name, source_data, self.config.data_integration_user, self.config.data_integration_host)
+        self.setState(state=initState, 
+                job_name=job_name, 
+                processing_env=processing_env, 
+                notebook_name=notebook_name
+            )
+        
+        return job_name
 
