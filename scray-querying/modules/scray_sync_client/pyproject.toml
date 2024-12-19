@@ -2,7 +2,7 @@
 name = "scray-sync-client"
 version = "0.0.1"
 authors = [
-  { name="Stefan Obermeier", email="st.obermeier@seeburger.de" },
+  { name="Stefan Obermeier", email="st.obermeier@example.com" },
 ]
 description = "A package to interact with the scary sync API"
 readme = "README.md"

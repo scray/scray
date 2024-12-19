@@ -19,3 +19,6 @@ from __future__ import absolute_import
 
 # import models into model package
 from scray.client.models.versioned_data import VersionedData
+from .agent_configuration import AgentConfiguration
+
+__all__ = ["AgentConfiguration", "JobStates"]

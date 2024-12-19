@@ -3,18 +3,18 @@ SOURCE_DATA=./
 NOTEBOOK_NAME=token_classification_01.ipynb
 INITIAL_STATE=""
 PROCESSING_ENV=""
-DOCKER_IMAGE="scray-jupyter_tensorflow_pytorch-gpu:0.1.1"
+DOCKER_IMAGE="scrayorg/scray-jupyter_tensorflow-gpu:0.1.1"
 JOB_NAME_LITERALLY=false
-DATA_INTEGRATION_HOST=ml-integration-git.research.dev.seeburger.de
+DATA_INTEGRATION_HOST=ml-integration-git.research.dev.example.com
 DATA_INTEGRATION_USER=ubuntu
-SYNC_API_URL="http://ml-integration.research.dev.seeburger.de:8082"
+SYNC_API_URL="http://ml-integration.research.dev.example.com:8082"
 
 
 
 createArchive() {
   echo "Create archive $JOB_NAME.tar.gz from source $SOURCE_DATA"
   tar -czvf $JOB_NAME.tar.gz $SOURCE_DATA > /dev/null
-  sftp -o StrictHostKeyChecking=accept-new $DATA_INTEGRATION_USER@$DATA_INTEGRATION_HOST:/sftp-share/  <<< 'put '$JOB_NAME'.tar.gz'
+  sftp -o StrictHostKeyChecking=accept-new $DATA_INTEGRATION_USER@$DATA_INTEGRATION_HOST:sftp-share/  <<< 'put '$JOB_NAME'.tar.gz'
   rm -f ./$JOB_NAME.tar.gz
 }
 
@@ -103,18 +103,41 @@ function parse-args() {
             --initial-state )   shift
                 INITIAL_STATE=$1
         ;;
-	        --processing-env) shift
-		        PROCESSING_ENV=$1
+	          --processing-env) shift
+		            PROCESSING_ENV=$1
         ;;
-	        --docker-image) shift
-		        DOCKER_IMAGE=$1
+	          --docker-image) shift
+		            DOCKER_IMAGE=$1
 	      ;;
-	        --take-jobname-literally) shift
-		        JOB_NAME_LITERALLY=$1            
+	          --take-jobname-literally) shift
+		            JOB_NAME_LITERALLY=$1            
         esac
         shift
     done
 }
+
+
+# Check if sync host env var is empty
+if [ -z "$SCRAY_DATA_INTEGRATION_HOST" ]; then
+    echo "The environment variable  SCRAY_DATA_INTEGRATION_HOST not set. Default value \"$DATA_INTEGRATION_HOST\" is used."
+else
+    DATA_INTEGRATION_HOST="$SCRAY_DATA_INTEGRATION_HOST"
+fi
+
+# Check if sync host user env var is empty
+if [ -z "$SCRAY_DATA_INTEGRATION_USER" ]; then
+    echo "The environment variable  SCRAY_DATA_INTEGRATION_USER not set. Default value \"$DATA_INTEGRATION_USER\" is used."
+else
+    DATA_INTEGRATION_USER="$SCRAY_DATA_INTEGRATION_USER"
+fi
+
+# Check if sync host user env var is empty
+if [ -z "$SCRAY_SYNC_API_URL" ]; then
+    echo "The environment variable  SCRAY_DATA_INTEGRATION_USER not set. Default value \"$SYNC_API_URL\" is used."
+else
+    SYNC_API_URL="$SCRAY_SYNC_API_URL"
+fi
+
 
 
 if [ "$1" == "run" ]

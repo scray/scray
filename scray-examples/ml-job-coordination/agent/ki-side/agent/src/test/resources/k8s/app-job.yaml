@@ -23,6 +23,8 @@ spec:
               value: "once"
             - name: RUNTIME_TYPE
               value: "once"
+            - name: SYNC_API_URL
+              value: "http://ml-integration.research.dev.example.com:8082/sync/versioneddata"
           volumeMounts:
             - name: ssh-key-volume
               mountPath: "/etc/ssh-key"

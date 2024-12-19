@@ -20,10 +20,14 @@ from typing import Dict, Optional
 import json
 from scray.client.config import ScrayClientConfig
 from scray.job_client.config import ScrayJobClientConfig
+from scray.job_client.models.agent_configuration import AgentConfiguration
+from scray.job_client.models.job_state_configuration import JobStates
 from scray.job_client.models.job_sync_api_data import JobSyncApiData
 from scray.client.models.versioned_data import VersionedData
 from scray.client import ScrayClient
+from scray.job_client.io import create_archive
 import time
+import uuid
 
 from requests import Session
 
@@ -54,6 +58,14 @@ class ScrayJobClient:
     def __waitForJobcompletion():  {
 
     }
+        
+    def load_job_state_configuration(self, processor = "42") -> JobStates:
+        trigger_states = [("env1", "UPLOADED")]
+        error_states = [("env1", "CONVERSION_ERROR")]
+        completed_states =  [("env1", "CONVERTED")]
+
+        return JobStates(trigger_states=trigger_states, error_states=error_states, completed_states=completed_states)
+
 
     def get_job_state(self, job_name):
         
@@ -102,7 +114,6 @@ class ScrayJobClient:
     def get_jobs(self, processing_env, requested_state=None) -> list[str]:
               
             latestVersions = self.client.get_all_versioned_data()
-
             if latestVersions is None:
                 logger.info("No new version available")
                 return []
@@ -133,6 +144,16 @@ class ScrayJobClient:
                 return list(map(get_job_name, job_with_matching_state))
     
 
+    def wait_for_new_job(self, processing_env, requested_state)-> list[str]:
+
+        while True:
+
+            jobs = self.get_jobs(processing_env, requested_state)
+
+            if jobs:
+                return jobs
+                
+            time.sleep(1)
 
 
 
@@ -155,7 +176,7 @@ class ScrayJobClient:
             time.sleep(1)
 
 
-    def setState(self, state, job_name, processing_env, docker_image = "_", source_data = "_", notebook_name = "_", metadata = ""):
+    def setState(self, state, job_name, processing_env, docker_image = "scrayorg/scray-jupyter_tensorflow-gpu:0.1.3", source_data = "./", notebook_name = "token_classification_01.ipynb", metadata = ""):
 
         data = json.dumps({
                 "filename": f"{job_name}.tar.gz",
@@ -176,6 +197,28 @@ class ScrayJobClient:
 
         self.client.updateVersion(versionedData)
 
+    def get_agent_conf(self, env: str, agent_name: str) -> AgentConfiguration:
+        
+        latestVersion = self.client.getLatestVersion('_', agent_name)
+        logger.info("Latest agent config version: " + latestVersion.to_str())
+        agent_conf = AgentConfiguration.from_json(json_string=latestVersion.data)
+
+        return agent_conf
+    
+    def set_agent_conf(self, env: str, agent_name: str, configuration: AgentConfiguration):
+
+        conf_json = json.dumps(configuration.to_dict())
+
+        versionedData = VersionedData(
+                                    data_source = agent_name,
+                                    merge_key = "_",
+                                    version = 0,
+                                    data= conf_json,
+                                    version_key = 0)
+
+        self.client.updateVersion(versionedData)
+
+
     def get_job_metadata(self, job_name):
         
         latestVersion = self.client.getLatestVersion('_', job_name)
@@ -183,4 +226,21 @@ class ScrayJobClient:
         metadata = JobSyncApiData.from_json(json_string=latestVersion.data).metadata
 
         return metadata
-    
+    env = ""
+
+
+    def upload_job(self, source_data, notebook_name: str,  processing_env: str = "http://scray.org/ai/jobs/env/see/ki1-k8s", job_name = "job-" + str(uuid.uuid4())):
+        create_archive(job_name, source_data, self.config.data_integration_user, self.config.data_integration_host)
+
+        return job_name
+
+    def deploy_job(self, source_data, notebook_name: str,  processing_env: str = "http://scray.org/ai/jobs/env/see/ki1-k8s", job_name = "job-" + str(uuid.uuid4()), initState="UPLOADED"):
+        create_archive(job_name, source_data, self.config.data_integration_user, self.config.data_integration_host)
+        self.setState(state=initState, 
+                job_name=job_name, 
+                processing_env=processing_env, 
+                notebook_name=notebook_name
+            )
+        
+        return job_name
+

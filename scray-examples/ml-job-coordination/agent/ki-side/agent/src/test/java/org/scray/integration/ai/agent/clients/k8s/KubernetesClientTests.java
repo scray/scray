@@ -1,5 +1,6 @@
 package org.scray.integration.ai.agent.clients.k8s;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -26,7 +27,7 @@ public class KubernetesClientTests {
 
 			System.out.println(objectMapper.writeValueAsString(ingressDescription));
 		} catch (JsonProcessingException e) {
-			e.printStackTrace();
+            Assertions.fail(e);
 		}
 
 	}
@@ -35,16 +36,17 @@ public class KubernetesClientTests {
 		KubernetesClient aiK8client = new KubernetesClient();
 
 		var descriptor = aiK8client.loadDesciptorFormFile("src/test/resources/k8s/service.yaml");
-		Service serviceDescription = aiK8client.configureServiceDefinion(descriptor, "scray-app1", "scray-app1", 7411);
+		Service serviceDescription = aiK8client.configureServiceDefinion(descriptor, "scray-app1", "scray-app1-service", 7411);
 
-
-		//aiK8client.deployService(serviceDescription);
 
 		ObjectMapper objectMapper = new ObjectMapper();
 		try {
-			System.out.println(objectMapper.writeValueAsString(serviceDescription));
+		    String serviceDef = objectMapper.writeValueAsString(serviceDescription);
+
+		    Assertions.assertTrue(serviceDef.contains("{\"name\":\"scray-app1-service\"}"));
+            Assertions.assertTrue(serviceDef.contains("\"selector\":{\"app\":\"scray-app1\"}"));
 		} catch (JsonProcessingException e) {
-			e.printStackTrace();
+            Assertions.fail(e);
 		}
 	}
 
@@ -62,26 +64,31 @@ public class KubernetesClientTests {
 		try {
 			System.out.println(objectMapper.writeValueAsString(serviceDescription));
 		} catch (JsonProcessingException e) {
-			e.printStackTrace();
+            Assertions.fail(e);
 		}
 	}
 
-//	@Test
-//	public void configureJobDescription() {
-//		KubernetesClient aiK8client = new KubernetesClient();
-//
-//		var descriptor = aiK8client.loadDesciptorFormFile("src/test/resources/k8s/app-job.yaml");
-//		Job serviceDescription = aiK8client.configureJobDescriptor(descriptor, "scray-app1", "scray-app1", "image1", "ml-integration.research.dev.seeburger.de:8082");
-//
-//
-//
-//		ObjectMapper objectMapper = new ObjectMapper();
-//		try {
-//			System.out.println(objectMapper.writeValueAsString(serviceDescription));
-//		} catch (JsonProcessingException e) {
-//			e.printStackTrace();
-//		}
-//	}
+	@Test
+	public void configureJobDescription() {
+		KubernetesClient aiK8client = new KubernetesClient();
+
+		var descriptor = aiK8client.loadDesciptorFormFile("src/test/resources/k8s/app-job.yaml");
+		Job jobDescription = aiK8client.configureJobDescriptor(descriptor, "scray-app1", "scray-app1", "PYTHON","image1", "ml-integration.research.dev.example.com:8082");
+
+		ObjectMapper objectMapper = new ObjectMapper();
+		String jobDef;
+        try
+        {
+            jobDef = objectMapper.writeValueAsString(jobDescription);
+            Assertions.assertTrue(jobDef.contains("{\"name\":\"RUNTIME_TYPE\",\"value\":\"PYTHON\"}"));
+        }
+        catch (JsonProcessingException e)
+        {
+            Assertions.fail(e);
+        }
+
+
+	}
 
 
 

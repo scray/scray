@@ -1,5 +1,12 @@
 ### Start a in /see/os environement
 
+
+```
+export SCRAY_DATA_INTEGRATION_USER=stefan
+export SCRAY_DATA_INTEGRATION_HOST=127.0.0.1
+export SCRAY_SYNC_API_URL=http://127.0.0.1:8082
+```
+
 ```
 ./run-on-ki1.sh run\
   --take-jobname-literally true\

@@ -29,7 +29,7 @@ public class Client {
 
 		String publisherId = UUID.randomUUID().toString();
 		var publisher = new MqttChannel(
-				"tcp://ml-integration.research.dev.seeburger.de:1883",
+				"tcp://ml-integration.research.dev.example.com:1883",
 				Optional.empty(),
 				Optional.empty());
 

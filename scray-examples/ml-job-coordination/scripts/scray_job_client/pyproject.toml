@@ -2,7 +2,7 @@
 name = "scray-job-client"
 version = "0.0.1"
 authors = [
-  { name="Stefan Obermeier", email="st.obermeier@seeburger.de" },
+  { name="Stefan Obermeier", email="st.obermeier@example.com" },
 ]
 description = "A package to interact with the scary sync API"
 readme = "README.md"
@@ -13,16 +13,16 @@ classifiers = [
 ]
 
 dependencies = [
-  'scray_sync_client ~= 0.0.1'
+    'scray_sync_client ~= 0.0.1',
+    'paramiko ~= 3.5.0'
 ]
-
 
 [project.urls]
 "Homepage" = "https://github.com/scray/scray"
 "Bug Tracker" = "https://github.com/scray/scray/issues"
 
 [project.scripts]
-scray_job_client = "scray.job_client:main"
+scray-job-client = "scray.job_client.main:main_cli"
 
 [build-system]
 requires = ["hatchling"]

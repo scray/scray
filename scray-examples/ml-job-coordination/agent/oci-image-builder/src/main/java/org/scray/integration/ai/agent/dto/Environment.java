@@ -6,7 +6,7 @@ public class Environment {
 		K8s,
 		Standalone,
 		App,
-		Python
+		OciBuild
 	}
 
 	private String name;

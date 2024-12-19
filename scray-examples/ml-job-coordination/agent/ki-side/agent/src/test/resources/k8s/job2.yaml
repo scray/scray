@@ -21,6 +21,10 @@ spec:
               value: "timestamp-example"
             - name: RUN_TYPE
               value: "once"
+            - name: RUNTIME_TYPE
+              value: "PAPERMILL"
+            - name: SYNC_API_URL
+              value: "http://ml-integration.research.dev.example.com:8082/sync/versioneddata"
           volumeMounts:
             - name: ssh-key-volume
               mountPath: "/etc/ssh-key"
