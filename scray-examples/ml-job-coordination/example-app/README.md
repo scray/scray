@@ -10,8 +10,8 @@ export SCRAY_SYNC_API_URL=http://127.0.0.1:8082
 ```
 ./run-on-ki1.sh run\
   --take-jobname-literally true\
-  --job-name gradio-example-app\ 
-  --processing-env http://scray.org/ai/app/env/see/os\
+  --job-name gradio-example-app\
+  --processing-env http://scray.org/ai/app/env/see/os/k8s/k8s-deployment\
   --notebook-name app.py\
-  --docker-image  scray/gradio-example:0.1.3
+  --docker-image  scrayorg/python:0.1.3
 ```
