@@ -42,7 +42,7 @@ class ScrayClient:
 
     def getLatestVersion(self, datasource, mergeky) -> VersionedData:
 
-        url = f"{self.client_config.host_address}:{self.client_config.port}/sync/versioneddata/latest/?datasource={datasource}&mergekey={mergeky}"
+        url = f"{self.client_config.host_address}:{self.client_config.port}/sync/versioneddata/latest?datasource={datasource}&mergekey={mergeky}"
         logger.debug("Request " + url)
         response = self._make_getrequest(conn=self.request_session, method="GET", url=url)
 
