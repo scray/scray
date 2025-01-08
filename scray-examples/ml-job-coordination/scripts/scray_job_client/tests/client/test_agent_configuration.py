@@ -59,8 +59,19 @@ class TestAgentConfiguration(TestCase):
             JobStates(env="http://scray.org/ai/jobs/env/see/001", trigger_states=["UPLOADED"], error_states=["CONVERSION_ERROR"], completed_states=["SUMMARIZED"])
         ]
 
+
         input  = S3Configuration(hostname = "https://s3.i1.example.com", bucket = "data-bucket", path = "/in-data/data.txt", data_description = "open api description")
-        output = S3Configuration(hostname = "https://s3.i2.example.com", bucket = "data-bucket", path = "/out-data/", data_description = "open api description")
+        
+        description = """
+        {   
+          "requestBody": {
+              "content": {},
+              "required": true
+          }
+        }
+        """
+        output = S3Configuration(hostname = "https://s3.i2.example.com", bucket = "data-bucket", path = "/out-data/", 
+                                 data_description = description)
 
         
         agent_conf = AgentConfiguration(env=env, name=name, job_states=states, data_input_conf=input, data_output_conf=output)

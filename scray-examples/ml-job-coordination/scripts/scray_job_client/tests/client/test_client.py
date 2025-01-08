@@ -43,12 +43,130 @@ class TestScrayClient(TestCase):
 
     def test_agent_conf_loading(self):
         config = ScrayClientConfig(
-            host_address = "http://ml-integration.research.example.com",
+            host_address = "http://localhost",
             port = 8082
         )
 
         client = ScrayJobClient(config=config)
 
+
+        description = """
+        {
+            "openapi": "3.1.0",
+            "info": {
+                "title": "FastAPI",
+                "version": "0.1.0"
+            },
+            "paths": {
+                "/jira/servicedesk/comment/": {
+                    "put": {
+                        "summary": "Add Comment",
+                        "description": "Creates an internal comment on an existing customer request.",
+                        "operationId": "add_comment_jira_servicedesk_comment__put",
+                        "requestBody": {
+                            "content": {
+                                "application/json": {
+                                    "schema": {
+                                        "$ref": "#/components/schemas/JiraCommentDetails"
+                                    }
+                                }
+                            },
+                            "required": true
+                        },
+                        "responses": {
+                            "200": {
+                                "description": "Successful Response",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {}
+                                    }
+                                }
+                            },
+                            "422": {
+                                "description": "Validation Error",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "$ref": "#/components/schemas/HTTPValidationError"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "components": {
+                "schemas": {
+                    "HTTPValidationError": {
+                        "properties": {
+                            "detail": {
+                                "items": {
+                                    "$ref": "#/components/schemas/ValidationError"
+                                },
+                                "type": "array",
+                                "title": "Detail"
+                            }
+                        },
+                        "type": "object",
+                        "title": "HTTPValidationError"
+                    },
+                    "JiraCommentDetails": {
+                        "properties": {
+                            "issueId": {
+                                "type": "string",
+                                "title": "Issueid"
+                            },
+                            "comment": {
+                                "type": "string",
+                                "title": "Comment"
+                            }
+                        },
+                        "type": "object",
+                        "required": [
+                            "issueId",
+                            "comment"
+                        ],
+                        "title": "JiraCommentDetails"
+                    },
+                    "ValidationError": {
+                        "properties": {
+                            "loc": {
+                                "items": {
+                                    "anyOf": [
+                                        {
+                                            "type": "string"
+                                        },
+                                        {
+                                            "type": "integer"
+                                        }
+                                    ]
+                                },
+                                "type": "array",
+                                "title": "Location"
+                            },
+                            "msg": {
+                                "type": "string",
+                                "title": "Message"
+                            },
+                            "type": {
+                                "type": "string",
+                                "title": "Error Type"
+                            }
+                        },
+                        "type": "object",
+                        "required": [
+                            "loc",
+                            "msg",
+                            "type"
+                        ],
+                        "title": "ValidationError"
+                    }
+                }
+            }
+        }"""
+
+  
         # Create configuration
         name = "agent-007"
         env = "http://scray.org/sync/agent/configuration"
@@ -64,14 +182,14 @@ class TestScrayClient(TestCase):
                 hostname = "https://s3.example.com", 
                 bucket = "data-bucket", 
                 path = "/in-data/data.txt", 
-                data_description = "data description"
+                data_description = description
             )
         
         output = ScrayJobMetadataConfiguration(
                 hostname = "http://ml-integration.research.example.com", 
                 env = "http://scray.org/ai/jobs/env/see/000/result", 
                 jobname= "job512", 
-                data_description = "data description"
+                data_description = ""
             )
 
         agent_conf = AgentConfiguration(
@@ -80,6 +198,7 @@ class TestScrayClient(TestCase):
             data_input_conf=input, 
             data_output_conf=output
             )
+
 
         # Set new configuration
         client.set_agent_conf(env = "env1", agent_name = "process", configuration = agent_conf)

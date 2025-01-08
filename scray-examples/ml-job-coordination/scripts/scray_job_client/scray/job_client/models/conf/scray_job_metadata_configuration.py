@@ -25,7 +25,7 @@ class ScrayJobMetadataConfiguration(AgentDataIoConfiguration):
        self.hostname = hostname
        self.env = env
        self.jobname = jobname
-       self.data_description = data_description
+       self.data_description = data_description.strip().replace("\n", "").replace("\"", "'")
    
     def to_dict(self):
         return asdict(self)

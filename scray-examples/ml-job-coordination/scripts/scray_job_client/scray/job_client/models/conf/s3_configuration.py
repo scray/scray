@@ -25,7 +25,7 @@ class S3Configuration(AgentDataIoConfiguration):
        self.hostname = hostname
        self.bucket = bucket
        self.path = path
-       self.data_description = data_description
+       self.data_description = data_description.strip().replace("\n", "").replace("\"", "'")
    
     def to_dict(self):
         return asdict(self)
