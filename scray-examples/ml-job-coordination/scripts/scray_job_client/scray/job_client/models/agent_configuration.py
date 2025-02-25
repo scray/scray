@@ -54,7 +54,7 @@ class AgentConfiguration:
         instance = AgentConfiguration(
             env = data.get('env'),
             name = data.get('name'),
-            job_states = data.get('job_states'),
+            job_states = [JobStates.from_json(job_state) for job_state in data.get('job_states')],
             data_input_conf = AgentConfiguration._get_data_io_configuration(data.get('data_input_conf')),
             data_output_conf = AgentConfiguration._get_data_io_configuration(data.get('data_output_conf'))
         )

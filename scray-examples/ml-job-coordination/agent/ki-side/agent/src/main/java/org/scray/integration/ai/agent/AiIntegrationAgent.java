@@ -211,7 +211,13 @@ public class AiIntegrationAgent
         if (!useImageAllowList || allowedImages.contains(jobState.getImageName()))
         {
             KubernetesClient k8sClient = new KubernetesClient();
-            k8sClient.deployJob(versionedData.getDataSource(), env.getEnvVars().get("RUNTIME_TYPE"), jobState.getImageName(), env.getK8sJobDescriptonTemplateFullPath(), syncApiUrl);
+            k8sClient.deployJob(
+                                versionedData.getDataSource(),
+                                env.getEnvVars().get("RUNTIME_TYPE"),
+                                jobState.getImageName(), env.getK8sJobDescriptonTemplateFullPath(),
+                                env.getEnvVars().get("SCRAY_SYNC_API_URL"),
+                                env.getEnvVars().get("SCRAY_DATA_INTEGRATION_HOST")
+                                );
         }
         else
         {
@@ -261,7 +267,8 @@ public class AiIntegrationAgent
                                             env.getEnvVars().get("RUNTIME_TYPE"),
                                             jobToStart.getAiJobsData().getImageName(),
                                             env.getK8sJobDescriptonTemplateFullPath(),
-                                            syncApiUrl
+                                            env.getEnvVars().get("SCRAY_SYNC_API_URL"), // FIXME Read it fom config file
+                                            env.getEnvVars().get("SCRAY_DATA_INTEGRATION_HOST") // FIXME Read it fom config file
                                             );
                     }
                     else

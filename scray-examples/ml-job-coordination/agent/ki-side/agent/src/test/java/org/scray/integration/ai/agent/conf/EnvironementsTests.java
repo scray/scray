@@ -82,6 +82,8 @@ public class EnvironementsTests
                                    2);
          env2.setIngressTemplate("fffs");
          env2.putEnvVar("JAVA_HOME", "/opt/java/spdf-17/");
+         env2.putEnvVar("SCRAY_SYNC_API_URL", "ml-integration.research.dev.example.com:8082");
+         env2.putEnvVar("SCRAY_DATA_INTEGRATION_HOST", "ml-integration.research.dev.example.com");
 
          List<Environment> envList = new ArrayList<Environment>();
 
@@ -111,6 +113,8 @@ public class EnvironementsTests
             Assertions.assertEquals("http://scray.org/test/env2", loadedEnvs.getEnvironments().get(1).getName());
             Assertions.assertEquals(Environment.EnvType.Python, loadedEnvs.getEnvironments().get(1).getType());
             Assertions.assertEquals(2, loadedEnvs.getEnvironments().get(1).getVersion());
+            Assertions.assertEquals("ml-integration.research.dev.example.com:8082", loadedEnvs.getEnvironments().get(1).getEnvVars().get("SCRAY_SYNC_API_URL"));
+
 
 
 

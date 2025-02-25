@@ -73,7 +73,7 @@ public class KubernetesClientTests {
 		KubernetesClient aiK8client = new KubernetesClient();
 
 		var descriptor = aiK8client.loadDesciptorFormFile("src/test/resources/k8s/app-job.yaml");
-		Job jobDescription = aiK8client.configureJobDescriptor(descriptor, "scray-app1", "scray-app1", "PYTHON","image1", "ml-integration.research.dev.example.com:8082");
+		Job jobDescription = aiK8client.configureJobDescriptor(descriptor, "scray-app1", "scray-app1", "PYTHON","image1", "http://ml-integration.research.dev.example.com:8082", "ml-integration.research.dev.example.com");
 
 		ObjectMapper objectMapper = new ObjectMapper();
 		String jobDef;
@@ -81,6 +81,8 @@ public class KubernetesClientTests {
         {
             jobDef = objectMapper.writeValueAsString(jobDescription);
             Assertions.assertTrue(jobDef.contains("{\"name\":\"RUNTIME_TYPE\",\"value\":\"PYTHON\"}"));
+            Assertions.assertTrue(jobDef.contains("{\"name\":\"SCRAY_DATA_INTEGRATION_HOST\",\"value\":\"ml-integration.research.dev.example.com\"}"));
+            Assertions.assertTrue(jobDef.contains("{\"name\":\"SCRAY_SYNC_API_URL\",\"value\":\"http://ml-integration.research.dev.example.com:8082\"}"));
         }
         catch (JsonProcessingException e)
         {

@@ -199,7 +199,7 @@ class ScrayJobClient:
 
     def get_agent_conf(self, env: str, agent_name: str) -> AgentConfiguration:
         
-        latestVersion = self.client.getLatestVersion('_', agent_name)
+        latestVersion = self.client.getLatestVersion(agent_name, '_')
         logger.info("Latest agent config version: " + latestVersion.to_str())
         agent_conf = AgentConfiguration.from_json(json_string=latestVersion.data)
 

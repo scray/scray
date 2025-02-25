@@ -69,7 +69,7 @@ public class KubernetesClient {
 		aiK8client.close();
 	}
 
-	public void deployAppJob(String jobName, String runtimeType, String imageName, String jobTemplatePath, String syncApiUrl) {
+	public void deployAppJob(String jobName, String runtimeType, String imageName, String jobTemplatePath, String syncApiUrl, String dataIntegrationHost) {
 		KubernetesClient aiK8client = new KubernetesClient();
 
 		var deploymentName = jobName;
@@ -85,7 +85,8 @@ public class KubernetesClient {
 					jobName,
 					runtimeType,
 					imageName,
-					syncApiUrl);
+					syncApiUrl,
+					dataIntegrationHost);
 
 			var configuredVpc = aiK8client.configurePvc(descriptor, deploymentName);
 
@@ -105,7 +106,7 @@ public class KubernetesClient {
 		}
 	}
 
-	public void deployApp(String jobName, String runtimeType, String imageName, String jobTemplatePath, String syncApiUrl) {
+	public void deployApp(String jobName, String runtimeType, String imageName, String jobTemplatePath, String syncApiUrl, String dataIntegrationHost) {
 
 		String host = jobName + ".app.research.dev.example.com";
 		String ingressPath = "/";
@@ -136,10 +137,10 @@ public class KubernetesClient {
 			}
 		}
 
-		this.deployJob(jobName, runtimeType, imageName, jobTemplatePath, syncApiUrl);
+		this.deployJob(jobName, runtimeType, imageName, jobTemplatePath, syncApiUrl, dataIntegrationHost);
 	}
 
-	public void deployJob(String jobName, String runtimeType, String imageName, String jobTemplatePath, String syncApiUrl) {
+	public void deployJob(String jobName, String runtimeType, String imageName, String jobTemplatePath, String syncApiUrl, String dataIntegrationHost) {
 		KubernetesClient aiK8client = new KubernetesClient();
 
 		var deploymentName = jobName;
@@ -155,7 +156,8 @@ public class KubernetesClient {
 					jobName,
 					runtimeType,
 					imageName,
-					syncApiUrl);
+					syncApiUrl,
+					dataIntegrationHost);
 
 			var configuredVpc = aiK8client.configurePvc(descriptor, deploymentName);
 
@@ -245,7 +247,8 @@ public class KubernetesClient {
 			String jobName,
 			String runtimeType,
 			String imageName,
-			String syncApiUrl) {
+			String syncApiUrl,
+	        String dataIntegrationHost) {
 
 		var jobDescription = preparedDeploymentDescriptor.items().stream()
 			.filter(item -> item != null && item.getKind().equals("Job") &&  item.getMetadata().getName().equals("jupyter-tensorflow-job"))
@@ -270,7 +273,8 @@ public class KubernetesClient {
 									.endEnv()
 									.editMatchingEnv(e -> e.getName().equals("RUN_TYPE")).withValue("once").endEnv() // FIXME ??
                                     .editMatchingEnv(e -> e.getName().equals("RUNTIME_TYPE")).withValue(runtimeType).endEnv()
-									.editMatchingEnv(e -> e.getName().equals("SYNC_API_URL")).withValue(syncApiUrl).endEnv()
+									.editMatchingEnv(e -> e.getName().equals("SCRAY_SYNC_API_URL")).withValue(syncApiUrl).endEnv()
+                                    .editMatchingEnv(e -> e.getName().equals("SCRAY_DATA_INTEGRATION_HOST")).withValue(dataIntegrationHost).endEnv()
 									.endContainer()
 								.endSpec()
 							.endTemplate()
