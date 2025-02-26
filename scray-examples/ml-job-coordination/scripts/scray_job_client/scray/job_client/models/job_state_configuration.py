@@ -1,5 +1,5 @@
 from dataclasses import asdict, dataclass
-from typing import List
+from typing import List, Dict
 
 @dataclass
 class JobStates:
@@ -70,4 +70,13 @@ class JobStates:
     
     def to_dict(self):
          return asdict(self)
+    
+    @classmethod
+    def from_json(cls, data: Dict[str, any]) -> "JobStates":
+        return cls(
+            env=data.get("env", ""),
+            trigger_states=data.get("trigger_states", []),
+            error_states=data.get("error_states", []),
+            completed_states=data.get("completed_states", [])
+        )
 
