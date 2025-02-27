@@ -91,7 +91,7 @@ class ScrayJobClient:
                 print("State 'COMPLETED' reached")
                 break
 
-            time.sleep(1)
+            time.sleep(3)
     
     def wait_for_job_state(self, job_name, desiredState):
         
@@ -109,7 +109,7 @@ class ScrayJobClient:
                 print(f"State '{desiredState}' reached")
                 break
 
-            time.sleep(1)
+            time.sleep(3)
 
     def get_jobs(self, processing_env, requested_state=None) -> list[str]:
               
@@ -154,27 +154,6 @@ class ScrayJobClient:
                 return jobs
                 
             time.sleep(1)
-
-
-
-    def wait_for_job_state(self, job_name, desiredState):
-        
-        while True:
-            
-            latestVersion = self.client.getLatestVersion('_', job_name)
-
-            logger.info("Latest version data: " + latestVersion.to_str())
-
-            state = JobSyncApiData.from_json(json_string=latestVersion.data).state
-
-            print(f"Waiting for state '{desiredState}'; current state is '{state}'")
-
-            if state == desiredState:
-                print(f"State '{desiredState}' reached")
-                break
-
-            time.sleep(1)
-
 
     def setState(self, state, job_name, processing_env, docker_image = "scrayorg/scray-jupyter_tensorflow-gpu:0.1.3", source_data = "./", notebook_name = "token_classification_01.ipynb", metadata = ""):
 
@@ -234,12 +213,14 @@ class ScrayJobClient:
 
         return job_name
 
-    def deploy_job(self, source_data, notebook_name: str,  processing_env: str = "http://scray.org/ai/jobs/env/see/ki1-k8s", job_name = "job-" + str(uuid.uuid4()), initState="UPLOADED"):
+    def deploy_job(self, source_data, notebook_name: str,  processing_env: str = "http://scray.org/ai/jobs/env/see/ki1-k8s", job_name = "job-" + str(uuid.uuid4()), initState="UPLOADED", docker_image="scray/python:0.1.3", metadata = ""):
         create_archive(job_name, source_data, self.config.data_integration_user, self.config.data_integration_host)
         self.setState(state=initState, 
                 job_name=job_name, 
                 processing_env=processing_env, 
-                notebook_name=notebook_name
+                notebook_name=notebook_name,
+                docker_image=docker_image,
+                metadata=metadata
             )
         
         return job_name
