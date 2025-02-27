@@ -127,9 +127,9 @@ runPapermillJob() {
     echo "no requirements.txt"
   fi
 
-  echo papermill --stdout-file notebook-stdout --autosave-cell-every 2  $NOTEBOOK_NAME out.$NOTEBOOK_NAME &
+  echo papermill --stdout-file notebook-stdout --stderr-file notebook-stderr  --autosave-cell-every 2  $NOTEBOOK_NAME out.$NOTEBOOK_NAME &
 
-  papermill --stdout-file notebook-stdout --autosave-cell-every 2  $NOTEBOOK_NAME out.$NOTEBOOK_NAME &
+  papermill --stdout-file notebook-stdout --stderr-file notebook-stderr --autosave-cell-every 2  $NOTEBOOK_NAME out.$NOTEBOOK_NAME &
   PID=$!
 
   uploadCurrentNotebookState out.$NOTEBOOK_NAME
