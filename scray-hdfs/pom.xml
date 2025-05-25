@@ -27,7 +27,7 @@
 
 	<modules>
 		<module>/modules/scray-hdfs-writer</module>
-		<module>/modules/scray-hdfs-service-adapter</module>
+<!--		<module>/modules/scray-hdfs-service-adapter</module>-->
 	</modules>
 
 	<dependencies>
