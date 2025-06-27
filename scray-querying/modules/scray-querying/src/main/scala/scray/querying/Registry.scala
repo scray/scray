@@ -220,7 +220,7 @@ object Registry extends LazyLogging with Registry {
       rwlock.writeLock.lock
       try {
         // get is o.k. since this method may not be called if the qs has not been previously created
-        val oldVersion = getLatestVersion(querySpace).get
+        val oldVersion = getLatestVersion(querySpace).getOrElse(0)
         val newVersion = oldVersion + 1
         logger.debug(s"Creating new version for query-space $querySpace, updating $oldVersion to $newVersion by providing ${tables.size} new tables.")
         // copy the stuff over...
@@ -326,8 +326,8 @@ object Registry extends LazyLogging with Registry {
   /**
    * en- or disable caching of column family values. Disable in case of memory pressure.
    */
-  def setCachingEnabled(enabled: Boolean) = enableCaches.set(enabled)
-  def getCachingEnabled = enableCaches.get
+  def setCachingEnabled(enabled: Boolean): Unit = enableCaches.set(enabled)
+  def getCachingEnabled: Boolean = enableCaches.get
 
   def addCreateQueryInformationListener(listener: QueryInformation => Unit) =
     createQueryInformationListeners += listener

@@ -65,7 +65,7 @@ class SimpleHashJoinSource[Q <: DomainQuery, K <: DomainQuery, V](
 	  QueryCosts(amount, sourceCosts.estimatedCardinality)
   }
   
-  def getKeyedQuery(query: Q, columns: Set[RowColumn[_]]) = new KeyedQuery(
+  def getKeyedQuery(query: Q, columns: Set[RowColumn[_]]): KeyedQuery = new KeyedQuery(
         columns,
         lookupSourceJoinColumns.head.table,
         lookupSource.getColumns,

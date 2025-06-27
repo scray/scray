@@ -15,9 +15,12 @@
 
 package scray.hdfs.io.configure
 
+import org.apache.hadoop.fs.InvalidPathException
 import scray.hdfs.io.write.IHdfsWriterConstats
+
 import java.util.Optional
 import scray.hdfs.io.configure.WriteDestionationConstats.WriteMode
+
 import java.util.Arrays
 
 class CompactionState {}
@@ -50,6 +53,7 @@ class WriteParameter(
   val password:                    Array[Byte]                                = null,
   var path:                        String,
   var fileNameCreator:             Optional[FilenameCreator]                  = Optional.empty(),
+  var appendToExistingFile:        Boolean                                    = false,
   var fileFormat:                  IHdfsWriterConstats.SequenceKeyValueFormat,
   var version:                     Version                                    = Version(0),
   var writeVersioned:              Boolean                                    = false,
@@ -67,6 +71,7 @@ class WriteParameter(
           && Arrays.equals(this.password, that.password)
           && this.path == that.path
           && this.fileNameCreator == that.fileNameCreator
+          && this.appendToExistingFile == that.appendToExistingFile
           && this.fileFormat == that.fileFormat
           && this.version == that.version
           && this.writeVersioned == that.writeVersioned
@@ -90,6 +95,7 @@ class WriteParameter(
       .andThen(composeAttributes(getHashCodeOrZeroOfArray(password)))
       .andThen(composeAttributes(getHashCodeOrZero(path)))
       .andThen(composeAttributes(getHashCodeOrZero(fileNameCreator)))
+      .andThen(composeAttributes(getHashCodeOrZero(appendToExistingFile)))
       .andThen(composeAttributes(getHashCodeOrZero(fileFormat)))
       .andThen(composeAttributes(getHashCodeOrZero(version)))
       .andThen(composeAttributes(getHashCodeOrZero(writeVersioned)))
@@ -130,6 +136,7 @@ object WriteParameter {
     var password: Array[Byte] = null
     var path: String = null
     var fileNameCreator: Optional[FilenameCreator] = Optional.empty()
+    var appendToExistingFile = false
     var fileFormat: IHdfsWriterConstats.SequenceKeyValueFormat = null
     var version: Version = Version(0)
     var writeVersioned: Boolean = false
@@ -147,6 +154,9 @@ object WriteParameter {
     }
 
     def setPath(path: String): Builder = {
+      if(path.contains(" ")) {
+        throw new InvalidPathException(" spaces are not allowed in the path: " + path );
+      }
       this.path = path
       this
     }
@@ -216,6 +226,11 @@ object WriteParameter {
       this
     }
     
+    def setAppendToExistingFile(appendToExistingFile: Boolean): Builder = {
+      this.appendToExistingFile = appendToExistingFile
+      this
+    }
+    
     def createConfiguration: WriteParameter = {
       new WriteParameter(
         queryspace,
@@ -223,6 +238,7 @@ object WriteParameter {
         password,
         path,
         fileNameCreator,
+        appendToExistingFile,
         fileFormat,
         version,
         writeVersioned,

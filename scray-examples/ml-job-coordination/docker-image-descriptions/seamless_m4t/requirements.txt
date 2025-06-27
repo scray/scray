@@ -1,0 +1,8 @@
+torch==2.0.1
+huggingface_hub
+bitsandbytes
+confluent_kafka
+kafka-python
+transformers
+accelerate
+pandas

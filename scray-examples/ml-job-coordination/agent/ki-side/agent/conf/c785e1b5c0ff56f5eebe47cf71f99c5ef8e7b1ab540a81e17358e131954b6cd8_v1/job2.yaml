@@ -1,0 +1,46 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: jupyter-tensorflow-job
+  labels:
+    app: jupyter-tensorflow-job
+spec:
+  completions: 1
+  parallelism: 1
+  template:
+    metadata:
+      labels:
+        app: jupyter-tensorflow-job
+    spec:
+      containers:
+        - name: scray-ai-container
+          image: scray-jupyter_tensorflow-gpu:0.1.1
+          workingDir: /opt/scray-sync/
+          resources:
+            limits:
+              nvidia.com/gpu: "1"
+          env:
+            - name: JOB_NAME
+              value: "timestamp-example"
+            - name: RUN_TYPE
+              value: "once"
+            - name: RUNTIME_TYPE
+              value: "PAPERMILL"
+            - name: SYNC_API_URL
+              value: "http://ml-integration.research.dev.example.com:8082/sync/versioneddata"
+          volumeMounts:
+            - name: ssh-key-volume
+              mountPath: "/etc/ssh-key"
+      restartPolicy: Never
+      volumes:
+        - name: ssh-key-volume
+          secret:
+            secretName: data-ssh-key
+            defaultMode: 292
+        - name: hf-cache2
+          persistentVolumeClaim:
+            claimName: 'hf-cache2'
+        - name: model-cache
+          persistentVolumeClaim:
+            claimName: 'model-cache'
+

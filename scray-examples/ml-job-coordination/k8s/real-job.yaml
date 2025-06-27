@@ -1,0 +1,42 @@
+apiVersion: v1
+items:
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    labels:
+      app: jupyter-tensorflow-job
+    name: jupyter-tensorflow-job
+  spec:
+    selector:
+      matchLabels:
+        app: jupyter-tensorflow-job
+    template:
+      metadata:
+        labels:
+          app: jupyter-tensorflow-job
+      spec:
+        containers:
+        - env:
+          - name: JOB_NAME
+            value: timestamp-example
+          image: scrayorg/scray-jupyter_tensorflow-gpu:0.1.1
+          imagePullPolicy: IfNotPresent
+          name: scray-jupyter-tensorflow-latest-gpu
+          volumeMounts:
+          - mountPath: /mnt/ext-notebooks/
+            name: notebooks
+          - mountPath: /etc/ssh-key
+            name: ssh-key-volume
+          workingDir: /opt/scray-sync/
+        restartPolicy: Never
+        volumes:
+        - name: notebooks
+          persistentVolumeClaim:
+            claimName: notebooks-pv-claim
+        - name: ssh-key-volume
+          secret:
+            defaultMode: 256
+            secretName: data-ssh-key
+kind: List
+metadata:
+  resourceVersion: ""

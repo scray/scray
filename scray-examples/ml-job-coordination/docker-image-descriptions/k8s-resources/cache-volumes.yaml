@@ -1,0 +1,60 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: hf-cache2
+spec:
+  storageClassName: local-storage
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 1Gi
+  selector:
+    matchLabels:
+      type: hf-cache2
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: model-cache
+spec:
+  storageClassName: local-storage
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 1Gi
+  selector:
+    matchLabels:
+      type: model-cache
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: hf-cache2
+  labels:
+    type: hf-cache2
+spec:
+  storageClassName: local-storage
+  capacity:
+    storage: 200Gi
+  accessModes:
+    - ReadWriteMany
+  hostPath:
+    path: "/mnt/ssd1/huggingface/cache/huggingface/"
+
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: model-cache
+  labels:
+    type: model-cache
+spec:
+  storageClassName: local-storage
+  capacity:
+    storage: 200Gi
+  accessModes:
+    - ReadWriteMany
+  hostPath:
+    path: "/mnt/ssd1/ml-models:/root/ml-models/"

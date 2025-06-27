@@ -1,22 +1,54 @@
+// See the LICENCE.txt file distributed with this work for additional
+// information regarding copyright ownership.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+// http://www.apache.org/licenses/LICENSE-2.0
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// See the LICENCE.txt file distributed with this work for additional
+// information regarding copyright ownership.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+
+// http://www.apache.org/licenses/LICENSE-2.0
+
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package scray.sync.impl
 
-import scray.sync.api.VersionedData
-import scala.io.Source
+import scray.sync.api.{VersionedData, VersionedDataApi}
+
 import scala.collection.mutable.HashMap
 import java.util.ArrayList
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
+
 import java.io.FileWriter
 import java.io.BufferedWriter
 import java.io.File
 import com.google.gson.reflect.TypeToken
 import scray.sync.api.VersionedData
+
 import collection.JavaConverters._
-import scray.sync.api.VersionedDataApi
 import com.typesafe.scalalogging.LazyLogging
+
 import java.io.OutputStream
 import java.io.OutputStreamWriter
 import java.io.InputStream
+import java.util
+import scala.io.Source
 
 class FileVersionedDataApiImpl extends VersionedDataApi with LazyLogging {
   var versionInformations: HashMap[Int, VersionedData] = this.toMap(new ArrayList[VersionedData])
@@ -30,19 +62,23 @@ class FileVersionedDataApiImpl extends VersionedDataApi with LazyLogging {
     versionInformations.put(VersionedData.createVersionKey(dataSource, mergeKey), new VersionedData(dataSource, mergeKey, version, data))
   }
 
-  def persist(path: String) = {
+  def updateVersion(vd: VersionedData) {
+    versionInformations.put(VersionedData.createVersionKey(vd.dataSource, vd.mergeKey), vd)
+  }
+
+  def persist(path: String): Unit = {
     this.writeToFile(path)
   }
   
-  def persist(outStream: OutputStream) {
+  def persist(outStream: OutputStream): Unit = {
     this.writeToFile(outStream)
   }
   
-  def load(path: String) = {
+  def load(path: String): Unit = {
     versionInformations = readFromFile(path)
   }
   
-  def load(stream: InputStream) = {
+  def load(stream: InputStream): Unit = {
     versionInformations = readFromInputStram(stream)
   }
 
@@ -109,7 +145,7 @@ class FileVersionedDataApiImpl extends VersionedDataApi with LazyLogging {
     }).toList.asJava
   }
 
-  private def writeToFile(path: String) = {
+  private def writeToFile(path: String): Unit = {
     val jsonString = gson.toJson(toList(versionInformations))
 
     val file = new File(path)
@@ -118,12 +154,19 @@ class FileVersionedDataApiImpl extends VersionedDataApi with LazyLogging {
     bw.close()
   }
   
-  private def writeToFile(outStream: OutputStream) = {
+  private def writeToFile(outStream: OutputStream): Unit = {
     val jsonString = gson.toJson(toList(versionInformations))
 
     val bw = new OutputStreamWriter(outStream)
     bw.write(jsonString)
     bw.flush()
     bw.close()
+  }
+
+  /**
+   * Get all resources where a version exits for
+   */
+  override def getAllVersionedResources(): java.util.List[VersionedData] = {
+    this.toList(this.versionInformations)
   }
 }

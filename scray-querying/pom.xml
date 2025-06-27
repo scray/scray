@@ -18,12 +18,14 @@
 		<maven-bundle-plugin.version>3.0.1</maven-bundle-plugin.version>
 	</properties>
 
-	
+
 	<modules>
-		<module>modules/scray-querying</module>
+<!--		<module>/modules/scray-querying</module>-->
 		<module>/modules/scray-sync-api</module>
 		<module>/modules/scray-sync-cassandra</module>
 		<module>/modules/scray-sync-file</module>
+		<module>/modules/scray-sync-api-rest</module>
+		<module>/modules/scray-sync-events-mqtt</module>
 	</modules>
 
 	<profiles>

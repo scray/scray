@@ -1,3 +1,17 @@
+// See the LICENCE.txt file distributed with this work for additional
+// information regarding copyright ownership.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 package scray.querying.sync
 
 import java.util.concurrent.locks.Lock
@@ -18,7 +32,7 @@ class Table[T <: AbstractRow](val keySpace: String, val tableName: String, val c
     rows += row
   }
   
-  def getRows = {
+  def getRows: ListBuffer[RowWithValue] = {
     rows
   }
 }
@@ -121,8 +135,8 @@ object SyncTable {
           colString: DBColumnImplementation[String],
           colInt: DBColumnImplementation[Int],
           colLong: DBColumnImplementation[Long],
-          colBool: DBColumnImplementation[Boolean]) = {
-    new Table(keySpace, tableName, new SyncTableBasicClasses.SyncTableRowEmpty)
+          colBool: DBColumnImplementation[Boolean]): Table[SyncTableBasicClasses.SyncTableRowEmpty] = {
+      new Table(keySpace, tableName, new SyncTableBasicClasses.SyncTableRowEmpty)
   }
 }
 
@@ -142,18 +156,18 @@ abstract class AbstractTypeDetection {
 object JobLockTable {
   def apply(keySpace: String, tableName: String)(implicit 
           colString: DBColumnImplementation[String],
-          colBool: DBColumnImplementation[Boolean]) = {
+          colBool: DBColumnImplementation[Boolean]): Table[SyncTableBasicClasses.JobLockTable] = {
     new Table(keySpace, tableName, new SyncTableBasicClasses.JobLockTable)
   }
 }
 
 object VoidTable {
-  def apply(keySpace: String, tableName: String, columns: AbstractRow) = {
+  def apply(keySpace: String, tableName: String, columns: AbstractRow): Table[AbstractRow] = {
     new Table(keySpace, tableName, columns)
   }
 }
 object DataTable {
-  def apply(keySpace: String, tableName: String, columns: RowWithValue) = {
+  def apply(keySpace: String, tableName: String, columns: RowWithValue): Table[RowWithValue] = {
     new Table(keySpace, tableName, columns)
   }
 }
