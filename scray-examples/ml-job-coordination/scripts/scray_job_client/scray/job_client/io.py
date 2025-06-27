@@ -81,12 +81,14 @@ def clean_up(job_name, notebook_name):
         if os.path.exists(file):
             os.remove(file)
 
-def download_results(job_name, data_integration_user, data_integration_host):
+def download_results(job_name, data_integration_user, data_integration_host, destination_path = "./"):
     # Remove existing fin tar.gz file if it exists
-    fin_tar_gz_file = f"{job_name}-fin.tar.gz"
+    fin_tar_gz_file = f"{destination_path}/{job_name}-fin.tar.gz"
     if os.path.exists(fin_tar_gz_file):
         os.remove(fin_tar_gz_file)
     
+    os.makedirs(destination_path, exist_ok=True)
+
     # Download the fin tar.gz file using SFTP
     transport = paramiko.Transport((data_integration_host, 22))
     try:
@@ -114,47 +116,35 @@ def download_results(job_name, data_integration_user, data_integration_host):
         except Exception as e:
             print(f"Error during tar extraction: {e}")
 
-    # Example usage
-    create_archive(
-        job_name="example_job",
-        source_data="/path/to/source_data",
-        data_integration_user="user",
-        data_integration_host="host.com"
-    )
+def get_job_fin_data(job_name, data_integration_user, data_integration_host):
 
-    clean_up(
-        job_name="example_job",
-        notebook_name="example_notebook"
-    )
+        temp_tar_path = f"/tmp/{job_name}.tar.gz"
+                
+        try:
+            private_key_path = f"{Path.home()}/.ssh/id_rsa"
+            key = paramiko.RSAKey.from_private_key_file(private_key_path)
 
-    download_results(
-        job_name="example_job",
-        data_integration_user="user",
-        data_integration_host="host.com"
-    )
+            # Connect to SFTP
+            transport.connect(username=data_integration_user, pkey=key)
+            sftp = paramiko.SFTPClient.from_transport(transport)
+            
+            # Download the archive
+            remote_path = f"sftp-share/{job_name}.tar.gz"
+            print(f"Downloading {remote_path} to {temp_tar_path}")
+            sftp.get(remote_path, temp_tar_path)
+            sftp.close()
 
-    # Example usage
-    download_updated_notebook(
-        job_name="example_job",
-        notebook_name="example_notebook",
-        data_integration_user="user",
-        data_integration_host="host.com"
-    )
+            # Extract the archive
+            with tarfile.open(temp_tar_path, "r:gz") as tar:
+                tar.extractall(path=destination_path)
+                print(f"Extracted {job_name}.tar.gz to {destination_path}")
 
-    create_archive(
-        job_name="example_job",
-        source_data="/path/to/source_data",
-        data_integration_user="user",
-        data_integration_host="host.com"
-    )
-
-    clean_up(
-        job_name="example_job",
-        notebook_name="example_notebook"
-    )
-
-    download_results(
-        job_name="example_job",
-        data_integration_user="user",
-        data_integration_host="host.com"
-    )
+        except Exception as e:
+            print(f"Error during download and extraction: {e}")
+        finally:
+            transport.close()
+            
+            # Remove the downloaded archive after extraction
+            if os.path.exists(temp_tar_path):
+                os.remove(temp_tar_path)
+                print(f"Removed temporary file {temp_tar_path}")

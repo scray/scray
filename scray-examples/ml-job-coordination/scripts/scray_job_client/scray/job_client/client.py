@@ -224,4 +224,49 @@ class ScrayJobClient:
             )
         
         return job_name
+    
+    def get_job_fin_data(job_name, destination_path, data_integration_user, data_integration_host):
+        """
+        Downloads the completed job data and extracts it to a specified destination.
+
+        :param job_name: Name of the job (used for the file name).
+        :param destination_path: Path where the extracted files should be stored.
+        :param data_integration_user: Username for the SFTP connection.
+        :param data_integration_host: Host of the SFTP server.
+        """
+        temp_tar_path = f"/tmp/{job_name}.tar.gz"
+        
+        # Ensure the destination path exists
+        os.makedirs(destination_path, exist_ok=True)
+
+        transport = paramiko.Transport((data_integration_host, 22))
+        
+        try:
+            private_key_path = f"{Path.home()}/.ssh/id_rsa"
+            key = paramiko.RSAKey.from_private_key_file(private_key_path)
+
+            # Connect to SFTP
+            transport.connect(username=data_integration_user, pkey=key)
+            sftp = paramiko.SFTPClient.from_transport(transport)
+            
+            # Download the archive
+            remote_path = f"sftp-share/{job_name}.tar.gz"
+            print(f"Downloading {remote_path} to {temp_tar_path}")
+            sftp.get(remote_path, temp_tar_path)
+            sftp.close()
+
+            # Extract the archive
+            with tarfile.open(temp_tar_path, "r:gz") as tar:
+                tar.extractall(path=destination_path)
+                print(f"Extracted {job_name}.tar.gz to {destination_path}")
+
+        except Exception as e:
+            print(f"Error during download and extraction: {e}")
+        finally:
+            transport.close()
+            
+            # Remove the downloaded archive after extraction
+            if os.path.exists(temp_tar_path):
+                os.remove(temp_tar_path)
+                print(f"Removed temporary file {temp_tar_path}")
 

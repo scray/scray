@@ -15,12 +15,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import scala.Option;
 import scray.sync.api.VersionedData;
-import scray.sync.impl.FileVersionedDataApiImpl;
 
-import java.io.FileNotFoundException;
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 public class ReadController {
@@ -49,7 +47,7 @@ public class ReadController {
             syncApiManager.getSyncApi().getLatestVersion(datasource, mergekey);
         }
 
-        Option<VersionedData> latestVersion = syncApiManager.getSyncApi().getLatestVersion(datasource, mergekey);
+        Optional<scray.sync.api.VersionedData> latestVersion = syncApiManager.getSyncApi().getLatestVersion(datasource, mergekey);
 
         if(latestVersion.isEmpty()) {
             return new ResponseEntity<VersionedData>(HttpStatus.NOT_FOUND);

@@ -10,7 +10,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import scray.sync.api.VersionedData;
-import scray.sync.api.VersionedDataApi;
 
 public class MqttSyncEventManager implements SyncEventManager {
 	private static final Logger logger = LoggerFactory.getLogger(SyncFileManager.class);

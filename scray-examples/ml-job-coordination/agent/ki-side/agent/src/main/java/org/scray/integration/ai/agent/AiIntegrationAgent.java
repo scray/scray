@@ -45,7 +45,7 @@ public class AiIntegrationAgent
 
     private Environments environements = null;
 
-    private String syncApiUrl = "http://ml-integration.research.dev.example.com:8082/sync/versioneddata";
+    private String syncApiUrl = "http://ml-integration.research.dev.seeburger.de:8082/sync/versioneddata";
 
     public AiIntegrationAgent(Environments envs)
     {

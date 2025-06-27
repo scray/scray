@@ -16,7 +16,6 @@
     <description>Rest interface for Scray sync API</description>
     <properties>
         <java.version>17</java.version>
-        <scala.compat.version>2.13</scala.compat.version>
     </properties>
     <dependencies>
         <dependency>
@@ -56,12 +55,12 @@
         </dependency>
         <dependency>
             <groupId>org.scray</groupId>
-            <artifactId>scray-sync-api_${scala.compat.version}</artifactId>
+            <artifactId>scray-sync-api</artifactId>
             <version>1.1.3-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.scray</groupId>
-            <artifactId>scray-sync-file_${scala.compat.version}</artifactId>
+            <artifactId>scray-sync-file</artifactId>
             <version>1.1.3-SNAPSHOT</version>
         </dependency>
         <dependency>
