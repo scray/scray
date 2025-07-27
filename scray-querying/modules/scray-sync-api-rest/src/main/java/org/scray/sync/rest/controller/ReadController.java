@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import scala.Option;
 
 import org.scray.sync.rest.MqttSyncEventManager;
 import org.scray.sync.rest.SyncEventManager;
@@ -58,7 +59,7 @@ public class ReadController {
             syncApiManager.getSyncApi().getLatestVersion(datasource, mergekey);
         }
 
-        Optional<scray.sync.api.VersionedData> latestVersion = syncApiManager.getSyncApi().getLatestVersion(datasource, mergekey);
+        Option<VersionedData> latestVersion = syncApiManager.getSyncApi().getLatestVersion(datasource, mergekey);
 
 
         if(latestVersion.isEmpty()) {
