@@ -13,7 +13,7 @@ classifiers = [
 ]
 
 dependencies = [
-    'scray_sync_client ~= 0.0.1',
+    'scray_sync_client ~= 0.0.2',
     'paramiko ~= 3.5.0'
 ]
 
