@@ -80,7 +80,7 @@ class ScrayClient:
         self, conn, method, url
     ):
 
-        response = conn.request(method, url)
+        response = conn.request(method, url, timeout=15)
         if response.status_code == 200:
             return response.json()
         else:
@@ -92,7 +92,7 @@ class ScrayClient:
     ):
         newHeaders = {'Content-type': 'application/json'}
 
-        response = conn.put(url, data=str(data()), headers=newHeaders)
+        response = conn.put(url, data=str(data()), headers=newHeaders, timeout=15)
         if response.status_code == 200:
             logger.info("State successfully updated")
         else:
