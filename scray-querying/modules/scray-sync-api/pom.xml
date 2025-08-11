@@ -26,14 +26,6 @@
         </dependency>
     </dependencies>
 
-		<!-- Test -->
-		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
-			<version>4.13.1</version>
-			<scope>test</scope>
-		</dependency>
-
     <build>
         <plugins>
             <!-- Compiler plugin (optional since source/target are set in properties) -->
