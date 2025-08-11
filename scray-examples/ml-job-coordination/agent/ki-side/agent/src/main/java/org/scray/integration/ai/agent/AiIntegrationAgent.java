@@ -159,7 +159,10 @@ public class AiIntegrationAgent
                          catch (JacksonException e)
                          {
                              logger.warn("No Ai job data parsed");
-                             logger.debug(versonData.getData());
+                             logger.debug("Parse exception: {}, Data: {}", e, 
+                            		    versonData.getData() != null 
+                            		        ? versonData.getData().substring(0, Math.min(100, versonData.getData().length())) 
+                            		        : "null");
                              Optional<JobToSchedule> emptyJobData = Optional.empty();
                              return emptyJobData;
                          }
