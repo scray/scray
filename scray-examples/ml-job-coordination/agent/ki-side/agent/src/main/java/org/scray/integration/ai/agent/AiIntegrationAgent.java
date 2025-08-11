@@ -159,7 +159,10 @@ public class AiIntegrationAgent
                          catch (JacksonException e)
                          {
                              logger.warn("No Ai job data parsed");
-                             logger.debug(versonData.getData());
+                             logger.debug("Parse exception: {}, Data: {}", e, 
+                            		    versonData.getData() != null 
+                            		        ? versonData.getData().substring(0, Math.min(100, versonData.getData().length())) 
+                            		        : "null");
                              Optional<JobToSchedule> emptyJobData = Optional.empty();
                              return emptyJobData;
                          }
@@ -292,11 +295,11 @@ public class AiIntegrationAgent
                     {
                         KubernetesClient k8sClient = new KubernetesClient();
                         k8sClient.deleteJob(jobToTerminate.getVersionData().getDataSource());
-                    }
-                    catch (JobNotFoundException e)
-                    {
-                        logger.warn(e.getMessage());
-                    }
+	                } catch (JobNotFoundException e) {
+	                    logger.warn("Job not found: {}", e.getMessage());
+	                } catch (Exception e) {
+	                    logger.error("Unexpected error during job termination", e);
+	                }
 
                     this.setState(jobToTerminate.getVersionData(), jobToTerminate.getAiJobsData(), "DEAD");
 

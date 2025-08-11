@@ -14,12 +14,27 @@
 
 package org.scray.sync.rest;
 
-import scray.sync.api.VersionedData;
+public class PublishedEventStatistics {
 
-public interface SyncEventManager {
+	private long pubshingNotAcknowledged;
+	private long publishedEvents;
 
-	public void publishUpdate(VersionedData updatedVersionedData);
+	public long getPubshingNotAcknowledged() {
+		return pubshingNotAcknowledged;
+	}
+	public void setPubshingNotAcknowledged(long pubshingNotAcknowledged) {
+		this.pubshingNotAcknowledged = pubshingNotAcknowledged;
+	}
+	public long getPublishedEvents() {
+		return publishedEvents;
+	}
+	public void setPublishedEvents(long publishedEvents) {
+		this.publishedEvents = publishedEvents;
+	}
 
-	public PublishedEventStatistics getStatistics();
-
+	@Override
+	public String toString() {
+		return "PublishdEventStatistics [pubshingNotAcknowledged=" + pubshingNotAcknowledged + ", publishedEvents="
+				+ publishedEvents + "]";
+	}
 }
