@@ -3,7 +3,7 @@ SOURCE_DATA=./
 NOTEBOOK_NAME=token_classification_01.ipynb
 INITIAL_STATE=""
 PROCESSING_ENV=""
-DOCKER_IMAGE="scrayorg/scray-jupyter_tensorflow-gpu:0.1.1"
+DOCKER_IMAGE="scrayorg/scray-jupyter_tensorflow-gpu:0.1.2"
 JOB_NAME_LITERALLY=false
 DATA_INTEGRATION_HOST=ml-integration-git.research.dev.example.com
 DATA_INTEGRATION_USER=ubuntu
@@ -56,7 +56,8 @@ downloadUpdatedNotebook() {
 
 setState() {
 echo $1
-curl -sS -X 'PUT' \
+echo $SYNC_API_URL
+curl -sS -k  -X 'PUT' \
   ''$SYNC_API_URL'/sync/versioneddata/latest' \
   -H 'accept: */*' \
   -H 'Content-Type: application/json' \
@@ -71,11 +72,11 @@ curl -sS -X 'PUT' \
 
 waitForJobCompletion() {
 
-   STATE_OBJECT=$(curl -sS -X 'GET'   ''$SYNC_API_URL'/sync/versioneddata/latest?datasource='$JOB_NAME'&mergekey=_'   -H 'accept: application/json' | jq '.data  | fromjson')
+   STATE_OBJECT=$(curl -k -sS -X 'GET'   ''$SYNC_API_URL'/sync/versioneddata/latest?datasource='$JOB_NAME'&mergekey=_'   -H 'accept: application/json' | jq '.data  | fromjson')
 
   while [ "$STATE" != "\"COMPLETED\"" ]
   do
-    STATE_OBJECT=$(curl -sS -X 'GET'   ''$SYNC_API_URL'/sync/versioneddata/latest?datasource='$JOB_NAME'&mergekey=_'   -H 'accept: application/json' | jq '.data  | fromjson')
+    STATE_OBJECT=$(curl -k  -sS -X 'GET'   ''$SYNC_API_URL'/sync/versioneddata/latest?datasource='$JOB_NAME'&mergekey=_'   -H 'accept: application/json' | jq '.data  | fromjson')
     STATE=$(echo "$STATE_OBJECT" | jq .state)
 
     downloadUpdatedNotebook
@@ -131,6 +132,12 @@ else
     DATA_INTEGRATION_USER="$SCRAY_DATA_INTEGRATION_USER"
 fi
 
+# Check if sync host user env var is empty
+if [ -z "$SCRAY_SYNC_API_URL" ]; then
+    echo "The environment variable  SCRAY_DATA_INTEGRATION_USER not set. Default value \"$SYNC_API_URL\" is used."
+else
+    SYNC_API_URL="$SCRAY_SYNC_API_URL"
+fi
 
 
 
