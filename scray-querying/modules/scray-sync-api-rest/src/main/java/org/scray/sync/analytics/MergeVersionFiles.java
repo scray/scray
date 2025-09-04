@@ -16,6 +16,7 @@ package org.scray.sync.analytics;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,8 +26,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import scray.sync.impl.FileVersionedDataApiImpl;
 
-public class StateRemover {
-	private static final Logger logger = LoggerFactory.getLogger(StateRemover.class);
+public class MergeVersionFiles {
+	private static final Logger logger = LoggerFactory.getLogger(MergeVersionFiles.class);
 
 	public FileVersionedDataApiImpl removeState(List<String> statesToRemove, List<VersionedData> vData) {
 
@@ -50,16 +51,21 @@ public class StateRemover {
 
 	public static void main(String[] args) {
 
-		StateRemover remover = new StateRemover();
+		MergeVersionFiles remover = new MergeVersionFiles();
 		List<VersionedData> vsData = new SyncFileManager("sync-api-stat.json").getSyncApi().getAllVersionedResources();
+		List<VersionedData> vsData2 = new SyncFileManager("sync-api-stat.json.v2").getSyncApi().getAllVersionedResources();
+
 		List<String> statesToRemove = Arrays.asList("COMPLETED", "CONVESION_ERROR", "ERROR", "PUBLISHED", "FINISHED", "LOADING_ERROR");
+
+
+		List<VersionedData> allVersions = Stream.concat(vsData.stream(), vsData2.stream()).toList();
 
 		FileVersionedDataApiImpl statesToPersist = remover.removeState(
 				statesToRemove,
-				vsData
+				allVersions
 		);
 
-		var numOfInStates = vsData.size();
+		var numOfInStates = allVersions.size();
 		var numOfOutStates = statesToPersist.getAllVersionedResources().size();
 
 		System.out.println("Num of in states:  " + numOfInStates);

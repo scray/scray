@@ -16,10 +16,15 @@ package scray.sync.api;
 import java.util.function.Function;
 
 public class VersionedData {
-    private final String dataSource;  // Defines where the data come from. E.g. from a batch or streaming job
-    private final String mergeKey;    // Describes an attribute to merge two dataSources
-    private final long version;       // Version of this data. E.g. time stamp
-    private final String data;        // String representation of the data to store
+
+
+	private String dataSource;  // Defines where the data come from. E.g. from a batch or streaming job
+    private String mergeKey;    // Describes an attribute to merge two dataSources
+    private long version;       // Version of this data. E.g. time stamp
+    private String data;        // String representation of the data to store
+    private Long versionKey;
+
+    public VersionedData() {}
 
     public VersionedData(String dataSource, String mergeKey, long version, String data) {
         this.dataSource = dataSource;
@@ -28,7 +33,33 @@ public class VersionedData {
         this.data = data;
     }
 
-    public <T> T getDataAs(Function<String, T> f) {
+
+
+    public void setDataSource(String dataSource) {
+		this.dataSource = dataSource;
+	}
+
+
+
+	public void setMergeKey(String mergeKey) {
+		this.mergeKey = mergeKey;
+	}
+
+
+
+	public void setVersion(long version) {
+		this.version = version;
+	}
+
+
+
+	public void setData(String data) {
+		this.data = data;
+	}
+
+
+
+	public <T> T getDataAs(Function<String, T> f) {
         return f.apply(data);
     }
 

@@ -97,7 +97,7 @@ class ScrayJobClient:
         
         while True:
             
-            latestVersion = self.client.getLatestVersion
+            latestVersion = self.client.getLatestVersion(job_name, "_")
 
             logger.info("Latest version data: " + latestVersion.to_str())
 
@@ -112,36 +112,42 @@ class ScrayJobClient:
             time.sleep(3)
 
     def get_jobs(self, processing_env, requested_state=None) -> list[str]:
-              
-            latestVersions = self.client.get_all_versioned_data()
-            if latestVersions is None:
-                logger.info("No new version available")
-                return []
-            else:
-                logger.info("Latest version data: " + str(type(latestVersions)))
 
-                def env_state_filter(latestVersion) -> str:
-                    try:
-                        metadata = JobSyncApiData.from_json(json_string=latestVersion.data)
+            if requested_state is None:
+                latestVersions = self.client.get_all_versioned_data()
+                if latestVersions is None:
+                    logger.info("No new version available")
+                    return []
+                else:
+                    logger.info("Latest version data: " + str(type(latestVersions)))
 
-                        if metadata.processingEnv == processing_env:
-                            if requested_state is None:
-                                return True  # If no state is requested, include all states
+                    def env_state_filter(latestVersion) -> str:
+                        try:
+                            metadata = JobSyncApiData.from_json(json_string=latestVersion.data)
+
+                            if metadata.processingEnv == processing_env:
+                                if requested_state is None:
+                                    return True  # If no state is requested, include all states
+                                else:
+                                    return metadata.state == requested_state
                             else:
-                                return metadata.state == requested_state
-                        else:
-                            return False
-                        
-                    except ValueError:
-                        return False 
+                                return False
+                            
+                        except ValueError:
+                            return False 
+            else:
+                   latestVersions = self.client.getLatestVersionedDataByState(processing_env, requested_state)
 
+                   if latestVersions is None:
+                    logger.info("No new version available")
+                    return []
+                   else:
+                    logger.info("Latest version data: " + str(type(latestVersions)))
                 
-                def get_job_name(versioned_data) -> str:
-                    return versioned_data.data_source
+                    def get_job_name(versioned_data) -> str:
+                        return versioned_data.data_source
                 
-                job_with_matching_state = list(filter(env_state_filter, latestVersions))
-
-                return list(map(get_job_name, job_with_matching_state))
+                    return list(map(get_job_name, latestVersions))
     
 
     def wait_for_new_job(self, processing_env, requested_state)-> list[str]:

@@ -27,6 +27,11 @@ public interface VersionedDataApi {
     Optional<VersionedData> getLatestVersion(String dataSource, String mergeKey);
 
     /**
+     * Get latest version based on an index
+     */
+    Optional<List<VersionedData>> getLatestVersion(String idxName, String attribute1, String attribute2);
+
+    /**
      * Update the versioned data for a given resource
      */
     void updateVersion(String dataSource, String mergeKey, long version, String data);
@@ -55,4 +60,5 @@ public interface VersionedDataApi {
      * Get all resources where a version exists
      */
     List<VersionedData> getAllVersionedResources();
+
 }

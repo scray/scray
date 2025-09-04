@@ -3,6 +3,8 @@ package scray.sync.impl;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
+
+import scala.Array;
 import scray.sync.api.VersionedData;
 import scray.sync.api.VersionedDataApi;
 
@@ -13,12 +15,20 @@ import java.io.*;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 
 public class FileVersionedDataApiImpl implements VersionedDataApi {
     private static final Logger logger = LoggerFactory.getLogger(FileVersionedDataApiImpl.class);
 
     private final Gson gson = new GsonBuilder().setPrettyPrinting().create();
-    private Map<Integer, VersionedData> versionInformations = new HashMap<>();
+    private Map<Integer, VersionedData> versionInformations = new ConcurrentHashMap<>();
+    private Map<Integer, Map<Integer, VersionedData>> versionInformationsIdxEnvState = new ConcurrentHashMap<>();
+    private Idx idx = new IndexDataEnvState();
+
+    private IndexDataEnvState indexCreator = new IndexDataEnvState();
+
 
     public FileVersionedDataApiImpl() {
         this.versionInformations = toMap(new ArrayList<>());
@@ -33,12 +43,45 @@ public class FileVersionedDataApiImpl implements VersionedDataApi {
     @Override
     public void updateVersion(String dataSource, String mergeKey, long version, String data) {
         VersionedData vd = new VersionedData(dataSource, mergeKey, version, data);
+
+        // Get old version to know which one to update
+    	var oldV = Optional.ofNullable(versionInformations.get(vd.getVersionKey()));
+    	// Add new state to idx
+        idx.put(oldV, vd, versionInformationsIdxEnvState);
+
         versionInformations.put(vd.getVersionKey(), vd);
     }
 
     public void updateVersion(VersionedData vd) {
+        // Get old version to know which one to update
+    	var oldV = Optional.ofNullable(versionInformations.get(vd.getVersionKey()));
+    	// Add new state to idx
+        idx.put(oldV, vd, versionInformationsIdxEnvState);
+
         versionInformations.put(vd.getVersionKey(), vd);
     }
+
+	@Override
+	public Optional<List<VersionedData>> getLatestVersion(String idxName, String attribute1, String attribute2) {
+
+		 Optional<Integer> key = idx.getKey(attribute1, attribute2);
+
+		 if(key.isEmpty()) {
+			 logger.debug("Error while creating key from inputdata");
+			 return Optional.empty();
+		 } else {
+			var vds = Optional.ofNullable(versionInformationsIdxEnvState.get(key.get()))
+			.map(Map::values);
+
+
+			if(vds.isEmpty()) {
+				return Optional.empty();
+			} else {
+				return Optional.of(new ArrayList(vds.get()));
+			}
+
+		 }
+	}
 
     @Override
     public void persist(String path) {
@@ -90,7 +133,7 @@ public class FileVersionedDataApiImpl implements VersionedDataApi {
     }
 
     private Map<Integer, VersionedData> toMap(List<VersionedData> dataList) {
-        Map<Integer, VersionedData> resultMap = new HashMap<>();
+        Map<Integer, VersionedData> resultMap = new ConcurrentHashMap<>();
         for (VersionedData data : dataList) {
             int key = data.getVersionKey();
             VersionedData existing = resultMap.get(key);

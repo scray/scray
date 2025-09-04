@@ -20,13 +20,18 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 import scala.Option;
 
+import org.scray.sync.rest.FilterParser;
 import org.scray.sync.rest.MqttSyncEventManager;
+import org.scray.sync.rest.PersistBuffer;
+import org.scray.sync.rest.SearchRequest;
 import org.scray.sync.rest.SyncEventManager;
 import org.scray.sync.rest.SyncFileManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -35,142 +40,141 @@ import org.springframework.web.bind.annotation.*;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import scray.sync.api.QuerySpec;
+import scray.sync.api.QuerySpec.Condition;
 import scray.sync.api.VersionedData;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 @RestController
+@SpringBootApplication(exclude = {
+		org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration.class })
 public class ReadController {
 
-    private static final Logger logger = LoggerFactory.getLogger(ReadController.class);
-    SyncFileManager syncApiManager = new SyncFileManager("sync-api-stat.json");
-    SyncEventManager eventManager = new MqttSyncEventManager();
+	private static final Logger logger = LoggerFactory.getLogger(ReadController.class);
+	SyncEventManager eventManager = new MqttSyncEventManager();
+	private final PersistBuffer persistBuffer;
+	SyncFileManager syncApiManager;
 
 
-    @Operation(summary = "Get latest version",
-            description = "Get latest version of the data",
+	public ReadController(PersistBuffer buffer) {
+		this.persistBuffer = buffer;
+		this.syncApiManager = buffer.getSyncApiManager();
+	}
 
-            tags = { "Sync-API" })
-    @ApiResponses(value =
-            {
-                    @ApiResponse(responseCode = "200",
-                            description = "OK",
-                            content = @Content(
-                                    mediaType = MediaType.APPLICATION_JSON_VALUE,
-                                    schema = @Schema(implementation = VersionedData.class))) })
-    @Parameter(name = "filter", description = "Optional filters on data JSON fields, e.g., data.env==http%3A%2F%2Fexample-env.scray.org;data.job.meta.name==job1")
-    @CrossOrigin(origins = "*")
-    @GetMapping(value = "/sync/versioneddata/latest")
-    ResponseEntity<VersionedData> getLatestVersion(
-    		@RequestParam String datasource,
-    		@RequestParam String mergekey,
-    		@RequestParam(required = false) String filter) {
+	@Operation(summary = "Get latest version", description = "Get latest version of the data",
 
-        if(datasource == null && mergekey == null) {
-            syncApiManager.getSyncApi().getLatestVersion(datasource, mergekey);
-        }
+			tags = { "Sync-API" })
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "OK", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = VersionedData.class))) })
+	@Parameter(name = "filter", description = "Optional filters on data JSON fields, e.g., data.env==http%3A%2F%2Fexample-env.scray.org;data.job.meta.name==job1")
+	@CrossOrigin(origins = "*")
+	@GetMapping(value = "/sync/versioneddata/latest")
+	ResponseEntity<VersionedData> getLatestVersion(@RequestParam String datasource, @RequestParam String mergekey,
+			@RequestParam(required = false) String filter) {
 
+		if (datasource == null && mergekey == null) {
+			syncApiManager.getSyncApi().getLatestVersion(datasource, mergekey);
+		}
 
-        Optional<VersionedData> latestVersion = syncApiManager.getSyncApi().getLatestVersion(datasource, mergekey);
+		Optional<VersionedData> latestVersion = syncApiManager.getSyncApi().getLatestVersion(datasource, mergekey);
 
-        if(latestVersion.isEmpty()) {
-            return new ResponseEntity<VersionedData>(HttpStatus.NOT_FOUND);
-        } else {
+		if (latestVersion.isEmpty()) {
+			return new ResponseEntity<VersionedData>(HttpStatus.NOT_FOUND);
+		} else {
+			return new ResponseEntity<VersionedData>(latestVersion.get(), HttpStatus.OK);
+		}
 
-        	var latestVersionData = latestVersion.get();
+	}
 
-            if (filter != null && !filter.isBlank()) {
-                try {
-                    ObjectMapper objectMapper = new ObjectMapper();
-                    JsonNode dataJson = objectMapper.readTree(latestVersionData.getData());
-                    Map<String, String> filters = parseFilterString(filter);
+	private final FilterParser parser = new FilterParser();
 
-                    for (Map.Entry<String, String> entry : filters.entrySet()) {
-                        String jsonPath = entry.getKey();
-                        String expectedValue = entry.getValue();
+	@io.swagger.v3.oas.annotations.parameters.RequestBody(required = true, content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, examples = @ExampleObject(name = "SearchRequestExample", value = "{\n"
+			+ "  \"filter\": \"data.processingEnv==http://scray.org/ai/app/env/see/os/k8s;data.state==RUNNING\"\n"
+			+ "}")))
+	@PostMapping("/indexes/{indexName}/search")
+	public ResponseEntity<List<VersionedData>> search(@PathVariable String indexName,
+			@RequestBody SearchRequest request) {
+		QuerySpec filter = parser.parse(request.filter());
+		if (filter != null && filter.conditions().size() == 2) {
+			try {
 
-                        JsonNode actualNode = getNestedJsonNode(dataJson, jsonPath);
-                        if (actualNode == null || !expectedValue.equals(actualNode.asText())) {
-                            return new ResponseEntity<>(HttpStatus.NOT_FOUND); // does not match filter
-                        }
-                    }
+				String processingEnv = filter.conditions().get("data.processingEnv").getValue();
+				String state = filter.conditions().get("data.state").getValue();
 
-                } catch (Exception e) {
-                    return new ResponseEntity<>(HttpStatus.BAD_REQUEST); // bad JSON or bad filter
-                }
-            }
+				Optional<List<VersionedData>> latestVersion = syncApiManager.getSyncApi().getLatestVersion("EnvState",
+						processingEnv, state);
+				if (latestVersion.isEmpty()) {
+					return new ResponseEntity("No entry found for given filter", HttpStatus.NOT_FOUND);
+				} else {
+					return new ResponseEntity(latestVersion, HttpStatus.OK);
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+				return new ResponseEntity<>(HttpStatus.BAD_REQUEST); // bad JSON or bad filter
+			}
+		} else {
+			return new ResponseEntity(HttpStatus.NOT_FOUND);
+		}
+	}
 
-            return new  ResponseEntity<VersionedData>(latestVersion.get(), HttpStatus.OK);
-        }
-    }
+	private Map<String, String> parseFilterString(String filter) {
+		Map<String, String> result = new HashMap<>();
+		String[] filters = filter.split(";");
+		for (String clause : filters) {
+			String[] parts = clause.split("==", 2);
+			if (parts.length == 2) {
+				result.put(parts[0].trim(), parts[1].trim());
+			} else {
+				throw new IllegalArgumentException("Invalid filter format: " + clause);
+			}
+		}
+		return result;
+	}
 
+	private JsonNode getNestedJsonNode(JsonNode root, String path) {
+		String[] keys = path.split("\\.");
+		JsonNode current = root;
+		for (String key : keys) {
+			if (current == null)
+				return null;
+			current = current.get(key);
+		}
+		return current;
+	}
 
-    private Map<String, String> parseFilterString(String filter) {
-        Map<String, String> result = new HashMap<>();
-        String[] filters = filter.split(";");
-        for (String clause : filters) {
-            String[] parts = clause.split("==", 2);
-            if (parts.length == 2) {
-                result.put(parts[0].trim(), parts[1].trim());
-            } else {
-                throw new IllegalArgumentException("Invalid filter format: " + clause);
-            }
-        }
-        return result;
-    }
+	@Operation(summary = "Get lates versions of all versioned resources.", description = "A list with all versioned resource of this user",
 
-    private JsonNode getNestedJsonNode(JsonNode root, String path) {
-        String[] keys = path.split("\\.");
-        JsonNode current = root;
-        for (String key : keys) {
-            if (current == null) return null;
-            current = current.get(key);
-        }
-        return current;
-    }
+			tags = { "Sync-API" })
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "OK", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = VersionedData.class))) })
+	@CrossOrigin(origins = "*")
+	@GetMapping(value = "/sync/versioneddata/all/latest")
+	public ResponseEntity<List<VersionedData>> getLatestVersion() {
+		return new ResponseEntity<>(syncApiManager.getSyncApi().getAllVersionedResources(), HttpStatus.OK);
+	}
 
+	@Operation(summary = "Update Version", description = "Update a version",
 
-
-    @Operation(summary = "Get lates versions of all versioned resources.",
-            description = "A list with all versioned resource of this user",
-
-            tags = { "Sync-API" })
-    @ApiResponses(value =
-            {
-                    @ApiResponse(responseCode = "200",
-                            description = "OK",
-                            content = @Content(
-                                    mediaType = MediaType.APPLICATION_JSON_VALUE,
-                                    schema = @Schema(implementation = VersionedData.class))) })
-    @CrossOrigin(origins = "*")
-    @GetMapping(value = "/sync/versioneddata/all/latest")
-    public ResponseEntity<List<VersionedData>> getLatestVersion() {
-    	return new ResponseEntity<>(syncApiManager.getSyncApi().getAllVersionedResources(), HttpStatus.OK);
-    }
-
-
-
-    @Operation(summary = "Update Version",
-            description = "Update a version",
-
-            tags = { "Sync-API" })
-    @ApiResponses(value =
-            {
-                    @ApiResponse(responseCode = "200",
-                            description = "OK")
-            })
-    @CrossOrigin(origins = "*")
-    @PutMapping(value = "/sync/versioneddata/latest")
-    void updateVersion(@RequestBody VersionedData updatedVersionedData) {
-        syncApiManager.getSyncApi().updateVersion(updatedVersionedData);
-        syncApiManager.persist();
-        try {
-        eventManager.publishUpdate(updatedVersionedData);
-        } catch (Exception e) {
-        	logger.warn("Error when sending event notification {} ", e);
-        }
-    }
+			tags = { "Sync-API" })
+	@io.swagger.v3.oas.annotations.parameters.RequestBody(required = true, content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = VersionedData.class), examples = @ExampleObject(name = "VersionedDataExample", value = "{\n"
+			+ "  \"dataSource\": \"s1\",\n" + "  \"mergeKey\": \"_\",\n" + "  \"version\": 0,\n"
+			+ "  \"data\": \"{\\\"processingEnv\\\": \\\"http://scray.org/ai/app/env/see/os/k8s\\\",  \\\"state\\\": \\\"RUNNING\\\"}\",\n"
+			+ "  \"versionKey\": 0\n" + "}")))
+	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "OK") })
+	@CrossOrigin(origins = "*")
+	@PutMapping(value = "/sync/versioneddata/latest")
+	void updateVersion(@RequestBody VersionedData updatedVersionedData) {
+		syncApiManager.getSyncApi().updateVersion(updatedVersionedData);
+		persistBuffer.markDirty();
+		try {
+			eventManager.publishUpdate(updatedVersionedData);
+		} catch (Exception e) {
+			logger.warn("Error when sending event notification {} ", e);
+		}
+	}
 }
