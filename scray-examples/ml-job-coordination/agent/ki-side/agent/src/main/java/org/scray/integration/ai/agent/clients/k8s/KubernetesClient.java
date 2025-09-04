@@ -272,8 +272,9 @@ public class KubernetesClient {
 										.withValue(jobName)
 									.endEnv()
 									.editMatchingEnv(e -> e.getName().equals("RUN_TYPE")).withValue("once").endEnv() // FIXME ??
-                                    .editMatchingEnv(e -> e.getName().equals("RUNTIME_TYPE")).withValue(runtimeType).endEnv()
+                                    .editMatchingEnv(e -> e.getName().equals("RUNTIME_TYPE")).withValue("PYTHON").endEnv()
 									.editMatchingEnv(e -> e.getName().equals("SCRAY_SYNC_API_URL")).withValue(syncApiUrl).endEnv()
+									.editMatchingEnv(e -> e.getName().equals("SYNC_API_URL")).withValue(syncApiUrl).endEnv()
                                     .editMatchingEnv(e -> e.getName().equals("SCRAY_DATA_INTEGRATION_HOST")).withValue(dataIntegrationHost).endEnv()
 									.endContainer()
 								.endSpec()
@@ -404,6 +405,11 @@ public class KubernetesClient {
 		Job job = client.batch().v1().jobs().inNamespace("default").list().getItems().stream()
 		.filter(jobR -> {
 			String appName = jobR.getSpec().getTemplate().getMetadata().getLabels().get("app");
+		    if (appName == null) {
+		        logger.error("App label is missing (expected '{}') in Job resource: {}", jobName, jobR.getMetadata().getName());
+		        return false;
+		    }
+
 			return appName.equals(jobName);
 		})
 		.reduce(null, (a, b) -> b);

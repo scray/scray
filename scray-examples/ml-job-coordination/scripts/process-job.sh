@@ -176,7 +176,7 @@ runLocalJob() {
 
 setState() {
   echo $1
-  curl -X 'PUT' \
+  curl -k -X 'PUT' \
     $SYNC_API_URL'/latest' \
     -H 'accept: */*' \
     -H 'Content-Type: application/json' \
@@ -191,7 +191,7 @@ setState() {
 }
 
 waitForNextJob() {
-  STATE_OBJECT=$(curl -sS -X 'GET' $SYNC_API_URL'/latest?datasource='$JOB_NAME'&mergekey=_' -H 'accept: application/json' | jq '.data  | fromjson')
+  STATE_OBJECT=$(curl -k -sS -X 'GET' $SYNC_API_URL'/latest?datasource='$JOB_NAME'&mergekey=_' -H 'accept: application/json' | jq '.data  | fromjson')
   STATE=$(echo "$STATE_OBJECT" | jq .state)
   SOURCE_DATA=$(echo "$STATE_OBJECT" | jq -r .dataDir)
   NOTEBOOK_NAME=$(echo "$STATE_OBJECT" | jq -r .notebookName)
@@ -202,7 +202,7 @@ waitForNextJob() {
   echo PROCESSING_ENV: "$PROCESSING_ENV"
 
   while [ "$STATE" != "\"$TRIGGER_STATE\"" ]; do
-    STATE_OBJECT=$(curl -sS -X 'GET' $SYNC_API_URL'/latest?datasource='$JOB_NAME'&mergekey=_' -H 'accept: application/json' | jq '.data  | fromjson')
+    STATE_OBJECT=$(curl -k -sS -X 'GET' $SYNC_API_URL'/latest?datasource='$JOB_NAME'&mergekey=_' -H 'accept: application/json' | jq '.data  | fromjson')
     SOURCE_DATA=$(echo "$STATE_OBJECT" | jq -r .dataDir)
     NOTEBOOK_NAME=$(echo "$STATE_OBJECT" | jq -r .notebookName)
 

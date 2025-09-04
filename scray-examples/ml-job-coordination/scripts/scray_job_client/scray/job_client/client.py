@@ -97,7 +97,7 @@ class ScrayJobClient:
         
         while True:
             
-            latestVersion = self.client.getLatestVersion
+            latestVersion = self.client.getLatestVersion(job_name, "_")
 
             logger.info("Latest version data: " + latestVersion.to_str())
 
@@ -112,36 +112,42 @@ class ScrayJobClient:
             time.sleep(3)
 
     def get_jobs(self, processing_env, requested_state=None) -> list[str]:
-              
-            latestVersions = self.client.get_all_versioned_data()
-            if latestVersions is None:
-                logger.info("No new version available")
-                return []
-            else:
-                logger.info("Latest version data: " + str(type(latestVersions)))
 
-                def env_state_filter(latestVersion) -> str:
-                    try:
-                        metadata = JobSyncApiData.from_json(json_string=latestVersion.data)
+            if requested_state is None:
+                latestVersions = self.client.get_all_versioned_data()
+                if latestVersions is None:
+                    logger.info("No new version available")
+                    return []
+                else:
+                    logger.info("Latest version data: " + str(type(latestVersions)))
 
-                        if metadata.processingEnv == processing_env:
-                            if requested_state is None:
-                                return True  # If no state is requested, include all states
+                    def env_state_filter(latestVersion) -> str:
+                        try:
+                            metadata = JobSyncApiData.from_json(json_string=latestVersion.data)
+
+                            if metadata.processingEnv == processing_env:
+                                if requested_state is None:
+                                    return True  # If no state is requested, include all states
+                                else:
+                                    return metadata.state == requested_state
                             else:
-                                return metadata.state == requested_state
-                        else:
-                            return False
-                        
-                    except ValueError:
-                        return False 
+                                return False
+                            
+                        except ValueError:
+                            return False 
+            else:
+                   latestVersions = self.client.getLatestVersionedDataByState(processing_env, requested_state)
 
+                   if latestVersions is None:
+                    logger.info("No new version available")
+                    return []
+                   else:
+                    logger.info("Latest version data: " + str(type(latestVersions)))
                 
-                def get_job_name(versioned_data) -> str:
-                    return versioned_data.data_source
+                    def get_job_name(versioned_data) -> str:
+                        return versioned_data.data_source
                 
-                job_with_matching_state = list(filter(env_state_filter, latestVersions))
-
-                return list(map(get_job_name, job_with_matching_state))
+                    return list(map(get_job_name, latestVersions))
     
 
     def wait_for_new_job(self, processing_env, requested_state)-> list[str]:
@@ -224,4 +230,49 @@ class ScrayJobClient:
             )
         
         return job_name
+    
+    def get_job_fin_data(job_name, destination_path, data_integration_user, data_integration_host):
+        """
+        Downloads the completed job data and extracts it to a specified destination.
+
+        :param job_name: Name of the job (used for the file name).
+        :param destination_path: Path where the extracted files should be stored.
+        :param data_integration_user: Username for the SFTP connection.
+        :param data_integration_host: Host of the SFTP server.
+        """
+        temp_tar_path = f"/tmp/{job_name}.tar.gz"
+        
+        # Ensure the destination path exists
+        os.makedirs(destination_path, exist_ok=True)
+
+        transport = paramiko.Transport((data_integration_host, 22))
+        
+        try:
+            private_key_path = f"{Path.home()}/.ssh/id_rsa"
+            key = paramiko.RSAKey.from_private_key_file(private_key_path)
+
+            # Connect to SFTP
+            transport.connect(username=data_integration_user, pkey=key)
+            sftp = paramiko.SFTPClient.from_transport(transport)
+            
+            # Download the archive
+            remote_path = f"sftp-share/{job_name}.tar.gz"
+            print(f"Downloading {remote_path} to {temp_tar_path}")
+            sftp.get(remote_path, temp_tar_path)
+            sftp.close()
+
+            # Extract the archive
+            with tarfile.open(temp_tar_path, "r:gz") as tar:
+                tar.extractall(path=destination_path)
+                print(f"Extracted {job_name}.tar.gz to {destination_path}")
+
+        except Exception as e:
+            print(f"Error during download and extraction: {e}")
+        finally:
+            transport.close()
+            
+            # Remove the downloaded archive after extraction
+            if os.path.exists(temp_tar_path):
+                os.remove(temp_tar_path)
+                print(f"Removed temporary file {temp_tar_path}")
 

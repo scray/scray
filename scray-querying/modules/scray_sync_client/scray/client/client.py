@@ -20,6 +20,7 @@ from typing import Dict, Optional
 import json
 from scray.client.config import ScrayClientConfig
 from scray.client.models.versioned_data import VersionedData
+import json
 
 from requests import Session
 
@@ -51,7 +52,38 @@ class ScrayClient:
 
         return result
     
+    def getLatestVersionedDataByState(self, env, state) -> list[VersionedData]:
 
+        url = f"{self.client_config.host_address}:{self.client_config.port}/indexes/state-env/search/"
+        logger.debug("Request " + url)
+
+        filter_str = f"data.processingEnv=={env};data.state=={state}"
+        payload = {
+            "filter": filter_str
+        }
+
+        response = self._make_postrequest(
+            conn=self.request_session,
+            url=url,
+            data=payload
+        )
+
+        def create_versioned_data_object(response):
+            print(type(response))
+            if response is None:
+                return []
+            else:
+                result = []
+                for item in response:
+                    obj = VersionedData()
+                    obj.fromDict(item)
+                    result.append(obj)
+                return result
+            result = VersionedData()
+            result.fromDict(response)
+            return result
+
+        return create_versioned_data_object(response)
     
 
     def get_all_versioned_data(self) -> list[VersionedData]:
@@ -60,12 +92,19 @@ class ScrayClient:
         logger.debug("Request " + url)
         response = self._make_getrequest(conn=self.request_session, method="GET", url=url)
 
-        def create_versioned_data_object(response):
-            result = VersionedData()
-            result.fromDict(response)
+        def create_versioned_data_objects(response_list):
+           print(response_list)
+           if response_list is None:
+            return []
+           else:
+            result = []
+            for item in response_list:
+                obj = VersionedData()
+                obj.fromDict(item)
+                result.append(obj)
             return result
 
-        return list(map(create_versioned_data_object, response))
+        return map(create_versioned_data_objects, response)
 
     def updateVersion(self, versionedData):
         url = f"{self.client_config.host_address}:{self.client_config.port}/sync/versioneddata/latest/?datasource={versionedData.data_source}&mergekey={versionedData.merge_key}"
@@ -80,7 +119,7 @@ class ScrayClient:
         self, conn, method, url
     ):
 
-        response = conn.request(method, url)
+        response = conn.request(method, url, timeout=15)
         if response.status_code == 200:
             return response.json()
         else:
@@ -92,8 +131,23 @@ class ScrayClient:
     ):
         newHeaders = {'Content-type': 'application/json'}
 
-        response = conn.put(url, data=str(data()), headers=newHeaders)
+        response = conn.put(url, data=str(data()), headers=newHeaders, timeout=15)
         if response.status_code == 200:
             logger.info("State successfully updated")
         else:
             logger.error(f"Error while interacting with sync API. Code: {response.status_code}")
+    
+    def _make_postrequest(
+        self, conn, url, data
+    ):
+        newHeaders = {'Content-type': 'application/json'}
+        response = conn.post(url, data=json.dumps(data), headers=newHeaders, timeout=15)
+        if response.status_code == 200:
+            return response.json()
+        else:
+            logger.error(
+                f"Error while interacting with sync API (POST). "
+                f"Code: {response.status_code}, Response: {response.text}"
+            )
+
+
