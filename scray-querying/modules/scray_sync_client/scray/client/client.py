@@ -55,6 +55,7 @@ class ScrayClient:
     def getLatestVersionedDataByState(self, env, state) -> list[VersionedData]:
 
         url = f"{self.client_config.host_address}:{self.client_config.port}/indexes/state-env/search/"
+
         logger.debug("Request " + url)
 
         filter_str = f"data.processingEnv=={env};data.state=={state}"
@@ -69,9 +70,9 @@ class ScrayClient:
         )
 
         def create_versioned_data_object(response):
-            print(type(response))
             if response is None:
                 return []
+            
             else:
                 result = []
                 for item in response:
@@ -92,19 +93,17 @@ class ScrayClient:
         logger.debug("Request " + url)
         response = self._make_getrequest(conn=self.request_session, method="GET", url=url)
 
-        def create_versioned_data_objects(response_list):
-           print(response_list)
-           if response_list is None:
+        if response is None:
             return []
-           else:
-            result = []
-            for item in response_list:
-                obj = VersionedData()
-                obj.fromDict(item)
-                result.append(obj)
-            return result
+        if not isinstance(response, list):
+            raise TypeError(f"Expected list, got {type(response)}")
 
-        return map(create_versioned_data_objects, response)
+        result: list[VersionedData] = []
+        for item in response:
+            vd = VersionedData()
+            vd.fromDict(item)
+            result.append(vd)
+        return result
 
     def updateVersion(self, versionedData):
         url = f"{self.client_config.host_address}:{self.client_config.port}/sync/versioneddata/latest/?datasource={versionedData.data_source}&mergekey={versionedData.merge_key}"

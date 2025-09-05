@@ -135,6 +135,12 @@ class ScrayJobClient:
                             
                         except ValueError:
                             return False 
+                    
+                    def get_job_name(versioned_data) -> str:
+                        return versioned_data.data_source
+                    
+                    job_with_matching_state = list(filter(env_state_filter, latestVersions))
+                    return list(map(get_job_name, job_with_matching_state))
             else:
                    latestVersions = self.client.getLatestVersionedDataByState(processing_env, requested_state)
 
