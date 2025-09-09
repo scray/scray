@@ -255,7 +255,7 @@ class ScrayJobClient:
 
     def get_job_metadata(self, job_name):
         
-        latestVersion = self.client.getLatestVersion('_', job_name)
+        latestVersion = self.client.getLatestVersion(job_name, '_')
         logger.info("Latest version data: " + latestVersion.to_str())
         metadata = JobSyncApiData.from_json(json_string=latestVersion.data).metadata
 
