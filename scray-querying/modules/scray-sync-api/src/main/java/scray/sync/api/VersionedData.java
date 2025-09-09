@@ -90,6 +90,6 @@ public class VersionedData {
     }
 
     public static int createVersionKey(String dataSource, String mergeKey) {
-        return dataSource.hashCode() * 31 + mergeKey.hashCode() * 31;
+        return java.util.Objects.hash(dataSource, mergeKey);
     }
 }

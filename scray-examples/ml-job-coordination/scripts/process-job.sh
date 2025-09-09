@@ -4,6 +4,8 @@ DATA_INTEGRATION_HOST=ml-integration-git.research.dev.example.com
 DATA_INTEGRATION_USER=ubuntu
 SYNC_API_URL="http://ml-integration.research.dev.example.com:8082"
 
+RESUMABLE_JOB = false
+
 if [[ -z "${TRIGGER_STATE}" ]]; then
   echo "TRIGGER_STATE not set use default \"SCHEDULED\""
   TRIGGER_STATE="SCHEDULED"

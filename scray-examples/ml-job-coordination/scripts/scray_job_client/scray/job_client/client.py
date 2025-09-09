@@ -110,7 +110,38 @@ class ScrayJobClient:
                 break
 
             time.sleep(3)
+            
+    def get_jobs_old(self, processing_env, requested_state=None) -> list[str]:
+              
+            latestVersions = self.client.get_all_versioned_data()
+            if latestVersions is None:
+                logger.info("No new version available")
+                return []
+            else:
+                logger.info("Latest version data: " + str(type(latestVersions)))
 
+                def env_state_filter(latestVersion) -> str:
+                    try:
+                        metadata = JobSyncApiData.from_json(json_string=latestVersion.data)
+
+                        if metadata.processingEnv == processing_env:
+                            if requested_state is None:
+                                return True  # If no state is requested, include all states
+                            else:
+                                return metadata.state == requested_state
+                        else:
+                            return False
+                        
+                    except ValueError:
+                        return False 
+
+                
+                def get_job_name(versioned_data) -> str:
+                    return versioned_data.data_source
+                
+                job_with_matching_state = list(filter(env_state_filter, latestVersions))
+
+                return list(map(get_job_name, job_with_matching_state))
     def get_jobs(self, processing_env, requested_state=None) -> list[str]:
 
             if requested_state is None:
@@ -155,7 +186,19 @@ class ScrayJobClient:
                 
                     return list(map(get_job_name, latestVersions))
     
+    def get_jobsFF(self, processing_env, requested_state=None) -> list[str]:
 
+      latestVersions = self.client.get_all_versioned_data()
+      if latestVersions is None:
+        logger.info("No new version available")
+        return []
+      else:
+        logger.info("Latest version data: " + str(type(latestVersions)))
+
+        def env_state_filter(latestVersion) -> JobSyncApiData:
+             metadata = JobSyncApiData.from_json(json_string=latestVersion.data)                           
+        return list(filter(env_state_filter, latestVersions))
+    
     def wait_for_new_job(self, processing_env, requested_state)-> list[str]:
 
         while True:

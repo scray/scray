@@ -96,11 +96,17 @@ public class FileVersionedDataApiImpl implements VersionedDataApi {
     @Override
     public void load(String path) {
         versionInformations = readFromFile(path);
+
+        // Init index
+        versionInformations.values().stream().map(vd -> idx.put(Optional.empty(), vd, versionInformationsIdxEnvState)).count();
     }
 
     @Override
     public void load(InputStream stream) {
         versionInformations = readFromStream(stream);
+
+        // Init index
+        versionInformations.values().stream().map(vd -> idx.put(Optional.empty(), vd, versionInformationsIdxEnvState)).count();
     }
 
     @Override
