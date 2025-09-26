@@ -52,7 +52,7 @@ public class StateRemover {
 
 		StateRemover remover = new StateRemover();
 		List<VersionedData> vsData = new SyncFileManager("sync-api-stat.json").getSyncApi().getAllVersionedResources();
-		List<String> statesToRemove = Arrays.asList("COMPLETED", "CONVESION_ERROR", "ERROR", "PUBLISHED", "FINISHED", "LOADING_ERROR");
+		List<String> statesToRemove = Arrays.asList("COMPLETED", "CONVESION_ERROR", "ERROR", "PUBLISHED", "CANCELED", "FINISHED", "LOADING_ERROR");
 
 		FileVersionedDataApiImpl statesToPersist = remover.removeState(
 				statesToRemove,

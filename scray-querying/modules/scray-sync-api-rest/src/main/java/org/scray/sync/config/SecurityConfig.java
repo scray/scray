@@ -50,7 +50,7 @@ public class SecurityConfig {
         .clientSecret(encoder.encode("secret"))
         .authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
         .scope("data.read")
-        .tokenSettings(ts -> new AntPathRequestMatcher(ts.accessTokenTimeToLive(Duration.ofMinutes(10))))
+        //.tokenSettings(ts -> new AntPathRequestMatcher(ts.accessTokenTimeToLive(Duration.ofMinutes(10))))
         .build();
     return new InMemoryRegisteredClientRepository(agent);
   }
@@ -96,6 +96,6 @@ public class SecurityConfig {
 
   @Bean
   JwtDecoder jwtDecoder(JWKSource<SecurityContext> jwkSource) {
-    return NimbusJwtDecoder.withJwkSource(jwkSource).build();
+      return OAuth2AuthorizationServerConfiguration.jwtDecoder(jwkSource);
   }
 }
