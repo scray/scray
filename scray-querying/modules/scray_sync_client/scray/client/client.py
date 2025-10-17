@@ -20,6 +20,7 @@ from typing import Dict, Optional
 import json
 from scray.client.config import ScrayClientConfig
 from scray.client.models.versioned_data import VersionedData
+from scray.client.models.http_client import HttpClient
 import json
 
 from requests import Session
@@ -37,6 +38,7 @@ class ScrayClient:
         self.client_config = client_config
 
         self.request_session = Session()
+        self.httpClient = HttpClient(token_provider=lambda: client_config.client_secret)
 
     
     def create() -> None: logger.info("Create scray client")
@@ -45,7 +47,7 @@ class ScrayClient:
 
         url = f"{self.client_config.host_address}:{self.client_config.port}/sync/versioneddata/latest?datasource={datasource}&mergekey={mergeky}"
         logger.debug("Request " + url)
-        response = self._make_getrequest(conn=self.request_session, method="GET", url=url)
+        response = self.httpClient.get(conn=self.request_session, method="GET", url=url)
 
         result = VersionedData()
         result.fromDict(response)
@@ -63,10 +65,10 @@ class ScrayClient:
             "filter": filter_str
         }
 
-        response = self._make_postrequest(
+        response = self.httpClient.post(
             conn=self.request_session,
             url=url,
-            data=payload
+            data=json.dumps(payload)
         )
 
         def create_versioned_data_object(response):
@@ -91,7 +93,7 @@ class ScrayClient:
 
         url = f"{self.client_config.host_address}:{self.client_config.port}/sync/versioneddata/all/latest/"
         logger.debug("Request " + url)
-        response = self._make_getrequest(conn=self.request_session, method="GET", url=url)
+        response = self.httpClient.get(conn=self.request_session, method="GET", url=url)
 
         if response is None:
             return []
@@ -109,44 +111,4 @@ class ScrayClient:
         url = f"{self.client_config.host_address}:{self.client_config.port}/sync/versioneddata/latest/?datasource={versionedData.data_source}&mergekey={versionedData.merge_key}"
         logger.debug("Request " + url)
 
-        self._make_putrequest(conn=self.request_session, url=url, data=versionedData.to_api_json)
-
-
-
-
-    def _make_getrequest(
-        self, conn, method, url
-    ):
-
-        response = conn.request(method, url, timeout=15)
-        if response.status_code == 200:
-            return response.json()
-        else:
-            logger.error(f"Error while interacting with sync API. Code: {response.status_code}")
-            return ""
-    
-    def _make_putrequest(
-        self, conn, url, data
-    ):
-        newHeaders = {'Content-type': 'application/json'}
-
-        response = conn.put(url, data=str(data()), headers=newHeaders, timeout=15)
-        if response.status_code == 200:
-            logger.info("State successfully updated")
-        else:
-            logger.error(f"Error while interacting with sync API. Code: {response.status_code}")
-    
-    def _make_postrequest(
-        self, conn, url, data
-    ):
-        newHeaders = {'Content-type': 'application/json'}
-        response = conn.post(url, data=json.dumps(data), headers=newHeaders, timeout=15)
-        if response.status_code == 200:
-            return response.json()
-        else:
-            logger.error(
-                f"Error while interacting with sync API (POST). "
-                f"Code: {response.status_code}, Response: {response.text}"
-            )
-
-
+        self.httpClient.put(conn=self.request_session, url=url, data=versionedData.to_api_json())

@@ -93,6 +93,16 @@ class VersionedData(object):
     
     
     def to_api_json(self) -> str:
-        data = self.data.replace("\"", "\\\"")
-        return f"{{\"dataSource\": \"{self.data_source}\", \"mergeKey\": \"{self.merge_key}\", \"version\": {self.version}, \"data\": \"{data}\", \"versionKey\": {self.version_key}}}"
-    
+        if self.data is not None:
+            data = self.data.replace('"', '\\"')
+        else:
+            data = ""
+        
+        return (
+            '{'
+            f'"dataSource": "{self.data_source}", '
+            f'"mergeKey": "{self.merge_key}", '
+            f'"version": {self.version}, '
+            f'"data": "{data}", '
+            f'"versionKey": {self.version_key}'
+            '}')
