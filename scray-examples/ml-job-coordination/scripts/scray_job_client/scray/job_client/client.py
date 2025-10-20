@@ -48,8 +48,11 @@ class ScrayJobClient:
 
         scrayClientConfig = ScrayClientConfig(
 
-            host_address = config.host_address,
-            port = config.port
+            host_address = config.sync_host_address,
+            port = config.sync_port,
+            client_id = config.sync_client_id,
+            client_secret = config.sync_client_secret,
+            token_url = config.sync_token_url  
         )
 
         self.client = ScrayClient(client_config=scrayClientConfig)
@@ -79,7 +82,7 @@ class ScrayJobClient:
         
         while True:
             
-            latestVersion = self.client.getLatestVersion('_', job_name)
+            latestVersion = self.client.getLatestVersion(job_name, '_')
 
             logger.info("Latest version data: " + latestVersion.to_str())
 

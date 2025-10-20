@@ -40,7 +40,6 @@ class ScrayClient:
         self.request_session = Session()
         self.httpClient = HttpClient(token_provider=lambda: client_config.client_secret)
 
-    
     def create() -> None: logger.info("Create scray client")
 
     def getLatestVersion(self, datasource, mergeky) -> VersionedData:

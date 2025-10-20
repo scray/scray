@@ -28,8 +28,11 @@ __all__ = [
 
 @dataclass
 class ScrayJobClientConfig:
-    host_address: str
-    port: Optional[int] = 80
+    sync_host_address: str
+    sync_port: Optional[int] = 80
+    sync_client_id: Optional[str] = "scray_sync_client"
+    sync_client_secret: Optional[str] = "super_scrure_secret"
+    sync_token_url: Optional[str] = None
     
     data_integration_user: str = "ubuntu"
     data_integration_host: str = None
@@ -37,4 +40,4 @@ class ScrayJobClientConfig:
 
     def __post_init__(self):
       if self.data_integration_host == None:
-        self.data_integration_host = self.host_address.replace("https://", "").replace("http://", "").replace("/", "")
+        self.data_integration_host = self.sync_host_address.replace("https://", "").replace("http://", "").replace("/", "")
