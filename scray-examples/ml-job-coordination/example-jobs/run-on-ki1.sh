@@ -3,7 +3,7 @@ SOURCE_DATA=./
 NOTEBOOK_NAME=token_classification_01.ipynb
 INITIAL_STATE=""
 PROCESSING_ENV=""
-DOCKER_IMAGE="scrayorg/scray-jupyter_tensorflow-gpu:0.1.2"
+DOCKER_IMAGE="scrayorg/scray-jupyter_tensorflow-gpu:0.1.1"
 JOB_NAME_LITERALLY=false
 DATA_INTEGRATION_HOST=ml-integration-git.research.dev.example.com
 DATA_INTEGRATION_USER=ubuntu
@@ -55,8 +55,8 @@ downloadUpdatedNotebook() {
 }
 
 setState() {
-echo $1
-curl -k -sS -X 'PUT' \
+
+curl -sS -X 'PUT' \
   ''$SYNC_API_URL'/sync/versioneddata/latest' \
   -H 'accept: */*' \
   -H 'Content-Type: application/json' \
@@ -71,11 +71,11 @@ curl -k -sS -X 'PUT' \
 
 waitForJobCompletion() {
 
-   STATE_OBJECT=$(curl -k -sS -X 'GET'   ''$SYNC_API_URL'/sync/versioneddata/latest?datasource='$JOB_NAME'&mergekey=_'   -H 'accept: application/json' | jq '.data  | fromjson')
+   STATE_OBJECT=$(curl -sS -X 'GET'   ''$SYNC_API_URL'/sync/versioneddata/latest?datasource='$JOB_NAME'&mergekey=_'   -H 'accept: application/json' | jq '.data  | fromjson')
 
   while [ "$STATE" != "\"COMPLETED\"" ]
   do
-    STATE_OBJECT=$(curl -k -sS -X 'GET'   ''$SYNC_API_URL'/sync/versioneddata/latest?datasource='$JOB_NAME'&mergekey=_'   -H 'accept: application/json' | jq '.data  | fromjson')
+    STATE_OBJECT=$(curl -sS -X 'GET'   ''$SYNC_API_URL'/sync/versioneddata/latest?datasource='$JOB_NAME'&mergekey=_'   -H 'accept: application/json' | jq '.data  | fromjson')
     STATE=$(echo "$STATE_OBJECT" | jq .state)
 
     downloadUpdatedNotebook
@@ -138,7 +138,12 @@ else
     SYNC_API_URL="$SCRAY_SYNC_API_URL"
 fi
 
-
+if [ -z "$SCRAY_SYNC_API_TOKEN" ]; then
+  echo "WARN: SCRAY_SYNC_API_TOKEN is not set. Please export your bearer token, e.g.:"
+  echo "  export SCRAY_SYNC_API_TOKEN='your-token-here' For now default token is used"
+  SCRAY_SYNC_API_TOKEN="super-secret-token"
+fi
+AUTH_HEADER="Authorization: Bearer $SCRAY_SYNC_API_TOKEN"
 
 if [ "$1" == "run" ]
 then

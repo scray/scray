@@ -28,22 +28,18 @@ class HttpClient:
         return None
 
     def get(self, conn, method, url):
-        print("GET" + str(self._auth_headers()))
-
         resp = conn.request(method, url, headers=self._auth_headers(), timeout=15)
         if resp.status_code == 401:
             resp = conn.request(method, url, headers=self._auth_headers(), timeout=15)
         return self._handle(resp)
 
     def put(self, conn, url, data: Any):
-        print(str(self._auth_headers()))
         resp = conn.put(url, data=data, headers=self._auth_headers(), timeout=15)
         if resp.status_code == 401:
             resp = conn.put(url, data=data, headers=self._auth_headers(), timeout=15)
         return self._handle(resp)
 
     def post(self, conn, url, data: Any):
-        print("POST" + str(self._auth_headers()))
         resp = conn.post(url, data=data, headers=self._auth_headers(), timeout=15)
         if resp.status_code == 401:
             resp = conn.post(url, data=data, headers=self._auth_headers(), timeout=15)

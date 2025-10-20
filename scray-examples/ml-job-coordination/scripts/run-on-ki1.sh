@@ -55,7 +55,7 @@ downloadUpdatedNotebook() {
 }
 
 setState() {
-echo $1
+
 curl -sS -X 'PUT' \
   ''$SYNC_API_URL'/sync/versioneddata/latest' \
   -H 'accept: */*' \
@@ -138,7 +138,12 @@ else
     SYNC_API_URL="$SCRAY_SYNC_API_URL"
 fi
 
-
+if [ -z "$SCRAY_SYNC_API_TOKEN" ]; then
+  echo "WARN: SCRAY_SYNC_API_TOKEN is not set. Please export your bearer token, e.g.:"
+  echo "  export SCRAY_SYNC_API_TOKEN='your-token-here' For now default token is used"
+  SCRAY_SYNC_API_TOKEN="super-secret-token"
+fi
+AUTH_HEADER="Authorization: Bearer $SCRAY_SYNC_API_TOKEN"
 
 if [ "$1" == "run" ]
 then
