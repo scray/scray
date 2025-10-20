@@ -21,6 +21,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
 import scala.Option;
 
 import org.scray.sync.rest.FilterParser;
@@ -31,6 +33,7 @@ import org.scray.sync.rest.SyncEventManager;
 import org.scray.sync.rest.SyncFileManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -50,9 +53,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import javax.servlet.http.HttpServletRequest;
+
 @RestController
-@SpringBootApplication(exclude = {
-		org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration.class })
+@SpringBootApplication(
+		exclude = {org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration.class }
+		)
 public class ReadController {
 
 	private static final Logger logger = LoggerFactory.getLogger(ReadController.class);
@@ -60,6 +66,17 @@ public class ReadController {
 	private final PersistBuffer persistBuffer;
 	SyncFileManager syncApiManager;
 
+    // Inject your expected token from application.properties or env
+    @Value("${security.apiToken}")
+    private String expectedToken;
+
+
+    private boolean isAuthorized(HttpServletRequest request) {
+        String auth = request.getHeader(HttpHeaders.AUTHORIZATION); // "Authorization"
+        if (auth == null || !auth.startsWith("Bearer ")) return false;
+        String token = auth.substring(7).trim();
+        return !token.isEmpty() && token.equals(expectedToken);
+    }
 
 	public ReadController(PersistBuffer buffer) {
 		this.persistBuffer = buffer;
@@ -75,7 +92,11 @@ public class ReadController {
 	@CrossOrigin(origins = "*")
 	@GetMapping(value = "/sync/versioneddata/latest")
 	ResponseEntity<VersionedData> getLatestVersion(@RequestParam String datasource, @RequestParam String mergekey,
-			@RequestParam(required = false) String filter) {
+			@RequestParam(required = false) String filter, HttpServletRequest request) {
+
+        if (!isAuthorized(request)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
 
 		if (datasource == null && mergekey == null) {
 			syncApiManager.getSyncApi().getLatestVersion(datasource, mergekey);
@@ -98,8 +119,14 @@ public class ReadController {
 			+ "}")))
 	@PostMapping("/indexes/{indexName}/search")
 	public ResponseEntity<List<VersionedData>> search(@PathVariable String indexName,
-			@RequestBody SearchRequest request) {
-		QuerySpec filter = parser.parse(request.filter());
+			@RequestBody SearchRequest searchRequest, HttpServletRequest request) {
+
+        if (!isAuthorized(request)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+
+		QuerySpec filter = parser.parse(searchRequest.filter());
 		if (filter != null && filter.conditions().size() == 2) {
 			try {
 
@@ -154,7 +181,12 @@ public class ReadController {
 			@ApiResponse(responseCode = "200", description = "OK", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = VersionedData.class))) })
 	@CrossOrigin(origins = "*")
 	@GetMapping(value = "/sync/versioneddata/all/latest")
-	public ResponseEntity<List<VersionedData>> getLatestVersion() {
+	public ResponseEntity<List<VersionedData>> getLatestVersion(HttpServletRequest request) {
+
+        if (!isAuthorized(request)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
 		return new ResponseEntity<>(syncApiManager.getSyncApi().getAllVersionedResources(), HttpStatus.OK);
 	}
 
@@ -168,7 +200,12 @@ public class ReadController {
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "OK") })
 	@CrossOrigin(origins = "*")
 	@PutMapping(value = "/sync/versioneddata/latest")
-	void updateVersion(@RequestBody VersionedData updatedVersionedData) {
+	ResponseEntity<?> updateVersion(@RequestBody VersionedData updatedVersionedData,  HttpServletRequest request) {
+
+        if (!isAuthorized(request)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
 		syncApiManager.getSyncApi().updateVersion(updatedVersionedData);
 		persistBuffer.markDirty();
 		try {
@@ -176,5 +213,6 @@ public class ReadController {
 		} catch (Exception e) {
 			logger.warn("Error when sending event notification {} ", e);
 		}
+		return ResponseEntity.status(HttpStatus.OK).build();
 	}
 }
