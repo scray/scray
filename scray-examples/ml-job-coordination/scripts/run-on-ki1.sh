@@ -60,6 +60,7 @@ curl -sS -X 'PUT' \
   ''$SYNC_API_URL'/sync/versioneddata/latest' \
   -H 'accept: */*' \
   -H 'Content-Type: application/json' \
+  -H "Authorization: Bearer $TOKEN" \
   -d '{
   "dataSource": "'$JOB_NAME'",
   "mergeKey": "_",
@@ -71,11 +72,11 @@ curl -sS -X 'PUT' \
 
 waitForJobCompletion() {
 
-   STATE_OBJECT=$(curl -sS -X 'GET'   ''$SYNC_API_URL'/sync/versioneddata/latest?datasource='$JOB_NAME'&mergekey=_'   -H 'accept: application/json' | jq '.data  | fromjson')
+   STATE_OBJECT=$(curl -sS -H "Authorization: Bearer $TOKEN" -X 'GET'   ''$SYNC_API_URL'/sync/versioneddata/latest?datasource='$JOB_NAME'&mergekey=_'   -H 'accept: application/json' | jq '.data  | fromjson')
 
   while [ "$STATE" != "\"COMPLETED\"" ]
   do
-    STATE_OBJECT=$(curl -sS -X 'GET'   ''$SYNC_API_URL'/sync/versioneddata/latest?datasource='$JOB_NAME'&mergekey=_'   -H 'accept: application/json' | jq '.data  | fromjson')
+    STATE_OBJECT=$(curl -sS -H "Authorization: Bearer $TOKEN" -X 'GET'   ''$SYNC_API_URL'/sync/versioneddata/latest?datasource='$JOB_NAME'&mergekey=_'   -H 'accept: application/json' | jq '.data  | fromjson')
     STATE=$(echo "$STATE_OBJECT" | jq .state)
 
     downloadUpdatedNotebook

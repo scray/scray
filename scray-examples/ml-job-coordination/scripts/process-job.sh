@@ -41,6 +41,13 @@ then
     SYNC_API_URL="http://ml-integration.research.dev.example.com:8082/sync/versioneddata"
 fi
 
+if [ -z "$SCRAY_SYNC_API_TOKEN" ]; then
+  echo "WARN: SCRAY_SYNC_API_TOKEN is not set. Please export your bearer token, e.g.:"
+  echo "  export SCRAY_SYNC_API_TOKEN='your-token-here' For now default token is used"
+  SCRAY_SYNC_API_TOKEN="super-secret-token"
+fi
+AUTH_HEADER="Authorization: Bearer $SCRAY_SYNC_API_TOKEN"
+
 SOURCE_DATA=.
 NOTEBOOK_NAME=example-notebook.ipynb
 JOB_LOCATION="~/jobs/b636f6f92d51e742f861ee2a928621b6/"
@@ -182,6 +189,7 @@ setState() {
     $SYNC_API_URL'/latest' \
     -H 'accept: */*' \
     -H 'Content-Type: application/json' \
+    -H "Authorization: Bearer $TOKEN" \
     -d '{
   "dataSource": "'$JOB_NAME'",
   "mergeKey": "_",
@@ -193,7 +201,7 @@ setState() {
 }
 
 waitForNextJob() {
-  STATE_OBJECT=$(curl -k -sS -X 'GET' $SYNC_API_URL'/latest?datasource='$JOB_NAME'&mergekey=_' -H 'accept: application/json' | jq '.data  | fromjson')
+  STATE_OBJECT=$(curl -k -sS -H "Authorization: Bearer $TOKEN" -X 'GET' $SYNC_API_URL'/latest?datasource='$JOB_NAME'&mergekey=_' -H 'accept: application/json' | jq '.data  | fromjson')
   STATE=$(echo "$STATE_OBJECT" | jq .state)
   SOURCE_DATA=$(echo "$STATE_OBJECT" | jq -r .dataDir)
   NOTEBOOK_NAME=$(echo "$STATE_OBJECT" | jq -r .notebookName)
@@ -204,7 +212,7 @@ waitForNextJob() {
   echo PROCESSING_ENV: "$PROCESSING_ENV"
 
   while [ "$STATE" != "\"$TRIGGER_STATE\"" ]; do
-    STATE_OBJECT=$(curl -k -sS -X 'GET' $SYNC_API_URL'/latest?datasource='$JOB_NAME'&mergekey=_' -H 'accept: application/json' | jq '.data  | fromjson')
+    STATE_OBJECT=$(curl -k -sS -H "Authorization: Bearer $TOKEN" -X 'GET' $SYNC_API_URL'/latest?datasource='$JOB_NAME'&mergekey=_' -H 'accept: application/json' | jq '.data  | fromjson')
     SOURCE_DATA=$(echo "$STATE_OBJECT" | jq -r .dataDir)
     NOTEBOOK_NAME=$(echo "$STATE_OBJECT" | jq -r .notebookName)
 
