@@ -282,7 +282,7 @@ class ScrayJobClient:
             )
         
         return job_name
-    
+
     def get_job_fin_data(job_name, destination_path, data_integration_user, data_integration_host):
         """
         Downloads the completed job data and extracts it to a specified destination.
@@ -292,6 +292,8 @@ class ScrayJobClient:
         :param data_integration_user: Username for the SFTP connection.
         :param data_integration_host: Host of the SFTP server.
         """
+
+        import os
         temp_tar_path = f"/tmp/{job_name}.tar.gz"
         
         # Ensure the destination path exists
