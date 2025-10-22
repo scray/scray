@@ -286,7 +286,7 @@ class ScrayJobClient:
         
         return job_name
 
-    def get_job_fin_data(job_name, destination_path, data_integration_user, data_integration_host):
+    def get_job_fin_data(self, job_name, destination_path, data_integration_user, data_integration_host):
         """
         Downloads the completed job data and extracts it to a specified destination.
 
