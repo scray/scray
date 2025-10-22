@@ -16,8 +16,10 @@
 #
 
 import logging
+import tarfile
 from typing import Dict, Optional
 import json
+import paramiko
 from scray.client.config import ScrayClientConfig
 from scray.job_client.config import ScrayJobClientConfig
 from scray.job_client.models.agent_configuration import AgentConfiguration
