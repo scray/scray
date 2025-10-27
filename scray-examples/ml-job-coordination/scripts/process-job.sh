@@ -3,6 +3,7 @@
 DATA_INTEGRATION_HOST=ml-integration-git.research.dev.example.com
 DATA_INTEGRATION_USER=ubuntu
 SYNC_API_URL="http://ml-integration.research.dev.example.com:8082"
+OUTPUT_FOLDER="job_output"
 
 RESUMABLE_JOB = false
 
