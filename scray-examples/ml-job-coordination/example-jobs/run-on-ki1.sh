@@ -56,32 +56,62 @@ downloadUpdatedNotebook() {
 
 setState() {
 
-curl -sS -X 'PUT' \
-  ''$SYNC_API_URL'/sync/versioneddata/latest' \
-  -H 'accept: */*' \
-  -H 'Content-Type: application/json' \
-  -d '{
-  "dataSource": "'$JOB_NAME'",
-  "mergeKey": "_",
-  "version": 0,
-  "data": "{\"filename\": \"'$JOB_NAME'.tar.gz\", \"processingEnv\": \"'$PROCESSING_ENV'\", \"state\": \"'$1'\", \"imageName\": \"'$DOCKER_IMAGE'\",   \"dataDir\": \"'$SOURCE_DATA'\", \"notebookName\": \"'$NOTEBOOK_NAME'\"}",
-  "versionKey": 0
-  }'
+  curl -sS --cacert ca.pem -X 'PUT' \
+    ''$SYNC_API_URL'/sync/versioneddata/latest' \
+    -H 'accept: */*' \
+    -H 'Content-Type: application/json' \
+    -H "$AUTH_HEADER" \
+    -d '{
+      "dataSource": "'$JOB_NAME'",
+      "mergeKey": "_",
+      "version": 0,
+      "data": "{\"filename\": \"'$JOB_NAME'.tar.gz\", \"processingEnv\": \"'$PROCESSING_ENV'\", \"state\": \"'$1'\", \"imageName\": \"'$DOCKER_IMAGE'\",   \"dataDir\": \"'$SOURCE_DATA'\", \"notebookName\": \"'$NOTEBOOK_NAME'\"}",
+      "versionKey": 0
+    }'
+}
+
+
+
+getJobState() { 
+  local http
+  http=$(curl --cacert ca.pem -sS -w "%{http_code}" \
+    -H "$AUTH_HEADER" \
+    -H "accept: application/json" \
+    -X GET \
+    "$SYNC_API_URL/sync/versioneddata/latest?datasource=$JOB_NAME&mergekey=_" \
+    -o response.json) || {
+      echo "curl failed (network/SSL error)" >&2
+      exit 1
+    }
+
+  if [[ $http -eq 401 || $http -eq 403 ]]; then
+    echo "Authentication failed: invalid or expired token (HTTP $http)" >&2
+    cat response.json >&2
+    exit 1
+  elif [[ $http -ge 400 ]]; then
+    echo "Request failed with HTTP $http" >&2
+    cat response.json >&2
+    exit 1
+  fi
+
+  # Parse JSON and extract state
+  if ! STATE_OBJECT=$(jq -e '.data | fromjson' response.json); then
+    echo "Response JSON missing/invalid:" >&2
+    cat response.json >&2
+    exit 1
+  fi
+
+  STATE=$(jq -r '.state' <<<"$STATE_OBJECT")
 }
 
 waitForJobCompletion() {
+  getJobState
 
-   STATE_OBJECT=$(curl -sS -X 'GET'   ''$SYNC_API_URL'/sync/versioneddata/latest?datasource='$JOB_NAME'&mergekey=_'   -H 'accept: application/json' | jq '.data  | fromjson')
-
-  while [ "$STATE" != "\"COMPLETED\"" ]
-  do
-    STATE_OBJECT=$(curl -sS -X 'GET'   ''$SYNC_API_URL'/sync/versioneddata/latest?datasource='$JOB_NAME'&mergekey=_'   -H 'accept: application/json' | jq '.data  | fromjson')
-    STATE=$(echo "$STATE_OBJECT" | jq .state)
-
+  while [[ "$STATE" != "COMPLETED" ]]; do
     downloadUpdatedNotebook
-
-    echo "Wait for state COMPLETED  current state is " "$STATE"
+    echo "Waiting for state COMPLETED current state: $STATE"
     sleep 8
+    getJobState 
   done
 
   echo "State COMPLETED reached"
@@ -133,7 +163,7 @@ fi
 
 # Check if sync host user env var is empty
 if [ -z "$SCRAY_SYNC_API_URL" ]; then
-    echo "The environment variable  SCRAY_DATA_INTEGRATION_USER not set. Default value \"$SYNC_API_URL\" is used."
+    echo "The environment variable SCRAY_SYNC_API_URL  not set. Default value \"$SYNC_API_URL\" is used."
 else
     SYNC_API_URL="$SCRAY_SYNC_API_URL"
 fi
