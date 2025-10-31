@@ -38,6 +38,8 @@ class ScrayJobClientConfig:
     data_integration_host: str = None
     data_integration_port: int = 22
 
+    take_jobname_literally: bool = False
+    
     def __post_init__(self):
       if self.data_integration_host == None:
         self.data_integration_host = self.sync_host_address.replace("https://", "").replace("http://", "").replace("/", "")
