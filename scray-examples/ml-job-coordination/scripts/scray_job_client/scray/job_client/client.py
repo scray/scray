@@ -18,6 +18,7 @@
 import logging
 from pathlib import Path
 import tarfile
+import tempfile
 from typing import Dict, Optional
 import json
 import paramiko
