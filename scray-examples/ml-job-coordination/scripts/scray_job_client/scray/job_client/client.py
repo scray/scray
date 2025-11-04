@@ -343,7 +343,7 @@ class ScrayJobClient:
         """
 
         # use values from configuration if no parameter is given
-        data_integration_user = data_integration_user or self.config.data_integration_use
+        data_integration_user = data_integration_user or self.config.data_integration_user
         data_integration_host = data_integration_host or self.config.data_integration_host
 
         import os
