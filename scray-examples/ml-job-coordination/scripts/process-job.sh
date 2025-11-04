@@ -49,6 +49,7 @@ if [ -z "$SCRAY_SYNC_API_TOKEN" ]; then
 fi
 AUTH_HEADER="Authorization: Bearer $SCRAY_SYNC_API_TOKEN"
 
+
 SOURCE_DATA=.
 NOTEBOOK_NAME=example-notebook.ipynb
 JOB_LOCATION="~/jobs/b636f6f92d51e742f861ee2a928621b6/"
@@ -79,18 +80,20 @@ downloadJob() {
 
 uploadCurrentNotebookState() {
   LOG_FILE=$1
-  tar -czvf $JOB_NAME-state.tar.gz $SOURCE_DATA/$LOG_FILE
-  sftp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa  $DATA_INTEGRATION_USER@$DATA_INTEGRATION_HOST:sftp-share/ <<<'PUT '$JOB_NAME-state.tar.gz''
+  tar -czvf ${JOB_NAME}_out.tar.gz $LOG_FILE
+  sftp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa  $DATA_INTEGRATION_USER@$DATA_INTEGRATION_HOST:sftp-share/ <<<'PUT '${JOB_NAME}_out.tar.gz''
 }
 
 runPythonJob() {
   cd $JOB_LOCATION
   cd $SOURCE_DATA
 
+  mkdir -p $OUTPUT_FOLDER
+
   REQ_FILE=requirements.txt
  
   if test -f "$REQ_FILE"; then
-    pip install -r requirements.txt 2>&1 | tee -a out.$JOB_NAME.txt 
+    pip install -r requirements.txt 2>&1 | tee -a $OUTPUT_FOLDER/out.pip.$JOB_NAME.log 
   else
     echo "no requirements.txt"
   fi
@@ -104,55 +107,58 @@ runPythonJob() {
  # chmod u+x run.sh
  # ./run.sh &
 
-  python3 $NOTEBOOK_NAME  2>&1 | tee -a out.$JOB_NAME.txt &
-  uploadCurrentNotebookState out.$JOB_NAME.txt
+  python3 $NOTEBOOK_NAME  2>&1 | tee -a $OUTPUT_FOLDER/out.$JOB_NAME.log &
+  uploadCurrentNotebookState $OUTPUT_FOLDER
   
   PID=$!
 
-  echo "Wait for completion" >>  out.$JOB_NAME.txt
-  tail out.$JOB_NAME.txt
+  echo "Wait for completion" >>  $OUTPUT_FOLDER/out.$JOB_NAME.log
+  tail $OUTPUT_FOLDER/out.$JOB_NAME.log
 
 
   while ps -p $PID > /dev/null; do
     echo " python3 $NOTEBOOK_NAME $PID is running"
     echo "Upload std out"
-    uploadCurrentNotebookState out.$JOB_NAME.txt
+    uploadCurrentNotebookState $OUTPUT_FOLDER
     sleep 40
   done
 
-  tar -czvf $JOB_NAME-fin.tar.gz $SOURCE_DATA
-  sftp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa $DATA_INTEGRATION_USER@$DATA_INTEGRATION_HOST:sftp-share/ <<<'PUT '$JOB_NAME-fin.tar.gz''
+  uploadCurrentNotebookState $OUTPUT_FOLDER
+  tar -czvf $JOB_NAME-backup.tar.gz $OUTPUT_FOLDER/ 
+  sftp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa $DATA_INTEGRATION_USER@$DATA_INTEGRATION_HOST:sftp-share/ <<<'PUT '$JOB_NAME-backup.tar.gz''
 }
 
 
 runPapermillJob() {
   cd $JOB_LOCATION
   cd $SOURCE_DATA
-  
+ 
+  mkdir -p $OUTPUT_FOLDER
+
   REQ_FILE=requirements.txt
  
   if test -f "$REQ_FILE"; then
-    pip install -r requirements.txt 2>&1 | tee -a out.$JOB_NAME.txt 
+    pip install -r requirements.txt 2>&1 | tee -a $OUTPUT_FOLDER/out.pip.$JOB_NAME.txt 
   else
     echo "no requirements.txt"
   fi
+  echo "Joblocationn $JOB_LOCATION"
 
-  echo papermill --stdout-file notebook-stdout --stderr-file notebook-stderr  --autosave-cell-every 2  $NOTEBOOK_NAME out.$NOTEBOOK_NAME &
-
-  papermill --stdout-file notebook-stdout --stderr-file notebook-stderr --autosave-cell-every 2  $NOTEBOOK_NAME out.$NOTEBOOK_NAME &
+  papermill --stdout-file $OUTPUT_FOLDER/notebook-stdout.txt --stderr-file $OUTPUT_FOLDER/notebook-stderr.txt --autosave-cell-every 2  $NOTEBOOK_NAME $OUTPUT_FOLDER/out.$NOTEBOOK_NAME &
   PID=$!
 
-  uploadCurrentNotebookState out.$NOTEBOOK_NAME
+  uploadCurrentNotebookState $OUTPUT_FOLDER
   
   while ps -p $PID > /dev/null; do
     echo "papermill $PID is running"
     echo "Upload current notebook state"
-    uploadCurrentNotebookState out.$NOTEBOOK_NAME
+    uploadCurrentNotebookState $OUTPUT_FOLDER
     sleep 40
   done
-
-  tar -czvf $JOB_NAME-fin.tar.gz $SOURCE_DATA
-  sftp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa $DATA_INTEGRATION_USER@$DATA_INTEGRATION_HOST:sftp-share/ <<<'PUT '$JOB_NAME-fin.tar.gz''
+ 
+  uploadCurrentNotebookState $OUTPUT_FOLDER
+  tar -czvf $JOB_NAME-fin.tar.gz $OUTPUT_FOLDER/ 
+  sftp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa $DATA_INTEGRATION_USER@$DATA_INTEGRATION_HOST:sftp-share/ <<<'PUT '$JOB_NAME-backup.tar.gz''
 }
 
 
@@ -188,9 +194,9 @@ setState() {
   echo $1
   curl -k -X 'PUT' \
     $SYNC_API_URL'/latest' \
+    -H "$AUTH_HEADER" \
     -H 'accept: */*' \
     -H 'Content-Type: application/json' \
-    -H "Authorization: Bearer $TOKEN" \
     -d '{
   "dataSource": "'$JOB_NAME'",
   "mergeKey": "_",
@@ -225,7 +231,7 @@ waitForNextJob() {
   echo SOURCE_DATA: "$SOURCE_DATA"
   echo NOTEBOOK_NAME: "$NOTEBOOK_NAME"
 
-  echo "State UPLOADED reached"
+  echo "State "$TRIGGER_STATE" reached"
 }
 
 
