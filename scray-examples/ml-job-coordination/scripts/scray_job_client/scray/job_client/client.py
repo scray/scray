@@ -334,7 +334,7 @@ class ScrayJobClient:
                 os.remove(temp_tar_path)
                 print(f"Removed temporary file {temp_tar_path}")
 
-    def get_job_out_data(self, job_name, destination_path, data_integration_user, data_integration_host):
+    def get_job_out_data(self, job_name, destination_path, data_integration_user=None, data_integration_host=None):
         """
         Downloads the files stored in the output folder of the job
 
@@ -342,9 +342,13 @@ class ScrayJobClient:
         :param destination_path: Path where the extracted files should be stored.
         """
 
+        # use values from configuration if no parameter is given
+        data_integration_user = data_integration_user or self.config.data_integration_use
+        data_integration_host = data_integration_host or self.config.data_integration_host
+
         import os
         temp_dir = tempfile.gettempdir()
-        temp_tar_path = os.path.join(temp_dir, f"{job_name}.tar.gz")
+        temp_tar_path = os.path.join(temp_dir, f"{job_name}_out.tar.gz")
         
         # Ensure the destination path exists
         os.makedirs(destination_path, exist_ok=True)
