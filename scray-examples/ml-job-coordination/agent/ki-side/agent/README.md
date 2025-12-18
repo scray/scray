@@ -52,7 +52,7 @@ To build the core project, do the following:
 ```kubectl create secret generic data-ssh-key --from-file=id_rsa=$HOME/.ssh/id_rsa```
 
 
-export SCRAY_SYNC_API_URL="https://sync.research.dev.seeburger.de/"
+export SCRAY_SYNC_API_URL="https://sync.research.dev.example.com/"
 
 
 ### Connect to Keycloak
