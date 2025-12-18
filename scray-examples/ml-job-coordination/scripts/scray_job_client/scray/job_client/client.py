@@ -193,7 +193,7 @@ class ScrayJobClient:
                 
                     return list(map(get_job_name, latestVersions))
     
-    def get_jobsFF(self, processing_env, requested_state=None) -> list[str]:
+    def get_jobsFF(self) -> list[str]:
 
       latestVersions = self.client.get_all_versioned_data()
       if latestVersions is None:
