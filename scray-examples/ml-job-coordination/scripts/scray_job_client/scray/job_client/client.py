@@ -398,7 +398,7 @@ class ScrayJobClient:
 
         import os
         temp_dir = tempfile.gettempdir()
-        temp_tar_path = os.path.join(temp_dir, f"{job_name}_state.tar.gz")
+        temp_tar_path = os.path.join(temp_dir, f"{job_name}-state.tar.gz")
         
         # Ensure the destination path exists
         os.makedirs(destination_path, exist_ok=True)
@@ -414,7 +414,7 @@ class ScrayJobClient:
             sftp = paramiko.SFTPClient.from_transport(transport)
             
             # Download the archive
-            remote_path = f"sftp-share/{job_name}_state.tar.gz"
+            remote_path = f"sftp-share/{job_name}-state.tar.gz"
             print(f"Downloading {remote_path} to {temp_tar_path}")
             sftp.get(remote_path, temp_tar_path)
             sftp.close()
@@ -422,7 +422,7 @@ class ScrayJobClient:
             # Extract the archive
             with tarfile.open(temp_tar_path, "r:gz") as tar:
                 tar.extractall(path=destination_path)
-                print(f"Extracted {job_name}_state.tar.gz to {destination_path}")
+                print(f"Extracted {job_name}-state.tar.gz to {destination_path}")
 
         except Exception as e:
             print(f"Error during download and extraction: {e}")
