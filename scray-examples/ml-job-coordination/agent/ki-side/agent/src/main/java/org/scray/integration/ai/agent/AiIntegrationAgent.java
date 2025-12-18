@@ -129,7 +129,7 @@ public class AiIntegrationAgent
 
         // environements.put("http://scray.org/ai/jobs/env/see/ki1-k8s/cpu/python", Environment.EnvType.Python);
 
-        // environements.put("http://scray.org/ai/jobs/env/see/ki2-k8s/cpu/python", Environment.EnvType.Python);
+        //environements.put("http://scray.org/ai/jobs/env/see/ki2-k8s/cpu/python", Environment.EnvType.Python);
         // environements.put("http://scray.org/ai/jobs/env/see/ki2-k8s/python", Environment.EnvType.Python);
         // environements.put("http://scray.org/ai/jobs/env/see/ki2-k8s", Environment.EnvType.K8s);
 
@@ -143,11 +143,11 @@ public class AiIntegrationAgent
     public Stream<JobToSchedule> getJobDataForThisAgent(String syncApiData, Environments myEnvs)
         throws JsonMappingException, JsonProcessingException
     {
-
         return Arrays.asList(jsonObjectMapper.readValue(syncApiData, VersionedData2[].class)).stream()
                      // parse job data
                      .map(versonData ->
                      {
+
                          try
                          {
                              return Optional.of(
@@ -157,7 +157,7 @@ public class AiIntegrationAgent
                          catch (JacksonException e)
                          {
                              logger.warn("No Ai job data parsed");
-                             logger.debug("Parse exception: {}, Data: {}", e,
+                             logger.info("Parse exception: {}, Data: {}", e,
                             		    versonData.getData() != null
                             		        ? versonData.getData().substring(0, Math.min(100, versonData.getData().length()))
                             		        : "null");
@@ -268,8 +268,8 @@ public class AiIntegrationAgent
                                             env.getEnvVars().get("RUNTIME_TYPE"),
                                             jobToStart.getAiJobsData().getImageName(),
                                             env.getK8sJobDescriptonTemplateFullPath(),
-                                            env.getEnvVars().get("SCRAY_SYNC_API_URL"), // FIXME Read it fom config file
-                                            env.getEnvVars().get("SCRAY_DATA_INTEGRATION_HOST") // FIXME Read it fom config file
+                                            env.getEnvVars().get("SCRAY_SYNC_API_URL"),
+                                            env.getEnvVars().get("SCRAY_DATA_INTEGRATION_HOST")
                                             );
                     }
                     else

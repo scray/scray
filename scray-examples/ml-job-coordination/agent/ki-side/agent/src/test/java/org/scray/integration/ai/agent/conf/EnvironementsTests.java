@@ -108,15 +108,10 @@ public class EnvironementsTests
             Assertions.assertEquals(1, loadedEnvs.getEnvironments().get(0).getVersion());
             Assertions.assertEquals("job42.yaml", loadedEnvs.getEnvironments().get(0).getK8sJobDescriptonTemplate());
 
-
-
             Assertions.assertEquals("http://scray.org/test/env2", loadedEnvs.getEnvironments().get(1).getName());
             Assertions.assertEquals(Environment.EnvType.Python, loadedEnvs.getEnvironments().get(1).getType());
             Assertions.assertEquals(2, loadedEnvs.getEnvironments().get(1).getVersion());
             Assertions.assertEquals("ml-integration.research.dev.example.com:8082", loadedEnvs.getEnvironments().get(1).getEnvVars().get("SCRAY_SYNC_API_URL"));
-
-
-
 
         }
         catch (IOException e)
