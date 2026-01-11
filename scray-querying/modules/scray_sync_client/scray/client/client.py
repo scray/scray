@@ -22,6 +22,7 @@ from scray.client.config import ScrayClientConfig
 from scray.client.models.versioned_data import VersionedData
 from scray.client.models.http_client import HttpClient
 import json
+from urllib.parse import urlsplit, urlencode
 
 from requests import Session
 
@@ -42,9 +43,22 @@ class ScrayClient:
 
     def create() -> None: logger.info("Create scray client")
 
+    def createUrl(self, api_subpath: str) -> str:
+        host_address = self.client_config.host_address
+        if "://" not in host_address:
+            host_address = "https://" + host_address
+
+        parts = urlsplit(host_address)
+
+        base_path = parts.path.rstrip("/")
+        api_subpath = "/" + api_subpath.lstrip("/")
+
+        return f"{parts.scheme}://{parts.hostname}:{self.client_config.port}{base_path}{api_subpath}"
+
+
     def getLatestVersion(self, datasource, mergeky) -> VersionedData:
 
-        url = f"{self.client_config.host_address}:{self.client_config.port}/sync/versioneddata/latest?datasource={datasource}&mergekey={mergeky}"
+        url = self.createUrl(f"sync/versioneddata/latest?datasource={datasource}&mergekey={mergeky}")
         logger.debug("Request " + url)
         response = self.httpClient.get(conn=self.request_session, method="GET", url=url)
 
@@ -55,7 +69,7 @@ class ScrayClient:
     
     def getLatestVersionedDataByState(self, env, state) -> list[VersionedData]:
 
-        url = f"{self.client_config.host_address}:{self.client_config.port}/indexes/state-env/search/"
+        url = self.createUrl("/indexes/state-env/search/")
 
         logger.debug("Request " + url)
 
@@ -90,7 +104,8 @@ class ScrayClient:
 
     def get_all_versioned_data(self) -> list[VersionedData]:
 
-        url = f"{self.client_config.host_address}:{self.client_config.port}/sync/versioneddata/all/latest/"
+        url = self.createUrl("sync/versioneddata/all/latest/")
+
         logger.debug("Request " + url)
         response = self.httpClient.get(conn=self.request_session, method="GET", url=url)
 
@@ -107,7 +122,8 @@ class ScrayClient:
         return result
 
     def updateVersion(self, versionedData):
-        url = f"{self.client_config.host_address}:{self.client_config.port}/sync/versioneddata/latest/?datasource={versionedData.data_source}&mergekey={versionedData.merge_key}"
+        url = self.createUrl(f"/sync/versioneddata/latest/?datasource={versionedData.data_source}&mergekey={versionedData.merge_key}")
+        
         logger.debug("Request " + url)
 
         self.httpClient.put(conn=self.request_session, url=url, data=versionedData.to_api_json())
