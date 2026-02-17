@@ -35,7 +35,7 @@ echo "RUN_TYPE is: $RUN_TYPE"
 
 if [ -z "$SYNC_API_URL" ]
 then
-    echo "RUN_TYPE not set. Use default value service"
+    echo "SYNC_API_URL not set. Use default value service "
     SYNC_API_URL="http://ml-integration.research.dev.example.com:8082/sync/versioneddata"
 fi
 
@@ -176,7 +176,7 @@ runLocalJob() {
 
 setState() {
   echo $1
-  curl -X 'PUT' \
+  curl -k -X 'PUT' \
     $SYNC_API_URL'/latest' \
     -H 'accept: */*' \
     -H 'Content-Type: application/json' \
@@ -191,7 +191,7 @@ setState() {
 }
 
 waitForNextJob() {
-  STATE_OBJECT=$(curl -sS -X 'GET' $SYNC_API_URL'/latest?datasource='$JOB_NAME'&mergekey=_' -H 'accept: application/json' | jq '.data  | fromjson')
+  STATE_OBJECT=$(curl -k -sS -X 'GET' $SYNC_API_URL'/latest?datasource='$JOB_NAME'&mergekey=_' -H 'accept: application/json' | jq '.data  | fromjson')
   STATE=$(echo "$STATE_OBJECT" | jq .state)
   SOURCE_DATA=$(echo "$STATE_OBJECT" | jq -r .dataDir)
   NOTEBOOK_NAME=$(echo "$STATE_OBJECT" | jq -r .notebookName)
@@ -202,7 +202,7 @@ waitForNextJob() {
   echo PROCESSING_ENV: "$PROCESSING_ENV"
 
   while [ "$STATE" != "\"$TRIGGER_STATE\"" ]; do
-    STATE_OBJECT=$(curl -sS -X 'GET' $SYNC_API_URL'/latest?datasource='$JOB_NAME'&mergekey=_' -H 'accept: application/json' | jq '.data  | fromjson')
+    STATE_OBJECT=$(curl -k -sS -X 'GET' $SYNC_API_URL'/latest?datasource='$JOB_NAME'&mergekey=_' -H 'accept: application/json' | jq '.data  | fromjson')
     SOURCE_DATA=$(echo "$STATE_OBJECT" | jq -r .dataDir)
     NOTEBOOK_NAME=$(echo "$STATE_OBJECT" | jq -r .notebookName)
 
