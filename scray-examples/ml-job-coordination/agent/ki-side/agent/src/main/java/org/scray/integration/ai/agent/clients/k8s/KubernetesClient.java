@@ -106,15 +106,15 @@ public class KubernetesClient {
 		}
 	}
 
-	public void deployApp(String jobName, String runtimeType, String imageName, String jobTemplatePath, String syncApiUrl, String dataIntegrationHost) {
+	public void deployApp(String jobName, String runtimeType, String imageName, String jobTemplatePath, String syncApiUrl, String dataIntegrationHost, String hostBasePath) {
 
-		String host = jobName + ".app.research.dev.example.com";
+		String host = jobName.concat("/").concat(hostBasePath).replace("//", "/");
 		String ingressPath = "/";
 		String serviceName = jobName;
 		int portNumber = 7860;
 
 
-		var serviceDescriptorTemplate = this.loadDesciptorFormFile("service.yaml");
+		var serviceDescriptorTemplate = this.loadDesciptorFormFile("service.yaml"); // FIXME set full path to conf
 		Service serviceDescription = this.configureServiceDefinion(serviceDescriptorTemplate, serviceName, jobName, portNumber);
 
 		System.out.println(serviceDescription);
@@ -122,7 +122,7 @@ public class KubernetesClient {
 		this.deployService(serviceDescription);
 
 		// Configure ingress
-		var ingressDescriptorTemplate = this.loadDesciptorFormFile("app-ingress.yaml");
+		var ingressDescriptorTemplate = this.loadDesciptorFormFile("app-ingress.yaml"); // FIXME set full path to conf
 		Ingress ingressDescription = this.configureIngressDefinition(ingressDescriptorTemplate, host, jobName, ingressPath, serviceName, portNumber);
 
 		this.deployIngress(ingressDescription);
@@ -274,6 +274,7 @@ public class KubernetesClient {
 									.editMatchingEnv(e -> e.getName().equals("RUN_TYPE")).withValue("once").endEnv() // FIXME ??
                                     .editMatchingEnv(e -> e.getName().equals("RUNTIME_TYPE")).withValue(runtimeType).endEnv()
 									.editMatchingEnv(e -> e.getName().equals("SCRAY_SYNC_API_URL")).withValue(syncApiUrl).endEnv()
+									.editMatchingEnv(e -> e.getName().equals("SYNC_API_URL")).withValue(syncApiUrl).endEnv()
                                     .editMatchingEnv(e -> e.getName().equals("SCRAY_DATA_INTEGRATION_HOST")).withValue(dataIntegrationHost).endEnv()
 									.endContainer()
 								.endSpec()
@@ -404,6 +405,11 @@ public class KubernetesClient {
 		Job job = client.batch().v1().jobs().inNamespace("default").list().getItems().stream()
 		.filter(jobR -> {
 			String appName = jobR.getSpec().getTemplate().getMetadata().getLabels().get("app");
+		    if (appName == null) {
+		        logger.error("App label is missing (expected '{}') in Job resource: {}", jobName, jobR.getMetadata().getName());
+		        return false;
+		    }
+
 			return appName.equals(jobName);
 		})
 		.reduce(null, (a, b) -> b);

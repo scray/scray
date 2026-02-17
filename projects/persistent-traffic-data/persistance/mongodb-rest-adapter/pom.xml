@@ -13,7 +13,7 @@
       <distribution>repo</distribution>
     </license>
   </licenses>
-  
+
   <build>
     <sourceDirectory>src/main/java</sourceDirectory>
     <plugins>

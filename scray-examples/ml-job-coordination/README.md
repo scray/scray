@@ -23,7 +23,7 @@ docker build -t registry.research.dev.example.com:5000/scray/scray-jupyter_tenso
 ### Python image
 
 ```
-docker build -t registry.research.dev.example.com:5000/scray/python:0.1.3 -f ./docker-image-descriptions/scray-python-3.10.12/Dockerfile .
+docker build -t registry.research.dev.example.com:5000/scray/python:0.1.4 -f ./docker-image-descriptions/scray-python-3.10.12/Dockerfile .
 ```
 
 ### huggingface-transformers-pytorch-deepspeed-latest-gpu

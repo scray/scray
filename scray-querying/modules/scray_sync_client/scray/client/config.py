@@ -30,3 +30,7 @@ __all__ = [
 class ScrayClientConfig:
     host_address: str
     port: Optional[int] = 80
+    client_id: Optional[str] = "scray_sync_client"
+    client_secret: Optional[str] = "super_scrure_secret"
+    token_url: Optional[str] = None
+

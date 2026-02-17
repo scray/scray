@@ -3,6 +3,9 @@
 DATA_INTEGRATION_HOST=ml-integration-git.research.dev.example.com
 DATA_INTEGRATION_USER=ubuntu
 SYNC_API_URL="http://ml-integration.research.dev.example.com:8082"
+OUTPUT_FOLDER="job_output"
+
+RESUMABLE_JOB = false
 
 if [[ -z "${TRIGGER_STATE}" ]]; then
   echo "TRIGGER_STATE not set use default \"SCHEDULED\""
@@ -39,6 +42,14 @@ then
     SYNC_API_URL="http://ml-integration.research.dev.example.com:8082/sync/versioneddata"
 fi
 
+if [ -z "$SCRAY_SYNC_API_TOKEN" ]; then
+  echo "WARN: SCRAY_SYNC_API_TOKEN is not set. Please export your bearer token, e.g.:"
+  echo "  export SCRAY_SYNC_API_TOKEN='your-token-here' For now default token is used"
+  SCRAY_SYNC_API_TOKEN="super-secret-token"
+fi
+AUTH_HEADER="Authorization: Bearer $SCRAY_SYNC_API_TOKEN"
+
+
 SOURCE_DATA=.
 NOTEBOOK_NAME=example-notebook.ipynb
 JOB_LOCATION="~/jobs/b636f6f92d51e742f861ee2a928621b6/"
@@ -69,18 +80,20 @@ downloadJob() {
 
 uploadCurrentNotebookState() {
   LOG_FILE=$1
-  tar -czvf $JOB_NAME-state.tar.gz $SOURCE_DATA/$LOG_FILE
-  sftp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa  $DATA_INTEGRATION_USER@$DATA_INTEGRATION_HOST:sftp-share/ <<<'PUT '$JOB_NAME-state.tar.gz''
+  tar -czvf ${JOB_NAME}_out.tar.gz $LOG_FILE
+  sftp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa  $DATA_INTEGRATION_USER@$DATA_INTEGRATION_HOST:sftp-share/ <<<'PUT '${JOB_NAME}_out.tar.gz''
 }
 
 runPythonJob() {
   cd $JOB_LOCATION
   cd $SOURCE_DATA
 
+  mkdir -p $OUTPUT_FOLDER
+
   REQ_FILE=requirements.txt
  
   if test -f "$REQ_FILE"; then
-    pip install -r requirements.txt 2>&1 | tee -a out.$JOB_NAME.txt 
+    pip install -r requirements.txt 2>&1 | tee -a $OUTPUT_FOLDER/out.pip.$JOB_NAME.log 
   else
     echo "no requirements.txt"
   fi
@@ -94,55 +107,58 @@ runPythonJob() {
  # chmod u+x run.sh
  # ./run.sh &
 
-  python3 $NOTEBOOK_NAME  2>&1 | tee -a out.$JOB_NAME.txt &
-  uploadCurrentNotebookState out.$JOB_NAME.txt
+  python3 $NOTEBOOK_NAME  2>&1 | tee -a $OUTPUT_FOLDER/out.$JOB_NAME.log &
+  uploadCurrentNotebookState $OUTPUT_FOLDER
   
   PID=$!
 
-  echo "Wait for completion" >>  out.$JOB_NAME.txt
-  tail out.$JOB_NAME.txt
+  echo "Wait for completion" >>  $OUTPUT_FOLDER/out.$JOB_NAME.log
+  tail $OUTPUT_FOLDER/out.$JOB_NAME.log
 
 
   while ps -p $PID > /dev/null; do
     echo " python3 $NOTEBOOK_NAME $PID is running"
     echo "Upload std out"
-    uploadCurrentNotebookState out.$JOB_NAME.txt
+    uploadCurrentNotebookState $OUTPUT_FOLDER
     sleep 40
   done
 
-  tar -czvf $JOB_NAME-fin.tar.gz $SOURCE_DATA
-  sftp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa $DATA_INTEGRATION_USER@$DATA_INTEGRATION_HOST:sftp-share/ <<<'PUT '$JOB_NAME-fin.tar.gz''
+  uploadCurrentNotebookState $OUTPUT_FOLDER
+  tar -czvf $JOB_NAME-backup.tar.gz $OUTPUT_FOLDER/ 
+  sftp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa $DATA_INTEGRATION_USER@$DATA_INTEGRATION_HOST:sftp-share/ <<<'PUT '$JOB_NAME-backup.tar.gz''
 }
 
 
 runPapermillJob() {
   cd $JOB_LOCATION
   cd $SOURCE_DATA
-  
+ 
+  mkdir -p $OUTPUT_FOLDER
+
   REQ_FILE=requirements.txt
  
   if test -f "$REQ_FILE"; then
-    pip install -r requirements.txt 2>&1 | tee -a out.$JOB_NAME.txt 
+    pip install -r requirements.txt 2>&1 | tee -a $OUTPUT_FOLDER/out.pip.$JOB_NAME.txt 
   else
     echo "no requirements.txt"
   fi
+  echo "Joblocationn $JOB_LOCATION"
 
-  echo papermill --stdout-file notebook-stdout --stderr-file notebook-stderr  --autosave-cell-every 2  $NOTEBOOK_NAME out.$NOTEBOOK_NAME &
-
-  papermill --stdout-file notebook-stdout --stderr-file notebook-stderr --autosave-cell-every 2  $NOTEBOOK_NAME out.$NOTEBOOK_NAME &
+  papermill --stdout-file $OUTPUT_FOLDER/notebook-stdout.txt --stderr-file $OUTPUT_FOLDER/notebook-stderr.txt --autosave-cell-every 2  $NOTEBOOK_NAME $OUTPUT_FOLDER/out.$NOTEBOOK_NAME &
   PID=$!
 
-  uploadCurrentNotebookState out.$NOTEBOOK_NAME
+  uploadCurrentNotebookState $OUTPUT_FOLDER
   
   while ps -p $PID > /dev/null; do
     echo "papermill $PID is running"
     echo "Upload current notebook state"
-    uploadCurrentNotebookState out.$NOTEBOOK_NAME
+    uploadCurrentNotebookState $OUTPUT_FOLDER
     sleep 40
   done
-
-  tar -czvf $JOB_NAME-fin.tar.gz $SOURCE_DATA
-  sftp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa $DATA_INTEGRATION_USER@$DATA_INTEGRATION_HOST:sftp-share/ <<<'PUT '$JOB_NAME-fin.tar.gz''
+ 
+  uploadCurrentNotebookState $OUTPUT_FOLDER
+  tar -czvf $JOB_NAME-fin.tar.gz $OUTPUT_FOLDER/ 
+  sftp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa $DATA_INTEGRATION_USER@$DATA_INTEGRATION_HOST:sftp-share/ <<<'PUT '$JOB_NAME-backup.tar.gz''
 }
 
 
@@ -178,6 +194,7 @@ setState() {
   echo $1
   curl -k -X 'PUT' \
     $SYNC_API_URL'/latest' \
+    -H "$AUTH_HEADER" \
     -H 'accept: */*' \
     -H 'Content-Type: application/json' \
     -d '{
@@ -191,7 +208,7 @@ setState() {
 }
 
 waitForNextJob() {
-  STATE_OBJECT=$(curl -k -sS -X 'GET' $SYNC_API_URL'/latest?datasource='$JOB_NAME'&mergekey=_' -H 'accept: application/json' | jq '.data  | fromjson')
+  STATE_OBJECT=$(curl -k -sS -H "$AUTH_HEADER" -X 'GET' $SYNC_API_URL'/latest?datasource='$JOB_NAME'&mergekey=_' -H 'accept: application/json' | jq '.data  | fromjson')
   STATE=$(echo "$STATE_OBJECT" | jq .state)
   SOURCE_DATA=$(echo "$STATE_OBJECT" | jq -r .dataDir)
   NOTEBOOK_NAME=$(echo "$STATE_OBJECT" | jq -r .notebookName)
@@ -202,7 +219,7 @@ waitForNextJob() {
   echo PROCESSING_ENV: "$PROCESSING_ENV"
 
   while [ "$STATE" != "\"$TRIGGER_STATE\"" ]; do
-    STATE_OBJECT=$(curl -k -sS -X 'GET' $SYNC_API_URL'/latest?datasource='$JOB_NAME'&mergekey=_' -H 'accept: application/json' | jq '.data  | fromjson')
+    STATE_OBJECT=$(curl -k -sS -H "$AUTH_HEADER" -X 'GET' $SYNC_API_URL'/latest?datasource='$JOB_NAME'&mergekey=_' -H 'accept: application/json' | jq '.data  | fromjson')
     SOURCE_DATA=$(echo "$STATE_OBJECT" | jq -r .dataDir)
     NOTEBOOK_NAME=$(echo "$STATE_OBJECT" | jq -r .notebookName)
 
@@ -214,7 +231,7 @@ waitForNextJob() {
   echo SOURCE_DATA: "$SOURCE_DATA"
   echo NOTEBOOK_NAME: "$NOTEBOOK_NAME"
 
-  echo "State UPLOADED reached"
+  echo "State "$TRIGGER_STATE" reached"
 }
 
 

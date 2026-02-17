@@ -16,8 +16,12 @@
 #
 
 import logging
+from pathlib import Path
+import tarfile
+import tempfile
 from typing import Dict, Optional
 import json
+import paramiko
 from scray.client.config import ScrayClientConfig
 from scray.job_client.config import ScrayJobClientConfig
 from scray.job_client.models.agent_configuration import AgentConfiguration
@@ -48,8 +52,11 @@ class ScrayJobClient:
 
         scrayClientConfig = ScrayClientConfig(
 
-            host_address = config.host_address,
-            port = config.port
+            host_address = config.sync_host_address,
+            port = config.sync_port,
+            client_id = config.sync_client_id,
+            client_secret = config.sync_client_secret,
+            token_url = config.sync_token_url  
         )
 
         self.client = ScrayClient(client_config=scrayClientConfig)
@@ -69,7 +76,7 @@ class ScrayJobClient:
 
     def get_job_state(self, job_name):
         
-        latestVersion = self.client.getLatestVersion('_', job_name)
+        latestVersion = self.client.getLatestVersion(job_name, '_')
         logger.info("Latest version data: " + latestVersion.to_str())
         job_state = JobSyncApiData.from_json(json_string=latestVersion.data).state
 
@@ -79,7 +86,7 @@ class ScrayJobClient:
         
         while True:
             
-            latestVersion = self.client.getLatestVersion('_', job_name)
+            latestVersion = self.client.getLatestVersion(job_name, '_')
 
             logger.info("Latest version data: " + latestVersion.to_str())
 
@@ -97,7 +104,7 @@ class ScrayJobClient:
         
         while True:
             
-            latestVersion = self.client.getLatestVersion
+            latestVersion = self.client.getLatestVersion(job_name, "_")
 
             logger.info("Latest version data: " + latestVersion.to_str())
 
@@ -110,8 +117,8 @@ class ScrayJobClient:
                 break
 
             time.sleep(3)
-
-    def get_jobs(self, processing_env, requested_state=None) -> list[str]:
+            
+    def get_jobs_old(self, processing_env, requested_state=None) -> list[str]:
               
             latestVersions = self.client.get_all_versioned_data()
             if latestVersions is None:
@@ -142,8 +149,63 @@ class ScrayJobClient:
                 job_with_matching_state = list(filter(env_state_filter, latestVersions))
 
                 return list(map(get_job_name, job_with_matching_state))
-    
+    def get_jobs(self, processing_env, requested_state=None) -> list[str]:
 
+            if requested_state is None:
+                latestVersions = self.client.get_all_versioned_data()
+                if latestVersions is None:
+                    logger.info("No new version available")
+                    return []
+                else:
+                    logger.info("Latest version data: " + str(type(latestVersions)))
+
+                    def env_state_filter(latestVersion) -> str:
+                        try:
+                            metadata = JobSyncApiData.from_json(json_string=latestVersion.data)
+
+                            if metadata.processingEnv == processing_env:
+                                if requested_state is None:
+                                    return True  # If no state is requested, include all states
+                                else:
+                                    return metadata.state == requested_state
+                            else:
+                                return False
+                            
+                        except ValueError:
+                            return False 
+                    
+                    def get_job_name(versioned_data) -> str:
+                        return versioned_data.data_source
+                    
+                    job_with_matching_state = list(filter(env_state_filter, latestVersions))
+                    return list(map(get_job_name, job_with_matching_state))
+            else:
+                   latestVersions = self.client.getLatestVersionedDataByState(processing_env, requested_state)
+
+                   if latestVersions is None:
+                    logger.info("No new version available")
+                    return []
+                   else:
+                    logger.info("Latest version data: " + str(type(latestVersions)))
+                
+                    def get_job_name(versioned_data) -> str:
+                        return versioned_data.data_source
+                
+                    return list(map(get_job_name, latestVersions))
+    
+    def get_jobsFF(self, processing_env, requested_state=None) -> list[str]:
+
+      latestVersions = self.client.get_all_versioned_data()
+      if latestVersions is None:
+        logger.info("No new version available")
+        return []
+      else:
+        logger.info("Latest version data: " + str(type(latestVersions)))
+
+        def env_state_filter(latestVersion) -> JobSyncApiData:
+             metadata = JobSyncApiData.from_json(json_string=latestVersion.data)                           
+        return list(filter(env_state_filter, latestVersions))
+    
     def wait_for_new_job(self, processing_env, requested_state)-> list[str]:
 
         while True:
@@ -200,7 +262,7 @@ class ScrayJobClient:
 
     def get_job_metadata(self, job_name):
         
-        latestVersion = self.client.getLatestVersion('_', job_name)
+        latestVersion = self.client.getLatestVersion(job_name, '_')
         logger.info("Latest version data: " + latestVersion.to_str())
         metadata = JobSyncApiData.from_json(json_string=latestVersion.data).metadata
 
@@ -213,7 +275,7 @@ class ScrayJobClient:
 
         return job_name
 
-    def deploy_job(self, source_data, notebook_name: str,  processing_env: str = "http://scray.org/ai/jobs/env/see/ki1-k8s", job_name = "job-" + str(uuid.uuid4()), initState="UPLOADED", docker_image="scray/python:0.1.3", metadata = ""):
+    def deploy_job(self, source_data, notebook_name: str,  processing_env: str = "http://scray.org/ai/jobs/env/see/ki1-k8s", job_name = "job-" + str(uuid.uuid4()), initState="UPLOADED", docker_image="scray/python:0.1.4", metadata = ""):
         create_archive(job_name, source_data, self.config.data_integration_user, self.config.data_integration_host)
         self.setState(state=initState, 
                 job_name=job_name, 
@@ -224,4 +286,151 @@ class ScrayJobClient:
             )
         
         return job_name
+
+    def get_job_fin_data(self, job_name, destination_path, data_integration_user, data_integration_host):
+        """
+        Downloads the completed job data and extracts it to a specified destination.
+
+        :param job_name: Name of the job (used for the file name).
+        :param destination_path: Path where the extracted files should be stored.
+        :param data_integration_user: Username for the SFTP connection.
+        :param data_integration_host: Host of the SFTP server.
+        """
+
+        import os
+        temp_tar_path = f"/tmp/{job_name}.tar.gz"
+        
+        # Ensure the destination path exists
+        os.makedirs(destination_path, exist_ok=True)
+
+        transport = paramiko.Transport((data_integration_host, 22))
+        
+        try:
+            private_key_path = f"{Path.home()}/.ssh/id_rsa"
+            key = paramiko.RSAKey.from_private_key_file(private_key_path)
+
+            # Connect to SFTP
+            transport.connect(username=data_integration_user, pkey=key)
+            sftp = paramiko.SFTPClient.from_transport(transport)
+            
+            # Download the archive
+            remote_path = f"sftp-share/{job_name}.tar.gz"
+            print(f"Downloading {remote_path} to {temp_tar_path}")
+            sftp.get(remote_path, temp_tar_path)
+            sftp.close()
+
+            # Extract the archive
+            with tarfile.open(temp_tar_path, "r:gz") as tar:
+                tar.extractall(path=destination_path)
+                print(f"Extracted {job_name}.tar.gz to {destination_path}")
+
+        except Exception as e:
+            print(f"Error during download and extraction: {e}")
+        finally:
+            transport.close()
+            
+            # Remove the downloaded archive after extraction
+            if os.path.exists(temp_tar_path):
+                os.remove(temp_tar_path)
+                print(f"Removed temporary file {temp_tar_path}")
+
+    def get_job_out_data1(self, job_name, destination_path, data_integration_user=None, data_integration_host=None):
+        """
+        Downloads the files stored in the output folder of the job
+
+        :param job_name: Name of the job.
+        :param destination_path: Path where the extracted files should be stored.
+        """
+
+        # use values from configuration if no parameter is given
+        data_integration_user = data_integration_user or self.config.data_integration_user
+        data_integration_host = data_integration_host or self.config.data_integration_host
+
+        import os
+        temp_dir = tempfile.gettempdir()
+        temp_tar_path = os.path.join(temp_dir, f"{job_name}_out.tar.gz")
+        
+        # Ensure the destination path exists
+        os.makedirs(destination_path, exist_ok=True)
+
+        transport = paramiko.Transport((data_integration_host, 22))
+        
+        try:
+            private_key_path = f"{Path.home()}/.ssh/id_rsa"
+            key = paramiko.RSAKey.from_private_key_file(private_key_path)
+
+            # Connect to SFTP
+            transport.connect(username=data_integration_user, pkey=key)
+            sftp = paramiko.SFTPClient.from_transport(transport)
+            
+            # Download the archive
+            remote_path = f"sftp-share/{job_name}_out.tar.gz"
+            print(f"Downloading {remote_path} to {temp_tar_path}")
+            sftp.get(remote_path, temp_tar_path)
+            sftp.close()
+
+            # Extract the archive
+            with tarfile.open(temp_tar_path, "r:gz") as tar:
+                tar.extractall(path=destination_path)
+                print(f"Extracted {job_name}_out.tar.gz to {destination_path}")
+
+        except Exception as e:
+            print(f"Error during download and extraction: {e}")
+        finally:
+            transport.close()
+            
+            # Remove the downloaded archive after extraction
+            if os.path.exists(temp_tar_path):
+                os.remove(temp_tar_path)
+                print(f"Removed temporary file {temp_tar_path}")
+
+    def get_job_out_data(self, job_name, destination_path, data_integration_user=None, data_integration_host=None):
+        """
+        Downloads the files stored in the output folder of the job
+
+        :param job_name: Name of the job.
+        :param destination_path: Path where the extracted files should be stored.
+        """
+
+        # use values from configuration if no parameter is given
+        data_integration_user = data_integration_user or self.config.data_integration_user
+        data_integration_host = data_integration_host or self.config.data_integration_host
+
+        import os
+        temp_dir = tempfile.gettempdir()
+        temp_tar_path = os.path.join(temp_dir, f"{job_name}-state.tar.gz")
+        
+        # Ensure the destination path exists
+        os.makedirs(destination_path, exist_ok=True)
+
+        transport = paramiko.Transport((data_integration_host, 22))
+        
+        try:
+            private_key_path = f"{Path.home()}/.ssh/id_rsa"
+            key = paramiko.RSAKey.from_private_key_file(private_key_path)
+
+            # Connect to SFTP
+            transport.connect(username=data_integration_user, pkey=key)
+            sftp = paramiko.SFTPClient.from_transport(transport)
+            
+            # Download the archive
+            remote_path = f"sftp-share/{job_name}-state.tar.gz"
+            print(f"Downloading {remote_path} to {temp_tar_path}")
+            sftp.get(remote_path, temp_tar_path)
+            sftp.close()
+
+            # Extract the archive
+            with tarfile.open(temp_tar_path, "r:gz") as tar:
+                tar.extractall(path=destination_path)
+                print(f"Extracted {job_name}-state.tar.gz to {destination_path}")
+
+        except Exception as e:
+            print(f"Error during download and extraction: {e}")
+        finally:
+            transport.close()
+            
+            # Remove the downloaded archive after extraction
+            if os.path.exists(temp_tar_path):
+                os.remove(temp_tar_path)
+                print(f"Removed temporary file {temp_tar_path}")
 

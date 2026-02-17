@@ -55,11 +55,12 @@ downloadUpdatedNotebook() {
 }
 
 setState() {
-echo $1
+
 curl -sS -X 'PUT' \
   ''$SYNC_API_URL'/sync/versioneddata/latest' \
   -H 'accept: */*' \
   -H 'Content-Type: application/json' \
+  -H "Authorization: Bearer $TOKEN" \
   -d '{
   "dataSource": "'$JOB_NAME'",
   "mergeKey": "_",
@@ -71,11 +72,11 @@ curl -sS -X 'PUT' \
 
 waitForJobCompletion() {
 
-   STATE_OBJECT=$(curl -sS -X 'GET'   ''$SYNC_API_URL'/sync/versioneddata/latest?datasource='$JOB_NAME'&mergekey=_'   -H 'accept: application/json' | jq '.data  | fromjson')
+   STATE_OBJECT=$(curl -sS -H "Authorization: Bearer $TOKEN" -X 'GET'   ''$SYNC_API_URL'/sync/versioneddata/latest?datasource='$JOB_NAME'&mergekey=_'   -H 'accept: application/json' | jq '.data  | fromjson')
 
   while [ "$STATE" != "\"COMPLETED\"" ]
   do
-    STATE_OBJECT=$(curl -sS -X 'GET'   ''$SYNC_API_URL'/sync/versioneddata/latest?datasource='$JOB_NAME'&mergekey=_'   -H 'accept: application/json' | jq '.data  | fromjson')
+    STATE_OBJECT=$(curl -sS -H "Authorization: Bearer $TOKEN" -X 'GET'   ''$SYNC_API_URL'/sync/versioneddata/latest?datasource='$JOB_NAME'&mergekey=_'   -H 'accept: application/json' | jq '.data  | fromjson')
     STATE=$(echo "$STATE_OBJECT" | jq .state)
 
     downloadUpdatedNotebook
@@ -133,12 +134,17 @@ fi
 
 # Check if sync host user env var is empty
 if [ -z "$SCRAY_SYNC_API_URL" ]; then
-    echo "The environment variable  SCRAY_DATA_INTEGRATION_USER not set. Default value \"$SYNC_API_URL\" is used."
+    echo "The environment variable SCRAY_SYNC_API_URL  not set. Default value \"$SYNC_API_URL\" is used."
 else
     SYNC_API_URL="$SCRAY_SYNC_API_URL"
 fi
 
-
+if [ -z "$SCRAY_SYNC_API_TOKEN" ]; then
+  echo "WARN: SCRAY_SYNC_API_TOKEN is not set. Please export your bearer token, e.g.:"
+  echo "  export SCRAY_SYNC_API_TOKEN='your-token-here' For now default token is used"
+  SCRAY_SYNC_API_TOKEN="super-secret-token"
+fi
+AUTH_HEADER="Authorization: Bearer $SCRAY_SYNC_API_TOKEN"
 
 if [ "$1" == "run" ]
 then

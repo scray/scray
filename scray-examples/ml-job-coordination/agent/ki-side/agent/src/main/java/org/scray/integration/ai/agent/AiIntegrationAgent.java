@@ -45,8 +45,6 @@ public class AiIntegrationAgent
 
     private Environments environements = null;
 
-    private String syncApiUrl = "http://ml-integration.research.dev.example.com:8082/sync/versioneddata";
-
     public AiIntegrationAgent(Environments envs)
     {
         this.environements = envs;
@@ -131,7 +129,7 @@ public class AiIntegrationAgent
 
         // environements.put("http://scray.org/ai/jobs/env/see/ki1-k8s/cpu/python", Environment.EnvType.Python);
 
-        // environements.put("http://scray.org/ai/jobs/env/see/ki2-k8s/cpu/python", Environment.EnvType.Python);
+        //environements.put("http://scray.org/ai/jobs/env/see/ki2-k8s/cpu/python", Environment.EnvType.Python);
         // environements.put("http://scray.org/ai/jobs/env/see/ki2-k8s/python", Environment.EnvType.Python);
         // environements.put("http://scray.org/ai/jobs/env/see/ki2-k8s", Environment.EnvType.K8s);
 
@@ -145,11 +143,11 @@ public class AiIntegrationAgent
     public Stream<JobToSchedule> getJobDataForThisAgent(String syncApiData, Environments myEnvs)
         throws JsonMappingException, JsonProcessingException
     {
-
         return Arrays.asList(jsonObjectMapper.readValue(syncApiData, VersionedData2[].class)).stream()
                      // parse job data
                      .map(versonData ->
                      {
+
                          try
                          {
                              return Optional.of(
@@ -159,7 +157,10 @@ public class AiIntegrationAgent
                          catch (JacksonException e)
                          {
                              logger.warn("No Ai job data parsed");
-                             logger.debug(versonData.getData());
+                             logger.info("Parse exception: {}, Data: {}", e,
+                            		    versonData.getData() != null
+                            		        ? versonData.getData().substring(0, Math.min(100, versonData.getData().length()))
+                            		        : "null");
                              Optional<JobToSchedule> emptyJobData = Optional.empty();
                              return emptyJobData;
                          }
@@ -267,8 +268,8 @@ public class AiIntegrationAgent
                                             env.getEnvVars().get("RUNTIME_TYPE"),
                                             jobToStart.getAiJobsData().getImageName(),
                                             env.getK8sJobDescriptonTemplateFullPath(),
-                                            env.getEnvVars().get("SCRAY_SYNC_API_URL"), // FIXME Read it fom config file
-                                            env.getEnvVars().get("SCRAY_DATA_INTEGRATION_HOST") // FIXME Read it fom config file
+                                            env.getEnvVars().get("SCRAY_SYNC_API_URL"),
+                                            env.getEnvVars().get("SCRAY_DATA_INTEGRATION_HOST")
                                             );
                     }
                     else
@@ -292,11 +293,11 @@ public class AiIntegrationAgent
                     {
                         KubernetesClient k8sClient = new KubernetesClient();
                         k8sClient.deleteJob(jobToTerminate.getVersionData().getDataSource());
-                    }
-                    catch (JobNotFoundException e)
-                    {
-                        logger.warn(e.getMessage());
-                    }
+	                } catch (JobNotFoundException e) {
+	                    logger.warn("Job not found: {}", e.getMessage());
+	                } catch (Exception e) {
+	                    logger.error("Unexpected error during job termination", e);
+	                }
 
                     this.setState(jobToTerminate.getVersionData(), jobToTerminate.getAiJobsData(), "DEAD");
 

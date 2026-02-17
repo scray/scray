@@ -46,7 +46,6 @@ public class ConfigurationLoader {
 			e.printStackTrace();
 			throw new ConfiguratonIoError(e.getMessage());
 		}
-
 	}
 
 	public void write(Environments envs, OutputStream stream) throws ConfiguratonIoError, StreamWriteException, DatabindException, IOException {
