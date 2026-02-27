@@ -106,7 +106,15 @@ public class KubernetesClient {
 		}
 	}
 
-	public void deployApp(String jobName, String runtimeType, String imageName, String jobTemplatePath, String syncApiUrl, String dataIntegrationHost, String hostBasePath) {
+	public void deployApp(
+			String jobName,
+			String runtimeType,
+			String imageName,
+			String jobTemplatePath,
+			String syncApiUrl,
+			String dataIntegrationHost,
+			String hostBasePath
+		) {
 
 		String host = jobName.concat("/").concat(hostBasePath).replace("//", "/");
 		String ingressPath = "/";

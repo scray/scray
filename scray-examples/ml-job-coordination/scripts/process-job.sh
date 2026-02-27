@@ -79,9 +79,15 @@ downloadJob() {
 }
 
 uploadCurrentNotebookState() {
-  LOG_FILE=$1
-  tar -czvf ${JOB_NAME}_out.tar.gz $LOG_FILE
-  sftp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa  $DATA_INTEGRATION_USER@$DATA_INTEGRATION_HOST:sftp-share/ <<<'PUT '${JOB_NAME}_out.tar.gz''
+  LOG_FOLDER=$1
+  
+  local ARCHIVE="${JOB_NAME}-state.tar.gz"
+
+  tar -czvf "$ARCHIVE" -C "$LOG_FOLDER" .
+  sftp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa \
+    "$DATA_INTEGRATION_USER@$DATA_INTEGRATION_HOST:sftp-share/" <<EOF
+put "$ARCHIVE"
+EOF
 }
 
 runPythonJob() {
@@ -161,8 +167,6 @@ runPapermillJob() {
   sftp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa $DATA_INTEGRATION_USER@$DATA_INTEGRATION_HOST:sftp-share/ <<<'PUT '$JOB_NAME-backup.tar.gz''
 }
 
-
-
 runJob() {
   
   if [ "$RUNTIME_TYPE" == "PAPERMILL" ]
@@ -176,11 +180,7 @@ runJob() {
     processNextJob
   fi
 
-
-
 EXECUTION_ENV=
-
-
 
 }
 

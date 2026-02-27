@@ -17,12 +17,12 @@
 	<dependencies>
 		<dependency>
 			<groupId>org.scray</groupId>
-			<artifactId>scray-sync-api_${scala.compat.version}</artifactId>
+			<artifactId>scray-sync-api</artifactId>
 			<version>${scray.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.scray</groupId>
-			<artifactId>scray-sync-file_${scala.compat.version}</artifactId>
+			<artifactId>scray-sync-file</artifactId>
 			<version>${scray.version}</version>
 		</dependency>
 		<dependency>
