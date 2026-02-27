@@ -1,4 +1,4 @@
-FROM nvidia/cuda:11.7.1-cudnn8-devel-ubuntu22.04
+FROM nvidia/cuda:12.9.0-cudnn-devel-ubuntu22.04
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && \
     apt-get upgrade -y && \
@@ -66,3 +66,4 @@ ENV PYTHONPATH=${HOME}/app \
     SYSTEM=spaces
 
 CMD ["bash", "-c", "/opt/scray-sync/process-job.sh"]
+
