@@ -25,17 +25,24 @@ class TolerantLabelEncoder(LabelEncoder):
         self.unknown_encoded_value = unknown_encoded_value
 
     def transform(self, y):
-        check_is_fitted(self, 'classes_')
-        y = column_or_1d(y, warn=True)
+        try:
+            check_is_fitted(self, 'classes_')
+            y = column_or_1d(y, warn=True)
 
-        indices = np.isin(y, self.classes_)
-        if not self.ignore_unknown and not np.all(indices):
-            raise ValueError("y contains new labels: %s" 
-                                         % str(np.setdiff1d(y, self.classes_)))
+            indices = np.isin(y, self.classes_)
+            if not self.ignore_unknown and not np.all(indices):
+                raise ValueError("y contains new labels: %s" 
+                                             % str(np.setdiff1d(y, self.classes_)))
 
-        y_transformed = np.searchsorted(self.classes_, y)
-        y_transformed[~indices]=self.unknown_encoded_value
-        return y_transformed
+            if self.classes_ is not None and y is not None:    
+                y_transformed = np.searchsorted(self.classes_, y)
+            else:
+                return [-1]
+
+            y_transformed[~indices]=self.unknown_encoded_value
+            return y_transformed
+        except Exception as e:
+            return [-1]
 
     # for appended versions
     def transform_version(self, y):

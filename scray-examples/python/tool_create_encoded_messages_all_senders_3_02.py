@@ -9,7 +9,7 @@
 
 # # Main
 
-# In[1]:
+# In[ ]:
 
 
 import dfBasics
@@ -19,14 +19,14 @@ import pfAdapt
 #import charts
 
 
-# In[2]:
+# In[ ]:
 
 
 import pandas as pd
 from pyspark.sql import functions
 
 
-# In[3]:
+# In[ ]:
 
 
 columns = ['CGLOBALMESSAGEID', 'CSTARTTIME', 'CENDTIME', 'CSTATUS', 'CSERVICE',       'CSLABILLINGMONTH', 'CSENDERPROTOCOL', 'CSENDERENDPOINTID',       'CINBOUNDSIZE', 'CRECEIVERPROTOCOL', 'CRECEIVERENDPOINTID', 'CSLATAT',       'CMESSAGETAT2', 'CSLADELIVERYTIME']
@@ -35,7 +35,7 @@ def get_columns_2():
     columns = ['CGLOBALMESSAGEID', 'CSTARTTIME', 'CENDTIME', 'CSTATUS', 'CSERVICE',            'CSENDERPROTOCOL', 'CSENDERENDPOINTID',           'CINBOUNDSIZE', 'CRECEIVERPROTOCOL', 'CRECEIVERENDPOINTID', 'CSLATAT',           'CMESSAGETAT2', 'CSLADELIVERYTIME']
     return columns
 
-columns = ['CGLOBALMESSAGEID',  'CSTARTTIME', 'CENDTIME', 'CSTATUS', 'CSERVICE', 'CSENDERENDPOINTID', 'CSENDERPROTOCOL', 'CINBOUNDSIZE', 'CRECEIVERPROTOCOL', 'CRECEIVERENDPOINTID', 'CSLATAT', 'CMESSAGETAT2', 'CSLADELIVERYTIME']
+columns = ['CGLOBALMESSAGEID',  'CSTARTTIME', 'CENDTIME', 'CSTATUS', 'CSERVICE', 'CSLABILLINGMONTH', 'CSENDERENDPOINTID', 'CSENDERPROTOCOL', 'CINBOUNDSIZE', 'CRECEIVERPROTOCOL', 'CRECEIVERENDPOINTID', 'CSLATAT', 'CMESSAGETAT2', 'CSLADELIVERYTIME']
      
 
 #columns = get_columns_2()
@@ -43,13 +43,35 @@ columns = ['CGLOBALMESSAGEID',  'CSTARTTIME', 'CENDTIME', 'CSTATUS', 'CSERVICE',
 #columns = [ 'CSTARTTIME', 'CSENDERENDPOINTID']
 
 
-# In[4]:
+# In[ ]:
 
 
-sparkSession = dfBasics.getSparkSession()
+#sparkSession = dfBasics.getSparkSession()
 
 
-# In[5]:
+# In[ ]:
+
+
+import numpy as np
+import pandas as pd
+
+import findspark
+findspark.init()
+
+from pyspark.sql import SparkSession
+from pyspark.sql.types import IntegerType
+from pyspark.sql.functions import col
+
+sparkSession =  SparkSession.builder.config('spark.local.dir', '/tmp').config("spark.executor.memory", "12g").config("spark.driver.memory", "12g").config("spark.driver.maxResultSize", "0").config("spark.shuffle.registration.maxAttempts", "1").config("spark.task.maxFailures", "1").appName("jupyter").getOrCreate()
+
+
+# In[ ]:
+
+
+
+
+
+# In[ ]:
 
 
 #df = sparkSession.read.parquet("/tmp/sla.parquet")
@@ -58,20 +80,7 @@ df = sparkSession.read.parquet('hdfs://172.30.17.145:8020/sla_sql_data/*/*').sel
 #senders = pd.read_parquet('/tmp/senders' + '.parquet', engine='pyarrow')
 
 
-# In[6]:
-
-
-"""
-senders = sparkSession.read.parquet("/tmp/senders.parquet")
-#senders = pd.read_parquet('/tmp/senders' + '.parquet', engine='pyarrow')
-senders = list(senders.toPandas()['CSENDERENDPOINTID'])
-"""
-
-sender_receivers_df = pd.read_parquet('/home/jovyan/work/output/v00004/single/' + 'sender_receivers.parquet')
-#sender_receivers_df
-
-
-# In[7]:
+# In[ ]:
 
 
 from pyspark.sql.functions import udf
@@ -100,13 +109,13 @@ def get_columns(df):
     return columns
 
 
-# In[8]:
+# In[ ]:
 
 
 #!ls /home/jovyan/work/npy
 
 
-# In[9]:
+# In[ ]:
 
 
 # ## encode columns
@@ -168,25 +177,7 @@ def cast_spark_columns(dataframe=None,columns=[],type="int" ):
 from pyspark.sql import functions as F
 
 
-def process_0(sender=None,receiver=None, dataframe=None,year=None):
-    df3 = dataframe.withColumn("timestamp", F.from_unixtime(dataframe.CSTARTTIME / 1000))
 
-    # Step 2: Extract the year from the timestamp
-    df4 = df3.withColumn("tyear", F.year("timestamp"))
-
-    # Step 3: Filter the DataFrame using the specified conditions
-    df5 = df4.where(
-        (F.col("tyear").isin([year])) &
-        (F.col("CSENDERENDPOINTID").isin([sender])) &
-        (F.col("CRECEIVERENDPOINTID").isin([receiver]))
-    )
-    
-    df6 = df5.fillna(-1)
-    
-    df7 = encode_columns_spark(dataframe=df6,columns=columns)
-    df8 = df7.withColumn("year", udf_add_year(df7.CSTARTTIME)).withColumn("month", udf_add_month(df7.CSTARTTIME)).withColumn("day", udf_add_day(df7.CSTARTTIME)).withColumn("hour", udf_add_hour(df7.CSTARTTIME)).withColumn("minute", udf_add_minute(df7.CSTARTTIME)) 
-    df9=cast_spark_columns(dataframe=df8, columns=['CSTARTTIME', 'CENDTIME','CINBOUNDSIZE','CSLATAT','CMESSAGETAT2','CSLADELIVERYTIME'], type='long')
-    return df9
 
 
 def process(sender=None,receiver=None, dataframe=None,year=None):
@@ -257,54 +248,7 @@ def process_0(sender=None, receiver=None, dataframe=None, year=None):
 # In[19]:
 
 
-# In[10]:
-
-
-from pyspark.sql import functions as F
-from pyspark.sql.types import LongType
-
-def process_2(sender=None, receiver=None, dataframe=None, year=None):
-    # Step 1: Extract timestamp and year in a single transformation
-    df3 = (
-        dataframe
-        .withColumn("timestamp", F.from_unixtime(F.col("CSTARTTIME") / 1000))
-        .withColumn("tyear", F.year(F.col("timestamp")))
-    )
-
-    # Step 2: Filter the DataFrame using the specified conditions
-    if sender is not None:
-        df3 = df3.filter(F.col("CSENDERENDPOINTID").isin(sender))
-    if receiver is not None:
-        df3 = df3.filter(F.col("CRECEIVERENDPOINTID").isin(receiver))
-    if year is not None:
-        df3 = df3.filter(F.col("tyear") == year)
-
-    # Step 3: Fill NaN values with -1
-    df3 = df3.fillna(-1)
-
-    # Step 4: Encode columns (assuming 'columns' is predefined or passed in)
-    df3 = encode_columns_spark(dataframe=df3, columns=columns)
-    
-    # Step 5: Extract date parts in a single transformation
-    df3 = (
-        df3.withColumn("year", udf_add_year(F.col("CSTARTTIME")))
-           .withColumn("month", udf_add_month(F.col("CSTARTTIME")))
-           .withColumn("day", udf_add_day(F.col("CSTARTTIME")))
-           .withColumn("hour", udf_add_hour(F.col("CSTARTTIME")))
-           .withColumn("minute", udf_add_minute(F.col("CSTARTTIME")))
-    )
-
-    # Step 6: Cast columns to 'long' type in one go
-    long_columns = ['CSTARTTIME', 'CENDTIME', 'CINBOUNDSIZE', 'CSLATAT', 'CMESSAGETAT2', 'CSLADELIVERYTIME']
-    df3 = df3.select(
-        *df3.columns,
-        *[F.col(col).cast(LongType()).alias(col) for col in long_columns]
-    )
-
-    return df3
-
-
-# In[11]:
+# In[ ]:
 
 
 # In[17]:
@@ -320,13 +264,13 @@ np.load = lambda *a,**k: np_load_old(*a, allow_pickle=True, **k)
 
 # # Main
 
-# In[12]:
+# In[ ]:
 
 
 import dfBasics
 import pandas as pd
 
-version_sla = 'v00004'
+version_sla = 'v00005'
 version     = version_sla + '/v00000'
 
 home_directory  =  '/home/jovyan/work/'
@@ -337,7 +281,7 @@ share_directory = '/home/jovyan/work/output/'
 
 # ### encode value
 
-# In[13]:
+# In[ ]:
 
 
 def e_transform(value,_encoder ):
@@ -350,7 +294,7 @@ def e_transform(value,_encoder ):
 
 # ### decode value
 
-# In[14]:
+# In[ ]:
 
 
 import numpy
@@ -363,13 +307,13 @@ def e_inverse_transform(value,_encoder):
         return None
 
 
-# In[15]:
+# In[ ]:
 
 
 #!mkdir -p /home/jovyan/work/output/enc
 
 
-# In[16]:
+# In[ ]:
 
 
 """
@@ -378,14 +322,14 @@ if None in senders:
 """
 
 
-# In[17]:
+# In[ ]:
 
 
-ENCODED_PATH = '/home/jovyan/work/output/v00004/v00000/encoded/parts/'
-NPY_PATH = '/home/jovyan/work/output/v00004/npy/'
+ENCODED_PATH = '/home/jovyan/work/output/v00005/v00000/encoded/parts/'
+NPY_PATH = '/home/jovyan/work/output/v00005/npy/'
 
 
-# In[18]:
+# In[ ]:
 
 
 from os import listdir
@@ -396,10 +340,11 @@ def listdirectory(path=None,filter='.'):
 _files = listdirectory(path=ENCODED_PATH)
 #senders = senders[len(_files):]
 
-columns = ['CSTATUS','CSERVICE','CSENDERENDPOINTID','CSENDERPROTOCOL','CRECEIVERPROTOCOL','CRECEIVERENDPOINTID']
+#columns = ['CSTATUS','CSERVICE','CSENDERENDPOINTID','CSENDERPROTOCOL','CRECEIVERPROTOCOL','CRECEIVERENDPOINTID']
+columns = ['CSTATUS','CSERVICE','CSLABILLINGMONTH','CSENDERPROTOCOL','CSENDERENDPOINTID','CRECEIVERPROTOCOL','CRECEIVERENDPOINTID']
 
 
-# In[19]:
+# In[ ]:
 
 
 npy=NPY_PATH
@@ -410,83 +355,49 @@ for column in columns:
     encoders[column] = _encoder
 
 
-# In[21]:
+# In[ ]:
 
 
-len(sender_receivers_df)
+year_months = list(encoders['CSLABILLINGMONTH'].classes_)
 
 
 # In[ ]:
 
 
-import pyspark.sql.functions as f
-import os.path
-years = [2019,2020,2021,2022,2023,2024]
-
-df3 = df.withColumn("timestamp", F.from_unixtime(df.CSTARTTIME / 1000))
-# Step 2: Extract the year from the timestamp
-df4 = df3.withColumn("tyear", F.year("timestamp"))
-    
-for index,row in sender_receivers_df.iterrows():
-    enc_sender = index
-    enc_receivers = list(row['CRECEIVERENDPOINTID'])
-    
-    sender = e_inverse_transform(enc_sender,encoders['CSENDERENDPOINTID'])
-    for enc_receiver in enc_receivers:
-        receiver = e_inverse_transform(enc_receiver,encoders['CRECEIVERENDPOINTID'])
-        #print(sender,receiver)
-        for year in years:
-            filename_1 = ENCODED_PATH + "sla_enc_%s_%s_%s_%s_%s_%s.parquet" % ('srfull','v00004_v00000',sender,receiver,'0','0')
-            filename = ENCODED_PATH + "sla_enc_%s_%s_%s_%s_%s_%s.parquet" % ('srfull','v00004_v00000',sender,receiver,year,'0')
-            
-            if not os.path.isfile(filename_1 + '/_SUCCESS'): 
-                #print(filename_1)
-                if not os.path.isfile(filename + '/_SUCCESS'): 
-                    #print(filename)
-                    df5 = process(sender=sender,receiver=receiver,dataframe=df4,year=year)
-                    df5.write.mode("overwrite").parquet(filename)
+#!rm -rf /home/jovyan/work/output/v00004/v00000/encoded/parts/sla_enc_srfull_v00004_v00000_7e1d9ad0-e67d-11e8-be62-528eac1b495c_ca3583d0-467a-11e9-a416-e137ac1b495c_2021_0.parquet
+#!df .
 
 
 # In[ ]:
 
 
-#e_transform('772e6440-e973-11e8-be62-528eac1b495c',encoders['CSENDERENDPOINTID'] ),enc_sender
+len(year_months)
 
 
 # In[ ]:
 
 
-#df4.head(100)
-
-
-# In[ ]:
-
-
-"""
-import pyspark.sql.functions as f
+import pyspark.sql.functions as f  # Use lowercase for consistency
 import os.path
 
-sender = e_inverse_transform(enc_sender,encoders['CSENDERENDPOINTID'])
-for enc_receiver in enc_receivers:
-    receiver = e_inverse_transform(enc_receiver,encoders['CRECEIVERENDPOINTID'])
-    print(sender,receiver)
-    filename = ENCODED_PATH + "sla_enc_%s_%s_%s_%s_%s_%s.parquet" % ('srfull','v00004_v00000',sender,receiver,'0','0')
-    if not os.path.isfile(filename + '/_SUCCESS'): 
-        df4 = process(sender=sender,receiver=receiver,dataframe=df)
-        df4.write.mode("overwrite").parquet(filename)
-"""
+# Add timestamp and hour columns
+df3 = df.withColumn("timestamp", f.from_unixtime(f.col("CSTARTTIME") / 1000))
+df4 = df3.withColumn("thour", f.hour("timestamp"))
 
-
-# In[ ]:
-
-
-"""
-import pyspark.sql.functions as f
-#sender = senders[0]
-for sender in senders:
-    df4 = process(sender=sender,dataframe=df)
-    df4.write.mode("overwrite").parquet("/home/jovyan/work/output/enc/sla_enc_" + sender + ".parquet")
-"""
+# Loop through hours and filter DataFrame
+for year_month in year_months[20:]:
+    for hour in range(0, 24):
+        filename = ENCODED_PATH + "sla_enc_%s_%s_%s_%s_%s_%s.parquet" % ('srfull','v00005_v00000',year_month,'0','0',str(hour))
+        if not os.path.isfile(filename + '/_SUCCESS'): 
+            filtered_df = df4.where(
+                (f.col("CSLABILLINGMONTH").isin([year_month])) &
+                (f.col("thour") == hour)  # Match specific hour
+            )
+            df6 = filtered_df.fillna(-1)
+            df7 = encode_columns_spark(dataframe=df6,columns=columns)
+            df8 = df7.withColumn("year", udf_add_year(df7.CSTARTTIME)).withColumn("month", udf_add_month(df7.CSTARTTIME)).withColumn("day", udf_add_day(df7.CSTARTTIME)).withColumn("hour", udf_add_hour(df7.CSTARTTIME)).withColumn("minute", udf_add_minute(df7.CSTARTTIME)) 
+            df9=cast_spark_columns(dataframe=df8, columns=['CSTARTTIME', 'CENDTIME','CINBOUNDSIZE','CSLATAT','CMESSAGETAT2','CSLADELIVERYTIME'], type='long')
+            df9.write.mode("overwrite").parquet(filename)
 
 
 # In[ ]:

@@ -427,7 +427,7 @@ df3 = df.withColumn("timestamp", F.from_unixtime(df.CSTARTTIME / 1000))
 # Step 2: Extract the year from the timestamp
 df4 = df3.withColumn("tyear", F.year("timestamp"))
     
-for index,row in sender_receivers_df.iterrows():
+for index, row in sender_receivers_df.iloc[8000:].iterrows():
     enc_sender = index
     enc_receivers = list(row['CRECEIVERENDPOINTID'])
     

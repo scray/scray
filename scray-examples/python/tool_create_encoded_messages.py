@@ -271,11 +271,24 @@ def process(dataframe=None, encoders=None, columns=None, sender=None):
 # In[ ]:
 
 
+import os
 def process_update(year,month,week,df,encoders=None, columns=None):
-    df2 = df.where(f.col("year").isin([year])).where(f.col("week").isin([week]))
-    df3 = process(dataframe=df2, encoders=encoders, columns=columns)
-    df4 = df3.withColumn("error", udf_add_error(f.col("CSTATUS"), f.col("CSERVICE")).cast(IntegerType()))
-    df4.write.mode('overwrite').parquet('/home/jovyan/work/output/v00003_v00001/sla_enc_v00003_v00001_' + str(year) + '_' + str(month) + '_' + str(week) + '.parquet')
+    result_file = '/home/jovyan/work/output/v00003_v00001/sla_enc_v00003_v00001_' + str(year) + '_' + str(month) + '_' + str(week) + '.parquet'
+    try:
+        if not os.path.isdir(result_file):
+            df2 = df.where(f.col("year").isin([year])).where(f.col("week").isin([week]))
+            df3 = process(dataframe=df2, encoders=encoders, columns=columns)
+            df4 = df3.withColumn("error", udf_add_error(f.col("CSTATUS"), f.col("CSERVICE")).cast(IntegerType()))
+            df4.write.mode('overwrite').parquet(result_file)
+    except Exception as exception:
+        #exception
+        print(exception)               
+
+
+# In[ ]:
+
+
+
 
 
 # In[ ]:
@@ -386,8 +399,12 @@ pdf2
 
 years = [2019,2020,2021,2022,2023]
 for year in years:
-    weeks = get_weeks(pf_year_weeks,year)
-    for week in weeks:
-        month = pf_year_weeks[(pf_year_weeks['year'] == year) & (pf_year_weeks['week'] == week)].iloc[0]['month']
-        process_update(year,month,week,df,encoders=encoders, columns=columns)           
+    try:
+        weeks = get_weeks(pf_year_weeks,year)
+        for week in weeks:
+            month = pf_year_weeks[(pf_year_weeks['year'] == year) & (pf_year_weeks['week'] == week)].iloc[0]['month']
+            process_update(year,month,week,df,encoders=encoders, columns=columns)       
+    except Exception as exception:
+        #exception
+        print(exception)           
 

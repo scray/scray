@@ -201,7 +201,7 @@ def process(sender=None,receiver=None, dataframe=None,year=None):
         (F.col("tyear").isin([year])) &
         (F.col("CSENDERENDPOINTID").isin([sender])) &
         (F.col("CRECEIVERENDPOINTID").isin([receiver]))
-    ).persist()
+    )
     
     df6 = df5.fillna(-1)
     
@@ -210,38 +210,6 @@ def process(sender=None,receiver=None, dataframe=None,year=None):
     df9=cast_spark_columns(dataframe=df8, columns=['CSTARTTIME', 'CENDTIME','CINBOUNDSIZE','CSLATAT','CMESSAGETAT2','CSLADELIVERYTIME'], type='long')
     return df9
 
-
-def process_0(sender=None, receiver=None, dataframe=None, year=None):
-    from pyspark.sql.functions import col, year as spark_year, month, dayofmonth, hour, minute, when
-
-    # Filter data as early as possible
-    df_filtered = dataframe.where(
-        (col("tyear") == year) &
-        (col("CSENDERENDPOINTID") == sender) &
-        (col("CRECEIVERENDPOINTID") == receiver)
-    )
-    
-    # Minimize transformations by using a single pass with select and when conditions for filling nulls
-    df_transformed = df_filtered.fillna(-1).select(
-        '*',  # Keep all columns or select specific ones if needed for optimization
-        spark_year("CSTARTTIME").alias("year"),
-        month("CSTARTTIME").alias("month"),
-        dayofmonth("CSTARTTIME").alias("day"),
-        hour("CSTARTTIME").alias("hour"),
-        minute("CSTARTTIME").alias("minute")
-    )
-    
-    # Encode columns (assuming this is efficient, ensure this function is optimized)
-    df_encoded = encode_columns_spark(dataframe=df_transformed, columns=columns)
-    
-    # Perform type casting (try to do this minimally if possible)
-    df_final = cast_spark_columns(
-        dataframe=df_encoded, 
-        columns=['CSTARTTIME', 'CENDTIME', 'CINBOUNDSIZE', 'CSLATAT', 'CMESSAGETAT2', 'CSLADELIVERYTIME'], 
-        type='long'
-    )
-    
-    return df_final
 
 
 # In[18]:
@@ -427,7 +395,7 @@ df3 = df.withColumn("timestamp", F.from_unixtime(df.CSTARTTIME / 1000))
 # Step 2: Extract the year from the timestamp
 df4 = df3.withColumn("tyear", F.year("timestamp"))
     
-for index,row in sender_receivers_df.iterrows():
+for index, row in sender_receivers_df.iloc[4000:].iterrows():
     enc_sender = index
     enc_receivers = list(row['CRECEIVERENDPOINTID'])
     

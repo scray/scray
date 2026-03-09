@@ -46,7 +46,18 @@ columns = ['CGLOBALMESSAGEID',  'CSTARTTIME', 'CENDTIME', 'CSTATUS', 'CSERVICE',
 # In[4]:
 
 
-sparkSession = dfBasics.getSparkSession()
+import numpy as np
+import pandas as pd
+
+import findspark
+findspark.init()
+
+from pyspark.sql import SparkSession
+from pyspark.sql.types import IntegerType
+from pyspark.sql.functions import col
+
+sparkSession =  SparkSession.builder.config('spark.local.dir', '/tmp').config("spark.executor.memory", "12g").config("spark.driver.memory", "12g").config("spark.driver.maxResultSize", "0").config("spark.shuffle.registration.maxAttempts", "1").config("spark.task.maxFailures", "1").appName("jupyter").getOrCreate()
+
 
 
 # In[5]:
@@ -427,7 +438,7 @@ df3 = df.withColumn("timestamp", F.from_unixtime(df.CSTARTTIME / 1000))
 # Step 2: Extract the year from the timestamp
 df4 = df3.withColumn("tyear", F.year("timestamp"))
     
-for index,row in sender_receivers_df.iterrows():
+for index, row in sender_receivers_df.iloc[5000:].iterrows():
     enc_sender = index
     enc_receivers = list(row['CRECEIVERENDPOINTID'])
     
