@@ -1,6 +1,6 @@
 [project]
 name = "scray-job-client"
-version = "0.0.4"
+version = "0.0.6"
 authors = [
   { name="Stefan Obermeier", email="st.obermeier@seeburger.com" },
 ]
@@ -13,7 +13,7 @@ classifiers = [
 ]
 
 dependencies = [
-    'scray_sync_client ~= 0.0.4',
+    'scray_sync_client ~= 0.0.5',
     'paramiko ~= 3.5.0'
 ]
 

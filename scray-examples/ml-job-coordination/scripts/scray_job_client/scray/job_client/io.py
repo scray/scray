@@ -37,11 +37,20 @@ def download_updated_notebook(job_name, notebook_name, data_integration_user, da
 
 
 def create_archive(job_name, source_data, data_integration_user, data_integration_host):
-    print(f"Create archive {job_name}.tar.gz from source {source_data}")
+    archive_path = os.path.abspath(f"{job_name}.tar.gz")
+    source_path  = os.path.abspath(source_data)
+
+    print(f"Create archive {archive_path} from source {source_path}")
 
     # Create tar.gz archive
-    with tarfile.open(f"{job_name}.tar.gz", "w:gz") as tar:
-        tar.add(source_data, arcname=os.path.basename(source_data))
+    with tarfile.open(archive_path, "w:gz") as tar:
+        if os.path.isdir(source_path):
+            for entry in os.scandir(source_path):
+                if os.path.abspath(entry.path) == archive_path:
+                    continue
+                tar.add(entry.path, arcname=entry.name, recursive=True)
+        else:
+            tar.add(source_path, arcname=os.path.basename(source_path))
 
     # Upload the file using SFTP
     transport = paramiko.Transport((data_integration_host, 22))

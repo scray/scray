@@ -56,7 +56,8 @@ class ScrayJobClient:
             port = config.sync_port,
             client_id = config.sync_client_id,
             client_secret = config.sync_client_secret,
-            token_url = config.sync_token_url  
+            token_url = config.sync_token_url,
+            ca_bundle= config.sync_ca_bundle
         )
 
         self.client = ScrayClient(client_config=scrayClientConfig)
@@ -65,7 +66,7 @@ class ScrayJobClient:
     def __waitForJobcompletion():  {
 
     }
-        
+
     def load_job_state_configuration(self, processor = "42") -> JobStates:
         trigger_states = [("env1", "UPLOADED")]
         error_states = [("env1", "CONVERSION_ERROR")]
@@ -75,7 +76,7 @@ class ScrayJobClient:
 
 
     def get_job_state(self, job_name):
-        
+
         latestVersion = self.client.getLatestVersion(job_name, '_')
         logger.info("Latest version data: " + latestVersion.to_str())
         job_state = JobSyncApiData.from_json(json_string=latestVersion.data).state
@@ -83,9 +84,9 @@ class ScrayJobClient:
         return job_state
 
     def wait_for_job_completion(self, job_name):
-        
+
         while True:
-            
+
             latestVersion = self.client.getLatestVersion(job_name, '_')
 
             logger.info("Latest version data: " + latestVersion.to_str())
@@ -99,11 +100,11 @@ class ScrayJobClient:
                 break
 
             time.sleep(3)
-    
+
     def wait_for_job_state(self, job_name, desiredState):
-        
+
         while True:
-            
+
             latestVersion = self.client.getLatestVersion(job_name, "_")
 
             logger.info("Latest version data: " + latestVersion.to_str())
@@ -117,9 +118,9 @@ class ScrayJobClient:
                 break
 
             time.sleep(3)
-            
+
     def get_jobs_old(self, processing_env, requested_state=None) -> list[str]:
-              
+
             latestVersions = self.client.get_all_versioned_data()
             if latestVersions is None:
                 logger.info("No new version available")
@@ -138,14 +139,14 @@ class ScrayJobClient:
                                 return metadata.state == requested_state
                         else:
                             return False
-                        
-                    except ValueError:
-                        return False 
 
-                
+                    except ValueError:
+                        return False
+
+
                 def get_job_name(versioned_data) -> str:
                     return versioned_data.data_source
-                
+
                 job_with_matching_state = list(filter(env_state_filter, latestVersions))
 
                 return list(map(get_job_name, job_with_matching_state))
@@ -170,13 +171,13 @@ class ScrayJobClient:
                                     return metadata.state == requested_state
                             else:
                                 return False
-                            
+
                         except ValueError:
-                            return False 
-                    
+                            return False
+
                     def get_job_name(versioned_data) -> str:
                         return versioned_data.data_source
-                    
+
                     job_with_matching_state = list(filter(env_state_filter, latestVersions))
                     return list(map(get_job_name, job_with_matching_state))
             else:
@@ -187,12 +188,12 @@ class ScrayJobClient:
                     return []
                    else:
                     logger.info("Latest version data: " + str(type(latestVersions)))
-                
+
                     def get_job_name(versioned_data) -> str:
                         return versioned_data.data_source
-                
+
                     return list(map(get_job_name, latestVersions))
-    
+
     def get_jobsFF(self, processing_env, requested_state=None) -> list[str]:
 
       latestVersions = self.client.get_all_versioned_data()
@@ -203,9 +204,9 @@ class ScrayJobClient:
         logger.info("Latest version data: " + str(type(latestVersions)))
 
         def env_state_filter(latestVersion) -> JobSyncApiData:
-             metadata = JobSyncApiData.from_json(json_string=latestVersion.data)                           
+             metadata = JobSyncApiData.from_json(json_string=latestVersion.data)
         return list(filter(env_state_filter, latestVersions))
-    
+
     def wait_for_new_job(self, processing_env, requested_state)-> list[str]:
 
         while True:
@@ -214,7 +215,7 @@ class ScrayJobClient:
 
             if jobs:
                 return jobs
-                
+
             time.sleep(1)
 
     def setState(self, state, job_name, processing_env, docker_image = "scrayorg/scray-jupyter_tensorflow-gpu:0.1.3", source_data = "./", notebook_name = "token_classification_01.ipynb", metadata = ""):
@@ -239,13 +240,13 @@ class ScrayJobClient:
         self.client.updateVersion(versionedData)
 
     def get_agent_conf(self, env: str, agent_name: str) -> AgentConfiguration:
-        
+
         latestVersion = self.client.getLatestVersion(agent_name, '_')
         logger.info("Latest agent config version: " + latestVersion.to_str())
         agent_conf = AgentConfiguration.from_json(json_string=latestVersion.data)
 
         return agent_conf
-    
+
     def set_agent_conf(self, env: str, agent_name: str, configuration: AgentConfiguration):
 
         conf_json = json.dumps(configuration.to_dict())
@@ -261,7 +262,7 @@ class ScrayJobClient:
 
 
     def get_job_metadata(self, job_name):
-        
+
         latestVersion = self.client.getLatestVersion(job_name, '_')
         logger.info("Latest version data: " + latestVersion.to_str())
         metadata = JobSyncApiData.from_json(json_string=latestVersion.data).metadata
@@ -275,16 +276,16 @@ class ScrayJobClient:
 
         return job_name
 
-    def deploy_job(self, source_data, notebook_name: str,  processing_env: str = "http://scray.org/ai/jobs/env/see/ki1-k8s", job_name = "job-" + str(uuid.uuid4()), initState="UPLOADED", docker_image="scray/python:0.1.4", metadata = ""):
+    def deploy_job(self, source_data, notebook_name: str,  processing_env: str = "http://scray.org/ai/jobs/env/see/ki1-k8s", job_name = "job-" + str(uuid.uuid4()), initState="UPLOADED", docker_image="scrayorg/python:0.1.4", metadata = ""):
         create_archive(job_name, source_data, self.config.data_integration_user, self.config.data_integration_host)
-        self.setState(state=initState, 
-                job_name=job_name, 
-                processing_env=processing_env, 
+        self.setState(state=initState,
+                job_name=job_name,
+                processing_env=processing_env,
                 notebook_name=notebook_name,
                 docker_image=docker_image,
                 metadata=metadata
             )
-        
+
         return job_name
 
     def get_job_fin_data(self, job_name, destination_path, data_integration_user, data_integration_host):
@@ -299,12 +300,12 @@ class ScrayJobClient:
 
         import os
         temp_tar_path = f"/tmp/{job_name}.tar.gz"
-        
+
         # Ensure the destination path exists
         os.makedirs(destination_path, exist_ok=True)
 
         transport = paramiko.Transport((data_integration_host, 22))
-        
+
         try:
             private_key_path = f"{Path.home()}/.ssh/id_rsa"
             key = paramiko.RSAKey.from_private_key_file(private_key_path)
@@ -312,7 +313,7 @@ class ScrayJobClient:
             # Connect to SFTP
             transport.connect(username=data_integration_user, pkey=key)
             sftp = paramiko.SFTPClient.from_transport(transport)
-            
+
             # Download the archive
             remote_path = f"sftp-share/{job_name}.tar.gz"
             print(f"Downloading {remote_path} to {temp_tar_path}")
@@ -328,7 +329,7 @@ class ScrayJobClient:
             print(f"Error during download and extraction: {e}")
         finally:
             transport.close()
-            
+
             # Remove the downloaded archive after extraction
             if os.path.exists(temp_tar_path):
                 os.remove(temp_tar_path)
@@ -349,12 +350,12 @@ class ScrayJobClient:
         import os
         temp_dir = tempfile.gettempdir()
         temp_tar_path = os.path.join(temp_dir, f"{job_name}_out.tar.gz")
-        
+
         # Ensure the destination path exists
         os.makedirs(destination_path, exist_ok=True)
 
         transport = paramiko.Transport((data_integration_host, 22))
-        
+
         try:
             private_key_path = f"{Path.home()}/.ssh/id_rsa"
             key = paramiko.RSAKey.from_private_key_file(private_key_path)
@@ -362,7 +363,7 @@ class ScrayJobClient:
             # Connect to SFTP
             transport.connect(username=data_integration_user, pkey=key)
             sftp = paramiko.SFTPClient.from_transport(transport)
-            
+
             # Download the archive
             remote_path = f"sftp-share/{job_name}_out.tar.gz"
             print(f"Downloading {remote_path} to {temp_tar_path}")
@@ -378,7 +379,7 @@ class ScrayJobClient:
             print(f"Error during download and extraction: {e}")
         finally:
             transport.close()
-            
+
             # Remove the downloaded archive after extraction
             if os.path.exists(temp_tar_path):
                 os.remove(temp_tar_path)
@@ -399,12 +400,12 @@ class ScrayJobClient:
         import os
         temp_dir = tempfile.gettempdir()
         temp_tar_path = os.path.join(temp_dir, f"{job_name}-state.tar.gz")
-        
+
         # Ensure the destination path exists
         os.makedirs(destination_path, exist_ok=True)
 
         transport = paramiko.Transport((data_integration_host, 22))
-        
+
         try:
             private_key_path = f"{Path.home()}/.ssh/id_rsa"
             key = paramiko.RSAKey.from_private_key_file(private_key_path)
@@ -412,7 +413,7 @@ class ScrayJobClient:
             # Connect to SFTP
             transport.connect(username=data_integration_user, pkey=key)
             sftp = paramiko.SFTPClient.from_transport(transport)
-            
+
             # Download the archive
             remote_path = f"sftp-share/{job_name}-state.tar.gz"
             print(f"Downloading {remote_path} to {temp_tar_path}")
@@ -428,7 +429,7 @@ class ScrayJobClient:
             print(f"Error during download and extraction: {e}")
         finally:
             transport.close()
-            
+
             # Remove the downloaded archive after extraction
             if os.path.exists(temp_tar_path):
                 os.remove(temp_tar_path)
