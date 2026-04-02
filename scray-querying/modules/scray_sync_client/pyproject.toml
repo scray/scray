@@ -1,8 +1,8 @@
 [project]
 name = "scray-sync-client"
-version = "0.0.4"
+version = "0.0.5"
 authors = [
-  { name="Stefan Obermeier", email="st.obermeier@example.com" },
+  { name="Stefan Obermeier", email="st.obermeier@seeburger.com" },
 ]
 description = "A package to interact with the scary sync API"
 readme = "README.md"

@@ -22,6 +22,7 @@ from scray.client.config import ScrayClientConfig
 from scray.client.models.versioned_data import VersionedData
 from scray.client.models.http_client import HttpClient
 import json
+import os
 from urllib.parse import urlsplit, urlencode
 
 from requests import Session
@@ -39,6 +40,12 @@ class ScrayClient:
         self.client_config = client_config
 
         self.request_session = Session()
+
+        #Set CA bundle for ssl verification if provided
+        if client_config.ca_bundle:
+            self.request_session.verify = os.path.abspath(client_config.ca_bundle)
+            print(f"Using CA bundle at {self.request_session.verify}")
+
         self.httpClient = HttpClient(token_provider=lambda: client_config.client_secret)
 
     def create() -> None: logger.info("Create scray client")
