@@ -57,7 +57,7 @@ class ScrayJobClient:
             client_id = config.sync_client_id,
             client_secret = config.sync_client_secret,
             token_url = config.sync_token_url,
-            ca_bundle= config.sync_ca_bundle
+            ca_bundle= config.sync_ca_bundle_path
         )
 
         self.client = ScrayClient(client_config=scrayClientConfig)
