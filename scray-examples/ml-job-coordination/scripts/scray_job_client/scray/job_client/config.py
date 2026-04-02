@@ -32,7 +32,8 @@ class ScrayJobClientConfig:
     sync_port: Optional[int] = 80
     sync_client_id: Optional[str] = "scray_sync_client"
     sync_client_secret: Optional[str] = "super_scrure_secret"
-    sync_token_url: Optional[str] = None
+    sync_token_url: Optional[str] = None,
+    sync_ca_bundle_path: Optional[str] = None
     
     data_integration_user: str = "ubuntu"
     data_integration_host: str = None
