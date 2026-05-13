@@ -2,6 +2,7 @@ package org.scray.integration.ai.agent;
 
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -13,12 +14,11 @@ import java.util.stream.Stream;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.core.JacksonException;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.fabric8.kubernetes.api.model.networking.v1.Ingress;
 
+import org.apache.commons.io.input.BoundedInputStream;
 import org.scray.integration.ai.agent.clients.k8s.KubernetesClient;
 import org.scray.integration.ai.agent.clients.k8s.KubernetesClient.JobNotFoundException;
 import org.scray.integration.ai.agent.clients.rest.RestClient;
@@ -140,9 +140,10 @@ public class AiIntegrationAgent
     }
 
 
-    public Stream<JobToSchedule> getJobDataForThisAgent(String syncApiData, Environments myEnvs)
-        throws JsonMappingException, JsonProcessingException
-    {
+    public Stream<JobToSchedule> getJobDataForThisAgent(InputStream syncApiData, Environments myEnvs)
+        throws IOException
+        {
+
         return Arrays.asList(jsonObjectMapper.readValue(syncApiData, VersionedData2[].class)).stream()
                      // parse job data
                      .map(versonData ->
@@ -230,14 +231,11 @@ public class AiIntegrationAgent
     public void pollForNewJobs()
     {
 
-        String syncApiData;
         try
         {
-            syncApiData = apiClient.getData();
+            var parsedVersionData = this.getAndParseVersionedData("UPLOADED");
 
-            this.getJobDataForThisAgent(syncApiData, environements)
-                .filter(jobData -> jobData.getAiJobsData().getState().equals("UPLOADED"))
-                .map(jobToStart ->
+            parsedVersionData.map(jobToStart ->
                 {
                     var env = environements.getEnvironment(jobToStart.getAiJobsData().getProcessingEnv());
                     var envType = env.getType();
@@ -264,12 +262,15 @@ public class AiIntegrationAgent
                     if (!useImageAllowList || allowedImages.contains(jobToStart.getAiJobsData().getImageName()))
                     {
                         KubernetesClient k8sClient = new KubernetesClient();
+
+
                         k8sClient.deployApp(jobToStart.getVersionData().getDataSource(),
                                             env.getEnvVars().get("RUNTIME_TYPE"),
                                             jobToStart.getAiJobsData().getImageName(),
                                             env.getK8sJobDescriptonTemplateFullPath(),
                                             env.getEnvVars().get("SCRAY_SYNC_API_URL"),
-                                            env.getEnvVars().get("SCRAY_DATA_INTEGRATION_HOST")
+                                            env.getEnvVars().get("SCRAY_DATA_INTEGRATION_HOST"),
+                                            env.getIngressBaseURL()
                                             );
                     }
                     else
@@ -283,8 +284,7 @@ public class AiIntegrationAgent
                     return "";
                 }).toList();
 
-            this.getJobDataForThisAgent(syncApiData, environements)
-                .filter(jobData -> jobData.getAiJobsData().getState().equals("WANTED_D"))
+            this.getAndParseVersionedData("WANTED_D")
                 .map(jobToTerminate ->
                 {
                     logger.info("Kill job {}", jobToTerminate.getVersionData().getDataSource());
@@ -311,6 +311,35 @@ public class AiIntegrationAgent
         }
     }
 
+    private Stream<JobToSchedule> getAndParseVersionedData(String requestedState) {
+
+        return environements.getEnvironments().stream()
+        .map(Environment::getName)
+        .map(envName -> {
+            try
+            {
+                return Optional.of(apiClient.fetchLatestVersionedDataByState(envName, requestedState));
+            }
+            catch (IOException e)
+            {
+                e.printStackTrace();
+                logger.error("Error when fetching data for env {}: {}", envName, e.getMessage());
+                return Optional.<InputStream>empty();
+            }
+        }).flatMap(Optional::stream)
+        .flatMap(inData ->  {
+            try
+            {
+                return this.getJobDataForThisAgent(inData, environements);
+            }
+            catch (IOException e)
+            {
+                logger.error("Error parsing job data", e);
+                return Stream.empty();
+            }
+        });
+
+    }
 
     public void addEnv(String name, Environment type)
     {

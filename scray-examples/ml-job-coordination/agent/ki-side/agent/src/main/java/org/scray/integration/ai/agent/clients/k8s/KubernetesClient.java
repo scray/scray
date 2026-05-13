@@ -116,10 +116,18 @@ public class KubernetesClient {
 			String hostBasePath
 		) {
 
-		String host = jobName.concat("/").concat(hostBasePath).replace("//", "/");
 		String ingressPath = "/";
 		String serviceName = jobName;
 		int portNumber = 7860;
+
+
+		var host = "";
+		if (hostBasePath != null) {
+		    host = jobName.concat(".").concat(hostBasePath).replace("//", "/"); // Hostname used to access the service
+    	} else {
+    	    logger.warn("Ingress hoste base path not defined. jobName will be used.");
+    		host = jobName;
+    	}
 
 
 		var serviceDescriptorTemplate = this.loadDesciptorFormFile("service.yaml"); // FIXME set full path to conf

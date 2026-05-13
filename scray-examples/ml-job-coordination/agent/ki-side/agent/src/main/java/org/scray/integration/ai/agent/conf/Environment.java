@@ -41,8 +41,20 @@ public class Environment {
     private HashMap<String, String> envVars = new HashMap<>();
     private String confBasePath = "conf";
 
+    private String ingressBaseURL;
 
 
+
+
+    public String getIngressBaseURL()
+    {
+        return ingressBaseURL;
+    }
+
+    public void setIngressBaseURL(String ingressBaseURL)
+    {
+        this.ingressBaseURL = ingressBaseURL;
+    }
 
     public enum EnvType {
         K8s,
@@ -67,6 +79,7 @@ public class Environment {
     public Environment(String name, String id, int version,
                        String description,
                        String ingressTemplate,
+                       String ingressBaseURL,
                        String k8sJobDescriptonTemplate,
                        String k8sDeploymentDescriptionTemplate, EnvType type, HashMap<String, String> envVars, String confBasePath)
     {
@@ -76,6 +89,7 @@ public class Environment {
         this.version = version;
         this.description = description;
         this.ingressTemplate = ingressTemplate;
+        this.ingressBaseURL = ingressBaseURL;
         this.k8sJobDescriptonTemplate = k8sJobDescriptonTemplate;
         this.k8sDeploymentDescriptionTemplate = k8sDeploymentDescriptionTemplate;
         this.type = type;

@@ -3,6 +3,9 @@ package org.scray.integration.ai.agent;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
@@ -27,7 +30,7 @@ public class AiIntegrationAgentTests {
 		Environments myEnvs = new Environments(1, "test");
 		myEnvs.addEnvironment("http://scray.org/ai/jobs/env/see/ki2-k8s", exampleEnv);
 
-		String testData = "[\r\n"
+		InputStream testData = new ByteArrayInputStream(("[\r\n"
 				+ "   {\r\n"
 				+ "      \"dataSource\":\"deepspeed1-1736\",\r\n"
 				+ "      \"mergeKey\":\"_\",\r\n"
@@ -48,7 +51,7 @@ public class AiIntegrationAgentTests {
 				+ "      \"version\":0,\r\n"
 				+ "      \"data\":\"{\\\"filename\\\": \\\"deepspeed1.tar.gz\\\", \\\"state\\\": \\\"COMPLETED\\\",  \\\"dataDir\\\": \\\"./\\\", \\\"notebookName\\\": \\\"app_backend.ipynb\\\"}\",\r\n"
 				+ "      \"versionKey\":69008779\r\n"
-				+ "   }]";
+				+ "   }]").getBytes(StandardCharsets.UTF_8));
 
 		try {
 
