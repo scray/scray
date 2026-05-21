@@ -14,8 +14,15 @@
 
 package org.scray.sync.analytics;
 
+
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.slf4j.Logger;
@@ -26,52 +33,107 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import scray.sync.impl.FileVersionedDataApiImpl;
 
-public class MergeVersionFiles {
-	private static final Logger logger = LoggerFactory.getLogger(MergeVersionFiles.class);
 
-	public FileVersionedDataApiImpl removeState(List<String> statesToRemove, List<VersionedData> vData) {
+public class MergeVersionFiles
+{
+    private static final Logger logger = LoggerFactory.getLogger(MergeVersionFiles.class);
 
-		ObjectMapper objectMapper = new ObjectMapper();
-		FileVersionedDataApiImpl statesToPersist = new FileVersionedDataApiImpl();
+    public FileVersionedDataApiImpl removeState(List<String> statesToRemove, List<VersionedData> vData)
+    {
 
-		for (VersionedData data : vData) {
-			try {
-				var state = objectMapper.readTree(data.getData());
+        ObjectMapper objectMapper = new ObjectMapper();
+        FileVersionedDataApiImpl statesToPersist = new FileVersionedDataApiImpl();
 
-				if(!statesToRemove.contains(state.get("state").asText())) {
-					statesToPersist.updateVersion(data);
-				}
-			} catch (Exception e) {
-				logger.warn("Error while parsing state attribute in version data");
-			}
-		}
+        for (VersionedData data : vData)
+        {
+            try
+            {
+                var state = objectMapper.readTree(data.getData());
 
-		return statesToPersist;
-	}
+                if (!statesToRemove.contains(state.get("state").asText()))
+                {
+                    statesToPersist.updateVersion(data);
+                }
+            }
+            catch (Exception e)
+            {
+                e.printStackTrace();
+                System.out.println("Invalid data " + data.getData());
+                logger.warn("Error while parsing state attribute in version data");
+            }
+        }
 
-	public static void main(String[] args) {
-
-		MergeVersionFiles remover = new MergeVersionFiles();
-		List<VersionedData> vsData = new SyncFileManager("sync-api-stat.json").getSyncApi().getAllVersionedResources();
-		List<VersionedData> vsData2 = new SyncFileManager("sync-api-stat.json.v2").getSyncApi().getAllVersionedResources();
-
-		List<String> statesToRemove = Arrays.asList("COMPLETED", "CONVESION_ERROR", "ERROR", "PUBLISHED", "FINISHED", "LOADING_ERROR");
+        return statesToPersist;
+    }
 
 
-		List<VersionedData> allVersions = Stream.concat(vsData.stream(), vsData2.stream()).toList();
+    public static void main(String[] args)
+    {
+        MergeVersionFiles merger = new MergeVersionFiles();
 
-		FileVersionedDataApiImpl statesToPersist = remover.removeState(
-				statesToRemove,
-				allVersions
-		);
+        List<VersionedData> f1 = new SyncFileManager("sync-api-stat-f1.json").getSyncApi().getAllVersionedResources();
+        List<VersionedData> f2 = new SyncFileManager("sync-api-stat-f2.json").getSyncApi().getAllVersionedResources();
 
-		var numOfInStates = allVersions.size();
-		var numOfOutStates = statesToPersist.getAllVersionedResources().size();
+        var mergedData = merger.mergeVersionedFiles(f1, f2);
+        FileVersionedDataApiImpl statesToPersist = new FileVersionedDataApiImpl();
+        statesToPersist.updateVersions(mergedData);
 
-		System.out.println("Num of in states:  " + numOfInStates);
-		System.out.println("Num of out states: " + numOfOutStates);
+        System.out.println("F1 size:  " + f1.size());
+        System.out.println("F2 size: " + f2.size());
+        System.out.println("F1 + F2 merged size: " + mergedData.size());
 
-		statesToPersist.persist("sync-api-stat.26.05.2025.json.v2");
-	}
+        statesToPersist.persist("sync-api-stat.json");
+
+    }
+
+
+    /**
+     * Merge f1 and f2 to one file. In case of a conflict f1 is used.
+     *
+     * @param f1
+     * @param f2
+     */
+    public List<VersionedData> mergeVersionedFiles(List<VersionedData> f1, List<VersionedData> f2)
+    {
+
+        Set<Integer> f1Keys = f1.stream()
+                                .map(VersionedData::getVersionKey)
+                                .collect(Collectors.toSet());
+
+        List<VersionedData> mergedSyncDataFiles = new ArrayList<>(f1);
+
+        // Find all which do not exist in f1
+        f2.stream()
+          .filter(data -> !f1Keys.contains(data.getVersionKey()))
+          .forEach(mergedSyncDataFiles::add);
+
+        return Collections.unmodifiableList(mergedSyncDataFiles);
+
+    }
+
+
+    public void removeStates()
+    {
+        MergeVersionFiles remover = new MergeVersionFiles();
+        List<VersionedData> vsData = new SyncFileManager("sync-api.bk.stat-02.03.2026").getSyncApi().getAllVersionedResources();
+        List<VersionedData> vsData2 = new SyncFileManager("sync-api-stat.bk.02.03.2026.json").getSyncApi().getAllVersionedResources();
+
+        List<String> statesToRemove = Arrays.asList("COMPLETED", "CONVESION_ERROR", "ERROR", "PUBLISHED", "FINISHED", "LOADING_ERROR",
+                                                    "UNCATEGORIZED", "CATEGORIZED");
+
+        List<VersionedData> allVersions = Stream.concat(vsData.stream(), vsData2.stream()).toList();
+
+        FileVersionedDataApiImpl statesToPersist = remover.removeState(
+                                                                       statesToRemove,
+                                                                       allVersions);
+
+        var numOfInStates = allVersions.size();
+        var numOfOutStates = statesToPersist.getAllVersionedResources().size();
+
+        System.out.println("Num of in states:  " + numOfInStates);
+        System.out.println("Num of out states: " + numOfOutStates);
+
+        statesToPersist.persist("sync-api-stat.26.05.2025.json.v2");
+    }
 
 }

@@ -1,0 +1,26 @@
+# Place this in the `scray-querying/` directory alongside its pom.xml.
+# Keeps the build context small and avoids invalidating cache layers
+# because of local IDE / build artifacts.
+
+**/target/
+**/.idea/
+**/.vscode/
+**/.settings/
+**/.classpath
+**/.project
+**/*.iml
+**/.DS_Store
+
+# Git metadata is huge and never needed in the build
+.git
+.gitignore
+.gitattributes
+
+# Logs and local state
+**/*.log
+**/.mvn/wrapper/maven-wrapper.jar
+
+# Don't recursively copy any Dockerfile into the context
+Dockerfile
+**/Dockerfile
+.dockerignore
