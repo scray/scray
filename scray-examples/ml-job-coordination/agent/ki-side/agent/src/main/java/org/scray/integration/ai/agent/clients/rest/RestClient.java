@@ -1,15 +1,12 @@
 package org.scray.integration.ai.agent.clients.rest;
 
 
-import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -18,9 +15,9 @@ import java.nio.charset.StandardCharsets;
 import javax.net.ssl.*;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
+import java.util.Base64;
 import java.util.Map;
 
-import org.bouncycastle.mime.BoundaryLimitedInputStream;
 import org.scray.integration.ai.agent.AiIntegrationAgent;
 import org.apache.commons.io.input.BoundedInputStream;
 import org.slf4j.Logger;
@@ -32,13 +29,32 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class RestClient
 {
 
-    private final Logger logger = LoggerFactory.getLogger(AiIntegrationAgent.class);
+    private static final Logger logger = LoggerFactory.getLogger(AiIntegrationAgent.class);
     private static final int MAX_RESPONSE_BYTES = 1 * 1024 * 1024 * 1024; // 1 GB, tune to your data
 
     private URI url = null;
 
-    private String TOKEN = "eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkphbmUgRG9lIiwiaWF0IjoxNzI5NDQwMDAwLCJleHAiOjE3Mjk0NDM2MDAsImlzcyI6ImF1dGguZXhhbXBsZS5jb20iLCJhdWQiOiJhcGkuZXhhbXBsZS5jb20iLCJzY29wZSI6InJlYWQ6dGhpbmdzIHdyaXRlOnRoaW5ncyJ9";
+    private static final String TOKEN_ENV_VAR = "SCRAY_SYNC_API_TOKEN";
+    private static final String TOKEN = initToken();
     private static final ObjectMapper jsonObjectMapper = new ObjectMapper();
+
+
+    private static String initToken()
+    {
+        String envToken = System.getenv(TOKEN_ENV_VAR);
+        if (envToken != null && !envToken.isEmpty())
+        {
+            logger.info("Using API token from environment variable {}", TOKEN_ENV_VAR);
+            return envToken;
+        }
+
+        byte[] bytes = new byte[32];
+        new SecureRandom().nextBytes(bytes);
+        String generated = Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+        logger.info("{} not set, generated random API token: {}", TOKEN_ENV_VAR, generated);
+        return generated;
+    }
+
 
     private static void disableCertValidation()
         throws Exception

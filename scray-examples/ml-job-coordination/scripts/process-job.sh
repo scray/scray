@@ -4,6 +4,7 @@ DATA_INTEGRATION_HOST=ml-integration-git.research.dev.example.com
 DATA_INTEGRATION_USER=ubuntu
 SYNC_API_URL="http://ml-integration.research.dev.example.com:8082"
 OUTPUT_FOLDER="job_output"
+RUNNING_STATE="RUNNING"
 
 RESUMABLE_JOB = false
 
@@ -218,15 +219,21 @@ waitForNextJob() {
   echo NOTEBOOK_NAME: "$NOTEBOOK_NAME"
   echo PROCESSING_ENV: "$PROCESSING_ENV"
 
-  while [ "$STATE" != "\"$TRIGGER_STATE\"" ]; do
-    STATE_OBJECT=$(curl -k -sS -H "$AUTH_HEADER" -X 'GET' $SYNC_API_URL'/latest?datasource='$JOB_NAME'&mergekey=_' -H 'accept: application/json' | jq '.data  | fromjson')
-    SOURCE_DATA=$(echo "$STATE_OBJECT" | jq -r .dataDir)
-    NOTEBOOK_NAME=$(echo "$STATE_OBJECT" | jq -r .notebookName)
+  if [ "$STATE" == "\"$RUNNING_STATE\"" ]; then
+    echo "State is already $RUNNING_STATE. Skip job execution."
+    setState 'EXTERNALLY_TERMINATED'
+    return
+  elif
+    while [ "$STATE" != "\"$TRIGGER_STATE\"" ]; do
+      STATE_OBJECT=$(curl -k -sS -H "$AUTH_HEADER" -X 'GET' $SYNC_API_URL'/latest?datasource='$JOB_NAME'&mergekey=_' -H 'accept: application/json' | jq '.data  | fromjson')
+      SOURCE_DATA=$(echo "$STATE_OBJECT" | jq -r .dataDir)
+      NOTEBOOK_NAME=$(echo "$STATE_OBJECT" | jq -r .notebookName)
 
-    STATE=$(echo "$STATE_OBJECT" | jq .state)
-    echo "[$JOB_NAME] Wait for state $TRIGGER_STATE current state is " "$STATE"
-    sleep 5
-  done
+      STATE=$(echo "$STATE_OBJECT" | jq .state)
+      echo "[$JOB_NAME] Wait for state $TRIGGER_STATE current state is " "$STATE"
+      sleep 5
+    done
+  fi
 
   echo SOURCE_DATA: "$SOURCE_DATA"
   echo NOTEBOOK_NAME: "$NOTEBOOK_NAME"
@@ -239,7 +246,7 @@ processNextJob() {
     waitForNextJob
     setState 'DOWNLOADING'
     downloadJob
-    setState 'RUNNING'
+    setState $RUNNING_STATE
     runJob
     setState 'COMPLETED'
 }

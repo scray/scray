@@ -20,10 +20,15 @@ docker run --runtime=nvidia --gpus all -e JOB_NAME=timestamp-example --name time
 docker build -t registry.research.dev.example.com:5000/scray/scray-jupyter_tensorflow_pytorch-gpu:0.1.1 -f ./docker-image-descriptions/jupyter_tensorflow_pytorch_latest-gpu/Dockerfile .
 ```
 
+
+### 
+docker build -t registry.research.dev.example.com:5000/scray/scray-jupyter_tensorflow_pytorch-gpu:0.1.1 -f ./docker-image-descriptions/jupyter_tensorflow_pytorch_latest-gpu/Dockerfile .
+
+
 ### Python image
 
 ```
-docker build -t registry.research.dev.example.com:5000/scray/python:0.1.4 -f ./docker-image-descriptions/scray-python-3.10.12/Dockerfile .
+docker build -t scrayorg/python:0.1.4 -f ./docker-image-descriptions/scray-python-3.10.12/Dockerfile .
 ```
 
 ### huggingface-transformers-pytorch-deepspeed-latest-gpu
@@ -51,7 +56,9 @@ sudo ctr -n=k8s.io images import /tmp/q1.tar
 ### llama
 
 ```
-docker build -t scray/llama-backend:0.1.3 -f ./docker-image-descriptions/seamless_m4t/ 
+docker build -t registry.research.dev.example.com:5000/scray/llama-backend-root:0.1.8 -f ./docker-image-descriptions/llama-backend/Dockerfile .
+
+docker build -t registry.research.dev.example.com:5000/scray/llama-backend-root:0.1.8 -f ./docker-image-descriptions/seamless_m4t/ 
 ```
 ### Use Case specific images
 

@@ -1,14 +1,6 @@
 # syntax=docker/dockerfile:1.7
 #
-# Dockerfile for scray-sync-api-rest (Spring Boot, Java 17, Maven).
-#
-# Build context MUST be the `scray-querying` directory of the repo,
-# because this module depends on three sibling modules that aren't
-# published to Maven Central and have to be built alongside it:
-#   - scray-sync-api
-#   - scray-sync-file
-#   - scray-sync-events-mqtt
-#
+# Dockerfile for scray-sync-api-rest 
 # Build from the repo root:
 #   docker build \
 #     -f scray-querying/modules/scray-sync-api-rest/Dockerfile \
@@ -39,7 +31,6 @@ COPY modules/scray-sync-api-rest/pom.xml      modules/scray-sync-api-rest/pom.xm
 RUN --mount=type=cache,target=/root/.m2 \
     mvn -B -pl :scray-sync-api-rest -am dependency:go-offline -DskipTests || true
 
-# 2) Now copy sources and build.
 COPY modules/ modules/
 
 RUN --mount=type=cache,target=/root/.m2 \

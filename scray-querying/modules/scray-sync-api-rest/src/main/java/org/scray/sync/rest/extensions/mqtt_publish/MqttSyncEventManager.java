@@ -12,11 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package org.scray.sync.rest;
+package org.scray.sync.rest.extensions.mqtt_publish;
 
 import java.util.Optional;
 
 import org.scray.sync.out.mqtt.MqttChannel;
+import org.scray.sync.rest.PublishedEventStatistics;
+import org.scray.sync.rest.SyncEventManager;
+import org.scray.sync.rest.SyncFileManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

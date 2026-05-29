@@ -23,17 +23,29 @@ public class VersionedData {
     private long version;       // Version of this data. E.g. time stamp
     private String data;        // String representation of the data to store
     private Long versionKey;
+    private String env;
 
     public VersionedData() {}
 
-    public VersionedData(String dataSource, String mergeKey, long version, String data) {
+    public VersionedData(String dataSource, String mergeKey, long version, String env, String data) {
         this.dataSource = dataSource;
         this.mergeKey = mergeKey;
         this.version = version;
         this.data = data;
+        this.env = env;
     }
 
 
+
+    public String getEnv()
+    {
+        return env;
+    }
+
+    public void setEnv(String env)
+    {
+        this.env = env;
+    }
 
     public void setDataSource(String dataSource) {
 		this.dataSource = dataSource;
@@ -85,8 +97,8 @@ public class VersionedData {
 
     @Override
     public String toString() {
-        return String.format("{\"dataSource\": \"%s\", \"mergeKey\": \"%s\", \"version\": %d, \"data\": \"%s\"}",
-                dataSource, mergeKey, version, data);
+        return String.format("{\"dataSource\": \"%s\", \"mergeKey\": \"%s\", \"version\": %d, \"data\": \"%s\",\"env\": \"%s\"}",
+                dataSource, mergeKey, version, data, env);
     }
 
     public static int createVersionKey(String dataSource, String mergeKey) {

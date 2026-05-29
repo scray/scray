@@ -36,6 +36,10 @@ public interface VersionedDataApi {
      */
     void updateVersion(String dataSource, String mergeKey, long version, String data);
 
+
+    void updateVersion(String dataSource, String mergeKey, long version, String env, String data);
+
+
     /**
      * Persist versioned data information to the local file system
      */

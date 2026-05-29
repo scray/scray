@@ -26,11 +26,12 @@ import org.springframework.http.HttpHeaders;
 import scala.Option;
 
 import org.scray.sync.rest.FilterParser;
-import org.scray.sync.rest.MqttSyncEventManager;
+import org.scray.sync.rest.HttpSubscriptionPublisher;
 import org.scray.sync.rest.PersistBuffer;
 import org.scray.sync.rest.SearchRequest;
 import org.scray.sync.rest.SyncEventManager;
 import org.scray.sync.rest.SyncFileManager;
+import org.scray.sync.rest.extensions.mqtt_publish.MqttSyncEventManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -52,17 +53,19 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 import javax.servlet.http.HttpServletRequest;
 
 @RestController
 @SpringBootApplication(
 		exclude = {org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration.class }
-		)
+	)
 public class ReadController {
 
 	private static final Logger logger = LoggerFactory.getLogger(ReadController.class);
 	SyncEventManager eventManager = new MqttSyncEventManager();
+    private final HttpSubscriptionPublisher httpPublisher;
 	private final PersistBuffer persistBuffer;
 	SyncFileManager syncApiManager;
 
@@ -78,11 +81,12 @@ public class ReadController {
         return !token.isEmpty() && token.equals(expectedToken);
     }
 
-	public ReadController(PersistBuffer buffer) {
-		this.persistBuffer = buffer;
-		this.syncApiManager = buffer.getSyncApiManager();
-	}
 
+    public ReadController(PersistBuffer buffer, HttpSubscriptionPublisher httpPublisher) {
+        this.persistBuffer = buffer;
+        this.syncApiManager = buffer.getSyncApiManager();
+        this.httpPublisher = httpPublisher;
+    }
 	@Operation(summary = "Get latest version", description = "Get latest version of the data",
 
 			tags = { "Sync-API" })
@@ -200,19 +204,26 @@ public class ReadController {
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "OK") })
 	@CrossOrigin(origins = "*")
 	@PutMapping(value = "/sync/versioneddata/latest")
-	ResponseEntity<?> updateVersion(@RequestBody VersionedData updatedVersionedData,  HttpServletRequest request) {
-
+    ResponseEntity<?> updateVersion(@RequestBody VersionedData updatedVersionedData,
+                                     HttpServletRequest request) {
         if (!isAuthorized(request)) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
-		syncApiManager.getSyncApi().updateVersion(updatedVersionedData);
-		persistBuffer.markDirty();
-		try {
-			eventManager.publishUpdate(updatedVersionedData);
-		} catch (Exception e) {
-			logger.warn("Error when sending event notification {} ", e);
-		}
-		return ResponseEntity.status(HttpStatus.OK).build();
-	}
+        // assign a fresh dataSource id if the caller didn't provide one
+        if (updatedVersionedData.getDataSource() == null
+                || updatedVersionedData.getDataSource().isBlank()) {
+            updatedVersionedData.setDataSource(UUID.randomUUID() + "_" + System.currentTimeMillis());
+        }
+
+        syncApiManager.getSyncApi().updateVersion(updatedVersionedData);
+        persistBuffer.markDirty();
+        try {
+            eventManager.publishUpdate(updatedVersionedData);
+            httpPublisher.publish(updatedVersionedData);
+        } catch (Exception e) {
+            logger.warn("Error when sending event notification {} ", e);
+        }
+        return ResponseEntity.status(HttpStatus.OK).build();
+    }
 }

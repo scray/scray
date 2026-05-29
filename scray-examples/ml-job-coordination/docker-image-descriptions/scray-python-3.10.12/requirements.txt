@@ -1,3 +1,2 @@
 papermill
-nougat-ocr==0.1.17
-opencv-python-headless==4.8.0.74
+

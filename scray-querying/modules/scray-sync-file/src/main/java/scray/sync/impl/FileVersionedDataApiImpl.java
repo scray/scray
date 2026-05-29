@@ -25,9 +25,9 @@ public class FileVersionedDataApiImpl implements VersionedDataApi {
     private final Gson gson = new GsonBuilder().setPrettyPrinting().create();
     private Map<Integer, VersionedData> versionInformations = new ConcurrentHashMap<>();
     private Map<Integer, Map<Integer, VersionedData>> versionInformationsIdxEnvState = new ConcurrentHashMap<>();
-    private Idx idx = new IndexDataEnvState();
+    //private Idx idx = new IndexDataEnvState();
 
-    private IndexDataEnvState indexCreator = new IndexDataEnvState();
+    //private IndexDataEnvState indexCreator = new IndexDataEnvState();
 
 
     public FileVersionedDataApiImpl() {
@@ -41,30 +41,41 @@ public class FileVersionedDataApiImpl implements VersionedDataApi {
     }
 
     @Override
-    public void updateVersion(String dataSource, String mergeKey, long version, String data) {
-        VersionedData vd = new VersionedData(dataSource, mergeKey, version, data);
+    public void updateVersion(String dataSource, String mergeKey, long version, String env, String data) {
+        VersionedData vd = new VersionedData(dataSource, mergeKey, version, env, data);
 
         // Get old version to know which one to update
     	var oldV = Optional.ofNullable(versionInformations.get(vd.getVersionKey()));
     	// Add new state to idx
-        idx.put(oldV, vd, versionInformationsIdxEnvState);
+        //idx.put(oldV, vd, versionInformationsIdxEnvState);
 
         versionInformations.put(vd.getVersionKey(), vd);
+    }
+
+    @Override
+    public void updateVersion(String dataSource, String mergeKey, long version, String data)
+    {
+       this.updateVersion(dataSource, mergeKey, version, "default", data);
     }
 
     public void updateVersion(VersionedData vd) {
         // Get old version to know which one to update
     	var oldV = Optional.ofNullable(versionInformations.get(vd.getVersionKey()));
     	// Add new state to idx
-        idx.put(oldV, vd, versionInformationsIdxEnvState);
+        //idx.put(oldV, vd, versionInformationsIdxEnvState);
 
         versionInformations.put(vd.getVersionKey(), vd);
+    }
+
+    public void updateVersions(List<VersionedData> vds) {
+        vds.forEach(this::updateVersion);
     }
 
 	@Override
 	public Optional<List<VersionedData>> getLatestVersion(String idxName, String attribute1, String attribute2) {
 
-		 Optional<Integer> key = idx.getKey(attribute1, attribute2);
+		 //Optional<Integer> key = idx.getKey(attribute1, attribute2); // FIXME
+	    Optional<Integer> key = Optional.empty();
 
 		 if(key.isEmpty()) {
 			 logger.debug("Error while creating key from inputdata");
@@ -98,7 +109,7 @@ public class FileVersionedDataApiImpl implements VersionedDataApi {
         versionInformations = readFromFile(path);
 
         // Init index
-        versionInformations.values().stream().map(vd -> idx.put(Optional.empty(), vd, versionInformationsIdxEnvState)).count();
+        //versionInformations.values().stream().map(vd -> idx.put(Optional.empty(), vd, versionInformationsIdxEnvState)).count();
     }
 
     @Override
@@ -106,7 +117,7 @@ public class FileVersionedDataApiImpl implements VersionedDataApi {
         versionInformations = readFromStream(stream);
 
         // Init index
-        versionInformations.values().stream().map(vd -> idx.put(Optional.empty(), vd, versionInformationsIdxEnvState)).count();
+        //versionInformations.values().stream().map(vd -> idx.put(Optional.empty(), vd, versionInformationsIdxEnvState)).count();
     }
 
     @Override
