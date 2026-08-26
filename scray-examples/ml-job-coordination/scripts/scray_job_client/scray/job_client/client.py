@@ -387,7 +387,7 @@ class ScrayJobClient:
 
     def get_job_out_data(self, job_name, destination_path, data_integration_user=None, data_integration_host=None):
         """
-        Downloads the files stored in the output folder of the job
+        Downloads the files stored in the output folder [``job_output``] of the job
 
         :param job_name: Name of the job.
         :param destination_path: Path where the extracted files should be stored.
