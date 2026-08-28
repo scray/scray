@@ -5,8 +5,7 @@ DATA_INTEGRATION_USER=ubuntu
 SYNC_API_URL="http://ml-integration.research.dev.example.com:8082"
 OUTPUT_FOLDER="job_output"
 RUNNING_STATE="RUNNING"
-
-RESUMABLE_JOB = false
+RESUMABLE_JOB="${RESUMABLE_JOB:-true}"
 
 if [[ -z "${TRIGGER_STATE}" ]]; then
   echo "TRIGGER_STATE not set use default \"SCHEDULED\""
@@ -210,7 +209,7 @@ setState() {
 
 waitForNextJob() {
   STATE_OBJECT=$(curl -k -sS -H "$AUTH_HEADER" -X 'GET' $SYNC_API_URL'/latest?datasource='$JOB_NAME'&mergekey=_' -H 'accept: application/json' | jq '.data  | fromjson')
-  STATE=$(echo "$STATE_OBJECT" | jq .state)
+  STATE=$(echo "$STATE_OBJECT" | jq -r '.state')
   SOURCE_DATA=$(echo "$STATE_OBJECT" | jq -r .dataDir)
   NOTEBOOK_NAME=$(echo "$STATE_OBJECT" | jq -r .notebookName)
   PROCESSING_ENV=$(echo "$STATE_OBJECT" | jq -r .processingEnv)
@@ -219,18 +218,28 @@ waitForNextJob() {
   echo NOTEBOOK_NAME: "$NOTEBOOK_NAME"
   echo PROCESSING_ENV: "$PROCESSING_ENV"
 
-  if [ "$STATE" == "\"$RUNNING_STATE\"" ]; then
-    echo "State is already $RUNNING_STATE. Skip job execution."
-    setState 'EXTERNALLY_TERMINATED'
-    return
-  elif
-    while [ "$STATE" != "\"$TRIGGER_STATE\"" ]; do
-      STATE_OBJECT=$(curl -k -sS -H "$AUTH_HEADER" -X 'GET' $SYNC_API_URL'/latest?datasource='$JOB_NAME'&mergekey=_' -H 'accept: application/json' | jq '.data  | fromjson')
-      SOURCE_DATA=$(echo "$STATE_OBJECT" | jq -r .dataDir)
-      NOTEBOOK_NAME=$(echo "$STATE_OBJECT" | jq -r .notebookName)
+  if [ "$STATE" = "$RUNNING_STATE" ]; then
+    if [ "$RESUMABLE_JOB" = "true" ]; then
+      echo "Job is resumable. Restarting interrupted job."
+      setState 'RESTARTING'
+      return 0
+    else
+      echo "Job is not resumable. Marking it as externally terminated."
+      setState 'EXTERNALLY_TERMINATED'
+      return 1
+    fi
+  else
+    while [ "$STATE" != "$TRIGGER_STATE" ]; do
+      STATE_OBJECT=$(curl -k -sS -H "$AUTH_HEADER" -X GET \
+        "$SYNC_API_URL/latest?datasource=$JOB_NAME&mergekey=_" \
+        -H 'accept: application/json' |
+        jq '.data | fromjson')
 
-      STATE=$(echo "$STATE_OBJECT" | jq .state)
-      echo "[$JOB_NAME] Wait for state $TRIGGER_STATE current state is " "$STATE"
+      SOURCE_DATA=$(echo "$STATE_OBJECT" | jq -r '.dataDir')
+      NOTEBOOK_NAME=$(echo "$STATE_OBJECT" | jq -r '.notebookName')
+      STATE=$(echo "$STATE_OBJECT" | jq -r '.state')
+
+      echo "[$JOB_NAME] Wait for state $TRIGGER_STATE; current state is $STATE"
       sleep 5
     done
   fi
